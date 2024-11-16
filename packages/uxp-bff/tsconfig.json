@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist", // Output compiled files to the dist folder
+    "rootDir": "./src", // Treat src as the root for inputs
+    "module": "commonjs", // Use CommonJS for Node.js
+    "target": "es2019", // Use a modern JavaScript version supported by Node.js
+    "declaration": true, // Generate .d.ts files
+    "declarationMap": true, // Generate declaration maps
+    "esModuleInterop": true, // Allow default imports from CommonJS modules
+    "skipLibCheck": true // Skip type checking of declaration files
+  },
+  "include": ["src/**/*"]
+}
