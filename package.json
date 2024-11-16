@@ -1,0 +1,75 @@
+{
+  "name": "@uxp/monorepo",
+  "description": "Unified Experience Platform root monorepo",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "prepare": "husky",
+    "build:bff": "npm run build --workspace=@myorg/bff",
+    "dev:bff": "npm run dev --workspace=@myorg/bff",
+    "build:ui-core": "npm run build --workspace=@uxp/ui-core",
+    "build-dev:ui-core": "npm run build-dev --workspace=@uxp/ui-core",
+    "build:ui-presenter": "npm run build --workspace=@uxp/ui-presenter",
+    "xbuild": "npm run build:ui-core && npm run build:ui-presenter && npm run build:bff",
+    "lint": "eslint packages/**",
+    "lint:fix": "eslint packages/** --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "lint-staged": {
+    "*.ts": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.tsx": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.js": [
+      "eslint --fix",
+      "prettier --write"
+    ]
+  },
+  "devDependencies": {
+    "@babel/core": "^7.26.0",
+    "@babel/preset-env": "^7.26.0",
+    "@babel/preset-react": "^7.25.9",
+    "@babel/preset-typescript": "^7.26.0",
+    "@eslint/js": "^9.15.0",
+    "@types/node": "^22.9.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@types/webpack-env": "^1.18.5",
+    "@typescript-eslint/eslint-plugin": "^8.14.0",
+    "@typescript-eslint/parser": "^8.14.0",
+    "babel-loader": "^9.2.1",
+    "css-loader": "^7.1.2",
+    "eslint": "^9.15.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-prettier": "^5.2.1",
+    "eslint-plugin-react": "^7.37.2",
+    "eslint-plugin-react-hooks": "^5.0.0",
+    "html-webpack-plugin": "^5.6.3",
+    "husky": "^9.1.6",
+    "lint-staged": "^15.2.10",
+    "path": "^0.12.7",
+    "prettier": "^3.3.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "style-loader": "^4.0.0",
+    "ts-loader": "^9.5.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.3",
+    "webpack": "^5.96.1",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^5.1.0"
+  }
+}

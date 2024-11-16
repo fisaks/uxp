@@ -1,0 +1,6 @@
+# Idea
+.idea
+# package directories
+node_modules
+# Serverless directories
+dist
