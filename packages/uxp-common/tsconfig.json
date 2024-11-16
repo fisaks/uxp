@@ -1,0 +1,18 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist", // Output compiled files to the dist folder
+    "rootDir": "./src", // Treat src as the root for inputs
+    "declaration": true,
+    "declarationMap": true,
+    "composite": true, // Required for project references
+    "strict": true
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
+}
