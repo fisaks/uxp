@@ -21,6 +21,8 @@ root.render(
   </React.StrictMode>
 );
 
+declare const module: __WebpackModuleApi.Module;
+
 if (process.env.NODE_ENV === "development" && module.hot) {
   module.hot.accept("./UxpApp", () => {
     const NextUxpApp = require("./UxpApp").default;

@@ -18,12 +18,18 @@
     "allowJs": true,
     "composite": true,
     "baseUrl": ".",
+    
     "paths": {
       "*": ["packages/*/src"]
     },
-    "typeRoots": ["./types", "./node_modules/@types"]
+    "types": ["node", "webpack-env"],
+    "typeRoots": [ "./node_modules/@types"]
   },
-  "include": ["packages/**/*"],
+  "include": [
+    "packages/*/src/**/*.ts",
+    "packages/*/src/**/*.tsx",
+    "packages/*/src/**/*.cjs"
+  ],
   "references": [
     {
       "path": "./packages/uxp-ui-core"
