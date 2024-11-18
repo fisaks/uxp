@@ -1,0 +1,47 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+
+  express:
+    build:
+      context: ./
+      dockerfile: ./Dockerfile
+      target: bff
+    container_name: express
+    env_file:
+      - .env # Load shared .env file
+    environment:
+        DATABASE_HOST: ${DATABASE_HOST}
+        DATABASE_PORT: ${DATABASE_PORT}
+        DATABASE_USER: ${MYSQL_USER}
+        DATABASE_PASSWORD: ${MYSQL_PASSWORD}
+        DATABASE_NAME: ${MYSQL_DATABASE}
+    depends_on:
+      - mysql
+    ports:
+      - "3001:3001"
+
+  nginx:
+    build:
+      context: ./
+      dockerfile: ./Dockerfile
+      target: web
+    container_name: nginx
+    depends_on:
+      - express
+    ports:
+      - "80:80"
+      - "443:443"
+
+volumes:
+  mysql_data:

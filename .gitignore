@@ -6,3 +6,5 @@ node_modules
 dist
 tsconfig.tsbuildinfo
 
+.env
+packages/uxp-ui-core/.htpasswd

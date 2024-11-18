@@ -1,5 +1,30 @@
 import express, { Request, Response } from "express";
 
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+// Use these in your database connection
+const dbConfig = {
+  host: process.env.DATABASE_HOST,
+  user: process.env.DATABASE_USER,
+  password: process.env.DATABASE_PASSWORD,
+  database: process.env.DATABASE_NAME,
+};
+/*
+// Example: Using dbConfig for a MySQL connection
+import mysql from 'mysql2/promise';
+
+async function connectToDatabase() {
+  const connection = await mysql.createConnection(dbConfig);
+  console.log('Connected to MySQL database');
+}
+
+connectToDatabase().catch(console.error);
+*/
+console.log("Started env is " + JSON.stringify( dbConfig))
+
+
 const app = express();
 const port = 3001;
 
