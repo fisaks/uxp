@@ -36,6 +36,7 @@ export default [
     rules: {
       "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }], // Ignore unused vars starting with '_'
       "@typescript-eslint/no-explicit-any": "warn", // Discourage `any`
+      "no-unused-vars": "off"
     },
   },
 

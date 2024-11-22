@@ -7,9 +7,13 @@
     "target": "ES2021", // Use a modern JavaScript version supported by Node.js
     "declaration": true, // Generate .d.ts files
     "declarationMap": true, // Generate declaration maps
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    
   },
   "include": [
-    "src/**/*"
+    "src/**/*",
+    "types/**/*"
   ],
   "exclude": [
     "node_modules",
@@ -20,5 +24,9 @@
       "path": "../uxp-common"
     } // Reference to the common package
 
+  ],
+  "files": [
+    "./types/express.d.ts"
   ]
+
 }

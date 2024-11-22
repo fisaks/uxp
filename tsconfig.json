@@ -28,13 +28,13 @@
       "webpack-env"
     ],
     "typeRoots": [
-      "./node_modules/@types"
+      "./node_modules/@types",
     ]
   },
   "include": [
     "packages/*/src/**/*.ts",
     "packages/*/src/**/*.tsx",
-    "packages/*/src/**/*.cjs"
+    "packages/*/src/**/*.cjs",
   ],
   "exclude": [
     "node_modules",
