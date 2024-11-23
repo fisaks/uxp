@@ -1,9 +1,9 @@
-import 'reflect-metadata';
+import "reflect-metadata";
 
-const QUERYRUNNER_METADATA_KEY = Symbol('db:queryRunner');
+const QUERYRUNNER_METADATA_KEY = Symbol("db:queryRunner");
 
 export interface UseQueryRunnerOptions {
-    transactional?: boolean; // Indicates if the connection should start a transaction
+  transactional?: boolean; // Indicates if the connection should start a transaction
 }
 
 /**
@@ -11,9 +11,9 @@ export interface UseQueryRunnerOptions {
  * @param options Options for the QueryRunner, e.g., transactional
  */
 export function UseQueryRunner(options: UseQueryRunnerOptions = {}): MethodDecorator {
-    return (target, propertyKey: string | symbol) => {
-        Reflect.defineMetadata(QUERYRUNNER_METADATA_KEY, options, target, propertyKey);
-    };
+  return (target, propertyKey: string | symbol) => {
+    Reflect.defineMetadata(QUERYRUNNER_METADATA_KEY, options, target, propertyKey);
+  };
 }
 
 /**
@@ -22,6 +22,9 @@ export function UseQueryRunner(options: UseQueryRunnerOptions = {}): MethodDecor
  * @param propertyKey The method name
  * @returns UseQueryRunnerOptions if the handler is annotated, otherwise null
  */
-export function getUseQueryRunnerOptions(target: Record<string, unknown>, propertyKey: string | symbol): UseQueryRunnerOptions | null {
-    return Reflect.getMetadata(QUERYRUNNER_METADATA_KEY, target, propertyKey) || null;
+export function getUseQueryRunnerOptions(
+  target: Record<string, unknown>,
+  propertyKey: string | symbol
+): UseQueryRunnerOptions | null {
+  return Reflect.getMetadata(QUERYRUNNER_METADATA_KEY, target, propertyKey) || null;
 }

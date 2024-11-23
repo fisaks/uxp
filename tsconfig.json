@@ -19,28 +19,13 @@
     "composite": true,
     "baseUrl": ".",
     "paths": {
-      "*": [
-        "packages/*/src"
-      ]
+      "*": ["packages/*/src"]
     },
-    "types": [
-      "node",
-      "webpack-env"
-    ],
-    "typeRoots": [
-      "./node_modules/@types",
-    ]
+    "types": ["node", "webpack-env"],
+    "typeRoots": ["./node_modules/@types"]
   },
-  "include": [
-    "packages/*/src/**/*.ts",
-    "packages/*/src/**/*.tsx",
-    "packages/*/src/**/*.cjs",
-  ],
-  "exclude": [
-    "node_modules",
-    "**/dist",
-    "**/build"
-  ],
+  "include": ["packages/*/src/**/*.ts", "packages/*/src/**/*.tsx", "packages/*/src/**/*.cjs"],
+  "exclude": ["node_modules", "**/dist", "**/build"],
   "references": [
     {
       "path": "./packages/uxp-common"

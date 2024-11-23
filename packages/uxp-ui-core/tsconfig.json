@@ -2,7 +2,7 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "rootDir": "./src", // Treat src as the root for inputs
+    "rootDir": "./src" // Treat src as the root for inputs
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"],
@@ -10,6 +10,5 @@
     {
       "path": "../uxp-common"
     } // Reference to the common package
-
   ]
 }

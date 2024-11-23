@@ -12,10 +12,10 @@ module.exports = merge(baseConfig, {
     open: true, // Automatically open the browser
     proxy: [
       {
-        context: ['/api'], // Match paths starting with /api
-        target: 'http://localhost:3001', // Backend server
+        context: ["/api"], // Match paths starting with /api
+        target: "http://localhost:3001", // Backend server
         changeOrigin: true, // Handle host header changes
-        pathRewrite: { '^/api': '' }, // Remove /api prefix if necessary
+        pathRewrite: { "^/api": "" }, // Remove /api prefix if necessary
         secure: false, // If the backend is using HTTP, not HTTPS
       },
     ],
