@@ -2,7 +2,7 @@ import Ajv from "ajv";
 import { FastifyInstance } from "fastify";
 import "reflect-metadata";
 import { QueryRunner } from "typeorm";
-import { getUseQueryRunnerOptions } from "./queryrunner.decorator";
+import { getUseQueryRunnerOptions, UseQueryRunnerOptions } from "./queryrunner.decorator";
 const { AppDataSource } = require("../db/typeorm.config");
 
 const ajv = new Ajv();
@@ -12,10 +12,10 @@ const WEBSOCKET_ACTIONS_METADATA_KEY = "websocket:actions";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 export interface WebSocketActionMetadata {
-  action: string;
-  handlerName: string;
-  validate?: (payload: any) => boolean;
-  schema?: object;
+    action: string;
+    handlerName: string;
+    validate?: (payload: any) => boolean;
+    schema?: object;
 }
 
 /**
@@ -24,19 +24,19 @@ export interface WebSocketActionMetadata {
  * @param options Optional validation and schema configuration
  */
 export function WebSocketAction(
-  action: string,
-  options?: { validate?: (payload: any) => boolean; schema?: object }
+    action: string,
+    options?: { validate?: (payload: any) => boolean; schema?: object }
 ): MethodDecorator {
-  return function (target: any, propertyKey: string | symbol) {
-    const actions: WebSocketActionMetadata[] = Reflect.getMetadata(WEBSOCKET_ACTIONS_METADATA_KEY, target) || [];
-    actions.push({
-      action,
-      handlerName: propertyKey as string,
-      validate: options?.validate,
-      schema: options?.schema,
-    });
-    Reflect.defineMetadata(WEBSOCKET_ACTIONS_METADATA_KEY, actions, target);
-  };
+    return function (target: any, propertyKey: string | symbol) {
+        const actions: WebSocketActionMetadata[] = Reflect.getMetadata(WEBSOCKET_ACTIONS_METADATA_KEY, target) || [];
+        actions.push({
+            action,
+            handlerName: propertyKey as string,
+            validate: options?.validate,
+            schema: options?.schema,
+        });
+        Reflect.defineMetadata(WEBSOCKET_ACTIONS_METADATA_KEY, actions, target);
+    };
 }
 
 /**
@@ -45,93 +45,134 @@ export function WebSocketAction(
  * @returns Array of WebSocket action metadata
  */
 export function getWebSocketActions(target: any): WebSocketActionMetadata[] {
-  return Reflect.getMetadata(WEBSOCKET_ACTIONS_METADATA_KEY, target) || [];
+    return Reflect.getMetadata(WEBSOCKET_ACTIONS_METADATA_KEY, target) || [];
 }
 
+
+// Preloaded action map type
+interface WebSocketActionHandler {
+    handler: Function;
+    validate?: (payload: unknown) => boolean;
+    schemaValidate?: Ajv.ValidateFunction;
+    queryRunnerOptions?: UseQueryRunnerOptions | null
+
+}
+
+type WebSocketActionMap = Record<string, WebSocketActionHandler>;
+
+
+function preloadWebSocketHandlers(handlers: any[]): WebSocketActionMap {
+    const actionMap: WebSocketActionMap = {};
+
+    handlers.forEach((HandlerClass) => {
+        const instance = new HandlerClass();
+        const actions: WebSocketActionMetadata[] = getWebSocketActions(HandlerClass.prototype);
+
+        actions.forEach(({ action, validate, schema, handlerName }) => {
+            console.log(`WebSocket Action:\t${action} => ${HandlerClass.name}.${handlerName}`);
+            const schemaValidate = schema ? ajv.compile(schema) : undefined;
+            const queryRunnerOptions = getUseQueryRunnerOptions(HandlerClass.prototype, handlerName);
+
+            actionMap[action] = {
+                handler: instance[handlerName].bind(instance),
+                validate,
+                schemaValidate,
+                queryRunnerOptions,
+            };
+        });
+    });
+
+    return actionMap;
+}
 /**
  * Register WebSocket handlers with Fastify
  * @param fastify Fastify instance
  * @param handlers Array of handler classes
  */
 export function registerWebSocketHandlers(fastify: FastifyInstance, handlers: any[]) {
-  fastify.get("/ws", { websocket: true }, (socket /* WebSocket */, _req /* FastifyRequest */) => {
-    handlers.forEach((HandlerClass) => {
-      const instance = new HandlerClass();
-      const actions: WebSocketActionMetadata[] = getWebSocketActions(HandlerClass.prototype);
+    const actionMap = preloadWebSocketHandlers(handlers);
+    fastify.get("/ws", { websocket: true }, (socket /* WebSocket */, _req /* FastifyRequest */) => {
+        console.log('WebSocket connection established');
 
-      actions.forEach(({ action, validate, schema, handlerName }) => {
-        console.log(`Registering WebSocket Action:\t${action}  => ${HandlerClass.name}.${handlerName}`);
-        const schemaValidate = schema ? ajv.compile(schema) : null;
-
-        const originalHandler = instance[handlerName].bind(instance);
-
-        socket.on(action, async (message) => {
-          let queryRunner: QueryRunner | undefined;
-          try {
-            let payload: unknown;
+        socket.on("message", async (message) => {
+            let queryRunner: QueryRunner | undefined;
             try {
-              payload = JSON.parse(message);
-            } catch (err) {
-              console.error("Invalid JSON payload", err);
-              socket.send(JSON.stringify({ error: "Invalid JSON payload" }));
-              return;
-            }
+                let payload: unknown;
+                let action: string | undefined;
+                try {
+                    const parsedMessage = JSON.parse(message.toString());
+                    action = parsedMessage.action;
+                    payload = parsedMessage.payload;
+                } catch (err) {
+                    console.error('Invalid JSON payload', err);
+                    socket.send(JSON.stringify({ error: 'Invalid JSON payload' }));
+                    return;
+                }
 
-            // Perform custom validation
-            if (validate && !validate(payload)) {
-              socket.send(
-                JSON.stringify({
-                  error: "Validation failed",
-                })
-              );
-              return;
-            }
-            // Schema validation
-            if (schemaValidate && !schemaValidate(payload)) {
-              socket.send(
-                JSON.stringify({
-                  error: "Schema validation failed",
-                  details: schemaValidate.errors,
-                })
-              );
-              return;
-            }
+                // Ensure the action exists in the action map
+                const actionHandler = action && actionMap[action];
+                if (!actionHandler) {
+                    socket.send(
+                        JSON.stringify({
+                            error: `No handler registered for action "${action}"`,
+                        })
+                    );
+                    return;
+                }
+                const { handler, validate, schemaValidate, queryRunnerOptions } = actionHandler;
 
-            // Check for QueryRunner options
-            const queryRunnerOptions = getUseQueryRunnerOptions(HandlerClass.prototype, handlerName);
-            if (queryRunnerOptions) {
-              queryRunner = AppDataSource.createQueryRunner();
-              await queryRunner!.connect();
+                // Perform custom validation
+                if (validate && !validate(payload)) {
+                    socket.send(
+                        JSON.stringify({
+                            error: "Validation failed",
+                        })
+                    );
+                    return;
+                }
+                // Schema validation
+                if (schemaValidate && !schemaValidate(payload)) {
+                    socket.send(
+                        JSON.stringify({
+                            error: "Schema validation failed",
+                            details: schemaValidate.errors,
+                        })
+                    );
+                    return;
+                }
 
-              if (queryRunnerOptions.transactional) {
-                await queryRunner!.startTransaction();
-              }
-            }
+                // Check for QueryRunner options
+                if (queryRunnerOptions) {
+                    queryRunner = AppDataSource.createQueryRunner();
+                    await queryRunner!.connect();
 
-            // Inject the QueryRunner as an additional argument if required
-            const args = queryRunner ? [payload, queryRunner] : [payload];
-            const result = await originalHandler(...args);
+                    if (queryRunnerOptions.transactional) {
+                        await queryRunner!.startTransaction();
+                    }
+                }
 
-            if (queryRunner?.isTransactionActive) {
-              await queryRunner.commitTransaction();
-            }
+                // Inject the QueryRunner as an additional argument if required
+                const args = queryRunner ? [payload, queryRunner] : [payload];
+                const result = await handler(...args);
 
-            if (result) {
-              socket.send(JSON.stringify(result));
+                if (queryRunner?.isTransactionActive) {
+                    await queryRunner.commitTransaction();
+                }
+
+                if (result) {
+                    socket.send(JSON.stringify(result));
+                }
+            } catch (err: any) {
+                if (queryRunner?.isTransactionActive) {
+                    await queryRunner.rollbackTransaction();
+                }
+                console.error("Error in WebSocket message", err);
+                socket.send(JSON.stringify({ error: err.message }));
+            } finally {
+                if (queryRunner) {
+                    await queryRunner.release();
+                }
             }
-          } catch (err: any) {
-            if (queryRunner?.isTransactionActive) {
-              await queryRunner.rollbackTransaction();
-            }
-            console.error(`Error in WebSocket action "${action}":`, err);
-            socket.send(JSON.stringify({ error: err.message }));
-          } finally {
-            if (queryRunner) {
-              await queryRunner.release();
-            }
-          }
         });
-      });
     });
-  });
-}
+};
