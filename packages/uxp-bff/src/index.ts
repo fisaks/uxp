@@ -1,40 +1,43 @@
 import path from 'path';
-require('./config/env');
-const env  = require('./config/envValidator')
-const {AppDataSource} = require("./db/typeorm.config")
-import express, { Request, Response } from "express";
-//import { AppDataSource } from './db/typeorm.config';
 
-import { transactionMiddleware } from './db/transactionMiddleware';
-import { Server } from 'socket.io';
-import { createServer } from 'http';
-import { registerWebSocketHandlers } from './decorator/websocket.decorator';
-import { registerRoutes } from './decorator/route.decorator';
+require('./config/env');
+const env = require('./config/envValidator')
+const { AppDataSource } = require("./db/typeorm.config")
+
+import fastifyWebsocket from '@fastify/websocket';
+import Fastify from 'fastify';
+
 import { discoverHandlers } from './decorator/handler.discovery';
+import { registerRoutes } from './decorator/route.decorator';
+import { registerWebSocketHandlers } from './decorator/websocket.decorator';
 
 
 AppDataSource.initialize()
-  .then(() => console.log(`Database connected to ${env.MYSQL_DATABASE} at ${env.DATABASE_HOST}:${env.DATABASE_PORT}`))
-  .catch((err:Error) => console.error('Error during Data Source initialization', err));
+  .then(() => {
+    console.log(`Database connected to ${env.MYSQL_DATABASE} at ${env.DATABASE_HOST}:${env.DATABASE_PORT}`)
+    console.log('Entities:', AppDataSource.entityMetadatas.map((meta: { name: string }) => meta.name));
+  })
+  .catch((err: Error) => console.error('Error during Data Source initialization', err));
 
 
-const app = express();
-const httpServer = createServer(app);
-const io = new Server(httpServer);
 const port = 3001;
+const fastify = Fastify({ logger: true });
+fastify.register(fastifyWebsocket);
 
-// Middleware
-app.use(express.json());
-app.use(transactionMiddleware);
+
+
 // Discover and register REST and WebSocket handlers
 const handlers = discoverHandlers(path.join(__dirname, './features'));
 
-registerRoutes(app, handlers);
-registerWebSocketHandlers(io, handlers);
+registerRoutes(fastify, handlers);
+registerWebSocketHandlers(fastify, handlers);
 
 
 
-// Start the server
-app.listen(port, () => {
-  console.log(`BFF is running at http://localhost:${port}`);
+
+// Start the server :)
+fastify.listen({ port: port, host: '0.0.0.0' }, (err, address) => {
+  if (err) throw err;
+  console.log(`BFF is running at address ${address}`);
 });
+

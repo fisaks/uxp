@@ -4,16 +4,15 @@
   "version": "1.0.0",
   "type": "commonjs",
   "main": "dist/index.js",
-  "module": "dist/index.esm.js",
-  "types": "dist/index.d.ts",
+  "types": "build_types/index.d.ts",
   "keywords": [],
   "author": "",
   "license": "ISC",
   "scripts": {
     "build": "tsc --build ",
     "trace": "tsc --traceResolution ",
-    "dev": "ts-node-dev --project ./tsconfig.json -r tsconfig-paths/register --respawn src/index.ts",
-    "clean": "rm -rf dist tsconfig.tsbuildinfo",
+    "dev": "ts-node-dev --project ./tsconfig.json --respawn src/index.ts",
+    "clean": "rm -rf dist tsconfig.tsbuildinfo build_types",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "typeorm:generate": "tsc --build && typeorm migration:generate ./src/db/migrations/GeneratedMigration -d ./dist/db/typeorm.config.js",
@@ -21,11 +20,11 @@
     "typeorm:revert": "typeorm migration:revert -d ./dist/db/typeorm.config.js"
   },
   "dependencies": {
+    "@fastify/websocket": "^11.0.1",
     "dotenv": "^16.4.5",
-    "express": "^4.21.1",
-    "joi": "^17.13.3",
+    "fastify": "^5.1.0",
     "mysql2": "^3.11.4",
-    "socket.io": "^4.8.1",
+    "reflect-metadata": "^0.2.2",
     "typeorm": "^0.3.20"
   },
   "devDependencies": {

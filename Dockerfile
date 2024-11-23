@@ -21,13 +21,16 @@ COPY . .
 RUN npm run build
 
 # Stage 2: Runtime container
-FROM node:22-slim as bff
+FROM node:22-slim AS bff
+
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
 # Set the working directory
 WORKDIR /app
 
 # Copy the build output from the builder stage
 COPY --from=builder /app/packages/uxp-bff/dist ./dist
+COPY --from=builder /app/.env.prod ./dist/
 
 # Copy only the necessary dependencies from the builder stage
 COPY --from=builder /app/node_modules ./node_modules
@@ -37,11 +40,12 @@ COPY --from=builder /app/packages/uxp-bff/package.json ./package.json
 EXPOSE 3001
 
 # Start the application
+ENV NODE_ENV=prod
 CMD ["node", "dist/index.js"]
 
-FROM nginx:alpine as web
+FROM nginx:alpine AS web
 COPY --from=builder /app/packages/uxp-ui-core/dist /usr/share/nginx/html
-COPY --from=builder /app/.env /etc/nginx/conf.d/.env
+COPY --from=builder /app/.env.prod /etc/nginx/conf.d/.env
 COPY ./packages/uxp-ui-core/nginx.conf /etc/nginx/conf.d/nginx.conf
 
 RUN export $(cat /etc/nginx/conf.d/.env | xargs) && \

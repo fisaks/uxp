@@ -17,19 +17,22 @@ start_dev_env() {
     
     
     # Pane 1: Start Docker (MySQL container)
-    tmux send-keys -t $SESSION_NAME "trap 'docker compose down' EXIT && docker compose up -d mysql && echo '################## PRESS CTRL+b d TO DETACH ##################' && docker logs -f mysql" C-m
+    tmux send-keys -t $SESSION_NAME "trap 'docker compose down' EXIT && docker compose --env-file .env.dev up -d mysql && echo '################## PRESS CTRL+b d TO DETACH ##################' && docker logs -f mysql" C-m
     
     tmux split-window -v -t $SESSION_NAME
     tmux resize-pane -t 0 -U 20
+    tmux split-window -v -t $SESSION_NAME
     
+    tmux select-pane -t 1
     tmux split-window -h -t $SESSION_NAME
     
     tmux send-keys -t $SESSION_NAME.1 "npm run start:bff" C-m
     
     tmux send-keys -t $SESSION_NAME.2 "npm run start:app" C-m
-    
+        
+
     # Select the first pane
-    tmux select-pane -t 0
+    tmux select-pane -t 3
     
     # Attach to the tmux session
     tmux attach-session -t $SESSION_NAME
@@ -42,6 +45,15 @@ stop_dev_env() {
     tmux kill-session -t $SESSION_NAME 2>/dev/null || echo "No tmux session found with name $SESSION_NAME"
     
 }
+
+
+print_usage() {
+    echo "Usage: $0 {start|stop}"
+    echo "Commands:"
+    echo "  start   Start the dev server"
+    echo "  stop    Stop the dev server"
+}
+
 case "$1" in
     start )
         start_dev_env
@@ -50,7 +62,7 @@ case "$1" in
         stop_dev_env
     ;;
     * )
-        start_dev_env
+        print_usage
     ;;
     
 esac

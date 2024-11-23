@@ -19,6 +19,7 @@ export default [
           jsx: true, // Enable JSX for React
         },
       },
+
       globals: {
         console: true, // Explicitly allow console as a global
         window: true, // Browser global
@@ -28,6 +29,7 @@ export default [
         module: true, // Node.js module system
         require: true, // Node.js `require` function
         exports: true, // Node.js `exports` global
+        __WebpackModuleApi: "readonly",
       },
     },
     plugins: {

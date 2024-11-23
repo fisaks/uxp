@@ -1,31 +1,48 @@
-import { Application } from 'express';
-import { AnySchema } from 'joi';
+import { FastifyInstance } from 'fastify';
 import 'reflect-metadata';
+import { QueryRunner } from 'typeorm';
+import { getUseQueryRunnerOptions } from './queryrunner.decorator';
+const { AppDataSource } = require("../db/typeorm.config")
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+// Metadata key for storing route information
 const ROUTES_METADATA_KEY = 'rest:routes';
 
+// Metadata structure for routes
 export interface RouteMetadata {
     method: 'get' | 'post' | 'put' | 'delete';
     path: string;
     handlerName: string;
     validate?: (payload: any) => boolean;
-    schema?: AnySchema;
+    schema?: {
+        body?: object; // JSON Schema for the request body
+        querystring?: object; // JSON Schema for query parameters
+        headers?: object; // JSON Schema for headers
+    };
 }
 
+/**
+ * Route decorator for registering a route method
+ * @param method HTTP method (get, post, put, delete)
+ * @param path Route path
+ * @param options Optional validation and schema configuration
+ */
 export function Route(
-    method: 'get' | 'post' | 'put' | 'delete',
-    path: string,
-    options?: { validate?: (payload: any) => boolean; schema?: AnySchema }
-) {
+    method: RouteMetadata['method'],
+    path: RouteMetadata['path'],
+    options?: { validate?: RouteMetadata['validate'], schema?: RouteMetadata['schema'] }
+): MethodDecorator {
 
-    return function (target: any, propertyKey: string) {
+    return function (target: any, propertyKey: string | symbol) {
 
         const routes: RouteMetadata[] =
             Reflect.getMetadata(ROUTES_METADATA_KEY, target.constructor) || [];
+
         routes.push({
             method,
             path,
-            handlerName: propertyKey,
+            handlerName: propertyKey as string,
             validate: options?.validate,
             schema: options?.schema,
         });
@@ -33,43 +50,78 @@ export function Route(
     };
 }
 
+/**
+ * Retrieve registered routes from a controller
+ * @param target The controller class
+ * @returns Array of route metadata
+ */
 export function getRoutes(target: any): RouteMetadata[] {
     return Reflect.getMetadata(ROUTES_METADATA_KEY, target) || [];
 }
 
 
-export function registerRoutes(app: Application, controllers: any[]) {
+/**
+ * Register all routes from controllers in Fastify
+ * @param fastify Fastify instance
+ * @param controllers Array of controller classes
+ */
+export function registerRoutes(fastify: FastifyInstance, controllers: any[]) {
     controllers.forEach((ControllerClass) => {
         const instance = new ControllerClass();
-        const routes = getRoutes(ControllerClass);
+
+        const routes: RouteMetadata[] = getRoutes(ControllerClass);
 
         routes.forEach(({ method, path, validate, schema, handlerName }) => {
             console.log(`Restroute:\t${method} ${path} => ${ControllerClass.name}.${handlerName}`)
-            const handler = instance[handlerName].bind(instance);
 
-            app[method](path, async (req, res, next) => {
-                try {
-                    // Schema validation
-                    if (schema) {
-                        const { error } = schema.validate(req.body);
-                        if (error) {
-                            res.status(400).json({ error: `Invalid payload: ${error.message}` });
-                            return;
-                        }
-                    }
+            const originalHandler = instance[handlerName].bind(instance);
 
-                    // Validation function
-                    if (validate && !validate(req.body)) {
-                        res.status(400).json({ error: 'Invalid payload' });
+            fastify.route({
+                method: method.toUpperCase(),
+                url: path,
+                schema, // Attach validation schema here
+                handler: async (request, reply) => {
+                    // Optional validation
+                    if (validate && !validate(request.body)) {
+                        reply.code(400).send({ error: 'Validation failed' });
                         return;
                     }
+                    let queryRunner: QueryRunner | undefined;
+                    try {
+                        // Check for QueryRunner options
+                        const queryRunnerOptions = getUseQueryRunnerOptions(ControllerClass.prototype, handlerName);
+                        if (queryRunnerOptions) {
+                            queryRunner = AppDataSource.createQueryRunner();
+                            await queryRunner!.connect();
 
-                    await handler(req, res, next);
-                } catch (err) {
-                    next(err);
-                }
-            });
+                            if (queryRunnerOptions.transactional) {
+                                await queryRunner!.startTransaction();
+                            }
+                        }
+
+                        // Inject the QueryRunner as an additional argument if required
+                        const args = queryRunner
+                            ? [request, reply, queryRunner]
+                            : [request, reply];
+
+                        // Execute the original handler
+                        const result = await originalHandler(...args);
+                        if (queryRunner?.isTransactionActive) {
+                            await queryRunner.commitTransaction();
+                        }
+                        return result;
+                    } catch (err) {
+                        if (queryRunner?.isTransactionActive) {
+                            await queryRunner.rollbackTransaction();
+                        }
+                        throw err;
+                    } finally {
+                        if (queryRunner) {
+                            await queryRunner.release();
+                        }
+                    }
+                },
+            })
         });
     });
-}
-
+};

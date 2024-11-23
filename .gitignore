@@ -6,5 +6,8 @@ node_modules
 dist
 tsconfig.tsbuildinfo
 
+.env.prod
+.env.dev
 .env
 packages/uxp-ui-core/.htpasswd
+packages/uxp-bff/build_types

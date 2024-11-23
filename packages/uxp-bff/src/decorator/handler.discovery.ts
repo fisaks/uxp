@@ -2,8 +2,12 @@ import { readdirSync, statSync } from 'fs';
 import path from 'path';
 import { getRoutes } from './route.decorator';
 import { getWebSocketActions } from './websocket.decorator';
+const { IsProd } = require('../config/env');
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 export function discoverHandlers(baseDir: string): any[] {
+    console.log(`Discover handlers from ${baseDir}`)
+
     const handlers: any[] = [];
     function scanDirectory(dir: string) {
         const entries = readdirSync(dir);
@@ -11,7 +15,7 @@ export function discoverHandlers(baseDir: string): any[] {
             const fullPath = path.join(dir, entry);
             if (statSync(fullPath).isDirectory()) {
                 scanDirectory(fullPath); // Recursive traversal
-            } else if (entry.endsWith('.ts')) {
+            } else if (entry.endsWith(IsProd ? '.js' : '.ts')) {
                 const module = require(fullPath);
 
                 const classesWithActions = Object.values(module).filter((exported) => {

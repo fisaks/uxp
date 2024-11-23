@@ -5,6 +5,7 @@
     "rootDir": "./src", // Treat src as the root for inputs
     "module": "commonjs", // Use CommonJS for Node.js
     "target": "ES2021", // Use a modern JavaScript version supported by Node.js
+    "declarationDir": "./build_types",
     "declaration": true, // Generate .d.ts files
     "declarationMap": true, // Generate declaration maps
     "experimentalDecorators": true,
@@ -13,7 +14,6 @@
   },
   "include": [
     "src/**/*",
-    "types/**/*"
   ],
   "exclude": [
     "node_modules",
@@ -25,8 +25,5 @@
     } // Reference to the common package
 
   ],
-  "files": [
-    "./types/express.d.ts"
-  ]
 
 }
