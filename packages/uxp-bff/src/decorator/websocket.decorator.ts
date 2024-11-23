@@ -66,7 +66,7 @@ function preloadWebSocketHandlers(handlers: any[]): WebSocketActionMap {
         const actions: WebSocketActionMetadata[] = getWebSocketActions(HandlerClass.prototype);
 
         actions.forEach(({ action, validate, schema, handlerName }) => {
-            console.log(`WebSocket Action:\t${action} => ${HandlerClass.name}.${handlerName}`);
+            console.log(`WebSocket Action:\t/ws\t${action} => ${HandlerClass.name}.${handlerName}`);
             const schemaValidate = schema ? ajv.compile(schema) : undefined;
             const queryRunnerOptions = getUseQueryRunnerOptions(HandlerClass.prototype, handlerName);
 

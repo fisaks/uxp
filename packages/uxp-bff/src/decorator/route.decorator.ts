@@ -60,21 +60,22 @@ export function getRoutes(target: any): RouteMetadata[] {
  * Register all routes from controllers in Fastify
  * @param fastify Fastify instance
  * @param controllers Array of controller classes
+ * @param basePath Base path for all routes
  */
-export function registerRoutes(fastify: FastifyInstance, controllers: any[]) {
+export function registerRoutes(fastify: FastifyInstance, controllers: any[], basePath: string = '/api') {
     controllers.forEach((ControllerClass) => {
         const instance = new ControllerClass();
 
         const routes: RouteMetadata[] = getRoutes(ControllerClass);
 
         routes.forEach(({ method, path, validate, schema, handlerName }) => {
-            console.log(`Restroute:\t${method} ${path} => ${ControllerClass.name}.${handlerName}`);
+            console.log(`Restroute:\t${method} ${basePath}${path} => ${ControllerClass.name}.${handlerName}`);
 
             const originalHandler = instance[handlerName].bind(instance);
 
             fastify.route({
                 method: method.toUpperCase(),
-                url: path,
+                url: `${basePath}${path}`,
                 schema, // Attach validation schema here
                 handler: async (request, reply) => {
                     // Optional validation

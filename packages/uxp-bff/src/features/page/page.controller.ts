@@ -19,7 +19,7 @@ export class PageController {
      * GET /pages/metadata
      * Fetch metadata JSON for a page by basepath.
      */
-    @Route("get", "/api/page", {
+    @Route("get", "/page", {
         schema: GetPageSchema,
     })
     @UseQueryRunner()
