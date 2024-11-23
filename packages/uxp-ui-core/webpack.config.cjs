@@ -4,21 +4,21 @@ const baseConfig = require("../../webpack.config.base.cjs"); // Import root base
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 
 module.exports = merge(baseConfig, {
-  mode: "development",
-  devtool: "eval-source-map",
+    mode: "development",
+    devtool: "eval-source-map",
 
-  entry: "./src/index.tsx", // Entry point for this package
+    entry: "./src/index.tsx", // Entry point for this package
 
-  output: {
-    filename: "uxp-ui-core.bundle.js",
-    path: path.resolve(__dirname, "dist"), // Output directory for the build
-    clean: true,
-  },
+    output: {
+        filename: "uxp-ui-core.bundle.js",
+        path: path.resolve(__dirname, "dist"), // Output directory for the build
+        clean: true,
+    },
 
-  plugins: [
-    new HtmlWebpackPlugin({
-      template: "./index.html", // Use your template file
-      filename: "index.html", // Name of the output file
-    }),
-  ],
+    plugins: [
+        new HtmlWebpackPlugin({
+            template: "./index.html", // Use your template file
+            filename: "index.html", // Name of the output file
+        }),
+    ],
 });

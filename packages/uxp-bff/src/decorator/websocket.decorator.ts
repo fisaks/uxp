@@ -48,18 +48,15 @@ export function getWebSocketActions(target: any): WebSocketActionMetadata[] {
     return Reflect.getMetadata(WEBSOCKET_ACTIONS_METADATA_KEY, target) || [];
 }
 
-
 // Preloaded action map type
 interface WebSocketActionHandler {
     handler: Function;
     validate?: (payload: unknown) => boolean;
     schemaValidate?: Ajv.ValidateFunction;
-    queryRunnerOptions?: UseQueryRunnerOptions | null
-
+    queryRunnerOptions?: UseQueryRunnerOptions | null;
 }
 
 type WebSocketActionMap = Record<string, WebSocketActionHandler>;
-
 
 function preloadWebSocketHandlers(handlers: any[]): WebSocketActionMap {
     const actionMap: WebSocketActionMap = {};
@@ -92,7 +89,7 @@ function preloadWebSocketHandlers(handlers: any[]): WebSocketActionMap {
 export function registerWebSocketHandlers(fastify: FastifyInstance, handlers: any[]) {
     const actionMap = preloadWebSocketHandlers(handlers);
     fastify.get("/ws", { websocket: true }, (socket /* WebSocket */, _req /* FastifyRequest */) => {
-        console.log('WebSocket connection established');
+        console.log("WebSocket connection established");
 
         socket.on("message", async (message) => {
             let queryRunner: QueryRunner | undefined;
@@ -104,8 +101,8 @@ export function registerWebSocketHandlers(fastify: FastifyInstance, handlers: an
                     action = parsedMessage.action;
                     payload = parsedMessage.payload;
                 } catch (err) {
-                    console.error('Invalid JSON payload', err);
-                    socket.send(JSON.stringify({ error: 'Invalid JSON payload' }));
+                    console.error("Invalid JSON payload", err);
+                    socket.send(JSON.stringify({ error: "Invalid JSON payload" }));
                     return;
                 }
 
@@ -175,4 +172,4 @@ export function registerWebSocketHandlers(fastify: FastifyInstance, handlers: an
             }
         });
     });
-};
+}

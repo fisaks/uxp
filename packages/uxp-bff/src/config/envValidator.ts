@@ -1,9 +1,9 @@
 type EnvVariables = {
-  MYSQL_DATABASE: string;
-  MYSQL_USER: string;
-  MYSQL_PASSWORD: string;
-  DATABASE_HOST: string;
-  DATABASE_PORT: string;
+    MYSQL_DATABASE: string;
+    MYSQL_USER: string;
+    MYSQL_PASSWORD: string;
+    DATABASE_HOST: string;
+    DATABASE_PORT: string;
 };
 
 /**
@@ -11,11 +11,11 @@ type EnvVariables = {
  * @param vars - The environment variables to validate.
  */
 function validateEnv(vars: Partial<EnvVariables>): asserts vars is EnvVariables {
-  const missingVars = Object.keys(vars).filter((key) => vars[key as keyof EnvVariables] === undefined);
+    const missingVars = Object.keys(vars).filter((key) => vars[key as keyof EnvVariables] === undefined);
 
-  if (missingVars.length > 0) {
-    throw new Error(`Missing required environment variables: ${missingVars.join(", ")}`);
-  }
+    if (missingVars.length > 0) {
+        throw new Error(`Missing required environment variables: ${missingVars.join(", ")}`);
+    }
 }
 
 // Validate and export environment variables

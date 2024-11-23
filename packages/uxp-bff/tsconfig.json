@@ -1,21 +1,21 @@
 {
-  "extends": "../../tsconfig.json",
-  "compilerOptions": {
-    "outDir": "./dist", // Output compiled files to the dist folder
-    "rootDir": "./src", // Treat src as the root for inputs
-    "module": "commonjs", // Use CommonJS for Node.js
-    "target": "ES2021", // Use a modern JavaScript version supported by Node.js
-    "declarationDir": "./build_types",
-    "declaration": true, // Generate .d.ts files
-    "declarationMap": true, // Generate declaration maps
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true
-  },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"],
-  "references": [
-    {
-      "path": "../uxp-common"
-    } // Reference to the common package
-  ]
+    "extends": "../../tsconfig.json",
+    "compilerOptions": {
+        "outDir": "./dist", // Output compiled files to the dist folder
+        "rootDir": "./src", // Treat src as the root for inputs
+        "module": "commonjs", // Use CommonJS for Node.js
+        "target": "ES2021", // Use a modern JavaScript version supported by Node.js
+        "declarationDir": "./build_types",
+        "declaration": true, // Generate .d.ts files
+        "declarationMap": true, // Generate declaration maps
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true
+    },
+    "include": ["src/**/*"],
+    "exclude": ["node_modules", "dist"],
+    "references": [
+        {
+            "path": "../uxp-common"
+        } // Reference to the common package
+    ]
 }

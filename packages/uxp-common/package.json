@@ -1,20 +1,20 @@
 {
-  "name": "@uxp/common",
-  "description": "",
-  "version": "1.0.0",
-  "main": "dist/index.js",
-  "module": "dist/index.esm.js",
-  "types": "dist/index.d.ts",
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "scripts": {
-    "build": "tsc --build",
-    "dev": "ts-node-dev --respawn src/index.ts",
-    "clean": "rm -rf dist",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
-  },
-  "dependencies": {},
-  "devDependencies": {}
+    "name": "@uxp/common",
+    "description": "",
+    "version": "1.0.0",
+    "main": "dist/index.js",
+    "module": "dist/index.esm.js",
+    "types": "dist/index.d.ts",
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "scripts": {
+        "build": "tsc --build",
+        "dev": "ts-node-dev --respawn src/index.ts",
+        "clean": "rm -rf dist",
+        "lint": "eslint .",
+        "lint:fix": "eslint . --fix"
+    },
+    "dependencies": {},
+    "devDependencies": {}
 }

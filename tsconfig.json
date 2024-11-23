@@ -1,43 +1,43 @@
 {
-  "compilerOptions": {
-    "noImplicitAny": true,
-    "strict": true,
-    "strictNullChecks": true,
-    "noImplicitThis": true,
-    "alwaysStrict": true,
-    "noImplicitReturns": true,
-    "experimentalDecorators": true,
-    "target": "ES2021",
-    "module": "esnext",
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "outDir": "./dist",
-    "jsx": "react-jsx",
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "allowJs": true,
-    "composite": true,
-    "baseUrl": ".",
-    "paths": {
-      "*": ["packages/*/src"]
+    "compilerOptions": {
+        "noImplicitAny": true,
+        "strict": true,
+        "strictNullChecks": true,
+        "noImplicitThis": true,
+        "alwaysStrict": true,
+        "noImplicitReturns": true,
+        "experimentalDecorators": true,
+        "target": "ES2021",
+        "module": "esnext",
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "outDir": "./dist",
+        "jsx": "react-jsx",
+        "moduleResolution": "node",
+        "resolveJsonModule": true,
+        "allowJs": true,
+        "composite": true,
+        "baseUrl": ".",
+        "paths": {
+            "*": ["packages/*/src"]
+        },
+        "types": ["node", "webpack-env"],
+        "typeRoots": ["./node_modules/@types"]
     },
-    "types": ["node", "webpack-env"],
-    "typeRoots": ["./node_modules/@types"]
-  },
-  "include": ["packages/*/src/**/*.ts", "packages/*/src/**/*.tsx", "packages/*/src/**/*.cjs"],
-  "exclude": ["node_modules", "**/dist", "**/build"],
-  "references": [
-    {
-      "path": "./packages/uxp-common"
-    },
-    {
-      "path": "./packages/uxp-bff"
-    },
-    {
-      "path": "./packages/uxp-ui-core"
-    },
-    {
-      "path": "./packages/uxp-ui-presenter"
-    }
-  ]
+    "include": ["packages/*/src/**/*.ts", "packages/*/src/**/*.tsx", "packages/*/src/**/*.cjs"],
+    "exclude": ["node_modules", "**/dist", "**/build"],
+    "references": [
+        {
+            "path": "./packages/uxp-common"
+        },
+        {
+            "path": "./packages/uxp-bff"
+        },
+        {
+            "path": "./packages/uxp-ui-core"
+        },
+        {
+            "path": "./packages/uxp-ui-presenter"
+        }
+    ]
 }

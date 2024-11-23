@@ -1,41 +1,41 @@
 services:
-  mysql:
-    image: mysql:8.0
-    container_name: mysql
-    env_file:
-      - .env.prod
-    volumes:
-      - mysql_data:/var/lib/mysql
-    ports:
-      - "3306:3306"
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-  bff-server:
-    build:
-      context: ./
-      dockerfile: ./Dockerfile
-      target: bff
-    container_name: bff-server
-    depends_on:
-      mysql:
-        condition: service_healthy
-    ports:
-      - "3001:3001"
+    mysql:
+        image: mysql:8.0
+        container_name: mysql
+        env_file:
+            - .env.prod
+        volumes:
+            - mysql_data:/var/lib/mysql
+        ports:
+            - "3306:3306"
+        healthcheck:
+            test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+    bff-server:
+        build:
+            context: ./
+            dockerfile: ./Dockerfile
+            target: bff
+        container_name: bff-server
+        depends_on:
+            mysql:
+                condition: service_healthy
+        ports:
+            - "3001:3001"
 
-  nginx:
-    build:
-      context: ./
-      dockerfile: ./Dockerfile
-      target: web
-    container_name: nginx
-    depends_on:
-      - bff-server
-    ports:
-      - "80:80"
-      - "443:443"
+    nginx:
+        build:
+            context: ./
+            dockerfile: ./Dockerfile
+            target: web
+        container_name: nginx
+        depends_on:
+            - bff-server
+        ports:
+            - "80:80"
+            - "443:443"
 
 volumes:
-  mysql_data:
+    mysql_data:
