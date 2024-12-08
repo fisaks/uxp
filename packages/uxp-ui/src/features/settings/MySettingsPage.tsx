@@ -2,7 +2,7 @@ import { FormControlLabel, Paper, Radio, RadioGroup, Typography } from "@mui/mat
 
 import React, { useState } from "react";
 import { useSelector } from "react-redux";
-import { CenteredBox, LoadingButton } from "../../components";
+import { CenteredBox, LoadingButton } from "@uxp/ui-lib";
 import { useAppDispatch } from "../../hooks";
 import { selectIsLoading, selectIsProcessed } from "../loading/loadingSelectors";
 import { selectCurrentUser } from "../user/userSelectors";

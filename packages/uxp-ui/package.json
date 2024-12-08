@@ -21,7 +21,7 @@
         "@mui/material": "^6.1.8",
         "@reduxjs/toolkit": "^2.3.0",
         "@uxp/common": "^1.0.0",
-        "@uxp/ui-presenter": "1.0.0",
+        "@uxp/ui-lib": "^1.0.0",
         "ajv": "^8.17.1",
         "ajv-errors": "^3.0.0",
         "ajv-formats": "^3.0.1",

@@ -1,11 +1,11 @@
 import { useMediaQuery } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 //import theme from "./theme";
+import { Loading, withLoading } from "@uxp/ui-lib";
 import { useSelector } from "react-redux";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
-import { Loading, withLoading } from "./components";
-import MainContent from "./components/layout/MainContent";
-import PageWrapper from "./components/layout/PageWrapper";
+
+import { MainContent, PageWrapper } from "./components";
 import HeaderMenu from "./features/header/components/HeaderMenu";
 import { selectIsLoading } from "./features/loading/loadingSelectors";
 import MySettingsPage from "./features/settings/MySettingsPage";
@@ -16,7 +16,6 @@ import ProfilePage from "./features/user/pages/ProfilePage";
 import RegisterPage from "./features/user/pages/RegisterPage";
 import RegistrationThankYouPage from "./features/user/pages/RegistrationThankYouPage";
 import { selectCurrentUser } from "./features/user/userSelectors";
-import { whoami } from "./features/user/userThunks";
 import { useAppDispatch, useInitializeApp } from "./hooks";
 
 type RoutesProps = {

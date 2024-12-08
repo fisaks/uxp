@@ -4,10 +4,16 @@ import { handleThunkResult } from "../../../utils/thunkUtils";
 import React, { useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { Link as RouterLink, useNavigate } from "react-router-dom"; // Import for routing
-import { FormFieldErrors, FormFieldLabel, FormFieldRefs, LoadingButton, ServerErrorTile } from "../../../components";
-import ErrorTile from "../../../components/forms/ErrorTile";
-import ValidatedTextField from "../../../components/forms/ValidatedTextField";
-import CenteredBox from "../../../components/layout/CenteredBox";
+import {
+    ErrorTile,
+    ValidatedTextField,
+    CenteredBox,
+    FormFieldErrors,
+    FormFieldLabel,
+    FormFieldRefs,
+    LoadingButton,
+} from "@uxp/ui-lib";
+import { ServerErrorTile } from "../../../components";
 import { useAppDispatch } from "../../../hooks";
 import { compileSchema, validateField } from "../../../utils/validationUtils"; // Utility for schema compilation
 import { selectError } from "../../error/errorSelectors";

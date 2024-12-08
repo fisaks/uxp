@@ -3,7 +3,6 @@
     "compilerOptions": {
         "outDir": "./dist",
         "rootDir": "./src", // Treat src as the root for inputs
-
         "module": "ESNext",
         "target": "ES2021",
         "jsx": "react-jsx",
@@ -11,11 +10,19 @@
         "esModuleInterop": true,
         "skipLibCheck": true
     },
-    "include": ["src/**/*"],
-    "exclude": ["node_modules", "dist"],
+    "include": [
+        "src/**/*"
+    ],
+    "exclude": [
+        "node_modules",
+        "dist"
+    ],
     "references": [
         {
             "path": "../uxp-common"
-        } // Reference to the common package
+        },
+        {
+            "path": "../uxp-ui-lib"
+        } 
     ]
 }

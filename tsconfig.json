@@ -23,6 +23,10 @@
             "@uxp/common": [
                 "packages/uxp-common/dist",
                 "packages/uxp-common/src",
+            ],
+            "@uxp/ui-lib": [
+                "packages/uxp-ui-lib/dist",
+                "packages/uxp-ui-lib/src",
             ]
         },
         "types": [

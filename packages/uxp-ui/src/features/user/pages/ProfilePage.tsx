@@ -3,10 +3,16 @@ import { Accordion, AccordionDetails, AccordionSummary, Typography } from "@mui/
 import { ProfilePayload, ProfileSchema, ValidationErrorMessages } from "@uxp/common";
 import React, { useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
-import { FormFieldErrors, FormFieldLabel, FormFieldRefs, LoadingButton, ServerErrorTile } from "../../../components";
-import ErrorTile from "../../../components/forms/ErrorTile";
-import ValidatedTextField from "../../../components/forms/ValidatedTextField";
-import CenteredBox from "../../../components/layout/CenteredBox";
+import {
+    ErrorTile,
+    CenteredBox,
+    ValidatedTextField,
+    FormFieldErrors,
+    FormFieldLabel,
+    FormFieldRefs,
+    LoadingButton,
+} from "@uxp/ui-lib";
+import { ServerErrorTile } from "../../../components";
 import { useAppDispatch } from "../../../hooks";
 import { compileSchema, validateField } from "../../../utils/validationUtils"; // Utility for schema compilation
 import { selectError } from "../../error/errorSelectors";

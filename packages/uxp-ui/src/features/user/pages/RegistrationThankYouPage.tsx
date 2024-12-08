@@ -1,7 +1,7 @@
 import { Link, Typography } from "@mui/material";
 import React from "react";
 import { Link as RouterLink } from "react-router-dom";
-import { CenteredBox } from "../../../components";
+import { CenteredBox } from "@uxp/ui-lib";
 
 const RegistrationThankYouPage: React.FC = () => {
     return (

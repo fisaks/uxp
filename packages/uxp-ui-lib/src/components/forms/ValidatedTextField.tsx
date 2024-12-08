@@ -1,7 +1,6 @@
 import { Visibility, VisibilityOff } from "@mui/icons-material";
-import { IconButton, InputAdornment, TextField } from "@mui/material";
+import { IconButton, InputAdornment, TextField, useTheme } from "@mui/material";
 import { useState } from "react";
-import { useUxpTheme } from "../../features/theme/useUxpTheme";
 import React from "react";
 
 interface ValidatedTextFieldProps<TFormData> {
@@ -32,7 +31,7 @@ const ValidatedTextField = <TFormData extends Record<string, string>>({
     const [showPassword, setShowPassword] = useState(false);
 
     const isPasswordField = type === "password";
-    const theme = useUxpTheme();
+    const theme = useTheme();
 
     const handleMouseDown = () => {
         setShowPassword(true);
