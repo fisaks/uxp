@@ -3,6 +3,13 @@
     "compilerOptions": {
         "outDir": "./dist",
         "rootDir": "./src",
+        "module": "ESNext",
+        "target": "ES2021",
+        "jsx": "react-jsx",
+        "strict": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+
         "declaration": true, // Generate .d.ts files for type declarations
         "declarationMap": true // Map declaration files to source files
     },
@@ -15,3 +22,4 @@
     ]
     
 }
+

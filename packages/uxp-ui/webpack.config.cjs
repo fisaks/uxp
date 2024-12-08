@@ -17,7 +17,7 @@ module.exports = merge(baseConfig, {
 
     
     output: {
-        filename: "uxp-ui-core.bundle.js",
+        filename: "uxp-ui.bundle.js",
         path: path.resolve(__dirname, "dist"), // Output directory for the build
         clean: true,
     },

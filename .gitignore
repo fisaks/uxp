@@ -9,6 +9,6 @@ tsconfig.tsbuildinfo
 .env.prod
 .env.dev
 .env
-packages/uxp-ui-core/.htpasswd
+packages/uxp-ui/.htpasswd
 packages/uxp-bff/build_types
 .history

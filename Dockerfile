@@ -8,11 +8,11 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 COPY packages/uxp-bff/package.json ./packages/uxp-bff/
 COPY packages/uxp-common/package.json ./packages/uxp-common/
-COPY packages/uxp-ui-core/package.json ./packages/uxp-ui-core/
-COPY packages/uxp-ui-presenter/package.json ./packages/uxp-ui-presenter/
+COPY packages/uxp-ui/package.json ./packages/uxp-ui/
+COPY packages/uxp-ui-lib/package.json ./packages/uxp-ui-lib/
 
 # Install dependencies for the entire monorepo
-RUN npm install
+RUN npm ci
 
 # Copy the entire monorepo
 COPY . .
@@ -35,6 +35,8 @@ COPY --from=builder /app/.env.prod ./dist/
 # Copy only the necessary dependencies from the builder stage
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/packages/uxp-bff/package.json ./package.json
+COPY --from=builder /app/packages/uxp-common/package.json ./node_modules/@uxp/common/package.json
+COPY --from=builder /app/packages/uxp-common/dist ./node_modules/@uxp/common/dist
 
 # Expose the application port
 EXPOSE 3001
@@ -44,14 +46,14 @@ ENV NODE_ENV=prod
 CMD ["node", "dist/index.js"]
 
 FROM nginx:alpine AS web
-COPY --from=builder /app/packages/uxp-ui-core/dist /usr/share/nginx/html
+COPY --from=builder /app/packages/uxp-ui/dist /usr/share/nginx/html
 COPY --from=builder /app/.env.prod /etc/nginx/conf.d/.env
-COPY ./packages/uxp-ui-core/nginx.conf /etc/nginx/conf.d/nginx.conf
+COPY ./packages/uxp-ui/nginx.conf /etc/nginx/conf.d/nginx.conf
 
 RUN export $(cat /etc/nginx/conf.d/.env | xargs) && \
     envsubst '$DOMAIN_NAME,$LOCAL_NETWORK' < /etc/nginx/conf.d/nginx.conf > /etc/nginx/conf.d/default.conf && rm /etc/nginx/conf.d/.env
 
 
-COPY ./packages/uxp-ui-core/.htpasswd /etc/nginx/conf.d/.htpasswd
+COPY ./packages/uxp-ui/.htpasswd /etc/nginx/conf.d/.htpasswd
 EXPOSE 80 443
 CMD ["nginx", "-g", "daemon off;"]

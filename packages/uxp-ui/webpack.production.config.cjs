@@ -9,7 +9,7 @@ module.exports = merge(baseConfig, {
     devtool: false,
 
     output: {
-        filename: "uxp-ui-core.bundle.js?[contenthash]",
+        filename: "uxp-ui.bundle.js?[contenthash]",
     },
 
     optimization: {
