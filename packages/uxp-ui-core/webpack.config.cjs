@@ -8,7 +8,14 @@ module.exports = merge(baseConfig, {
     devtool: "eval-source-map",
 
     entry: "./src/index.tsx", // Entry point for this package
+    resolve: {
+        alias: {
+            ajv$: require.resolve("ajv"), // Resolve to AJV v8
+            "ajv-formats$": require.resolve("ajv-formats"), // Resolve to AJV-formats v3
+        },
+    },
 
+    
     output: {
         filename: "uxp-ui-core.bundle.js",
         path: path.resolve(__dirname, "dist"), // Output directory for the build

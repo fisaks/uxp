@@ -2,7 +2,14 @@
     "extends": "../../tsconfig.json",
     "compilerOptions": {
         "outDir": "./dist",
-        "rootDir": "./src" // Treat src as the root for inputs
+        "rootDir": "./src", // Treat src as the root for inputs
+
+        "module": "ESNext",
+        "target": "ES2021",
+        "jsx": "react-jsx",
+        "strict": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true
     },
     "include": ["src/**/*"],
     "exclude": ["node_modules", "dist"],

@@ -9,13 +9,15 @@
         "declaration": true, // Generate .d.ts files
         "declarationMap": true, // Generate declaration maps
         "experimentalDecorators": true,
-        "emitDecoratorMetadata": true
+        "emitDecoratorMetadata": true,
+        "strict": true
     },
-    "include": ["src/**/*"],
+    "include": ["src/**/*", "../uxp-common/src/schema/user.schema.ts"],
     "exclude": ["node_modules", "dist"],
     "references": [
         {
             "path": "../uxp-common"
         } // Reference to the common package
     ]
+
 }

@@ -4,6 +4,7 @@ type EnvVariables = {
     MYSQL_PASSWORD: string;
     DATABASE_HOST: string;
     DATABASE_PORT: string;
+    JWT_SECRET: string;
 };
 
 /**

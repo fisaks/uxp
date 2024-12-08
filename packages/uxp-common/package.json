@@ -4,17 +4,19 @@
     "version": "1.0.0",
     "main": "dist/index.js",
     "module": "dist/index.esm.js",
-    "types": "dist/index.d.ts",
+    "types": "dist/index.d.ts                                                                                                                   ",
     "keywords": [],
     "author": "",
     "license": "ISC",
     "scripts": {
         "build": "tsc --build",
         "dev": "ts-node-dev --respawn src/index.ts",
-        "clean": "rm -rf dist",
+        "clean": "rm -rf dist tsconfig.tsbuildinfo",
+        "watch": "tsc --watch",
         "lint": "eslint .",
         "lint:fix": "eslint . --fix"
     },
-    "dependencies": {},
-    "devDependencies": {}
+    "dependencies": {
+        "ajv": "^8.17.1"
+    }
 }

@@ -2,6 +2,7 @@ import js from "@eslint/js"; // Core JavaScript rules
 import ts from "@typescript-eslint/eslint-plugin"; // TypeScript rules
 import tsParser from "@typescript-eslint/parser"; // TypeScript parser
 import react from "eslint-plugin-react"; // React rules
+import globals from "globals";
 
 export default [
     // Base JavaScript configuration
@@ -30,10 +31,12 @@ export default [
                 require: true, // Node.js `require` function
                 exports: true, // Node.js `exports` global
                 __WebpackModuleApi: "readonly",
+                ...globals.browser,
             },
         },
         plugins: {
             "@typescript-eslint": ts,
+            react,
         },
         rules: {
             "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }], // Ignore unused vars starting with '_'

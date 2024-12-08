@@ -2,10 +2,10 @@
 
 # Load environment variables from the .env file
 set -o allexport
-if [ -f ".env" ]; then
-    source .env
+if [ -f ".env.dev" ]; then
+    source .env.dev
 else
-    echo "Error: .env file not found"
+    echo "Error: .env.dev file not found"
     exit 1
 fi
 set +o allexport

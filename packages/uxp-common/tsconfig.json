@@ -6,7 +6,10 @@
         "declaration": true,
         "declarationMap": true,
         "composite": true, // Required for project references
-        "strict": true
+        "strict": true,
+        "target": "ESNext",
+        "module": "CommonJS",
+
     },
     "include": ["src/**/*"],
     "exclude": ["node_modules", "dist"]

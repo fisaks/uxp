@@ -14,7 +14,13 @@ const AppDataSource = new DataSource({
     logging: true,
     entities: [process.env.TS_NODE_DEV ? "src/db/entities/**/*.ts" : "dist/db/entities/**/*.js"],
     //entities: [Page],
-    migrations: [process.env.TS_NODE_DEV ? "src/db/migrations/**/*.ts" : "dist/db/migrations/**/*.js"],
+    migrations: [
+        process.env.TS_NODE_DEV ? "src/db/migrations/**/*.ts" : "dist/db/migrations/**/*.js",
+        process.env.TS_NODE_DEV ? "src/db/migrations/**/*.sql" : "dist/db/migrations/**/*.sql",
+    ],
+    cli: {
+        migrationsDir: "dist/migration",
+    },
     extra: {
         connectionLimit: 10, // Connection pooling
     },

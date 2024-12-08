@@ -1,4 +1,4 @@
-import Ajv from "ajv";
+import Ajv, { ValidateFunction } from "ajv";
 import { FastifyInstance } from "fastify";
 import "reflect-metadata";
 import { QueryRunner } from "typeorm";
@@ -52,7 +52,7 @@ export function getWebSocketActions(target: any): WebSocketActionMetadata[] {
 interface WebSocketActionHandler {
     handler: Function;
     validate?: (payload: unknown) => boolean;
-    schemaValidate?: Ajv.ValidateFunction;
+    schemaValidate?: ValidateFunction;
     queryRunnerOptions?: UseQueryRunnerOptions | null;
 }
 

@@ -1,5 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client"; // React 18's new API
+import { Provider } from "react-redux";
+import store from "./app/store";
 import UxpApp from "./UxpApp";
 //import './index.css'; // Optional: import a global CSS file
 
@@ -17,7 +19,9 @@ const root = ReactDOM.createRoot(rootElement);
 // Render the App component
 root.render(
     <React.StrictMode>
-        <UxpApp />
+        <Provider store={store}>
+            <UxpApp />
+        </Provider>
     </React.StrictMode>
 );
 
@@ -28,7 +32,9 @@ if (process.env.NODE_ENV === "development" && module.hot) {
         const NextUxpApp = require("./UxpApp").default;
         root.render(
             <React.StrictMode>
-                <NextUxpApp />
+                <Provider store={store}>
+                    <NextUxpApp />
+                </Provider>
             </React.StrictMode>
         );
     });

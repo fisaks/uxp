@@ -13,8 +13,7 @@ start_dev_env() {
     
     # Start a new tmux session (detached)
     tmux new-session -d -s $SESSION_NAME
-    
-    
+      
     
     # Pane 1: Start Docker (MySQL container)
     tmux send-keys -t $SESSION_NAME "trap 'docker compose down' EXIT && docker compose --env-file .env.dev up -d mysql && echo '################## PRESS CTRL+b d TO DETACH ##################' && docker logs -f mysql" C-m
@@ -30,10 +29,16 @@ start_dev_env() {
     
     tmux send-keys -t $SESSION_NAME.2 "npm run start:app" C-m
         
+    tmux select-pane -t 0
+    tmux split-window -h -t $SESSION_NAME
+    tmux send-keys -t $SESSION_NAME.1 "npm run watch" C-m
 
     # Select the first pane
-    tmux select-pane -t 3
-    
+    tmux select-pane -t 4
+    tmux split-window -h -t $SESSION_NAME
+    tmux send-keys -t $SESSION_NAME.4 "sleep 10 && ./mysql.sh" C-m
+    tmux select-pane -t 5
+    tmux resize-pane -R 90
     # Attach to the tmux session
     tmux attach-session -t $SESSION_NAME
     

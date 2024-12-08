@@ -9,13 +9,17 @@ module.exports = merge(baseConfig, {
         },
         port: 3000, // Port for the development server
         hot: true, // Enable hot module replacement
-        open: true, // Automatically open the browser
+        watchFiles: [
+            path.resolve(__dirname, 'src'),
+            path.resolve(__dirname, '../common'),
+          ],
+        //open: true, // Automatically open the browser
         proxy: [
             {
                 context: ["/api"], // Match paths starting with /api
                 target: "http://localhost:3001", // Backend server
                 changeOrigin: true, // Handle host header changes
-                pathRewrite: { "^/api": "" }, // Remove /api prefix if necessary
+            
                 secure: false, // If the backend is using HTTP, not HTTPS
             },
         ],
