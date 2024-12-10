@@ -4,33 +4,28 @@
     "private": true,
     "version": "1.0.0",
     "type": "module",
-    "workspaces": [
-        "packages/*"
-    ],
     "scripts": {
-        "prepare": "husky",
-        "build:bff": "npm run build --workspace=@uxp/bff",
-        "dev:bff": "npm run dev --workspace=@uxp/bff",
-        "build:ui": "npm run build --workspace=@uxp/ui",
-        "build:common": "npm run build --workspace=@uxp/common",
-        "build-dev:ui": "npm run build-dev --workspace=@uxp/ui",
-        "build:ui-lib": "npm run build --workspace=@uxp/ui-lib",
-        "clean:bff": "npm run clean --workspace=@uxp/bff",
-        "clean:ui": "npm run clean --workspace=@uxp/ui",
-        "clean:common": "npm run clean --workspace=@uxp/common",
-        "clean-dev:ui": "npm run clean --workspace=@uxp/ui",
-        "clean:ui-lib": "npm run clean --workspace=@uxp/ui-lib",
-        
-        "watch": "npm run watch --workspace=@uxp/common",
-
-        "start:app": "npm run start --workspace=@uxp/ui",
-        "start:bff": "npm run dev --workspace=@uxp/bff",
-        "build": "npm run build:common  && npm run build:bff && npm run build:ui-lib && npm run build:ui ",
-        "clean": "npm run clean:ui && npm run clean:ui-lib && npm run clean:bff && npm run clean:common",
+        "prepare": "husky install",
+        "build": "pnpm -r build",
+        "clean": "pnpm -r clean",
+        "build:bff": "pnpm --filter=@uxp/bff build ",
+        "build:ui": "pnpm --filter=@uxp/ui build ",
+        "build-dev:ui": "pnpm --filter=@uxp/ui build-dev",
+        "build:common": "pnpm --filter=@uxp/common build ",
+        "build:ui-lib": "pnpm --filter=@uxp/ui-lib build ",
+        "clean:bff": "pnpm --filter=@uxp/bff clean ",
+        "clean:common": "pnpm --filter=@uxp/common clean ",
+        "clean:ui": "pnpm --filter=@uxp/ui clean ",
+        "clean:ui-lib": "pnpm --filter=@uxp/ui-lib clean ",
+        "watch": "pnpm --filter=@uxp/common --filter=@uxp/ui-lib watch ",
+        "start:app": "pnpm --filter=@uxp/ui start ",
+        "start:bff": "pnpm --filter=@uxp/bff dev ",
         "lint": "eslint packages/**",
         "lint:fix": "eslint packages/** --fix",
         "format": "prettier --write .",
-        "format:check": "prettier --check ."
+        "format:check": "prettier --check .",
+        "format:check2": "prettier --check ."
+        
     },
     "keywords": [],
     "author": "",
@@ -78,12 +73,15 @@
         "prettier": "^3.3.3",
         "react": "^18.3.1",
         "react-dom": "^18.3.1",
+        "rimraf": "^6.0.1",
         "style-loader": "^4.0.0",
+        "terser-webpack-plugin": "^5.3.10",
         "ts-loader": "^9.5.1",
         "ts-node": "^10.9.2",
         "typescript": "^5.6.3",
         "webpack": "^5.96.1",
         "webpack-cli": "^5.1.4",
-        "webpack-dev-server": "^5.1.0"
+        "webpack-dev-server": "^5.1.0",
+        "webpack-merge": "^6.0.1"
     }
 }

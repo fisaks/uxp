@@ -12,7 +12,7 @@
         "emitDecoratorMetadata": true,
         "strict": true
     },
-    "include": ["src/**/*", "../uxp-common/src/schema/user.schema.ts"],
+    "include": ["src/**/*"],
     "exclude": ["node_modules", "dist"],
     "references": [
         {

@@ -1,22 +1,33 @@
 {
     "name": "@uxp/ui-lib",
-    "description": "",
+    "description": "Unified Experience Platform shared ui library",
     "version": "1.0.0",
     "main": "dist/index.js",
     "module": "dist/index.esm.js",
     "types": "dist/index.d.ts",
     "scripts": {
-        "build": "tsc --build",
-        "clean": "rm -rf tsconfig.tsbuildinfo dist",
-        "test": "jest",
-        "lint": "eslint .",
-        "lint:fix": "eslint . --fix"
+        "build": "pnpm tsc --build",
+        "clean": "pnpm rimraf tsconfig.tsbuildinfo dist",
+        "test": "pnpm jest",
+        "lint": "pnpm eslint .",
+        "lint:fix": "pnpm eslint . --fix"
     },
     "keywords": [],
     "author": "",
     "license": "ISC",
     "peerDependencies": {
         "react": "^18.0.0",
-        "react-dom": "^18.0.0"
+        "react-dom": "^18.0.0",
+        "@emotion/react": "^11.13.5",
+        "@emotion/styled": "^11.13.5",
+        "@fontsource/roboto": "^5.1.0",
+        "@mui/icons-material": "^6.1.8",
+        "@mui/material": "^6.1.8",
+        "@uxp/common": "workspace:*"
+    },
+    "devDependencies": {
+        "@types/react": "^18.3.12",
+        "@types/redux-logger": "^3.0.13",
+        "webpack-bundle-analyzer": "^4.10.2"
     }
 }

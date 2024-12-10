@@ -1,5 +1,5 @@
 #!/bin/bash
-npm run build
+pnpm run build
 
 # Build the bff stage
 docker build --target bff -t bff:latest .

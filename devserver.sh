@@ -25,13 +25,13 @@ start_dev_env() {
     tmux select-pane -t 1
     tmux split-window -h -t $SESSION_NAME
     
-    tmux send-keys -t $SESSION_NAME.1 "npm run start:bff" C-m
+    tmux send-keys -t $SESSION_NAME.1 "pnpm run start:bff" C-m
     
-    tmux send-keys -t $SESSION_NAME.2 "npm run start:app" C-m
+    tmux send-keys -t $SESSION_NAME.2 "pnpm run start:app" C-m
         
     tmux select-pane -t 0
     tmux split-window -h -t $SESSION_NAME
-    tmux send-keys -t $SESSION_NAME.1 "npm run watch" C-m
+    tmux send-keys -t $SESSION_NAME.1 "pnpm run watch" C-m
 
     # Select the first pane
     tmux select-pane -t 4

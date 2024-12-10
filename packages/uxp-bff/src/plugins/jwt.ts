@@ -1,4 +1,5 @@
-import fastifyJwt from "fastify-jwt";
+import fastifyJwt from "@fastify/jwt";
+
 import fp from "fastify-plugin";
 import { ACCESS_TOKEN } from "../config/constant";
 

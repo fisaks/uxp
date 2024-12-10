@@ -1,6 +1,6 @@
 {
     "name": "@uxp/common",
-    "description": "",
+    "description": "Unified Experience Platform shared common components",
     "version": "1.0.0",
     "main": "dist/index.js",
     "module": "dist/index.esm.js",
@@ -9,14 +9,15 @@
     "author": "",
     "license": "ISC",
     "scripts": {
-        "build": "tsc --build",
-        "dev": "ts-node-dev --respawn src/index.ts",
-        "clean": "rm -rf dist tsconfig.tsbuildinfo",
-        "watch": "tsc --watch",
-        "lint": "eslint .",
-        "lint:fix": "eslint . --fix"
+        "build": "pnpm tsc --build",
+        "dev": "pnpm ts-node-dev --respawn src/index.ts",
+        "clean": "pnpm rimraf dist tsconfig.tsbuildinfo",
+        "watch": "pnpm tsc --watch",
+        "lint": "pnpm eslint .",
+        "lint:fix": "pnpm eslint . --fix"
     },
-    "dependencies": {
-        "ajv": "^8.17.1"
+    "peerDependencies": {
+        "ajv": "^8.17.1",
+        "axios": "^1.7.8"
     }
 }

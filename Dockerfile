@@ -1,49 +1,66 @@
 # Stage 1: Build the application
 FROM node:22 AS builder
 
+RUN npm install -g pnpm
+
 # Set the working directory
 WORKDIR /app
 
+
+
 # Copy only the package.json and package-lock.json first
-COPY package.json package-lock.json ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY packages/uxp-bff/package.json ./packages/uxp-bff/
 COPY packages/uxp-common/package.json ./packages/uxp-common/
 COPY packages/uxp-ui/package.json ./packages/uxp-ui/
 COPY packages/uxp-ui-lib/package.json ./packages/uxp-ui-lib/
 
+
 # Install dependencies for the entire monorepo
-RUN npm ci
+RUN pnpm fetch
+RUN pnpm install --offline --frozen-lockfile
 
 # Copy the entire monorepo
 COPY . .
 
 # Build the app
-RUN npm run build
+RUN pnpm run build
 
 # Stage 2: Runtime container
+#docker run -it uxp-bff-server /bin/sh
 FROM node:22-slim AS bff
 
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+RUN npm install -g pnpm
 
 # Set the working directory
 WORKDIR /app
 
-# Copy the build output from the builder stage
-COPY --from=builder /app/packages/uxp-bff/dist ./dist
-COPY --from=builder /app/.env.prod ./dist/
 
-# Copy only the necessary dependencies from the builder stage
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/packages/uxp-bff/package.json ./package.json
-COPY --from=builder /app/packages/uxp-common/package.json ./node_modules/@uxp/common/package.json
-COPY --from=builder /app/packages/uxp-common/dist ./node_modules/@uxp/common/dist
+
+# Copy necessary files and directories
+
+COPY --from=builder /app/.env.prod ./
+COPY --from=builder /app/packages/uxp-bff/dist ./uxp-bff/dist
+COPY --from=builder /app/packages/uxp-bff/package.json ./uxp-bff/
+
+COPY --from=builder /app/packages/uxp-common/dist ./uxp-common/dist
+COPY --from=builder /app/packages/uxp-common/package.json ./uxp-common/package.json
+
+COPY --from=builder /app/pnpm-lock.yaml ./pnpm-lock.yaml
+
+RUN echo "packages:\n  - 'uxp-bff'\n  - 'uxp-common'\n" > /app/pnpm-workspace.yaml
+
+# Install production dependencies for the backend only
+RUN pnpm install --prod --filter=@uxp/bff --filter=@uxp/common...
 
 # Expose the application port
 EXPOSE 3001
 
 # Start the application
 ENV NODE_ENV=prod
-CMD ["node", "dist/index.js"]
+WORKDIR /app/uxp-bff
+CMD ["node", "./dist/index.js"]
 
 FROM nginx:alpine AS web
 COPY --from=builder /app/packages/uxp-ui/dist /usr/share/nginx/html
