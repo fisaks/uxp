@@ -45,6 +45,10 @@ export function Route(
         schema?: RouteMetadata["schema"];
     }
 ): MethodDecorator {
+    /**
+     * The target parameter represents the prototype of the class
+     * where the decorator is applied.
+     */
     return function (target: any, propertyKey: string | symbol) {
         const routes: RouteMetadata[] = Reflect.getMetadata(ROUTES_METADATA_KEY, target.constructor) || [];
 
@@ -53,7 +57,7 @@ export function Route(
             path,
             handlerName: propertyKey as string,
             authenticate: options?.authenticate ?? true, // Default to true
-            roles: (options?.roles ?? options?.authenticate) ? ["user"] : [],
+            roles: options?.roles ?? (options?.authenticate ? ["user"] : []),
             validate: options?.validate,
             schema: options?.schema,
         });
@@ -86,7 +90,7 @@ export function registerRoutes(fastify: FastifyInstance, controllers: any[], bas
         const routes: RouteMetadata[] = getRoutes(ControllerClass);
 
         routes.forEach(({ method, path, validate, schema, handlerName, authenticate, roles }) => {
-            console.log(`Restroute:\t${method} ${basePath}${path} => ${ControllerClass.name}.${handlerName}`);
+            console.log(`Registering route: ${method} ${basePath}${path} => ${ControllerClass.name}.${handlerName}`);
 
             const originalHandler = instance[handlerName].bind(instance);
 
@@ -110,7 +114,7 @@ export function registerRoutes(fastify: FastifyInstance, controllers: any[], bas
                         if (roles && roles.length > 0) {
                             const user = request.user as { roles: UserRole[] }; // Assume `user` is attached by `jwtVerify()`
                             if (!user.roles.includes("admin") && !user.roles.some((r) => roles.includes(r))) {
-                                console.log("WRONG ROLE ", user.roles, roles);
+                                fastify.log.error("User does not have the required role to access this route");
                                 reply.code(403).send(createErrorResponse([{ code: ErrorCodes.FORBIDDEN }], request));
                                 return;
                             }
@@ -131,8 +135,8 @@ export function registerRoutes(fastify: FastifyInstance, controllers: any[], bas
                             queryRunner = AppDataSource.createQueryRunner();
                             await queryRunner!.connect();
 
-                            if (queryRunnerOptions.transactional) {
-                                await queryRunner!.startTransaction();
+                            if (queryRunnerOptions.transactional && queryRunner) {
+                                await queryRunner.startTransaction();
                             }
                         }
 
