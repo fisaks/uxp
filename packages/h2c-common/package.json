@@ -1,0 +1,23 @@
+{
+    "name": "@h2c/common",
+    "description": "A shared library for non UI reusable utilities, types, and components used across HouseCare's BFF and UI modules.",
+    "version": "1.0.0",
+    "main": "dist/index.js",
+    "module": "dist/index.esm.js",
+    "types": "dist/index.d.ts                                                                                                                   ",
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "scripts": {
+        "build": "pnpm tsc --build",
+        "dev": "pnpm ts-node-dev --respawn src/index.ts",
+        "clean": "pnpm rimraf dist tsconfig.tsbuildinfo",
+        "watch": "pnpm tsc --watch",
+        "lint": "pnpm eslint .",
+        "lint:fix": "pnpm eslint . --fix"
+    },
+    "peerDependencies": {
+        "ajv": "^8.17.1",
+        "axios": "^1.7.8"
+    }
+}

@@ -27,7 +27,12 @@
             "@uxp/ui-lib": [
                 "packages/uxp-ui-lib/dist",
                 "packages/uxp-ui-lib/src",
-            ]
+            ],
+            "@h2c/common": [
+                "packages/h2c-common/dist",
+                "packages/h2c-common/src",
+            ],
+
         },
         "types": [
             "node",
@@ -47,5 +52,8 @@
         "**/dist",
         "**/build"
     ],
+    "files": [
+        "typings.d.ts",
+      ]
 
 }
