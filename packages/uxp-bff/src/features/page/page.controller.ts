@@ -16,6 +16,39 @@ const GetPageSchema: SchemaValidate<undefined, { basepath: string }> = {
         required: ["basepath"],
     },
 };
+/*
+const routes = [
+  { path: '/login/foo/*' },
+  { path: '/login/foo/bar' },
+  { path: '/login/*' },
+  { path: '/login/foo' },
+  { path: '/login/bar' }
+];
+
+routes.sort((a, b) => {
+  const aParts = a.path.split('/');
+  const bParts = b.path.split('/');
+  
+  // Compare lengths first
+  if (aParts.length !== bParts.length) {
+    return bParts.length - aParts.length;
+  }
+  
+  // If lengths are equal, compare specificity
+  for (let i = 0; i < aParts.length; i++) {
+    if (aParts[i] === '*' && bParts[i] !== '*') {
+      return 1;
+    }
+    if (aParts[i] !== '*' && bParts[i] === '*') {
+      return -1;
+    }
+  }
+  
+  return 0;
+});
+
+console.log(routes);
+*/
 
 export class PageController {
     /**

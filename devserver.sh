@@ -24,7 +24,7 @@ start_dev_env() {
     
     tmux select-pane -t 1
     tmux split-window -h -t $SESSION_NAME
-    
+        
     tmux send-keys -t $SESSION_NAME.1 "pnpm run start:bff" C-m
     
     tmux send-keys -t $SESSION_NAME.2 "pnpm run start:app" C-m
@@ -39,9 +39,21 @@ start_dev_env() {
     tmux send-keys -t $SESSION_NAME.4 "sleep 10 && ./mysql.sh" C-m
     tmux select-pane -t 5
     tmux resize-pane -R 90
+    
+    # Rename the first tab to 'uxp'
+    tmux rename-window -t $SESSION_NAME:0 'uxp'
+    
+    # Create a new window (tab) and rename it to 'h2c'
+    tmux new-window -t $SESSION_NAME -n 'h2c'
+    tmux split-window -h -t $SESSION_NAME:1
+    tmux send-keys -t $SESSION_NAME:1.0 "pnpm run start:h2c-bff" C-m
+    tmux send-keys -t $SESSION_NAME:1.1 "pnpm run start:h2c-app" C-m
+    
+    # Select the first tab
+    tmux select-window -t $SESSION_NAME:0
     # Attach to the tmux session
     tmux attach-session -t $SESSION_NAME
-    
+    tmux select-pane -t 5
 }
 
 # Function to stop the development environment

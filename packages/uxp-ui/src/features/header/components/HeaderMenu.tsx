@@ -11,15 +11,13 @@ import {
     Toolbar,
     Typography,
 } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { useAppDispatch } from "../../../hooks";
-import { selectIsLoading } from "../../loading/loadingSelectors";
+import { selectLinksForHeaderMenu, selectLinksForProfileIcon } from "../../navigation/navigationSelectors";
 import { selectIsLoggedInUser } from "../../user/userSelectors";
 import { logout } from "../../user/userThunks";
-import { selectHeaderMenuItems } from "../headerMenuSelectors";
-import { fetchMenuItems } from "../headerMenuThunk";
 
 interface HeaderMenuProps {
     isDesktop: boolean;
@@ -27,19 +25,16 @@ interface HeaderMenuProps {
 
 const HeaderMenu: React.FC<HeaderMenuProps> = ({ isDesktop }) => {
     const dispatch = useAppDispatch();
-    const fetchMenuItemsLoading = useSelector(selectIsLoading("header/fetchMenuItems"));
+
     const [headerMenuOpen, setHeaderMenuOpen] = useState(false);
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
     const toggleHeaderMenu = () => setHeaderMenuOpen(!headerMenuOpen);
     const closeHeaderMenu = () => setHeaderMenuOpen(false);
-    const headerMenuItems = useSelector(selectHeaderMenuItems());
-    const isLoggedInUser = useSelector(selectIsLoggedInUser());
+    const headerMenuLinks = useSelector(selectLinksForHeaderMenu());
+    const profileIconLinks = useSelector(selectLinksForProfileIcon());
 
-    useEffect(() => {
-        dispatch(fetchMenuItems({}));
-        console.log("FO header", isLoggedInUser);
-    }, [dispatch, isLoggedInUser]);
+    const isLoggedInUser = useSelector(selectIsLoggedInUser());
 
     const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
         setAnchorEl(event.currentTarget);
@@ -68,11 +63,11 @@ const HeaderMenu: React.FC<HeaderMenuProps> = ({ isDesktop }) => {
                     </Typography>
 
                     {isDesktop &&
-                        headerMenuItems.map(({ name, url }) => (
+                        headerMenuLinks.map((link) => (
                             <Typography
-                                key={name}
+                                key={link.link}
                                 component={Link}
-                                to={url}
+                                to={link.link}
                                 sx={{
                                     mx: 2,
                                     textDecoration: "none",
@@ -80,7 +75,7 @@ const HeaderMenu: React.FC<HeaderMenuProps> = ({ isDesktop }) => {
                                     "&:hover": { textDecoration: "underline" },
                                 }}
                             >
-                                {name}
+                                {link.label}
                             </Typography>
                         ))}
 
@@ -106,26 +101,11 @@ const HeaderMenu: React.FC<HeaderMenuProps> = ({ isDesktop }) => {
                             "aria-labelledby": "user-menu-button",
                         }}
                     >
-                        <MenuItem
-                            component={Link}
-                            to="/profile"
-                            tabIndex={0}
-                            onClick={(event) => {
-                                handleMenuClose(); // Close the menu
-                            }}
-                        >
-                            My Profile
-                        </MenuItem>
-                        <MenuItem
-                            component={Link}
-                            to="/my-settings"
-                            tabIndex={0}
-                            onClick={(event) => {
-                                handleMenuClose(); // Close the menu
-                            }}
-                        >
-                            My Settings
-                        </MenuItem>
+                        {profileIconLinks.map(({ link, label }) => (
+                            <MenuItem key={link} component={Link} to={link} onClick={handleMenuClose}>
+                                {label}
+                            </MenuItem>
+                        ))}
 
                         <MenuItem onClick={doLogout} tabIndex={0}>
                             Logout
@@ -148,11 +128,11 @@ const HeaderMenu: React.FC<HeaderMenuProps> = ({ isDesktop }) => {
                                 zIndex: (theme) => theme.zIndex.drawer + 2,
                             }}
                         >
-                            {headerMenuItems.map(({ name, url }) => (
+                            {headerMenuLinks.map(({ link, label }) => (
                                 <Typography
-                                    key={name}
+                                    key={link}
                                     component={Link}
-                                    to={url}
+                                    to={link}
                                     sx={{
                                         display: "block",
                                         py: 2,
@@ -163,7 +143,7 @@ const HeaderMenu: React.FC<HeaderMenuProps> = ({ isDesktop }) => {
                                     }}
                                     onClick={closeHeaderMenu}
                                 >
-                                    {name}
+                                    {label}
                                 </Typography>
                             ))}
                         </Box>

@@ -21,7 +21,8 @@ export type LoadingKey =
     | "header/fetchMenuItems"
     | "user/profile"
     | "mysettings/fetch"
-    | "mysettings/update";
+    | "mysettings/update"
+    | "navigation/fetch";
 
 export const createLoadingAwareThunk = <Returned, ThunkArg>(
     typePrefix: LoadingKey,

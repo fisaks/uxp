@@ -1,7 +1,7 @@
 import { Typography } from "@mui/material";
 import React from "react";
 
-interface MainContentProps {}
+type MainContentProps = {};
 
 const MainContent: React.FC<MainContentProps> = () => {
     return (

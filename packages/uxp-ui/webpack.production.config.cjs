@@ -9,7 +9,10 @@ module.exports = merge(baseConfig, {
     devtool: false,
 
     output: {
-        filename: "uxp-ui.bundle.js?[contenthash]",
+        //filename: "uxp-ui.bundle.js?[contenthash]",
+        filename: '[name].bundle.[contenthash].js', // Unique names for entry points
+        chunkFilename: 'uxp-[name].[contenthash].js', // Unique names for lazy-loaded chunks
+
     },
 
     optimization: {

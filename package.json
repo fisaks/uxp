@@ -11,6 +11,9 @@
         "watch": "pnpm --filter=@uxp/common --filter=@uxp/ui-lib --filter=@h2c/common watch",
         "start:app": "pnpm --filter=@uxp/ui start ",
         "start:bff": "pnpm --filter=@uxp/bff dev ",
+        "start:h2c-app": "pnpm --filter=@h2c/ui start ",
+        "start:h2c-bff": "pnpm --filter=@h2c/bff dev ",
+
         "lint": "eslint packages/**",
         "lint:fix": "eslint packages/** --fix",
         "format": "prettier --write .",

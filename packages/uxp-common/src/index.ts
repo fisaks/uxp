@@ -8,3 +8,5 @@ export * from "./menu/menu.types";
 export * from "./utils/axiosUtil";
 export * from "./schema/user.schema";
 export * from "./schema/schemaValidate";
+export * from "./uxp/pagesRoutesApps.types";
+export * from "./navigation/navigation.types";

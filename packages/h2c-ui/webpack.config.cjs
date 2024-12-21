@@ -22,6 +22,7 @@ module.exports = merge(baseConfig, {
         filename: "h2c-ui.bundle.js",
         path: path.resolve(__dirname, "dist"), // Output directory for the build
         clean: true,
+        
     },
 
     plugins: [
