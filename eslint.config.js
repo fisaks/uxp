@@ -71,6 +71,7 @@ export default [
             "**/build/**",
             "**/*.d.ts",
             "**/*.config.cjs",
+            "public",
         ], // Ignore common folders and declaration files
     },
 ];
