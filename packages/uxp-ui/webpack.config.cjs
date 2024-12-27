@@ -8,8 +8,9 @@ module.exports = merge(baseConfig, {
     devtool: "eval-source-map",
 
     entry: {
-        "uxp-ui":"./src/index.tsx", // Entry point for this package
+        "uxp-ui": "./src/index.tsx", // Entry point for this package
     },
+ 
     resolve: {
         alias: {
             ajv$: require.resolve("ajv"), // Resolve to AJV v8
@@ -31,6 +32,10 @@ module.exports = merge(baseConfig, {
         new HtmlWebpackPlugin({
             template: "./index.html", // Use your template file
             filename: "index.html", // Name of the output file
+            templateParameters: {
+                mode: process.env.NODE_ENV==="prod" ? "production" : "development"
+              },
+
         }),
     ],
     optimization: {
@@ -38,12 +43,12 @@ module.exports = merge(baseConfig, {
             chunks: 'all',
             cacheGroups: {
                 vendors: {
-                  test: /[\\/]node_modules[\\/]/,
-                  name: 'vendors',
-                  chunks: 'all',
-                  
+                    test: /[\\/]node_modules[\\/]/,
+                    name: 'vendors',
+                    chunks: 'all',
+
                 },
-              },
+            },
         },
     },
 

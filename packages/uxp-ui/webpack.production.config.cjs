@@ -3,7 +3,7 @@ const { merge } = require("webpack-merge"); // Extend base config
 const baseConfig = require("./webpack.config.cjs"); // Import root base config
 
 const TerserPlugin = require("terser-webpack-plugin");
-
+process.env.NODE_ENV = "prod";
 module.exports = merge(baseConfig, {
     mode: "production",
     devtool: false,

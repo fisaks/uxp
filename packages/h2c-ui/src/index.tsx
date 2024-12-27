@@ -1,40 +1,77 @@
+import createCache from "@emotion/cache";
+import { CacheProvider } from "@emotion/react";
 import React from "react";
 import ReactDOM from "react-dom/client"; // React 18's new API
 import { Provider } from "react-redux";
-import store from "./app/store";
+import { createStore } from "./app/store";
+import { initializeConfig } from "./config";
 import H2CApp from "./H2CApp";
+const styleInsert = require("../../tools/src/insert-function.cjs");
 
-// Get the root element in the HTML
-const rootElement = document.getElementById("root");
-
-// Ensure the root element exists before rendering
-if (!rootElement) {
-    throw new Error("Root element not found. Ensure you have an element with id 'root' in your HTML.");
+// Extend the Window interface to include __UXP_PORTAL__
+declare global {
+    interface Window {
+        __UXP_PORTAL__?: boolean;
+    }
 }
-
-// Create a React root
-const root = ReactDOM.createRoot(rootElement);
-
-// Render the App component
-root.render(
-    <React.StrictMode>
-        <Provider store={store}>
-            <H2CApp />
-        </Provider>
-    </React.StrictMode>
-);
-
 declare const module: __WebpackModuleApi.Module;
+// Get the root element in the HTML
 
-if (process.env.NODE_ENV === "development" && module.hot) {
-    module.hot.accept("./H2CApp", () => {
-        const NextH2CApp = require("./H2CApp").default;
-        root.render(
-            <React.StrictMode>
-                <Provider store={store}>
-                    <NextH2CApp />
-                </Provider>
-            </React.StrictMode>
-        );
+//let hotRoot:ReactDOM.Root|undefined;
+
+export const initApplication = (documentRoot: ShadowRoot | Document) => {
+    const container = documentRoot instanceof Document ? documentRoot.head : documentRoot;
+    styleInsert.init(container);
+    // Create a custom Emotion cache
+    const shadowCache = createCache({
+        key: `shadow`,
+        container: container,
     });
+
+    const store = createStore();
+    const rootElement = documentRoot.getElementById("root");
+
+    // Ensure the root element exists before rendering
+    if (!rootElement) {
+        throw new Error("Root element not found. Ensure you have an element with id 'root' in your HTML.");
+    }
+    initializeConfig(rootElement);
+    // Create a React root
+    // Store root globally to avoid duplicate createRoot calls
+    const globalRootKey = "__UXP_APP_ROOT__";
+    if (!(globalRootKey in rootElement)) {
+        (rootElement as any)[globalRootKey] = ReactDOM.createRoot(rootElement);
+    }
+
+    const root = (rootElement as any)[globalRootKey];
+    //const root = ReactDOM.createRoot(rootElement);
+    //let hotRoot=root;
+
+    // Render the App component
+    root.render(
+        <React.StrictMode>
+            <Provider store={store}>
+                <CacheProvider value={shadowCache}>
+                    <H2CApp />
+                </CacheProvider>
+            </Provider>
+        </React.StrictMode>
+    );
+    if (process.env.NODE_ENV === "development" && module.hot) {
+        module.hot.accept("./H2CApp", () => {
+            const NextH2CApp = require("./H2CApp").default;
+            root.render(
+                <React.StrictMode>
+                    <Provider store={store}>
+                        <CacheProvider value={shadowCache}>
+                            <NextH2CApp />
+                        </CacheProvider>
+                    </Provider>
+                </React.StrictMode>
+            );
+        });
+    }
+};
+if (!window.__UXP_PORTAL__) {
+    initApplication(document);
 }

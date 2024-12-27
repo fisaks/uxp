@@ -11,6 +11,18 @@ type ErrorLogMessage = LogMessage & {
     error?: Error;
 };
 
+/**
+ * A simple logger that logs messages with metadata.
+ *
+ * @example
+ * ```typescript
+ * AppLogger.info(req, { message: "Page app not found %s", args: [uuid] });
+ * AppLogger.error(req, { message: "Failed to fetch or rewrite index.html", error: error as Error });
+ * AppLogger.error(undefined, { error: err as Error });
+ * AppLogger.warn(req, { message: `Failed login attempt ${user.failedLoginAttempts}/${MAX_FAILD_LOGIN}` });
+ * ```
+ */
+
 export class AppLogger {
     private static fastifyLogger: FastifyInstance["log"] | typeof console;
 

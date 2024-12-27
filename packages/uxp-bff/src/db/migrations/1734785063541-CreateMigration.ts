@@ -18,7 +18,12 @@ export class CreateMigration1734785063541 implements MigrationInterface {
         pageRepository.delete({});
 
         const app = await appRepository.save(
-            new AppEntity({ name: "H2C", baseUrl: "http://localhost:3010", isActive: true })
+            new AppEntity({
+                name: "H2C",
+                baseUrl: "http://localhost:3010",
+                isActive: true,
+                config: { contextPath: "/", indexPage: "index.html" },
+            })
         );
 
         const home2CarePage = await pageRepository.save(

@@ -4,10 +4,21 @@ const baseConfig = require("./webpack.config.cjs"); // Import root base config
 
 module.exports = merge(baseConfig, {
     devServer: {
-        static: {
-            directory: path.resolve(__dirname, 'static'), // Serve 'data' during development
-            publicPath: '/static/', // Match the path in your component
-        },
+        static: [
+            {
+                directory: path.resolve(__dirname, "dist"), // Serve files from the dist folder
+                publicPath: "/",
+            },
+            {
+                directory: path.resolve(__dirname, "../../public/static/libs"), // Serve files from the dist folder
+                publicPath: "/static/libs",
+            },
+            {
+                directory: path.resolve(__dirname, 'static'), // Serve 'data' during development
+                publicPath: '/static/', // Match the path in your component
+            },
+
+        ],
         port: 3010, // Port for the development server
         hot: true, // Enable hot module replacement
         watchFiles: [

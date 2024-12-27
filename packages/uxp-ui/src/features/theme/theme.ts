@@ -1,5 +1,6 @@
 import { createTheme } from "@mui/material";
 import { deepmerge } from "@mui/utils";
+import "@fontsource/roboto";
 
 // Base theme with common settings
 const baseTheme = createTheme({

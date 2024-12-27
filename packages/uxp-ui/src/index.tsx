@@ -1,8 +1,11 @@
+import createCache from "@emotion/cache";
+import { CacheProvider } from "@emotion/react";
 import React from "react";
 import ReactDOM from "react-dom/client"; // React 18's new API
 import { Provider } from "react-redux";
 import store from "./app/store";
 import UxpApp from "./UxpApp";
+
 //import './index.css'; // Optional: import a global CSS file
 
 // Get the root element in the HTML
@@ -16,12 +19,16 @@ if (!rootElement) {
 // Create a React root
 const root = ReactDOM.createRoot(rootElement);
 
+const cache = createCache({ key: "css", prepend: true });
+
 // Render the App component
 root.render(
     <React.StrictMode>
-        <Provider store={store}>
-            <UxpApp />
-        </Provider>
+        <CacheProvider value={cache}>
+            <Provider store={store}>
+                <UxpApp />
+            </Provider>
+        </CacheProvider>
     </React.StrictMode>
 );
 
@@ -32,9 +39,11 @@ if (process.env.NODE_ENV === "development" && module.hot) {
         const NextUxpApp = require("./UxpApp").default;
         root.render(
             <React.StrictMode>
-                <Provider store={store}>
-                    <NextUxpApp />
-                </Provider>
+                <CacheProvider value={cache}>
+                    <Provider store={store}>
+                        <NextUxpApp />
+                    </Provider>
+                </CacheProvider>
             </React.StrictMode>
         );
     });

@@ -32,6 +32,9 @@
                 "packages/h2c-common/dist",
                 "packages/h2c-common/src",
             ],
+            "@uxp/tools": [
+                "packages/tools/src",
+            ],
 
         },
         "types": [

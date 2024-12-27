@@ -1,7 +1,10 @@
+process.env.META_TAG = "h2c";
+
 const path = require("path");
 const { merge } = require("webpack-merge"); // Extend base config
 const baseConfig = require("../../webpack.config.base.cjs"); // Import root base config
 const HtmlWebpackPlugin = require("html-webpack-plugin");
+const htmlWebpackInjectAttributesPlugin = require("html-webpack-inject-attributes-plugin");
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 
@@ -17,18 +20,24 @@ module.exports = merge(baseConfig, {
         },
     },
 
-
     output: {
         filename: "h2c-ui.bundle.js",
         path: path.resolve(__dirname, "dist"), // Output directory for the build
         clean: true,
-        
-    },
+        library: {
+            name: 'h2c',
+            type: 'window',
 
+        },
+
+    },
     plugins: [
         new HtmlWebpackPlugin({
             template: "./index.html", // Use your template file
             filename: "index.html", // Name of the output file
+        }),
+        new htmlWebpackInjectAttributesPlugin({
+            "data-uxp-remote-app": process.env.META_TAG
         }),
 
         new CopyWebpackPlugin({

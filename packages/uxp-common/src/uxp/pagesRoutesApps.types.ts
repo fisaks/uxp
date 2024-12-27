@@ -1,6 +1,9 @@
-export type AppConfigData = {};
+export type AppConfigData = {
+    contextPath: string;
+    indexPage: string;
+};
 
-export type PageAppsConfigData = {};
+export type PageAppsConfigData = Partial<AppConfigData> & {};
 
 export type RouteConfigData = {
     redirect?: string;

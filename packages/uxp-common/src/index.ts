@@ -6,6 +6,7 @@ export * from "./error/ErrorCodes";
 export * from "./user/user.types";
 export * from "./menu/menu.types";
 export * from "./utils/axiosUtil";
+export * from "./utils/urlUtil";
 export * from "./schema/user.schema";
 export * from "./schema/schemaValidate";
 export * from "./uxp/pagesRoutesApps.types";

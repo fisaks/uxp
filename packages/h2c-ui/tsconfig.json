@@ -10,9 +10,10 @@
         "esModuleInterop": true,
         "skipLibCheck": true,
         
+        
     },
     "include": [
-        "src/**/*"
+        "src/**/*",
     ],
     "exclude": [
         "node_modules",
@@ -28,5 +29,6 @@
         {
             "path": "../uxp-ui-lib"
         } 
-    ]
+    ],
+
 }

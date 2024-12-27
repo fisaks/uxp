@@ -15,7 +15,7 @@ const ROUTES_METADATA_KEY = "rest:routes";
 
 // Metadata structure for routes
 export interface RouteMetadata {
-    method: "get" | "post" | "put" | "delete";
+    method: "get" | "post" | "put" | "delete" | "all";
     path: string;
     handlerName: string;
     validate?: (req: FastifyRequest) => boolean;
@@ -74,6 +74,7 @@ export function getRoutes(target: any): RouteMetadata[] {
     return Reflect.getMetadata(ROUTES_METADATA_KEY, target) || [];
 }
 
+const ALL_METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"];
 /**
  * Register all routes from controllers in Fastify
  * @param fastify Fastify instance
@@ -95,28 +96,32 @@ export function registerRoutes(fastify: FastifyInstance, controllers: any[], bas
             const originalHandler = instance[handlerName].bind(instance);
 
             fastify.route({
-                method: method.toUpperCase(),
+                method: method === "all" ? ALL_METHODS : method.toUpperCase(),
                 url: `${basePath}${path}`,
                 schema, // Attach validation schema here
 
                 preHandler: async (request: FastifyRequest, reply: FastifyReply) => {
-                    if (authenticate || request.cookies[ACCESS_TOKEN]) {
-                        // Verify JWT token
-                        try {
-                            await request.jwtVerify();
-                        } catch (err) {
-                            fastify.log.error({ err }, "Failed to verify access token");
-                            reply.code(401).send(createErrorResponse([{ code: ErrorCodes.UNAUTHORIZED }], request));
-                            return;
-                        }
-
-                        // Check user role
-                        if (roles && roles.length > 0) {
-                            const user = request.user as { roles: UserRole[] }; // Assume `user` is attached by `jwtVerify()`
-                            if (!user.roles.includes("admin") && !user.roles.some((r) => roles.includes(r))) {
-                                fastify.log.error("User does not have the required role to access this route");
-                                reply.code(403).send(createErrorResponse([{ code: ErrorCodes.FORBIDDEN }], request));
+                    if (request.url !== `${basePath}/refresh-token`) {
+                        if (authenticate || request.cookies[ACCESS_TOKEN]) {
+                            // Verify JWT token
+                            try {
+                                await request.jwtVerify();
+                            } catch (err) {
+                                fastify.log.error({ err }, "Failed to verify access token");
+                                reply.code(401).send(createErrorResponse([{ code: ErrorCodes.UNAUTHORIZED }], request));
                                 return;
+                            }
+
+                            // Check user role
+                            if (roles && roles.length > 0) {
+                                const user = request.user as { roles: UserRole[] }; // Assume `user` is attached by `jwtVerify()`
+                                if (!user.roles.includes("admin") && !user.roles.some((r) => roles.includes(r))) {
+                                    fastify.log.error("User does not have the required role to access this route");
+                                    reply
+                                        .code(403)
+                                        .send(createErrorResponse([{ code: ErrorCodes.FORBIDDEN }], request));
+                                    return;
+                                }
                             }
                         }
                     }
