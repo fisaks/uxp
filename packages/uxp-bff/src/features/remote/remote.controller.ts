@@ -8,6 +8,7 @@ import { UseQueryRunner } from "../../decorator/queryrunner.decorator";
 import { Route } from "../../decorator/route.decorator";
 import { AppLogger } from "../../utils/AppLogger";
 import { sendErrorResponse } from "../../utils/errorUtils";
+import { AppEntity } from "../../db/entities/AppEntity";
 
 export class RemoteController {
     /**
@@ -42,7 +43,7 @@ export class RemoteController {
         }
         const config = { ...(pageApps.app.config ?? {}), ...(pageApps.config ?? {}) };
         const { contextPath, indexPage } = config;
-        const { baseUrl } = pageApps.app;
+        const { baseUrl, identifier: appIdentifier } = pageApps.app;
         const targetUrl = buildUrlWithParams({ hostname: baseUrl, contextPath, resourceParts: [indexPage] });
         AppLogger.info(req, { message: `Remote target url is ${targetUrl}` });
 
@@ -60,7 +61,7 @@ export class RemoteController {
             const document = dom.window.document;
             const rewriteUrl = (url: string): string => {
                 if (url.startsWith("http") || url.startsWith("//")) return url; // Absolute URLs
-                return buildPath("/api/content/resource", uuid, url);
+                return buildPath("/api/content/resource", appIdentifier, url);
             };
 
             document.querySelectorAll("script:not([src])").forEach((script) => {
@@ -95,7 +96,7 @@ export class RemoteController {
                     if (attr.name.startsWith("data-base-url")) {
                         // Rewrite the attribute value
                         const originalValue = attr.value;
-                        div.setAttribute(attr.name, buildPath("/api/content/resource", uuid, originalValue));
+                        div.setAttribute(attr.name, buildPath("/api/content/resource", appIdentifier, originalValue));
                     }
                 });
             });
@@ -117,40 +118,37 @@ export class RemoteController {
         }
     }
 
-    @Route("all", "/content/resource/:uuid/*", { authenticate: false })
+    @Route("all", "/content/resource/:appIdentifier/*", { authenticate: false })
     @UseQueryRunner()
     async executeContentResource(
-        req: FastifyRequest<{ Params: { uuid: string } }>,
+        req: FastifyRequest<{ Params: { appIdentifier: string } }>,
         reply: FastifyReply,
         queryRunner: QueryRunner
     ) {
-        const { uuid } = req.params;
+        const { appIdentifier } = req.params;
 
-        const resourcePath = req.raw.url!.replace(`/api/content/resource/${uuid}/`, "");
+        const resourcePath = req.raw.url!.replace(`/api/content/resource/${appIdentifier}/`, "");
 
-        const pageApps = (await queryRunner.manager
-            .getRepository(PageAppsEntity)
-            .createQueryBuilder("pageApps")
-            .leftJoinAndSelect("pageApps.app", "app")
-            .where("pageApps.uuid = :uuid", { uuid })
-            .getOne()) as PageAppsEntity | null;
+        const app = (await queryRunner.manager
+            .getRepository(AppEntity)
+            .findOneBy({ identifier: appIdentifier })) as AppEntity | null;
 
-        if (!pageApps) {
-            AppLogger.info(req, { message: "Page app not found %s", args: [uuid] });
+        if (!app) {
+            AppLogger.info(req, { message: "App not found %s", args: [appIdentifier] });
             return sendErrorResponse({
                 reply,
                 req,
                 code: ErrorCodes.RESOURCE_NOT_FOUND,
-                message: "Page app not found",
+                message: "App not found",
                 statusCode: 404,
             });
         }
 
         try {
             // Fetch the resource from the backend app
-            const config = { ...(pageApps.app.config ?? {}), ...(pageApps.config ?? {}) };
-            const { contextPath, indexPage } = config;
-            const { baseUrl } = pageApps.app;
+            const config = { ...(app.config ?? {}) };
+            const { contextPath } = config;
+            const { baseUrl } = app;
             const targetUrl = buildUrlWithParams({ hostname: baseUrl, contextPath, resourceParts: [resourcePath] });
             AppLogger.info(req, { message: `Remote url is ${targetUrl}` });
 

@@ -4,18 +4,12 @@ import { PageAppsEntity } from "../entities/PageAppsEntity";
 import { PageEntity } from "../entities/PageEntity";
 import { RouteEntity } from "../entities/RouteEntity";
 
-export class CreateMigration1735423027921 implements MigrationInterface {
+export class CreateMigration1735424119330 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
         const pageRepository = queryRunner.manager.getRepository(PageEntity);
-
         const pageAppsRepository = queryRunner.manager.getRepository(PageAppsEntity);
         const routeRepository = queryRunner.manager.getRepository(RouteEntity);
         const appRepository = queryRunner.manager.getRepository(AppEntity);
-
-        pageAppsRepository.delete({});
-        appRepository.delete({});
-        routeRepository.delete({});
-        pageRepository.delete({});
 
         const h2c = await appRepository.save(
             new AppEntity({
@@ -143,5 +137,15 @@ export class CreateMigration1735423027921 implements MigrationInterface {
         ]);
     }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {}
+    public async down(queryRunner: QueryRunner): Promise<void> {
+        const pageRepository = queryRunner.manager.getRepository(PageEntity);
+        const pageAppsRepository = queryRunner.manager.getRepository(PageAppsEntity);
+        const routeRepository = queryRunner.manager.getRepository(RouteEntity);
+        const appRepository = queryRunner.manager.getRepository(AppEntity);
+
+        pageAppsRepository.delete({});
+        appRepository.delete({});
+        routeRepository.delete({});
+        pageRepository.delete({});
+    }
 }

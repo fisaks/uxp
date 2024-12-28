@@ -1,5 +1,6 @@
 import { AppConfigData } from "@uxp/common";
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { BeforeInsert, BeforeUpdate, Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import slugify from "slugify";
 
 // App Entity
 @Entity("apps")
@@ -13,6 +14,9 @@ export class AppEntity {
     @Column({ unique: true })
     name!: string; // App name (e.g., "H2C")
 
+    @Column({ unique: true })
+    identifier!: string;
+
     @Column()
     baseUrl!: string; // Base URL for reverse proxy
 
@@ -21,4 +25,12 @@ export class AppEntity {
 
     @Column()
     isActive!: boolean; // Indicates if the app is active
+
+    @BeforeInsert()
+    @BeforeUpdate()
+    generateIdentifier() {
+        if (!this.identifier || this.name) {
+            this.identifier = slugify(this.name, { lower: true, strict: true });
+        }
+    }
 }
