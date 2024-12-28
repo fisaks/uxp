@@ -5,7 +5,7 @@ import ReactDOM from "react-dom/client"; // React 18's new API
 import { Provider } from "react-redux";
 import store from "./app/store";
 import UxpApp from "./UxpApp";
-
+import "./app/remoteAppBroadcaster";
 //import './index.css'; // Optional: import a global CSS file
 
 // Get the root element in the HTML
@@ -20,10 +20,6 @@ if (!rootElement) {
 const root = ReactDOM.createRoot(rootElement);
 
 const cache = createCache({ key: "uxp", prepend: true });
-
-if (!window.uxp) {
-    window.uxp = {};
-}
 
 // Render the App component
 root.render(

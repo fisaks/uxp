@@ -5,6 +5,7 @@ declare global {
             theme?: unknown;
             defaultTheme?: string;
             updateTheme?: (mode: unknown) => void;
+            getUser?: () => UserPubllic | undefined;
         };
     }
 }

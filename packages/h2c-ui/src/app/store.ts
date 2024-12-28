@@ -1,4 +1,5 @@
 import { configureStore } from "@reduxjs/toolkit";
+import { remoteAppReducer } from "@uxp/ui-lib";
 import { createLogger } from "redux-logger";
 
 import templateReducer from "../features/template/templateSlice";
@@ -12,6 +13,7 @@ export const createStore = () => {
     return configureStore({
         reducer: {
             template: templateReducer,
+            remoteApp: remoteAppReducer,
         },
         devTools: process.env.NODE_ENV === "development",
         middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(logger),
