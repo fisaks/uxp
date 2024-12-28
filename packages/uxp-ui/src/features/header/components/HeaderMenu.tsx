@@ -59,7 +59,7 @@ const HeaderMenu: React.FC<HeaderMenuProps> = ({ isDesktop }) => {
                     )}
 
                     <Typography variant="h6" noWrap sx={{ flexGrow: 1 }}>
-                        Responsive UI
+                        Unified Experience Platform
                     </Typography>
 
                     {isDesktop &&

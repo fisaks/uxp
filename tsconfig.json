@@ -19,7 +19,6 @@
         "composite": true,
         "baseUrl": ".",
         "paths": {
- 
             "@uxp/common": [
                 "packages/uxp-common/dist",
                 "packages/uxp-common/src",
@@ -35,7 +34,6 @@
             "@uxp/tools": [
                 "packages/tools/src",
             ],
-
         },
         "types": [
             "node",
@@ -57,6 +55,6 @@
     ],
     "files": [
         "typings.d.ts",
-      ]
-
+        "global.d.ts",
+    ]
 }

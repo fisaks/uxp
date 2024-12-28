@@ -10,7 +10,8 @@
         "clean": "pnpm rimraf tsconfig.tsbuildinfo dist",
         "test": "pnpm jest",
         "lint": "pnpm eslint .",
-        "lint:fix": "pnpm eslint . --fix"
+        "lint:fix": "pnpm eslint . --fix",
+        "watch": "pnpm tsc --watch"
     },
     "keywords": [],
     "author": "",

@@ -1,9 +1,10 @@
-import React from "react";
-import ImageDisplay from "./ImageDisplay";
-import { fetchTemplate } from "./features/template/templateThunk";
-import { useDispatch, useSelector } from "react-redux";
-import { selectTemplateValue } from "./features/template/templateSelector";
 import { Button } from "@mui/material";
+import { UxpTheme } from "@uxp/ui-lib";
+import React from "react";
+import { useSelector } from "react-redux";
+import ImageDisplay from "./ImageDisplay";
+import { selectTemplateValue } from "./features/template/templateSelector";
+import { fetchTemplate } from "./features/template/templateThunk";
 import { useAppDispatch } from "./hooks";
 
 const H2CApp: React.FC = () => {
@@ -15,15 +16,17 @@ const H2CApp: React.FC = () => {
     };
 
     return (
-        <div>
-            <h1>Welcome to U2C App</h1>
+        <UxpTheme>
+            <div>
+                <h1>Welcome to U2C App</h1>
 
-            <ImageDisplay />
-            <Button variant="contained" color="primary" onClick={handleButtonClick}>
-                Call Template Thunk
-            </Button>
-            <div>{value}</div>
-        </div>
+                <ImageDisplay />
+                <Button variant="contained" color="primary" onClick={handleButtonClick}>
+                    Call Template Thunk
+                </Button>
+                <div>{value}</div>
+            </div>
+        </UxpTheme>
     );
 };
 

@@ -19,7 +19,11 @@ if (!rootElement) {
 // Create a React root
 const root = ReactDOM.createRoot(rootElement);
 
-const cache = createCache({ key: "css", prepend: true });
+const cache = createCache({ key: "uxp", prepend: true });
+
+if (!window.uxp) {
+    window.uxp = {};
+}
 
 // Render the App component
 root.render(

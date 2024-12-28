@@ -8,3 +8,4 @@ export { default as ValidatedTextField } from "./forms/ValidatedTextField";
 //.layout
 export { default as CenteredBox } from "./layout/CenteredBox";
 export * from "./layout/Loading";
+export * from "./theme/UxpTheme";

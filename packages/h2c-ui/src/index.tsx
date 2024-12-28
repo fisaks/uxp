@@ -9,11 +9,6 @@ import H2CApp from "./H2CApp";
 const styleInsert = require("../../tools/src/insert-function.cjs");
 
 // Extend the Window interface to include __UXP_PORTAL__
-declare global {
-    interface Window {
-        __UXP_PORTAL__?: boolean;
-    }
-}
 declare const module: __WebpackModuleApi.Module;
 // Get the root element in the HTML
 
