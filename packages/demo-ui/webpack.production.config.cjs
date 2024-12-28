@@ -10,14 +10,15 @@ module.exports = merge(baseConfig, {
 
     output: {
         filename: '[name].[contenthash].bundle.js', // Unique names for entry points
-        chunkFilename: 'h2c-[name].[contenthash].js', // Unique names for lazy-loaded chunks
+        chunkFilename: 'uxp-demo-[name].[contenthash].js', // Unique names for lazy-loaded chunks
         path: path.resolve(__dirname, "dist"), // Output directory for the build
         clean: true,
         library: {
-            name: 'h2c',
+            name: 'uxp-demo',
             type: 'window',
         },
     },
+
 
     optimization: {
         minimize: true, // Enable minimization

@@ -19,11 +19,10 @@ module.exports = merge(baseConfig, {
             },
 
         ],
-        port: 3010, // Port for the development server
+        port: 3020, // Port for the development server
         hot: true, // Enable hot module replacement
         watchFiles: [
             path.resolve(__dirname, 'src'),
-            path.resolve(__dirname, '../h2c-common'),
             path.resolve(__dirname, '../uxp-common'),
             path.resolve(__dirname, '../uxp-ui-lib'),
         ],
@@ -31,7 +30,7 @@ module.exports = merge(baseConfig, {
         proxy: [
             {
                 context: ["/api"], // Match paths starting with /api
-                target: "http://localhost:3011", // Backend server
+                target: "http://localhost:3021", // Backend server
                 changeOrigin: true, // Handle host header changes
 
                 secure: false, // If the backend is using HTTP, not HTTPS

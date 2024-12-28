@@ -44,11 +44,20 @@ start_dev_env() {
     tmux rename-window -t $SESSION_NAME:0 'uxp'
     
     # Create a new window (tab) and rename it to 'h2c'
-    tmux new-window -t $SESSION_NAME -n 'h2c'
-    tmux split-window -h -t $SESSION_NAME:1
-    tmux send-keys -t $SESSION_NAME:1.0 "pnpm run start:h2c-bff" C-m
-    tmux send-keys -t $SESSION_NAME:1.1 "pnpm run start:h2c-app" C-m
+    tmux new-window -t $SESSION_NAME -n 'demo&h2c'
     
+    tmux split-window -v -t $SESSION_NAME:1
+    tmux select-pane -t 0
+    tmux split-window -h -t $SESSION_NAME:1
+    tmux select-pane -t 2
+    tmux split-window -h -t $SESSION_NAME:1
+    tmux send-keys -t $SESSION_NAME:1.0 "pnpm run start:demo-bff" C-m
+    tmux send-keys -t $SESSION_NAME:1.1 "pnpm run start:demo-app" C-m
+    tmux send-keys -t $SESSION_NAME:1.2 "pnpm run start:h2c-bff" C-m
+    tmux send-keys -t $SESSION_NAME:1.3 "pnpm run start:h2c-app" C-m
+    
+
+
     # Select the first tab
     tmux select-window -t $SESSION_NAME:0
     # Attach to the tmux session

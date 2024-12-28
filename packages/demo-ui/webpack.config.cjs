@@ -1,4 +1,4 @@
-process.env.META_TAG = "h2c";
+process.env.META_TAG = "uxp-demo";
 
 const path = require("path");
 const { merge } = require("webpack-merge"); // Extend base config
@@ -13,7 +13,7 @@ module.exports = merge(baseConfig, {
     devtool: "eval-source-map",
 
     entry: {
-        "h2c-ui": "./src/index.tsx", // Entry point for this package
+        "uxp-demo-ui": "./src/index.tsx", // Entry point for this package
     },
     resolve: {
         alias: {
@@ -24,12 +24,13 @@ module.exports = merge(baseConfig, {
 
     output: {
         filename: '[name].bundle.js', // Unique names for entry points
-        chunkFilename: 'h2c-[name].js', // Unique names for lazy-loaded chunks
+        chunkFilename: 'uxp-demo-[name].js', // Unique names for lazy-loaded chunks
         path: path.resolve(__dirname, "dist"), // Output directory for the build
         clean: true,
         library: {
-            name: 'h2c',
+            name: 'uxp-demo',
             type: 'window',
+
         },
     },
     plugins: [

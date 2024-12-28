@@ -12,7 +12,9 @@
         "start:app": "pnpm --filter=@uxp/ui start ",
         "start:bff": "pnpm --filter=@uxp/bff dev ",
         "start:h2c-app": "pnpm --filter=@h2c/ui start ",
-        "start:bff": "pnpm --filter=@h2c/bff dev ",
+        "start:h2c-bff": "pnpm --filter=@h2c/bff dev ",
+        "start:demo-app": "pnpm --filter=@uxp/demo-ui start ",
+        "start:demo-bff": "pnpm --filter=@uxp/demo-bff dev ",
 
         "lint": "eslint packages/**",
         "lint:fix": "eslint packages/** --fix",

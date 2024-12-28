@@ -4,7 +4,7 @@ import { PageAppsEntity } from "../entities/PageAppsEntity";
 import { PageEntity } from "../entities/PageEntity";
 import { RouteEntity } from "../entities/RouteEntity";
 
-export class CreateMigration1734785063541 implements MigrationInterface {
+export class CreateMigration1735423027921 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
         const pageRepository = queryRunner.manager.getRepository(PageEntity);
 
@@ -17,7 +17,7 @@ export class CreateMigration1734785063541 implements MigrationInterface {
         routeRepository.delete({});
         pageRepository.delete({});
 
-        const app = await appRepository.save(
+        const h2c = await appRepository.save(
             new AppEntity({
                 name: "H2C",
                 baseUrl: "http://localhost:3010",
@@ -26,8 +26,23 @@ export class CreateMigration1734785063541 implements MigrationInterface {
             })
         );
 
+        const demo = await appRepository.save(
+            new AppEntity({
+                name: "uxp-demo",
+                baseUrl: "http://localhost:3020",
+                isActive: true,
+                config: { contextPath: "/", indexPage: "index.html" },
+            })
+        );
+
         const home2CarePage = await pageRepository.save(
             new PageEntity({ name: "Home 2 Care", identifier: "home-2-care" })
+        );
+        const uxpDemoPage = await pageRepository.save(
+            new PageEntity({ name: "Demo Page", identifier: "uxp-demo-page" })
+        );
+        const uxpDemoPage2 = await pageRepository.save(
+            new PageEntity({ name: "Demo App 2", identifier: "uxp-demo-page-2" })
         );
 
         const loginPage = await pageRepository.save(new PageEntity({ name: "Login", identifier: "login" }));
@@ -41,7 +56,11 @@ export class CreateMigration1734785063541 implements MigrationInterface {
         const startPage = await pageRepository.save(new PageEntity({ name: "Start Page", identifier: "start-page" }));
 
         await pageAppsRepository.save([
-            new PageAppsEntity({ page: home2CarePage, app: app, order: 1, roles: ["user"] }),
+            new PageAppsEntity({ page: home2CarePage, app: h2c, order: 1, roles: ["user"] }),
+            new PageAppsEntity({ page: uxpDemoPage, app: demo, order: 1, roles: ["user"] }),
+            new PageAppsEntity({ page: uxpDemoPage2, app: demo, order: 1, roles: ["user"] }),
+            new PageAppsEntity({ page: uxpDemoPage2, app: demo, order: 2, roles: ["user"] }),
+
             new PageAppsEntity({ page: loginPage, order: 1, roles: undefined, internalComponent: "LoginPage" }),
             new PageAppsEntity({ page: registerPage, order: 1, roles: undefined, internalComponent: "RegisterPage" }),
             new PageAppsEntity({ page: myProfilePage, order: 1, roles: ["user"], internalComponent: "MyProfilePage" }),
@@ -59,6 +78,20 @@ export class CreateMigration1734785063541 implements MigrationInterface {
                 routePattern: "/home-2-care/*",
                 link: "/home-2-care/",
                 page: home2CarePage,
+                roles: ["user"],
+                groupName: "header-menu",
+            }),
+            new RouteEntity({
+                routePattern: "/demo-app/*",
+                link: "/demo-app/",
+                page: uxpDemoPage,
+                roles: ["user"],
+                groupName: "header-menu",
+            }),
+            new RouteEntity({
+                routePattern: "/demo-app-2/*",
+                link: "/demo-app-2/",
+                page: uxpDemoPage2,
                 roles: ["user"],
                 groupName: "header-menu",
             }),
