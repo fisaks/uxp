@@ -3,7 +3,7 @@ import axios from "axios";
 import React, { useEffect, useRef, useState } from "react";
 
 interface RemoteAppProps {
-    uuid: string;
+    contentUuid: string;
 }
 
 declare global {
@@ -16,16 +16,16 @@ declare global {
 
 const fetchPromises: Record<string, Promise<any>> = {};
 
-const RemoteApp: React.FC<RemoteAppProps> = ({ uuid }) => {
+const RemoteApp: React.FC<RemoteAppProps> = ({ contentUuid }) => {
     const containerRef = useRef<HTMLDivElement>(null);
-    const [loaded, setLoaded] = useState(false);
+    const [contentLoaded, setContentLoaded] = useState(false);
     useEffect(() => {
         const fetchAndRenderApp = async () => {
             if (!containerRef.current) return;
 
             try {
                 // Fetch the index.html using Axios
-                const response = await axios.get(`/api/content/index/${uuid}`, {
+                const response = await axios.get(`/api/content/index/${contentUuid}`, {
                     headers: {
                         "Content-Type": "text/html",
                     },
@@ -45,7 +45,7 @@ const RemoteApp: React.FC<RemoteAppProps> = ({ uuid }) => {
                 // Parse the fetched HTML
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(html, "text/html");
-                let currentApp: string = "";
+                //let currentApp: string = "";
                 // Function to handle <script> tags and inject into the main document
                 const injectScript = (scriptElement: HTMLScriptElement, target: HTMLElement | ShadowRoot) => {
                     const newScript = document.createElement("script");
@@ -65,7 +65,7 @@ const RemoteApp: React.FC<RemoteAppProps> = ({ uuid }) => {
 
                     if (scriptElement.src && scriptElement.dataset.uxpRemoteApp !== undefined) {
                         const remoteApp = scriptElement.dataset.uxpRemoteApp;
-                        currentApp = remoteApp;
+                        //currentApp = remoteApp;
                         // Special handling for scripts with the "uxp-remote-app" data attribute
                         if (window[remoteApp]) {
                             fetchPromises[remoteApp] = Promise.resolve();
@@ -81,7 +81,7 @@ const RemoteApp: React.FC<RemoteAppProps> = ({ uuid }) => {
                             window[remoteApp].initApplication(shadowRoot);
                         });
                     } else {
-                        console.log("Adding script:", uuid);
+                        console.log("Adding script:", contentUuid);
                         target.appendChild(newScript);
                     }
                 };
@@ -135,20 +135,20 @@ const RemoteApp: React.FC<RemoteAppProps> = ({ uuid }) => {
             } catch (error) {
                 console.error(`Error fetching or rendering remote app:`, error);
             } finally {
-                setTimeout(() => setLoaded(true), 0);
+                setTimeout(() => setContentLoaded(true), 0);
             }
         };
 
         fetchAndRenderApp();
-    }, [uuid]); // Refetch when UUID changes
+    }, [contentUuid]); // Refetch when UUID changes
 
     return (
         <>
-            {!loaded && <Loading fullHeight={false} />}
+            {!contentLoaded && <Loading fullHeight={false} />}
             <div
-                id={`remote-app-${uuid}`}
+                id={`remote-app-${contentUuid}`}
                 ref={containerRef}
-                style={{ visibility: loaded ? "visible" : "hidden" }}
+                style={{ visibility: contentLoaded ? "visible" : "hidden" }}
             ></div>
         </>
     );

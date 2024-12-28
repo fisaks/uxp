@@ -14,7 +14,7 @@ const RoutePage: React.FC<RoutePageProps> = ({ pageUuid }) => {
         if (m.internalComponent) {
             return <DynamicComponentLoader key={m.uuid} componentName={m.internalComponent} />;
         } else {
-            return <RemoteApp key={m.uuid} uuid={m.uuid} />;
+            return <RemoteApp key={m.uuid} contentUuid={m.uuid} />;
         }
     });
 };
