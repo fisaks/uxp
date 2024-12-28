@@ -1,6 +1,5 @@
 import { useMediaQuery } from "@mui/material";
 import React, { useState } from "react";
-//import theme from "./theme";
 import { Loading } from "@uxp/ui-lib";
 import { useSelector } from "react-redux";
 import { BrowserRouter } from "react-router-dom";

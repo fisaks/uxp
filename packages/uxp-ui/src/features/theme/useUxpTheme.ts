@@ -1,8 +1,8 @@
-import { UXP_THEME_CHANGE_EVENT } from "@uxp/ui-lib";
+import { UXP_THEME_CHANGE_EVENT, defaultTheme, draculaTheme } from "@uxp/ui-lib";
 import React, { useEffect } from "react";
 import { useSelector } from "react-redux";
 import { selectMySetting } from "../settings/mySettingSelector";
-import { defaultTheme, draculaTheme } from "./theme";
+
 const DEFAULT_TEHME = "dracula";
 export const useUxpTheme = () => {
     const mySettings = useSelector(selectMySetting());
@@ -14,6 +14,7 @@ export const useUxpTheme = () => {
     useEffect(() => {
         if (window.uxp && !window.uxp?.theme) {
             window.uxp.theme = theme;
+            window.uxp.defaultTheme = DEFAULT_TEHME;
             window.uxp.updateTheme = (theme) => {
                 window.uxp!.theme = theme;
 

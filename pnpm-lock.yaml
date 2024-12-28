@@ -476,6 +476,9 @@ importers:
       '@mui/material':
         specifier: ^6.1.8
         version: 6.1.10(@emotion/react@11.13.5(@types/react@18.3.14)(react@18.3.1))(@emotion/styled@11.13.5(@emotion/react@11.13.5(@types/react@18.3.14)(react@18.3.1))(@types/react@18.3.14)(react@18.3.1))(@types/react@18.3.14)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@mui/utils':
+        specifier: ^6.1.10
+        version: 6.1.10(@types/react@18.3.14)(react@18.3.1)
       '@uxp/common':
         specifier: workspace:*
         version: link:../uxp-common

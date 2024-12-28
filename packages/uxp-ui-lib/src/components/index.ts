@@ -9,3 +9,4 @@ export { default as ValidatedTextField } from "./forms/ValidatedTextField";
 export { default as CenteredBox } from "./layout/CenteredBox";
 export * from "./layout/Loading";
 export * from "./theme/UxpTheme";
+export * from "./theme/theme";

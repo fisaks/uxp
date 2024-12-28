@@ -63,16 +63,22 @@ export class RemoteController {
                 return buildPath("/api/content/resource", uuid, url);
             };
 
+            document.querySelectorAll("script:not([src])").forEach((script) => {
+                if (script.getAttribute("data-uxp-remove") === "true") {
+                    script.remove();
+                }
+            });
+
             // Update script, link,
             document.querySelectorAll("script[src]").forEach((script) => {
-                if (script.getAttribute("data-uxp-libs") === "true") {
+                if (script.getAttribute("data-uxp-remove") === "true") {
                     script.remove();
                 } else {
                     script.setAttribute("src", rewriteUrl(script.getAttribute("src")!));
                 }
             });
             document.querySelectorAll("link[href]").forEach((link) => {
-                if (link.getAttribute("data-uxp-libs") === "true") {
+                if (link.getAttribute("data-uxp-remove") === "true") {
                     link.remove();
                 } else {
                     link.setAttribute("href", rewriteUrl(link.getAttribute("href")!));

@@ -24,6 +24,7 @@
         "@fontsource/roboto": "^5.1.0",
         "@mui/icons-material": "^6.1.8",
         "@mui/material": "^6.1.8",
+        "@mui/utils": "^6.1.10",
         "@uxp/common": "workspace:*"
     },
     "devDependencies": {
