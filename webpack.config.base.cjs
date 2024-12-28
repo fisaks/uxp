@@ -23,7 +23,7 @@ module.exports = {
                 use: "ts-loader", // Process TypeScript files
             },
             {
-                test: /\.css$/,
+                test: /\.module\.css$/,
                 use: [
                     {
                         loader: "style-loader",
@@ -34,7 +34,29 @@ module.exports = {
                             },
                         },
                     },
-                    "css-loader"], // Process CSS files
+                    {
+                        loader: "css-loader",
+                        options: {
+                            modules: true, // Enables CSS modules
+                        },
+                    },
+                ],
+            },
+            {
+                test: /\.css$/,
+                exclude: /\.module\.css$/,
+                use: [
+                    {
+                        loader: "style-loader",
+                        options: {
+                            insert: metaTag === "no-app" ? undefined : require.resolve("./packages/tools/src/insert-function.cjs"),
+                            attributes: {
+                                "data-uxp-app": metaTag,
+                            },
+                        },
+                    },
+                    "css-loader", // Process regular CSS files
+                ],
             },
             {
                 test: /\.(png|jpg|jpeg|gif|svg)$/i, // Matches common image formats

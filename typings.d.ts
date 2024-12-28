@@ -12,7 +12,7 @@ declare module "*.scss" {
     export = classNames;
 }
 
-declare module "*.css" {
+declare module "*.module.css" {
     interface IClassNames {
         [className: string]: string;
     }

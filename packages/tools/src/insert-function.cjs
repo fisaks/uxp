@@ -5,6 +5,10 @@ let roots = [];
 function init(documentRoot) {
     roots.push(documentRoot);
 
+    applytoRoot(documentRoot);
+
+}
+function applytoRoot(documentRoot) {
     for (const element of elements) {
         const id = element.getAttribute('id');
         const existingElement = documentRoot.querySelector(`#${id}`);
@@ -19,14 +23,16 @@ function init(documentRoot) {
 function insertIntoTarget(element) {
 
 
-    console.log('Style insertIntoTarget', element, elements,roots);
+    console.log('Style insertIntoTarget', element, elements, roots);
 
     element.setAttribute('id', `uxp-${crypto.randomUUID()}`);
     elements.push(element);
     document.head.appendChild(element);
-    for (const root of roots) {
-        init(root);
-    }
+    setTimeout(() => {
+        for (const root of roots) {
+            applytoRoot(root);
+        }            
+    }, 0);
 }
 
 

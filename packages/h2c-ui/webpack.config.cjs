@@ -12,7 +12,9 @@ module.exports = merge(baseConfig, {
     mode: "development",
     devtool: "eval-source-map",
 
-    entry: "./src/index.tsx", // Entry point for this package
+    entry: {
+        "h2c-ui": "./src/index.tsx", // Entry point for this package
+    },
     resolve: {
         alias: {
             ajv$: require.resolve("ajv"), // Resolve to AJV v8
@@ -21,7 +23,8 @@ module.exports = merge(baseConfig, {
     },
 
     output: {
-        filename: "h2c-ui.bundle.js",
+        filename: '[name].bundle.js', // Unique names for entry points
+        chunkFilename: 'h2c-[name].js', // Unique names for lazy-loaded chunks
         path: path.resolve(__dirname, "dist"), // Output directory for the build
         clean: true,
         library: {
