@@ -1,8 +1,15 @@
+import { ErrorCodes, UserRole } from "@uxp/common";
 import Ajv, { ValidateFunction } from "ajv";
 import { FastifyInstance } from "fastify";
 import "reflect-metadata";
-import { QueryRunner } from "typeorm";
+import { DataSource } from "typeorm";
+import { ACCESS_TOKEN } from "../config/constant";
+import { createErrorMessageResponse } from "../error/errorResponse";
+import { Token } from "../types/token.types";
+import { AppLogger } from "../utils/AppLogger";
+import { HandlerConstructor, HandlerRegistry } from "./handler.registry";
 import { getUseQueryRunnerOptions, UseQueryRunnerOptions } from "./queryrunner.decorator";
+import { hasRequiredRoles, validateMessagePayload, withQueryRunner } from "./request-utils";
 const { AppDataSource } = require("../db/typeorm.config");
 
 const ajv = new Ajv();
@@ -16,8 +23,11 @@ export interface WebSocketActionMetadata {
     handlerName: string;
     validate?: (payload: any) => boolean;
     schema?: object;
+    authenticate: boolean; // If true, the route requires authentication
+    roles: UserRole[]; // Roles allowed to access this route
 }
 
+type MessageValidateFunction = WebSocketActionMetadata["validate"];
 /**
  * WebSocketAction decorator for registering WebSocket message handlers
  * @param action The action name for the WebSocket message
@@ -25,17 +35,27 @@ export interface WebSocketActionMetadata {
  */
 export function WebSocketAction(
     action: string,
-    options?: { validate?: (payload: any) => boolean; schema?: object }
+    options?: {
+        authenticate?: boolean; // Requires authentication (default: true)
+        roles?: UserRole[]; // Allowed roles (default: ['user'])
+        validate?: MessageValidateFunction;
+        schema?: WebSocketActionMetadata["schema"];
+    }
 ): MethodDecorator {
     return function (target: any, propertyKey: string | symbol) {
-        const actions: WebSocketActionMetadata[] = Reflect.getMetadata(WEBSOCKET_ACTIONS_METADATA_KEY, target) || [];
+        const actions: WebSocketActionMetadata[] =
+            Reflect.getMetadata(WEBSOCKET_ACTIONS_METADATA_KEY, target.constructor) || [];
+        HandlerRegistry.registerWsHandler(target.constructor);
+
         actions.push({
             action,
             handlerName: propertyKey as string,
             validate: options?.validate,
             schema: options?.schema,
+            authenticate: options?.authenticate ?? true, // Default to true
+            roles: options?.roles ?? (options?.authenticate ? ["user"] : []),
         });
-        Reflect.defineMetadata(WEBSOCKET_ACTIONS_METADATA_KEY, actions, target);
+        Reflect.defineMetadata(WEBSOCKET_ACTIONS_METADATA_KEY, actions, target.constructor);
     };
 }
 
@@ -54,19 +74,27 @@ interface WebSocketActionHandler {
     validate?: (payload: unknown) => boolean;
     schemaValidate?: ValidateFunction;
     queryRunnerOptions?: UseQueryRunnerOptions | null;
+    authenticate: boolean;
+    roles: UserRole[];
 }
 
 type WebSocketActionMap = Record<string, WebSocketActionHandler>;
 
-function preloadWebSocketHandlers(handlers: any[]): WebSocketActionMap {
+function preloadWebSocketHandlers(fastify: FastifyInstance, handlers: any[]): WebSocketActionMap {
     const actionMap: WebSocketActionMap = {};
 
     handlers.forEach((HandlerClass) => {
-        const instance = new HandlerClass();
-        const actions: WebSocketActionMetadata[] = getWebSocketActions(HandlerClass.prototype);
+        const instance =
+            HandlerClass.length > 0 // Constructor has parameters
+                ? new HandlerClass(fastify) // Pass the Fastify instance
+                : new HandlerClass(); // Instantiate without parameters
 
-        actions.forEach(({ action, validate, schema, handlerName }) => {
-            console.log(`WebSocket Action:\t/ws\t${action} => ${HandlerClass.name}.${handlerName}`);
+        const actions: WebSocketActionMetadata[] = getWebSocketActions(HandlerClass);
+
+        actions.forEach(({ action, validate, schema, handlerName, authenticate, roles }) => {
+            AppLogger.info(undefined, {
+                message: `WebSocket Action: ${action} => ${HandlerClass.name}.${handlerName}`,
+            });
             const schemaValidate = schema ? ajv.compile(schema) : undefined;
             const queryRunnerOptions = getUseQueryRunnerOptions(HandlerClass.prototype, handlerName);
 
@@ -75,100 +103,138 @@ function preloadWebSocketHandlers(handlers: any[]): WebSocketActionMap {
                 validate,
                 schemaValidate,
                 queryRunnerOptions,
+                authenticate,
+                roles,
             };
         });
     });
 
     return actionMap;
 }
+type RegisterWebSocketHandlersArgs = {
+    fastify: FastifyInstance;
+    dataSource?: DataSource;
+    handlers: HandlerConstructor[];
+};
+type WebSocketMessage = {
+    action: string;
+    payload: Record<string, unknown>;
+};
 /**
  * Register WebSocket handlers with Fastify
  * @param fastify Fastify instance
  * @param handlers Array of handler classes
  */
-export function registerWebSocketHandlers(fastify: FastifyInstance, handlers: any[]) {
-    const actionMap = preloadWebSocketHandlers(handlers);
-    fastify.get("/ws", { websocket: true }, (socket /* WebSocket */, _req /* FastifyRequest */) => {
-        console.log("WebSocket connection established");
+export function registerWebSocketHandlers({ fastify, dataSource, handlers }: RegisterWebSocketHandlersArgs) {
+    const actionMap = preloadWebSocketHandlers(fastify, handlers);
+
+    fastify.get("/ws", { websocket: true }, async (socket /* WebSocket */, request /* FastifyRequest */) => {
+        AppLogger.info(request, { message: "WebSocket connection established" });
+        let user: Token | undefined = undefined;
+        if (request.cookies[ACCESS_TOKEN]) {
+            try {
+                await request.jwtVerify();
+                user = request.user as Token;
+            } catch (err: unknown) {
+                AppLogger.error(request, {
+                    message: "Failed to verify access token in WebSocket connection",
+                    error: err,
+                    object: { username: user?.username },
+                });
+            }
+        }
 
         socket.on("message", async (message) => {
-            let queryRunner: QueryRunner | undefined;
             try {
                 let payload: unknown;
                 let action: string | undefined;
+
                 try {
-                    const parsedMessage = JSON.parse(message.toString());
+                    const parsedMessage: WebSocketMessage = JSON.parse(message.toString());
                     action = parsedMessage.action;
                     payload = parsedMessage.payload;
                 } catch (err) {
-                    console.error("Invalid JSON payload", err);
-                    socket.send(JSON.stringify({ error: "Invalid JSON payload" }));
+                    AppLogger.error(request, { message: "Invalid JSON Message", error: err });
+                    socket.send(
+                        createErrorMessageResponse({ code: ErrorCodes.VALIDATION, message: "Invalid Message" })
+                    );
                     return;
                 }
 
                 // Ensure the action exists in the action map
                 const actionHandler = action && actionMap[action];
                 if (!actionHandler) {
+                    AppLogger.error(request, {
+                        message: `No handler registered for action "${action}"`,
+                        object: { username: user?.username, action, roles: user?.roles },
+                    });
                     socket.send(
-                        JSON.stringify({
-                            error: `No handler registered for action "${action}"`,
+                        createErrorMessageResponse({
+                            code: ErrorCodes.NOT_FOUND,
+                            message: `No handler registered for action "${action}`,
                         })
                     );
                     return;
                 }
-                const { handler, validate, schemaValidate, queryRunnerOptions } = actionHandler;
+                AppLogger.info(request, {
+                    message: "Processing WebSocket action",
+                    object: { username: user?.username, action, roles: user?.roles },
+                });
 
-                // Perform custom validation
-                if (validate && !validate(payload)) {
+                const {
+                    handler,
+                    validate,
+                    schemaValidate,
+                    queryRunnerOptions,
+                    authenticate: needsAuthentication,
+                    roles: requiredRoles,
+                } = actionHandler;
+
+                if (needsAuthentication && !user) {
                     socket.send(
-                        JSON.stringify({
-                            error: "Validation failed",
+                        createErrorMessageResponse({
+                            code: ErrorCodes.UNAUTHORIZED,
+                            message: "Authentication required",
                         })
                     );
                     return;
                 }
-                // Schema validation
-                if (schemaValidate && !schemaValidate(payload)) {
+
+                if (!hasRequiredRoles({ userRoles: user?.roles ?? [], requiredRoles })) {
                     socket.send(
-                        JSON.stringify({
-                            error: "Schema validation failed",
-                            details: schemaValidate.errors,
-                        })
+                        createErrorMessageResponse({ code: ErrorCodes.FORBIDDEN, message: "Insufficient permissions" })
                     );
                     return;
                 }
 
-                // Check for QueryRunner options
-                if (queryRunnerOptions) {
-                    queryRunner = AppDataSource.createQueryRunner();
-                    await queryRunner!.connect();
+                const validation = validateMessagePayload(payload, validate, schemaValidate);
+                if (validation) {
+                    socket.send(
+                        createErrorMessageResponse(
+                            { code: ErrorCodes.VALIDATION, message: validation.message },
+                            validation.errors ?? undefined
+                        )
+                    );
+                    return;
+                }
 
-                    if (queryRunnerOptions.transactional) {
-                        await queryRunner!.startTransaction();
+                await withQueryRunner(dataSource, queryRunnerOptions, async (queryRunner) => {
+                    const args = queryRunner ? [payload, user, queryRunner] : [payload, user];
+                    const result = await handler(...args);
+
+                    if (result) {
+                        socket.send(JSON.stringify({ success: true, data: result }));
                     }
-                }
-
-                // Inject the QueryRunner as an additional argument if required
-                const args = queryRunner ? [payload, queryRunner] : [payload];
-                const result = await handler(...args);
-
-                if (queryRunner?.isTransactionActive) {
-                    await queryRunner.commitTransaction();
-                }
-
-                if (result) {
-                    socket.send(JSON.stringify(result));
-                }
+                    return result;
+                });
             } catch (err: any) {
-                if (queryRunner?.isTransactionActive) {
-                    await queryRunner.rollbackTransaction();
-                }
-                console.error("Error in WebSocket message", err);
-                socket.send(JSON.stringify({ error: err.message }));
-            } finally {
-                if (queryRunner) {
-                    await queryRunner.release();
-                }
+                AppLogger.error(request, { message: "Error in WebSocket message", error: err });
+                socket.send(
+                    createErrorMessageResponse({
+                        code: ErrorCodes.INTERNAL_SERVER_ERROR,
+                        message: "An unexpected error occurred",
+                    })
+                );
             }
         });
     });

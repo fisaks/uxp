@@ -1,5 +1,5 @@
 // src/utils/errorResponse.ts
-import { ErrorDetail, ApiErrorResponse } from "@uxp/common";
+import { ApiErrorResponse, ErrorDetail } from "@uxp/common";
 import { FastifyRequest } from "fastify";
 import { DateTime } from "luxon";
 
@@ -12,4 +12,12 @@ export const createErrorResponse = (errors: ErrorDetail[], request: FastifyReque
             correlationId: request.id, // Fastify automatically assigns a unique ID to each request
         },
     };
+};
+
+export const createErrorMessageResponse = (error: ErrorDetail, details?: object): string => {
+    return JSON.stringify({
+        success: false,
+        error,
+        details,
+    });
 };

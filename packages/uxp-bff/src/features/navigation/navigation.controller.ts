@@ -32,7 +32,7 @@ export class NavigationController {
             }
             return rolesOnElement.length === 0 || rolesOnElement.some((role) => user?.roles.includes(role));
         };
-
+        console.log("user", user);
         return {
             routes: routes
                 .filter((f) => shouldInclude(f.roles, f.unauthenticatedOnly))

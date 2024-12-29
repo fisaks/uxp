@@ -15,3 +15,6 @@ export interface ApiErrorResponse {
         correlationId: string;
     };
 }
+export type MessageErrorResponse = {
+    error: ErrorDetail;
+};

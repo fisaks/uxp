@@ -1,12 +1,15 @@
 import { ErrorCodes, UserRole } from "@uxp/common";
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import "reflect-metadata";
-import { QueryRunner } from "typeorm";
+import { DataSource } from "typeorm";
 
 import { ACCESS_TOKEN } from "../config/constant";
 import { createErrorResponse } from "../error/errorResponse";
+import { Token } from "../types/token.types";
+import { AppLogger } from "../utils/AppLogger";
+import { HandlerConstructor, HandlerRegistry } from "./handler.registry";
 import { getUseQueryRunnerOptions } from "./queryrunner.decorator";
-const { AppDataSource } = require("../db/typeorm.config");
+import { hasRequiredRoles, withQueryRunner } from "./request-utils";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -51,7 +54,7 @@ export function Route(
      */
     return function (target: any, propertyKey: string | symbol) {
         const routes: RouteMetadata[] = Reflect.getMetadata(ROUTES_METADATA_KEY, target.constructor) || [];
-
+        HandlerRegistry.registerRestHandler(target.constructor);
         routes.push({
             method,
             path,
@@ -75,13 +78,20 @@ export function getRoutes(target: any): RouteMetadata[] {
 }
 
 const ALL_METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"];
+type RegisterRoutesArgs = {
+    fastify: FastifyInstance;
+    dataSource?: DataSource;
+    controllers: HandlerConstructor[];
+    basePath?: string;
+};
+
 /**
  * Register all routes from controllers in Fastify
  * @param fastify Fastify instance
  * @param controllers Array of controller classes
  * @param basePath Base path for all routes
  */
-export function registerRoutes(fastify: FastifyInstance, controllers: any[], basePath: string = "/api") {
+export function registerRoutes({ fastify, dataSource, controllers, basePath = "/api" }: RegisterRoutesArgs) {
     controllers.forEach((ControllerClass) => {
         const instance =
             ControllerClass.length > 0 // Constructor has parameters
@@ -91,13 +101,15 @@ export function registerRoutes(fastify: FastifyInstance, controllers: any[], bas
         const routes: RouteMetadata[] = getRoutes(ControllerClass);
 
         routes.forEach(({ method, path, validate, schema, handlerName, authenticate, roles }) => {
-            console.log(`Registering route: ${method} ${basePath}${path} => ${ControllerClass.name}.${handlerName}`);
+            AppLogger.info(undefined, {
+                message: `Registering route: ${method} ${basePath}${path} => ${ControllerClass.name}.${handlerName}`,
+            });
 
             const originalHandler = instance[handlerName].bind(instance);
-
+            const url = `${basePath}${path}`;
             fastify.route({
                 method: method === "all" ? ALL_METHODS : method.toUpperCase(),
-                url: `${basePath}${path}`,
+                url,
                 schema, // Attach validation schema here
 
                 preHandler: async (request: FastifyRequest, reply: FastifyReply) => {
@@ -107,21 +119,20 @@ export function registerRoutes(fastify: FastifyInstance, controllers: any[], bas
                             try {
                                 await request.jwtVerify();
                             } catch (err) {
-                                fastify.log.error({ err }, "Failed to verify access token");
+                                AppLogger.error(request, { message: "Failed to verify access token", error: err });
                                 reply.code(401).send(createErrorResponse([{ code: ErrorCodes.UNAUTHORIZED }], request));
                                 return;
                             }
+                            const user = request.user as Token;
 
                             // Check user role
-                            if (roles && roles.length > 0) {
-                                const user = request.user as { roles: UserRole[] }; // Assume `user` is attached by `jwtVerify()`
-                                if (!user.roles.includes("admin") && !user.roles.some((r) => roles.includes(r))) {
-                                    fastify.log.error("User does not have the required role to access this route");
-                                    reply
-                                        .code(403)
-                                        .send(createErrorResponse([{ code: ErrorCodes.FORBIDDEN }], request));
-                                    return;
-                                }
+                            if (!hasRequiredRoles({ userRoles: user?.roles ?? [], requiredRoles: roles ?? [] })) {
+                                AppLogger.error(request, {
+                                    message: "User does not have the required role to access this route",
+                                    object: { url, roles: user?.roles },
+                                });
+                                reply.code(403).send(createErrorResponse([{ code: ErrorCodes.FORBIDDEN }], request));
+                                return;
                             }
                         }
                     }
@@ -132,38 +143,12 @@ export function registerRoutes(fastify: FastifyInstance, controllers: any[], bas
                         reply.code(400).send(createErrorResponse([{ code: ErrorCodes.VALIDATION }], request));
                         return;
                     }
-                    let queryRunner: QueryRunner | undefined;
-                    try {
-                        // Check for QueryRunner options
-                        const queryRunnerOptions = getUseQueryRunnerOptions(ControllerClass.prototype, handlerName);
-                        if (queryRunnerOptions) {
-                            queryRunner = AppDataSource.createQueryRunner();
-                            await queryRunner!.connect();
+                    const queryRunnerOptions = getUseQueryRunnerOptions(ControllerClass.prototype, handlerName);
 
-                            if (queryRunnerOptions.transactional && queryRunner) {
-                                await queryRunner.startTransaction();
-                            }
-                        }
-
-                        // Inject the QueryRunner as an additional argument if required
+                    return await withQueryRunner(dataSource, queryRunnerOptions, async (queryRunner) => {
                         const args = queryRunner ? [request, reply, queryRunner] : [request, reply];
-
-                        // Execute the original handler
-                        const result = await originalHandler(...args);
-                        if (queryRunner?.isTransactionActive) {
-                            await queryRunner.commitTransaction();
-                        }
-                        return result;
-                    } catch (err) {
-                        if (queryRunner?.isTransactionActive) {
-                            await queryRunner.rollbackTransaction();
-                        }
-                        throw err;
-                    } finally {
-                        if (queryRunner) {
-                            await queryRunner.release();
-                        }
-                    }
+                        return await originalHandler(...args);
+                    });
                 },
             });
         });

@@ -8,14 +8,18 @@ type LogMessage = {
 };
 
 type ErrorLogMessage = LogMessage & {
-    error?: Error;
+    error?: Error | unknown;
 };
 
 /**
  * A simple logger that logs messages with metadata.
  *
+ * This logger can be initialized with a Fastify logger instance and provides methods to log messages at different levels (info, warn, error, debug).
+ * If not initialized, it falls back to using the console for logging.
+ *
  * @example
  * ```typescript
+ * AppLogger.initialize(fastify.log);
  * AppLogger.info(req, { message: "Page app not found %s", args: [uuid] });
  * AppLogger.error(req, { message: "Failed to fetch or rewrite index.html", error: error as Error });
  * AppLogger.error(undefined, { error: err as Error });
@@ -56,7 +60,7 @@ export class AppLogger {
     private static mergeData(
         metadata: Record<string, unknown>,
         object?: Record<string, unknown>,
-        error?: Error
+        error?: Error | unknown
     ): Record<string, unknown> {
         return {
             ...metadata,

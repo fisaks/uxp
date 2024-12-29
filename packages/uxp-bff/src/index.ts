@@ -2,16 +2,18 @@ import path from "path";
 
 require("./config/env");
 const env = require("./config/envValidator");
+
 const { AppDataSource } = require("./db/typeorm.config");
 
 import fastifyWebsocket from "@fastify/websocket";
 import Fastify from "fastify";
 
 import fastifyCookie from "@fastify/cookie";
-import { discoverHandlers } from "./decorator/handler.discovery";
+import { HandlerRegistry } from "./decorator/handler.registry";
 import { registerRoutes } from "./decorator/route.decorator";
 import { registerWebSocketHandlers } from "./decorator/websocket.decorator";
 import errorHandler from "./error/errorHandler";
+import "./features/user/user.controller";
 import jwtPlugin from "./plugins/jwt"; //
 import { AppLogger } from "./utils/AppLogger";
 
@@ -41,12 +43,24 @@ if (!env.IsProd) {
 }
 
 // Discover and register REST and WebSocket handlers
-const handlers = discoverHandlers(path.join(__dirname, "./features"));
+HandlerRegistry.discoverHandlers(path.join(__dirname, "./features"));
+const restHandlers = HandlerRegistry.getRestHandlers();
+const wsHandlers = HandlerRegistry.getWsHandlers();
+//console.log("handlers", handlers);
+console.log("restHandlers", restHandlers);
+console.log("wsHandlers", wsHandlers);
 
-registerRoutes(fastify, handlers);
-registerWebSocketHandlers(fastify, handlers);
+registerRoutes({
+    fastify,
+    dataSource: AppDataSource,
+    controllers: Array.from(restHandlers),
+});
+registerWebSocketHandlers({
+    fastify,
+    dataSource: AppDataSource,
+    handlers: Array.from(wsHandlers),
+});
 
-console.error("errorHandler", fastify.errorHandler);
 // Start the server :)
 fastify.listen({ port: port, host: "0.0.0.0" }, (err, address) => {
     if (err) throw err;

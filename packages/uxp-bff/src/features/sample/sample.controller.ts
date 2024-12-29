@@ -1,7 +1,7 @@
 import { FastifyReply, FastifyRequest } from "fastify";
 import { Route } from "../../decorator/route.decorator";
 
-export class UserController {
+export class SampleController {
     @Route("get", "/sample/users")
     async getUsers(_req: FastifyRequest, _reply: FastifyReply) {
         // Simulate fetching users

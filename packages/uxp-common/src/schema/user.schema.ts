@@ -71,13 +71,13 @@ export const ProfileSchema: SchemaValidate<ProfilePayload, undefined, { uuid: st
             {
                 if: {
                     properties: {
-                        password: { minLength: 1 }, // Apply condition only if password has a value
+                        password: { type: "string", minLength: 1 }, // Apply condition only if password has a value
                     },
                 },
                 then: {
                     properties: {
                         password: { not: { const: { $data: "1/passwordOld" } } },
-                        passwordOld: { minLength: 8 },
+                        passwordOld: { type: "string", minLength: 8 },
                     },
                 },
             },
