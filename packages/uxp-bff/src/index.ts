@@ -12,9 +12,9 @@ import {
     jwtPlugin,
     registerRoutes,
     registerWebSocketHandlers,
+    IsProd,
 } from "@uxp/bff-common";
 import path from "path";
-import { IsProd } from "./config/constant";
 
 AppDataSource.initialize()
     .then(() => {
