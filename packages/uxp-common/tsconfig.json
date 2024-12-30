@@ -6,6 +6,8 @@
         "declaration": true,
         "declarationMap": true,
         "composite": true, // Required for project references
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
         "strict": true,
         "target": "ESNext",
         "module": "CommonJS",
