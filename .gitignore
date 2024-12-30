@@ -14,3 +14,4 @@ tsconfig.tsbuildinfo
 packages/uxp-ui/.htpasswd
 packages/uxp-bff/build_types
 .history
+build_types
