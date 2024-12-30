@@ -35,8 +35,7 @@ export const withQueryRunner = async <T = unknown>(
     callback: (queryRunner: QueryRunner) => Promise<T>
 ) => {
     if (!dataSource || !options) {
-        await callback(null as unknown as QueryRunner); // No query runner needed
-        return;
+        return await callback(null as unknown as QueryRunner); // No query runner needed
     }
 
     const queryRunner = dataSource.createQueryRunner();

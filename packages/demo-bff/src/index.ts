@@ -1,9 +1,29 @@
+import fastifyCookie from "@fastify/cookie";
+import { AppLogger, errorHandler, HandlerRegistry, jwtPlugin, registerRoutes } from "@uxp/bff-common";
 import Fastify from "fastify";
+import path from "path";
+import "./env";
 
-const fastify = Fastify();
+const fastify = Fastify({ logger: true });
+AppLogger.initialize(fastify.log);
+fastify.setErrorHandler(errorHandler);
+fastify.register(fastifyCookie);
+fastify.register(jwtPlugin);
 
-fastify.get("/api/template", async (request, reply) => {
-    return "Hello, world!";
+// Log incoming request payloads
+
+fastify.addHook("preHandler", async (request, reply) => {
+    request.log.info({ body: request.body }, "Incoming request payload");
+});
+
+HandlerRegistry.discoverHandlers(path.join(__dirname, "./controllers"));
+const restHandlers = HandlerRegistry.getRestHandlers();
+
+console.log("restHandlers", restHandlers);
+
+registerRoutes({
+    fastify,
+    controllers: Array.from(restHandlers),
 });
 
 const port = 3021;
