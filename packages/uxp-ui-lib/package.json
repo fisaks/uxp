@@ -3,11 +3,11 @@
     "description": "Unified Experience Platform shared ui library",
     "version": "1.0.0",
     "main": "dist/index.js",
-    "module": "dist/index.esm.js",
+    "module": "dist/index.js",
     "types": "dist/index.d.ts",
     "scripts": {
         "build": "pnpm tsc --build",
-        "clean": "pnpm rimraf tsconfig.tsbuildinfo dist",
+        "clean": "pnpm rimraf -v tsconfig.tsbuildinfo dist",
         "test": "pnpm jest",
         "lint": "pnpm eslint .",
         "lint:fix": "pnpm eslint . --fix",

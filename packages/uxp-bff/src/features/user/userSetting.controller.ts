@@ -1,10 +1,10 @@
-import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import { Route, UseQueryRunner } from "@uxp/bff-common";
 import { ErrorCodes, UserSettingsPayload, UserSettingsResponse, UserSettingsSchema } from "@uxp/common";
+
+import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { QueryRunner } from "typeorm";
 import { User } from "../../db/entities/User";
 import { UserSettings } from "../../db/entities/UserSettings";
-import { UseQueryRunner } from "../../decorator/queryrunner.decorator";
-import { Route } from "../../decorator/route.decorator";
 import { UserService } from "../../services/user.service";
 import { sendErrorResponse } from "../../utils/errorUtils";
 

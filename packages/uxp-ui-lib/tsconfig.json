@@ -9,7 +9,7 @@
         "strict": true,
         "esModuleInterop": true,
         "skipLibCheck": true,
-
+        "composite": true, // Required for project references
         "declaration": true, // Generate .d.ts files for type declarations
         "declarationMap": true // Map declaration files to source files
     },

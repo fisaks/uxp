@@ -1,14 +1,12 @@
+import { AppLogger, Route, UseQueryRunner } from "@uxp/bff-common";
 import { buildPath, buildUrlWithParams, ErrorCodes } from "@uxp/common";
 import axios from "axios";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { JSDOM } from "jsdom";
 import { QueryRunner } from "typeorm";
-import { PageAppsEntity } from "../../db/entities/PageAppsEntity";
-import { UseQueryRunner } from "../../decorator/queryrunner.decorator";
-import { Route } from "../../decorator/route.decorator";
-import { AppLogger } from "../../utils/AppLogger";
-import { sendErrorResponse } from "../../utils/errorUtils";
 import { AppEntity } from "../../db/entities/AppEntity";
+import { PageAppsEntity } from "../../db/entities/PageAppsEntity";
+import { sendErrorResponse } from "../../utils/errorUtils";
 
 export class RemoteController {
     /**

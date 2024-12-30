@@ -23,6 +23,11 @@
                 "packages/uxp-common/dist",
                 "packages/uxp-common/src",
             ],
+            "@uxp/bff-common": [
+                "packages/uxp-bff-common/dist",
+                "packages/uxp-bff-common/src",
+            ],
+
             "@uxp/ui-lib": [
                 "packages/uxp-ui-lib/dist",
                 "packages/uxp-ui-lib/src",
@@ -56,5 +61,6 @@
     "files": [
         "typings.d.ts",
         "global.d.ts",
-    ]
+    ],
+
 }

@@ -1,12 +1,9 @@
 import { ErrorCodes, MenuItemResponse, UserRole } from "@uxp/common";
+import { createErrorResponse, Route, Token, UseQueryRunner } from "@uxp/bff-common";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { QueryRunner } from "typeorm";
 
 import { MenuItem } from "../../db/entities/MenuItem";
-import { UseQueryRunner } from "../../decorator/queryrunner.decorator";
-import { Route } from "../../decorator/route.decorator";
-import { createErrorResponse } from "../../error/errorResponse";
-import { Token } from "../../types/token.types";
 
 export class MenuController {
     /**

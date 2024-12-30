@@ -1,5 +1,5 @@
 import { FastifyReply, FastifyRequest } from "fastify";
-import { Route } from "../../decorator/route.decorator";
+import { Route } from "@uxp/bff-common";
 
 export class SampleController {
     @Route("get", "/sample/users")

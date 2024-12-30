@@ -20,6 +20,9 @@
         },
         {
             "path": "../uxp-common",
+        },
+        {
+            "path": "../uxp-bff-common",
         } 
     ]
 

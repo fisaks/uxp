@@ -1,6 +1,6 @@
 {
-    "name": "@h2c/common",
-    "description": "A shared library for non UI reusable utilities, types, and components used across HouseCare's BFF and UI modules.",
+    "name": "@uxp/bff-common",
+    "description": "Unified Experience Platform shared common bff components",
     "version": "1.0.0",
     "main": "dist/index.js",
     "module": "dist/index.esm.js",
@@ -16,11 +16,22 @@
         "lint": "pnpm eslint .",
         "lint:fix": "pnpm eslint . --fix"
     },
-    "dependencies": {
-        "@uxp/common": "workspace:*"
-    },
     "peerDependencies": {
         "ajv": "^8.17.1",
-        "axios": "^1.7.8"
+        "axios": "^1.7.8",
+        "@fastify/cookie": "^11.0.1",
+        "@fastify/jwt": "^9.0.1",
+        "@fastify/websocket": "^11.0.1",
+        "fastify": "^5.1.0",
+        "fastify-plugin": "^5.0.1",
+        "reflect-metadata": "^0.2.2",
+        "typeorm": "^0.3.20",
+        "luxon": "^3.5.0",
+        "@uxp/common": "workspace:*"
+        
+    },
+    "devDependencies": {
+        "@types/luxon": "^3.4.2",
+        "@types/jsonwebtoken": "^9.0.7"
     }
 }

@@ -1,7 +1,7 @@
-import { ErrorCodes, UserRole } from "@uxp/common";
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import "reflect-metadata";
 import { DataSource } from "typeorm";
+import { ErrorCodes, UserRole } from "@uxp/common";
 
 import { ACCESS_TOKEN } from "../config/constant";
 import { createErrorResponse } from "../error/errorResponse";

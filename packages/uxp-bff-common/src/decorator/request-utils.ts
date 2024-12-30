@@ -1,7 +1,7 @@
-import { UserRole } from "@uxp/common";
 import { ValidateFunction } from "ajv";
 import { DataSource, QueryRunner } from "typeorm";
 import { UseQueryRunnerOptions } from "./queryrunner.decorator";
+import { UserRole } from "@uxp/common";
 
 type HasRequiredRolesArgs = {
     userRoles: UserRole[];

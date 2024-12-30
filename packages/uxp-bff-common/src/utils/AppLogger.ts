@@ -1,4 +1,5 @@
 import { FastifyInstance, FastifyRequest } from "fastify";
+
 import { Token } from "../types/token.types";
 
 type LogMessage = {

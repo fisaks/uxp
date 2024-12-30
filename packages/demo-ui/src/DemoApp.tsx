@@ -9,7 +9,7 @@ import { useAppDispatch } from "./hooks";
 
 const LazyTextComponent = React.lazy(() => import("./LazyTextComponent"));
 
-const H2CApp: React.FC = () => {
+const DemoApp: React.FC = () => {
     const dispatch = useAppDispatch();
     const value = useSelector(selectTemplateValue);
     const user = useSelector(selectCurrentUser);
@@ -49,4 +49,4 @@ const H2CApp: React.FC = () => {
     );
 };
 
-export default H2CApp;
+export default DemoApp;

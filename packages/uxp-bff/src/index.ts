@@ -9,13 +9,14 @@ import fastifyWebsocket from "@fastify/websocket";
 import Fastify from "fastify";
 
 import fastifyCookie from "@fastify/cookie";
-import { HandlerRegistry } from "./decorator/handler.registry";
-import { registerRoutes } from "./decorator/route.decorator";
-import { registerWebSocketHandlers } from "./decorator/websocket.decorator";
-import errorHandler from "./error/errorHandler";
-import "./features/user/user.controller";
-import jwtPlugin from "./plugins/jwt"; //
-import { AppLogger } from "./utils/AppLogger";
+import {
+    HandlerRegistry,
+    registerRoutes,
+    registerWebSocketHandlers,
+    errorHandler,
+    AppLogger,
+    jwtPlugin,
+} from "@uxp/bff-common";
 
 AppDataSource.initialize()
     .then(() => {

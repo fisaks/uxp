@@ -3,23 +3,18 @@
     "compilerOptions": {
         "outDir": "./dist", // Output compiled files to the dist folder
         "rootDir": "./src", // Treat src as the root for inputs
+        "module": "commonjs", // Use CommonJS for Node.js
+        "target": "ES2021", // Use a modern JavaScript version supported by Node.js
+
         "declaration": true,
         "declarationMap": true,
         "composite": true, // Required for project references
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
         "strict": true,
-        "target": "ESNext",
-        "module": "CommonJS",
+
+
     },
-    "include": [
-        "src/**/*"
-    ],
-    "exclude": [
-        "node_modules",
-        "dist"
-    ],
-    "references": [
-        {
-            "path": "../uxp-common",
-        }
-    ]
+    "include": ["src/**/*"],
+    "exclude": ["node_modules", "dist"]
 }

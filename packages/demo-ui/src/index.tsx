@@ -5,7 +5,7 @@ import ReactDOM from "react-dom/client"; // React 18's new API
 import { Provider } from "react-redux";
 import { createStore } from "./app/store";
 import { initializeConfig } from "./config";
-import H2CApp from "./H2CApp";
+import DemoApp from "./DemoApp";
 const styleInsert = require("../../tools/src/insert-function.cjs");
 
 // Extend the Window interface to include __UXP_PORTAL__
@@ -47,19 +47,19 @@ export const initApplication = (documentRoot: ShadowRoot | Document) => {
         <React.StrictMode>
             <Provider store={store}>
                 <CacheProvider value={shadowCache}>
-                    <H2CApp />
+                    <DemoApp />
                 </CacheProvider>
             </Provider>
         </React.StrictMode>
     );
     if (process.env.NODE_ENV === "development" && module.hot) {
-        module.hot.accept("./H2CApp", () => {
-            const NextH2CApp = require("./H2CApp").default;
+        module.hot.accept("./DemoApp", () => {
+            const NextDemoApp = require("./DemoApp").default;
             root.render(
                 <React.StrictMode>
                     <Provider store={store}>
                         <CacheProvider value={shadowCache}>
-                            <NextH2CApp />
+                            <NextDemoApp />
                         </CacheProvider>
                     </Provider>
                 </React.StrictMode>

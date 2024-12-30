@@ -1,11 +1,9 @@
+import { Route, Token, UseQueryRunner } from "@uxp/bff-common";
 import { NavigationResponse, NavigationRoute, UserRole } from "@uxp/common";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { QueryRunner } from "typeorm";
 import { RouteEntity } from "../../db/entities/RouteEntity";
-import { UseQueryRunner } from "../../decorator/queryrunner.decorator";
-import { Route } from "../../decorator/route.decorator";
 import { UserService } from "../../services/user.service";
-import { Token } from "../../types/token.types";
 
 export class NavigationController {
     /**

@@ -1,4 +1,3 @@
-// packages/common/src/errors/ErrorCodes.ts
 export const ErrorCodes = {
     INTERNAL_SERVER_ERROR: "INTERNAL_SERVER_ERROR",
     UNAUTHORIZED: "UNAUTHORIZED",

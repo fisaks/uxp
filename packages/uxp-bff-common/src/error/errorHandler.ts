@@ -4,7 +4,7 @@ import { AppLogger } from "../utils/AppLogger";
 import { AppError } from "./AppError";
 import { createErrorResponse } from "./errorResponse";
 
-const errorHandler = (error: FastifyError, request: FastifyRequest, reply: FastifyReply) => {
+export const errorHandler = (error: FastifyError, request: FastifyRequest, reply: FastifyReply) => {
     // Log the error for debugging
     AppLogger.error(request, { error: error });
 
@@ -26,5 +26,3 @@ const errorHandler = (error: FastifyError, request: FastifyRequest, reply: Fasti
 
     reply.status(statusCode).send(response);
 };
-
-export default errorHandler;

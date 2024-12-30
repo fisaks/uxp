@@ -1,9 +1,7 @@
+import { ACCESS_TOKEN, AppError, AppLogger, REFRESH_TOKEN, RefreshToken, Token } from "@uxp/bff-common";
 import { ErrorCodes } from "@uxp/common";
 import { FastifyInstance, FastifyReply } from "fastify";
-import { ACCESS_TOKEN, AccessTokenExpires, REFRESH_TOKEN, RefreshTokenExpires } from "../config/constant";
-import { AppError } from "../error/AppError";
-import { RefreshToken, Token } from "../types/token.types";
-import { AppLogger } from "./AppLogger";
+import { AccessTokenExpires, RefreshTokenExpires } from "../config/constant";
 
 export function generateAccessToken(fastify: FastifyInstance, payload: Token): string {
     return fastify.jwt.sign(payload, { expiresIn: AccessTokenExpires });

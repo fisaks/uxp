@@ -3,7 +3,7 @@ import { UserPubllic, UserRole } from "@uxp/common";
 import { FastifyRequest } from "fastify";
 import { QueryRunner } from "typeorm";
 import { User } from "../db/entities/User";
-import { Token } from "../types/token.types";
+import { Token } from "@uxp/bff-common";
 
 export class UserService {
     static async findByUuid(queryRunner: QueryRunner, uuid: string): Promise<User | null> {

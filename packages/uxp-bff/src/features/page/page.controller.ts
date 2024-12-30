@@ -1,11 +1,8 @@
+import { Route, UseQueryRunner, createErrorResponse } from "@uxp/bff-common";
 import { ErrorCodes, SchemaValidate } from "@uxp/common";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { QueryRunner } from "typeorm";
 import { Page } from "../../db/entities/Page";
-
-import { UseQueryRunner } from "../../decorator/queryrunner.decorator";
-import { Route } from "../../decorator/route.decorator";
-import { createErrorResponse } from "../../error/errorResponse";
 
 const GetPageSchema: SchemaValidate<undefined, { basepath: string }> = {
     querystring: {

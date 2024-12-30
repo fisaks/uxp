@@ -1,6 +1,5 @@
 import { WebSocket } from "@fastify/websocket";
-import { WebSocketAction } from "../../decorator/websocket.decorator";
-
+import { WebSocketAction } from "@uxp/bff-common";
 // Define schemas as constants
 const joinRoomSchema = {
     type: "object",
