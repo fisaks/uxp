@@ -9,7 +9,7 @@ const ENV = process.env.NODE_ENV === "prod" ? "prod" : "dev";
  * @param startDir - The directory to start searching from.
  * @returns The full path to the `.env` file, or `null` if not found.
  */
-function findEnvFile(startDir: string = __dirname): string | null {
+function findEnvFile(startDir: string): string | null {
     let currentDir = startDir;
     while (true) {
         const envPath = path.join(currentDir, `.env.${ENV}`);
@@ -34,7 +34,7 @@ function findEnvFile(startDir: string = __dirname): string | null {
 
 const loadEnvFile = (startDir: string): void => {
     console.log(`Trying to find env file starting from ${startDir}`);
-    const envFile = findEnvFile();
+    const envFile = findEnvFile(startDir);
     if (envFile) {
         dotenv.config({ path: envFile });
         console.log(`Loaded environment variables from ${envFile}`);

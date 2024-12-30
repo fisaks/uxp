@@ -1,7 +1,6 @@
 import { envLoader } from "@uxp/bff-common";
-import path from "path";
 
-envLoader(path.join(__dirname, "../.."));
+envLoader(__dirname);
 
 export const requiredKeys = [
     "MYSQL_DATABASE",
