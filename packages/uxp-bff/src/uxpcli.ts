@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 
+import env from "./config/env";
 import bcrypt from "bcrypt";
 import { Command } from "commander";
 import { UserRole } from "packages/uxp-common/src";
 import { Repository } from "typeorm";
 import { BCRYPT_SALT_ROUNDS } from "./config/constant";
 import { User } from "./db/entities/User";
-require("./config/env");
-const env = require("./config/envValidator");
+
 const { AppDataSource } = require("./db/typeorm.config");
 
 const program = new Command();

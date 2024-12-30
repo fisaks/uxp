@@ -1,22 +1,20 @@
-import path from "path";
-
-require("./config/env");
-const env = require("./config/envValidator");
+import fastifyWebsocket from "@fastify/websocket";
+import Fastify from "fastify";
+import env from "./config/env";
 
 const { AppDataSource } = require("./db/typeorm.config");
 
-import fastifyWebsocket from "@fastify/websocket";
-import Fastify from "fastify";
-
 import fastifyCookie from "@fastify/cookie";
 import {
+    AppLogger,
+    errorHandler,
     HandlerRegistry,
+    jwtPlugin,
     registerRoutes,
     registerWebSocketHandlers,
-    errorHandler,
-    AppLogger,
-    jwtPlugin,
 } from "@uxp/bff-common";
+import path from "path";
+import { IsProd } from "./config/constant";
 
 AppDataSource.initialize()
     .then(() => {
@@ -37,7 +35,7 @@ fastify.register(jwtPlugin);
 fastify.register(fastifyWebsocket);
 
 // Log incoming request payloads
-if (!env.IsProd) {
+if (!IsProd) {
     fastify.addHook("preHandler", async (request, reply) => {
         request.log.info({ body: request.body }, "Incoming request payload");
     });
@@ -47,7 +45,7 @@ if (!env.IsProd) {
 HandlerRegistry.discoverHandlers(path.join(__dirname, "./features"));
 const restHandlers = HandlerRegistry.getRestHandlers();
 const wsHandlers = HandlerRegistry.getWsHandlers();
-//console.log("handlers", handlers);
+
 console.log("restHandlers", restHandlers);
 console.log("wsHandlers", wsHandlers);
 

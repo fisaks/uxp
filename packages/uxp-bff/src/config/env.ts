@@ -1,46 +1,28 @@
-const dotenv = require("dotenv");
-const path = require("path");
-const fs = require("fs");
+import { envLoader } from "@uxp/bff-common";
+import path from "path";
 
-const ENV = process.env.NODE_ENV === "prod" ? "prod" : "dev";
-const IsProd = ENV === "prod";
-/**
- * Recursively searches for a `.env` file starting from the given directory and moving up.
- * @param startDir - The directory to start searching from.
- * @returns The full path to the `.env` file, or `null` if not found.
- */
-function findEnvFile(startDir: string = __dirname): string | null {
-    let currentDir = startDir;
+envLoader(path.join(__dirname, "../.."));
 
-    while (true) {
-        const envPath = path.join(currentDir, `.env.${ENV}`);
+export const requiredKeys = [
+    "MYSQL_DATABASE",
+    "MYSQL_USER",
+    "MYSQL_PASSWORD",
+    "DATABASE_HOST",
+    "DATABASE_PORT",
+    "JWT_SECRET",
+] as const;
+export type RequiredKeys = (typeof requiredKeys)[number];
+export type EnvVariables = Record<RequiredKeys, string>;
 
-        if (fs.existsSync(envPath)) {
-            return envPath;
-        }
+function validateEnv(vars: EnvVariables): EnvVariables {
+    const missingVars = requiredKeys.filter((key) => vars[key] === undefined);
 
-        const parentDir = path.dirname(currentDir);
-        if (parentDir === currentDir) {
-            // Reached the root directory
-            break;
-        }
-
-        currentDir = parentDir;
+    if (missingVars.length > 0) {
+        throw new Error(`Missing required environment variables: ${missingVars.join(", ")}`);
     }
-
-    return null;
+    return vars;
 }
 
-// Locate and load the `.env` file
-const envFile = findEnvFile();
-if (envFile) {
-    dotenv.config({ path: envFile });
-    console.log(`Loaded environment variables from ${envFile}`);
-} else {
-    console.warn(`.env.${ENV} file not found!`);
-}
+// Validate and export environment variables
 
-module.exports = {
-    ENV,
-    IsProd,
-};
+export default validateEnv(process.env as EnvVariables);

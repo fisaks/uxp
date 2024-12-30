@@ -1,6 +1,7 @@
 import "@fastify/cookie";
 import "@fastify/jwt";
 export * from "./config/constant";
+export { default as envLoader } from "./config/envLoader";
 export * from "./decorator/handler.registry";
 export * from "./decorator/queryrunner.decorator";
 export * from "./decorator/request-utils";

@@ -137,6 +137,9 @@ importers:
       '@fastify/websocket':
         specifier: ^11.0.1
         version: 11.0.1
+      '@uxp/bff-common':
+        specifier: workspace:*
+        version: link:../uxp-bff-common
       '@uxp/common':
         specifier: workspace:*
         version: link:../uxp-common
@@ -292,6 +295,9 @@ importers:
       '@h2c/common':
         specifier: workspace:*
         version: link:../h2c-common
+      '@uxp/bff-common':
+        specifier: workspace:*
+        version: link:../uxp-bff-common
       '@uxp/common':
         specifier: workspace:*
         version: link:../uxp-common
@@ -558,6 +564,9 @@ importers:
       axios:
         specifier: ^1.7.8
         version: 1.7.9
+      dotenv:
+        specifier: ^16.4.5
+        version: 16.4.7
       fastify:
         specifier: ^5.1.0
         version: 5.1.0
