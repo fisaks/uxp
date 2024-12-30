@@ -19,48 +19,17 @@
         "composite": true,
         "baseUrl": ".",
         "paths": {
-            "@uxp/common": [
-                "packages/uxp-common/dist",
-                "packages/uxp-common/src",
-            ],
-            "@uxp/bff-common": [
-                "packages/uxp-bff-common/dist",
-                "packages/uxp-bff-common/src",
-            ],
+            "@uxp/common": ["packages/uxp-common/dist", "packages/uxp-common/src"],
+            "@uxp/bff-common": ["packages/uxp-bff-common/dist", "packages/uxp-bff-common/src"],
 
-            "@uxp/ui-lib": [
-                "packages/uxp-ui-lib/dist",
-                "packages/uxp-ui-lib/src",
-            ],
-            "@h2c/common": [
-                "packages/h2c-common/dist",
-                "packages/h2c-common/src",
-            ],
-            "@uxp/tools": [
-                "packages/tools/src",
-            ],
+            "@uxp/ui-lib": ["packages/uxp-ui-lib/dist", "packages/uxp-ui-lib/src"],
+            "@h2c/common": ["packages/h2c-common/dist", "packages/h2c-common/src"],
+            "@uxp/tools": ["packages/tools/src"]
         },
-        "types": [
-            "node",
-            "webpack-env"
-        ],
-        "typeRoots": [
-            "./node_modules/@types"
-        ]
+        "types": ["node", "webpack-env"],
+        "typeRoots": ["./node_modules/@types"]
     },
-    "include": [
-        "packages/*/src/**/*.ts",
-        "packages/*/src/**/*.tsx",
-        "packages/*/src/**/*.cjs"
-    ],
-    "exclude": [
-        "node_modules",
-        "**/dist",
-        "**/build"
-    ],
-    "files": [
-        "typings.d.ts",
-        "global.d.ts",
-    ],
-
+    "include": ["packages/*/src/**/*.ts", "packages/*/src/**/*.tsx", "packages/*/src/**/*.cjs"],
+    "exclude": ["node_modules", "**/dist", "**/build"],
+    "files": ["typings.d.ts", "global.d.ts"]
 }

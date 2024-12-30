@@ -8,17 +8,10 @@
         "jsx": "react-jsx",
         "strict": true,
         "esModuleInterop": true,
-        "skipLibCheck": true,
-        
-        
+        "skipLibCheck": true
     },
-    "include": [
-        "src/**/*",
-    ],
-    "exclude": [
-        "node_modules",
-        "dist"
-    ],
+    "include": ["src/**/*"],
+    "exclude": ["node_modules", "dist"],
     "references": [
         {
             "path": "../h2c-common"
@@ -28,7 +21,6 @@
         },
         {
             "path": "../uxp-ui-lib"
-        } 
-    ],
-
+        }
+    ]
 }

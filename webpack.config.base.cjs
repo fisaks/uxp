@@ -9,11 +9,11 @@ module.exports = {
         mainFields: ["browser", "module", "main"],
     },
     externals: {
-        react: 'React',
-        'react-dom': 'ReactDOM',
-        '@emotion/react': 'emotionReact',
-        '@emotion/styled': 'emotionStyled',
-        'axios': 'axios'
+        react: "React",
+        "react-dom": "ReactDOM",
+        "@emotion/react": "emotionReact",
+        "@emotion/styled": "emotionStyled",
+        axios: "axios",
     },
     module: {
         rules: [
@@ -28,7 +28,10 @@ module.exports = {
                     {
                         loader: "style-loader",
                         options: {
-                            insert: metaTag === "no-app" ? undefined : require.resolve("./packages/tools/src/insert-function.cjs"),
+                            insert:
+                                metaTag === "no-app"
+                                    ? undefined
+                                    : require.resolve("./packages/tools/src/insert-function.cjs"),
                             attributes: {
                                 "data-uxp-app": metaTag,
                             },
@@ -49,7 +52,10 @@ module.exports = {
                     {
                         loader: "style-loader",
                         options: {
-                            insert: metaTag === "no-app" ? undefined : require.resolve("./packages/tools/src/insert-function.cjs"),
+                            insert:
+                                metaTag === "no-app"
+                                    ? undefined
+                                    : require.resolve("./packages/tools/src/insert-function.cjs"),
                             attributes: {
                                 "data-uxp-app": metaTag,
                             },
@@ -60,9 +66,9 @@ module.exports = {
             },
             {
                 test: /\.(png|jpg|jpeg|gif|svg)$/i, // Matches common image formats
-                type: 'asset', // Automatically chooses between 'asset/resource' and 'asset/inline'
+                type: "asset", // Automatically chooses between 'asset/resource' and 'asset/inline'
                 generator: {
-                    filename: 'images/[name][hash][ext]', // Custom output folder for images
+                    filename: "images/[name][hash][ext]", // Custom output folder for images
                 },
                 parser: {
                     dataUrlCondition: {

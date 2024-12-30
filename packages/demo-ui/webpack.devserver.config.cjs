@@ -14,17 +14,16 @@ module.exports = merge(baseConfig, {
                 publicPath: "/static/libs",
             },
             {
-                directory: path.resolve(__dirname, 'static'), // Serve 'data' during development
-                publicPath: '/static/', // Match the path in your component
+                directory: path.resolve(__dirname, "static"), // Serve 'data' during development
+                publicPath: "/static/", // Match the path in your component
             },
-
         ],
         port: 3020, // Port for the development server
         hot: true, // Enable hot module replacement
         watchFiles: [
-            path.resolve(__dirname, 'src'),
-            path.resolve(__dirname, '../uxp-common'),
-            path.resolve(__dirname, '../uxp-ui-lib'),
+            path.resolve(__dirname, "src"),
+            path.resolve(__dirname, "../uxp-common"),
+            path.resolve(__dirname, "../uxp-ui-lib"),
         ],
         //open: true, // Automatically open the browser
         proxy: [

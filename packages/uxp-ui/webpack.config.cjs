@@ -10,7 +10,7 @@ module.exports = merge(baseConfig, {
     entry: {
         "uxp-ui": "./src/index.tsx", // Entry point for this package
     },
- 
+
     resolve: {
         alias: {
             ajv$: require.resolve("ajv"), // Resolve to AJV v8
@@ -18,12 +18,11 @@ module.exports = merge(baseConfig, {
         },
     },
 
-
     output: {
         //filename: "uxp-ui.bundle.js",
         //chunkFilename: '[name].js', // Unique names for lazy-loaded chunks
-        filename: '[name].bundle.js', // Unique names for entry points
-        chunkFilename: 'uxp-[name].js', // Unique names for lazy-loaded chunks
+        filename: "[name].bundle.js", // Unique names for entry points
+        chunkFilename: "uxp-[name].js", // Unique names for lazy-loaded chunks
         path: path.resolve(__dirname, "dist"), // Output directory for the build
         clean: true,
     },
@@ -33,23 +32,20 @@ module.exports = merge(baseConfig, {
             template: "./index.html", // Use your template file
             filename: "index.html", // Name of the output file
             templateParameters: {
-                mode: process.env.NODE_ENV==="prod" ? "production" : "development"
-              },
-
+                mode: process.env.NODE_ENV === "prod" ? "production" : "development",
+            },
         }),
     ],
     optimization: {
         splitChunks: {
-            chunks: 'all',
+            chunks: "all",
             cacheGroups: {
                 vendors: {
                     test: /[\\/]node_modules[\\/]/,
-                    name: 'vendors',
-                    chunks: 'all',
-
+                    name: "vendors",
+                    chunks: "all",
                 },
             },
         },
     },
-
 });

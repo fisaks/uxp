@@ -16,14 +16,13 @@
     "exclude": ["node_modules", "dist"],
     "references": [
         {
-            "path": "../h2c-common",
+            "path": "../h2c-common"
         },
         {
-            "path": "../uxp-common",
+            "path": "../uxp-common"
         },
         {
-            "path": "../uxp-bff-common",
-        } 
+            "path": "../uxp-bff-common"
+        }
     ]
-
 }

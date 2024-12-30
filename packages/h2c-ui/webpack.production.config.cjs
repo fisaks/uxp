@@ -9,13 +9,13 @@ module.exports = merge(baseConfig, {
     devtool: false,
 
     output: {
-        filename: '[name].[contenthash].bundle.js', // Unique names for entry points
-        chunkFilename: 'h2c-[name].[contenthash].js', // Unique names for lazy-loaded chunks
+        filename: "[name].[contenthash].bundle.js", // Unique names for entry points
+        chunkFilename: "h2c-[name].[contenthash].js", // Unique names for lazy-loaded chunks
         path: path.resolve(__dirname, "dist"), // Output directory for the build
         clean: true,
         library: {
-            name: 'h2c',
-            type: 'window',
+            name: "h2c",
+            type: "window",
         },
     },
 

@@ -1,1 +1,1 @@
-export * from './insert-fuction'
+export * from "./insert-fuction";

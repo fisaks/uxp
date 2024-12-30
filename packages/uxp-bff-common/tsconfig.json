@@ -11,9 +11,7 @@
         "composite": true, // Required for project references
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true,
-        "strict": true,
-
-
+        "strict": true
     },
     "include": ["src/**/*"],
     "exclude": ["node_modules", "dist"]
