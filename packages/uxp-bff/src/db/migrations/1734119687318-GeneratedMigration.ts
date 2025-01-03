@@ -17,9 +17,6 @@ export class GeneratedMigration1734119687318 implements MigrationInterface {
             `CREATE TABLE \`routes\` (\`id\` int NOT NULL AUTO_INCREMENT, \`routePattern\` varchar(255) NOT NULL, \`localizedRoutePattern\` json NULL, \`link\` varchar(255) NOT NULL, \`localizedLink\` json NULL, \`groupName\` varchar(255) NULL, \`config\` json NULL, \`unauthenticatedOnly\` tinyint NOT NULL DEFAULT 0, \`roles\` text NULL, \`pageId\` int NOT NULL, PRIMARY KEY (\`id\`)) ENGINE=InnoDB`
         );
         await queryRunner.query(
-            `ALTER TABLE \`user_settings\` ADD CONSTRAINT \`FK_986a2b6d3c05eb4091bb8066f78\` FOREIGN KEY (\`userId\`) REFERENCES \`users\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`
-        );
-        await queryRunner.query(
             `ALTER TABLE \`page_apps\` ADD CONSTRAINT \`FK_d16fc29157ec25b0ce46bdae380\` FOREIGN KEY (\`pageId\`) REFERENCES \`pages\`(\`id\`) ON DELETE NO ACTION ON UPDATE NO ACTION`
         );
         await queryRunner.query(
@@ -34,7 +31,6 @@ export class GeneratedMigration1734119687318 implements MigrationInterface {
         await queryRunner.query(`ALTER TABLE \`routes\` DROP FOREIGN KEY \`FK_a0205659602014b6d42afa5b90c\``);
         await queryRunner.query(`ALTER TABLE \`page_apps\` DROP FOREIGN KEY \`FK_2a7af23f0d133e53aed8148955c\``);
         await queryRunner.query(`ALTER TABLE \`page_apps\` DROP FOREIGN KEY \`FK_d16fc29157ec25b0ce46bdae380\``);
-        await queryRunner.query(`ALTER TABLE \`user_settings\` DROP FOREIGN KEY \`FK_986a2b6d3c05eb4091bb8066f78\``);
         await queryRunner.query(`DROP TABLE \`routes\``);
         await queryRunner.query(`DROP INDEX \`IDX_502690df8574d74a4a8be0ab08\` ON \`page_apps\``);
         await queryRunner.query(`DROP INDEX \`IDX_PAGE_APPS_PAGE_ID\` ON \`page_apps\``);

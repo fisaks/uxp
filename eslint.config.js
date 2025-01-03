@@ -32,6 +32,7 @@ export default [
                 exports: true, // Node.js `exports` global
                 __WebpackModuleApi: "readonly",
                 ...globals.browser,
+                __webpack_public_path__: "writable",
             },
         },
         plugins: {

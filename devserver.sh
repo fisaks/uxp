@@ -13,10 +13,10 @@ start_dev_env() {
     
     # Start a new tmux session (detached)
     tmux new-session -d -s $SESSION_NAME
-      
+    
     
     # Pane 1: Start Docker (MySQL container)
-    tmux send-keys -t $SESSION_NAME "trap 'docker compose down' EXIT && docker compose --env-file .env.dev up -d mysql && echo '################## PRESS CTRL+b d TO DETACH ##################' && docker logs -f mysql" C-m
+    tmux send-keys -t $SESSION_NAME "trap 'docker compose -f docker-compose.yaml -f docker-compose.dev.yaml down' EXIT && docker compose -f docker-compose.yaml -f docker-compose.dev.yaml up -d db-server && echo '################## PRESS CTRL+b d TO DETACH ##################' && docker logs -f uxp-db-server-1" C-m
     
     tmux split-window -v -t $SESSION_NAME
     tmux resize-pane -t 0 -U 20
@@ -24,15 +24,19 @@ start_dev_env() {
     
     tmux select-pane -t 1
     tmux split-window -h -t $SESSION_NAME
-        
-    tmux send-keys -t $SESSION_NAME.1 "pnpm run start:bff" C-m
+    
+    #tmux send-keys -t $SESSION_NAME.1 "export \$(grep -v '^#' .env.dev | xargs) >/dev/null 2>&1" C-m
+    tmux send-keys -t $SESSION_NAME.1 "set -o allexport" C-m
+    tmux send-keys -t $SESSION_NAME.1 "source .env.dev" C-m
+    tmux send-keys -t $SESSION_NAME.1 "set +o allexport" C-m
+    tmux send-keys -t $SESSION_NAME.1 "./database/wait-for-db.sh && pnpm  --filter @uxp/bff run typeorm:run && pnpm run start:bff" C-m
     
     tmux send-keys -t $SESSION_NAME.2 "pnpm run start:app" C-m
-        
+    
     tmux select-pane -t 0
     tmux split-window -h -t $SESSION_NAME
     tmux send-keys -t $SESSION_NAME.1 "pnpm run watch" C-m
-
+    
     # Select the first pane
     tmux select-pane -t 4
     tmux split-window -h -t $SESSION_NAME
@@ -53,11 +57,15 @@ start_dev_env() {
     tmux split-window -h -t $SESSION_NAME:1
     tmux send-keys -t $SESSION_NAME:1.0 "pnpm run start:demo-bff" C-m
     tmux send-keys -t $SESSION_NAME:1.1 "pnpm run start:demo-app" C-m
-    tmux send-keys -t $SESSION_NAME:1.2 "pnpm run start:h2c-bff" C-m
+    
+    tmux send-keys -t $SESSION_NAME:1.2 "export \$(grep -v '^#' .env.dev | xargs) >/dev/null 2>&1" C-m
+    tmux send-keys -t $SESSION_NAME:1.2 "./database/wait-for-db.sh && pnpm  --filter @h2c/bff run typeorm:run && pnpm run start:h2c-bff" C-m
+    
+    #tmux send-keys -t $SESSION_NAME:1.2 "pnpm run start:h2c-bff" C-m
     tmux send-keys -t $SESSION_NAME:1.3 "pnpm run start:h2c-app" C-m
     
-
-
+    
+    
     # Select the first tab
     tmux select-window -t $SESSION_NAME:0
     # Attach to the tmux session
@@ -65,11 +73,27 @@ start_dev_env() {
     tmux select-pane -t 5
 }
 
+is_db_running() {
+    docker ps --filter "name=uxp-db-server-1" --format "{{.Names}}" | grep -q "uxp-db-server-1"
+}
+
 # Function to stop the development environment
 stop_dev_env() {
     echo "Stopping tmux session and Docker Compose..."
     tmux kill-session -t $SESSION_NAME 2>/dev/null || echo "No tmux session found with name $SESSION_NAME"
-    
+    timeout=30         # Maximum wait time in seconds
+    elapsed=0 
+    while is_db_running; do
+        if [ "$elapsed" -ge "$timeout" ]; then
+            echo -e "\nTimeout reached after $timeout seconds. Exiting."
+            exit 1
+        fi
+        
+        echo -ne "\rWaiting for container 'uxp-db-server-1' to stop: $elapsed seconds elapsed..."
+        sleep 1
+        ((elapsed++))
+    done
+    echo -e "\nContainer 'uxp-db-server-1' stopped after $elapsed seconds."
 }
 
 

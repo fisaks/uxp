@@ -1,31 +1,37 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
+import env from "../../config/env";
 import { AppEntity } from "../entities/AppEntity";
 import { PageAppsEntity } from "../entities/PageAppsEntity";
 import { PageEntity } from "../entities/PageEntity";
 import { RouteEntity } from "../entities/RouteEntity";
 
-export class CreateMigration1735424119330 implements MigrationInterface {
+export class CreateMigration1735921258470 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
         const pageRepository = queryRunner.manager.getRepository(PageEntity);
         const pageAppsRepository = queryRunner.manager.getRepository(PageAppsEntity);
         const routeRepository = queryRunner.manager.getRepository(RouteEntity);
         const appRepository = queryRunner.manager.getRepository(AppEntity);
 
+        pageAppsRepository.delete({});
+        appRepository.delete({});
+        routeRepository.delete({});
+        pageRepository.delete({});
+
         const h2c = await appRepository.save(
             new AppEntity({
                 name: "H2C",
-                baseUrl: "http://localhost:3010",
+                baseUrl: env.REMOTE_HOST_H2C,
                 isActive: true,
-                config: { contextPath: "/", indexPage: "index.html" },
+                config: { contextPath: "/h2c", indexPage: "index.html" },
             })
         );
 
         const demo = await appRepository.save(
             new AppEntity({
                 name: "uxp-demo",
-                baseUrl: "http://localhost:3020",
+                baseUrl: env.REMOTE_HOST_DEMO,
                 isActive: true,
-                config: { contextPath: "/", indexPage: "index.html" },
+                config: { contextPath: "/demo", indexPage: "index.html" },
             })
         );
 
@@ -74,6 +80,7 @@ export class CreateMigration1735424119330 implements MigrationInterface {
                 page: home2CarePage,
                 roles: ["user"],
                 groupName: "header-menu",
+                accessType: "role-based",
             }),
             new RouteEntity({
                 routePattern: "/demo-app/*",
@@ -81,6 +88,7 @@ export class CreateMigration1735424119330 implements MigrationInterface {
                 page: uxpDemoPage,
                 roles: ["user"],
                 groupName: "header-menu",
+                accessType: "role-based",
             }),
             new RouteEntity({
                 routePattern: "/demo-app-2/*",
@@ -88,13 +96,15 @@ export class CreateMigration1735424119330 implements MigrationInterface {
                 page: uxpDemoPage2,
                 roles: ["user"],
                 groupName: "header-menu",
+                accessType: "role-based",
             }),
             new RouteEntity({
                 routePattern: "/",
                 link: "/",
                 page: startPage,
-                roles: ["user"],
+                roles: [],
                 groupName: "header-menu",
+                accessType: "authenticated",
             }),
             new RouteEntity({
                 routePattern: "/login",
@@ -102,7 +112,7 @@ export class CreateMigration1735424119330 implements MigrationInterface {
                 page: loginPage,
                 roles: undefined,
                 groupName: "unauthenticated",
-                unauthenticatedOnly: true,
+                accessType: "unauthenticated",
             }),
             new RouteEntity({
                 routePattern: "/register",
@@ -110,30 +120,37 @@ export class CreateMigration1735424119330 implements MigrationInterface {
                 page: registerPage,
                 roles: undefined,
                 groupName: "unauthenticated",
-                unauthenticatedOnly: true,
+                accessType: "unauthenticated",
             }),
             new RouteEntity({
                 routePattern: "/my-profile",
                 link: "/my-profile",
                 page: myProfilePage,
-                roles: ["user"],
+                roles: [],
+                accessType: "authenticated",
                 groupName: "profile-icon",
             }),
             new RouteEntity({
                 routePattern: "/my-settings",
                 link: "/my-settings",
                 page: mySettingsPage,
-                roles: ["user"],
+                roles: [],
+                accessType: "authenticated",
                 groupName: "profile-icon",
             }),
             new RouteEntity({
                 routePattern: "*",
                 roles: undefined,
-                unauthenticatedOnly: true,
+                accessType: "unauthenticated",
                 groupName: "unauthenticated",
                 config: { redirect: "/login" },
             }),
-            new RouteEntity({ routePattern: "*", roles: [], config: { redirect: "/" } }),
+            new RouteEntity({
+                routePattern: "*",
+                roles: [],
+                config: { redirect: "/" },
+                accessType: "authenticated",
+            }),
         ]);
     }
 

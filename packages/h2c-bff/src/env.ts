@@ -3,9 +3,9 @@ import { envLoader } from "@uxp/bff-common";
 envLoader(__dirname);
 
 export const requiredKeys = [
-    "MYSQL_DATABASE",
-    "MYSQL_USER",
-    "MYSQL_PASSWORD",
+    "MYSQL_H2C_DATABASE",
+    "MYSQL_H2C_USER",
+    "MYSQL_H2C_PASSWORD",
     "DATABASE_HOST",
     "DATABASE_PORT",
     "JWT_SECRET",

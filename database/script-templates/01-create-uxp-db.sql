@@ -1,0 +1,11 @@
+-- Create main UXP database
+CREATE DATABASE IF NOT EXISTS {{MYSQL_UXP_DATABASE}};
+
+-- Create user for UXP
+CREATE USER IF NOT EXISTS '{{MYSQL_UXP_USER}}'@'%' IDENTIFIED BY '{{MYSQL_UXP_PASSWORD}}';
+
+-- Grant privileges to the user 
+GRANT ALL PRIVILEGES ON {{MYSQL_UXP_DATABASE}}.* TO '{{MYSQL_UXP_USER}}'@'%';
+
+-- Apply changes
+FLUSH PRIVILEGES;

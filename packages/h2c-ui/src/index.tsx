@@ -16,6 +16,14 @@ declare const module: __WebpackModuleApi.Module;
 
 export const initApplication = (documentRoot: ShadowRoot | Document) => {
     const container = documentRoot instanceof Document ? documentRoot.head : documentRoot;
+    const rootElement = documentRoot.getElementById("root");
+
+    // Ensure the root element exists before rendering
+    if (!rootElement) {
+        throw new Error("Root element not found. Ensure you have an element with id 'root' in your HTML.");
+    }
+    __webpack_public_path__ = initializeConfig(rootElement) ?? "";
+    console.log("public path", __webpack_public_path__);
     styleInsert.init(container);
     // Create a custom Emotion cache
     const shadowCache = createCache({
@@ -24,13 +32,7 @@ export const initApplication = (documentRoot: ShadowRoot | Document) => {
     });
 
     const store = createStore();
-    const rootElement = documentRoot.getElementById("root");
 
-    // Ensure the root element exists before rendering
-    if (!rootElement) {
-        throw new Error("Root element not found. Ensure you have an element with id 'root' in your HTML.");
-    }
-    initializeConfig(rootElement);
     // Create a React root
     // Store root globally to avoid duplicate createRoot calls
     const globalRootKey = "__UXP_APP_ROOT__";

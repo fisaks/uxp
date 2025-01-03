@@ -2,6 +2,9 @@ import { LocalizedStringValue, RouteConfigData, UserRole } from "@uxp/common";
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { PageEntity } from "./PageEntity";
 // Route Entity
+
+export type AccessType = "unauthenticated" | "authenticated" | "role-based";
+
 @Entity("routes")
 export class RouteEntity {
     constructor(init?: Partial<RouteEntity>) {
@@ -36,8 +39,12 @@ export class RouteEntity {
     @Column("json", { nullable: true })
     config!: RouteConfigData;
 
-    @Column({ default: false })
-    unauthenticatedOnly!: boolean; // If true, this route is only available to unauthenticated users
+    @Column({
+        type: "enum",
+        enum: ["unauthenticated", "authenticated", "role-based"], // Use string literals directly
+        default: "role-based",
+    })
+    accessType!: AccessType;
 
     @Column("simple-array", { nullable: true })
     roles: UserRole[] = ["user"];

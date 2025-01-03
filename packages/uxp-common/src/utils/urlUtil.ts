@@ -56,3 +56,11 @@ export const buildPath = (...parts: string[]): string => {
     // Add the leading slash only if the first part had one
     return startsWithSlash ? `/${normalizedPath}` : normalizedPath;
 };
+
+export const removeContextPath = (url: string, contextPath: string) => {
+    const normalizedContextPath = contextPath.replace(/\/+$/, ""); // Remove trailing slashes
+    const regex = new RegExp(`^${normalizedContextPath}(\\/|$)`); // Match contextPath at the start of the URL
+
+    // Remove the contextPath if it matches
+    return url.replace(regex, "/");
+};

@@ -160,7 +160,7 @@ export class UserController {
         reply.send({ user: UserService.toUserPublic(user) } as LoginResponse);
     }
 
-    @Route("put", "/profile/:uuid", { authenticate: true, schema: ProfileSchema })
+    @Route("put", "/profile/:uuid", { authenticate: true, roles: [], schema: ProfileSchema })
     @UseQueryRunner()
     async profile(
         req: FastifyRequest<{ Body: ProfilePayload; Params: { uuid: string } }>,
@@ -285,7 +285,7 @@ export class UserController {
         }
     }
 
-    @Route("get", "/whoami", { authenticate: true, roles: ["user"] })
+    @Route("get", "/whoami", { authenticate: true, roles: [] })
     @UseQueryRunner()
     async whoAmI(req: FastifyRequest, reply: FastifyReply, queryRunner: QueryRunner) {
         const { uuid } = req.user as Token;

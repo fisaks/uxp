@@ -1,5 +1,5 @@
 #!/bin/bash
-
+export COMPOSE_PROJECT_NAME=uxp
 
 compose_up() {
     docker compose up -d

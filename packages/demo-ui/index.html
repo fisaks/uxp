@@ -3,14 +3,14 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <link rel="stylesheet" href="/static/global.css" />
+        <link rel="stylesheet" href="/demo/static/global.css" />
 
         <title>UXP Demo Remote App</title>
-        <script src="/static/libs/development/react.development.js" data-uxp-remove="true"></script>
-        <script src="/static/libs/development/react-dom.development.js" data-uxp-remove="true"></script>
-        <script src="/static/libs/development/emotion-react.development.js" data-uxp-remove="true"></script>
-        <script src="/static/libs/development/emotion-styled.development.js" data-uxp-remove="true"></script>
-        <script src="/static/libs/development/axios.development.js" data-uxp-remove="true"></script>
+        <script src="/demo/static/libs/development/react.development.js" data-uxp-remove="true"></script>
+        <script src="/demo/static/libs/development/react-dom.development.js" data-uxp-remove="true"></script>
+        <script src="/demo/static/libs/development/emotion-react.development.js" data-uxp-remove="true"></script>
+        <script src="/demo/static/libs/development/emotion-styled.development.js" data-uxp-remove="true"></script>
+        <script src="/demo/static/libs/development/axios.development.js" data-uxp-remove="true"></script>
         <script data-uxp-remove="true">
             window.uxp = {
                 defaultTheme: "dracula",
@@ -30,6 +30,6 @@
     </head>
 
     <body>
-        <div id="root" data-base-url-api="/api" data-base-url-static="/static"></div>
+        <div id="root" data-base-url="/demo/" data-base-url-api="/demo/api" data-base-url-static="/demo/static"></div>
     </body>
 </html>

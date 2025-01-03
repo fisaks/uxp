@@ -9,6 +9,7 @@ export function initializeConfig(rootElement: HTMLElement | null) {
     // Read data attributes from the root element
     const apiUrl = rootElement.getAttribute("data-base-url-api");
     const staticUrl = rootElement.getAttribute("data-base-url-static");
+    const baseUrl = rootElement.getAttribute("data-base-url");
 
     if (!apiUrl || !staticUrl) {
         throw new Error("Base URLs are not defined in data attributes!");
@@ -17,6 +18,7 @@ export function initializeConfig(rootElement: HTMLElement | null) {
     // Assign the values to global variables
     BASE_URL_API = apiUrl;
     BASE_URL_STATIC = staticUrl;
+    return baseUrl?.endsWith("/") ? baseUrl : baseUrl + "/";
 }
 
 export function getBaseUrlApi(): string {

@@ -37,6 +37,9 @@
             "prettier --write"
         ]
     },
+    "dependencies": {
+        "husky": "^9.1.6"
+    },
     "devDependencies": {
         "@babel/core": "^7.26.0",
         "@babel/preset-env": "^7.26.0",
@@ -61,7 +64,6 @@
         "eslint-plugin-react-hooks": "^5.0.0",
         "globals": "^15.12.0",
         "html-webpack-plugin": "^5.6.3",
-        "husky": "^9.1.6",
         "lint-staged": "^15.2.10",
         "path": "^0.12.7",
         "prettier": "^3.3.3",

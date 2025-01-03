@@ -2,7 +2,7 @@ import { Route, Token, UseQueryRunner } from "@uxp/bff-common";
 import { NavigationResponse, NavigationRoute, UserRole } from "@uxp/common";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { QueryRunner } from "typeorm";
-import { RouteEntity } from "../../db/entities/RouteEntity";
+import { AccessType, RouteEntity } from "../../db/entities/RouteEntity";
 import { UserService } from "../../services/user.service";
 
 export class NavigationController {
@@ -18,22 +18,25 @@ export class NavigationController {
             .createQueryBuilder("route")
             .leftJoinAndSelect("route.page", "page") // Include the referenced PageEntity
             .leftJoinAndSelect("page.contents", "contents") // Include related PageAppsEntity
-            .orderBy("route.link", "ASC") // Order by route link
+            .orderBy("route.routePattern", "ASC") // Order by route link
             .addOrderBy("contents.order", "ASC") // Then order by contents order
             .getMany()) as unknown as RouteEntity[];
 
         const user: Token | undefined = UserService.getLoggedInUser(req);
-        const isGuest = !user || user.roles.length === 0;
-        const shouldInclude = (rolesOnElement: UserRole[], unauthenticatedOnly?: boolean) => {
-            if (unauthenticatedOnly) {
+        const isGuest = !user;
+        const shouldInclude = (rolesOnElement: UserRole[], accessType?: AccessType) => {
+            if (accessType === "unauthenticated") {
                 return isGuest;
             }
-            return rolesOnElement.length === 0 || rolesOnElement.some((role) => user?.roles.includes(role));
+            if (!isGuest && accessType === "authenticated") {
+                return true;
+            }
+            return rolesOnElement.some((role) => user?.roles.includes(role));
         };
         console.log("user", user);
         return {
             routes: routes
-                .filter((f) => shouldInclude(f.roles, f.unauthenticatedOnly))
+                .filter((f) => shouldInclude(f.roles, f.accessType))
                 .map((route) => {
                     return {
                         routePattern: route.routePattern,
@@ -49,7 +52,7 @@ export class NavigationController {
                                   metadata: route.page.metadata ?? undefined,
                                   localizedMetadata: route.page.localizedMetadata ?? undefined,
                                   contents: route.page.contents
-                                      .filter((f) => shouldInclude(f.roles, undefined))
+                                      .filter((f) => shouldInclude(f.roles, route.accessType))
                                       .map((content) => {
                                           return {
                                               uuid: content.uuid,

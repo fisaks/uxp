@@ -4,9 +4,12 @@
 print_usage() {
     echo "Usage: $0 {web|bff|sb} {docker logs flags}"
     echo "Valid options:"
-    echo "  web    log to NGINX"
-    echo "  bff  log to bff"
-    echo "  db    log to MySQL"
+    echo "  web           log to web"
+    echo "  web-remote    log to web"
+    echo "  uxp           log to bff"
+    echo "  demo          log to demo"
+    echo "  h2c           log to h2c"
+    echo "  db            log to MySQL"
 }
 
 # Check if no argument is provided
@@ -20,22 +23,41 @@ fi
 # Validate the first argument
 case "$1" in
     web)
-        echo "You selected 'nginx'. Opening shell to nginx..."
+        echo "You selected 'web'. Opening shell to web..."
         # Add nginx-related commands here
         shift 1
-        docker logs nginx $@
+        docker logs uxp-web-server-1 $@
     ;;
-    bff)
-        echo "You selected 'bff'. Opening shell to bff..."
+    web-remote)
+        echo "You selected 'web-remote'. Opening shell to web-remote..."
+        # Add nginx-related commands here
+        shift 1
+        docker logs uxp-web-remote-server-1 $@
+    ;;
+    uxp)
+        echo "You selected 'uxp'. Opening shell to uxp-bff..."
         # Add express-related commands here
         shift 1
-        docker logs bff-server $@
+        docker logs uxp-bff-server-1 $@
     ;;
+    demo)
+        echo "You selected 'demo'. Opening shell to demo-bff..."
+        # Add express-related commands here
+        shift 1
+        docker logs uxp-demo-server-1 $@
+    ;;
+    h2c)
+        echo "You selected 'h2c'. Opening shell to h2c-bff..."
+        # Add express-related commands here
+        shift 1
+        docker logs uxp-h2c-server-1 $@
+    ;;
+
     db)
         echo "You selected 'mysql'. Opening shell to mysql..."
         # Add MySQL-related commands here
         shift 1
-        docker logs mysql $@
+        docker logs uxp-db-server-1 $@
     ;;
     *)
         echo "Error: Invalid argument '$1'."

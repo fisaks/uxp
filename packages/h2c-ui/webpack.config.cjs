@@ -30,11 +30,14 @@ module.exports = merge(baseConfig, {
             name: "h2c",
             type: "window",
         },
+        //publicPath:"/h2c/"
+        //publicPath:""
     },
     plugins: [
         new HtmlWebpackPlugin({
             template: "./index.html", // Use your template file
             filename: "index.html", // Name of the output file
+            publicPath:"/h2c/",
         }),
         new htmlWebpackInjectAttributesPlugin({
             "data-uxp-remote-app": process.env.META_TAG,

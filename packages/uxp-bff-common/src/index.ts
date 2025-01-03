@@ -15,3 +15,4 @@ export { default as jwtPlugin } from "./plugins/jwt";
 
 export * from "./types/token.types";
 export * from "./utils/AppLogger";
+export * from "./health/health.controller";

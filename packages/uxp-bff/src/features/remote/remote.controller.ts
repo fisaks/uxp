@@ -1,6 +1,6 @@
 import { AppLogger, Route, UseQueryRunner } from "@uxp/bff-common";
-import { buildPath, buildUrlWithParams, ErrorCodes } from "@uxp/common";
-import axios from "axios";
+import { buildPath, buildUrlWithParams, ErrorCodes, removeContextPath } from "@uxp/common";
+import axios, { AxiosError } from "axios";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { JSDOM } from "jsdom";
 import { QueryRunner } from "typeorm";
@@ -59,7 +59,7 @@ export class RemoteController {
             const document = dom.window.document;
             const rewriteUrl = (url: string): string => {
                 if (url.startsWith("http") || url.startsWith("//")) return url; // Absolute URLs
-                return buildPath("/api/content/resource", appIdentifier, url);
+                return buildPath("/api/content/resource", appIdentifier, removeContextPath(url, contextPath));
             };
 
             document.querySelectorAll("script:not([src])").forEach((script) => {
@@ -94,7 +94,14 @@ export class RemoteController {
                     if (attr.name.startsWith("data-base-url")) {
                         // Rewrite the attribute value
                         const originalValue = attr.value;
-                        div.setAttribute(attr.name, buildPath("/api/content/resource", appIdentifier, originalValue));
+                        div.setAttribute(
+                            attr.name,
+                            buildPath(
+                                "/api/content/resource",
+                                appIdentifier,
+                                removeContextPath(originalValue, contextPath)
+                            )
+                        );
                     }
                 });
             });
@@ -156,6 +163,7 @@ export class RemoteController {
                 headers: req.headers, // Forward headers
                 data: req.body, // Forward the body for methods like POST or PUT
                 responseType: "stream", // Stream the response back to the client
+                validateStatus: (status) => status >= 200 && status < 500, // Only resolve for 2xx status codes
             });
 
             // Proxy the response
@@ -169,6 +177,10 @@ export class RemoteController {
             //return reply.send(response.data);
             response.data.pipe(reply.raw);
         } catch (error) {
+            AppLogger.error(req, {
+                error: error as AxiosError,
+                message: `Failed to fetch resource for app ${appIdentifier}`,
+            });
             return reply.status(500).send({ error: "Failed to fetch resource" });
         }
     }

@@ -1,0 +1,11 @@
+-- Create H2C database
+CREATE DATABASE IF NOT EXISTS {{MYSQL_H2C_DATABASE}};
+
+-- Create user for H2C
+CREATE USER IF NOT EXISTS '{{MYSQL_H2C_USER}}'@'%' IDENTIFIED BY '{{MYSQL_H2C_PASSWORD}}';
+
+-- Grant privileges to the user 
+GRANT ALL PRIVILEGES ON {{MYSQL_H2C_DATABASE}}.* TO '{{MYSQL_H2C_USER}}'@'%';
+
+-- Apply changes
+FLUSH PRIVILEGES;

@@ -1,11 +1,15 @@
 services:
-    mysql:
+    db-server:
         image: mysql:8.0
-        container_name: mysql
+        hostname: uxp-db
         env_file:
-            - .env.prod
+            - ./.env.prod
         volumes:
-            - mysql_data:/var/lib/mysql
+            - db_data:/var/lib/mysql
+            - ./database/:/uxp-initdb/
+ 
+        networks:
+            - uxp-network
         ports:
             - "3306:3306"
         healthcheck:
@@ -13,29 +17,89 @@ services:
             interval: 10s
             timeout: 5s
             retries: 5
+        command: >
+            sh -c "/uxp-initdb/generate-init-scripts.sh && /uxp-initdb/run-sql-scripts.sh & docker-entrypoint.sh mysqld"
+
     bff-server:
         build:
             context: ./
             dockerfile: ./Dockerfile
-            target: bff
-        container_name: bff-server
+            target: uxp-bff
+        networks:
+            - uxp-network
+        hostname: uxp-bff
         depends_on:
-            mysql:
+            db-server:
                 condition: service_healthy
-        ports:
-            - "3001:3001"
+        healthcheck:
+            test: ["CMD", "curl", "-f", "http://localhost:3001/api/health"]
+            interval: 10s
+            timeout: 5s
+            retries: 3
 
-    nginx:
+    web-server:
         build:
             context: ./
             dockerfile: ./Dockerfile
-            target: web
-        container_name: nginx
+            target: uxp-web
+        networks:
+            - uxp-network
+        hostname: uxp-web
         depends_on:
             - bff-server
         ports:
             - "80:80"
             - "443:443"
 
+    h2c-server:
+        build:
+            context: ./
+            dockerfile: ./Dockerfile
+            target: h2c-bff
+        networks:
+            - uxp-network
+        hostname: uxp-h2c-bff
+        depends_on:
+            db-server:
+                condition: service_healthy
+        healthcheck:
+            test: ["CMD", "curl", "-f", "http://localhost:3011/api/health"]
+            interval: 10s
+            timeout: 5s
+            retries: 3
+
+    demo-server:
+        build:
+            context: ./
+            dockerfile: ./Dockerfile
+            target: demo-bff
+        networks:
+            - uxp-network
+        hostname: uxp-demo-bff
+        depends_on:
+            db-server:
+                condition: service_healthy
+        healthcheck:
+            test: ["CMD", "curl", "-f", "http://localhost:3021/api/health"]
+            interval: 10s
+            timeout: 5s
+            retries: 3
+
+    web-remote-server:
+        build:
+            context: ./
+            dockerfile: ./Dockerfile
+            target: remote-web
+        networks:
+            - uxp-network
+        hostname: uxp-remote-web
+        depends_on:
+            - demo-server
+            - h2c-server
+
 volumes:
-    mysql_data:
+    db_data:
+
+networks:
+  uxp-network:
+    driver: bridge

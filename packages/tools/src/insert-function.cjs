@@ -2,11 +2,13 @@ let elements = [];
 let roots = [];
 // Function to initialize parameters at runtime
 function init(documentRoot) {
+    
     roots.push(documentRoot);
 
     applytoRoot(documentRoot);
 }
 function applytoRoot(documentRoot) {
+    console.log("Apply styles to root",documentRoot);
     for (const element of elements) {
         const id = element.getAttribute("id");
         const existingElement = documentRoot.querySelector(`#${id}`);

@@ -1,0 +1,10 @@
+services:
+    db-server:
+        env_file:
+          - ./.env.dev
+        volumes:
+            - db_dev_data:/var/lib/mysql
+            - ./database/:/uxp-initdb/
+
+volumes:
+    db_dev_data:

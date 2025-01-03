@@ -1,9 +1,10 @@
+process.env.NODE_ENV = "prod";
 const path = require("path");
 const { merge } = require("webpack-merge"); // Extend base config
 const baseConfig = require("./webpack.config.cjs"); // Import root base config
 
 const TerserPlugin = require("terser-webpack-plugin");
-process.env.NODE_ENV = "prod";
+
 module.exports = merge(baseConfig, {
     mode: "production",
     devtool: false,
@@ -12,6 +13,7 @@ module.exports = merge(baseConfig, {
         //filename: "uxp-ui.bundle.js?[contenthash]",
         filename: "[name].bundle.[contenthash].js", // Unique names for entry points
         chunkFilename: "uxp-[name].[contenthash].js", // Unique names for lazy-loaded chunks
+        publicPath: "/"
     },
 
     optimization: {

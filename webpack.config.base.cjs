@@ -35,6 +35,7 @@ module.exports = {
                             attributes: {
                                 "data-uxp-app": metaTag,
                             },
+                            //styleTagTransform: require.resolve("./packages/tools/src/style-tag-transform.cjs"),
                         },
                     },
                     {
@@ -59,9 +60,15 @@ module.exports = {
                             attributes: {
                                 "data-uxp-app": metaTag,
                             },
+                            //styleTagTransform: require.resolve("./packages/tools/src/style-tag-transform.cjs"),
                         },
                     },
-                    "css-loader", // Process regular CSS files
+                     {
+                        loader: "css-loader",
+                        options: {
+
+                        },
+                    },
                 ],
             },
             {
@@ -76,6 +83,14 @@ module.exports = {
                     },
                 },
             },
+          //  {
+            //    test: /\.(woff|woff2|eot|ttf|otf|svg)$/,
+              //  type: 'asset/resource',
+               // generator: {
+                 //   filename: 'fonts/[name][ext]', // Ensure fonts have relative paths
+
+                //},
+            //},
         ],
     },
     //plugins: [

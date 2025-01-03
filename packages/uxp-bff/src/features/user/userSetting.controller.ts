@@ -15,7 +15,7 @@ export class UserSettingController {
         this.fastify = fastify;
     }
 
-    @Route("get", "/my-settings", { authenticate: true })
+    @Route("get", "/my-settings", { authenticate: true, roles: [] })
     @UseQueryRunner()
     async fetchMySettings(req: FastifyRequest, reply: FastifyReply, queryRunner: QueryRunner) {
         const { uuid } = UserService.getLoggedInUser(req)!;
@@ -28,7 +28,7 @@ export class UserSettingController {
 
         reply.send((settings?.settings ?? {}) as UserSettingsResponse);
     }
-    @Route("put", "/my-settings", { authenticate: true, schema: UserSettingsSchema })
+    @Route("put", "/my-settings", { authenticate: true, roles: [], schema: UserSettingsSchema })
     @UseQueryRunner()
     async updateMySettings(
         req: FastifyRequest<{ Body: UserSettingsPayload }>,

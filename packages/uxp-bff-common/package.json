@@ -3,8 +3,9 @@
     "description": "Unified Experience Platform shared common bff components",
     "version": "1.0.0",
     "main": "dist/index.js",
-    "module": "dist/index.esm.js",
     "types": "dist/index.d.ts                                                                                                                   ",
+    "files": ["dist/"],
+    
     "keywords": [],
     "author": "",
     "license": "ISC",

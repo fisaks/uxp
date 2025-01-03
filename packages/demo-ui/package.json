@@ -2,6 +2,7 @@
     "name": "@uxp/demo-ui",
     "description": "The A demo remote application for the Unified Experience Platform",
     "version": "1.0.0",
+    "types": "build_types/index.d.ts",
     "scripts": {
         "start": "pnpm webpack serve --config webpack.devserver.config.cjs",
         "build": "pnpm webpack --config webpack.production.config.cjs",

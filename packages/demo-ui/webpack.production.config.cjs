@@ -1,3 +1,4 @@
+process.env.NODE_ENV = "prod";
 const path = require("path");
 const { merge } = require("webpack-merge"); // Extend base config
 const baseConfig = require("./webpack.config.cjs"); // Import root base config

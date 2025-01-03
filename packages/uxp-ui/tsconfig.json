@@ -3,6 +3,7 @@
     "compilerOptions": {
         "outDir": "./dist",
         "rootDir": "./src", // Treat src as the root for inputs
+        "declarationDir": "./build_types",
         "module": "ESNext",
         "target": "ES2021",
         "jsx": "react-jsx",

@@ -2,6 +2,7 @@
     "name": "@h2c/ui",
     "description": "The React-based user interface for the House2Care application",
     "version": "1.0.0",
+    "types": "build_types/index.d.ts",
     "scripts": {
         "start": "pnpm webpack serve --config webpack.devserver.config.cjs",
         "build": "pnpm webpack --config webpack.production.config.cjs",

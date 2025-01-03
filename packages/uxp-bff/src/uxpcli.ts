@@ -8,6 +8,8 @@ import { Repository } from "typeorm";
 import { BCRYPT_SALT_ROUNDS } from "./config/constant";
 import { User } from "./db/entities/User";
 
+// TODO make better
+env.DATABASE_HOST = "localhost";
 const { AppDataSource } = require("./db/typeorm.config");
 
 const program = new Command();
@@ -81,7 +83,7 @@ const initializeAndRunCLI = async () => {
     try {
         console.log("Initializing database connection...");
         await AppDataSource.initialize();
-        console.log(`Database connected to ${env.MYSQL_DATABASE} at ${env.DATABASE_HOST}:${env.DATABASE_PORT}`);
+        console.log(`Database connected to ${env.MYSQL_UXP_DATABASE} at ${env.DATABASE_HOST}:${env.DATABASE_PORT}`);
 
         program.name("uxpcli").description("A CLI tool for managing the UXP system.").version("1.0.0");
 
