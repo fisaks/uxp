@@ -1,0 +1,31 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+
+actor User as UI
+
+node "Docker Compose Services" {
+    [uxp-web-remote-server] as WebRemote
+    [uxp-web-server] as Web
+    [uxp-bff-server] as BFF
+    [uxp-h2c-bff] as H2CBFF
+    [uxp-demo-bff] as DemoBFF
+    [uxp-db-server] as DB
+}
+
+' Annotations for static resources
+note right of WebRemote : Hosts Static Resources for Remote Apps
+note right of Web : Hosts Static Resources for UXP
+
+' Arrows represent interactions
+UI --> Web : Interact via Browser
+Web --> BFF : API Calls
+Web --> WebRemote : Proxy Requests
+BFF --> WebRemote : Proxy Remote Requests
+WebRemote --> H2CBFF : API Calls to H2C
+WebRemote --> DemoBFF : API Calls to Demo
+BFF --> DB : Database Queries
+H2CBFF --> DB : Database Queries
+DemoBFF --> DB : Database Queries
+
+@enduml
