@@ -99,38 +99,17 @@ If you encounter any issues, check the logs for more information:
   ```
 - Run the following scripts to check logs for specific services:
   ```sh
-  ./mysql.sh
-  ./log.sh bff
-  ./log.sh web
-  ./log.sh db
+  ./log.sh <service>
   ```
 - Run the following scripts to open a shell in specific services:
   ```sh
-  ./shell.sh bff
-  ./shell.sh web
-  ./shell.sh db
+  ./shell.sh <service>
   ```
 - Run the following scripts to access the database:
   ```sh
   ./mysql.sh
   ```
 
-### Create .htpasswd for Password Protection
-
-1. Install apache2-utils:
-
-   ```sh
-   sudo apt-get install apache2-utils
-   ```
-2. Generate a password file:
-
-   ```sh
-   sudo htpasswd -c /etc/nginx/.htpasswd username
-   ```
-
-   `sudo apt-get install apache2-utils`
-
-Generate a password file:
 
 ## Navigating the tmux Environment
 
