@@ -15,3 +15,4 @@ packages/uxp-ui/.htpasswd
 packages/uxp-bff/build_types
 .history
 build_types
+packages/uxp-bff/src/db/private-migrations/

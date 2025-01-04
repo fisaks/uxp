@@ -13,7 +13,7 @@ const AppDataSource = new DataSource({
     //entities: [Page],
     migrations: [
         process.env.TS_NODE_DEV ? "src/db/migrations/**/*.ts" : "dist/db/migrations/**/*.js",
-        process.env.TS_NODE_DEV ? "src/db/migrations/**/*.sql" : "dist/db/migrations/**/*.sql",
+        process.env.TS_NODE_DEV ? "src/db/private-migrations/**/*.ts" : "dist/db/private-migrations/**/*.js",
     ],
     cli: {
         migrationsDir: "dist/migration",
