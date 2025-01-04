@@ -4,18 +4,24 @@ import { AppEntity } from "../entities/AppEntity";
 import { PageAppsEntity } from "../entities/PageAppsEntity";
 import { PageEntity } from "../entities/PageEntity";
 import { RouteEntity } from "../entities/RouteEntity";
+import { RouteTagsEntity } from "../entities/RouteTagsEntity";
+import { TagEntity } from "../entities/TagEntity";
 
-export class CreateMigration1735997112618 implements MigrationInterface {
+export class CreateMigration1736022305106 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
         const pageRepository = queryRunner.manager.getRepository(PageEntity);
         const pageAppsRepository = queryRunner.manager.getRepository(PageAppsEntity);
         const routeRepository = queryRunner.manager.getRepository(RouteEntity);
         const appRepository = queryRunner.manager.getRepository(AppEntity);
+        const tagRepository = queryRunner.manager.getRepository(TagEntity);
+        const routeTagRepository = queryRunner.manager.getRepository(RouteTagsEntity);
 
         pageAppsRepository.delete({});
         appRepository.delete({});
         routeRepository.delete({});
         pageRepository.delete({});
+        tagRepository.delete({});
+        routeTagRepository.delete({});
 
         const h2c = await appRepository.save(
             new AppEntity({
@@ -42,7 +48,7 @@ export class CreateMigration1735997112618 implements MigrationInterface {
             new PageEntity({
                 name: "Demo Page",
                 identifier: "uxp-demo-page",
-                config: { pageType: "leftNavigation", routeLinkGroup: "header-menu" },
+                config: { pageType: "leftNavigation", routeLinkGroup: "demo-links" },
             })
         );
         const uxpDemoPage2 = await pageRepository.save(
@@ -86,93 +92,149 @@ export class CreateMigration1735997112618 implements MigrationInterface {
             new PageAppsEntity({ page: startPage, order: 1, roles: ["user"], internalComponent: "StartPage" }),
         ]);
 
-        await routeRepository.save([
+        await tagRepository.save([
+            new TagEntity(new TagEntity({ name: "header-menu" })),
+            new TagEntity(new TagEntity({ name: "profile-icon" })),
+            new TagEntity(new TagEntity({ name: "demo-links" })),
+        ]);
+        const routeH2C = await routeRepository.save([
             new RouteEntity({
+                identifier: "home-2-care",
                 routePattern: "/home-2-care/*",
                 link: "/home-2-care/",
                 page: home2CarePage,
                 roles: ["user"],
-                groupName: "header-menu",
+                //groupName: "header-menu",
                 accessType: "role-based",
             }),
             new RouteEntity({
+                identifier: "demo-app",
                 routePattern: "/demo-app/*",
                 link: "/demo-app/",
                 page: uxpDemoPage,
                 roles: ["user"],
-                groupName: "header-menu",
+                //groupName: "header-menu",
                 accessType: "role-based",
             }),
             new RouteEntity({
+                identifier: "demo-app-2",
                 routePattern: "/demo-app-2/*",
                 link: "/demo-app-2/",
                 page: uxpDemoPage2,
                 roles: ["user"],
-                groupName: "header-menu",
+                //groupName: "header-menu",
                 accessType: "role-based",
             }),
             new RouteEntity({
+                identifier: "auth-root",
                 routePattern: "/",
                 link: "/",
                 page: startPage,
                 roles: [],
-                groupName: "header-menu",
+                //groupName: "header-menu",
                 accessType: "authenticated",
             }),
             new RouteEntity({
+                identifier: "login",
                 routePattern: "/login",
                 link: "/login",
                 page: loginPage,
                 roles: undefined,
-                groupName: "unauthenticated",
+                //groupName: "unauthenticated",
                 accessType: "unauthenticated",
             }),
             new RouteEntity({
+                identifier: "register",
                 routePattern: "/register",
                 link: "/register",
                 page: registerPage,
                 roles: undefined,
-                groupName: "unauthenticated",
+                //groupName: "unauthenticated",
                 accessType: "unauthenticated",
             }),
             new RouteEntity({
+                identifier: "register-thank-you",
                 routePattern: "/register-thank-you",
                 link: "/register-thank-you",
                 page: registerPageThankYou,
                 roles: undefined,
-                groupName: "unauthenticated",
+                //groupName: "unauthenticated",
                 accessType: "unauthenticated",
             }),
             new RouteEntity({
+                identifier: "my-profile",
                 routePattern: "/my-profile",
                 link: "/my-profile",
                 page: myProfilePage,
                 roles: [],
                 accessType: "authenticated",
-                groupName: "profile-icon",
+                //groupName: "profile-icon",
             }),
             new RouteEntity({
+                identifier: "my-settings",
                 routePattern: "/my-settings",
                 link: "/my-settings",
                 page: mySettingsPage,
                 roles: [],
                 accessType: "authenticated",
-                groupName: "profile-icon",
+                //groupName: "profile-icon",
             }),
             new RouteEntity({
+                identifier: "unauth-default",
                 routePattern: "*",
                 roles: undefined,
                 accessType: "unauthenticated",
-                groupName: "unauthenticated",
+                //groupName: "unauthenticated",
                 config: { redirect: "/login" },
             }),
             new RouteEntity({
+                identifier: "auth-default",
                 routePattern: "*",
                 roles: [],
                 config: { redirect: "/" },
                 accessType: "authenticated",
             }),
         ]);
+        await this.createRoute(queryRunner, "auth-root", "header-menu", 1);
+        await this.createRoute(queryRunner, "home-2-care", "header-menu", 2);
+        await this.createRoute(queryRunner, "demo-app", "header-menu", 3);
+        await this.createRoute(queryRunner, "demo-app-2", "header-menu", 4);
+
+        await this.createRoute(queryRunner, "my-settings", "profile-icon", 1);
+        await this.createRoute(queryRunner, "my-profile", "profile-icon", 2);
+
+        await this.createRoute(queryRunner, "home-2-care", "demo-links");
+        await this.createRoute(queryRunner, "demo-app", "demo-links");
+        await this.createRoute(queryRunner, "demo-app-2", "demo-links");
+    }
+
+    private async createRoute(
+        queryRunner: QueryRunner,
+        routeIdentifier: string,
+        tagName: string,
+        order?: number
+    ): Promise<void> {
+        const routeTagsRepository = queryRunner.manager.getRepository(RouteTagsEntity);
+
+        const routeTag = new RouteTagsEntity();
+        const route = await queryRunner.manager.getRepository(RouteEntity).findOne({
+            where: {
+                identifier: routeIdentifier,
+            },
+        });
+
+        const tag = await queryRunner.manager.getRepository(TagEntity).findOne({
+            where: {
+                name: tagName,
+            },
+        });
+
+        routeTag.route = route!;
+        routeTag.tag = tag!;
+        routeTag.routeOrder = order ?? null;
+
+        await routeTagsRepository.save(routeTag);
+        return;
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -180,10 +242,14 @@ export class CreateMigration1735997112618 implements MigrationInterface {
         const pageAppsRepository = queryRunner.manager.getRepository(PageAppsEntity);
         const routeRepository = queryRunner.manager.getRepository(RouteEntity);
         const appRepository = queryRunner.manager.getRepository(AppEntity);
+        const tagRepository = queryRunner.manager.getRepository(TagEntity);
+        const routeTagRepository = queryRunner.manager.getRepository(RouteTagsEntity);
 
         pageAppsRepository.delete({});
         appRepository.delete({});
         routeRepository.delete({});
         pageRepository.delete({});
+        tagRepository.delete({});
+        routeTagRepository.delete({});
     }
 }

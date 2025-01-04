@@ -2,13 +2,14 @@ import { PageConfigData, PageMetaData, RouteConfigData } from "../uxp/pagesRoute
 
 export type NavigationResponse = {
     routes: NavigationRoute[];
+    tags: NavigationTags;
 };
 export type NavigationRoute = {
     routePattern: string;
     localizedRoutePattern?: Record<string, string>;
     link?: string;
     localizedLink?: Record<string, string>;
-    groupName?: string;
+    identifier: string;
     config?: RouteConfigData;
     page?: {
         uuid: string;
@@ -24,3 +25,5 @@ export type NavigationRoute = {
         }[];
     };
 };
+
+export type NavigationTags = Record<string, string[]>;

@@ -1,8 +1,9 @@
 import { Route, Token, UseQueryRunner } from "@uxp/bff-common";
-import { NavigationResponse, NavigationRoute, UserRole } from "@uxp/common";
+import { NavigationResponse, NavigationRoute, NavigationTags, UserRole } from "@uxp/common";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { QueryRunner } from "typeorm";
 import { AccessType, RouteEntity } from "../../db/entities/RouteEntity";
+import { TagEntity } from "../../db/entities/TagEntity";
 import { UserService } from "../../services/user.service";
 
 export class NavigationController {
@@ -13,14 +14,27 @@ export class NavigationController {
     @Route("get", "/navigation", { authenticate: false })
     @UseQueryRunner()
     async getNavigation(req: FastifyRequest, reply: FastifyReply, queryRunner: QueryRunner) {
-        const routes: RouteEntity[] = (await queryRunner.manager
-            .getRepository("RouteEntity")
+        const routes = queryRunner.manager
+            .getRepository(RouteEntity)
             .createQueryBuilder("route")
             .leftJoinAndSelect("route.page", "page") // Include the referenced PageEntity
             .leftJoinAndSelect("page.contents", "contents") // Include related PageAppsEntity
             .orderBy("route.routePattern", "ASC") // Order by route link
             .addOrderBy("contents.order", "ASC") // Then order by contents order
-            .getMany()) as unknown as RouteEntity[];
+            .getMany();
+
+        const tags = queryRunner.manager
+            .getRepository(TagEntity)
+            .createQueryBuilder("tag")
+            .leftJoinAndSelect("tag.routeTags", "routeTag")
+            .leftJoinAndSelect("routeTag.route", "route")
+            .leftJoinAndSelect("route.page", "page")
+            .orderBy("tag.name", "ASC") // Order by tag name first
+            .addOrderBy("routeTag.routeOrder", "ASC") // Then by tag_order
+            .addOrderBy("page.identifier", "ASC") // Finally by page identifier
+            .getMany();
+
+        const [routesResult, tagsResult] = await Promise.all([routes, tags]);
 
         const user: Token | undefined = UserService.getLoggedInUser(req);
         const isGuest = !user;
@@ -34,8 +48,9 @@ export class NavigationController {
             return rolesOnElement.some((role) => user?.roles.includes(role));
         };
         console.log("user", user);
+
         return {
-            routes: routes
+            routes: routesResult
                 .filter((f) => shouldInclude(f.roles, f.accessType))
                 .map((route) => {
                     return {
@@ -63,12 +78,17 @@ export class NavigationController {
                                       }),
                               }
                             : undefined,
-                        groupName: route.groupName ?? undefined,
+                        identifier: route.identifier,
+                        //groupName: route.groupName ?? undefined,
                         config: route.config,
                         //unauthenticatedOnly: route.unauthenticatedOnly,
                         //roles: route.roles
                     };
                 }) as NavigationRoute[],
+            tags: tagsResult.reduce<NavigationTags>((acc, tag) => {
+                acc[tag.name] = tag.routeTags.map((routeTag) => routeTag.route.identifier);
+                return acc;
+            }, {}),
         } as NavigationResponse;
     }
 }

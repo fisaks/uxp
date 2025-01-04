@@ -9,10 +9,14 @@ export type RouteLink = {
 
 export const selectNavigationState = (state: RootState) => state.navigation;
 
-const selectRoutesByGroupName = (groupName: string) =>
-    createSelector(selectNavigationState, (navigationState) =>
-        navigationState.routes.filter((route) => route.groupName === groupName)
-    );
+const selectRoutesByTagName = (tagName: string) =>
+    createSelector(selectNavigationState, (navigationState) => {
+        const tagOrder = navigationState.tags[tagName] ?? [];
+
+        return navigationState.routes
+            .filter((route) => tagOrder.includes(route.identifier))
+            .sort((a, b) => tagOrder.indexOf(a.identifier) - tagOrder.indexOf(b.identifier));
+    });
 
 const mapRoutesToLinks = (routes: any[]) =>
     routes.map((route) => ({
@@ -20,13 +24,11 @@ const mapRoutesToLinks = (routes: any[]) =>
         label: route.page?.name,
     })) as RouteLink[];
 
-export const selectLinksForHeaderMenu = () => createSelector(selectRoutesByGroupName("header-menu"), mapRoutesToLinks);
+export const selectLinksForHeaderMenu = () => createSelector(selectRoutesByTagName("header-menu"), mapRoutesToLinks);
 
-export const selectLinksForProfileIcon = () =>
-    createSelector(selectRoutesByGroupName("profile-icon"), mapRoutesToLinks);
+export const selectLinksForProfileIcon = () => createSelector(selectRoutesByTagName("profile-icon"), mapRoutesToLinks);
 
-export const selectLinksByGroupName = (groupName: string) =>
-    createSelector(selectRoutesByGroupName(groupName), mapRoutesToLinks);
+export const selectLinksByTag = (tagName: string) => createSelector(selectRoutesByTagName(tagName), mapRoutesToLinks);
 
 export const selectAllRoutes = () =>
     createSelector(selectNavigationState, (navigationState) =>

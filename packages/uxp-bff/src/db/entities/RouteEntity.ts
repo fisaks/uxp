@@ -1,6 +1,17 @@
 import { LocalizedStringValue, RouteConfigData, UserRole } from "@uxp/common";
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import slugify from "slugify";
+import {
+    BeforeInsert,
+    BeforeUpdate,
+    Column,
+    Entity,
+    JoinColumn,
+    ManyToOne,
+    OneToMany,
+    PrimaryGeneratedColumn,
+} from "typeorm";
 import { PageEntity } from "./PageEntity";
+import { RouteTagsEntity } from "./RouteTagsEntity";
 // Route Entity
 
 export type AccessType = "unauthenticated" | "authenticated" | "role-based";
@@ -16,6 +27,9 @@ export class RouteEntity {
 
     @PrimaryGeneratedColumn()
     id!: number;
+
+    @Column({ unique: true, nullable: false })
+    identifier!: string;
 
     @Column()
     routePattern!: string; // Default route pattern (non-localized)
@@ -33,9 +47,6 @@ export class RouteEntity {
     @JoinColumn({ name: "pageId" })
     page!: PageEntity; // Associated page for this route
 
-    @Column({ nullable: true })
-    groupName!: string; // Group name for organizing routes
-
     @Column("json", { nullable: true })
     config!: RouteConfigData;
 
@@ -48,4 +59,13 @@ export class RouteEntity {
 
     @Column("simple-array", { nullable: true })
     roles: UserRole[] = ["user"];
+
+    @OneToMany(() => RouteTagsEntity, (routeTag) => routeTag.route)
+    routeTags!: RouteTagsEntity[];
+
+    @BeforeInsert()
+    @BeforeUpdate()
+    generateIdentifier() {
+        this.identifier = slugify(this.identifier, { lower: true, strict: true });
+    }
 }

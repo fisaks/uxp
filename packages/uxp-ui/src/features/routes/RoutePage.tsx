@@ -4,7 +4,7 @@ import { Link, useLocation } from "react-router-dom";
 
 import { PageLayout } from "@uxp/ui-lib";
 import DynamicComponentLoader from "../dynamic-components/DynamicComponentLoader";
-import { selectLinksByGroupName, selectPageByUuid } from "../navigation/navigationSelectors";
+import { selectLinksByTag, selectPageByUuid } from "../navigation/navigationSelectors";
 import RemoteApp from "./RemoteApp";
 
 type RoutePageProps = {
@@ -22,12 +22,13 @@ const RoutePage: React.FC<RoutePageProps> = ({ pageUuid, basePath }) => {
 
     const location = useLocation();
 
+    const links = useSelector(
+        page?.config.pageType === "leftNavigation" && page.config.routeLinkGroup
+            ? selectLinksByTag(page.config.routeLinkGroup)
+            : () => []
+    );
     const sidebarMenuItems = useMemo(() => {
-        return (
-            page?.config.pageType === "leftNavigation" && page.config.routeLinkGroup
-                ? useSelector(selectLinksByGroupName(page.config.routeLinkGroup))
-                : []
-        ).map(({ label, link }) => {
+        return links.map(({ label, link }) => {
             const fullLink = generateFullLink(basePath, link);
             return {
                 label,
@@ -37,7 +38,7 @@ const RoutePage: React.FC<RoutePageProps> = ({ pageUuid, basePath }) => {
                 active: location.pathname === fullLink,
             };
         });
-    }, [page, basePath, location.pathname]);
+    }, [links, basePath, location.pathname]);
 
     return (
         <PageLayout pageType={page!.config.pageType} leftSideBar={{ menuItems: sidebarMenuItems }}>
