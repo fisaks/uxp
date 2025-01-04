@@ -50,6 +50,7 @@ export class NavigationController {
                                   name: route.page.name,
                                   localizedName: route.page.localizedName ?? undefined,
                                   metadata: route.page.metadata ?? undefined,
+                                  config: route.page.config ?? { pageType: "fullWidth" },
                                   localizedMetadata: route.page.localizedMetadata ?? undefined,
                                   contents: route.page.contents
                                       .filter((f) => shouldInclude(f.roles, route.accessType))

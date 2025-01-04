@@ -5,7 +5,7 @@ import { PageAppsEntity } from "../entities/PageAppsEntity";
 import { PageEntity } from "../entities/PageEntity";
 import { RouteEntity } from "../entities/RouteEntity";
 
-export class CreateMigration1735921258471 implements MigrationInterface {
+export class CreateMigration1735997112618 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
         const pageRepository = queryRunner.manager.getRepository(PageEntity);
         const pageAppsRepository = queryRunner.manager.getRepository(PageAppsEntity);
@@ -39,7 +39,11 @@ export class CreateMigration1735921258471 implements MigrationInterface {
             new PageEntity({ name: "Home 2 Care", identifier: "home-2-care" })
         );
         const uxpDemoPage = await pageRepository.save(
-            new PageEntity({ name: "Demo Page", identifier: "uxp-demo-page" })
+            new PageEntity({
+                name: "Demo Page",
+                identifier: "uxp-demo-page",
+                config: { pageType: "leftNavigation", routeLinkGroup: "header-menu" },
+            })
         );
         const uxpDemoPage2 = await pageRepository.save(
             new PageEntity({ name: "Demo App 2", identifier: "uxp-demo-page-2" })

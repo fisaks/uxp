@@ -1,14 +1,22 @@
 import { Drawer, List, ListItem, ListItemText, Toolbar } from "@mui/material";
 import React from "react";
 
-interface SidebarProps {
+export type SidebarMenuItems = {
+    label: string;
+    link: string;
+    active?: boolean;
+    component?: React.ElementType; // Custom component to render
+    componentProp: string; // Props to pass to the custom component
+};
+
+type SidebarProps = {
     isDesktop: boolean;
     sidebarOpen: boolean;
     toggleSidebar: () => void;
-    sidebarMenuItems: string[];
-}
+    sidebarMenuItems: SidebarMenuItems[];
+};
 
-const Sidebar: React.FC<SidebarProps> = ({ isDesktop, sidebarOpen, toggleSidebar, sidebarMenuItems }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ isDesktop, sidebarOpen, toggleSidebar, sidebarMenuItems }) => {
     return (
         <Drawer
             variant={isDesktop ? "permanent" : "temporary"}
@@ -19,16 +27,25 @@ const Sidebar: React.FC<SidebarProps> = ({ isDesktop, sidebarOpen, toggleSidebar
                 [`& .MuiDrawer-paper`]: {
                     width: "15rem",
                     boxSizing: "border-box",
+                    ...(isDesktop
+                        ? {}
+                        : {
+                              position: "fixed",
+                              top: 0,
+                              left: 0,
+                              height: "100%",
+                              zIndex: (theme) => theme.zIndex.drawer + 1,
+                          }),
                 },
             }}
         >
             <Toolbar />
             <List>
-                {sidebarMenuItems.map((text) => (
+                {sidebarMenuItems.map(({ label, link, component, componentProp, active }, index) => (
                     <ListItem
-                        key={text}
-                        component="a"
-                        href={`#${text.toLowerCase()}`}
+                        key={index}
+                        component={component ?? "a"}
+                        {...(component ? { [componentProp]: link } : { href: link })}
                         sx={{
                             cursor: "pointer",
                             "&:hover": {
@@ -39,14 +56,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isDesktop, sidebarOpen, toggleSidebar
                                 bgcolor: "primary.main",
                                 color: "white",
                             },
+                            ...(active ? { bgcolor: "primary.main", color: "white" } : {}),
                         }}
                     >
-                        <ListItemText primary={text} />
+                        <ListItemText primary={label} />
                     </ListItem>
                 ))}
             </List>
         </Drawer>
     );
 };
-
-export default Sidebar;

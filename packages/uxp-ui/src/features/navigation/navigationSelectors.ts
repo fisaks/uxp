@@ -2,9 +2,14 @@ import { createSelector } from "@reduxjs/toolkit";
 
 import { RootState } from "../../app/store";
 
+export type RouteLink = {
+    label: string;
+    link: string;
+};
+
 export const selectNavigationState = (state: RootState) => state.navigation;
 
-export const selectRoutesByGroupName = (groupName: string) =>
+const selectRoutesByGroupName = (groupName: string) =>
     createSelector(selectNavigationState, (navigationState) =>
         navigationState.routes.filter((route) => route.groupName === groupName)
     );
@@ -13,12 +18,15 @@ const mapRoutesToLinks = (routes: any[]) =>
     routes.map((route) => ({
         link: route.link,
         label: route.page?.name,
-    }));
+    })) as RouteLink[];
 
 export const selectLinksForHeaderMenu = () => createSelector(selectRoutesByGroupName("header-menu"), mapRoutesToLinks);
 
 export const selectLinksForProfileIcon = () =>
     createSelector(selectRoutesByGroupName("profile-icon"), mapRoutesToLinks);
+
+export const selectLinksByGroupName = (groupName: string) =>
+    createSelector(selectRoutesByGroupName(groupName), mapRoutesToLinks);
 
 export const selectAllRoutes = () =>
     createSelector(selectNavigationState, (navigationState) =>

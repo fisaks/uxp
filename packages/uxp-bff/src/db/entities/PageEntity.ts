@@ -1,7 +1,7 @@
-import { LocalizedStringValue, PageMetaData } from "@uxp/common";
+import { LocalizedStringValue, PageConfigData, PageMetaData } from "@uxp/common";
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
-import { PageAppsEntity } from "./PageAppsEntity";
 import { v4 as uuidv4 } from "uuid";
+import { PageAppsEntity } from "./PageAppsEntity";
 
 // Page Entity
 @Entity("pages")
@@ -10,6 +10,9 @@ export class PageEntity {
         Object.assign(this, init);
         if (!this.uuid) {
             this.uuid = uuidv4();
+        }
+        if (!this.config) {
+            this.config = { pageType: "fullWidth" };
         }
     }
 
@@ -33,6 +36,9 @@ export class PageEntity {
 
     @Column("json", { nullable: true })
     localizedMetadata!: PageMetaData<LocalizedStringValue>;
+
+    @Column("json", { nullable: true })
+    config!: PageConfigData; // JSON column for rewrite rules, settings, etc.
 
     @OneToMany(() => PageAppsEntity, (pageApp) => pageApp.page)
     contents!: PageAppsEntity[]; // Ordered contents of the page

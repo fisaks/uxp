@@ -10,6 +10,7 @@ import {
     MenuItem,
     Toolbar,
     Typography,
+    useMediaQuery,
 } from "@mui/material";
 import React, { useState } from "react";
 import { useSelector } from "react-redux";
@@ -18,13 +19,12 @@ import { useAppDispatch } from "../../../hooks";
 import { selectLinksForHeaderMenu, selectLinksForProfileIcon } from "../../navigation/navigationSelectors";
 import { selectIsLoggedInUser } from "../../user/userSelectors";
 import { logout } from "../../user/userThunks";
+import { useUxpTheme } from "../../theme/useUxpTheme";
 
-interface HeaderMenuProps {
-    isDesktop: boolean;
-}
-
-const HeaderMenu: React.FC<HeaderMenuProps> = ({ isDesktop }) => {
+const HeaderMenu: React.FC = () => {
     const dispatch = useAppDispatch();
+    const theme = useUxpTheme();
+    const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
 
     const [headerMenuOpen, setHeaderMenuOpen] = useState(false);
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -48,6 +48,7 @@ const HeaderMenu: React.FC<HeaderMenuProps> = ({ isDesktop }) => {
         handleMenuClose();
         dispatch(logout({}));
     };
+
     return (
         <>
             <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
@@ -122,6 +123,8 @@ const HeaderMenu: React.FC<HeaderMenuProps> = ({ isDesktop }) => {
                                 position: "fixed",
                                 top: 64,
                                 width: "100%",
+                                maxHeight: "calc(100vh - 64px)", // Ensure the menu does not exceed the viewport height
+                                overflowY: "auto", // Make the menu scrollable
                                 bgcolor: "background.paper",
                                 textAlign: "center",
                                 boxShadow: 3,

@@ -6,3 +6,4 @@ export const selectUserState = (state: RootState) => state.user;
 export const selectCurrentUser = () => createSelector(selectUserState, (userState) => userState.user);
 
 export const selectIsLoggedInUser = () => createSelector(selectUserState, (userState) => !!userState.user);
+export const selectUserRoles = () => createSelector(selectUserState, (userState) => userState.user?.roles ?? []);

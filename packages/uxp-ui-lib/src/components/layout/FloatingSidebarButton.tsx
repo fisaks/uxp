@@ -6,7 +6,7 @@ interface FloatingSidebarButtonProps {
     toggleSidebar: () => void;
 }
 
-const FloatingSidebarButton: React.FC<FloatingSidebarButtonProps> = ({ toggleSidebar }) => {
+export const FloatingSidebarButton: React.FC<FloatingSidebarButtonProps> = ({ toggleSidebar }) => {
     return (
         <Fab
             color="primary"
@@ -23,5 +23,3 @@ const FloatingSidebarButton: React.FC<FloatingSidebarButtonProps> = ({ toggleSid
         </Fab>
     );
 };
-
-export default FloatingSidebarButton;

@@ -4,6 +4,10 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { selectAllRoutes } from "../navigation/navigationSelectors";
 import RoutePage from "./RoutePage";
 
+const getBasePath = (routePattern: string) => {
+    const match = routePattern.match(/^(.*)\*$/);
+    return match ? match[1] : undefined;
+};
 const UxpRoutes: React.FC = () => {
     const routes = useSelector(selectAllRoutes());
 
@@ -17,7 +21,11 @@ const UxpRoutes: React.FC = () => {
                         route.config?.redirect ? (
                             <Navigate to={route.config?.redirect} />
                         ) : (
-                            <RoutePage key={route.pageUuid!} pageUuid={route.pageUuid!} />
+                            <RoutePage
+                                key={route.pageUuid!}
+                                pageUuid={route.pageUuid!}
+                                basePath={getBasePath(route.routePattern)}
+                            />
                         )
                     }
                 />

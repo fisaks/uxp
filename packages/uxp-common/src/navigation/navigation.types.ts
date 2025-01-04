@@ -1,4 +1,4 @@
-import { PageMetaData, RouteConfigData } from "../uxp/pagesRoutesApps.types";
+import { PageConfigData, PageMetaData, RouteConfigData } from "../uxp/pagesRoutesApps.types";
 
 export type NavigationResponse = {
     routes: NavigationRoute[];
@@ -16,6 +16,7 @@ export type NavigationRoute = {
         name: string;
         localizedName?: Record<string, string>;
         metadata?: PageMetaData;
+        config: PageConfigData;
         localizedMetadata?: Record<string, PageMetaData>;
         contents: {
             uuid: string;
