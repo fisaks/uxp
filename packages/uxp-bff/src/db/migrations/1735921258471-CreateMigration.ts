@@ -5,7 +5,7 @@ import { PageAppsEntity } from "../entities/PageAppsEntity";
 import { PageEntity } from "../entities/PageEntity";
 import { RouteEntity } from "../entities/RouteEntity";
 
-export class CreateMigration1735921258470 implements MigrationInterface {
+export class CreateMigration1735921258471 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
         const pageRepository = queryRunner.manager.getRepository(PageEntity);
         const pageAppsRepository = queryRunner.manager.getRepository(PageAppsEntity);
@@ -47,6 +47,9 @@ export class CreateMigration1735921258470 implements MigrationInterface {
 
         const loginPage = await pageRepository.save(new PageEntity({ name: "Login", identifier: "login" }));
         const registerPage = await pageRepository.save(new PageEntity({ name: "Register", identifier: "register" }));
+        const registerPageThankYou = await pageRepository.save(
+            new PageEntity({ name: "RegisterThankYou", identifier: "register-thank-you" })
+        );
         const myProfilePage = await pageRepository.save(
             new PageEntity({ name: "My Profile", identifier: "my-profile" })
         );
@@ -63,6 +66,12 @@ export class CreateMigration1735921258470 implements MigrationInterface {
 
             new PageAppsEntity({ page: loginPage, order: 1, roles: undefined, internalComponent: "LoginPage" }),
             new PageAppsEntity({ page: registerPage, order: 1, roles: undefined, internalComponent: "RegisterPage" }),
+            new PageAppsEntity({
+                page: registerPageThankYou,
+                order: 1,
+                roles: undefined,
+                internalComponent: "RegistrationThankYouPage",
+            }),
             new PageAppsEntity({ page: myProfilePage, order: 1, roles: ["user"], internalComponent: "MyProfilePage" }),
             new PageAppsEntity({
                 page: mySettingsPage,
@@ -118,6 +127,14 @@ export class CreateMigration1735921258470 implements MigrationInterface {
                 routePattern: "/register",
                 link: "/register",
                 page: registerPage,
+                roles: undefined,
+                groupName: "unauthenticated",
+                accessType: "unauthenticated",
+            }),
+            new RouteEntity({
+                routePattern: "/register-thank-you",
+                link: "/register-thank-you",
+                page: registerPageThankYou,
                 roles: undefined,
                 groupName: "unauthenticated",
                 accessType: "unauthenticated",

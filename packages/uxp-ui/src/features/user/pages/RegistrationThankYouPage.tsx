@@ -10,10 +10,10 @@ const RegistrationThankYouPage: React.FC = () => {
                 Thank You for Registering!
             </Typography>
             <Typography variant="body1" sx={{ mb: 3 }}>
-                Your account has been successfully created, but it is not yet active.
+                Your account has been successfully created, but it is not yet approved.
             </Typography>
             <Typography variant="body1" sx={{ mb: 4 }}>
-                It needs to be approved by an administrator before you can log in.
+                You can log in, but your access is restricted until an administrator has approved your registration.
             </Typography>
             <Link component={RouterLink} to="/login" color="primary">
                 Go to Login

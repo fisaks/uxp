@@ -274,6 +274,9 @@ export class UserController {
         } catch (err) {
             AppLogger.error(req, { error: err as Error });
             if (err instanceof AppError) {
+                if (err.code === ErrorCodes.INVALID_REFRESH_TOKEN) {
+                    clearAuthCookies(reply);
+                }
                 throw err;
             }
             return sendErrorResponse({
