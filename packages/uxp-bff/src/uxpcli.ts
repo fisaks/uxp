@@ -1,17 +1,13 @@
 #!/usr/bin/env node
 
-import env from "./config/env";
 import bcrypt from "bcrypt";
 import { Command } from "commander";
 import { UserRole } from "packages/uxp-common/src";
-import { Repository } from "typeorm";
+import { DataSource, Repository } from "typeorm";
 import { BCRYPT_SALT_ROUNDS } from "./config/constant";
 import { User } from "./db/entities/User";
 
-// TODO make better
-env.DATABASE_HOST = "localhost";
-const { AppDataSource } = require("./db/typeorm.config");
-
+let AppDataSource: DataSource;
 const program = new Command();
 
 const withUser = async (
@@ -20,7 +16,7 @@ const withUser = async (
 ) => {
     const userRepository = AppDataSource.getRepository(User);
     try {
-        const user: User = await userRepository.findOneBy({ username });
+        const user: User | null = await userRepository.findOneBy({ username });
         if (!user) {
             throw new Error(`User '${username}' not found.`);
         }
@@ -81,11 +77,33 @@ const updateTokenVersion = async (username: string): Promise<void> => {
 // Initialize database and start the CLI
 const initializeAndRunCLI = async () => {
     try {
-        console.log("Initializing database connection...");
-        await AppDataSource.initialize();
-        console.log(`Database connected to ${env.MYSQL_UXP_DATABASE} at ${env.DATABASE_HOST}:${env.DATABASE_PORT}`);
-
         program.name("uxpcli").description("A CLI tool for managing the UXP system.").version("1.0.0");
+        program.option("--env <environment>", "Set the environment (default: dev)", "dev");
+        program.option(
+            "--host <environment>",
+            "Override the db host from env file needed for prod when run outside the docker network"
+        );
+
+        // Middleware to set NODE_ENV based on --env option
+        program.hook("preAction", async (thisCommand) => {
+            const envOption = thisCommand.opts().env;
+            const host = thisCommand.opts().host;
+            process.env.NODE_ENV = envOption;
+            console.log(`Environment set to ${process.env.NODE_ENV}`);
+
+            const envModule = await import("./config/env");
+            const env: typeof envModule.default = envModule.default;
+
+            if (host) {
+                env.DATABASE_HOST = host;
+            }
+            console.log("Initializing database connection...");
+            const { AppDataSource: LoadedAppDataSource } = require("./db/typeorm.config");
+            await LoadedAppDataSource.initialize();
+            AppDataSource = LoadedAppDataSource;
+
+            console.log(`Database connected to ${env.MYSQL_UXP_DATABASE} at ${env.DATABASE_HOST}:${env.DATABASE_PORT}`);
+        });
 
         program
             .command("update-password")
