@@ -1,12 +1,10 @@
 import { useMediaQuery } from "@mui/material";
-import React, { useState } from "react";
 import { Loading } from "@uxp/ui-lib";
-import { useSelector } from "react-redux";
+import React from "react";
 import { BrowserRouter } from "react-router-dom";
 
 import { PageWrapper } from "./components";
 import HeaderMenu from "./features/header/components/HeaderMenu";
-import { selectIsLoading } from "./features/loading/loadingSelectors";
 import UxpRoutes from "./features/routes/UxpRoutes";
 import { ThemeWrapper } from "./features/theme/ThemeWrapper";
 import { useUxpTheme } from "./features/theme/useUxpTheme";
@@ -15,9 +13,9 @@ import { useAppDispatch, useInitializeApp } from "./hooks";
 const UxpAppLayot: React.FC = () => {
     const theme = useUxpTheme();
     const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
-    const [headerMenuOpen, setHeaderMenuOpen] = useState(false);
-    const headerMenuItems = ["Profile", "Settings", "Log Out"];
-    const whoamiLoading = useSelector(selectIsLoading("user/whoami"));
+    //const [headerMenuOpen, setHeaderMenuOpen] = useState(false);
+    //const headerMenuItems = ["Profile", "Settings", "Log Out"];
+    //const whoamiLoading = useSelector(selectIsLoading("user/whoami"));
     //    const sidebarMenuItems = ["Dashboard", "Reports", "Analytics", "Support"];
     //    const [sidebarOpen, setSidebarOpen] = useState(false);
 

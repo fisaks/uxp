@@ -119,7 +119,7 @@ const HeaderMenu: React.FC<HeaderMenuProps> = ({ isDesktop }) => {
                     <Collapse in={headerMenuOpen}>
                         <Box
                             sx={{
-                                position: "absolute",
+                                position: "fixed",
                                 top: 64,
                                 width: "100%",
                                 bgcolor: "background.paper",
