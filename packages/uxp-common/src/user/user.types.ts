@@ -1,3 +1,5 @@
+import { SearchRequest, SearchResponse } from "../search/search.types";
+
 export type RegisterPayload = {
     username: string;
     password: string;
@@ -49,3 +51,6 @@ export type UserSettingsData = {
 
 export type UserSettingsResponse = UserSettingsData;
 export type UserSettingsPayload = UserSettingsData;
+
+export type UserSearchRequest = SearchRequest<UserPubllic>;
+export type UserSearchResponse = SearchResponse<UserPubllic[]>;

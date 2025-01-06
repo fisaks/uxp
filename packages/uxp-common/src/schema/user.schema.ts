@@ -3,6 +3,7 @@ import {
     ProfilePayload,
     RegisterPayload,
     UnlockUserPayload,
+    UserSearchRequest,
     UserSettingsPayload,
 } from "../user/user.types";
 import { SchemaValidate } from "./schemaValidate";
@@ -100,5 +101,65 @@ export const UserSettingsSchema: SchemaValidate<Required<UserSettingsPayload>> =
             theme: { type: "string", enum: ["dracula", "light"] },
         },
         required: [],
+    },
+};
+
+export const UserSearchSchema: SchemaValidate<UserSearchRequest> = {
+    body: {
+        type: "object",
+        properties: {
+            filters: {
+                type: "array",
+                items: {
+                    type: "object",
+                    properties: {
+                        field: {
+                            type: "string",
+                            enum: [
+                                "uuid",
+                                "username",
+                                "firstName",
+                                "lastName",
+                                "email",
+                                "roles",
+                                "createdAt",
+                                "lastLogin",
+                            ],
+                        },
+                        value: {
+                            oneOf: [
+                                { type: "string", nullable: true, minLength: 0, maxLength: 50 },
+                                { type: "number" },
+                                { type: "boolean" },
+                            ],
+                        },
+                        operator: { type: "string", enum: ["eq", "lt", "gt", "contains"] },
+                    },
+                    required: ["field", "value", "operator"],
+                },
+                nullable: true,
+            },
+            sort: {
+                type: "object",
+                properties: {
+                    field: {
+                        type: "string",
+                        enum: ["uuid", "username", "firstName", "lastName", "email", "roles", "createdAt", "lastLogin"],
+                    },
+                    direction: { type: "string", enum: ["asc", "desc"] },
+                },
+                required: ["field", "direction"],
+                nullable: true,
+            },
+            pagination: {
+                type: "object",
+                properties: {
+                    page: { type: "integer", minimum: 1 },
+                    size: { type: "integer", minimum: 1 },
+                },
+                required: ["page", "size"],
+            },
+        },
+        required: ["pagination"],
     },
 };

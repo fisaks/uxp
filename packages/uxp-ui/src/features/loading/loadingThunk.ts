@@ -23,6 +23,7 @@ export type LoadingKey =
     | "mysettings/fetch"
     | "mysettings/update"
     | "navigation/fetch"
+    | "user/search"
     | "globalSettings/patch"
     | "globalSettings/fetchLatest";
 

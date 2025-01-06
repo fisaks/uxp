@@ -58,7 +58,7 @@ export const ControlPanelPage: React.FC<ControlPanelPageProps> = ({ basePath }) 
             <LeftSideBar isDesktop={isDesktop} menuItems={controlaPanleMenuItems} />
 
             <AppBodyContent appHaveOwnLeftSideBar={true}>
-                <Typography variant="h1" component="h1" sx={{ marginBottom: 3 }}>
+                <Typography variant="h1" component="h1">
                     Control Panel
                 </Typography>
 

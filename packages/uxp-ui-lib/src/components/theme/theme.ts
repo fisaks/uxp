@@ -1,6 +1,6 @@
+import "@fontsource/roboto";
 import { createTheme } from "@mui/material";
 import { deepmerge } from "@mui/utils";
-import "@fontsource/roboto";
 
 // Base theme with common settings
 const baseTheme = createTheme({
@@ -110,6 +110,20 @@ export const draculaTheme = createTheme(
                             backgroundColor: "#6272a480",
                             color: "#50fa7b",
                         },
+                    },
+                },
+            },
+            MuiSvgIcon: {
+                styleOverrides: {
+                    root: {
+                        color: "#f8f8f2", // Default icon color (Dracula foreground)
+                    },
+                },
+            },
+            MuiIconButton: {
+                styleOverrides: {
+                    root: {
+                        color: "#f8f8f2", // IconButton color override
                     },
                 },
             },

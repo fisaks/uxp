@@ -27,6 +27,8 @@ const handleAJvError = (
     const statusCode = error.statusCode ?? 500;
     const code = ErrorCodes.VALIDATION;
     const validation = error.validation ?? [];
+    AppLogger.error(request, { object: { RequestBody: request.body } });
+
     const message =
         process.env.NODE_ENV === "development" ? validation.map((error) => error.message).join(", ") : undefined;
     const params = validation
