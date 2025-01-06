@@ -1,7 +1,6 @@
 import { Visibility, VisibilityOff } from "@mui/icons-material";
-import { IconButton, InputAdornment, TextField, useTheme } from "@mui/material";
-import { useState } from "react";
-import React from "react";
+import { CircularProgress, IconButton, InputAdornment, TextField, useTheme } from "@mui/material";
+import React, { useState } from "react";
 
 interface ValidatedTextFieldProps<TFormData> {
     name: keyof TFormData;
@@ -14,6 +13,7 @@ interface ValidatedTextFieldProps<TFormData> {
     onBlur?: () => void;
     type?: "text" | "password" | "email" | "number" | "tel" | "url";
     disabled?: boolean;
+    loading?: boolean;
 }
 
 const ValidatedTextField = <TFormData extends Record<string, string>>({
@@ -27,6 +27,7 @@ const ValidatedTextField = <TFormData extends Record<string, string>>({
     type = "text",
     helperText,
     disabled,
+    loading,
 }: ValidatedTextFieldProps<TFormData>) => {
     const [showPassword, setShowPassword] = useState(false);
 
@@ -68,26 +69,35 @@ const ValidatedTextField = <TFormData extends Record<string, string>>({
             onBlur={onBlur}
             slotProps={{
                 input: {
-                    endAdornment: isPasswordField && (
-                        <InputAdornment position="end">
-                            <IconButton
-                                aria-label={showPassword ? "Hide password" : "Show password"}
-                                onMouseDown={handleMouseDown}
-                                onMouseUp={handleMouseUp}
-                                onMouseLeave={handleMouseUp} // Ensures the password hides if the user drags the mouse out
-                                onKeyDown={handleKeyDown}
-                                onKeyUp={handleKeyUp}
-                                edge="end"
-                                sx={{
-                                    color: theme.palette.primary.main,
-                                    "&:hover": {
-                                        color: theme.palette.secondary.main,
-                                    },
-                                }}
-                            >
-                                {showPassword ? <Visibility /> : <VisibilityOff />}
-                            </IconButton>
-                        </InputAdornment>
+                    endAdornment: (
+                        <>
+                            {isPasswordField && (
+                                <InputAdornment position="end">
+                                    <IconButton
+                                        aria-label={showPassword ? "Hide password" : "Show password"}
+                                        onMouseDown={handleMouseDown}
+                                        onMouseUp={handleMouseUp}
+                                        onMouseLeave={handleMouseUp} // Ensures the password hides if the user drags the mouse out
+                                        onKeyDown={handleKeyDown}
+                                        onKeyUp={handleKeyUp}
+                                        edge="end"
+                                        sx={{
+                                            color: theme.palette.primary.main,
+                                            "&:hover": {
+                                                color: theme.palette.secondary.main,
+                                            },
+                                        }}
+                                    >
+                                        {showPassword ? <Visibility /> : <VisibilityOff />}
+                                    </IconButton>
+                                </InputAdornment>
+                            )}
+                            {loading && (
+                                <InputAdornment position="end">
+                                    <CircularProgress size={20} />
+                                </InputAdornment>
+                            )}
+                        </>
                     ),
                 },
             }}

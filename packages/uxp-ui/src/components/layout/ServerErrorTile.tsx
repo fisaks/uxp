@@ -16,6 +16,7 @@ const ERROR_MESSAGES: Record<ErrorCode, string> = {
     USER_NOT_FOUND: "The specified user could not be found.",
     USER_OLD_PASSWORD_NOT_MATCH: "The old password you entered is incorrect.",
     RESOURCE_NOT_FOUND: "The requested resource could not be found.",
+    PATCH_VERSION_CONFLICT: "Version conflict detected.",
     // Add more error mappings as needed
 };
 

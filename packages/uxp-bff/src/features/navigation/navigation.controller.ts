@@ -86,7 +86,12 @@ export class NavigationController {
                     };
                 }) as NavigationRoute[],
             tags: tagsResult.reduce<NavigationTags>((acc, tag) => {
-                acc[tag.name] = tag.routeTags.map((routeTag) => routeTag.route.identifier);
+                const taggedRoutes = tag.routeTags
+                    .filter((f) => shouldInclude(f.route.roles, f.route.accessType))
+                    .map((m) => m.route.identifier);
+                if (taggedRoutes.length > 0) {
+                    acc[tag.name] = taggedRoutes;
+                }
                 return acc;
             }, {}),
         } as NavigationResponse;

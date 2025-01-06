@@ -64,3 +64,8 @@ export const removeContextPath = (url: string, contextPath: string) => {
     // Remove the contextPath if it matches
     return url.replace(regex, "/");
 };
+
+export const generateFullLink = (basePath: string | undefined, link: string) => {
+    if (!basePath || link.startsWith("/")) return link;
+    return basePath.endsWith("/") ? `${basePath}${link}` : `${basePath}/${link}`;
+};

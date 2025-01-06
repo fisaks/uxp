@@ -22,7 +22,9 @@ export type LoadingKey =
     | "user/profile"
     | "mysettings/fetch"
     | "mysettings/update"
-    | "navigation/fetch";
+    | "navigation/fetch"
+    | "globalSettings/patch"
+    | "globalSettings/fetchLatest";
 
 export const createLoadingAwareThunk = <Returned, ThunkArg>(
     typePrefix: LoadingKey,

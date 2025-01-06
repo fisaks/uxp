@@ -7,7 +7,7 @@ import { RouteEntity } from "../entities/RouteEntity";
 import { RouteTagsEntity } from "../entities/RouteTagsEntity";
 import { TagEntity } from "../entities/TagEntity";
 
-export class CreateMigration1736022305106 implements MigrationInterface {
+export class CreateMigration1736033971030 implements MigrationInterface {
     public async up(queryRunner: QueryRunner): Promise<void> {
         const pageRepository = queryRunner.manager.getRepository(PageEntity);
         const pageAppsRepository = queryRunner.manager.getRepository(PageAppsEntity);
@@ -55,6 +55,10 @@ export class CreateMigration1736022305106 implements MigrationInterface {
             new PageEntity({ name: "Demo App 2", identifier: "uxp-demo-page-2" })
         );
 
+        const controlPanelPage = await pageRepository.save(
+            new PageEntity({ name: "Control Panel", identifier: "control-panel" })
+        );
+
         const loginPage = await pageRepository.save(new PageEntity({ name: "Login", identifier: "login" }));
         const registerPage = await pageRepository.save(new PageEntity({ name: "Register", identifier: "register" }));
         const registerPageThankYou = await pageRepository.save(
@@ -90,6 +94,12 @@ export class CreateMigration1736022305106 implements MigrationInterface {
                 internalComponent: "MySettingsPage",
             }),
             new PageAppsEntity({ page: startPage, order: 1, roles: ["user"], internalComponent: "StartPage" }),
+            new PageAppsEntity({
+                page: controlPanelPage,
+                order: 1,
+                roles: ["admin"],
+                internalComponent: "ControlPanelPage",
+            }),
         ]);
 
         await tagRepository.save([
@@ -97,7 +107,7 @@ export class CreateMigration1736022305106 implements MigrationInterface {
             new TagEntity(new TagEntity({ name: "profile-icon" })),
             new TagEntity(new TagEntity({ name: "demo-links" })),
         ]);
-        const routeH2C = await routeRepository.save([
+        await routeRepository.save([
             new RouteEntity({
                 identifier: "home-2-care",
                 routePattern: "/home-2-care/*",
@@ -194,6 +204,14 @@ export class CreateMigration1736022305106 implements MigrationInterface {
                 config: { redirect: "/" },
                 accessType: "authenticated",
             }),
+            new RouteEntity({
+                identifier: "control-panel-root",
+                routePattern: "/control-panel/*",
+                roles: ["admin"],
+                accessType: "role-based",
+                link: "/control-panel/",
+                page: controlPanelPage,
+            }),
         ]);
         await this.createRoute(queryRunner, "auth-root", "header-menu", 1);
         await this.createRoute(queryRunner, "home-2-care", "header-menu", 2);
@@ -202,6 +220,7 @@ export class CreateMigration1736022305106 implements MigrationInterface {
 
         await this.createRoute(queryRunner, "my-settings", "profile-icon", 1);
         await this.createRoute(queryRunner, "my-profile", "profile-icon", 2);
+        await this.createRoute(queryRunner, "control-panel-root", "profile-icon", 3);
 
         await this.createRoute(queryRunner, "home-2-care", "demo-links");
         await this.createRoute(queryRunner, "demo-app", "demo-links");

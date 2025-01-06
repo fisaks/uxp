@@ -20,6 +20,7 @@ import { selectLinksForHeaderMenu, selectLinksForProfileIcon } from "../../navig
 import { selectIsLoggedInUser } from "../../user/userSelectors";
 import { logout } from "../../user/userThunks";
 import { useUxpTheme } from "../../theme/useUxpTheme";
+import { selectGlobalConfig } from "../../global-config/globalConfigSelectors";
 
 const HeaderMenu: React.FC = () => {
     const dispatch = useAppDispatch();
@@ -33,6 +34,7 @@ const HeaderMenu: React.FC = () => {
     const closeHeaderMenu = () => setHeaderMenuOpen(false);
     const headerMenuLinks = useSelector(selectLinksForHeaderMenu());
     const profileIconLinks = useSelector(selectLinksForProfileIcon());
+    const globalConfig = useSelector(selectGlobalConfig);
 
     const isLoggedInUser = useSelector(selectIsLoggedInUser());
 
@@ -60,7 +62,7 @@ const HeaderMenu: React.FC = () => {
                     )}
 
                     <Typography variant="h6" noWrap sx={{ flexGrow: 1 }}>
-                        Unified Experience Platform
+                        {globalConfig?.siteName ?? "Unified Experience Platform"}
                     </Typography>
 
                     {isDesktop &&

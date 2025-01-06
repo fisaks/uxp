@@ -7,9 +7,10 @@ export { default as ValidatedTextField } from "./forms/ValidatedTextField";
 
 //.layout
 export { default as CenteredBox } from "./layout/CenteredBox";
+export * from "./layout/AppBodyContent";
+export * from "./layout/LeftSideBar";
 export * from "./layout/Loading";
-export * from "./layout/Sidebar";
-export * from "./layout/PageLayout";
-export * from "./layout/FloatingSidebarButton";
-export * from "./theme/UxpTheme";
+export { SidebarMenuItems } from "./layout/Sidebar";
+
 export * from "./theme/theme";
+export * from "./theme/UxpTheme";

@@ -149,7 +149,9 @@ const RemoteApp: React.FC<RemoteAppProps> = ({ contentUuid }) => {
                 id={`remote-app-${contentUuid}`}
                 ref={containerRef}
                 style={{ visibility: contentLoaded ? "visible" : "hidden" }}
-            ></div>
+            >
+                {/* Shadow DOM will be attached here */}
+            </div>
         </>
     );
 };

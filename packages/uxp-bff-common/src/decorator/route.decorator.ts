@@ -1,7 +1,7 @@
+import { ErrorCodes, UserRole } from "@uxp/common";
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import "reflect-metadata";
 import { DataSource } from "typeorm";
-import { ErrorCodes, UserRole } from "@uxp/common";
 
 import { ACCESS_TOKEN } from "../config/constant";
 import { createErrorResponse } from "../error/errorResponse";
@@ -18,7 +18,7 @@ const ROUTES_METADATA_KEY = "rest:routes";
 
 // Metadata structure for routes
 export interface RouteMetadata {
-    method: "get" | "post" | "put" | "delete" | "all";
+    method: "get" | "post" | "put" | "delete" | "patch" | "options" | "head" | "all";
     path: string;
     handlerName: string;
     validate?: (req: FastifyRequest) => boolean;

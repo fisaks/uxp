@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
+import { fetchLatestGlobalSettings } from "../features/global-config/globalConfigThunk";
+import { fetchNavigation } from "../features/navigation/navigationThunk";
 import { fetchMySettings } from "../features/settings/mySettingThunk";
 import { selectIsLoggedInUser } from "../features/user/userSelectors";
 import { whoami } from "../features/user/userThunks";
 import { handleThunkResult } from "../utils/thunkUtils";
 import { useAppDispatch } from "./useAppDispatch";
-import { fetchNavigation } from "../features/navigation/navigationThunk";
+import { unwrapResult } from "@reduxjs/toolkit";
 
 export const useInitializeApp = () => {
     const dispatch = useAppDispatch();
@@ -16,8 +18,13 @@ export const useInitializeApp = () => {
         dispatch(whoami({})).then(
             handleThunkResult(
                 async () => {
-                    await dispatch(fetchMySettings({}));
-                    await dispatch(fetchNavigation({}));
+                    const promises = [
+                        dispatch(fetchMySettings({})),
+                        dispatch(fetchNavigation({})),
+                        dispatch(fetchLatestGlobalSettings({})),
+                    ];
+                    await Promise.all(promises);
+
                     setLoading(false);
                 },
                 async (_, payload) => {

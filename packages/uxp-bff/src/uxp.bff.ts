@@ -17,6 +17,7 @@ import {
 } from "@uxp/bff-common";
 import "@uxp/bff-common/dist/health/health.controller";
 import path from "path";
+import { ValidateGlobalConfigValue } from "@uxp/common";
 
 AppDataSource.initialize()
     .then(() => {
@@ -29,7 +30,10 @@ AppDataSource.initialize()
     .catch((err: Error) => console.error("Error during Data Source initialization", err));
 
 const port = 3001;
-const fastify = Fastify({ logger: true, ajv: { customOptions: { allErrors: true, $data: true } } });
+const fastify = Fastify({
+    logger: true,
+    ajv: { customOptions: { allErrors: true, $data: true, keywords: [ValidateGlobalConfigValue] } },
+});
 AppLogger.initialize(fastify.log);
 fastify.setErrorHandler(errorHandler);
 fastify.register(fastifyCookie);

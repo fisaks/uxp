@@ -3,9 +3,10 @@ import React from "react";
 
 type LoadingProps = {
     fullHeight?: boolean;
+    size?: number;
 };
 
-export const Loading: React.FC<LoadingProps> = ({ fullHeight = false }) => (
+export const Loading: React.FC<LoadingProps> = ({ fullHeight = false, size }) => (
     <Box
         sx={{
             display: "flex",
@@ -14,7 +15,7 @@ export const Loading: React.FC<LoadingProps> = ({ fullHeight = false }) => (
             height: fullHeight ? "100vh" : "auto", // Full height or adjust to content
         }}
     >
-        <CircularProgress />
+        <CircularProgress size={size} />
     </Box>
 );
 

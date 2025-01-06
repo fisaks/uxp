@@ -9,6 +9,9 @@ const componentMap = {
     MyProfilePage: React.lazy(() => import(/* webpackChunkName: "my-profile-page" */ "../user/pages/ProfilePage")),
     MySettingsPage: React.lazy(() => import(/* webpackChunkName: "my-settings-page" */ "../settings/MySettingsPage")),
     StartPage: React.lazy(() => import(/* webpackChunkName: "start-page" */ "../../components/layout/MainContent")),
+    ControlPanelPage: React.lazy(
+        () => import(/* webpackChunkName: "control-panel-page" */ "../control-panel/pages/ControlPanelPage")
+    ),
 };
 
 export default componentMap;

@@ -5,10 +5,11 @@ import DynamicComponentErrorBoundary from "./DynamicComponentErrorBoundary";
 
 interface DynamicComponentLoaderProps {
     componentName: string;
-    props?: Record<string, any>;
+    basePath: string | undefined;
+    props?: Record<string, any | undefined>;
 }
 
-const DynamicComponentLoader: React.FC<DynamicComponentLoaderProps> = ({ componentName, props = {} }) => {
+const DynamicComponentLoader: React.FC<DynamicComponentLoaderProps> = ({ componentName, basePath, props = {} }) => {
     const Component = componentMap[componentName as keyof typeof componentMap];
 
     if (!Component) {
@@ -18,7 +19,7 @@ const DynamicComponentLoader: React.FC<DynamicComponentLoaderProps> = ({ compone
     return (
         <DynamicComponentErrorBoundary>
             <Suspense fallback={<Loading />}>
-                <Component {...props} />
+                <Component basePath={basePath} {...(props ? props : {})} />
             </Suspense>
         </DynamicComponentErrorBoundary>
     );
