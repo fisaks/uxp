@@ -50,7 +50,7 @@ const GlobalSettingsPage: React.FC = () => {
     const [formData, setFormData] = useState<GlobalConfigData>({
         siteName: globalConfig?.siteName ?? "",
     });
-    const [fieldErrors, setFieldErrors] = useState<FormFieldErrors<GlobalConfigData>>({});
+
     const isLoading = useSelector(selectIsLoading("globalSettings/patch"));
     const isLoadingLatest = useSelector(selectIsLoading("globalSettings/fetchLatest"));
     const loadingLatestError = useSelector(selectError("globalSettings/fetchLatest"));
@@ -58,41 +58,41 @@ const GlobalSettingsPage: React.FC = () => {
     const fieldRefs: FormFieldRefs<GlobalConfigData> = {
         siteName: useRef<HTMLInputElement>(null),
     };
+    const [fieldErrors, setFieldErrors] = useState<FormFieldErrors<GlobalConfigData>>({});
 
-    const fieldErrorHandler = (error: ApiErrorResponse, payload: PatchGlobalSettingPayload) => {
-        error.errors
-            .filter((e) => e.code === ErrorCodes.VALIDATION)
-            .forEach((e) => {
-                const keyword = e.params?.value;
-                setFieldErrors((prev) => ({
-                    ...prev,
-                    [payload.key]:
-                        fieldErrorMessages[keyword as keyof ValidationErrorMessages]?.[payload.key] ?? "Invalid value.",
-                }));
+    const updateFieldError = useCallback(
+        (key: string, message: string | undefined) => {
+            setFieldErrors((prev) => ({
+                ...prev,
+                [key]: message,
+            }));
+        },
+        [setFieldErrors]
+    );
+
+    const fieldErrorHandler = useCallback(
+        (error: ApiErrorResponse, payload: PatchGlobalSettingPayload) => {
+            error.errors.forEach((error) => {
+                if (error.code === ErrorCodes.VALIDATION) {
+                    const keyword = error.params?.value as keyof ValidationErrorMessages;
+                    updateFieldError(payload.key, fieldErrorMessages[keyword]?.[payload.key] ?? "Invalid value.");
+                } else if (error.code === ErrorCodes.PATCH_VERSION_CONFLICT) {
+                    updateFieldError(payload.key, globalErrorMessages.patchVersionConflict);
+                } else {
+                    updateFieldError(payload.key, globalErrorMessages.internalServerError);
+                }
             });
-        error.errors
-            .filter((e) => e.code === ErrorCodes.PATCH_VERSION_CONFLICT)
-            .forEach((e) => {
-                setFieldErrors((prev) => ({
-                    ...prev,
-                    [payload.key]: globalErrorMessages.patchVersionConflict,
-                }));
-            });
-        error.errors
-            .filter((e) => e.code === ErrorCodes.INTERNAL_SERVER_ERROR)
-            .forEach((e) => {
-                setFieldErrors((prev) => ({
-                    ...prev,
-                    [payload.key]: globalErrorMessages.internalServerError,
-                }));
-            });
-    };
-    const fieldSuccessHandler = (result: PatchGlobalConfigResponse, payload: PatchGlobalSettingPayload) => {
-        setFieldErrors((prev) => ({
-            ...prev,
-            [payload.key]: undefined,
-        }));
-    };
+        },
+        [updateFieldError]
+    );
+
+    const fieldSuccessHandler = useCallback(
+        (result: PatchGlobalConfigResponse, payload: PatchGlobalSettingPayload) => {
+            updateFieldError(payload.key, undefined);
+        },
+        [updateFieldError]
+    );
+
     const debouncedUpdateSiteName = useMemo(
         () =>
             createDebouncedUpdater({
@@ -101,12 +101,8 @@ const GlobalSettingsPage: React.FC = () => {
                 errorHandler: fieldErrorHandler,
                 debounceWait: 1000,
             }),
-        []
+        [fieldSuccessHandler, fieldErrorHandler]
     );
-
-    const reload = () => {
-        dispatch(fetchLatestGlobalSettings({}));
-    };
 
     const handleChange = useCallback(
         (name: keyof GlobalConfigData, value: string) => {
@@ -115,6 +111,9 @@ const GlobalSettingsPage: React.FC = () => {
         },
         [dispatch, debouncedUpdateSiteName, setFormData]
     );
+    const reload = useCallback(() => {
+        dispatch(fetchLatestGlobalSettings({}));
+    }, []);
 
     return (
         <Box sx={{ p: 2 }}>
@@ -138,22 +137,20 @@ const GlobalSettingsPage: React.FC = () => {
             </Box>
 
             <form>
-                {Object.keys(formData)
-                    .filter((key) => !key.startsWith("password"))
-                    .map((key) => (
-                        <ValidatedTextField<GlobalConfigData>
-                            key={key}
-                            disabled={isLoadingLatest}
-                            name={key as keyof GlobalConfigData}
-                            type="text"
-                            loading={isLoading}
-                            label={fieldLabels[key as keyof GlobalConfigData]}
-                            value={formData[key as keyof GlobalConfigData]}
-                            error={fieldErrors[key as keyof GlobalConfigData]}
-                            inputRef={fieldRefs[key as keyof GlobalConfigData]}
-                            onChange={(value) => handleChange(key as keyof GlobalConfigData, value)}
-                        />
-                    ))}
+                {Object.keys(formData).map((key) => (
+                    <ValidatedTextField<GlobalConfigData>
+                        key={key}
+                        disabled={isLoadingLatest}
+                        name={key as keyof GlobalConfigData}
+                        type="text"
+                        loading={isLoading}
+                        label={fieldLabels[key as keyof GlobalConfigData]}
+                        value={formData[key as keyof GlobalConfigData]}
+                        error={fieldErrors[key as keyof GlobalConfigData]}
+                        inputRef={fieldRefs[key as keyof GlobalConfigData]}
+                        onChange={(value) => handleChange(key as keyof GlobalConfigData, value)}
+                    />
+                ))}
             </form>
         </Box>
     );

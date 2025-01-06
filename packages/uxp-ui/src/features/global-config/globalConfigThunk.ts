@@ -4,7 +4,6 @@ import { RootState } from "../../app/store";
 import { createLoadingAwareThunk } from "../loading/loadingThunk";
 
 export const fetchLatestGlobalSettings = createLoadingAwareThunk("globalSettings/fetchLatest", async () => {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
     const response = await axiosInstance.get<LatestGlobalConfigResponse>("/global-settings/latest");
     return response.data;
 });
@@ -15,7 +14,6 @@ export const patchGlobalSetting = createLoadingAwareThunk(
     async ({ key, value }: PatchGlobalSettingPayload, { getState }) => {
         const state = getState() as RootState;
         const currentVersion = state.globalConfig.version;
-        await new Promise((resolve) => setTimeout(resolve, 1000));
         const response = await axiosInstance.patch<PatchGlobalConfigResponse>("/global-settings", {
             key,
             value,
