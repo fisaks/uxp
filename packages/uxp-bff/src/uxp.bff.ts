@@ -1,3 +1,5 @@
+process.env.TZ = "UTC";
+
 import fastifyWebsocket from "@fastify/websocket";
 import Fastify from "fastify";
 import env from "./config/env";
@@ -10,17 +12,17 @@ import {
     AppLogger,
     errorHandler,
     HandlerRegistry,
+    IsProd,
     jwtPlugin,
     registerRoutes,
     registerWebSocketHandlers,
-    IsProd,
 } from "@uxp/bff-common";
 import "@uxp/bff-common/dist/health/health.controller";
-import path from "path";
 import { ValidateGlobalConfigValue } from "@uxp/common";
+import path from "path";
 
 AppDataSource.initialize()
-    .then(() => {
+    .then(async () => {
         console.log(`Database connected to ${env.MYSQL_UXP_DATABASE} at ${env.DATABASE_HOST}:${env.DATABASE_PORT}`);
         console.log(
             "Entities:",
@@ -32,7 +34,7 @@ AppDataSource.initialize()
 const port = 3001;
 const fastify = Fastify({
     logger: true,
-    ajv: { customOptions: { allErrors: true, $data: true, keywords: [ValidateGlobalConfigValue] } },
+    ajv: { customOptions: { allErrors: true, $data: true, keywords: [ValidateGlobalConfigValue], coerceTypes: true } },
 });
 AppLogger.initialize(fastify.log);
 fastify.setErrorHandler(errorHandler);

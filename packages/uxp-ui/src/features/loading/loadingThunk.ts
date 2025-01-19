@@ -24,18 +24,23 @@ export type LoadingKey =
     | "mysettings/update"
     | "navigation/fetch"
     | "user/search"
+    | "user/lock"
+    | "user/unlock"
+    | "user/updateRoles"
     | "globalSettings/patch"
-    | "globalSettings/fetchLatest";
+    | "globalSettings/fetchLatest"
+    | "user/tokenVersion";
 
 export const createLoadingAwareThunk = <Returned, ThunkArg>(
     typePrefix: LoadingKey,
     action: AsyncThunkPayloadCreator<Returned, ThunkArg>,
-    processedTimeout = 3000
+    processedTimeout = 3000,
+    multi = false
 ) => {
     return createAsyncThunk<Returned, ThunkArg>(typePrefix, async (args, thunkAPI) => {
         const { dispatch, getState, rejectWithValue } = thunkAPI;
         const state = getState() as { loading: LoadingState };
-        if (state.loading.inProgress[typePrefix]) {
+        if (!multi && state.loading.inProgress[typePrefix]) {
             console.warn(`Action ${typePrefix} is already in progress.`);
             return rejectWithValue("Action already in progress");
         }

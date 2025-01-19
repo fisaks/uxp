@@ -1,6 +1,6 @@
 import { UserRole } from "@uxp/common";
 import { DateTime } from "luxon";
-import { Column, CreateDateColumn, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import { v4 as uuidv4 } from "uuid";
 import { UserSettings } from "./UserSettings";
 
@@ -52,7 +52,7 @@ export class User {
         type: "timestamp",
         nullable: true, // Allow null initially if the user has never logged in
         transformer: {
-            to: (value: DateTime | null) => (value ? value.toJSDate() : null),
+            to: (value: DateTime | null) => (value ? value.toUTC().toJSDate() : null),
             from: (value: Date | null) => (value ? DateTime.fromJSDate(value) : null),
         },
     })

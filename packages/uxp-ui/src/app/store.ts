@@ -1,6 +1,6 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { createLogger } from "redux-logger";
-import userSearchSlice from "../features/control-panel/userSearchSlice";
+import adminUserManagementSlice from "../features/control-panel/adminUserManagementSlice";
 import errorSlice from "../features/error/errorSlice";
 import globalConfigSlice from "../features/global-config/globalConfigSlice";
 import headerMenuSlice from "../features/header/headerMenuSlice";
@@ -24,7 +24,7 @@ const store = configureStore({
         navigation: navigationSlice,
         globalConfig: globalConfigSlice,
 
-        userSearch: userSearchSlice,
+        adminUserManagement: adminUserManagementSlice,
     },
     devTools: process.env.NODE_ENV === "development",
     middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(logger),

@@ -20,8 +20,10 @@
         "@emotion/styled": "^11.13.5",
         "@fontsource/roboto": "^5.1.0",
         "@mui/icons-material": "^6.1.8",
+        "@mui/lab": "6.0.0-beta.22",
         "@mui/material": "^6.1.8",
         "@mui/utils": "^6.1.10",
+        "@mui/x-date-pickers": "^7.23.6",
         "@reduxjs/toolkit": "^2.3.0",
         "@uxp/common": "workspace:*",
         "@uxp/ui-lib": "workspace:*",
@@ -29,20 +31,20 @@
         "ajv-errors": "^3.0.0",
         "ajv-formats": "^3.0.1",
         "axios": "^1.7.8",
+        "luxon": "^3.5.0",
         "react-redux": "^9.1.2",
         "react-router-dom": "^7.0.1",
         "redux-logger": "^3.0.6",
-        "socket.io-client": "^4.8.1",
-        "luxon": "^3.5.0"
+        "socket.io-client": "^4.8.1"
     },
     "peerDependencies": {
         "react": "^18.0.0",
         "react-dom": "^18.0.0"
     },
     "devDependencies": {
+        "@types/luxon": "^3.4.2",
         "@types/react": "^18.3.12",
         "@types/redux-logger": "^3.0.13",
-        "@types/luxon": "^3.4.2",
         "webpack-bundle-analyzer": "^4.10.2"
     }
 }

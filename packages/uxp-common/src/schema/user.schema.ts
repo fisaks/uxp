@@ -1,8 +1,11 @@
 import {
+    LockUserPayload,
     LoginPayload,
     ProfilePayload,
     RegisterPayload,
     UnlockUserPayload,
+    UpdateTokenVersionPayload,
+    UpdateUserRolesPayload,
     UserSearchRequest,
     UserSettingsPayload,
 } from "../user/user.types";
@@ -45,12 +48,45 @@ export const UnlockUserSchema: SchemaValidate<UnlockUserPayload> = {
     body: {
         type: "object",
         properties: {
-            uuid: { type: "string", minLength: 4 },
+            uuid: { type: "string", format: "uuid" },
         },
         required: ["uuid"],
     },
 };
 
+export const LockUserSchema: SchemaValidate<LockUserPayload> = {
+    body: {
+        type: "object",
+        properties: {
+            uuid: { type: "string", format: "uuid" },
+        },
+        required: ["uuid"],
+    },
+};
+
+export const UpdateUserRoleSchema: SchemaValidate<UpdateUserRolesPayload> = {
+    body: {
+        type: "object",
+        properties: {
+            uuid: { type: "string", format: "uuid" },
+            roles: {
+                type: "array",
+                items: { type: "string", enum: ["admin", "user"] },
+            },
+        },
+        required: ["uuid", "roles"],
+    },
+};
+
+export const UpdateTokenVersionSchema: SchemaValidate<UpdateTokenVersionPayload> = {
+    body: {
+        type: "object",
+        properties: {
+            uuid: { type: "string", format: "uuid" },
+        },
+        required: ["uuid"],
+    },
+};
 export const ProfileSchema: SchemaValidate<ProfilePayload, undefined, { uuid: string }> = {
     body: {
         type: "object",
@@ -124,13 +160,20 @@ export const UserSearchSchema: SchemaValidate<UserSearchRequest> = {
                                 "roles",
                                 "createdAt",
                                 "lastLogin",
+                                "isDisabled",
                             ],
                         },
                         value: {
-                            oneOf: [
-                                { type: "string", nullable: true, minLength: 0, maxLength: 50 },
-                                { type: "number" },
+                            anyOf: [
+                                {
+                                    type: "string",
+                                    nullable: true,
+                                    minLength: 0,
+                                    maxLength: 50,
+                                    not: { enum: ["true", "false"] },
+                                },
                                 { type: "boolean" },
+                                { type: "number" },
                             ],
                         },
                         operator: { type: "string", enum: ["eq", "lt", "gt", "contains"] },
@@ -139,16 +182,40 @@ export const UserSearchSchema: SchemaValidate<UserSearchRequest> = {
                 },
                 nullable: true,
             },
-            sort: {
-                type: "object",
-                properties: {
-                    field: {
-                        type: "string",
-                        enum: ["uuid", "username", "firstName", "lastName", "email", "roles", "createdAt", "lastLogin"],
+            search: {
+                type: ["string", "array"],
+                anyOf: [
+                    { type: "string", nullable: true, minLength: 0, maxLength: 50 },
+                    {
+                        type: "array",
+                        items: { type: "string", nullable: true, minLength: 0, maxLength: 50 },
                     },
-                    direction: { type: "string", enum: ["asc", "desc"] },
+                ],
+                nullable: true,
+            },
+            sort: {
+                type: "array",
+                items: {
+                    type: "object",
+                    properties: {
+                        field: {
+                            type: "string",
+                            enum: [
+                                "uuid",
+                                "username",
+                                "firstName",
+                                "lastName",
+                                "email",
+                                "roles",
+                                "createdAt",
+                                "lastLogin",
+                                "isDisabled",
+                            ],
+                        },
+                        direction: { type: "string", enum: ["asc", "desc"] },
+                    },
+                    required: ["field", "direction"],
                 },
-                required: ["field", "direction"],
                 nullable: true,
             },
             pagination: {

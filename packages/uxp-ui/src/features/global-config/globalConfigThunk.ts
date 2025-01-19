@@ -20,5 +20,7 @@ export const patchGlobalSetting = createLoadingAwareThunk(
             currentVersion,
         });
         return response.data;
-    }
+    },
+    undefined,
+    true
 );

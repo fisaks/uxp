@@ -1,183 +1,126 @@
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import {
-    Accordion,
-    AccordionDetails,
-    AccordionSummary,
-    Box,
-    Button,
-    Card,
-    CardContent,
-    CircularProgress,
-    List,
-    Pagination,
-    Paper,
-    Typography,
-    useTheme,
-} from "@mui/material";
-import { DateTime } from "luxon";
-import React, { useEffect, useState } from "react";
+import RefreshIcon from "@mui/icons-material/Refresh";
+import { Box, IconButton, Tooltip, Typography, useTheme } from "@mui/material";
+import { UserSearchRequest } from "@uxp/common";
+import { Loading } from "@uxp/ui-lib";
+import React, { useEffect } from "react";
 import { useSelector } from "react-redux";
 import { useAppDispatch } from "../../../hooks";
+import { handleThunkResult } from "../../../utils/thunkUtils";
 import { selectError } from "../../error/errorSelectors";
 import { selectIsLoading } from "../../loading/loadingSelectors";
-import { selectUSerSearchPagination, selectUserSearchResult } from "../userSearchSelectors";
-import { searchUsers } from "../userSearchThunk";
+import { selectUserSearchPagination, selectUserSearchResult } from "../adminUserManagementSelectors";
+import { removeUserFromList } from "../adminUserManagementSlice";
+import { lockUser, searchUsers, updateUserRoles } from "../adminUserManagementThunk";
+import PaginationWithHeader from "../componenets/PaginationWithHeader";
+import UserList from "../componenets/UserList";
+
+const initialRequest: UserSearchRequest = {
+    pagination: { page: 1, size: 10 },
+    filters: [
+        { field: "roles", operator: "eq", value: "" },
+        { field: "isDisabled", operator: "eq", value: false },
+    ],
+    sort: [{ field: "createdAt", direction: "asc" }],
+};
 
 const NewUserRequestsPage: React.FC = () => {
     const dispatch = useAppDispatch();
-    const theme = useTheme();
     const users = useSelector(selectUserSearchResult);
     const loading = useSelector(selectIsLoading("user/search"));
     const error = useSelector(selectError("user/search"));
-    const pagination = useSelector(selectUSerSearchPagination);
-    const [expandedUser, setExpandedUser] = useState<string | null>(null);
+    const pagination = useSelector(selectUserSearchPagination);
+    const theme = useTheme();
+    const isLoadingLatest = useSelector(selectIsLoading("user/search"));
 
     useEffect(() => {
-        /*dispatch(searchUsers({
-            pagination: { page: 1, size: 10 },
-            filters: [{ field: "roles", operator: "eq", value: "" }],
-            sort: { field: "createdAt", direction: "asc" }
-        }));*/
-        dispatch(searchUsers({ pagination: { page: 1, size: 10 }, sort: { field: "createdAt", direction: "asc" } }));
+        dispatch(searchUsers(initialRequest));
     }, [dispatch]);
 
-    const handlePageChange = (event: React.ChangeEvent<unknown>, page: number) => {
-        dispatch(searchUsers({ pagination: { page, size: 10 } }));
+    const reload = () => {
+        dispatch(searchUsers(initialRequest));
+    };
+    const handlePageChange = (_event: React.ChangeEvent<unknown>, page: number) => {
+        dispatch(searchUsers({ ...initialRequest, pagination: { ...initialRequest.pagination, page } }));
     };
 
-    const handleExpand = (uuid: string) => {
-        setExpandedUser(expandedUser === uuid ? null : uuid);
+    const handleApprove = (uuid: string, onDone: () => void) => {
+        dispatch(updateUserRoles({ uuid, roles: ["user"] })).then(
+            handleThunkResult(
+                () => {
+                    dispatch(removeUserFromList({ uuid }));
+                },
+                undefined,
+                () => {
+                    onDone();
+                }
+            )
+        );
     };
-    const handleApprove = (uuid: string) => {
-        // Dispatch an action or make an API call to approve the user
-        console.log(`User ${uuid} approved.`);
+
+    const handleReject = (uuid: string, onDone: () => void) => {
+        dispatch(lockUser({ uuid })).then(
+            handleThunkResult(
+                () => {
+                    dispatch(removeUserFromList({ uuid }));
+                },
+                undefined,
+                () => {
+                    console.log("onDone");
+                    onDone();
+                }
+            )
+        );
     };
-    const handleReject = (uuid: string) => {
-        // Dispatch an action or make an API call to reject the user
-        console.log(`User ${uuid} rejected.`);
-    };
-    if (loading) return <CircularProgress />;
-    if (error) return <Typography color="error">{"error"}</Typography>;
 
     return (
         <Box sx={{ p: 2 }}>
-            <Typography variant="h2" component="h2">
-                New User Requests
-            </Typography>
-            <List>
-                {users.map((user) => (
-                    <Card key={user.uuid} sx={{ marginBottom: 2, borderRadius: 2, boxShadow: 3 }}>
-                        <CardContent>
-                            <Accordion
-                                expanded={expandedUser === user.uuid}
-                                onChange={() => handleExpand(user.uuid)}
-                                elevation={0}
-                                sx={{ backgroundColor: "transparent", boxShadow: "none" }}
-                            >
-                                <AccordionSummary
-                                    expandIcon={<ExpandMoreIcon />}
-                                    aria-controls={`panel-${user.uuid}-content`}
-                                >
-                                    <Paper
-                                        elevation={3}
-                                        sx={{
-                                            p: 2,
-                                            width: "100%",
-                                            borderRadius: 2,
-                                            display: "flex",
-                                            flexDirection: "column",
-                                            gap: 1,
-                                        }}
-                                    >
-                                        <Typography variant="h6">{`${user.firstName} ${user.lastName}`}</Typography>
-                                    </Paper>
-                                </AccordionSummary>
-                                <AccordionDetails>
-                                    <Paper
-                                        elevation={1}
-                                        sx={{ p: 2, borderRadius: 2, display: "flex", flexDirection: "column", gap: 2 }}
-                                    >
-                                        <Box sx={{ display: "flex", gap: 2, justifyContent: "space-between" }}>
-                                            <Box sx={{ flex: 1 }}>
-                                                <Typography variant="subtitle2">First Name</Typography>
-                                                <Typography>{user.firstName}</Typography>
-                                            </Box>
-                                            <Box sx={{ flex: 1 }}>
-                                                <Typography variant="subtitle2">Last Name</Typography>
-                                                <Typography>{user.lastName}</Typography>
-                                            </Box>
-                                        </Box>
-                                        <Box sx={{ display: "flex", gap: 2, justifyContent: "space-between" }}>
-                                            <Box sx={{ flex: 1 }}>
-                                                <Typography variant="subtitle2">Username</Typography>
-                                                <Typography>{user.username}</Typography>
-                                            </Box>
-                                            <Box sx={{ flex: 1 }}>
-                                                <Typography variant="subtitle2">Roles</Typography>
-                                                <Typography>{user.roles.join(", ") || "None"}</Typography>
-                                            </Box>
-                                        </Box>
-                                        <Box>
-                                            <Typography variant="subtitle2">Email</Typography>
-                                            <Typography>{user.email}</Typography>
-                                        </Box>
-                                        <Box sx={{ display: "flex", gap: 2, justifyContent: "space-between" }}>
-                                            <Box sx={{ flex: 1 }}>
-                                                <Typography variant="subtitle2">Created</Typography>
-                                                <Typography>
-                                                    {DateTime.fromISO(user.createdAt)
-                                                        .setLocale(navigator.language)
-                                                        .toLocaleString(DateTime.DATETIME_FULL)}
-                                                </Typography>
-                                            </Box>
-                                            <Box sx={{ flex: 1 }}>
-                                                <Typography variant="subtitle2">Last Login</Typography>
-                                                <Typography>
-                                                    {user.lastLogin
-                                                        ? DateTime.fromISO(user.lastLogin)
-                                                              .setLocale(navigator.language)
-                                                              .toLocaleString(DateTime.DATETIME_FULL)
-                                                        : "Never"}
-                                                </Typography>
-                                            </Box>
-                                        </Box>
-                                        <Box
-                                            sx={{
-                                                mt: 2,
-                                                textAlign: "right",
-                                                display: "flex",
-                                                gap: 2,
-                                                justifyContent: "flex-end",
-                                            }}
-                                        >
-                                            <Button
-                                                variant="contained"
-                                                color="primary"
-                                                onClick={() => handleApprove(user.uuid)}
-                                            >
-                                                Approve User
-                                            </Button>
-                                            <Button
-                                                variant="outlined"
-                                                color="error"
-                                                onClick={() => handleReject(user.uuid)}
-                                            >
-                                                Reject User
-                                            </Button>
-                                        </Box>
-                                    </Paper>
-                                </AccordionDetails>
-                            </Accordion>
-                        </CardContent>
-                    </Card>
-                ))}
-            </List>
-            <Pagination
-                count={pagination.totalPages}
-                page={pagination.currentPage}
-                onChange={handlePageChange}
-                sx={{ mt: 2, display: "flex", justifyContent: "center" }}
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Typography variant="h2" component="h2">
+                    New User Requests
+                </Typography>
+                <Tooltip title={isLoadingLatest ? "Refreshing..." : "Reload"}>
+                    <span>
+                        <IconButton
+                            aria-label="reload requests"
+                            onClick={reload}
+                            disabled={isLoadingLatest}
+                            sx={{ color: theme.palette.primary.main }}
+                        >
+                            {isLoadingLatest ? <Loading size={20} /> : <RefreshIcon />}
+                        </IconButton>
+                    </span>
+                </Tooltip>
+            </Box>
+
+            {pagination && (
+                <Typography component="p" sx={{ mt: 1 }}>
+                    There is {pagination.totalItems} number of new user requests
+                </Typography>
+            )}
+            <PaginationWithHeader pagination={pagination} onPageChange={handlePageChange} />
+
+            <UserList
+                error={error ? "Failed to load user requests." : null}
+                retryAction={() => dispatch(searchUsers(initialRequest))}
+                isLoading={loading}
+                users={users}
+                userActions={[
+                    {
+                        label: "Approve user",
+                        variant: "contained",
+                        color: "primary",
+                        onAction: handleApprove,
+                    },
+                    {
+                        label: "Reject user",
+                        variant: "outlined",
+                        color: "error",
+                        onAction: handleReject,
+                    },
+                ]}
             />
+
+            <PaginationWithHeader pagination={pagination} onPageChange={handlePageChange} />
         </Box>
     );
 };

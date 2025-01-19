@@ -18,11 +18,29 @@ export type LoginResponse = {
 };
 
 export type WhoAmIResponse = LoginResponse;
+export type UpdateUserRolesResponse = {
+    user: UserAdminView;
+};
 
 export type UnlockUserPayload = {
     uuid: string;
 };
+export type UnlockUserReponse = UpdateUserRolesResponse;
 
+export type LockUserPayload = {
+    uuid: string;
+};
+export type LockUserResponse = UpdateUserRolesResponse;
+
+export type UpdateTokenVersionPayload = {
+    uuid: string;
+};
+export type UpdateTokenVersionResponse = UpdateUserRolesResponse;
+
+export type UpdateUserRolesPayload = {
+    uuid: string;
+    roles: UserRole[];
+};
 export type UserRole = "admin" | "user";
 
 export type UserPubllic = {
@@ -36,6 +54,11 @@ export type UserPubllic = {
     lastLogin?: string | null;
 };
 
+export type UserAdminView = UserPubllic & {
+    failedLoginAttempts: number;
+    isDisabled: boolean;
+    tokenVersion: number;
+};
 export type ProfilePayload = {
     passwordOld: string;
     password: string;
@@ -52,5 +75,5 @@ export type UserSettingsData = {
 export type UserSettingsResponse = UserSettingsData;
 export type UserSettingsPayload = UserSettingsData;
 
-export type UserSearchRequest = SearchRequest<UserPubllic>;
-export type UserSearchResponse = SearchResponse<UserPubllic[]>;
+export type UserSearchRequest = SearchRequest<UserAdminView>;
+export type UserSearchResponse = SearchResponse<UserAdminView[]>;

@@ -10,7 +10,9 @@ export { default as CenteredBox } from "./layout/CenteredBox";
 export * from "./layout/AppBodyContent";
 export * from "./layout/LeftSideBar";
 export * from "./layout/Loading";
+export * from "./layout/withErrorHandler";
 export { SidebarMenuItems } from "./layout/Sidebar";
 
 export * from "./theme/theme";
 export * from "./theme/UxpTheme";
+export * from "./search/SearchComponent";

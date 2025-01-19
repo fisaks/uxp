@@ -1,6 +1,9 @@
 import { AppError, AppLogger, REFRESH_TOKEN, Route, Token, UseQueryRunner } from "@uxp/bff-common";
 import {
     ErrorCodes,
+    LockUserPayload,
+    LockUserResponse,
+    LockUserSchema,
     LoginPayload,
     LoginResponse,
     LoginSchema,
@@ -10,6 +13,14 @@ import {
     RegisterResponse,
     RegisterSchema,
     UnlockUserPayload,
+    UnlockUserReponse,
+    UnlockUserSchema,
+    UpdateTokenVersionPayload,
+    UpdateTokenVersionResponse,
+    UpdateTokenVersionSchema,
+    UpdateUserRoleSchema,
+    UpdateUserRolesPayload,
+    UpdateUserRolesResponse,
     WhoAmIResponse,
 } from "@uxp/common";
 import bcrypt from "bcrypt";
@@ -324,7 +335,7 @@ export class UserController {
         clearAuthCookies(reply).code(204).send();
     }
 
-    @Route("post", "/unlock", { authenticate: true, roles: ["admin"] })
+    @Route("post", "/user/unlock", { authenticate: true, roles: ["admin"], schema: UnlockUserSchema })
     @UseQueryRunner()
     async unlockUser(req: FastifyRequest<{ Body: UnlockUserPayload }>, reply: FastifyReply, queryRunner: QueryRunner) {
         const { uuid } = req.body;
@@ -345,6 +356,100 @@ export class UserController {
         const adminUser = UserService.getLoggedInUser(req);
         AppLogger.info(req, { message: `User %s unlocked by admin %s`, args: [user.username, adminUser?.username] });
 
-        reply.code(204).send();
+        reply.send({ user: UserService.toUserAdminView(user) } as UnlockUserReponse);
+    }
+    @Route("post", "/user/lock", { authenticate: true, roles: ["admin"], schema: LockUserSchema })
+    @UseQueryRunner()
+    async lockUser(req: FastifyRequest<{ Body: LockUserPayload }>, reply: FastifyReply, queryRunner: QueryRunner) {
+        const { uuid } = req.body;
+        const user = await UserService.findByUuid(queryRunner, uuid);
+
+        if (!user) {
+            return sendErrorResponse({
+                reply,
+                req,
+                code: ErrorCodes.USER_NOT_FOUND,
+                message: "User not found",
+            });
+        }
+        const adminUser = UserService.getLoggedInUser(req);
+
+        if (adminUser?.uuid === user.uuid) {
+            return sendErrorResponse({
+                reply,
+                req,
+                statusCode: 500,
+                code: ErrorCodes.INTERNAL_SERVER_ERROR,
+                message: "User Can't lock himself",
+            });
+        }
+        user.isDisabled = true;
+        await UserService.saveUser(queryRunner, user);
+
+        AppLogger.info(req, { message: `User %s Locked by admin %s`, args: [user.username, adminUser?.username] });
+
+        reply.send({ user: UserService.toUserAdminView(user) } as LockUserResponse);
+    }
+
+    @Route("post", "/user/roles", { authenticate: true, roles: ["admin"], schema: UpdateUserRoleSchema })
+    @UseQueryRunner()
+    async updateUserRoles(
+        req: FastifyRequest<{ Body: UpdateUserRolesPayload }>,
+        reply: FastifyReply,
+        queryRunner: QueryRunner
+    ) {
+        const { uuid, roles } = req.body;
+        const user = await UserService.findByUuid(queryRunner, uuid);
+
+        if (!user) {
+            return sendErrorResponse({
+                reply,
+                req,
+                code: ErrorCodes.USER_NOT_FOUND,
+                message: "User not found",
+            });
+        }
+        const adminUser = UserService.getLoggedInUser(req);
+
+        user.roles = adminUser?.uuid === user.uuid && !roles.includes("admin") ? [...roles, "admin"] : roles;
+        await UserService.saveUser(queryRunner, user);
+
+        AppLogger.info(req, {
+            message: `User %s roles updated by admin %s to %s`,
+            args: [user.username, adminUser?.username, user.roles],
+        });
+
+        reply.send({ user: UserService.toUserAdminView(user) } as UpdateUserRolesResponse);
+    }
+
+    @Route("post", "/user/token-version", { authenticate: true, roles: ["admin"], schema: UpdateTokenVersionSchema })
+    @UseQueryRunner()
+    async updateUserTokenVersion(
+        req: FastifyRequest<{ Body: UpdateTokenVersionPayload }>,
+        reply: FastifyReply,
+        queryRunner: QueryRunner
+    ) {
+        const { uuid } = req.body;
+        const user = await UserService.findByUuid(queryRunner, uuid);
+
+        if (!user) {
+            return sendErrorResponse({
+                reply,
+                req,
+                code: ErrorCodes.USER_NOT_FOUND,
+                message: "User not found",
+            });
+        }
+        const adminUser = UserService.getLoggedInUser(req);
+
+        user.tokenVersion += 1;
+        await UserService.saveUser(queryRunner, user);
+
+        AppLogger.info(req, {
+            message: `User %s token version updated by admin %s`,
+            args: [user.username, adminUser?.username],
+        });
+
+        reply.send({ user: UserService.toUserAdminView(user) } as UpdateTokenVersionResponse);
     }
 }

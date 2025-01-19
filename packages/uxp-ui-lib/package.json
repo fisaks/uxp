@@ -25,11 +25,14 @@
         "@mui/icons-material": "^6.1.8",
         "@mui/material": "^6.1.8",
         "@mui/utils": "^6.1.10",
+        "@mui/x-date-pickers": "^7.23.6",
         "@reduxjs/toolkit": "^2.3.0",
         "react-redux": "^9.1.2",
+        "luxon": "^3.5.0",
         "@uxp/common": "workspace:*"
     },
     "devDependencies": {
+        "@types/luxon": "^3.4.2",
         "@types/react": "^18.3.12",
         "@types/redux-logger": "^3.0.13",
         "webpack-bundle-analyzer": "^4.10.2"

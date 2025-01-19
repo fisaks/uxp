@@ -1,9 +1,9 @@
 // userService.ts
-import { UserPubllic, UserRole } from "@uxp/common";
+import { Token } from "@uxp/bff-common";
+import { UserAdminView, UserPubllic, UserRole } from "@uxp/common";
 import { FastifyRequest } from "fastify";
 import { QueryRunner } from "typeorm";
 import { User } from "../db/entities/User";
-import { Token } from "@uxp/bff-common";
 
 export class UserService {
     static async findByUuid(queryRunner: QueryRunner, uuid: string): Promise<User | null> {
@@ -37,6 +37,36 @@ export class UserService {
             email,
             roles,
             lastLogin: lastLogin?.toISO(),
+        };
+        return userPublic;
+    };
+
+    static toUserAdminView = (user: User) => {
+        const {
+            uuid,
+            username,
+            firstName,
+            lastName,
+            createdAt,
+            email,
+            roles,
+            lastLogin,
+            failedLoginAttempts,
+            isDisabled,
+            tokenVersion,
+        } = user;
+        const userPublic: UserAdminView = {
+            uuid,
+            username,
+            firstName,
+            lastName,
+            createdAt: createdAt.toISO()!,
+            email,
+            roles,
+            lastLogin: lastLogin?.toISO(),
+            failedLoginAttempts: failedLoginAttempts,
+            isDisabled: isDisabled,
+            tokenVersion: tokenVersion,
         };
         return userPublic;
     };
