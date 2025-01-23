@@ -1,6 +1,6 @@
 import { FastifyReply, FastifyRequest } from "fastify";
 import { ErrorCode, ErrorDetail } from "@uxp/common";
-import { createErrorResponse } from "@uxp/bff-common";
+import { createErrorResponse } from "./errorResponse";
 
 interface ErrorResponseOptions {
     reply: FastifyReply;

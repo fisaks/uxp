@@ -12,7 +12,7 @@ import { DateTime } from "luxon";
 import { QueryRunner } from "typeorm";
 import { GlobalConfigEntity } from "../../db/entities/GlobalConfigEntity";
 import { UserService } from "../../services/user.service";
-import { sendErrorResponse } from "../../utils/errorUtils";
+import { sendErrorResponse } from "@uxp/bff-common";
 
 export class GlobalConfigController {
     async findLatestGlobalConfig(queryRunner: QueryRunner) {

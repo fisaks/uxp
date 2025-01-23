@@ -6,7 +6,7 @@ import { QueryRunner } from "typeorm";
 import { User } from "../../db/entities/User";
 import { UserSettings } from "../../db/entities/UserSettings";
 import { UserService } from "../../services/user.service";
-import { sendErrorResponse } from "../../utils/errorUtils";
+import { sendErrorResponse } from "@uxp/bff-common";
 
 export class UserSettingController {
     private fastify: FastifyInstance;

@@ -1,4 +1,4 @@
-import { AppLogger, Route, UseQueryRunner } from "@uxp/bff-common";
+import { AppLogger, Route, sendErrorResponse, UseQueryRunner } from "@uxp/bff-common";
 import { buildPath, buildUrlWithParams, ErrorCodes, removeContextPath } from "@uxp/common";
 import axios, { AxiosError } from "axios";
 import { FastifyReply, FastifyRequest } from "fastify";
@@ -6,7 +6,6 @@ import { JSDOM } from "jsdom";
 import { QueryRunner } from "typeorm";
 import { AppEntity } from "../../db/entities/AppEntity";
 import { PageAppsEntity } from "../../db/entities/PageAppsEntity";
-import { sendErrorResponse } from "../../utils/errorUtils";
 
 export class RemoteController {
     /**

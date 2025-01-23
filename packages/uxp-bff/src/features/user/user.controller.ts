@@ -23,6 +23,7 @@ import {
     UpdateUserRolesResponse,
     WhoAmIResponse,
 } from "@uxp/common";
+import { sendErrorResponse } from "@uxp/bff-common";
 import bcrypt from "bcrypt";
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { DateTime } from "luxon";
@@ -33,7 +34,6 @@ import { User } from "../../db/entities/User";
 
 import { UserService } from "../../services/user.service";
 
-import { sendErrorResponse } from "../../utils/errorUtils";
 import {
     clearAuthCookies,
     generateAccessToken,

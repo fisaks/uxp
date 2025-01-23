@@ -1,5 +1,5 @@
 const { DataSource } = require("typeorm");
-
+require("../env");
 const AppDataSource = new DataSource({
     type: "mysql",
     host: process.env.DATABASE_HOST,
@@ -10,11 +10,7 @@ const AppDataSource = new DataSource({
     synchronize: false, // Use migrations for schema changes
     logging: true,
     entities: [process.env.TS_NODE_DEV ? "src/db/entities/**/*.ts" : "dist/db/entities/**/*.js"],
-    //entities: [Page],
-    migrations: [
-        process.env.TS_NODE_DEV ? "src/db/migrations/**/*.ts" : "dist/db/migrations/**/*.js",
-        process.env.TS_NODE_DEV ? "src/db/private-migrations/**/*.ts" : "dist/db/private-migrations/**/*.js",
-    ],
+    migrations: [process.env.TS_NODE_DEV ? "src/db/migrations/**/*.ts" : "dist/db/migrations/**/*.js"],
     cli: {
         migrationsDir: "dist/migration",
     },

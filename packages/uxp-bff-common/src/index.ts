@@ -11,6 +11,7 @@ export * from "./error/AppError";
 
 export * from "./error/errorHandler";
 export * from "./error/errorResponse";
+export * from "./error/errorUtils";
 export { default as jwtPlugin } from "./plugins/jwt";
 
 export * from "./types/token.types";
