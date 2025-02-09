@@ -1,1 +1,1 @@
-export * from "./insert-fuction";
+module.exports = require("./insert-function");

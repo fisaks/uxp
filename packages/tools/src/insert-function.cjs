@@ -7,7 +7,7 @@ function init(documentRoot) {
     applytoRoot(documentRoot);
 }
 function applytoRoot(documentRoot) {
-    console.log("Apply styles to root", documentRoot);
+
     for (const element of elements) {
         const id = element.getAttribute("id");
         const existingElement = documentRoot.querySelector(`#${id}`);
@@ -18,7 +18,6 @@ function applytoRoot(documentRoot) {
 }
 
 function insertIntoTarget(element) {
-    console.log("Style insertIntoTarget", element, elements, roots);
 
     element.setAttribute("id", `uxp-${generateUUID()}`);
     elements.push(element);

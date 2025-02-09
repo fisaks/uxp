@@ -51,7 +51,7 @@ export const ActionIconButton = <Returned, Payload = void, RootState = any>({
     }, [error]);
 
     const handleActionClick = (event: React.MouseEvent<HTMLElement>) => {
-        if (!!confirmMessage) {
+        if (confirmMessage) {
             setConfirmAnchorEl(event.currentTarget);
         } else {
             trigger(payload as Payload);

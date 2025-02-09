@@ -7,7 +7,20 @@ import globals from "globals";
 export default [
     // Base JavaScript configuration
     js.configs.recommended,
+    {
+        files: ["**/*.cjs"], // Apply to TypeScript files
+        languageOptions: {
+            globals: {
+                console: true, // Explicitly allow console as a global
+                window: true, // Browser global
+                document: true, // Browser global
+                ...globals.browser,
+                __webpack_public_path__: "writable",
+            }
 
+        }
+
+    },
     // TypeScript configuration
     {
         files: ["**/*.ts", "**/*.tsx"], // Apply to TypeScript files
@@ -33,6 +46,7 @@ export default [
                 __WebpackModuleApi: "readonly",
                 ...globals.browser,
                 __webpack_public_path__: "writable",
+                NodeJS: "readonly"
             },
         },
         plugins: {
