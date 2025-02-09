@@ -251,6 +251,7 @@ export class UserController {
         try {
             const refreshToken = req.cookies[REFRESH_TOKEN];
             if (!refreshToken) {
+                clearAuthCookies(reply);
                 return sendErrorResponse({
                     reply,
                     req,
@@ -264,6 +265,7 @@ export class UserController {
             const user = await UserService.findByUuid(queryRunner, decoded.uuid);
 
             if (!user || user.tokenVersion === undefined || user.tokenVersion !== decoded.tokenVersion) {
+                clearAuthCookies(reply);
                 return sendErrorResponse({
                     reply,
                     req,

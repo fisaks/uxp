@@ -5,7 +5,7 @@
         "rootDir": "./src", // Treat src as the root for inputs
         "module": "commonjs", // Use CommonJS for Node.js
         "target": "ES2021", // Use a modern JavaScript version supported by Node.js
-
+        "types": ["node"],
         "declaration": true,
         "declarationMap": true,
         "composite": true, // Required for project references
@@ -14,5 +14,10 @@
         "strict": true
     },
     "include": ["src/**/*"],
-    "exclude": ["node_modules", "dist"]
+    "exclude": ["node_modules", "dist"],
+    "references": [
+        {
+            "path": "../uxp-common"
+        } // Reference to the common package
+    ]
 }

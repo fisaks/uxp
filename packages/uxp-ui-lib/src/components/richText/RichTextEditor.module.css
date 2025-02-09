@@ -1,0 +1,179 @@
+.editorContainer2 {
+    border: 1px solid transparent;
+    min-height: 150px;
+    padding: 0px;
+    overflow-wrap: break-word;
+    outline: none;
+
+}
+
+.editorContainer {
+    border: 1px solid transparent;
+    min-height: 150px;
+    padding: 0px;
+    overflow-wrap: break-word;
+    transition: all 0.3s ease-in-out;
+    position: relative;
+    outline: none;
+
+}
+
+.editorWrapper {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.fullScreen .editorWrapper {
+
+    /* Pushes content down */
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+}
+
+.fullScreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+
+    height: 100dvh;
+    background: white;
+    z-index: 9999;
+    padding: 0;
+    margin: 0;
+    border: none;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.toolbar {
+    display: flex;
+    gap: 4px;
+}
+
+.fullscreen .toolbar {
+    position: fixed;
+    /* Keeps it at the top */
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.9);
+    /* Slight transparency */
+    padding: 10px;
+    z-index: 10000;
+    /* Ensures it stays above everything */
+    display: flex;
+    justify-content: flex-start;
+    /* Aligns buttons to the left */
+    border-bottom: 1px solid #ddd;
+    /* Adds a subtle separator */
+}
+
+.editorContainer div[role="textbox"] {
+    padding: 5px;
+}
+
+
+/* Optional: Reduce spacing for all blocks */
+.editorContainer * {
+    margin: 0;
+    line-height: 1.2;
+}
+
+.editorContainer ul {
+    list-style-type: circle;
+}
+
+.editorContainer ul ul {
+    list-style-type: square;
+}
+
+.editorContainer ul ul ul {
+    list-style-type: disc;
+}
+
+.editorContainer ol {
+
+    counter-reset: item
+}
+
+.editorContainer ol li {
+
+    display: block;
+}
+
+.editorContainer ol li::before {
+
+    content: counters(item, ".") ". ";
+    counter-increment: item;
+}
+
+.editorContainer ol li p {
+    display: inline;
+    margin: 0;
+}
+
+
+
+
+.editorContainer table td,
+.editorContainer table th,
+.editorContainer table {
+    border: 1px solid transparent;
+}
+
+.editorContainer :global(.has-focus) table td,
+.editorContainer :global(.has-focus) table th,
+.editorContainer :global(.has-focus) table {
+    border: 1px solid #bbb;
+}
+
+.editorContainer :global(.resizable-image-wrapper) {
+    display: inline-block;
+    position: relative;
+}
+
+.editorContainer :global(.resizable-image-wrapper) img {
+    max-width: 100%;
+    height: auto;
+    cursor: pointer;
+}
+
+
+.editorContainer :global(.resize-handle) {
+    display: none;
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 22px;
+    height: 22px;
+
+    border-radius: 50%;
+    cursor: nwse-resize;
+    background: transparent;
+
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24' fill='none' stroke='%23007bff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 21l18-18M3 10V3h7M21 14v7h-7'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-size: contain;
+    background-position: center;
+
+}
+
+.editorContainer :global(.tiptap:focus-within) :global(.resize-handle) {
+    display: block
+}
+
+
+.floatingToolbar {
+    border-radius: 8px;
+    padding: 4px;
+    display: flex;
+    gap: 4px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    z-index: 10;
+}

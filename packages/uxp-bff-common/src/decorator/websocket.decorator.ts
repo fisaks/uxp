@@ -1,3 +1,4 @@
+import { ErrorCodes, UserRole } from "@uxp/common";
 import Ajv, { ValidateFunction } from "ajv";
 import { FastifyInstance } from "fastify";
 import "reflect-metadata";
@@ -9,7 +10,6 @@ import { AppLogger } from "../utils/AppLogger";
 import { HandlerConstructor, HandlerRegistry } from "./handler.registry";
 import { getUseQueryRunnerOptions, UseQueryRunnerOptions } from "./queryrunner.decorator";
 import { hasRequiredRoles, validateMessagePayload, withQueryRunner } from "./request-utils";
-import { ErrorCodes, UserRole } from "@uxp/common";
 
 const ajv = new Ajv();
 
@@ -125,72 +125,84 @@ type WebSocketMessage = {
  * @param fastify Fastify instance
  * @param handlers Array of handler classes
  */
-export function registerWebSocketHandlers({ fastify, dataSource, handlers }: RegisterWebSocketHandlersArgs) {
+export function registerLocalWebSocketHandlers({ fastify, dataSource, handlers }: RegisterWebSocketHandlersArgs) {
     const actionMap = preloadWebSocketHandlers(fastify, handlers);
 
-    // @ts-ignore: WebSocket route
+
     fastify.get("/ws", { websocket: true }, async (socket /* WebSocket */, request /* FastifyRequest */) => {
-        // @ts-ignore: WebSocket route
-        AppLogger.info(request, { message: "WebSocket connection established" });
+
+        AppLogger.info(request, { message: "WebSocket connection established (local)" });
+
         let user: Token | undefined = undefined;
-        // @ts-ignore: WebSocket route
         if (request.cookies[ACCESS_TOKEN]) {
             try {
-                // @ts-ignore: WebSocket route
                 await request.jwtVerify();
-                // @ts-ignore: WebSocket route
                 user = request.user as Token;
             } catch (err: unknown) {
-                // @ts-ignore: WebSocket route
+
                 AppLogger.error(request, {
                     message: "Failed to verify access token in WebSocket connection",
                     error: err,
-                    object: { username: user?.username },
+
                 });
             }
         }
 
-        // @ts-ignore: WebSocket route
+        const PING_INTERVAL = 30000; // Ping every 30s
+        const PONG_TIMEOUT = 10000; // Wait max 10s for pong
+        let pongReceived = true;
+        let pongTimeout: NodeJS.Timeout | null = null;
+
+        const sendPing = () => {
+            if (socket.readyState !== socket.OPEN) return;
+
+            pongReceived = false;
+            socket.ping();
+
+            // **Set a timeout to check if pong is received in time**
+            pongTimeout = setTimeout(() => {
+                if (!pongReceived) {
+                    AppLogger.warn(request, { message: "Client did not respond to ping. Closing WebSocket." });
+                    socket.close();
+                }
+            }, PONG_TIMEOUT);
+        };
+
+        const pingInterval = setInterval(sendPing, PING_INTERVAL);
+
+        socket.on("pong", () => {
+            AppLogger.debug(request, { message: "Pong received from client" });
+            pongReceived = true;
+
+            // **Clear the pong timeout when we get a response**
+            if (pongTimeout) {
+                clearTimeout(pongTimeout);
+                pongTimeout = null;
+            }
+        });
+
+
         socket.on("message", async (message) => {
             try {
-                let payload: unknown;
-                let action: string | undefined;
+                const parsedMessage = JSON.parse(message.toString());
+                const action = parsedMessage.action;
+                const payload = parsedMessage.payload;
+                const actionHandler = actionMap[action];
 
-                try {
-                    const parsedMessage: WebSocketMessage = JSON.parse(message.toString());
-                    action = parsedMessage.action;
-                    payload = parsedMessage.payload;
-                } catch (err) {
-                    // @ts-ignore: just
-                    AppLogger.error(request, { message: "Invalid JSON Message", error: err });
-                    // @ts-ignore: just
-                    socket.send(
-                        createErrorMessageResponse({ code: ErrorCodes.VALIDATION, message: "Invalid Message" })
-                    );
-                    return;
-                }
 
-                // Ensure the action exists in the action map
-                const actionHandler = action && actionMap[action];
                 if (!actionHandler) {
-                    // @ts-ignore: WebSocket route
-                    AppLogger.error(request, {
-                        message: `No handler registered for action "${action}"`,
-                        object: { username: user?.username, action, roles: user?.roles },
-                    });
-                    // @ts-ignore: WebSocket route
                     socket.send(
-                        createErrorMessageResponse({
+                        createErrorMessageResponse(request, action, {
                             code: ErrorCodes.NOT_FOUND,
                             message: `No handler registered for action "${action}`,
                         })
                     );
                     return;
                 }
-                // @ts-ignore: WebSocket route
+
                 AppLogger.info(request, {
                     message: "Processing WebSocket action",
-                    object: { username: user?.username, action, roles: user?.roles },
+                    object: { action, roles: user?.roles },
                 });
 
                 const {
@@ -203,9 +215,8 @@ export function registerWebSocketHandlers({ fastify, dataSource, handlers }: Reg
                 } = actionHandler;
 
                 if (needsAuthentication && !user) {
-                    // @ts-ignore: WebSocket route
                     socket.send(
-                        createErrorMessageResponse({
+                        createErrorMessageResponse(request, action, {
                             code: ErrorCodes.UNAUTHORIZED,
                             message: "Authentication required",
                         })
@@ -214,22 +225,18 @@ export function registerWebSocketHandlers({ fastify, dataSource, handlers }: Reg
                 }
 
                 if (!hasRequiredRoles({ userRoles: user?.roles ?? [], requiredRoles })) {
-                    // @ts-ignore: WebSocket route
                     socket.send(
-                        createErrorMessageResponse({ code: ErrorCodes.FORBIDDEN, message: "Insufficient permissions" })
+                        createErrorMessageResponse(request, action, { code: ErrorCodes.FORBIDDEN, message: "Insufficient permissions" })
                     );
                     return;
                 }
 
                 const validation = validateMessagePayload(payload, validate, schemaValidate);
                 if (validation) {
-                    // @ts-ignore: WebSocket route
-                    socket.send(
-                        createErrorMessageResponse(
-                            { code: ErrorCodes.VALIDATION, message: validation.message },
-                            validation.errors ?? undefined
-                        )
-                    );
+                    socket.send(createErrorMessageResponse(request, action,
+                        { code: ErrorCodes.VALIDATION, message: validation.message },
+                        validation.errors ?? undefined
+                    ));
                     return;
                 }
 
@@ -238,22 +245,32 @@ export function registerWebSocketHandlers({ fastify, dataSource, handlers }: Reg
                     const result = await handler(...args);
 
                     if (result) {
-                        // @ts-ignore: WebSocket route
                         socket.send(JSON.stringify({ success: true, data: result }));
                     }
                     return result;
                 });
             } catch (err: any) {
-                // @ts-ignore: WebSocket route
+
                 AppLogger.error(request, { message: "Error in WebSocket message", error: err });
-                // @ts-ignore: WebSocket route
+
                 socket.send(
-                    createErrorMessageResponse({
+                    createErrorMessageResponse(request, "unknown", {
                         code: ErrorCodes.INTERNAL_SERVER_ERROR,
                         message: "An unexpected error occurred",
                     })
                 );
             }
         });
+        socket.on("error", (error) => {
+            AppLogger.error(request, { message: "WebSocket error occurred", error });
+        });
+
+        socket.on("close", (code, reason) => {
+            AppLogger.info(request, { message: `WebSocket closed (code: ${code}, reason: ${reason.toString()})` });
+            clearInterval(pingInterval);
+            if (pongTimeout) clearTimeout(pongTimeout);
+        });
     });
 }
+
+

@@ -1,8 +1,9 @@
 // src/utils/errorResponse.ts
 
+import { ApiErrorResponse, ErrorDetail } from "@uxp/common";
 import { FastifyRequest } from "fastify";
 import { DateTime } from "luxon";
-import { ApiErrorResponse, ErrorDetail } from "@uxp/common";
+import { AppLogger } from "../utils/AppLogger";
 
 export const createErrorResponse = (errors: ErrorDetail[], request: FastifyRequest): ApiErrorResponse => {
     return {
@@ -15,7 +16,12 @@ export const createErrorResponse = (errors: ErrorDetail[], request: FastifyReque
     };
 };
 
-export const createErrorMessageResponse = (error: ErrorDetail, details?: object): string => {
+export const createErrorMessageResponse = (request: FastifyRequest, action: string, error: ErrorDetail, details?: object): string => {
+    AppLogger.error(request, {
+        message: error.message,
+
+        object: { action, errorCode: error.code },
+    });
     return JSON.stringify({
         success: false,
         error,

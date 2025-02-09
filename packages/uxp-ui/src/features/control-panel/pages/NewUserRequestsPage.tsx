@@ -14,12 +14,10 @@ import { lockUser, searchUsers, updateUserRoles } from "../adminUserManagementTh
 import PaginationWithHeader from "../componenets/PaginationWithHeader";
 import UserList from "../componenets/UserList";
 
+
 const initialRequest: UserSearchRequest = {
     pagination: { page: 1, size: 10 },
-    filters: [
-        { field: "roles", operator: "eq", value: "" },
-        { field: "isDisabled", operator: "eq", value: false },
-    ],
+    filters: [{ field: "roles", operator: "eq", value: "" }, { field: "isDisabled", operator: "eq", value: false }],
     sort: [{ field: "createdAt", direction: "asc" }],
 };
 
@@ -38,38 +36,26 @@ const NewUserRequestsPage: React.FC = () => {
 
     const reload = () => {
         dispatch(searchUsers(initialRequest));
-    };
+    }
     const handlePageChange = (_event: React.ChangeEvent<unknown>, page: number) => {
         dispatch(searchUsers({ ...initialRequest, pagination: { ...initialRequest.pagination, page } }));
     };
 
     const handleApprove = (uuid: string, onDone: () => void) => {
-        dispatch(updateUserRoles({ uuid, roles: ["user"] })).then(
-            handleThunkResult(
-                () => {
-                    dispatch(removeUserFromList({ uuid }));
-                },
-                undefined,
-                () => {
-                    onDone();
-                }
-            )
-        );
+        dispatch(updateUserRoles({ uuid, roles: ["user"] })).then(handleThunkResult(() => {
+            dispatch(removeUserFromList({ uuid }));
+        }, undefined, () => {
+            onDone();
+        }));
     };
 
     const handleReject = (uuid: string, onDone: () => void) => {
-        dispatch(lockUser({ uuid })).then(
-            handleThunkResult(
-                () => {
-                    dispatch(removeUserFromList({ uuid }));
-                },
-                undefined,
-                () => {
-                    console.log("onDone");
-                    onDone();
-                }
-            )
-        );
+        dispatch(lockUser({ uuid })).then(handleThunkResult(() => {
+            dispatch(removeUserFromList({ uuid }));
+        }, undefined, () => {
+            console.log("onDone");
+            onDone();
+        }));
     };
 
     return (
@@ -92,11 +78,9 @@ const NewUserRequestsPage: React.FC = () => {
                 </Tooltip>
             </Box>
 
-            {pagination && (
-                <Typography component="p" sx={{ mt: 1 }}>
-                    There is {pagination.totalItems} number of new user requests
-                </Typography>
-            )}
+            {pagination && <Typography component="p" sx={{ mt: 1 }}>
+                There is {pagination.totalItems} number of new user requests
+            </Typography>}
             <PaginationWithHeader pagination={pagination} onPageChange={handlePageChange} />
 
             <UserList
@@ -121,6 +105,7 @@ const NewUserRequestsPage: React.FC = () => {
             />
 
             <PaginationWithHeader pagination={pagination} onPageChange={handlePageChange} />
+
         </Box>
     );
 };

@@ -1,5 +1,5 @@
 import { HouseData } from "@h2c/common";
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, VersionColumn } from "typeorm";
+import { Column, CreateDateColumn, DeleteDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn, VersionColumn } from "typeorm";
 import { v4 as uuidv4 } from "uuid";
 
 import { DateTime } from "luxon";
@@ -27,19 +27,25 @@ export class HouseEntity {
 
     @CreateDateColumn({
         type: "timestamp",
-        transformer: { to: (value: DateTime) => value, from: (value: Date) => DateTime.fromJSDate(value) },
+        transformer: {
+             to: (value: DateTime) => value ? value.toJSDate() : value,
+             from: (value: Date) => DateTime.fromJSDate(value) },
     })
     createdAt!: DateTime;
 
-    @CreateDateColumn({
+    @UpdateDateColumn({
         type: "timestamp",
-        transformer: { to: (value: DateTime) => value, from: (value: Date) => DateTime.fromJSDate(value) },
+        transformer: { 
+            to: (value: DateTime) => value ? value.toJSDate() : value,
+            from: (value: Date) => DateTime.fromJSDate(value) },
     })
     updatedAt!: DateTime;
 
-    @CreateDateColumn({
+    @DeleteDateColumn({
         type: "timestamp",
-        transformer: { to: (value: DateTime) => value, from: (value: Date) => DateTime.fromJSDate(value) },
+        transformer: { 
+            to: (value: DateTime) => value ? value.toJSDate() : value,
+            from: (value: Date) => DateTime.fromJSDate(value) },
     })
     removedAt?: DateTime;
 

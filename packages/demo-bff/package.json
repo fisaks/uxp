@@ -12,7 +12,7 @@
         "build": "pnpm tsc --build",
         "trace": "pnpm tsc --traceResolution",
         "dev": "pnpm ts-node-dev --project ./tsconfig.json --debounce 500 --poll --respawn src/demo.bff.ts",
-        "clean": "rm -rf dist tsconfig.tsbuildinfo build_types",
+        "clean": "pnpm rimraf --glob -v  dist tsconfig.tsbuildinfo build_types",
         "lint": "pnpm eslint .",
         "lint:fix": "pnpm eslint . --fix",
         "typeorm:generate": "pnpm tsc --build && pnpm typeorm migration:generate ./src/db/migrations/GeneratedMigration -d ./dist/db/typeorm.config.js",

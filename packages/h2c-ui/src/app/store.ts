@@ -3,6 +3,10 @@ import { remoteAppReducer } from "@uxp/ui-lib";
 import { createLogger } from "redux-logger";
 
 import templateReducer from "../features/template/templateSlice";
+import houseReducer from "../features/house/houseSlice";
+import loadingErrorReducer from "../features/loading-error/loadingErrorSlice";
+
+
 
 export const createStore = () => {
     const logger = createLogger({
@@ -14,6 +18,8 @@ export const createStore = () => {
         reducer: {
             template: templateReducer,
             remoteApp: remoteAppReducer,
+            loadingError: loadingErrorReducer,
+            houses: houseReducer,
         },
         devTools: process.env.NODE_ENV === "development",
         middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(logger),

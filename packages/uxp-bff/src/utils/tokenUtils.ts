@@ -12,20 +12,21 @@ export function generateRefreshToken(fastify: FastifyInstance, payload: RefreshT
 }
 
 export function setAuthCookies(reply: FastifyReply, accessToken: string, refreshToken?: string): FastifyReply {
+    console.log("setAuthCookies", process.env.SECURE_COOKIE,(process.env.SECURE_COOKIE ?? "true").toLowerCase() === "true");
     reply.setCookie(ACCESS_TOKEN, accessToken, {
         httpOnly: true,
-        secure: true,
+        secure: (process.env.SECURE_COOKIE ?? "true").toLowerCase() === "true",
         sameSite: "strict",
         path: "/",
     });
 
     return refreshToken
         ? reply.setCookie(REFRESH_TOKEN, refreshToken, {
-              httpOnly: true,
-              secure: true,
-              sameSite: "strict",
-              path: "/",
-          })
+            httpOnly: true,
+            secure: (process.env.SECURE_COOKIE ?? "true").toLowerCase() === "true",
+            sameSite: "strict",
+            path: "/",
+        })
         : reply;
 }
 

@@ -9,7 +9,7 @@
         "build-dev": "pnpm webpack --config webpack.config.cjs",
         "lint": "pnpm eslint .",
         "lint:fix": "pnpm eslint . --fix",
-        "clean": "pnpm rimraf dist tsconfig.tsbuildinfo"
+        "clean": "pnpm rimraf --glob -v dist build_types tsconfig.tsbuildinfo"
     },
     "keywords": [],
     "author": "",

@@ -16,7 +16,7 @@ export const FloatingSidebarButton: React.FC<FloatingSidebarButtonProps> = ({ to
                 position: "fixed",
                 bottom: "50%",
                 left: 0,
-                transform: "translateY(-50%) translateX(-30%)",
+                transform: "translateY(-50%) translateX(-42%)",
             }}
         >
             <ChevronRightIcon />

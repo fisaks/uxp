@@ -11,6 +11,7 @@ export const requiredKeys = [
     "JWT_SECRET",
     "REMOTE_HOST_H2C",
     "REMOTE_HOST_DEMO",
+    "SECURE_COOKIE",
 ] as const;
 export type RequiredKeys = (typeof requiredKeys)[number];
 export type EnvVariables = Record<RequiredKeys, string>;

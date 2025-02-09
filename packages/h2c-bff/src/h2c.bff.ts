@@ -1,9 +1,10 @@
-import env from "./env";
 import fastifyCookie from "@fastify/cookie";
+import fastifyMultipart from "@fastify/multipart";
 import { AppLogger, errorHandler, HandlerRegistry, IsProd, jwtPlugin, registerRoutes } from "@uxp/bff-common";
+import "@uxp/bff-common/dist/health/health.controller";
 import Fastify from "fastify";
 import path from "path";
-import "@uxp/bff-common/dist/health/health.controller";
+import env from "./env";
 
 const { AppDataSource } = require("./db/typeorm.config");
 
@@ -22,6 +23,17 @@ AppLogger.initialize(fastify.log);
 fastify.setErrorHandler(errorHandler);
 fastify.register(fastifyCookie);
 fastify.register(jwtPlugin);
+fastify.register(fastifyMultipart, {
+    limits: {
+        fieldNameSize: 100, // Max field name size in bytes
+        fieldSize: 100,     // Max field value size in bytes
+        fields: 10,         // Max number of non-file fields
+        fileSize: 10000000,  // For multipart forms, the max file size in bytes
+        files: 10,           // Max number of file fields
+        headerPairs: 2000,  // Max number of header key=>value pairs
+        parts: 20         // For multipart forms, the max number of parts (fields + files)
+    }
+});
 
 if (!IsProd) {
     fastify.addHook("preHandler", async (request, reply) => {
@@ -36,6 +48,7 @@ console.log("restHandlers", restHandlers);
 
 registerRoutes({
     fastify,
+    dataSource: AppDataSource,
     controllers: Array.from(restHandlers),
 });
 

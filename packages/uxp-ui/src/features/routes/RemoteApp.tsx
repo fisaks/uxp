@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 
 interface RemoteAppProps {
     contentUuid: string;
+    basePath?: string;
 }
 
 declare global {
@@ -16,7 +17,7 @@ declare global {
 
 const fetchPromises: Record<string, Promise<any>> = {};
 
-const RemoteApp: React.FC<RemoteAppProps> = ({ contentUuid }) => {
+const RemoteApp: React.FC<RemoteAppProps> = ({ contentUuid, basePath }) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const [contentLoaded, setContentLoaded] = useState(false);
     useEffect(() => {
@@ -98,6 +99,10 @@ const RemoteApp: React.FC<RemoteAppProps> = ({ contentUuid }) => {
                 Array.from(doc.body.childNodes).forEach((node) => {
                     if (node.nodeName === "SCRIPT") {
                         injectScript(node as HTMLScriptElement, shadowRoot); // Inject into document.body
+                    } else if (basePath && (node as HTMLElement).id === "root") {
+                        const cloneNode = node.cloneNode(true);
+                        (cloneNode as HTMLElement).setAttribute("data-base-route-path", basePath);
+                        shadowRoot!.appendChild(cloneNode);
                     } else {
                         shadowRoot!.appendChild(node.cloneNode(true));
                     }

@@ -17,8 +17,6 @@ const UxpAppLayot: React.FC = () => {
     );
 };
 const UxpApp: React.FC = () => {
-    const dispatch = useAppDispatch();
-
     const loading = useInitializeApp();
 
     return loading ? (

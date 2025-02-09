@@ -55,6 +55,7 @@ export class AppLogger {
             username: (request.user as Token)?.username,
             ip: request.ip,
             userAgent: request.headers["user-agent"],
+            requestId: request.id
         };
     }
 
@@ -87,7 +88,7 @@ export class AppLogger {
         this.log(request, "info", message);
     }
 
-    public static warn(request: FastifyRequest | undefined, message: LogMessage) {
+    public static warn(request: FastifyRequest | undefined, message: ErrorLogMessage) {
         this.log(request, "warn", message);
     }
 

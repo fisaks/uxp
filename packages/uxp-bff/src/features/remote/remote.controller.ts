@@ -154,13 +154,18 @@ export class RemoteController {
             const { contextPath } = config;
             const { baseUrl } = app;
             const targetUrl = buildUrlWithParams({ hostname: baseUrl, contextPath, resourceParts: [resourcePath] });
+
             AppLogger.info(req, { message: `Remote url is ${targetUrl}` });
+
+            const reqHeaders = { ...req.headers };
+            delete reqHeaders["content-length"];
 
             const response = await axios({
                 method: req.method, // Forward the method (GET, POST, etc.)
                 url: targetUrl,
-                headers: req.headers, // Forward headers
-                data: req.body, // Forward the body for methods like POST or PUT
+                headers: reqHeaders["content-type"] ? reqHeaders : { ...reqHeaders, "content-type": null }, // Forward headers
+                data: req.uxpRaw ? req.raw : req.body,
+                // data: req.body, // Forward the body for methods like POST or PUT
                 responseType: "stream", // Stream the response back to the client
                 validateStatus: (status) => status >= 200 && status < 500, // Only resolve for 2xx status codes
             });

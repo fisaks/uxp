@@ -1,0 +1,17 @@
+export declare const ErrorCodes: {
+    readonly INTERNAL_SERVER_ERROR: "INTERNAL_SERVER_ERROR";
+    readonly UNAUTHORIZED: "UNAUTHORIZED";
+    readonly FORBIDDEN: "FORBIDDEN";
+    readonly VALIDATION: "VALIDATION";
+    readonly NOT_FOUND: "NOT_FOUND";
+    readonly PATCH_VERSION_CONFLICT: "PATCH_VERSION_CONFLICT";
+    readonly USERNAME_EXISTS: "USERNAME_EXISTS";
+    readonly ALREADY_REGISTERED: "ALREADY_REGISTERED";
+    readonly INVALID_USERNAME_PASSWORD: "INVALID_USERNAME_PASSWORD";
+    readonly INVALID_REFRESH_TOKEN: "INVALID_REFRESH_TOKEN";
+    readonly USER_NOT_FOUND: "USER_NOT_FOUND";
+    readonly RESOURCE_NOT_FOUND: "RESOURCE_NOT_FOUND";
+    readonly USER_OLD_PASSWORD_NOT_MATCH: "USER_OLD_PASSWORD_NOT_MATCH";
+};
+export type ErrorCode = keyof typeof ErrorCodes;
+//# sourceMappingURL=ErrorCodes.d.ts.map

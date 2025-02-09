@@ -107,10 +107,12 @@ export function registerRoutes({ fastify, dataSource, controllers, basePath = "/
 
             const originalHandler = instance[handlerName].bind(instance);
             const url = `${basePath}${path}`;
+
             fastify.route({
                 method: method === "all" ? ALL_METHODS : method.toUpperCase(),
                 url,
                 schema, // Attach validation schema here
+   
 
                 preHandler: async (request: FastifyRequest, reply: FastifyReply) => {
                     if (request.url !== `${basePath}/refresh-token`) {

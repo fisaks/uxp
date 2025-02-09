@@ -1,4 +1,4 @@
-import { BuildingData, House, HouseData } from "@h2c/common";
+import { BuildingData, House, HouseData, HouseSummary } from "@h2c/common";
 import { DateTime } from "luxon";
 import { QueryRunner } from "typeorm";
 import { v4 as uuidv4 } from "uuid";
@@ -20,6 +20,13 @@ export class HouseService {
     private queryRunner: QueryRunner;
     constructor(queryRunner: QueryRunner) {
         this.queryRunner = queryRunner;
+    }
+
+    async findAllHouses(includeRemoved = false): Promise<HouseEntity[]> {
+        const houseRepo = this.queryRunner.manager.getRepository(HouseEntity);
+        return houseRepo.find({
+            where: { removed: includeRemoved ? undefined : false },
+        });
     }
 
     // Fetch house by UUID
@@ -50,6 +57,10 @@ export class HouseService {
     // Map house entity to the API response structure
     mapToHouseResponse(house: HouseEntity): House {
         return { uuid: house.uuid, version: house.version, ...house.data };
+    }
+
+    mapToHouseSummary(house: HouseEntity): HouseSummary {
+        return { uuid: house.uuid, name: house.data.name };
     }
 
     // Add a new building

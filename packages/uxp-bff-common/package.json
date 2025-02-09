@@ -4,15 +4,16 @@
     "version": "1.0.0",
     "main": "dist/index.js",
     "types": "dist/index.d.ts                                                                                                                   ",
-    "files": ["dist/"],
-    
+    "files": [
+        "dist/"
+    ],
     "keywords": [],
     "author": "",
     "license": "ISC",
     "scripts": {
         "build": "pnpm tsc --build",
         "dev": "pnpm ts-node-dev --respawn src/index.ts",
-        "clean": "pnpm rimraf dist tsconfig.tsbuildinfo",
+        "clean": "pnpm rimraf --glob -v dist tsconfig.tsbuildinfo",
         "watch": "pnpm tsc --watch",
         "lint": "pnpm eslint .",
         "lint:fix": "pnpm eslint . --fix"
@@ -29,10 +30,18 @@
         "typeorm": "^0.3.20",
         "luxon": "^3.5.0",
         "dotenv": "^16.4.5",
+        "fs-extra": "^11.3.0",
+        "nanoid": "^3.3.4",
+        "@fastify/multipart": "^9.0.3",
+        "file-type": "^16.5.3",
         "@uxp/common": "workspace:*"
     },
     "devDependencies": {
         "@types/luxon": "^3.4.2",
-        "@types/jsonwebtoken": "^9.0.7"
+        "@types/jsonwebtoken": "^9.0.7",
+        "@types/file-type": "^10.9.3",
+        "@types/fs-extra": "^11.0.4",
+        "@types/node": "^22.10.1"
+        
     }
 }

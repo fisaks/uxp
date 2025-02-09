@@ -7,7 +7,7 @@ package-lock.json
 # Serverless directories
 dist
 tsconfig.tsbuildinfo
-
+uploads
 .env.prod
 .env.dev
 .env

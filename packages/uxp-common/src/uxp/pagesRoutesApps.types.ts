@@ -1,5 +1,7 @@
 export type AppConfigData = {
     contextPath: string;
+    wsPath: string;
+    wsPublic?: boolean;
     indexPage: string;
 };
 

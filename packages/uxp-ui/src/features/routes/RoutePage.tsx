@@ -43,7 +43,7 @@ const RoutePage: React.FC<RoutePageProps> = ({ pageUuid, basePath }) => {
                         <DynamicComponentLoader key={m.uuid} componentName={m.internalComponent} basePath={basePath} />
                     );
                 } else {
-                    return <RemoteApp key={m.uuid} contentUuid={m.uuid} />;
+                    return <RemoteApp key={m.uuid} contentUuid={m.uuid} basePath={basePath}/>;
                 }
             })}
         </MainPageLayout>

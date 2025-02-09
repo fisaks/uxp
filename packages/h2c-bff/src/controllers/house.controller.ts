@@ -15,7 +15,7 @@ export class HouseController {
     }
 
     /**
-     * POST /houses
+     * POST /hous
      * Creates a dummy house with default values
      */
     @Route("post", "/houses", { authenticate: true, roles: ["user"] })
@@ -27,7 +27,6 @@ export class HouseController {
             data: { ...DefaultHouseData },
             removed: false,
             createdAt: DateTime.now(),
-            updatedAt: DateTime.now(),
         });
 
         const savedHouse = await houseService.saveHouse(newHouse);
@@ -48,7 +47,7 @@ export class HouseController {
         queryRunner: QueryRunner
     ) {
         const { uuid } = req.params;
-        const { key, value, version } = req.body;
+        const { key, value } = req.body;
 
         const houseService = new HouseService(queryRunner);
         const house = await houseService.findHouseByUuid(uuid);
@@ -60,16 +59,6 @@ export class HouseController {
                 statusCode: 404,
                 code: "NOT_FOUND",
                 message: `House not found by uuid ${uuid}`,
-            });
-        }
-
-        if (house.version !== version) {
-            return sendErrorResponse({
-                reply,
-                req,
-                statusCode: 409,
-                code: "PATCH_VERSION_CONFLICT",
-                message: `Version conflict: The house has been updated by someone else.`,
             });
         }
 
@@ -180,6 +169,16 @@ export class HouseController {
         return reply.code(200).send(houseService.mapToHouseResponse(house));
     }
 
+    @Route("get", "/houses", { authenticate: true, roles: ["user"] })
+    @UseQueryRunner()
+    async getHouses(req: FastifyRequest, reply: FastifyReply, queryRunner: QueryRunner) {
+
+        const houseService = new HouseService(queryRunner);
+        const houses = await houseService.findAllHouses();
+
+        return reply.code(200).send(houses.map(houseService.mapToHouseResponse));
+    }
+
     /**
      * DELETE /houses/:uuid
      * Marks a house as removed
@@ -212,4 +211,27 @@ export class HouseController {
         AppLogger.info(req, { message: `Deleted house ${uuid}` });
         return reply.code(204).send();
     }
+
+    @Route("post", "/upload/:uuid", { authenticate: true, roles: ["user"] })
+    @UseQueryRunner()
+    async upload(
+        req: FastifyRequest<{ Params: { uuid: string } }>,
+        reply: FastifyReply,
+        queryRunner: QueryRunner
+    ) {
+        const { uuid } = req.params;
+        const data = await req.file();
+        if (!data) {
+            return reply.code(400).send({ error: 'No file uploaded' });
+        }
+
+        AppLogger.info(req, { message: `Uploaded file ${data.filename} for uuid ${uuid} ` });
+        const buf = await data.toBuffer()
+
+        AppLogger.info(req, { message: `Uploaded file length ${buf.length}` });
+
+        const fileUrl = `/uploads/${uuid}`;
+        return { url: fileUrl };
+    }
+
 }

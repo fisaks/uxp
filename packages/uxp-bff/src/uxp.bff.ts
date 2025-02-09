@@ -1,7 +1,7 @@
 process.env.TZ = "UTC";
 
 import fastifyWebsocket from "@fastify/websocket";
-import Fastify from "fastify";
+import Fastify, { FastifyRequest } from "fastify";
 import env from "./config/env";
 
 const { AppDataSource } = require("./db/typeorm.config");
@@ -15,7 +15,7 @@ import {
     IsProd,
     jwtPlugin,
     registerRoutes,
-    registerWebSocketHandlers,
+    registerLocalWebSocketHandlers,
 } from "@uxp/bff-common";
 import "@uxp/bff-common/dist/health/health.controller";
 import { ValidateGlobalConfigValue } from "@uxp/common";
@@ -34,6 +34,7 @@ AppDataSource.initialize()
 const port = 3001;
 const fastify = Fastify({
     logger: true,
+    disableRequestLogging: true,
     ajv: { customOptions: { allErrors: true, $data: true, keywords: [ValidateGlobalConfigValue], coerceTypes: true } },
 });
 AppLogger.initialize(fastify.log);
@@ -41,12 +42,29 @@ fastify.setErrorHandler(errorHandler);
 fastify.register(fastifyCookie);
 fastify.register(jwtPlugin);
 fastify.register(fastifyWebsocket);
+declare module 'fastify' {
+    interface FastifyRequest {
+        uxpRaw?: boolean
+    }
+}
 
+function setRaw(req: FastifyRequest, _payload: any, done: any) {
+    req['uxpRaw'] = true
+    done()
+}
+fastify.addContentTypeParser('multipart/form-data', setRaw)
 // Log incoming request payloads
 if (!IsProd) {
-    fastify.addHook("preHandler", async (request, reply) => {
-        request.log.info({ body: request.body }, "Incoming request payload");
+    fastify.addHook("preHandler", async (request, _reply) => {
+        if (request.uxpRaw) {
+            AppLogger.info(request, { message: "Request is raw data", object: { url: request.url, method: request.method } });
+        } else {
+            AppLogger.info(request, { message: "Incoming request payload", object: request.body as Record<string, unknown> });
+        }
     });
+    fastify.addHook('onResponse', (request, reply) => {
+        AppLogger.info(request, { message: "Response", object: { url: request.url, method: request.method, status: reply.status } });
+    })
 }
 
 // Discover and register REST and WebSocket handlers
@@ -62,7 +80,7 @@ registerRoutes({
     dataSource: AppDataSource,
     controllers: Array.from(restHandlers),
 });
-registerWebSocketHandlers({
+registerLocalWebSocketHandlers({
     fastify,
     dataSource: AppDataSource,
     handlers: Array.from(wsHandlers),

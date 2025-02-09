@@ -1,5 +1,7 @@
 import "@fastify/cookie";
 import "@fastify/jwt";
+import "@fastify/multipart";
+import "@fastify/websocket";
 export * from "./config/constant";
 export { default as envLoader } from "./config/envLoader";
 export * from "./decorator/handler.registry";
@@ -16,4 +18,5 @@ export { default as jwtPlugin } from "./plugins/jwt";
 
 export * from "./types/token.types";
 export * from "./utils/AppLogger";
+export * from "./utils/multipartUpload";
 export * from "./health/health.controller";

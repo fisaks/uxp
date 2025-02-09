@@ -1,5 +1,5 @@
 import { Drawer, List, ListItem, ListItemText, Toolbar } from "@mui/material";
-import React from "react";
+import React, { Ref, RefObject } from "react";
 
 export type SidebarMenuItems = {
     label: string;
@@ -7,6 +7,7 @@ export type SidebarMenuItems = {
     active?: boolean;
     component?: React.ElementType; // Custom component to render
     componentProp: string; // Props to pass to the custom component
+    
 };
 
 type SidebarProps = {
@@ -14,12 +15,16 @@ type SidebarProps = {
     sidebarOpen: boolean;
     toggleSidebar: () => void;
     sidebarMenuItems: SidebarMenuItems[];
+    drawerRootRef?:RefObject<HTMLDivElement>
 };
 
-export const Sidebar: React.FC<SidebarProps> = ({ isDesktop, sidebarOpen, toggleSidebar, sidebarMenuItems }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ isDesktop, sidebarOpen, toggleSidebar, sidebarMenuItems,drawerRootRef }) => {
+    const container = drawerRootRef ? drawerRootRef.current : undefined;
+
     return (
         <Drawer
             variant={isDesktop ? "permanent" : "temporary"}
+            container={container}
             open={isDesktop || sidebarOpen}
             onClose={toggleSidebar}
             ModalProps={{ keepMounted: true }}
@@ -44,6 +49,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isDesktop, sidebarOpen, toggle
                 {sidebarMenuItems.map(({ label, link, component, componentProp, active }, index) => (
                     <ListItem
                         key={index}
+                        onClick={toggleSidebar}
                         component={component ?? "a"}
                         {...(component ? { [componentProp]: link } : { href: link })}
                         sx={{

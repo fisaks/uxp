@@ -48,7 +48,7 @@ const UsersListPage: React.FC = () => {
     const searchRef = useRef<SearchRef<UserAdminView>>(null);
 
     useEffect(() => {
-        dispatch(searchUsers(initialRequest));
+        const a=dispatch(searchUsers(initialRequest));
     }, [dispatch]);
 
     const handlePageChange = (_event: React.ChangeEvent<unknown>, page: number) => {

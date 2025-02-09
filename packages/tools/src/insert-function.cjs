@@ -21,7 +21,7 @@ function applytoRoot(documentRoot) {
 function insertIntoTarget(element) {
     console.log("Style insertIntoTarget", element, elements, roots);
 
-    element.setAttribute("id", `uxp-${crypto.randomUUID()}`);
+    element.setAttribute("id", `uxp-${generateUUID()}`);
     elements.push(element);
     document.head.appendChild(element);
     setTimeout(() => {
@@ -29,6 +29,13 @@ function insertIntoTarget(element) {
             applytoRoot(root);
         }
     }, 0);
+}
+
+function generateUUID() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
 }
 
 insertIntoTarget.init = init;
