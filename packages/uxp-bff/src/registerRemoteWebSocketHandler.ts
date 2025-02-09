@@ -73,7 +73,7 @@ const connectToRemoteApp = async (request: FastifyRequest, app: AppEntity, maxRe
 
     const { baseUrl } = app;
     const { contextPath, wsPath } = app.config;
-    const wsurl = buildPath(baseUrl, contextPath, wsPath);
+    const wsurl = buildPath(baseUrl, contextPath, wsPath!);
     let attempt = 0;
     while (attempt < maxRetries) {
         try {
