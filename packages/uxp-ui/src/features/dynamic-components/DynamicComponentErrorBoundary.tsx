@@ -8,10 +8,7 @@ interface DynamicComponentErrorBoundaryState {
     hasError: boolean;
 }
 
-class DynamicComponentErrorBoundary extends Component<
-    DynamicComponentErrorBoundaryProps,
-    DynamicComponentErrorBoundaryState
-> {
+class DynamicComponentErrorBoundary extends Component<DynamicComponentErrorBoundaryProps, DynamicComponentErrorBoundaryState> {
     constructor(props: DynamicComponentErrorBoundaryProps) {
         super(props);
         this.state = { hasError: false };

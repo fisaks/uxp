@@ -1,4 +1,3 @@
-
 import { ACCESS_TOKEN, AppLogger, createErrorMessageResponse, Token } from "@uxp/bff-common";
 import { buildPath, ErrorCodes } from "@uxp/common";
 import { FastifyInstance, FastifyRequest } from "fastify";
@@ -8,9 +7,8 @@ import { AppEntity } from "./db/entities/AppEntity";
 
 export function registerRemoteWebSocketHandler({ fastify, dataSource }: { fastify: FastifyInstance; dataSource: DataSource }) {
     fastify.get("/ws/:appid", { websocket: true }, async (clientSocket, request) => {
-
         const appId = (request.params as any)?.appid;
-        const app = await getRemoteApp(dataSource, appId)
+        const app = await getRemoteApp(dataSource, appId);
 
         if (!app || !app.config.wsPath) {
             clientSocket.send(
@@ -32,7 +30,6 @@ export function registerRemoteWebSocketHandler({ fastify, dataSource }: { fastif
                 user = request.user as Token;
             } catch (err) {
                 AppLogger.warn(request, { message: "Failed to verify WebSocket token", error: err });
-
             }
         }
 
@@ -66,11 +63,9 @@ export function registerRemoteWebSocketHandler({ fastify, dataSource }: { fastif
 
 const getRemoteApp = async (dataSource: DataSource, appid: string) => {
     return dataSource.getRepository(AppEntity).findOneBy({ name: appid });
-
-}
+};
 
 const connectToRemoteApp = async (request: FastifyRequest, app: AppEntity, maxRetries = 3): Promise<WebSocket | null> => {
-
     const { baseUrl } = app;
     const { contextPath, wsPath } = app.config;
     const wsurl = buildPath(baseUrl, contextPath, wsPath!);
@@ -109,7 +104,7 @@ const connectToRemoteApp = async (request: FastifyRequest, app: AppEntity, maxRe
 
     AppLogger.error(request, { message: "Max WebSocket connection attempts reached" });
     return null;
-}
+};
 
 function setupWebSocketProxy(clientSocket: WebSocket, remoteSocket: WebSocket, request: FastifyRequest) {
     const PING_INTERVAL = 30000; // Ping every 30 seconds
@@ -165,7 +160,6 @@ function setupWebSocketProxy(clientSocket: WebSocket, remoteSocket: WebSocket, r
             remoteSocket.send(message);
         }
     });
-
 
     function closeSockets() {
         clearInterval(pingInterval);

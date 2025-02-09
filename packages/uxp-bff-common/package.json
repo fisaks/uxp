@@ -42,6 +42,5 @@
         "@types/file-type": "^10.9.3",
         "@types/fs-extra": "^11.0.4",
         "@types/node": "^22.10.1"
-        
     }
 }

@@ -60,9 +60,7 @@ const RemoteApp: React.FC<RemoteAppProps> = ({ contentUuid, basePath }) => {
                     }
 
                     // Copy other attributes
-                    Array.from(scriptElement.attributes).forEach((attr) =>
-                        newScript.setAttribute(attr.name, attr.value)
-                    );
+                    Array.from(scriptElement.attributes).forEach((attr) => newScript.setAttribute(attr.name, attr.value));
 
                     if (scriptElement.src && scriptElement.dataset.uxpRemoteApp !== undefined) {
                         const remoteApp = scriptElement.dataset.uxpRemoteApp;
@@ -150,11 +148,7 @@ const RemoteApp: React.FC<RemoteAppProps> = ({ contentUuid, basePath }) => {
     return (
         <>
             {!contentLoaded && <Loading fullHeight={false} />}
-            <div
-                id={`remote-app-${contentUuid}`}
-                ref={containerRef}
-                style={{ visibility: contentLoaded ? "visible" : "hidden" }}
-            >
+            <div id={`remote-app-${contentUuid}`} ref={containerRef} style={{ visibility: contentLoaded ? "visible" : "hidden" }}>
                 {/* Shadow DOM will be attached here */}
             </div>
         </>

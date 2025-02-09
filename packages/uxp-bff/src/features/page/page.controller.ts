@@ -56,11 +56,7 @@ export class PageController {
         schema: GetPageSchema,
     })
     @UseQueryRunner()
-    async getPageMetadata(
-        req: FastifyRequest<{ Querystring: { basepath: string } }>,
-        reply: FastifyReply,
-        queryRunner: QueryRunner
-    ) {
+    async getPageMetadata(req: FastifyRequest<{ Querystring: { basepath: string } }>, reply: FastifyReply, queryRunner: QueryRunner) {
         const basepath = req.query.basepath;
 
         const page = await queryRunner.manager.findOne(Page, {

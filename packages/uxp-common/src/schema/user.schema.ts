@@ -151,17 +151,7 @@ export const UserSearchSchema: SchemaValidate<UserSearchRequest> = {
                     properties: {
                         field: {
                             type: "string",
-                            enum: [
-                                "uuid",
-                                "username",
-                                "firstName",
-                                "lastName",
-                                "email",
-                                "roles",
-                                "createdAt",
-                                "lastLogin",
-                                "isDisabled",
-                            ],
+                            enum: ["uuid", "username", "firstName", "lastName", "email", "roles", "createdAt", "lastLogin", "isDisabled"],
                         },
                         value: {
                             anyOf: [
@@ -200,17 +190,7 @@ export const UserSearchSchema: SchemaValidate<UserSearchRequest> = {
                     properties: {
                         field: {
                             type: "string",
-                            enum: [
-                                "uuid",
-                                "username",
-                                "firstName",
-                                "lastName",
-                                "email",
-                                "roles",
-                                "createdAt",
-                                "lastLogin",
-                                "isDisabled",
-                            ],
+                            enum: ["uuid", "username", "firstName", "lastName", "email", "roles", "createdAt", "lastLogin", "isDisabled"],
                         },
                         direction: { type: "string", enum: ["asc", "desc"] },
                     },

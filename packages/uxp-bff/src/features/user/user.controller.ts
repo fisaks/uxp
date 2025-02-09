@@ -34,13 +34,7 @@ import { User } from "../../db/entities/User";
 
 import { UserService } from "../../services/user.service";
 
-import {
-    clearAuthCookies,
-    generateAccessToken,
-    generateRefreshToken,
-    setAuthCookies,
-    verifyRefreshToken,
-} from "../../utils/tokenUtils";
+import { clearAuthCookies, generateAccessToken, generateRefreshToken, setAuthCookies, verifyRefreshToken } from "../../utils/tokenUtils";
 
 export class UserController {
     private fastify: FastifyInstance;
@@ -173,11 +167,7 @@ export class UserController {
 
     @Route("put", "/profile/:uuid", { authenticate: true, roles: [], schema: ProfileSchema })
     @UseQueryRunner()
-    async profile(
-        req: FastifyRequest<{ Body: ProfilePayload; Params: { uuid: string } }>,
-        reply: FastifyReply,
-        queryRunner: QueryRunner
-    ) {
+    async profile(req: FastifyRequest<{ Body: ProfilePayload; Params: { uuid: string } }>, reply: FastifyReply, queryRunner: QueryRunner) {
         const { uuid } = req.params;
         const { passwordOld, password, email, firstName, lastName } = req.body;
         const adminRole = UserService.isUserInRole(req, "admin");
@@ -395,11 +385,7 @@ export class UserController {
 
     @Route("post", "/user/roles", { authenticate: true, roles: ["admin"], schema: UpdateUserRoleSchema })
     @UseQueryRunner()
-    async updateUserRoles(
-        req: FastifyRequest<{ Body: UpdateUserRolesPayload }>,
-        reply: FastifyReply,
-        queryRunner: QueryRunner
-    ) {
+    async updateUserRoles(req: FastifyRequest<{ Body: UpdateUserRolesPayload }>, reply: FastifyReply, queryRunner: QueryRunner) {
         const { uuid, roles } = req.body;
         const user = await UserService.findByUuid(queryRunner, uuid);
 
@@ -426,11 +412,7 @@ export class UserController {
 
     @Route("post", "/user/token-version", { authenticate: true, roles: ["admin"], schema: UpdateTokenVersionSchema })
     @UseQueryRunner()
-    async updateUserTokenVersion(
-        req: FastifyRequest<{ Body: UpdateTokenVersionPayload }>,
-        reply: FastifyReply,
-        queryRunner: QueryRunner
-    ) {
+    async updateUserTokenVersion(req: FastifyRequest<{ Body: UpdateTokenVersionPayload }>, reply: FastifyReply, queryRunner: QueryRunner) {
         const { uuid } = req.body;
         const user = await UserService.findByUuid(queryRunner, uuid);
 

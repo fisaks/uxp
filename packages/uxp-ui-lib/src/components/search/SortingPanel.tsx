@@ -1,16 +1,5 @@
 import { Add as AddIcon, ArrowDownward, ArrowUpward, Remove as RemoveIcon } from "@mui/icons-material";
-import {
-    Box,
-    FormControl,
-    Grid,
-    IconButton,
-    InputLabel,
-    MenuItem,
-    OutlinedInput,
-    Select,
-    Tooltip,
-    Typography,
-} from "@mui/material";
+import { Box, FormControl, Grid, IconButton, InputLabel, MenuItem, OutlinedInput, Select, Tooltip, Typography } from "@mui/material";
 import { SearchConfig, SearchSortType } from "@uxp/common";
 
 export const SortingPanel = <T,>({
@@ -41,13 +30,7 @@ export const SortingPanel = <T,>({
                         <InputLabel>Sort By</InputLabel>
                         <Select
                             value={sortOptions[index]?.field || ""}
-                            onChange={(e) =>
-                                handleSortChange(
-                                    index,
-                                    e.target.value as keyof T,
-                                    sortOptions[index]?.direction || "asc"
-                                )
-                            }
+                            onChange={(e) => handleSortChange(index, e.target.value as keyof T, sortOptions[index]?.direction || "asc")}
                             input={<OutlinedInput label="Sort By" />}
                         >
                             {config.sorting.map((sortField) => (

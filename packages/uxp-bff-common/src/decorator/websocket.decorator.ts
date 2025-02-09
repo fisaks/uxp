@@ -42,8 +42,7 @@ export function WebSocketAction(
     }
 ): MethodDecorator {
     return function (target: any, propertyKey: string | symbol) {
-        const actions: WebSocketActionMetadata[] =
-            Reflect.getMetadata(WEBSOCKET_ACTIONS_METADATA_KEY, target.constructor) || [];
+        const actions: WebSocketActionMetadata[] = Reflect.getMetadata(WEBSOCKET_ACTIONS_METADATA_KEY, target.constructor) || [];
         HandlerRegistry.registerWsHandler(target.constructor);
 
         actions.push({
@@ -128,9 +127,7 @@ type WebSocketMessage = {
 export function registerLocalWebSocketHandlers({ fastify, dataSource, handlers }: RegisterWebSocketHandlersArgs) {
     const actionMap = preloadWebSocketHandlers(fastify, handlers);
 
-
     fastify.get("/ws", { websocket: true }, async (socket /* WebSocket */, request /* FastifyRequest */) => {
-
         AppLogger.info(request, { message: "WebSocket connection established (local)" });
 
         let user: Token | undefined = undefined;
@@ -139,11 +136,9 @@ export function registerLocalWebSocketHandlers({ fastify, dataSource, handlers }
                 await request.jwtVerify();
                 user = request.user as Token;
             } catch (err: unknown) {
-
                 AppLogger.error(request, {
                     message: "Failed to verify access token in WebSocket connection",
                     error: err,
-
                 });
             }
         }
@@ -181,14 +176,12 @@ export function registerLocalWebSocketHandlers({ fastify, dataSource, handlers }
             }
         });
 
-
         socket.on("message", async (message) => {
             try {
                 const parsedMessage = JSON.parse(message.toString());
                 const action = parsedMessage.action;
                 const payload = parsedMessage.payload;
                 const actionHandler = actionMap[action];
-
 
                 if (!actionHandler) {
                     socket.send(
@@ -233,10 +226,14 @@ export function registerLocalWebSocketHandlers({ fastify, dataSource, handlers }
 
                 const validation = validateMessagePayload(payload, validate, schemaValidate);
                 if (validation) {
-                    socket.send(createErrorMessageResponse(request, action,
-                        { code: ErrorCodes.VALIDATION, message: validation.message },
-                        validation.errors ?? undefined
-                    ));
+                    socket.send(
+                        createErrorMessageResponse(
+                            request,
+                            action,
+                            { code: ErrorCodes.VALIDATION, message: validation.message },
+                            validation.errors ?? undefined
+                        )
+                    );
                     return;
                 }
 
@@ -250,7 +247,6 @@ export function registerLocalWebSocketHandlers({ fastify, dataSource, handlers }
                     return result;
                 });
             } catch (err: any) {
-
                 AppLogger.error(request, { message: "Error in WebSocket message", error: err });
 
                 socket.send(
@@ -272,5 +268,3 @@ export function registerLocalWebSocketHandlers({ fastify, dataSource, handlers }
         });
     });
 }
-
-

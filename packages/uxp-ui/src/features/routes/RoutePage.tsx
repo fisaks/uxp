@@ -19,9 +19,7 @@ const RoutePage: React.FC<RoutePageProps> = ({ pageUuid, basePath }) => {
 
     const location = useLocation();
 
-    const links = useSelector(
-        selectLinksByTag(page?.config.pageType === "leftNavigation" ? (page.config.routeLinkGroup ?? "") : "")
-    );
+    const links = useSelector(selectLinksByTag(page?.config.pageType === "leftNavigation" ? (page.config.routeLinkGroup ?? "") : ""));
     const sidebarMenuItems = useMemo(() => {
         return links.map(({ label, link }) => {
             const fullLink = generateFullLink(basePath, link);
@@ -39,11 +37,9 @@ const RoutePage: React.FC<RoutePageProps> = ({ pageUuid, basePath }) => {
         <MainPageLayout pageType={page!.config.pageType} leftSideBar={{ menuItems: sidebarMenuItems }}>
             {page?.contents.map((m) => {
                 if (m.internalComponent) {
-                    return (
-                        <DynamicComponentLoader key={m.uuid} componentName={m.internalComponent} basePath={basePath} />
-                    );
+                    return <DynamicComponentLoader key={m.uuid} componentName={m.internalComponent} basePath={basePath} />;
                 } else {
-                    return <RemoteApp key={m.uuid} contentUuid={m.uuid} basePath={basePath}/>;
+                    return <RemoteApp key={m.uuid} contentUuid={m.uuid} basePath={basePath} />;
                 }
             })}
         </MainPageLayout>

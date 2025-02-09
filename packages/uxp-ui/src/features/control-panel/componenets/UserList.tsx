@@ -51,12 +51,7 @@ const UserList: React.FC<UserListProps> = ({ users, userActions, updateRoles }) 
                         }}
                     >
                         <CardContent>
-                            <UserCard
-                                user={user}
-                                userActions={userActions}
-                                updateRoles={updateRoles}
-                                expand={expandAll}
-                            />
+                            <UserCard user={user} userActions={userActions} updateRoles={updateRoles} expand={expandAll} />
                         </CardContent>
                     </Card>
                 ))}

@@ -11,8 +11,7 @@ interface LoadingButtonProps extends ButtonProps {
     errorText?: string;
 }
 
-const LoadingButton: React.FC<LoadingButtonProps> = ({
-    isLoading, done, doneText, error, errorText, children, startIcon, ...props }) => {
+const LoadingButton: React.FC<LoadingButtonProps> = ({ isLoading, done, doneText, error, errorText, children, startIcon, ...props }) => {
     const divRef = useRef<HTMLDivElement | null>(null);
     const buttonRef = useRef<HTMLButtonElement | null>(null);
     const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
@@ -76,7 +75,6 @@ const LoadingButton: React.FC<LoadingButtonProps> = ({
                         padding: "8px 12px",
                         borderRadius: "8px",
                         cursor: "pointer",
-                        
                     }}
                     onClick={() => setAnchorEl(null)}
                 >
@@ -85,7 +83,6 @@ const LoadingButton: React.FC<LoadingButtonProps> = ({
                 </Typography>
             </Popover>
         </div>
-
     );
 };
 

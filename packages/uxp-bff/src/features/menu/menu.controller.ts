@@ -18,9 +18,7 @@ export class MenuController {
         const menuItems = await queryRunner.manager.find(MenuItem);
 
         if (!menuItems) {
-            reply
-                .code(404)
-                .send(createErrorResponse([{ code: ErrorCodes.NOT_FOUND, message: "Menu items Not Found" }], req));
+            reply.code(404).send(createErrorResponse([{ code: ErrorCodes.NOT_FOUND, message: "Menu items Not Found" }], req));
         } else {
             console.log("FFF", menuItems, roles, req.user);
             reply.send({

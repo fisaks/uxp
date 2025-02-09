@@ -4,15 +4,7 @@ import { handleThunkResult } from "../../../utils/thunkUtils";
 import React, { useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { Link as RouterLink, useNavigate } from "react-router-dom"; // Import for routing
-import {
-    ErrorTile,
-    ValidatedTextField,
-    CenteredBox,
-    FormFieldErrors,
-    FormFieldLabel,
-    FormFieldRefs,
-    LoadingButton,
-} from "@uxp/ui-lib";
+import { ErrorTile, ValidatedTextField, CenteredBox, FormFieldErrors, FormFieldLabel, FormFieldRefs, LoadingButton } from "@uxp/ui-lib";
 import { ServerErrorTile } from "../../../components";
 import { useAppDispatch } from "../../../hooks";
 import { compileSchema, validateField } from "../../../utils/validationUtils"; // Utility for schema compilation
@@ -133,9 +125,7 @@ const RegisterPage: React.FC = () => {
                 if (err.instancePath) {
                     const fieldName = err.instancePath.slice(1) as keyof RegisterPayload;
                     errors[fieldName] =
-                        errorMessages[err.keyword as keyof ValidationErrorMessages]?.[fieldName] ??
-                        err.message ??
-                        "Invalid value.";
+                        errorMessages[err.keyword as keyof ValidationErrorMessages]?.[fieldName] ?? err.message ?? "Invalid value.";
                 }
             });
         }
@@ -184,13 +174,7 @@ const RegisterPage: React.FC = () => {
                     <ValidatedTextField<RegisterPayload>
                         key={key}
                         name={key as keyof RegisterPayload}
-                        type={
-                            key === "email"
-                                ? "email"
-                                : ["password", "passwordConfirm"].includes(key)
-                                  ? "password"
-                                  : "text"
-                        }
+                        type={key === "email" ? "email" : ["password", "passwordConfirm"].includes(key) ? "password" : "text"}
                         label={fieldLabels[key as keyof RegisterPayload]}
                         value={formData[key as keyof RegisterPayload]}
                         error={fieldErrors[key as keyof RegisterPayload]}
@@ -199,14 +183,7 @@ const RegisterPage: React.FC = () => {
                         onBlur={() => handleBlur(key as keyof RegisterPayload)}
                     />
                 ))}
-                <LoadingButton
-                    variant="contained"
-                    color="primary"
-                    fullWidth
-                    sx={{ mt: 3 }}
-                    type="submit"
-                    isLoading={isLoading}
-                >
+                <LoadingButton variant="contained" color="primary" fullWidth sx={{ mt: 3 }} type="submit" isLoading={isLoading}>
                     Register
                 </LoadingButton>
                 <Typography variant="body2" align="center" sx={{ mt: 2 }}>

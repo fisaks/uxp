@@ -41,11 +41,7 @@ export const FilterPanel = <T,>({
                             value={filters[filter.key] ?? (filter.uiType === "selectMultiple" ? [] : "")}
                             onChange={(e) => handleFilterChange(filter.key, e.target.value)}
                             input={<OutlinedInput label={filter.label} />}
-                            renderValue={
-                                filter.uiType === "selectMultiple"
-                                    ? (selected) => (selected as string[]).join(", ")
-                                    : undefined
-                            }
+                            renderValue={filter.uiType === "selectMultiple" ? (selected) => (selected as string[]).join(", ") : undefined}
                         >
                             {filter.options?.map((option) => (
                                 <MenuItem key={option.value} value={option.value}>

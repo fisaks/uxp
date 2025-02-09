@@ -1,29 +1,18 @@
-import Image, { ImageOptions } from '@tiptap/extension-image';
-import { buildPath } from '@uxp/common';
+import Image, { ImageOptions } from "@tiptap/extension-image";
+import { buildPath } from "@uxp/common";
 
-
-
-
-declare module '@tiptap/core' {
+declare module "@tiptap/core" {
     interface Commands<ReturnType> {
         resizableImage: {
             /**
              * Inserts an image with additional attributes
              */
-            setImage: (
-                options: {
-                    src: string;
-                    alt?: string;
-                    title?: string;
-                    width?: string;
-                    float?: string;
-                }
-            ) => ReturnType;
+            setImage: (options: { src: string; alt?: string; title?: string; width?: string; float?: string }) => ReturnType;
         };
     }
 }
 
-export const ResizableImage = Image.extend<ImageOptions & { basePath: string },any>({
+export const ResizableImage = Image.extend<ImageOptions & { basePath: string }, any>({
     addOptions() {
         return {
             ...this.parent?.(),
@@ -33,30 +22,30 @@ export const ResizableImage = Image.extend<ImageOptions & { basePath: string },a
     addAttributes() {
         return {
             src: { default: null },
-            alt: { default: '' },
-            width: { default: '100%' }, // Default width
+            alt: { default: "" },
+            width: { default: "100%" }, // Default width
             draggable: { default: false }, // Allow dragging
-            float: { default: '' }
+            float: { default: "" },
         };
     },
-    
+
     addNodeView() {
         return ({ node, editor }) => {
-            const dom = document.createElement('div');
-            dom.classList.add('resizable-image-wrapper');
+            const dom = document.createElement("div");
+            dom.classList.add("resizable-image-wrapper");
 
-            dom.style.float = node.attrs.float ?? "none"
+            dom.style.float = node.attrs.float ?? "none";
             dom.style.margin = node.attrs.float === "left" ? "0 15px 0 0" : node.attrs.float === "right" ? "0 0 0 15px" : "0px";
 
-            const img = document.createElement('img');
-            
+            const img = document.createElement("img");
+
             img.src = buildPath(this.options.basePath, node.attrs.src);
             img.style.width = node.attrs.width;
             img.draggable = false;
             dom.appendChild(img);
 
-            const handle = document.createElement('div');
-            handle.classList.add('resize-handle');
+            const handle = document.createElement("div");
+            handle.classList.add("resize-handle");
             dom.appendChild(handle);
 
             let isResizing = false;
@@ -104,27 +93,25 @@ export const ResizableImage = Image.extend<ImageOptions & { basePath: string },a
                 document.removeEventListener("touchmove", resize);
                 document.removeEventListener("touchend", stopResize);
             };
-         
+
             handle.addEventListener("mousedown", startResize);
             handle.addEventListener("touchstart", startResize, { passive: false });
-
 
             return {
                 dom,
                 contentDOM: img,
                 update: (updatedNode) => {
-
                     if (updatedNode.attrs.src !== node.attrs.src) {
                         img.src = buildPath(this.options.basePath, node.attrs.src);
                     }
                     if (updatedNode.attrs.width !== node.attrs.width) {
                         img.style.width = updatedNode.attrs.width;
                     }
-                    if (updatedNode.attrs.float !== node.attrs.float ) {   
+                    if (updatedNode.attrs.float !== node.attrs.float) {
                         dom.style.float = updatedNode.attrs.float;
-                        dom.style.margin = updatedNode.attrs.float === "left" ? "0 15px 0 0" : node.attrs.float === "right" ? "0 0 0 15px" : "0px";
+                        dom.style.margin =
+                            updatedNode.attrs.float === "left" ? "0 15px 0 0" : node.attrs.float === "right" ? "0 0 0 15px" : "0px";
                     }
-                    
 
                     return true;
                 },

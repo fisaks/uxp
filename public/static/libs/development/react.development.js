@@ -42,8 +42,7 @@
             return null;
         }
 
-        var maybeIterator =
-            (MAYBE_ITERATOR_SYMBOL && maybeIterable[MAYBE_ITERATOR_SYMBOL]) || maybeIterable[FAUX_ITERATOR_SYMBOL];
+        var maybeIterator = (MAYBE_ITERATOR_SYMBOL && maybeIterable[MAYBE_ITERATOR_SYMBOL]) || maybeIterable[FAUX_ITERATOR_SYMBOL];
 
         if (typeof maybeIterator === "function") {
             return maybeIterator;
@@ -157,11 +156,7 @@
     function warn(format) {
         {
             {
-                for (
-                    var _len = arguments.length, args = new Array(_len > 1 ? _len - 1 : 0), _key = 1;
-                    _key < _len;
-                    _key++
-                ) {
+                for (var _len = arguments.length, args = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
                     args[_key - 1] = arguments[_key];
                 }
 
@@ -172,11 +167,7 @@
     function error(format) {
         {
             {
-                for (
-                    var _len2 = arguments.length, args = new Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1;
-                    _key2 < _len2;
-                    _key2++
-                ) {
+                for (var _len2 = arguments.length, args = new Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
                     args[_key2 - 1] = arguments[_key2];
                 }
 
@@ -353,8 +344,7 @@
     Component.prototype.setState = function (partialState, callback) {
         if (typeof partialState !== "object" && typeof partialState !== "function" && partialState != null) {
             throw new Error(
-                "setState(...): takes an object of state variables to update or a " +
-                    "function which returns an object of state variables."
+                "setState(...): takes an object of state variables to update or a " + "function which returns an object of state variables."
             );
         }
 
@@ -388,8 +378,7 @@
         var deprecatedAPIs = {
             isMounted: [
                 "isMounted",
-                "Instead, make sure to clean up subscriptions and pending requests in " +
-                    "componentWillUnmount to prevent memory leaks.",
+                "Instead, make sure to clean up subscriptions and pending requests in " + "componentWillUnmount to prevent memory leaks.",
             ],
             replaceState: [
                 "replaceState",
@@ -514,8 +503,7 @@
         {
             if (willCoercionThrow(value)) {
                 error(
-                    "The provided key is an unsupported type %s." +
-                        " This value must be coerced to a string before before using it here.",
+                    "The provided key is an unsupported type %s." + " This value must be coerced to a string before before using it here.",
                     typeName(value)
                 );
 
@@ -548,8 +536,7 @@
         {
             if (typeof type.tag === "number") {
                 error(
-                    "Received an unexpected object in getComponentNameFromType(). " +
-                        "This is likely a bug in React. Please file an issue."
+                    "Received an unexpected object in getComponentNameFromType(). " + "This is likely a bug in React. Please file an issue."
                 );
             }
         }
@@ -921,9 +908,7 @@
 
     function cloneElement(element, config, children) {
         if (element === null || element === undefined) {
-            throw new Error(
-                "React.cloneElement(...): The argument must be a React element, but you passed " + element + "."
-            );
+            throw new Error("React.cloneElement(...): The argument must be a React element, but you passed " + element + ".");
         }
 
         var propName; // Original props are copied
@@ -1153,10 +1138,7 @@
                     // Warn about using Maps as children
                     if (iteratorFn === iterableChildren.entries) {
                         if (!didWarnAboutMaps) {
-                            warn(
-                                "Using Maps as children is not supported. " +
-                                    "Use an array of keyed ReactElements instead."
-                            );
+                            warn("Using Maps as children is not supported. " + "Use an array of keyed ReactElements instead.");
                         }
 
                         didWarnAboutMaps = true;
@@ -1566,17 +1548,12 @@
                         "memo(forwardRef(...))."
                 );
             } else if (typeof render !== "function") {
-                error(
-                    "forwardRef requires a render function but was given %s.",
-                    render === null ? "null" : typeof render
-                );
+                error("forwardRef requires a render function but was given %s.", render === null ? "null" : typeof render);
             } else {
                 if (render.length !== 0 && render.length !== 2) {
                     error(
                         "forwardRef render functions accept exactly two parameters: props and ref. %s",
-                        render.length === 1
-                            ? "Did you forget to use the ref parameter?"
-                            : "Any additional parameter will be undefined."
+                        render.length === 1 ? "Did you forget to use the ref parameter?" : "Any additional parameter will be undefined."
                     );
                 }
             }
@@ -1673,10 +1650,7 @@
     function memo(type, compare) {
         {
             if (!isValidElementType(type)) {
-                error(
-                    "memo: The first argument must be a component. Instead " + "received: %s",
-                    type === null ? "null" : typeof type
-                );
+                error("memo: The first argument must be a component. Instead " + "received: %s", type === null ? "null" : typeof type);
             }
         }
 
@@ -1748,10 +1722,7 @@
                             "removed in a future major release. Did you mean to call useContext(Context) instead?"
                     );
                 } else if (realContext.Provider === Context) {
-                    error(
-                        "Calling useContext(Context.Provider) is not supported. " +
-                            "Did you mean to call useContext(Context) instead?"
-                    );
+                    error("Calling useContext(Context.Provider) is not supported. " + "Did you mean to call useContext(Context) instead?");
                 }
             }
         }
@@ -2157,11 +2128,7 @@
         {
             if (element) {
                 var owner = element._owner;
-                var stack = describeUnknownElementTypeFrameInDEV(
-                    element.type,
-                    element._source,
-                    owner ? owner.type : null
-                );
+                var stack = describeUnknownElementTypeFrameInDEV(element.type, element._source, owner ? owner.type : null);
                 ReactDebugCurrentFrame$1.setExtraStackFrame(stack);
             } else {
                 ReactDebugCurrentFrame$1.setExtraStackFrame(null);
@@ -2251,11 +2218,7 @@
         {
             if (element) {
                 var owner = element._owner;
-                var stack = describeUnknownElementTypeFrameInDEV(
-                    element.type,
-                    element._source,
-                    owner ? owner.type : null
-                );
+                var stack = describeUnknownElementTypeFrameInDEV(element.type, element._source, owner ? owner.type : null);
                 setExtraStackFrame(stack);
             } else {
                 setExtraStackFrame(null);
@@ -2483,8 +2446,7 @@
                     setCurrentlyValidatingElement$1(fragment);
 
                     error(
-                        "Invalid prop `%s` supplied to `React.Fragment`. " +
-                            "React.Fragment can only have `key` and `children` props.",
+                        "Invalid prop `%s` supplied to `React.Fragment`. " + "React.Fragment can only have `key` and `children` props.",
                         key
                     );
 
@@ -2591,9 +2553,7 @@
             Object.defineProperty(validatedFactory, "type", {
                 enumerable: false,
                 get: function () {
-                    warn(
-                        "Factory.type is deprecated. Access the class directly " + "before passing it to createFactory."
-                    );
+                    warn("Factory.type is deprecated. Access the class directly " + "before passing it to createFactory.");
 
                     Object.defineProperty(this, "type", {
                         value: type,
@@ -2757,9 +2717,7 @@
     var localSetImmediate = typeof setImmediate !== "undefined" ? setImmediate : null; // IE and Node.js + jsdom
 
     var isInputPending =
-        typeof navigator !== "undefined" &&
-        navigator.scheduling !== undefined &&
-        navigator.scheduling.isInputPending !== undefined
+        typeof navigator !== "undefined" && navigator.scheduling !== undefined && navigator.scheduling.isInputPending !== undefined
             ? navigator.scheduling.isInputPending.bind(navigator.scheduling)
             : null;
 
@@ -3087,8 +3045,7 @@
         if (fps < 0 || fps > 125) {
             // Using console['error'] to evade Babel and ESLint
             console["error"](
-                "forceFrameRate takes a positive int between 0 and 125, " +
-                    "forcing frame rates higher than 125 fps is not supported"
+                "forceFrameRate takes a positive int between 0 and 125, " + "forcing frame rates higher than 125 fps is not supported"
             );
             return;
         }

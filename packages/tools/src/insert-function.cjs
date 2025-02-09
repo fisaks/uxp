@@ -2,13 +2,12 @@ let elements = [];
 let roots = [];
 // Function to initialize parameters at runtime
 function init(documentRoot) {
-    
     roots.push(documentRoot);
 
     applytoRoot(documentRoot);
 }
 function applytoRoot(documentRoot) {
-    console.log("Apply styles to root",documentRoot);
+    console.log("Apply styles to root", documentRoot);
     for (const element of elements) {
         const id = element.getAttribute("id");
         const existingElement = documentRoot.querySelector(`#${id}`);
@@ -32,8 +31,9 @@ function insertIntoTarget(element) {
 }
 
 function generateUUID() {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-        const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+        const r = (Math.random() * 16) | 0,
+            v = c === "x" ? r : (r & 0x3) | 0x8;
         return v.toString(16);
     });
 }

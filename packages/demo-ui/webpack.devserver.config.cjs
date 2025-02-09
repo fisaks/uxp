@@ -16,11 +16,7 @@ module.exports = merge(baseConfig, {
         ],
         port: 3020, // Port for the development server
         hot: true, // Enable hot module replacement
-        watchFiles: [
-            path.resolve(__dirname, "./src"),
-            path.resolve(__dirname, "../uxp-common"),
-            path.resolve(__dirname, "../uxp-ui-lib"),
-        ],
+        watchFiles: [path.resolve(__dirname, "./src"), path.resolve(__dirname, "../uxp-common"), path.resolve(__dirname, "../uxp-ui-lib")],
         //open: true, // Automatically open the browser
         proxy: [
             {
@@ -37,7 +33,6 @@ module.exports = merge(baseConfig, {
                 pathRewrite: { "^/demo/": "/" },
                 secure: false, // If the backend is using HTTP, not HTTPS
             },
-
         ],
         historyApiFallback: true,
     },

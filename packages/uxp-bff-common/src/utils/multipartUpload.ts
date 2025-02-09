@@ -1,12 +1,12 @@
-import { safeNormalizeFilename } from '@uxp/common';
-import { FastifyRequest } from 'fastify';
-import { fromFile } from 'file-type';
-import fs from 'fs-extra';
-import { nanoid } from 'nanoid';
-import path from 'path';
-import { pipeline } from 'stream/promises';
-import { AppError } from '../error/AppError';
-import { AppLogger } from './AppLogger';
+import { safeNormalizeFilename } from "@uxp/common";
+import { FastifyRequest } from "fastify";
+import { fromFile } from "file-type";
+import fs from "fs-extra";
+import { nanoid } from "nanoid";
+import path from "path";
+import { pipeline } from "stream/promises";
+import { AppError } from "../error/AppError";
+import { AppLogger } from "./AppLogger";
 export interface UploadedFile {
     filePath: string;
     filename: string;
@@ -19,48 +19,44 @@ export interface UploadResult<Type = string> {
     fileType: Type;
 }
 const BlockedMimeTypes = [
-    'application/x-msdownload',  // .exe
-    'application/x-msdos-program', // .bat
-    'application/x-sh', // Shell script
-    'application/x-csh', // C shell script
-    'application/javascript', // .js
-    'application/x-python-code', // .py
-    'application/x-httpd-php', // .php
-    'application/x-java-archive', // .jar
-    'application/x-dosexec' // Generic Windows executables
+    "application/x-msdownload", // .exe
+    "application/x-msdos-program", // .bat
+    "application/x-sh", // Shell script
+    "application/x-csh", // C shell script
+    "application/javascript", // .js
+    "application/x-python-code", // .py
+    "application/x-httpd-php", // .php
+    "application/x-java-archive", // .jar
+    "application/x-dosexec", // Generic Windows executables
 ];
 
 const readMimeTypeFromFile = async (req: FastifyRequest, filePath: string) => {
-
     try {
         return fromFile(filePath);
     } catch (error) {
         AppLogger.warn(req, {
             message: `File type detection failed for ${filePath}:`,
-            error: error
+            error: error,
         });
-
     }
     return undefined;
-}
+};
 const removeFile = async (filePath: string) => {
     if (await fs.pathExists(filePath)) {
         await fs.unlink(filePath); // Delete empty file
     }
-}
+};
 export const handleMultipartUpload = async <FileTypes>(
     req: FastifyRequest,
     PreFlightFolder: string,
     FileEntities: readonly FileTypes[]
-
 ): Promise<UploadResult<FileTypes>> => {
     const parts = req.parts();
     const files: UploadedFile[] = [];
     let fileType: FileTypes | undefined;
 
     for await (const part of parts) {
-        if (part.type === 'file') {
-
+        if (part.type === "file") {
             if (!part.file.readable || part.file.readableLength === 0) {
                 throw new AppError(400, "VALIDATION", `File "${part.filename}" is empty and cannot be uploaded.`);
             }
@@ -80,7 +76,7 @@ export const handleMultipartUpload = async <FileTypes>(
             const { size } = await fs.stat(filePath);
             if (size === 0) {
                 await removeFile(filePath); // Delete empty file
-                throw new AppError(400, "VALIDATION", 'File is empty after processing.',);
+                throw new AppError(400, "VALIDATION", "File is empty after processing.");
             }
 
             const detectedFileType = await readMimeTypeFromFile(req, filePath);
@@ -93,7 +89,7 @@ export const handleMultipartUpload = async <FileTypes>(
             }
 
             files.push({ filePath, filename: uniqueFilename, publicId, mimetype: fileMimeType });
-        } else if (part.type === 'field' && part.fieldname === 'type' && FileEntities.includes(part.value as FileTypes)) {
+        } else if (part.type === "field" && part.fieldname === "type" && FileEntities.includes(part.value as FileTypes)) {
             fileType = part.value as FileTypes;
         }
     }
@@ -101,7 +97,7 @@ export const handleMultipartUpload = async <FileTypes>(
         for await (const file of files) {
             await removeFile(file.filePath);
         }
-        throw new AppError(400, "VALIDATION", 'File type not set.');
+        throw new AppError(400, "VALIDATION", "File type not set.");
     }
 
     return { files, fileType };

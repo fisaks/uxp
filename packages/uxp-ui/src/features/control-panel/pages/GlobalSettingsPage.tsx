@@ -1,19 +1,6 @@
 import { Box, IconButton, Tooltip, Typography, useTheme } from "@mui/material";
-import {
-    ApiErrorResponse,
-    ErrorCodes,
-    GlobalConfigData,
-    PatchGlobalConfigResponse,
-    ValidationErrorMessages,
-} from "@uxp/common";
-import {
-    createDebouncedUpdater,
-    FormFieldErrors,
-    FormFieldLabel,
-    FormFieldRefs,
-    Loading,
-    ValidatedTextField,
-} from "@uxp/ui-lib";
+import { ApiErrorResponse, ErrorCodes, GlobalConfigData, PatchGlobalConfigResponse, ValidationErrorMessages } from "@uxp/common";
+import { createDebouncedUpdater, FormFieldErrors, FormFieldLabel, FormFieldRefs, Loading, ValidatedTextField } from "@uxp/ui-lib";
 import { useAppDispatch } from "../../../hooks";
 
 import RefreshIcon from "@mui/icons-material/Refresh";
@@ -22,11 +9,7 @@ import { useSelector } from "react-redux";
 import { ServerErrorTile } from "../../../components";
 import { selectError } from "../../error/errorSelectors";
 import { selectGlobalConfig } from "../../global-config/globalConfigSelectors";
-import {
-    fetchLatestGlobalSettings,
-    patchGlobalSetting,
-    PatchGlobalSettingPayload,
-} from "../../global-config/globalConfigThunk";
+import { fetchLatestGlobalSettings, patchGlobalSetting, PatchGlobalSettingPayload } from "../../global-config/globalConfigThunk";
 import { selectIsLoading } from "../../loading/loadingSelectors";
 
 const fieldLabels: FormFieldLabel<GlobalConfigData> = {

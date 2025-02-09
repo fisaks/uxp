@@ -4,29 +4,30 @@ import { MouseEventHandler, useCallback, useEffect, useMemo, useRef, useState } 
 import { Loading } from "../layout/Loading";
 
 type ReloadIconButtonProps = {
-    reload: MouseEventHandler<HTMLButtonElement>,
-    isLoading: boolean
-}
+    reload: MouseEventHandler<HTMLButtonElement>;
+    isLoading: boolean;
+};
 export const ReloadIconButton = ({ reload, isLoading }: ReloadIconButtonProps) => {
     const popupContainerRef = useRef<HTMLDivElement>(null);
     const theme = useTheme();
     const [reloadTriggeredFromHere, setReloadTriggeredFromHere] = useState(false);
-    const onClick: MouseEventHandler<HTMLButtonElement> = useCallback((e) => {
-        setReloadTriggeredFromHere(true);
-        reload(e);
-    }, [reload])
+    const onClick: MouseEventHandler<HTMLButtonElement> = useCallback(
+        (e) => {
+            setReloadTriggeredFromHere(true);
+            reload(e);
+        },
+        [reload]
+    );
     useEffect(() => {
         if (!isLoading && reloadTriggeredFromHere) {
             setReloadTriggeredFromHere(false);
         }
-    }, [isLoading])
+    }, [isLoading]);
 
-    const showLoading = useMemo(() => isLoading && reloadTriggeredFromHere, [isLoading, reloadTriggeredFromHere])
+    const showLoading = useMemo(() => isLoading && reloadTriggeredFromHere, [isLoading, reloadTriggeredFromHere]);
     return (
         <div ref={popupContainerRef}>
-            <Tooltip title={showLoading ? "Refreshing..." : "Reload"}
-                slotProps={{ popper: { container: popupContainerRef.current } }}
-            >
+            <Tooltip title={showLoading ? "Refreshing..." : "Reload"} slotProps={{ popper: { container: popupContainerRef.current } }}>
                 <span>
                     <IconButton
                         aria-label="reload settings"
@@ -40,5 +41,5 @@ export const ReloadIconButton = ({ reload, isLoading }: ReloadIconButtonProps) =
             </Tooltip>
         </div>
     );
-}
+};
 export default ReloadIconButton;

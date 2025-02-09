@@ -77,11 +77,7 @@ export class HouseController {
 
     @Route("post", "/houses/:uuid/buildings", { authenticate: true, roles: ["user"], schema: AddBuildingSchema })
     @UseQueryRunner()
-    async addBuilding(
-        req: FastifyRequest<{ Params: { uuid: string } }>,
-        reply: FastifyReply,
-        queryRunner: QueryRunner
-    ) {
+    async addBuilding(req: FastifyRequest<{ Params: { uuid: string } }>, reply: FastifyReply, queryRunner: QueryRunner) {
         const { uuid } = req.params;
 
         const houseService = new HouseService(queryRunner);
@@ -172,7 +168,6 @@ export class HouseController {
     @Route("get", "/houses", { authenticate: true, roles: ["user"] })
     @UseQueryRunner()
     async getHouses(req: FastifyRequest, reply: FastifyReply, queryRunner: QueryRunner) {
-
         const houseService = new HouseService(queryRunner);
         const houses = await houseService.findAllHouses();
 
@@ -185,11 +180,7 @@ export class HouseController {
      */
     @Route("delete", "/houses/:uuid", { authenticate: true, roles: ["user"] })
     @UseQueryRunner()
-    async deleteHouse(
-        req: FastifyRequest<{ Params: { uuid: string } }>,
-        reply: FastifyReply,
-        queryRunner: QueryRunner
-    ) {
+    async deleteHouse(req: FastifyRequest<{ Params: { uuid: string } }>, reply: FastifyReply, queryRunner: QueryRunner) {
         const { uuid } = req.params;
 
         const houseService = new HouseService(queryRunner);
@@ -214,24 +205,19 @@ export class HouseController {
 
     @Route("post", "/upload/:uuid", { authenticate: true, roles: ["user"] })
     @UseQueryRunner()
-    async upload(
-        req: FastifyRequest<{ Params: { uuid: string } }>,
-        reply: FastifyReply,
-        queryRunner: QueryRunner
-    ) {
+    async upload(req: FastifyRequest<{ Params: { uuid: string } }>, reply: FastifyReply, queryRunner: QueryRunner) {
         const { uuid } = req.params;
         const data = await req.file();
         if (!data) {
-            return reply.code(400).send({ error: 'No file uploaded' });
+            return reply.code(400).send({ error: "No file uploaded" });
         }
 
         AppLogger.info(req, { message: `Uploaded file ${data.filename} for uuid ${uuid} ` });
-        const buf = await data.toBuffer()
+        const buf = await data.toBuffer();
 
         AppLogger.info(req, { message: `Uploaded file length ${buf.length}` });
 
         const fileUrl = `/uploads/${uuid}`;
         return { url: fileUrl };
     }
-
 }

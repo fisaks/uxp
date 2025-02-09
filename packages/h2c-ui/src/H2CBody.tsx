@@ -7,24 +7,22 @@ import { getBaseRoutePath } from "./config";
 import HouseInfoPage from "./features/house/pages/HouseInfoPage";
 
 export const H2CBody = () => {
-
     const theme = useTheme();
     const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
     const location = useLocation();
     const basePath = useMemo(() => getBaseRoutePath(), []);
 
-    const menuItems: SidebarMenuItems[] =
-        useMemo(() => {
-            return [
-                {
-                    label: "House Management",
-                    link: "house-info",
-                    component: Link,
-                    componentProp: "to",
-                    active: location.pathname === generateFullLink(basePath, "house-info")
-                }
-            ];
-        }, [basePath, location.pathname])
+    const menuItems: SidebarMenuItems[] = useMemo(() => {
+        return [
+            {
+                label: "House Management",
+                link: "house-info",
+                component: Link,
+                componentProp: "to",
+                active: location.pathname === generateFullLink(basePath, "house-info"),
+            },
+        ];
+    }, [basePath, location.pathname]);
 
     return (
         <>
@@ -36,6 +34,5 @@ export const H2CBody = () => {
                 </Routes>
             </AppBodyContent>
         </>
-
     );
-}
+};

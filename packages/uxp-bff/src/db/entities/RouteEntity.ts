@@ -1,15 +1,6 @@
 import { LocalizedStringValue, RouteConfigData, UserRole } from "@uxp/common";
 import slugify from "slugify";
-import {
-    BeforeInsert,
-    BeforeUpdate,
-    Column,
-    Entity,
-    JoinColumn,
-    ManyToOne,
-    OneToMany,
-    PrimaryGeneratedColumn,
-} from "typeorm";
+import { BeforeInsert, BeforeUpdate, Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { PageEntity } from "./PageEntity";
 import { RouteTagsEntity } from "./RouteTagsEntity";
 // Route Entity

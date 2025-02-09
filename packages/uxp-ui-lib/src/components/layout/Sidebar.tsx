@@ -7,7 +7,6 @@ export type SidebarMenuItems = {
     active?: boolean;
     component?: React.ElementType; // Custom component to render
     componentProp: string; // Props to pass to the custom component
-    
 };
 
 type SidebarProps = {
@@ -15,10 +14,10 @@ type SidebarProps = {
     sidebarOpen: boolean;
     toggleSidebar: () => void;
     sidebarMenuItems: SidebarMenuItems[];
-    drawerRootRef?:RefObject<HTMLDivElement>
+    drawerRootRef?: RefObject<HTMLDivElement>;
 };
 
-export const Sidebar: React.FC<SidebarProps> = ({ isDesktop, sidebarOpen, toggleSidebar, sidebarMenuItems,drawerRootRef }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ isDesktop, sidebarOpen, toggleSidebar, sidebarMenuItems, drawerRootRef }) => {
     const container = drawerRootRef ? drawerRootRef.current : undefined;
 
     return (

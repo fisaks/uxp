@@ -10,10 +10,7 @@ import { User } from "./db/entities/User";
 let AppDataSource: DataSource;
 const program = new Command();
 
-const withUser = async (
-    username: string,
-    operation: (user: User, userRepository: Repository<User>) => Promise<void>
-) => {
+const withUser = async (username: string, operation: (user: User, userRepository: Repository<User>) => Promise<void>) => {
     const userRepository = AppDataSource.getRepository(User);
     try {
         const user: User | null = await userRepository.findOneBy({ username });
@@ -79,10 +76,7 @@ const initializeAndRunCLI = async () => {
     try {
         program.name("uxpcli").description("A CLI tool for managing the UXP system.").version("1.0.0");
         program.option("--env <environment>", "Set the environment (default: dev)", "dev");
-        program.option(
-            "--host <environment>",
-            "Override the db host from env file needed for prod when run outside the docker network"
-        );
+        program.option("--host <environment>", "Override the db host from env file needed for prod when run outside the docker network");
 
         // Middleware to set NODE_ENV based on --env option
         program.hook("preAction", async (thisCommand) => {

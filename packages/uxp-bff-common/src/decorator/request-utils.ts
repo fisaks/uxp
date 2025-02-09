@@ -8,11 +8,7 @@ type HasRequiredRolesArgs = {
     requiredRoles: UserRole[];
 };
 export const hasRequiredRoles = ({ userRoles, requiredRoles }: HasRequiredRolesArgs): boolean => {
-    return (
-        userRoles.includes("admin") ||
-        requiredRoles.length === 0 ||
-        requiredRoles.some((role) => userRoles.includes(role))
-    );
+    return userRoles.includes("admin") || requiredRoles.length === 0 || requiredRoles.some((role) => userRoles.includes(role));
 };
 
 export const validateMessagePayload = (

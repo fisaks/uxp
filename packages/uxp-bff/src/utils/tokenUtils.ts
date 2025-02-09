@@ -12,7 +12,7 @@ export function generateRefreshToken(fastify: FastifyInstance, payload: RefreshT
 }
 
 export function setAuthCookies(reply: FastifyReply, accessToken: string, refreshToken?: string): FastifyReply {
-    console.log("setAuthCookies", process.env.SECURE_COOKIE,(process.env.SECURE_COOKIE ?? "true").toLowerCase() === "true");
+    console.log("setAuthCookies", process.env.SECURE_COOKIE, (process.env.SECURE_COOKIE ?? "true").toLowerCase() === "true");
     reply.setCookie(ACCESS_TOKEN, accessToken, {
         httpOnly: true,
         secure: (process.env.SECURE_COOKIE ?? "true").toLowerCase() === "true",
@@ -22,11 +22,11 @@ export function setAuthCookies(reply: FastifyReply, accessToken: string, refresh
 
     return refreshToken
         ? reply.setCookie(REFRESH_TOKEN, refreshToken, {
-            httpOnly: true,
-            secure: (process.env.SECURE_COOKIE ?? "true").toLowerCase() === "true",
-            sameSite: "strict",
-            path: "/",
-        })
+              httpOnly: true,
+              secure: (process.env.SECURE_COOKIE ?? "true").toLowerCase() === "true",
+              sameSite: "strict",
+              path: "/",
+          })
         : reply;
 }
 
@@ -39,12 +39,6 @@ export const verifyRefreshToken = (fastify: FastifyInstance, refreshToken: strin
         return fastify.jwt.verify(refreshToken) as RefreshToken;
     } catch (err: unknown) {
         AppLogger.error(undefined, { error: err as Error });
-        throw new AppError(
-            401,
-            ErrorCodes.INVALID_REFRESH_TOKEN,
-            "Invalid or expired refresh token",
-            undefined,
-            err as Error
-        );
+        throw new AppError(401, ErrorCodes.INVALID_REFRESH_TOKEN, "Invalid or expired refresh token", undefined, err as Error);
     }
 };

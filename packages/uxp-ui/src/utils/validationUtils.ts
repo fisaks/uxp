@@ -29,20 +29,14 @@ export const validateField = <TFormData extends Record<string, any>>({
 
     if (!isValid && validate.errors) {
         console.log("Validation Errors", validate.errors);
-        const errorForField = validate.errors
-            .filter((f) => f.keyword !== "if")
-            .find((err) => err.instancePath === `/${String(field)}`);
+        const errorForField = validate.errors.filter((f) => f.keyword !== "if").find((err) => err.instancePath === `/${String(field)}`);
 
         if (errorForField) {
             const keyword = errorForField.keyword;
 
             // If errorMessages are provided, map to custom message
             if (errorMessages) {
-                return (
-                    errorMessages[keyword as keyof ValidationErrorMessages]?.[field] ??
-                    errorForField?.message ??
-                    "Invalid value."
-                );
+                return errorMessages[keyword as keyof ValidationErrorMessages]?.[field] ?? errorForField?.message ?? "Invalid value.";
             }
             return errorForField?.message ?? "Invalid value.";
         }

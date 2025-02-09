@@ -1,23 +1,22 @@
-import { Extension } from '@tiptap/core';
+import { Extension } from "@tiptap/core";
 
 export interface LineHeightOptions {
-    types: string[],
+    types: string[];
 }
-declare module '@tiptap/core' {
+declare module "@tiptap/core" {
     interface Commands<ReturnType> {
         LineHeight: {
-
-            setLineHeight: (lineHeight: string) => ReturnType,
-        }
+            setLineHeight: (lineHeight: string) => ReturnType;
+        };
     }
 }
 export const LineHeight = Extension.create<LineHeightOptions>({
-    name: 'lineHeight',
+    name: "lineHeight",
 
     addOptions() {
         return {
-            types: ['paragraph', 'heading'],
-        }
+            types: ["paragraph", "heading"],
+        };
     },
 
     addGlobalAttributes() {
@@ -26,8 +25,8 @@ export const LineHeight = Extension.create<LineHeightOptions>({
                 types: this.options.types,
                 attributes: {
                     lineHeight: {
-                        default: '1.5',
-                        parseHTML: (element) => element.style.lineHeight || '2.0',
+                        default: "1.5",
+                        parseHTML: (element) => element.style.lineHeight || "2.0",
                         renderHTML: (attributes) => {
                             return attributes.lineHeight ? { style: `line-height: ${attributes.lineHeight};` } : {};
                         },
@@ -41,19 +40,18 @@ export const LineHeight = Extension.create<LineHeightOptions>({
         return {
             setLineHeight:
                 (value: string) =>
-                    ({ chain }) => {
-
-                        return this.options.types
-                            .map(type => chain().updateAttributes(type, { lineHeight: value }).run())
-                            .every(response => response)
-                    },
+                ({ chain }) => {
+                    return this.options.types
+                        .map((type) => chain().updateAttributes(type, { lineHeight: value }).run())
+                        .every((response) => response);
+                },
         };
     },
     addKeyboardShortcuts() {
         return {
-          'Ctrl-Shift-1': () => this.editor.commands.setLineHeight('1.2'),
-          'Ctrl-Shift-2': () => this.editor.commands.setLineHeight('1.5'),
-          'Ctrl-Shift-3': () => this.editor.commands.setLineHeight('2.0'),
-        }
-      },
+            "Ctrl-Shift-1": () => this.editor.commands.setLineHeight("1.2"),
+            "Ctrl-Shift-2": () => this.editor.commands.setLineHeight("1.5"),
+            "Ctrl-Shift-3": () => this.editor.commands.setLineHeight("2.0"),
+        };
+    },
 });

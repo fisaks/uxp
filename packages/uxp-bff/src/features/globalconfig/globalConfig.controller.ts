@@ -54,11 +54,7 @@ export class GlobalConfigController {
 
     @Route("patch", "/global-settings", { authenticate: true, roles: ["admin"], schema: GlobalConfigSchema })
     @UseQueryRunner()
-    async patchGlobalSettings(
-        req: FastifyRequest<{ Body: GlobalConfigPayload }>,
-        reply: FastifyReply,
-        queryRunner: QueryRunner
-    ) {
+    async patchGlobalSettings(req: FastifyRequest<{ Body: GlobalConfigPayload }>, reply: FastifyReply, queryRunner: QueryRunner) {
         const { key, value, currentVersion } = req.body;
 
         const latestConfig = await this.findLatestGlobalConfig(queryRunner);

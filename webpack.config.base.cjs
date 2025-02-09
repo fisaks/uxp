@@ -28,10 +28,7 @@ module.exports = {
                     {
                         loader: "style-loader",
                         options: {
-                            insert:
-                                metaTag === "no-app"
-                                    ? undefined
-                                    : require.resolve("./packages/tools/src/insert-function.cjs"),
+                            insert: metaTag === "no-app" ? undefined : require.resolve("./packages/tools/src/insert-function.cjs"),
                             attributes: {
                                 "data-uxp-app": metaTag,
                             },
@@ -53,21 +50,16 @@ module.exports = {
                     {
                         loader: "style-loader",
                         options: {
-                            insert:
-                                metaTag === "no-app"
-                                    ? undefined
-                                    : require.resolve("./packages/tools/src/insert-function.cjs"),
+                            insert: metaTag === "no-app" ? undefined : require.resolve("./packages/tools/src/insert-function.cjs"),
                             attributes: {
                                 "data-uxp-app": metaTag,
                             },
                             //styleTagTransform: require.resolve("./packages/tools/src/style-tag-transform.cjs"),
                         },
                     },
-                     {
+                    {
                         loader: "css-loader",
-                        options: {
-
-                        },
+                        options: {},
                     },
                 ],
             },
@@ -83,13 +75,13 @@ module.exports = {
                     },
                 },
             },
-          //  {
+            //  {
             //    test: /\.(woff|woff2|eot|ttf|otf|svg)$/,
-              //  type: 'asset/resource',
-               // generator: {
-                 //   filename: 'fonts/[name][ext]', // Ensure fonts have relative paths
+            //  type: 'asset/resource',
+            // generator: {
+            //   filename: 'fonts/[name][ext]', // Ensure fonts have relative paths
 
-                //},
+            //},
             //},
         ],
     },

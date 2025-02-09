@@ -53,8 +53,5 @@ export const createDebouncedUpdater = <T>({
         }
     };
 
-    return debounce(
-        (dispatch: (thunk: UpdateThunk<T>) => Promise<any>, payload: T) => processPatchUpdate(dispatch, payload),
-        debounceWait
-    );
+    return debounce((dispatch: (thunk: UpdateThunk<T>) => Promise<any>, payload: T) => processPatchUpdate(dispatch, payload), debounceWait);
 };

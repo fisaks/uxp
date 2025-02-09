@@ -41,9 +41,7 @@ export class CreateMigration1736033971030 implements MigrationInterface {
             })
         );
 
-        const home2CarePage = await pageRepository.save(
-            new PageEntity({ name: "Home 2 Care", identifier: "home-2-care" })
-        );
+        const home2CarePage = await pageRepository.save(new PageEntity({ name: "Home 2 Care", identifier: "home-2-care" }));
         const uxpDemoPage = await pageRepository.save(
             new PageEntity({
                 name: "Demo Page",
@@ -51,25 +49,17 @@ export class CreateMigration1736033971030 implements MigrationInterface {
                 config: { pageType: "leftNavigation", routeLinkGroup: "demo-links" },
             })
         );
-        const uxpDemoPage2 = await pageRepository.save(
-            new PageEntity({ name: "Demo App 2", identifier: "uxp-demo-page-2" })
-        );
+        const uxpDemoPage2 = await pageRepository.save(new PageEntity({ name: "Demo App 2", identifier: "uxp-demo-page-2" }));
 
-        const controlPanelPage = await pageRepository.save(
-            new PageEntity({ name: "Control Panel", identifier: "control-panel" })
-        );
+        const controlPanelPage = await pageRepository.save(new PageEntity({ name: "Control Panel", identifier: "control-panel" }));
 
         const loginPage = await pageRepository.save(new PageEntity({ name: "Login", identifier: "login" }));
         const registerPage = await pageRepository.save(new PageEntity({ name: "Register", identifier: "register" }));
         const registerPageThankYou = await pageRepository.save(
             new PageEntity({ name: "RegisterThankYou", identifier: "register-thank-you" })
         );
-        const myProfilePage = await pageRepository.save(
-            new PageEntity({ name: "My Profile", identifier: "my-profile" })
-        );
-        const mySettingsPage = await pageRepository.save(
-            new PageEntity({ name: "My Settings", identifier: "my-settings" })
-        );
+        const myProfilePage = await pageRepository.save(new PageEntity({ name: "My Profile", identifier: "my-profile" }));
+        const mySettingsPage = await pageRepository.save(new PageEntity({ name: "My Settings", identifier: "my-settings" }));
         const startPage = await pageRepository.save(new PageEntity({ name: "Start Page", identifier: "start-page" }));
 
         await pageAppsRepository.save([
@@ -227,12 +217,7 @@ export class CreateMigration1736033971030 implements MigrationInterface {
         await this.createRoute(queryRunner, "demo-app-2", "demo-links");
     }
 
-    private async createRoute(
-        queryRunner: QueryRunner,
-        routeIdentifier: string,
-        tagName: string,
-        order?: number
-    ): Promise<void> {
+    private async createRoute(queryRunner: QueryRunner, routeIdentifier: string, tagName: string, order?: number): Promise<void> {
         const routeTagsRepository = queryRunner.manager.getRepository(RouteTagsEntity);
 
         const routeTag = new RouteTagsEntity();

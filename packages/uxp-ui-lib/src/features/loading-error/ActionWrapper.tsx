@@ -1,10 +1,6 @@
 import CheckIcon from "@mui/icons-material/Check";
 import ErrorIcon from "@mui/icons-material/Error";
-import {
-    CircularProgress,
-    Popover,
-    Tooltip
-} from "@mui/material";
+import { CircularProgress, Popover, Tooltip } from "@mui/material";
 import type { AsyncThunk, ThunkDispatch, UnknownAction } from "@reduxjs/toolkit";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useThunkHandler } from "./useThunkHandler";
@@ -19,7 +15,6 @@ const ERROR_MESSAGES: Partial<Record<ErrorCode, string>> = {
     INVALID_REFRESH_TOKEN: "Your session has expired or is invalid. Please log in again.",
     RESOURCE_NOT_FOUND: "The requested resource could not be found.",
     PATCH_VERSION_CONFLICT: "Version conflict detected.",
-
 };
 
 interface ActionWrapperProps<Returned, Payload, RootState> {
@@ -37,11 +32,7 @@ const ActionWrapper = <Returned, Payload = void, RootState = any>({
     successDuration = 2000,
     children,
 }: ActionWrapperProps<Returned, Payload, RootState>) => {
-    const [trigger, isLoading, error, done] = useThunkHandler(
-        thunk,
-        dispatch,
-        successDuration
-    );
+    const [trigger, isLoading, error, done] = useThunkHandler(thunk, dispatch, successDuration);
 
     const actionRef = useRef<HTMLSpanElement | null>(null);
     const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
@@ -95,9 +86,7 @@ const ActionWrapper = <Returned, Payload = void, RootState = any>({
                     horizontal: "center",
                 }}
             >
-                <div style={{ padding: "8px 16px", color: "red", fontSize: "14px" }}>
-                    {errorMessage}
-                </div>
+                <div style={{ padding: "8px 16px", color: "red", fontSize: "14px" }}>{errorMessage}</div>
             </Popover>
         </>
     );

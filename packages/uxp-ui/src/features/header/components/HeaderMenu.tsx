@@ -1,17 +1,6 @@
 import AccountCircle from "@mui/icons-material/AccountCircle";
 import MenuIcon from "@mui/icons-material/Menu";
-import {
-    AppBar,
-    Box,
-    ClickAwayListener,
-    Collapse,
-    IconButton,
-    Menu,
-    MenuItem,
-    Toolbar,
-    Typography,
-    useMediaQuery,
-} from "@mui/material";
+import { AppBar, Box, ClickAwayListener, Collapse, IconButton, Menu, MenuItem, Toolbar, Typography, useMediaQuery } from "@mui/material";
 import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";

@@ -1,28 +1,27 @@
-import { Extension } from '@tiptap/core';
+import { Extension } from "@tiptap/core";
 
 export interface IndentOptions {
     indentSize: number; // Default size of indentation (e.g., 20px per level)
-    types: string[],
+    types: string[];
 }
 
-declare module '@tiptap/core' {
+declare module "@tiptap/core" {
     interface Commands<ReturnType> {
         Indent: {
-            increaseIndent: () => ReturnType,
-            decreaseIndent: () => ReturnType,
-        }
+            increaseIndent: () => ReturnType;
+            decreaseIndent: () => ReturnType;
+        };
     }
 }
 
-
 export const Indent = Extension.create<IndentOptions>({
-    name: 'indent',
+    name: "indent",
 
     addOptions() {
         return {
             indentSize: 20,
-            types: ['paragraph', 'heading'],
-        }
+            types: ["paragraph", "heading"],
+        };
     },
 
     addGlobalAttributes() {
@@ -30,24 +29,21 @@ export const Indent = Extension.create<IndentOptions>({
             {
                 types: this.options.types,
                 attributes: {
-
                     indent: {
-
                         default: 0,
                         //parseHTML: (element) => parseInt(element.style.marginLeft, 10) || 0,
                         parseHTML: (element) => {
-                            const marginLeft = window.getComputedStyle(element).marginLeft; 
-                            const parsedIndent = parseInt(marginLeft.replace('px', ''), 10);
+                            const marginLeft = window.getComputedStyle(element).marginLeft;
+                            const parsedIndent = parseInt(marginLeft.replace("px", ""), 10);
 
                             if (isNaN(parsedIndent)) {
-                                return 0; 
+                                return 0;
                             }
-                            return parsedIndent / 20; 
+                            return parsedIndent / 20;
                         },
                         //parseHTML: (element) => 0,
                         renderHTML: (attributes) => {
-
-                            return {style: attributes.indent ? `margin-left: ${attributes.indent * this.options.indentSize}px;` : ''}
+                            return { style: attributes.indent ? `margin-left: ${attributes.indent * this.options.indentSize}px;` : "" };
                         },
                     },
                 },
@@ -59,32 +55,35 @@ export const Indent = Extension.create<IndentOptions>({
         return {
             increaseIndent:
                 () =>
-                    ({ editor, chain }) => {
-                        return this.options.types
-                            .map(type => {
-                                const currentIndent = editor.getAttributes(type).indent || 0;
-                                return chain().updateAttributes(type, { indent: currentIndent + 1 }).run()
-                            }).every(response => response)
-                    },
-
+                ({ editor, chain }) => {
+                    return this.options.types
+                        .map((type) => {
+                            const currentIndent = editor.getAttributes(type).indent || 0;
+                            return chain()
+                                .updateAttributes(type, { indent: currentIndent + 1 })
+                                .run();
+                        })
+                        .every((response) => response);
+                },
 
             decreaseIndent:
                 () =>
-                    ({ editor, chain }) => {
-                        return this.options.types
-                            .map(type => {
-                                const currentIndent = editor.getAttributes(type).indent || 0;
-                                return chain().updateAttributes(type, { indent: Math.max(0, currentIndent - 1) }).run()
-                            }).every(response => response)
-                    }
-
-
-        }
+                ({ editor, chain }) => {
+                    return this.options.types
+                        .map((type) => {
+                            const currentIndent = editor.getAttributes(type).indent || 0;
+                            return chain()
+                                .updateAttributes(type, { indent: Math.max(0, currentIndent - 1) })
+                                .run();
+                        })
+                        .every((response) => response);
+                },
+        };
     },
     addKeyboardShortcuts() {
         return {
-          'Ctrl-Space': () => this.editor.commands.increaseIndent(),
-          'Ctrl-Shift-Space': () => this.editor.commands.decreaseIndent()
-        }
-      },
+            "Ctrl-Space": () => this.editor.commands.increaseIndent(),
+            "Ctrl-Shift-Space": () => this.editor.commands.decreaseIndent(),
+        };
+    },
 });

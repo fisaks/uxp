@@ -14,11 +14,11 @@ export const useThunkHandler = <Returned, Payload = void, RootState = any>(
     dispatch: ThunkDispatch<RootState, unknown, UnknownAction>,
     successDuration: number = 2000 // Default to 2 seconds
 ): [
-        (payload: Payload) => Promise<Returned | undefined>,
-        boolean, // loading
-        ApiErrorResponse | null, // error
-        boolean // loaded
-    ] => {
+    (payload: Payload) => Promise<Returned | undefined>,
+    boolean, // loading
+    ApiErrorResponse | null, // error
+    boolean, // loaded
+] => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<ApiErrorResponse | null>(null);
     const [loaded, setLoaded] = useState(false);

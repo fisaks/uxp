@@ -5,9 +5,9 @@ const baseConfig = require("./webpack.config.cjs"); // Import root base config
 module.exports = merge(baseConfig, {
     devServer: {
         static: [
-           // {
-             //   directory: path.resolve(__dirname, "dist"), // Serve files from the dist folder
-               // publicPath: "/h2c/",
+            // {
+            //   directory: path.resolve(__dirname, "dist"), // Serve files from the dist folder
+            // publicPath: "/h2c/",
             //},
             {
                 directory: path.resolve(__dirname, "../../public/static/libs"), // Serve files from the dist folder
@@ -42,7 +42,6 @@ module.exports = merge(baseConfig, {
                 pathRewrite: { "^/h2c/": "/" },
                 secure: false, // If the backend is using HTTP, not HTTPS
             },
-
         ],
         historyApiFallback: true,
     },

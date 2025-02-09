@@ -10,7 +10,6 @@ export const requiredKeys = [
     "DATABASE_PORT",
     "JWT_SECRET",
     "H2C_FILE_UPLOAD_PATH",
-
 ] as const;
 export type RequiredKeys = (typeof requiredKeys)[number];
 export type EnvVariables = Record<RequiredKeys, string>;

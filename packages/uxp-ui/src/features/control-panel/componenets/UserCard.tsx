@@ -138,11 +138,7 @@ const UserCard: React.FC<UserCardProps> = ({ user, userActions, updateRoles, exp
                                     <Typography>{user.roles.join(", ") || "None"}</Typography>
                                 )}
                                 {updateRoles && (
-                                    <IconButton
-                                        onClick={handleRoleEditToggle}
-                                        aria-label={"Edit roles"}
-                                        sx={{ marginLeft: 1 }}
-                                    >
+                                    <IconButton onClick={handleRoleEditToggle} aria-label={"Edit roles"} sx={{ marginLeft: 1 }}>
                                         {!isEditingRoles && <EditIcon />}
                                     </IconButton>
                                 )}
@@ -172,18 +168,14 @@ const UserCard: React.FC<UserCardProps> = ({ user, userActions, updateRoles, exp
                         <Box sx={{ flex: 1 }}>
                             <Typography variant="subtitle2">Created</Typography>
                             <Typography>
-                                {DateTime.fromISO(user.createdAt)
-                                    .setLocale(navigator.language)
-                                    .toLocaleString(DateTime.DATETIME_FULL)}
+                                {DateTime.fromISO(user.createdAt).setLocale(navigator.language).toLocaleString(DateTime.DATETIME_FULL)}
                             </Typography>
                         </Box>
                         <Box sx={{ flex: 1 }}>
                             <Typography variant="subtitle2">Last Login</Typography>
                             <Typography>
                                 {user.lastLogin
-                                    ? DateTime.fromISO(user.lastLogin)
-                                          .setLocale(navigator.language)
-                                          .toLocaleString(DateTime.DATETIME_FULL)
+                                    ? DateTime.fromISO(user.lastLogin).setLocale(navigator.language).toLocaleString(DateTime.DATETIME_FULL)
                                     : "Never"}
                             </Typography>
                         </Box>

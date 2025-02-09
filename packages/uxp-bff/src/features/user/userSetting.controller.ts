@@ -30,11 +30,7 @@ export class UserSettingController {
     }
     @Route("put", "/my-settings", { authenticate: true, roles: [], schema: UserSettingsSchema })
     @UseQueryRunner()
-    async updateMySettings(
-        req: FastifyRequest<{ Body: UserSettingsPayload }>,
-        reply: FastifyReply,
-        queryRunner: QueryRunner
-    ) {
+    async updateMySettings(req: FastifyRequest<{ Body: UserSettingsPayload }>, reply: FastifyReply, queryRunner: QueryRunner) {
         const { uuid } = UserService.getLoggedInUser(req)!;
 
         const user = await queryRunner.manager.findOne(User, {

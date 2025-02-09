@@ -28,24 +28,27 @@ export class HouseEntity {
     @CreateDateColumn({
         type: "timestamp",
         transformer: {
-             to: (value: DateTime) => value ? value.toJSDate() : value,
-             from: (value: Date) => DateTime.fromJSDate(value) },
+            to: (value: DateTime) => (value ? value.toJSDate() : value),
+            from: (value: Date) => DateTime.fromJSDate(value),
+        },
     })
     createdAt!: DateTime;
 
     @UpdateDateColumn({
         type: "timestamp",
-        transformer: { 
-            to: (value: DateTime) => value ? value.toJSDate() : value,
-            from: (value: Date) => DateTime.fromJSDate(value) },
+        transformer: {
+            to: (value: DateTime) => (value ? value.toJSDate() : value),
+            from: (value: Date) => DateTime.fromJSDate(value),
+        },
     })
     updatedAt!: DateTime;
 
     @DeleteDateColumn({
         type: "timestamp",
-        transformer: { 
-            to: (value: DateTime) => value ? value.toJSDate() : value,
-            from: (value: Date) => DateTime.fromJSDate(value) },
+        transformer: {
+            to: (value: DateTime) => (value ? value.toJSDate() : value),
+            from: (value: Date) => DateTime.fromJSDate(value),
+        },
     })
     removedAt?: DateTime;
 

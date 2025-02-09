@@ -55,7 +55,7 @@ export class AppLogger {
             username: (request.user as Token)?.username,
             ip: request.ip,
             userAgent: request.headers["user-agent"],
-            requestId: request.id
+            requestId: request.id,
         };
     }
 
@@ -71,11 +71,7 @@ export class AppLogger {
         };
     }
 
-    private static log(
-        request: FastifyRequest | undefined,
-        level: "info" | "warn" | "error" | "debug",
-        message: ErrorLogMessage
-    ) {
+    private static log(request: FastifyRequest | undefined, level: "info" | "warn" | "error" | "debug", message: ErrorLogMessage) {
         this.ensureInitialized();
 
         const metadata = this.extractMetadata(request);

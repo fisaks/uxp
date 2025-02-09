@@ -99,13 +99,7 @@
                               return a;
                           }))
                         : null != d &&
-                          (M(d) &&
-                              (d = oa(
-                                  d,
-                                  e +
-                                      (!d.key || (h && h.key === d.key) ? "" : ("" + d.key).replace(da, "$&/") + "/") +
-                                      a
-                              )),
+                          (M(d) && (d = oa(d, e + (!d.key || (h && h.key === d.key) ? "" : ("" + d.key).replace(da, "$&/") + "/") + a)),
                           b.push(d)),
                     1
                 );
@@ -118,8 +112,7 @@
                     h += B(c, b, e, f, d);
                 }
             else if (((f = x(a)), "function" === typeof f))
-                for (a = f.call(a), l = 0; !(c = a.next()).done; )
-                    (c = c.value), (f = m + N(c, l++)), (h += B(c, b, e, f, d));
+                for (a = f.call(a), l = 0; !(c = a.next()).done; ) (c = c.value), (f = m + N(c, l++)), (h += B(c, b, e, f, d));
             else if ("object" === c)
                 throw (
                     ((b = String(a)),
@@ -181,8 +174,7 @@
                         l = a[h],
                         f = h + 1,
                         g = a[f];
-                    if (0 > D(l, e))
-                        f < d && 0 > D(g, l) ? ((a[c] = g), (a[f] = e), (c = f)) : ((a[c] = l), (a[h] = e), (c = h));
+                    if (0 > D(l, e)) f < d && 0 > D(g, l) ? ((a[c] = g), (a[f] = e), (c = f)) : ((a[c] = l), (a[h] = e), (c = h));
                     else if (f < d && 0 > D(g, e)) (a[c] = g), (a[f] = e), (c = f);
                     else break a;
                 }
@@ -410,9 +402,7 @@
                 },
                 unstable_scheduleCallback: function (a, b, c) {
                     var e = v();
-                    "object" === typeof c && null !== c
-                        ? ((c = c.delay), (c = "number" === typeof c && 0 < c ? e + c : e))
-                        : (c = e);
+                    "object" === typeof c && null !== c ? ((c = c.delay), (c = "number" === typeof c && 0 < c ? e + c : e)) : (c = e);
                     switch (a) {
                         case 1:
                             var d = -1;
@@ -432,9 +422,7 @@
                     d = c + d;
                     a = { id: Da++, callback: b, priorityLevel: a, startTime: c, expirationTime: d, sortIndex: -1 };
                     c > e
-                        ? ((a.sortIndex = c),
-                          O(r, a),
-                          null === p(q) && a === p(r) && (z ? (ea(A), (A = -1)) : (z = !0), T(Q, c - e)))
+                        ? ((a.sortIndex = c), O(r, a), null === p(q) && a === p(r) && (z ? (ea(A), (A = -1)) : (z = !0), T(Q, c - e)))
                         : ((a.sortIndex = d), O(q, a), u || F || ((u = !0), R(S)));
                     return a;
                 },
@@ -527,8 +515,7 @@
                 void 0 !== b.ref && ((k = b.ref), (h = L.current));
                 void 0 !== b.key && (d = "" + b.key);
                 if (a.type && a.type.defaultProps) var l = a.type.defaultProps;
-                for (f in b)
-                    aa.call(b, f) && !ba.hasOwnProperty(f) && (e[f] = void 0 === b[f] && void 0 !== l ? l[f] : b[f]);
+                for (f in b) aa.call(b, f) && !ba.hasOwnProperty(f) && (e[f] = void 0 === b[f] && void 0 !== l ? l[f] : b[f]);
             }
             var f = arguments.length - 2;
             if (1 === f) e.children = c;

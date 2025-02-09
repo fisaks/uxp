@@ -1,4 +1,3 @@
-
 import { RemoteAppListener, UxpTheme } from "@uxp/ui-lib";
 import React, { useMemo } from "react";
 import { BrowserRouter } from "react-router-dom";

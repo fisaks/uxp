@@ -24,6 +24,4 @@ export type SchemaValidate<TBody = object, TQuerystring = undefined, TParams = u
     params?: JSONSchemaType<TParams>;
     headers?: JSONSchemaType<THeaders>;
 };
-export type ValidationErrorMessages<T = string> = Partial<
-    Record<AjvKeyword, Partial<Record<T extends string ? string : keyof T, string>>>
->;
+export type ValidationErrorMessages<T = string> = Partial<Record<AjvKeyword, Partial<Record<T extends string ? string : keyof T, string>>>>;

@@ -17,15 +17,10 @@ export class FileController {
         this.fastify = fastify;
     }
 
-    @Route("post", "/file", { authenticate: true, roles: ["user"], })
+    @Route("post", "/file", { authenticate: true, roles: ["user"] })
     @UseQueryRunner({ transactional: true })
-    async upload(
-        req: FastifyRequest,
-        _reply: FastifyReply,
-        queryRunner: QueryRunner
-    ) {
-
-        const files = await handleMultipartUpload<FileEntityType>(req, PreFlightFolder, FileEntities)
+    async upload(req: FastifyRequest, _reply: FastifyReply, queryRunner: QueryRunner) {
+        const files = await handleMultipartUpload<FileEntityType>(req, PreFlightFolder, FileEntities);
         const fileRepo = queryRunner.manager.getRepository(FileUploadEntity);
         const response: FileUploadResponse[] = [];
         const movedFiles: string[] = [];
@@ -49,7 +44,9 @@ export class FileController {
                 });
                 const newFileEntity = await fileRepo.save(fileEntity);
 
-                AppLogger.info(req, { message: `Uploaded file ${file.filename} with public id ${file.publicId} and internal id ${newFileEntity.id}` });
+                AppLogger.info(req, {
+                    message: `Uploaded file ${file.filename} with public id ${file.publicId} and internal id ${newFileEntity.id}`,
+                });
                 response.push({ publicId: newFileEntity.publicId, fileName: getPublicFileName(newFileEntity.fileName) });
             }
         } catch (error) {
@@ -57,11 +54,13 @@ export class FileController {
                 message: "File upload failed doing rollback",
                 error: error,
             });
-            await Promise.all(movedFiles.map(async (filePath) => {
-                if (await fs.pathExists(filePath)) {
-                    await fs.unlink(filePath);
-                }
-            }));
+            await Promise.all(
+                movedFiles.map(async (filePath) => {
+                    if (await fs.pathExists(filePath)) {
+                        await fs.unlink(filePath);
+                    }
+                })
+            );
 
             throw new AppError(500, "INTERNAL_SERVER_ERROR", "File upload failed", undefined, error as Error);
         }
@@ -96,7 +95,6 @@ export class FileController {
                 code: "NOT_FOUND",
                 message: `File not found on disk ${publicId}`,
             });
-
         }
 
         // 🚀 Stream the file to the client

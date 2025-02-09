@@ -15,17 +15,19 @@ type ActionIconButtonProps<Returned, Payload, RootState> = {
     tooltip?: string;
 
     children: React.ReactNode;
-
-}
-export const ActionIconButton = <Returned, Payload = void, RootState = any>
-    ({ thunk, dispatch, payload, successDuration, errorDuration, confirmMessage, children, tooltip }
-        : ActionIconButtonProps<Returned, Payload, RootState>) => {
-    const [trigger, isLoading, error, done] = useThunkHandler(
-        thunk,
-        dispatch,
-        successDuration
-    );
-    const theme = useTheme()
+};
+export const ActionIconButton = <Returned, Payload = void, RootState = any>({
+    thunk,
+    dispatch,
+    payload,
+    successDuration,
+    errorDuration,
+    confirmMessage,
+    children,
+    tooltip,
+}: ActionIconButtonProps<Returned, Payload, RootState>) => {
+    const [trigger, isLoading, error, done] = useThunkHandler(thunk, dispatch, successDuration);
+    const theme = useTheme();
     const buttonRef = useRef<HTMLButtonElement | null>(null);
     const drawerRootRef = useRef<HTMLDivElement>(null);
 
@@ -65,91 +67,88 @@ export const ActionIconButton = <Returned, Payload = void, RootState = any>
         trigger(payload as Payload);
         handleConfirmClose(event);
     };
-    const closeErrorMessage:MouseEventHandler<HTMLElement>= (event) => {
+    const closeErrorMessage: MouseEventHandler<HTMLElement> = (event) => {
         setErrorAnchorEl(null);
         event.stopPropagation();
     };
 
+    return (
+        <div ref={drawerRootRef}>
+            <Tooltip title={tooltip} slotProps={{ popper: { container: drawerRootRef.current } }}>
+                <IconButton
+                    disabled={isLoading || done}
+                    ref={buttonRef}
+                    onClick={handleActionClick}
+                    sx={{
+                        "&:disabled": {
+                            color: done ? "success.main" : "inherit", // Change text color to success.main when done
+                        },
+                    }}
+                >
+                    {isLoading ? <CircularProgress size={24} /> : done ? <CheckCircleOutline color="success" /> : children}
+                </IconButton>
+            </Tooltip>
 
-    return <div ref={drawerRootRef}>
-        <Tooltip title={tooltip}
-            slotProps={{ popper: { container: drawerRootRef.current } }}
-        >
-            <IconButton disabled={isLoading || done} ref={buttonRef} onClick={handleActionClick}
-                sx={{
-                    "&:disabled": {
-                        color: done ? "success.main" : "inherit", // Change text color to success.main when done
-                    },
-                }}>
-                {isLoading ? (
-                    <CircularProgress size={24} />
-                ) : done ? (
-                    <CheckCircleOutline color="success" />
-                ) : (
-                    children
-                )}
-
-            </IconButton>
-        </Tooltip>
-
-        <Popover
-            container={drawerRootRef.current}
-            open={Boolean(confirmAnchorEl)}
-            anchorEl={confirmAnchorEl}
-            onClose={handleConfirmClose}
-            anchorOrigin={{
-                vertical: 'bottom',
-                horizontal: 'right',
-            }}
-            transformOrigin={{
-                vertical: 'top',
-                horizontal: 'right',
-            }}>
-            <Box sx={{ padding: 2, backgroundColor: theme.palette.background.paper }}>
-                <Typography variant="body1">{confirmMessage}</Typography>
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-                    <Button onClick={handleConfirmClose} sx={{ mr: 1 }}>No</Button>
-                    <Button onClick={handleConfirmContinue} sx={{ color: theme.palette.error.main }}>
-                        Yes
-                    </Button>
-                </Box>
-            </Box>
-        </Popover>
-        <Popover
-            container={drawerRootRef.current}
-            open={Boolean(errorAnchorEl)}
-            anchorEl={errorAnchorEl}
-            onClose={closeErrorMessage}
-            anchorOrigin={{
-                vertical: "top",
-                horizontal: "center",
-            }}
-            transformOrigin={{
-                vertical: "top",
-                horizontal: "center",
-            }}
-            disableAutoFocus
-            disableEnforceFocus
-        >
-            <Typography
-                variant="body2"
-                sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1,
-                    backgroundColor: "error.main",
-                    color: "white",
-                    padding: "8px 12px",
-                    borderRadius: "8px",
-                    cursor: "pointer",
-
+            <Popover
+                container={drawerRootRef.current}
+                open={Boolean(confirmAnchorEl)}
+                anchorEl={confirmAnchorEl}
+                onClose={handleConfirmClose}
+                anchorOrigin={{
+                    vertical: "bottom",
+                    horizontal: "right",
                 }}
-                onClick={closeErrorMessage}
+                transformOrigin={{
+                    vertical: "top",
+                    horizontal: "right",
+                }}
             >
-                <ErrorIcon fontSize="small" />
-                {errorMessage ?? "An error occurred"}
-            </Typography>
-        </Popover>
-
-    </div >;
-}
+                <Box sx={{ padding: 2, backgroundColor: theme.palette.background.paper }}>
+                    <Typography variant="body1">{confirmMessage}</Typography>
+                    <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
+                        <Button onClick={handleConfirmClose} sx={{ mr: 1 }}>
+                            No
+                        </Button>
+                        <Button onClick={handleConfirmContinue} sx={{ color: theme.palette.error.main }}>
+                            Yes
+                        </Button>
+                    </Box>
+                </Box>
+            </Popover>
+            <Popover
+                container={drawerRootRef.current}
+                open={Boolean(errorAnchorEl)}
+                anchorEl={errorAnchorEl}
+                onClose={closeErrorMessage}
+                anchorOrigin={{
+                    vertical: "top",
+                    horizontal: "center",
+                }}
+                transformOrigin={{
+                    vertical: "top",
+                    horizontal: "center",
+                }}
+                disableAutoFocus
+                disableEnforceFocus
+            >
+                <Typography
+                    variant="body2"
+                    sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        backgroundColor: "error.main",
+                        color: "white",
+                        padding: "8px 12px",
+                        borderRadius: "8px",
+                        cursor: "pointer",
+                    }}
+                    onClick={closeErrorMessage}
+                >
+                    <ErrorIcon fontSize="small" />
+                    {errorMessage ?? "An error occurred"}
+                </Typography>
+            </Popover>
+        </div>
+    );
+};

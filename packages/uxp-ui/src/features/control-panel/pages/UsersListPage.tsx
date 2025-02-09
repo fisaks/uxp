@@ -4,27 +4,14 @@ import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import { useSelector } from "react-redux";
 import { useAppDispatch } from "../../../hooks";
 
-import {
-    SearchConfig,
-    SearchFilterType,
-    SearchSortType,
-    UserAdminView,
-    UserRole,
-    UserSearchRequest,
-} from "@uxp/common";
+import { SearchConfig, SearchFilterType, SearchSortType, UserAdminView, UserRole, UserSearchRequest } from "@uxp/common";
 import { Loading, SearchComponent, SearchRef } from "@uxp/ui-lib";
 
 import { handleThunkResult } from "../../../utils/thunkUtils";
 import { selectError } from "../../error/errorSelectors";
 import { selectIsLoading } from "../../loading/loadingSelectors";
 import { selectUserSearchPagination, selectUserSearchResult } from "../adminUserManagementSelectors";
-import {
-    lockUser,
-    searchUsers,
-    unlockUser,
-    updateUserRoles,
-    updateUserTokenVersion,
-} from "../adminUserManagementThunk";
+import { lockUser, searchUsers, unlockUser, updateUserRoles, updateUserTokenVersion } from "../adminUserManagementThunk";
 import PaginationWithHeader from "../componenets/PaginationWithHeader";
 import UserList from "../componenets/UserList";
 
@@ -48,7 +35,7 @@ const UsersListPage: React.FC = () => {
     const searchRef = useRef<SearchRef<UserAdminView>>(null);
 
     useEffect(() => {
-        const a=dispatch(searchUsers(initialRequest));
+        const a = dispatch(searchUsers(initialRequest));
     }, [dispatch]);
 
     const handlePageChange = (_event: React.ChangeEvent<unknown>, page: number) => {
@@ -58,26 +45,23 @@ const UsersListPage: React.FC = () => {
     const reload = useCallback(() => {
         searchRef.current?.triggerSearch();
     }, [searchRef.current]);
-    const doSearch = useCallback(
-        (filters: SearchFilterType<UserAdminView>, sort: SearchSortType<UserAdminView>[], pageSize: number) => {
-            const request: UserSearchRequest = {
-                filters: [
-                    { field: "username", operator: "contains", value: filters.username },
-                    ...(filters.roles?.map((m) => ({ field: "roles", operator: "contains", value: m })) ?? []),
-                    { field: "createdAt", operator: "gt", value: filters.createdAtStart },
-                    { field: "createdAt", operator: "lt", value: filters.createdAtEnd },
-                    { field: "lastLogin", operator: "gt", value: filters.lastLoginStart },
-                    { field: "lastLogin", operator: "lt", value: filters.lastLoginEnd },
-                    { field: "isDisabled", operator: "eq", value: filters.isDisabled },
-                ].filter((filter) => filter.value) as UserSearchRequest["filters"],
-                search: filters.search?.split(" ").filter((f) => !!f),
-                sort: sort.map((m) => ({ field: m.field!, direction: m.direction })),
-                pagination: { page: 1, size: pageSize },
-            };
-            dispatch(searchUsers(request));
-        },
-        []
-    );
+    const doSearch = useCallback((filters: SearchFilterType<UserAdminView>, sort: SearchSortType<UserAdminView>[], pageSize: number) => {
+        const request: UserSearchRequest = {
+            filters: [
+                { field: "username", operator: "contains", value: filters.username },
+                ...(filters.roles?.map((m) => ({ field: "roles", operator: "contains", value: m })) ?? []),
+                { field: "createdAt", operator: "gt", value: filters.createdAtStart },
+                { field: "createdAt", operator: "lt", value: filters.createdAtEnd },
+                { field: "lastLogin", operator: "gt", value: filters.lastLoginStart },
+                { field: "lastLogin", operator: "lt", value: filters.lastLoginEnd },
+                { field: "isDisabled", operator: "eq", value: filters.isDisabled },
+            ].filter((filter) => filter.value) as UserSearchRequest["filters"],
+            search: filters.search?.split(" ").filter((f) => !!f),
+            sort: sort.map((m) => ({ field: m.field!, direction: m.direction })),
+            pagination: { page: 1, size: pageSize },
+        };
+        dispatch(searchUsers(request));
+    }, []);
 
     const actionUnlockUser = useCallback(
         (uuid: string, onDone: () => void) => {

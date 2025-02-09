@@ -22,9 +22,6 @@ export function UseQueryRunner(options: UseQueryRunnerOptions = {}): MethodDecor
  * @param propertyKey The method name
  * @returns UseQueryRunnerOptions if the handler is annotated, otherwise null
  */
-export function getUseQueryRunnerOptions(
-    target: Record<string, unknown>,
-    propertyKey: string | symbol
-): UseQueryRunnerOptions | null {
+export function getUseQueryRunnerOptions(target: Record<string, unknown>, propertyKey: string | symbol): UseQueryRunnerOptions | null {
     return Reflect.getMetadata(QUERYRUNNER_METADATA_KEY, target, propertyKey) || null;
 }

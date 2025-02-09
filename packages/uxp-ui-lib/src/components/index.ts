@@ -17,10 +17,10 @@ export * from "./layout/LeftSideBar";
 export * from "./layout/Loading";
 export * from "./layout/withErrorHandler";
 export { SidebarMenuItems } from "./layout/Sidebar";
-export {default as MultiLevelMenu } from "./layout/MultiLevelMenu";
-export {MenuItemType } from "./layout/RecursiveMenuItem";
+export { default as MultiLevelMenu } from "./layout/MultiLevelMenu";
+export { MenuItemType } from "./layout/RecursiveMenuItem";
 
 export * from "./theme/theme";
 export * from "./theme/UxpTheme";
 export * from "./search/SearchComponent";
-export {default as RichTextEditor                                        } from "./richText/RichTextEditor";
+export { default as RichTextEditor } from "./richText/RichTextEditor";

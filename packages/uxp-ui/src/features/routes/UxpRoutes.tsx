@@ -21,11 +21,7 @@ const UxpRoutes: React.FC = () => {
                         route.config?.redirect ? (
                             <Navigate to={route.config?.redirect} />
                         ) : (
-                            <RoutePage
-                                key={route.pageUuid!}
-                                pageUuid={route.pageUuid!}
-                                basePath={getBasePath(route.routePattern)}
-                            />
+                            <RoutePage key={route.pageUuid!} pageUuid={route.pageUuid!} basePath={getBasePath(route.routePattern)} />
                         )
                     }
                 />

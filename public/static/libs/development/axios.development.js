@@ -65,10 +65,9 @@
         }),
             "function" != typeof e.return && (this.return = void 0);
     }
-    (_AsyncGenerator.prototype[("function" == typeof Symbol && Symbol.asyncIterator) || "@@asyncIterator"] =
-        function () {
-            return this;
-        }),
+    (_AsyncGenerator.prototype[("function" == typeof Symbol && Symbol.asyncIterator) || "@@asyncIterator"] = function () {
+        return this;
+    }),
         (_AsyncGenerator.prototype.next = function (e) {
             return this._invoke("next", e);
         }),
@@ -159,9 +158,7 @@
                 },
                 throw: function (r) {
                     var n = this.s.return;
-                    return void 0 === n
-                        ? Promise.reject(r)
-                        : AsyncFromSyncIteratorContinuation(n.apply(this.s, arguments));
+                    return void 0 === n ? Promise.reject(r) : AsyncFromSyncIteratorContinuation(n.apply(this.s, arguments));
                 },
             }),
             new AsyncFromSyncIterator(r)
@@ -341,9 +338,7 @@
                             invoke(t, n, e, r);
                         });
                     }
-                    return (r = r
-                        ? r.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg)
-                        : callInvokeWithMethodAndArg());
+                    return (r = r ? r.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg());
                 },
             });
         }
@@ -395,8 +390,7 @@
                         e.iterator.return &&
                         ((r.method = "return"), (r.arg = t), maybeInvokeDelegate(e, r), "throw" === r.method)) ||
                         ("return" !== n &&
-                            ((r.method = "throw"),
-                            (r.arg = new TypeError("The iterator does not provide a '" + n + "' method")))),
+                            ((r.method = "throw"), (r.arg = new TypeError("The iterator does not provide a '" + n + "' method")))),
                     y
                 );
             var i = tryCatch(o, e.iterator, r.arg);
@@ -410,18 +404,13 @@
                       (r.delegate = null),
                       y)
                     : a
-                : ((r.method = "throw"),
-                  (r.arg = new TypeError("iterator result is not an object")),
-                  (r.delegate = null),
-                  y);
+                : ((r.method = "throw"), (r.arg = new TypeError("iterator result is not an object")), (r.delegate = null), y);
         }
         function pushTryEntry(t) {
             var e = {
                 tryLoc: t[0],
             };
-            1 in t && (e.catchLoc = t[1]),
-                2 in t && ((e.finallyLoc = t[2]), (e.afterLoc = t[3])),
-                this.tryEntries.push(e);
+            1 in t && (e.catchLoc = t[1]), 2 in t && ((e.finallyLoc = t[2]), (e.afterLoc = t[3])), this.tryEntries.push(e);
         }
         function resetTryEntry(t) {
             var e = t.completion || {};
@@ -444,8 +433,7 @@
                 if (!isNaN(e.length)) {
                     var o = -1,
                         i = function next() {
-                            for (; ++o < e.length; )
-                                if (n.call(e, o)) return (next.value = e[o]), (next.done = !1), next;
+                            for (; ++o < e.length; ) if (n.call(e, o)) return (next.value = e[o]), (next.done = !1), next;
                             return (next.value = t), (next.done = !0), next;
                         };
                     return (i.next = i);
@@ -534,8 +522,7 @@
                         this.tryEntries.forEach(resetTryEntry),
                         !e)
                     )
-                        for (var r in this)
-                            "t" === r.charAt(0) && n.call(this, r) && !isNaN(+r.slice(1)) && (this[r] = t);
+                        for (var r in this) "t" === r.charAt(0) && n.call(this, r) && !isNaN(+r.slice(1)) && (this[r] = t);
                 },
                 stop: function () {
                     this.done = !0;
@@ -547,9 +534,7 @@
                     if (this.done) throw e;
                     var r = this;
                     function handle(n, o) {
-                        return (
-                            (a.type = "throw"), (a.arg = e), (r.next = n), o && ((r.method = "next"), (r.arg = t)), !!o
-                        );
+                        return (a.type = "throw"), (a.arg = e), (r.next = n), o && ((r.method = "next"), (r.arg = t)), !!o;
                     }
                     for (var o = this.tryEntries.length - 1; o >= 0; --o) {
                         var i = this.tryEntries[o],
@@ -580,11 +565,7 @@
                     }
                     i && ("break" === t || "continue" === t) && i.tryLoc <= e && e <= i.finallyLoc && (i = null);
                     var a = i ? i.completion : {};
-                    return (
-                        (a.type = t),
-                        (a.arg = e),
-                        i ? ((this.method = "next"), (this.next = i.finallyLoc), y) : this.complete(a)
-                    );
+                    return (a.type = t), (a.arg = e), i ? ((this.method = "next"), (this.next = i.finallyLoc), y) : this.complete(a);
                 },
                 complete: function (t, e) {
                     if ("throw" === t.type) throw t.arg;
@@ -735,20 +716,13 @@
         return obj;
     }
     function _slicedToArray(arr, i) {
-        return (
-            _arrayWithHoles(arr) ||
-            _iterableToArrayLimit(arr, i) ||
-            _unsupportedIterableToArray(arr, i) ||
-            _nonIterableRest()
-        );
+        return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest();
     }
     function _toArray(arr) {
         return _arrayWithHoles(arr) || _iterableToArray(arr) || _unsupportedIterableToArray(arr) || _nonIterableRest();
     }
     function _toConsumableArray(arr) {
-        return (
-            _arrayWithoutHoles(arr) || _iterableToArray(arr) || _unsupportedIterableToArray(arr) || _nonIterableSpread()
-        );
+        return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _unsupportedIterableToArray(arr) || _nonIterableSpread();
     }
     function _arrayWithoutHoles(arr) {
         if (Array.isArray(arr)) return _arrayLikeToArray(arr);
@@ -757,8 +731,7 @@
         if (Array.isArray(arr)) return arr;
     }
     function _iterableToArray(iter) {
-        if ((typeof Symbol !== "undefined" && iter[Symbol.iterator] != null) || iter["@@iterator"] != null)
-            return Array.from(iter);
+        if ((typeof Symbol !== "undefined" && iter[Symbol.iterator] != null) || iter["@@iterator"] != null) return Array.from(iter);
     }
     function _unsupportedIterableToArray(o, minLen) {
         if (!o) return;
@@ -766,8 +739,7 @@
         var n = Object.prototype.toString.call(o).slice(8, -1);
         if (n === "Object" && o.constructor) n = o.constructor.name;
         if (n === "Map" || n === "Set") return Array.from(o);
-        if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n))
-            return _arrayLikeToArray(o, minLen);
+        if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen);
     }
     function _arrayLikeToArray(arr, len) {
         if (len == null || len > arr.length) len = arr.length;
@@ -787,11 +759,7 @@
     function _createForOfIteratorHelper(o, allowArrayLike) {
         var it = (typeof Symbol !== "undefined" && o[Symbol.iterator]) || o["@@iterator"];
         if (!it) {
-            if (
-                Array.isArray(o) ||
-                (it = _unsupportedIterableToArray(o)) ||
-                (allowArrayLike && o && typeof o.length === "number")
-            ) {
+            if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || (allowArrayLike && o && typeof o.length === "number")) {
                 if (it) o = it;
                 var i = 0;
                 var F = function () {};
@@ -1483,12 +1451,7 @@
      * @returns {boolean}
      */
     function isSpecCompliantForm(thing) {
-        return !!(
-            thing &&
-            isFunction(thing.append) &&
-            thing[Symbol.toStringTag] === "FormData" &&
-            thing[Symbol.iterator]
-        );
+        return !!(thing && isFunction(thing.append) && thing[Symbol.toStringTag] === "FormData" && thing[Symbol.iterator]);
     }
     var toJSONObject = function toJSONObject(obj) {
         var stack = new Array(10);
@@ -2123,8 +2086,7 @@
     };
 
     var hasBrowserEnv = typeof window !== "undefined" && typeof document !== "undefined";
-    var _navigator =
-        ((typeof navigator === "undefined" ? "undefined" : _typeof(navigator)) === "object" && navigator) || undefined;
+    var _navigator = ((typeof navigator === "undefined" ? "undefined" : _typeof(navigator)) === "object" && navigator) || undefined;
 
     /**
      * Determine if we're running in a standard browser environment
@@ -2143,8 +2105,7 @@
      *
      * @returns {boolean}
      */
-    var hasStandardBrowserEnv =
-        hasBrowserEnv && (!_navigator || ["ReactNative", "NativeScript", "NS"].indexOf(_navigator.product) < 0);
+    var hasStandardBrowserEnv = hasBrowserEnv && (!_navigator || ["ReactNative", "NativeScript", "NS"].indexOf(_navigator.product) < 0);
 
     /**
      * Determine if we're running in a standard browser webWorker environment
@@ -2542,12 +2503,7 @@
                                 throw new Error("header name must be a non-empty string");
                             }
                             var key = utils$1.findKey(self, lHeader);
-                            if (
-                                !key ||
-                                self[key] === undefined ||
-                                _rewrite === true ||
-                                (_rewrite === undefined && self[key] !== false)
-                            ) {
+                            if (!key || self[key] === undefined || _rewrite === true || (_rewrite === undefined && self[key] !== false)) {
                                 self[key || _header] = normalizeValue(_value);
                             }
                         }
@@ -2612,11 +2568,7 @@
                         header = normalizeHeader(header);
                         if (header) {
                             var key = utils$1.findKey(this, header);
-                            return !!(
-                                key &&
-                                this[key] !== undefined &&
-                                (!matcher || matchHeaderValue(this, this[key], key, matcher))
-                            );
+                            return !!(key && this[key] !== undefined && (!matcher || matchHeaderValue(this, this[key], key, matcher)));
                         }
                         return false;
                     },
@@ -2689,10 +2641,7 @@
                         for (var _len = arguments.length, targets = new Array(_len), _key = 0; _key < _len; _key++) {
                             targets[_key] = arguments[_key];
                         }
-                        return (_this$constructor = this.constructor).concat.apply(
-                            _this$constructor,
-                            [this].concat(targets)
-                        );
+                        return (_this$constructor = this.constructor).concat.apply(_this$constructor, [this].concat(targets));
                     },
                 },
                 {
@@ -2783,14 +2732,7 @@
         );
         return AxiosHeaders;
     })(Symbol.iterator, Symbol.toStringTag);
-    AxiosHeaders.accessor([
-        "Content-Type",
-        "Content-Length",
-        "Accept",
-        "Accept-Encoding",
-        "User-Agent",
-        "Authorization",
-    ]);
+    AxiosHeaders.accessor(["Content-Type", "Content-Length", "Accept", "Accept-Encoding", "User-Agent", "Authorization"]);
 
     // reserved names hotfix
     utils$1.reduceDescriptors(AxiosHeaders.prototype, function (_ref3, key) {
@@ -3022,11 +2964,7 @@
         ? (function (origin, isMSIE) {
               return function (url) {
                   url = new URL(url, platform.origin);
-                  return (
-                      origin.protocol === url.protocol &&
-                      origin.host === url.host &&
-                      (isMSIE || origin.port === url.port)
-                  );
+                  return origin.protocol === url.protocol && origin.host === url.host && (isMSIE || origin.port === url.port);
               };
           })(new URL(platform.origin), platform.navigator && /(msie|trident)/i.test(platform.navigator.userAgent))
         : function () {
@@ -3221,20 +3159,13 @@
             headers = newConfig.headers,
             auth = newConfig.auth;
         newConfig.headers = headers = AxiosHeaders$1.from(headers);
-        newConfig.url = buildURL(
-            buildFullPath(newConfig.baseURL, newConfig.url),
-            config.params,
-            config.paramsSerializer
-        );
+        newConfig.url = buildURL(buildFullPath(newConfig.baseURL, newConfig.url), config.params, config.paramsSerializer);
 
         // HTTP basic authentication
         if (auth) {
             headers.set(
                 "Authorization",
-                "Basic " +
-                    btoa(
-                        (auth.username || "") + ":" + (auth.password ? unescape(encodeURIComponent(auth.password)) : "")
-                    )
+                "Basic " + btoa((auth.username || "") + ":" + (auth.password ? unescape(encodeURIComponent(auth.password)) : ""))
             );
         }
         var contentType;
@@ -3306,13 +3237,9 @@
                         return;
                     }
                     // Prepare the response
-                    var responseHeaders = AxiosHeaders$1.from(
-                        "getAllResponseHeaders" in request && request.getAllResponseHeaders()
-                    );
+                    var responseHeaders = AxiosHeaders$1.from("getAllResponseHeaders" in request && request.getAllResponseHeaders());
                     var responseData =
-                        !responseType || responseType === "text" || responseType === "json"
-                            ? request.responseText
-                            : request.response;
+                        !responseType || responseType === "text" || responseType === "json" ? request.responseText : request.response;
                     var response = {
                         data: responseData,
                         status: request.status,
@@ -3350,10 +3277,7 @@
                         // handled by onerror instead
                         // With one exception: request that using file: protocol, most browsers
                         // will return status as 0 even though it's a successful request
-                        if (
-                            request.status === 0 &&
-                            !(request.responseURL && request.responseURL.indexOf("file:") === 0)
-                        ) {
+                        if (request.status === 0 && !(request.responseURL && request.responseURL.indexOf("file:") === 0)) {
                             return;
                         }
                         // readystate handler is calling before onerror or ontimeout handlers,
@@ -3385,9 +3309,7 @@
 
                 // Handle timeout
                 request.ontimeout = function handleTimeout() {
-                    var timeoutErrorMessage = _config.timeout
-                        ? "timeout of " + _config.timeout + "ms exceeded"
-                        : "timeout exceeded";
+                    var timeoutErrorMessage = _config.timeout ? "timeout of " + _config.timeout + "ms exceeded" : "timeout exceeded";
                     var transitional = _config.transitional || transitionalDefaults;
                     if (_config.timeoutErrorMessage) {
                         timeoutErrorMessage = _config.timeoutErrorMessage;
@@ -3461,9 +3383,7 @@
                 }
                 var protocol = parseProtocol(_config.url);
                 if (protocol && platform.protocols.indexOf(protocol) === -1) {
-                    reject(
-                        new AxiosError("Unsupported protocol " + protocol + ":", AxiosError.ERR_BAD_REQUEST, config)
-                    );
+                    reject(new AxiosError("Unsupported protocol " + protocol + ":", AxiosError.ERR_BAD_REQUEST, config));
                     return;
                 }
 
@@ -3483,9 +3403,7 @@
                     aborted = true;
                     unsubscribe();
                     var err = reason instanceof Error ? reason : this.reason;
-                    controller.abort(
-                        err instanceof AxiosError ? err : new CanceledError(err instanceof Error ? err.message : err)
-                    );
+                    controller.abort(err instanceof AxiosError ? err : new CanceledError(err instanceof Error ? err.message : err));
                 }
             };
             var timer =
@@ -3641,11 +3559,7 @@
                                         _context3.next = 3;
                                         break;
                                     }
-                                    return _context3.delegateYield(
-                                        _asyncGeneratorDelegate(_asyncIterator(stream)),
-                                        "t0",
-                                        2
-                                    );
+                                    return _context3.delegateYield(_asyncGeneratorDelegate(_asyncIterator(stream)), "t0", 2);
                                 case 2:
                                     return _context3.abrupt("return");
                                 case 3:
@@ -3762,8 +3676,7 @@
         );
     };
 
-    var isFetchSupported =
-        typeof fetch === "function" && typeof Request === "function" && typeof Response === "function";
+    var isFetchSupported = typeof fetch === "function" && typeof Request === "function" && typeof Response === "function";
     var isReadableStreamSupported = isFetchSupported && typeof ReadableStream === "function";
 
     // used only inside the fetch adapter
@@ -3801,11 +3714,7 @@
               })());
     var test = function test(fn) {
         try {
-            for (
-                var _len = arguments.length, args = new Array(_len > 1 ? _len - 1 : 0), _key = 1;
-                _key < _len;
-                _key++
-            ) {
+            for (var _len = arguments.length, args = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
                 args[_key - 1] = arguments[_key];
             }
             return !!fn.apply(void 0, args);
@@ -3995,16 +3904,10 @@
                                             (responseType = _resolveConfig.responseType),
                                             (headers = _resolveConfig.headers),
                                             (_resolveConfig$withCr = _resolveConfig.withCredentials),
-                                            (withCredentials =
-                                                _resolveConfig$withCr === void 0
-                                                    ? "same-origin"
-                                                    : _resolveConfig$withCr),
+                                            (withCredentials = _resolveConfig$withCr === void 0 ? "same-origin" : _resolveConfig$withCr),
                                             (fetchOptions = _resolveConfig.fetchOptions);
                                         responseType = responseType ? (responseType + "").toLowerCase() : "text";
-                                        composedSignal = composeSignals$1(
-                                            [signal, cancelToken && cancelToken.toAbortSignal()],
-                                            timeout
-                                        );
+                                        composedSignal = composeSignals$1([signal, cancelToken && cancelToken.toAbortSignal()], timeout);
                                         unsubscribe =
                                             composedSignal &&
                                             composedSignal.unsubscribe &&
@@ -4012,11 +3915,7 @@
                                                 composedSignal.unsubscribe();
                                             };
                                         _context4.prev = 4;
-                                        _context4.t0 =
-                                            onUploadProgress &&
-                                            supportsRequestStream &&
-                                            method !== "get" &&
-                                            method !== "head";
+                                        _context4.t0 = onUploadProgress && supportsRequestStream && method !== "get" && method !== "head";
                                         if (!_context4.t0) {
                                             _context4.next = 11;
                                             break;
@@ -4036,10 +3935,7 @@
                                             body: data,
                                             duplex: "half",
                                         });
-                                        if (
-                                            utils$1.isFormData(data) &&
-                                            (contentTypeHeader = _request.headers.get("content-type"))
-                                        ) {
+                                        if (utils$1.isFormData(data) && (contentTypeHeader = _request.headers.get("content-type"))) {
                                             headers.setContentType(contentTypeHeader);
                                         }
                                         if (_request.body) {
@@ -4080,19 +3976,13 @@
                                     case 20:
                                         response = _context4.sent;
                                         isStreamResponse =
-                                            supportsResponseStream &&
-                                            (responseType === "stream" || responseType === "response");
-                                        if (
-                                            supportsResponseStream &&
-                                            (onDownloadProgress || (isStreamResponse && unsubscribe))
-                                        ) {
+                                            supportsResponseStream && (responseType === "stream" || responseType === "response");
+                                        if (supportsResponseStream && (onDownloadProgress || (isStreamResponse && unsubscribe))) {
                                             options = {};
                                             ["status", "statusText", "headers"].forEach(function (prop) {
                                                 options[prop] = response[prop];
                                             });
-                                            responseContentLength = utils$1.toFiniteNumber(
-                                                response.headers.get("content-length")
-                                            );
+                                            responseContentLength = utils$1.toFiniteNumber(response.headers.get("content-length"));
                                             (_ref5 =
                                                 (onDownloadProgress &&
                                                     progressEventDecorator(
@@ -4104,24 +3994,16 @@
                                                 (_onProgress = _ref6[0]),
                                                 (_flush = _ref6[1]);
                                             response = new Response(
-                                                trackStream(
-                                                    response.body,
-                                                    DEFAULT_CHUNK_SIZE,
-                                                    _onProgress,
-                                                    function () {
-                                                        _flush && _flush();
-                                                        unsubscribe && unsubscribe();
-                                                    }
-                                                ),
+                                                trackStream(response.body, DEFAULT_CHUNK_SIZE, _onProgress, function () {
+                                                    _flush && _flush();
+                                                    unsubscribe && unsubscribe();
+                                                }),
                                                 options
                                             );
                                         }
                                         responseType = responseType || "text";
                                         _context4.next = 26;
-                                        return resolvers[utils$1.findKey(resolvers, responseType) || "text"](
-                                            response,
-                                            config
-                                        );
+                                        return resolvers[utils$1.findKey(resolvers, responseType) || "text"](response, config);
                                     case 26:
                                         responseData = _context4.sent;
                                         !isStreamResponse && unsubscribe && unsubscribe();
@@ -4142,29 +4024,15 @@
                                         _context4.prev = 33;
                                         _context4.t2 = _context4["catch"](4);
                                         unsubscribe && unsubscribe();
-                                        if (
-                                            !(
-                                                _context4.t2 &&
-                                                _context4.t2.name === "TypeError" &&
-                                                /fetch/i.test(_context4.t2.message)
-                                            )
-                                        ) {
+                                        if (!(_context4.t2 && _context4.t2.name === "TypeError" && /fetch/i.test(_context4.t2.message))) {
                                             _context4.next = 38;
                                             break;
                                         }
-                                        throw Object.assign(
-                                            new AxiosError("Network Error", AxiosError.ERR_NETWORK, config, request),
-                                            {
-                                                cause: _context4.t2.cause || _context4.t2,
-                                            }
-                                        );
+                                        throw Object.assign(new AxiosError("Network Error", AxiosError.ERR_NETWORK, config, request), {
+                                            cause: _context4.t2.cause || _context4.t2,
+                                        });
                                     case 38:
-                                        throw AxiosError.from(
-                                            _context4.t2,
-                                            _context4.t2 && _context4.t2.code,
-                                            config,
-                                            request
-                                        );
+                                        throw AxiosError.from(_context4.t2, _context4.t2 && _context4.t2.code, config, request);
                                     case 39:
                                     case "end":
                                         return _context4.stop();
@@ -4331,9 +4199,7 @@
      */
     validators$1.transitional = function transitional(validator, version, message) {
         function formatMessage(opt, desc) {
-            return (
-                "[Axios v" + VERSION + "] Transitional option '" + opt + "'" + desc + (message ? ". " + message : "")
-            );
+            return "[Axios v" + VERSION + "] Transitional option '" + opt + "'" + desc + (message ? ". " + message : "");
         }
 
         // eslint-disable-next-line func-names
@@ -4347,12 +4213,7 @@
             if (version && !deprecatedWarnings[opt]) {
                 deprecatedWarnings[opt] = true;
                 // eslint-disable-next-line no-console
-                console.warn(
-                    formatMessage(
-                        opt,
-                        " has been deprecated since v" + version + " and will be removed in the near future"
-                    )
-                );
+                console.warn(formatMessage(opt, " has been deprecated since v" + version + " and will be removed in the near future"));
             }
             return validator ? validator(value, opt, opts) : true;
         };
@@ -4451,9 +4312,7 @@
                                                 _context.t0 = _context["catch"](0);
                                                 if (_context.t0 instanceof Error) {
                                                     dummy = {};
-                                                    Error.captureStackTrace
-                                                        ? Error.captureStackTrace(dummy)
-                                                        : (dummy = new Error());
+                                                    Error.captureStackTrace ? Error.captureStackTrace(dummy) : (dummy = new Error());
 
                                                     // slice off the Error: ... line
                                                     stack = dummy.stack ? dummy.stack.replace(/^.+\n/, "") : "";
@@ -4463,9 +4322,7 @@
                                                             // match without the 2 top stack lines
                                                         } else if (
                                                             stack &&
-                                                            !String(_context.t0.stack).endsWith(
-                                                                stack.replace(/^.+\n.+\n/, "")
-                                                            )
+                                                            !String(_context.t0.stack).endsWith(stack.replace(/^.+\n.+\n/, ""))
                                                         ) {
                                                             _context.t0.stack += "\n" + stack;
                                                         }

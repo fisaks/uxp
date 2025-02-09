@@ -11,7 +11,6 @@ export const HousePatchSchema: SchemaValidate<HousePatchPayload, undefined, { uu
                     "^(name|address|yearBuilt|legalRegistrationNumber|details\\.[a-zA-Z0-9_]{1,50}|buildings\\[\\d+\\]\\.[a-zA-Z0-9_]{1,50})$",
             },
             value: { type: "string", nullable: true, maxLength: 512 }, // Allow any value type
-
         },
         required: ["key"],
         additionalProperties: false,

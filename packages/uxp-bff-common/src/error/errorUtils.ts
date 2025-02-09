@@ -12,14 +12,7 @@ interface ErrorResponseOptions {
     statusCode?: number; // Optional, default to 400
 }
 
-export function sendErrorResponse({
-    reply,
-    req,
-    code,
-    message,
-    params,
-    statusCode = 400,
-}: ErrorResponseOptions): FastifyReply {
-    AppLogger.error(req, {object:{ code, message, params }});
+export function sendErrorResponse({ reply, req, code, message, params, statusCode = 400 }: ErrorResponseOptions): FastifyReply {
+    AppLogger.error(req, { object: { code, message, params } });
     return reply.status(statusCode).send(createErrorResponse([{ code, message, params }], req));
 }

@@ -3,10 +3,7 @@
         ? (module.exports = t(require("@emotion/react"), require("react")))
         : "function" == typeof define && define.amd
           ? define(["@emotion/react", "react"], t)
-          : ((e = "undefined" != typeof globalThis ? globalThis : e || self).emotionStyled = t(
-                e.emotionReact,
-                e.React
-            ));
+          : ((e = "undefined" != typeof globalThis ? globalThis : e || self).emotionStyled = t(e.emotionReact, e.React));
 })(this, function (e, t) {
     "use strict";
     function r(e) {
@@ -143,8 +140,7 @@
                 var o = r;
                 if (void 0 !== o.styles) {
                     var a = o.next;
-                    if (void 0 !== a)
-                        for (; void 0 !== a; ) (g = { name: a.name, styles: a.styles, next: g }), (a = a.next);
+                    if (void 0 !== a) for (; void 0 !== a; ) (g = { name: a.name, styles: a.styles, next: g }), (a = a.next);
                     return o.styles + ";";
                 }
                 return (function (e, t, r) {
@@ -155,9 +151,7 @@
                             var a = r[o];
                             if ("object" != typeof a) {
                                 var s = a;
-                                null != t && void 0 !== t[s]
-                                    ? (n += o + "{" + t[s] + "}")
-                                    : u(s) && (n += p(o) + ":" + f(o, s) + ";");
+                                null != t && void 0 !== t[s] ? (n += o + "{" + t[s] + "}") : u(s) && (n += p(o) + ":" + f(o, s) + ";");
                             } else {
                                 if ("NO_COMPONENT_SELECTOR" === o && l) throw new Error(m);
                                 if (!Array.isArray(a) || "string" != typeof a[0] || (null != t && void 0 !== t[a[0]])) {
@@ -170,8 +164,7 @@
                                         default:
                                             n += o + "{" + c + "}";
                                     }
-                                } else
-                                    for (var d = 0; d < a.length; d++) u(a[d]) && (n += p(o) + ":" + f(o, a[d]) + ";");
+                                } else for (var d = 0; d < a.length; d++) u(a[d]) && (n += p(o) + ":" + f(o, a[d]) + ";");
                             }
                         }
                     return n;
@@ -256,8 +249,7 @@
             return function () {
                 var f = arguments,
                     m = s && void 0 !== r.__emotion_styles ? r.__emotion_styles.slice(0) : [];
-                if ((void 0 !== a && m.push("label:" + a + ";"), null == f[0] || void 0 === f[0].raw))
-                    m.push.apply(m, f);
+                if ((void 0 !== a && m.push("label:" + a + ";"), null == f[0] || void 0 === f[0].raw)) m.push.apply(m, f);
                 else {
                     var v = f[0];
                     m.push(v[0]);
@@ -287,8 +279,7 @@
                           (b = f))
                         : null != t.className && (b = t.className + " ");
                     var _ = (function (e, t, r) {
-                        if (1 === e.length && "object" == typeof e[0] && null !== e[0] && void 0 !== e[0].styles)
-                            return e[0];
+                        if (1 === e.length && "object" == typeof e[0] && null !== e[0] && void 0 !== e[0].styles) return e[0];
                         var n = !0,
                             i = "";
                         g = void 0;
@@ -318,13 +309,10 @@
                                     case 2:
                                         r ^= (255 & e.charCodeAt(n + 1)) << 8;
                                     case 1:
-                                        r =
-                                            1540483477 * (65535 & (r ^= 255 & e.charCodeAt(n))) +
-                                            ((59797 * (r >>> 16)) << 16);
+                                        r = 1540483477 * (65535 & (r ^= 255 & e.charCodeAt(n))) + ((59797 * (r >>> 16)) << 16);
                                 }
                                 return (
-                                    ((r = 1540483477 * (65535 & (r ^= r >>> 13)) + ((59797 * (r >>> 16)) << 16)) ^
-                                        (r >>> 15)) >>>
+                                    ((r = 1540483477 * (65535 & (r ^= r >>> 13)) + ((59797 * (r >>> 16)) << 16)) ^ (r >>> 15)) >>>
                                     0
                                 ).toString(36);
                             })(i) + s;
@@ -347,9 +335,7 @@
                 });
                 return (
                     (x.displayName =
-                        void 0 !== a
-                            ? a
-                            : "Styled(" + ("string" == typeof c ? c : c.displayName || c.name || "Component") + ")"),
+                        void 0 !== a ? a : "Styled(" + ("string" == typeof c ? c : c.displayName || c.name || "Component") + ")"),
                     (x.defaultProps = r.defaultProps),
                     (x.__emotion_real = x),
                     (x.__emotion_base = c),

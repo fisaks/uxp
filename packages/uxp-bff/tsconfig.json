@@ -10,15 +10,10 @@
         "declarationMap": true, // Generate declaration maps
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true,
-        "strict": true,
+        "strict": true
     },
-    "include": [
-        "src/**/*"
-    ],
-    "exclude": [
-        "node_modules",
-        "dist"
-    ],
+    "include": ["src/**/*"],
+    "exclude": ["node_modules", "dist"],
     "references": [
         {
             "path": "../uxp-common"

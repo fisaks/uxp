@@ -252,25 +252,7 @@
         return D(X("", null, null, null, [""], (e = F(e)), 0, [0], e));
     }
     function X(e, t, r, n, a, o, s, c, i) {
-        for (
-            var u = 0,
-                f = 0,
-                l = s,
-                p = 0,
-                h = 0,
-                y = 0,
-                b = 1,
-                x = 1,
-                S = 1,
-                C = 0,
-                k = "",
-                O = a,
-                E = o,
-                _ = n,
-                A = k;
-            x;
-
-        )
+        for (var u = 0, f = 0, l = s, p = 0, h = 0, y = 0, b = 1, x = 1, S = 1, C = 0, k = "", O = a, E = o, _ = n, A = k; x; )
             switch (((y = C), (C = T()))) {
                 case 40:
                     if (108 != y && 58 == g(A, l - 1)) {
@@ -312,9 +294,7 @@
                             x = 0;
                         case 59 + f:
                             -1 == S && (A = m(A, /\f/g, "")),
-                                h > 0 &&
-                                    w(A) - l &&
-                                    $(h > 32 ? V(A + ";", n, r, l - 1) : V(m(A, " ", "") + ";", n, r, l - 2), i);
+                                h > 0 && w(A) - l && $(h > 32 ? V(A + ";", n, r, l - 1) : V(m(A, " ", "") + ";", n, r, l - 2), i);
                             break;
                         case 59:
                             A += ";";
@@ -327,17 +307,7 @@
                                         case 108:
                                         case 109:
                                         case 115:
-                                            X(
-                                                e,
-                                                _,
-                                                _,
-                                                n && $(B(e, _, _, 0, 0, a, c, k, a, (O = []), l), E),
-                                                a,
-                                                E,
-                                                l,
-                                                c,
-                                                n ? O : E
-                                            );
+                                            X(e, _, _, n && $(B(e, _, _, 0, 0, a, c, k, a, (O = []), l), E), a, E, l, c, n ? O : E);
                                             break;
                                         default:
                                             X(A, _, _, _, [""], E, 0, c, E);
@@ -451,8 +421,7 @@
                 if ((1 !== e.props.length || 58 === t.charCodeAt(0) || re.get(r)) && !n) {
                     re.set(e, !0);
                     for (var a = [], o = te(t, a), s = r.props, c = 0, i = 0; c < o.length; c++)
-                        for (var u = 0; u < s.length; u++, i++)
-                            e.props[i] = a[c] ? o[c].replace(/&\f/g, s[u]) : s[u] + " " + o[c];
+                        for (var u = 0; u < s.length; u++, i++) e.props[i] = a[c] ? o[c].replace(/&\f/g, s[u]) : s[u] + " " + o[c];
                 }
             }
         },
@@ -527,12 +496,7 @@
             case 3959:
                 return m(e, /(image-set\([^]*)/, c + "$1$`$1");
             case 4968:
-                return (
-                    m(m(e, /(.+:)(flex-)?(.*)/, c + "box-pack:$3" + o + "flex-pack:$3"), /s.+-b[^;]+/, "justify") +
-                    c +
-                    e +
-                    e
-                );
+                return m(m(e, /(.+:)(flex-)?(.*)/, c + "box-pack:$3" + o + "flex-pack:$3"), /s.+-b[^;]+/, "justify") + c + e + e;
             case 4095:
             case 3583:
             case 4068:
@@ -555,13 +519,7 @@
                         case 109:
                             if (45 !== g(e, t + 4)) break;
                         case 102:
-                            return (
-                                m(
-                                    e,
-                                    /(.+:)(.+)-([^]+)/,
-                                    "$1" + c + "$2-$3$1" + s + (108 == g(e, t + 3) ? "$3" : "$2-$3")
-                                ) + e
-                            );
+                            return m(e, /(.+:)(.+)-([^]+)/, "$1" + c + "$2-$3$1" + s + (108 == g(e, t + 3) ? "$3" : "$2-$3")) + e;
                         case 115:
                             return ~v(e, "stretch") ? oe(m(e, "stretch", "fill-available"), t) + e : e;
                     }
@@ -637,8 +595,7 @@
             if ("css" === t) {
                 var r = document.querySelectorAll("style[data-emotion]:not([data-s])");
                 Array.prototype.forEach.call(r, function (e) {
-                    -1 !== e.getAttribute("data-emotion").indexOf(" ") &&
-                        (document.head.appendChild(e), e.setAttribute("data-s", ""));
+                    -1 !== e.getAttribute("data-emotion").indexOf(" ") && (document.head.appendChild(e), e.setAttribute("data-s", ""));
                 });
             }
             var n,
@@ -647,13 +604,10 @@
                 c = {},
                 i = [];
             (n = e.container || document.head),
-                Array.prototype.forEach.call(
-                    document.querySelectorAll('style[data-emotion^="' + t + ' "]'),
-                    function (e) {
-                        for (var t = e.getAttribute("data-emotion").split(" "), r = 1; r < t.length; r++) c[t[r]] = !0;
-                        i.push(e);
-                    }
-                );
+                Array.prototype.forEach.call(document.querySelectorAll('style[data-emotion^="' + t + ' "]'), function (e) {
+                    for (var t = e.getAttribute("data-emotion").split(" "), r = 1; r < t.length; r++) c[t[r]] = !0;
+                    i.push(e);
+                });
             var u,
                 f,
                 l = [
@@ -1028,8 +982,7 @@
                 var o = r;
                 if (void 0 !== o.styles) {
                     var s = o.next;
-                    if (void 0 !== s)
-                        for (; void 0 !== s; ) (He = { name: s.name, styles: s.styles, next: He }), (s = s.next);
+                    if (void 0 !== s) for (; void 0 !== s; ) (He = { name: s.name, styles: s.styles, next: He }), (s = s.next);
                     return o.styles + ";";
                 }
                 return (function (e, t, r) {
@@ -1040,9 +993,7 @@
                             var s = r[o];
                             if ("object" != typeof s) {
                                 var c = s;
-                                null != t && void 0 !== t[c]
-                                    ? (n += o + "{" + t[c] + "}")
-                                    : Ie(c) && (n += Ge(o) + ":" + Le(o, c) + ";");
+                                null != t && void 0 !== t[c] ? (n += o + "{" + t[c] + "}") : Ie(c) && (n += Ge(o) + ":" + Le(o, c) + ";");
                             } else {
                                 if ("NO_COMPONENT_SELECTOR" === o && Re) throw new Error(We);
                                 if (!Array.isArray(s) || "string" != typeof s[0] || (null != t && void 0 !== t[s[0]])) {
@@ -1055,9 +1006,7 @@
                                         default:
                                             n += o + "{" + i + "}";
                                     }
-                                } else
-                                    for (var u = 0; u < s.length; u++)
-                                        Ie(s[u]) && (n += Ge(o) + ":" + Le(o, s[u]) + ";");
+                                } else for (var u = 0; u < s.length; u++) Ie(s[u]) && (n += Ge(o) + ":" + Le(o, s[u]) + ";");
                             }
                         }
                     return n;
@@ -1111,10 +1060,7 @@
                     case 1:
                         r = 1540483477 * (65535 & (r ^= 255 & e.charCodeAt(n))) + ((59797 * (r >>> 16)) << 16);
                 }
-                return (
-                    ((r = 1540483477 * (65535 & (r ^= r >>> 13)) + ((59797 * (r >>> 16)) << 16)) ^ (r >>> 15)) >>>
-                    0
-                ).toString(36);
+                return (((r = 1540483477 * (65535 & (r ^= r >>> 13)) + ((59797 * (r >>> 16)) << 16)) ^ (r >>> 15)) >>> 0).toString(36);
             })(a) + i;
         return { name: u, styles: a, next: He };
     }
@@ -1146,9 +1092,7 @@
             var o = e[Ke],
                 s = [a],
                 c = "";
-            "string" == typeof e.className
-                ? (c = Pe(t.registered, s, e.className))
-                : null != e.className && (c = e.className + " ");
+            "string" == typeof e.className ? (c = Pe(t.registered, s, e.className)) : null != e.className && (c = e.className + " ");
             var i = Xe(s, void 0, n.useContext(_e));
             c += t.key + "-" + i.name;
             var u = {};

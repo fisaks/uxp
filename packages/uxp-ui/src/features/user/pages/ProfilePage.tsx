@@ -3,15 +3,7 @@ import { Accordion, AccordionDetails, AccordionSummary, Typography } from "@mui/
 import { ProfilePayload, ProfileSchema, ValidationErrorMessages } from "@uxp/common";
 import React, { useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
-import {
-    ErrorTile,
-    CenteredBox,
-    ValidatedTextField,
-    FormFieldErrors,
-    FormFieldLabel,
-    FormFieldRefs,
-    LoadingButton,
-} from "@uxp/ui-lib";
+import { ErrorTile, CenteredBox, ValidatedTextField, FormFieldErrors, FormFieldLabel, FormFieldRefs, LoadingButton } from "@uxp/ui-lib";
 import { ServerErrorTile } from "../../../components";
 import { useAppDispatch } from "../../../hooks";
 import { compileSchema, validateField } from "../../../utils/validationUtils"; // Utility for schema compilation
@@ -150,9 +142,7 @@ const ProfilePage: React.FC = () => {
                     if (err.instancePath) {
                         const fieldName = err.instancePath.slice(1) as keyof ProfilePayload;
                         errors[fieldName] =
-                            errorMessages[err.keyword as keyof ValidationErrorMessages]?.[fieldName] ??
-                            err.message ??
-                            "Invalid value.";
+                            errorMessages[err.keyword as keyof ValidationErrorMessages]?.[fieldName] ?? err.message ?? "Invalid value.";
                     }
                 });
         }
@@ -216,11 +206,7 @@ const ProfilePage: React.FC = () => {
                     ))}
 
                 <Accordion>
-                    <AccordionSummary
-                        expandIcon={<ExpandMoreIcon />}
-                        aria-controls="change-password-content"
-                        id="change-password-header"
-                    >
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="change-password-content" id="change-password-header">
                         <Typography>Change Password</Typography>
                     </AccordionSummary>
                     <AccordionDetails>

@@ -4,15 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { Link as RouterLink } from "react-router-dom"; // Import for routing
 
-import {
-    CenteredBox,
-    ErrorTile,
-    FormFieldErrors,
-    FormFieldLabel,
-    FormFieldRefs,
-    LoadingButton,
-    ValidatedTextField,
-} from "@uxp/ui-lib";
+import { CenteredBox, ErrorTile, FormFieldErrors, FormFieldLabel, FormFieldRefs, LoadingButton, ValidatedTextField } from "@uxp/ui-lib";
 
 import { ServerErrorTile } from "../../../components";
 import { useAppDispatch } from "../../../hooks";
@@ -114,9 +106,7 @@ const LoginPage: React.FC = () => {
                 if (err.instancePath) {
                     const fieldName = err.instancePath.slice(1) as keyof LoginPayload;
                     errors[fieldName] =
-                        errorMessages[err.keyword as keyof ValidationErrorMessages]?.[fieldName] ??
-                        err.message ??
-                        "Invalid value.";
+                        errorMessages[err.keyword as keyof ValidationErrorMessages]?.[fieldName] ?? err.message ?? "Invalid value.";
                 }
             });
         }
@@ -170,14 +160,7 @@ const LoginPage: React.FC = () => {
                         onBlur={() => handleBlur(key as keyof LoginPayload)}
                     />
                 ))}
-                <LoadingButton
-                    variant="contained"
-                    color="primary"
-                    fullWidth
-                    sx={{ mt: 3 }}
-                    type="submit"
-                    isLoading={isLoading}
-                >
+                <LoadingButton variant="contained" color="primary" fullWidth sx={{ mt: 3 }} type="submit" isLoading={isLoading}>
                     Login
                 </LoadingButton>
                 {/* Register Link */}

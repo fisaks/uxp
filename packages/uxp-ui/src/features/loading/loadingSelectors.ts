@@ -4,8 +4,6 @@ import { LoadingKey } from "./loadingThunk";
 
 export const selectLoadingState = (state: RootState) => state.loading;
 
-export const selectIsLoading = (key: LoadingKey) =>
-    createSelector(selectLoadingState, (loadingState) => !!loadingState.loading[key]);
+export const selectIsLoading = (key: LoadingKey) => createSelector(selectLoadingState, (loadingState) => !!loadingState.loading[key]);
 
-export const selectIsProcessed = (key: LoadingKey) =>
-    createSelector(selectLoadingState, (loadingState) => !!loadingState.processed[key]);
+export const selectIsProcessed = (key: LoadingKey) => createSelector(selectLoadingState, (loadingState) => !!loadingState.processed[key]);

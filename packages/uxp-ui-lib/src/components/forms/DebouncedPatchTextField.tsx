@@ -1,16 +1,8 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState } from "react";
 
-import ReplayIcon from '@mui/icons-material/Replay';
-import {
-    Box,
-    debounce,
-    IconButton,
-    TextField,
-    Tooltip,
-    useTheme
-} from '@mui/material';
-import ReadOnlyField from './ReadOnlyField';
-
+import ReplayIcon from "@mui/icons-material/Replay";
+import { Box, debounce, IconButton, TextField, Tooltip, useTheme } from "@mui/material";
+import ReadOnlyField from "./ReadOnlyField";
 
 type DebouncedPatchTextFieldProps<T> = {
     entityId: string;
@@ -19,10 +11,20 @@ type DebouncedPatchTextFieldProps<T> = {
     value?: string;
     disabled?: boolean;
     patchAction: (payload: { entityId: string; field: keyof T; value?: string }) => any; // Generic patch action
-    dispatch: (action: ReturnType<DebouncedPatchTextFieldProps<T>["patchAction"]>) => { unwrap: () => ReturnType<DebouncedPatchTextFieldProps<T>["patchAction"]>["unwrap"] }; // Generic dispatch
-}
+    dispatch: (action: ReturnType<DebouncedPatchTextFieldProps<T>["patchAction"]>) => {
+        unwrap: () => ReturnType<DebouncedPatchTextFieldProps<T>["patchAction"]>["unwrap"];
+    }; // Generic dispatch
+};
 
-const DebouncedPatchTextField = <T,>({ entityId, label, field, value, patchAction, dispatch, disabled }: DebouncedPatchTextFieldProps<T>) => {
+const DebouncedPatchTextField = <T,>({
+    entityId,
+    label,
+    field,
+    value,
+    patchAction,
+    dispatch,
+    disabled,
+}: DebouncedPatchTextFieldProps<T>) => {
     const theme = useTheme();
 
     const [localValue, setLocalValue] = useState(value);
@@ -61,10 +63,9 @@ const DebouncedPatchTextField = <T,>({ entityId, label, field, value, patchActio
             value={localValue}
             onChange={handleChange}
             error={hasError}
-
             helperText={
                 hasError ? (
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <Box sx={{ display: "flex", alignItems: "center" }}>
                         Error occurred
                         <Tooltip title="Retry">
                             <IconButton size="small" sx={{ ml: 1 }} onClick={handleRetry}>
@@ -72,17 +73,18 @@ const DebouncedPatchTextField = <T,>({ entityId, label, field, value, patchActio
                             </IconButton>
                         </Tooltip>
                     </Box>
-                ) : ''
+                ) : (
+                    ""
+                )
             }
             sx={{
                 mb: 1,
                 backgroundColor: localValue !== value && !hasError ? theme.palette.warning.light : theme.palette.background.paper,
 
-                color:  theme.palette.text.primary,
-                '& .MuiOutlinedInput-root': {
+                color: theme.palette.text.primary,
+                "& .MuiOutlinedInput-root": {
                     height: 56, // Matches ReadOnlyField height
                 },
-               
             }}
         />
     );

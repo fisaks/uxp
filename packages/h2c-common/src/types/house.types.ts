@@ -17,7 +17,7 @@ export type BuildingData = {
 export type HouseSummary = {
     uuid: string;
     name: string;
-}
+};
 export type House = {
     uuid: string;
     version: number;

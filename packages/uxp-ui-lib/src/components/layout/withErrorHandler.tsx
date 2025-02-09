@@ -6,9 +6,7 @@ type WithErrorHandlerProps = {
     retryAction?: () => void;
 };
 
-export const withErrorHandler = <T extends object>(
-    WrappedComponent: React.ComponentType<T>
-): React.FC<T & WithErrorHandlerProps> => {
+export const withErrorHandler = <T extends object>(WrappedComponent: React.ComponentType<T>): React.FC<T & WithErrorHandlerProps> => {
     const ComponentWithErrorHandler: React.FC<T & WithErrorHandlerProps> = ({ error, retryAction, ...props }) => {
         if (error) {
             return (

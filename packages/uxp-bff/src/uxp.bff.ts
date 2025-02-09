@@ -42,17 +42,17 @@ fastify.setErrorHandler(errorHandler);
 fastify.register(fastifyCookie);
 fastify.register(jwtPlugin);
 fastify.register(fastifyWebsocket);
-declare module 'fastify' {
+declare module "fastify" {
     interface FastifyRequest {
-        uxpRaw?: boolean
+        uxpRaw?: boolean;
     }
 }
 
 function setRaw(req: FastifyRequest, _payload: any, done: any) {
-    req['uxpRaw'] = true
-    done()
+    req["uxpRaw"] = true;
+    done();
 }
-fastify.addContentTypeParser('multipart/form-data', setRaw)
+fastify.addContentTypeParser("multipart/form-data", setRaw);
 // Log incoming request payloads
 if (!IsProd) {
     fastify.addHook("preHandler", async (request, _reply) => {
@@ -62,9 +62,9 @@ if (!IsProd) {
             AppLogger.info(request, { message: "Incoming request payload", object: request.body as Record<string, unknown> });
         }
     });
-    fastify.addHook('onResponse', (request, reply) => {
+    fastify.addHook("onResponse", (request, reply) => {
         AppLogger.info(request, { message: "Response", object: { url: request.url, method: request.method, status: reply.status } });
-    })
+    });
 }
 
 // Discover and register REST and WebSocket handlers

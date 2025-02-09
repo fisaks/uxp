@@ -19,18 +19,13 @@ export const errorHandler = (error: FastifyError, request: FastifyRequest, reply
     }
 };
 
-const handleAJvError = (
-    error: FastifyError & { validation?: ErrorObject[] },
-    request: FastifyRequest,
-    reply: FastifyReply
-) => {
+const handleAJvError = (error: FastifyError & { validation?: ErrorObject[] }, request: FastifyRequest, reply: FastifyReply) => {
     const statusCode = error.statusCode ?? 500;
     const code = ErrorCodes.VALIDATION;
     const validation = error.validation ?? [];
     AppLogger.error(request, { object: { RequestBody: request.body } });
 
-    const message =
-        process.env.NODE_ENV === "development" ? validation.map((error) => error.message).join(", ") : undefined;
+    const message = process.env.NODE_ENV === "development" ? validation.map((error) => error.message).join(", ") : undefined;
     const params = validation
         .map((error) => ({
             field: error.instancePath.replace(/^\/|\/+/g, (_match, offset) => (offset === 0 ? "" : ".")),

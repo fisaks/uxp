@@ -42,19 +42,8 @@ export class UserService {
     };
 
     static toUserAdminView = (user: User) => {
-        const {
-            uuid,
-            username,
-            firstName,
-            lastName,
-            createdAt,
-            email,
-            roles,
-            lastLogin,
-            failedLoginAttempts,
-            isDisabled,
-            tokenVersion,
-        } = user;
+        const { uuid, username, firstName, lastName, createdAt, email, roles, lastLogin, failedLoginAttempts, isDisabled, tokenVersion } =
+            user;
         const userPublic: UserAdminView = {
             uuid,
             username,

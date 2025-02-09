@@ -65,14 +65,6 @@ export default [
 
     // Global ignores
     {
-        ignores: [
-            "node_modules",
-            "packages/*/node_modules",
-            "**/dist/**",
-            "**/build/**",
-            "**/*.d.ts",
-            "**/*.config.cjs",
-            "public",
-        ], // Ignore common folders and declaration files
+        ignores: ["node_modules", "packages/*/node_modules", "**/dist/**", "**/build/**", "**/*.d.ts", "**/*.config.cjs", "public"], // Ignore common folders and declaration files
     },
 ];

@@ -6,8 +6,6 @@ import templateReducer from "../features/template/templateSlice";
 import houseReducer from "../features/house/houseSlice";
 import loadingErrorReducer from "../features/loading-error/loadingErrorSlice";
 
-
-
 export const createStore = () => {
     const logger = createLogger({
         predicate: () => process.env.NODE_ENV === "development",

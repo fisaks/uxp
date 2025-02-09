@@ -29,9 +29,7 @@ export class GeneratedMigration1736022305105 implements MigrationInterface {
         );
         await queryRunner.query(`ALTER TABLE \`routes\` DROP COLUMN \`identifier\``);
         await queryRunner.query(`ALTER TABLE \`routes\` ADD \`identifier\` varchar(255) NOT NULL`);
-        await queryRunner.query(
-            `ALTER TABLE \`routes\` ADD UNIQUE INDEX \`IDX_91c45f4f2ef32102382b250498\` (\`identifier\`)`
-        );
+        await queryRunner.query(`ALTER TABLE \`routes\` ADD UNIQUE INDEX \`IDX_91c45f4f2ef32102382b250498\` (\`identifier\`)`);
         await queryRunner.query(
             `ALTER TABLE \`route_tags\` ADD CONSTRAINT \`FK_35eb1441e6c6a80c0790709d293\` FOREIGN KEY (\`route_id\`) REFERENCES \`routes\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`
         );

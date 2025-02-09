@@ -23,14 +23,11 @@ const globalSettingsSlice = createSlice({
         // Optionally, you can add reducers for local updates
     },
     extraReducers: (builder) => {
-        builder.addCase(
-            fetchLatestGlobalSettings.fulfilled,
-            (state, action: PayloadAction<LatestGlobalConfigResponse>) => {
-                state.config = action.payload.config;
-                state.version = action.payload.version;
-                state.updatedAt = action.payload.updatedAt;
-            }
-        );
+        builder.addCase(fetchLatestGlobalSettings.fulfilled, (state, action: PayloadAction<LatestGlobalConfigResponse>) => {
+            state.config = action.payload.config;
+            state.version = action.payload.version;
+            state.updatedAt = action.payload.updatedAt;
+        });
 
         builder.addCase(patchGlobalSetting.fulfilled, (state, action: PayloadAction<PatchGlobalConfigResponse>) => {
             state.config = action.payload.config;

@@ -66,15 +66,16 @@ The project is organized as a **TypeScript** monorepo with the following package
 
 1. Copy the `.env.template` file to create `.env.dev` and `.env.prod` files:
 
-   ```sh
-   cp .env.template .env.dev
-   cp .env.template .env.prod
+    ```sh
+    cp .env.template .env.dev
+    cp .env.template .env.prod
 
-   ```
+    ```
+
 2. Update the environment variables in `.env.dev` and `.env.prod` as needed:
 
-   - For development, set `DATABASE_HOST` to `localhost`.
-   - For production, set `DATABASE_HOST` to match the Docker Compose host name for the MySQL image.
+    - For development, set `DATABASE_HOST` to `localhost`.
+    - For production, set `DATABASE_HOST` to match the Docker Compose host name for the MySQL image.
 
 ## Development environment
 
@@ -114,9 +115,9 @@ To create a production build, run:
 
 - Ensure you have Docker and Docker Compose installed on your machine.
 - Use pnpm for package management. Install it globally if you haven't already:
-  ```sh
-  npm install -g pnpm
-  ```
+    ```sh
+    npm install -g pnpm
+    ```
 
 ## Troubleshooting
 
@@ -124,21 +125,21 @@ If you encounter any issues, check the logs for more information:
 
 - Ensure all environment variables are correctly set in the .env files.
 - Check the Docker Compose logs:
-  ```sh
-  docker compose logs
-  ```
+    ```sh
+    docker compose logs
+    ```
 - Run the following scripts to check logs for specific services:
-  ```sh
-  ./log.sh <service>
-  ```
+    ```sh
+    ./log.sh <service>
+    ```
 - Run the following scripts to open a shell in specific services:
-  ```sh
-  ./shell.sh <service>
-  ```
+    ```sh
+    ./shell.sh <service>
+    ```
 - Run the following scripts to access the database:
-  ```sh
-  ./mysql.sh
-  ```
+    ```sh
+    ./mysql.sh
+    ```
 
 ## Navigating the tmux Environment
 

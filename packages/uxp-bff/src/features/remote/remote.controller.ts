@@ -14,11 +14,7 @@ export class RemoteController {
      */
     @Route("get", "/content/index/:uuid", { authenticate: false })
     @UseQueryRunner()
-    async getContentIndex(
-        req: FastifyRequest<{ Params: { uuid: string } }>,
-        reply: FastifyReply,
-        queryRunner: QueryRunner
-    ) {
+    async getContentIndex(req: FastifyRequest<{ Params: { uuid: string } }>, reply: FastifyReply, queryRunner: QueryRunner) {
         const { uuid } = req.params;
 
         const pageApps = (await queryRunner.manager
@@ -95,11 +91,7 @@ export class RemoteController {
                         const originalValue = attr.value;
                         div.setAttribute(
                             attr.name,
-                            buildPath(
-                                "/api/content/resource",
-                                appIdentifier,
-                                removeContextPath(originalValue, contextPath)
-                            )
+                            buildPath("/api/content/resource", appIdentifier, removeContextPath(originalValue, contextPath))
                         );
                     }
                 });
@@ -133,9 +125,7 @@ export class RemoteController {
 
         const resourcePath = req.raw.url!.replace(`/api/content/resource/${appIdentifier}/`, "");
 
-        const app = (await queryRunner.manager
-            .getRepository(AppEntity)
-            .findOneBy({ identifier: appIdentifier })) as AppEntity | null;
+        const app = (await queryRunner.manager.getRepository(AppEntity).findOneBy({ identifier: appIdentifier })) as AppEntity | null;
 
         if (!app) {
             AppLogger.info(req, { message: "App not found %s", args: [appIdentifier] });
@@ -173,9 +163,7 @@ export class RemoteController {
             // Proxy the response
             // Send the proxied response back to the client
 
-            const headers = Object.fromEntries(
-                Object.entries(response.headers).map(([key, value]) => [key, value ?? undefined])
-            );
+            const headers = Object.fromEntries(Object.entries(response.headers).map(([key, value]) => [key, value ?? undefined]));
             //reply.headers(headers);
             reply.raw.writeHead(response.status, headers);
             //return reply.send(response.data);

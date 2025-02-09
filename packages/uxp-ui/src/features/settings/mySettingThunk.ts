@@ -7,10 +7,7 @@ export const fetchMySettings = createLoadingAwareThunk("mysettings/fetch", async
     return response.data;
 });
 
-export const updateMySettings = createLoadingAwareThunk(
-    "mysettings/update",
-    async (payload: UserSettingsPayload, { rejectWithValue }) => {
-        const response = await axiosInstance.put<UserSettingsResponse>("/my-settings", payload);
-        return response.data;
-    }
-);
+export const updateMySettings = createLoadingAwareThunk("mysettings/update", async (payload: UserSettingsPayload, { rejectWithValue }) => {
+    const response = await axiosInstance.put<UserSettingsResponse>("/my-settings", payload);
+    return response.data;
+});

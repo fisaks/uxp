@@ -296,12 +296,9 @@
             if (o === e)
                 return (
                     (r.delegate = null),
-                    ("throw" === n &&
-                        t.iterator.return &&
-                        ((r.method = "return"), (r.arg = e), k(t, r), "throw" === r.method)) ||
+                    ("throw" === n && t.iterator.return && ((r.method = "return"), (r.arg = e), k(t, r), "throw" === r.method)) ||
                         ("return" !== n &&
-                            ((r.method = "throw"),
-                            (r.arg = new TypeError("The iterator does not provide a '" + n + "' method")))),
+                            ((r.method = "throw"), (r.arg = new TypeError("The iterator does not provide a '" + n + "' method")))),
                     y
                 );
             var i = p(o, t.iterator, r.arg);
@@ -315,16 +312,11 @@
                       (r.delegate = null),
                       y)
                     : a
-                : ((r.method = "throw"),
-                  (r.arg = new TypeError("iterator result is not an object")),
-                  (r.delegate = null),
-                  y);
+                : ((r.method = "throw"), (r.arg = new TypeError("iterator result is not an object")), (r.delegate = null), y);
         }
         function j(e) {
             var t = { tryLoc: e[0] };
-            1 in e && (t.catchLoc = e[1]),
-                2 in e && ((t.finallyLoc = e[2]), (t.afterLoc = e[3])),
-                this.tryEntries.push(t);
+            1 in e && (t.catchLoc = e[1]), 2 in e && ((t.finallyLoc = e[2]), (t.afterLoc = e[3])), this.tryEntries.push(t);
         }
         function A(e) {
             var t = e.completion || {};
@@ -360,9 +352,7 @@
             }),
             (t.mark = function (e) {
                 return (
-                    Object.setPrototypeOf
-                        ? Object.setPrototypeOf(e, g)
-                        : ((e.__proto__ = g), f(e, c, "GeneratorFunction")),
+                    Object.setPrototypeOf ? Object.setPrototypeOf(e, g) : ((e.__proto__ = g), f(e, c, "GeneratorFunction")),
                     (e.prototype = Object.create(S)),
                     e
                 );
@@ -422,8 +412,7 @@
                         this.tryEntries.forEach(A),
                         !t)
                     )
-                        for (var r in this)
-                            "t" === r.charAt(0) && n.call(this, r) && !isNaN(+r.slice(1)) && (this[r] = e);
+                        for (var r in this) "t" === r.charAt(0) && n.call(this, r) && !isNaN(+r.slice(1)) && (this[r] = e);
                 },
                 stop: function () {
                     this.done = !0;
@@ -435,9 +424,7 @@
                     if (this.done) throw t;
                     var r = this;
                     function o(n, o) {
-                        return (
-                            (u.type = "throw"), (u.arg = t), (r.next = n), o && ((r.method = "next"), (r.arg = e)), !!o
-                        );
+                        return (u.type = "throw"), (u.arg = t), (r.next = n), o && ((r.method = "next"), (r.arg = e)), !!o;
                     }
                     for (var i = this.tryEntries.length - 1; i >= 0; --i) {
                         var a = this.tryEntries[i],
@@ -468,11 +455,7 @@
                     }
                     i && ("break" === e || "continue" === e) && i.tryLoc <= t && t <= i.finallyLoc && (i = null);
                     var a = i ? i.completion : {};
-                    return (
-                        (a.type = e),
-                        (a.arg = t),
-                        i ? ((this.method = "next"), (this.next = i.finallyLoc), y) : this.complete(a)
-                    );
+                    return (a.type = e), (a.arg = t), i ? ((this.method = "next"), (this.next = i.finallyLoc), y) : this.complete(a);
                 },
                 complete: function (e, t) {
                     if ("throw" === e.type) throw e.arg;
@@ -506,11 +489,7 @@
                     throw new Error("illegal catch attempt");
                 },
                 delegateYield: function (t, r, n) {
-                    return (
-                        (this.delegate = { iterator: L(t), resultName: r, nextLoc: n }),
-                        "next" === this.method && (this.arg = e),
-                        y
-                    );
+                    return (this.delegate = { iterator: L(t), resultName: r, nextLoc: n }), "next" === this.method && (this.arg = e), y;
                 },
             }),
             t
@@ -590,12 +569,7 @@
         return t && v(e.prototype, t), r && v(e, r), Object.defineProperty(e, "prototype", { writable: !1 }), e;
     }
     function m(e, t, r) {
-        return (
-            (t = c(t)) in e
-                ? Object.defineProperty(e, t, { value: r, enumerable: !0, configurable: !0, writable: !0 })
-                : (e[t] = r),
-            e
-        );
+        return (t = c(t)) in e ? Object.defineProperty(e, t, { value: r, enumerable: !0, configurable: !0, writable: !0 }) : (e[t] = r), e;
     }
     function b(e, t) {
         return (
@@ -649,8 +623,7 @@
         if (Array.isArray(e)) return e;
     }
     function E(e) {
-        if (("undefined" != typeof Symbol && null != e[Symbol.iterator]) || null != e["@@iterator"])
-            return Array.from(e);
+        if (("undefined" != typeof Symbol && null != e[Symbol.iterator]) || null != e["@@iterator"]) return Array.from(e);
     }
     function O(e, t) {
         if (e) {
@@ -828,10 +801,7 @@
                   : function (e) {
                         return setTimeout(e);
                     }),
-        ve =
-            "undefined" != typeof queueMicrotask
-                ? queueMicrotask.bind(Q)
-                : ("undefined" != typeof process && process.nextTick) || de,
+        ve = "undefined" != typeof queueMicrotask ? queueMicrotask.bind(Q) : ("undefined" != typeof process && process.nextTick) || de,
         ye = {
             isArray: N,
             isArrayBuffer: C,
@@ -851,14 +821,11 @@
                     e &&
                     (("function" == typeof FormData && e instanceof FormData) ||
                         (U(e.append) &&
-                            ("formdata" === (t = A(e)) ||
-                                ("object" === t && U(e.toString) && "[object FormData]" === e.toString()))))
+                            ("formdata" === (t = A(e)) || ("object" === t && U(e.toString) && "[object FormData]" === e.toString()))))
                 );
             },
             isArrayBufferView: function (e) {
-                return "undefined" != typeof ArrayBuffer && ArrayBuffer.isView
-                    ? ArrayBuffer.isView(e)
-                    : e && e.buffer && C(e.buffer);
+                return "undefined" != typeof ArrayBuffer && ArrayBuffer.isView ? ArrayBuffer.isView(e) : e && e.buffer && C(e.buffer);
             },
             isString: F,
             isNumber: B,
@@ -891,13 +858,7 @@
                         n = {},
                         o = function (t, o) {
                             var i = (r && Y(n, o)) || o;
-                            I(n[i]) && I(t)
-                                ? (n[i] = e(n[i], t))
-                                : I(t)
-                                  ? (n[i] = e({}, t))
-                                  : N(t)
-                                    ? (n[i] = t.slice())
-                                    : (n[i] = t);
+                            I(n[i]) && I(t) ? (n[i] = e(n[i], t)) : I(t) ? (n[i] = e({}, t)) : N(t) ? (n[i] = t.slice()) : (n[i] = t);
                         },
                         i = 0,
                         a = arguments.length;
@@ -1056,9 +1017,7 @@
         };
     function me(e, t, r, n, o) {
         Error.call(this),
-            Error.captureStackTrace
-                ? Error.captureStackTrace(this, this.constructor)
-                : (this.stack = new Error().stack),
+            Error.captureStackTrace ? Error.captureStackTrace(this, this.constructor) : (this.stack = new Error().stack),
             (this.message = e),
             (this.name = "AxiosError"),
             t && (this.code = t),
@@ -1157,11 +1116,7 @@
             if (null === e) return "";
             if (ye.isDate(e)) return e.toISOString();
             if (!u && ye.isBlob(e)) throw new me("Blob is not supported. Use a Buffer instead.");
-            return ye.isArrayBuffer(e) || ye.isTypedArray(e)
-                ? u && "function" == typeof Blob
-                    ? new Blob([e])
-                    : Buffer.from(e)
-                : e;
+            return ye.isArrayBuffer(e) || ye.isTypedArray(e) ? (u && "function" == typeof Blob ? new Blob([e]) : Buffer.from(e)) : e;
         }
         function c(e, r, o) {
             var u = e;
@@ -1177,9 +1132,7 @@
                     return (
                         (r = Ee(r)),
                         u.forEach(function (e, n) {
-                            !ye.isUndefined(e) &&
-                                null !== e &&
-                                t.append(!0 === a ? Oe([r], n, i) : null === a ? r : r + "[]", s(e));
+                            !ye.isUndefined(e) && null !== e && t.append(!0 === a ? Oe([r], n, i) : null === a ? r : r + "[]", s(e));
                         }),
                         !1
                     );
@@ -1194,9 +1147,8 @@
                     if (-1 !== l.indexOf(r)) throw Error("Circular reference detected in " + n.join("."));
                     l.push(r),
                         ye.forEach(r, function (r, i) {
-                            !0 ===
-                                (!(ye.isUndefined(r) || null === r) &&
-                                    o.call(t, r, ye.isString(i) ? i.trim() : i, n, p)) && e(r, n ? n.concat(i) : [i]);
+                            !0 === (!(ye.isUndefined(r) || null === r) && o.call(t, r, ye.isString(i) ? i.trim() : i, n, p)) &&
+                                e(r, n ? n.concat(i) : [i]);
                         }),
                         l.pop();
                 }
@@ -1307,10 +1259,7 @@
         _e = "undefined" != typeof window && "undefined" != typeof document,
         Ce = ("object" === ("undefined" == typeof navigator ? "undefined" : f(navigator)) && navigator) || void 0,
         Fe = _e && (!Ce || ["ReactNative", "NativeScript", "NS"].indexOf(Ce.product) < 0),
-        Ue =
-            "undefined" != typeof WorkerGlobalScope &&
-            self instanceof WorkerGlobalScope &&
-            "function" == typeof self.importScripts,
+        Ue = "undefined" != typeof WorkerGlobalScope && self instanceof WorkerGlobalScope && "function" == typeof self.importScripts,
         Be = (_e && window.location.href) || "http://localhost",
         De = u(
             u(
@@ -1380,20 +1329,11 @@
                     n = t.getContentType() || "",
                     o = n.indexOf("application/json") > -1,
                     i = ye.isObject(e);
-                if ((i && ye.isHTMLForm(e) && (e = new FormData(e)), ye.isFormData(e)))
-                    return o ? JSON.stringify(Ie(e)) : e;
-                if (
-                    ye.isArrayBuffer(e) ||
-                    ye.isBuffer(e) ||
-                    ye.isStream(e) ||
-                    ye.isFile(e) ||
-                    ye.isBlob(e) ||
-                    ye.isReadableStream(e)
-                )
+                if ((i && ye.isHTMLForm(e) && (e = new FormData(e)), ye.isFormData(e))) return o ? JSON.stringify(Ie(e)) : e;
+                if (ye.isArrayBuffer(e) || ye.isBuffer(e) || ye.isStream(e) || ye.isFile(e) || ye.isBlob(e) || ye.isReadableStream(e))
                     return e;
                 if (ye.isArrayBufferView(e)) return e.buffer;
-                if (ye.isURLSearchParams(e))
-                    return t.setContentType("application/x-www-form-urlencoded;charset=utf-8", !1), e.toString();
+                if (ye.isURLSearchParams(e)) return t.setContentType("application/x-www-form-urlencoded;charset=utf-8", !1), e.toString();
                 if (i) {
                     if (n.indexOf("application/x-www-form-urlencoded") > -1)
                         return (function (e, t) {
@@ -1443,8 +1383,7 @@
                         return JSON.parse(e);
                     } catch (e) {
                         if (o) {
-                            if ("SyntaxError" === e.name)
-                                throw me.from(e, me.ERR_BAD_RESPONSE, this, null, this.response);
+                            if ("SyntaxError" === e.name) throw me.from(e, me.ERR_BAD_RESPONSE, this, null, this.response);
                             throw e;
                         }
                     }
@@ -1496,8 +1435,7 @@
     function Ge(e, t, r, n, o) {
         return ye.isFunction(n)
             ? n.call(this, t, r)
-            : (o && (t = r),
-              ye.isString(t) ? (ye.isString(n) ? -1 !== t.indexOf(n) : ye.isRegExp(n) ? n.test(t) : void 0) : void 0);
+            : (o && (t = r), ye.isString(t) ? (ye.isString(n) ? -1 !== t.indexOf(n) : ye.isRegExp(n) ? n.test(t) : void 0) : void 0);
     }
     var Ke = (function (e, t) {
         function r(e) {
@@ -1515,8 +1453,7 @@
                                 var o = Je(t);
                                 if (!o) throw new Error("header name must be a non-empty string");
                                 var i = ye.findKey(n, o);
-                                (!i || void 0 === n[i] || !0 === r || (void 0 === r && !1 !== n[i])) &&
-                                    (n[i || t] = We(e));
+                                (!i || void 0 === n[i] || !0 === r || (void 0 === r && !1 !== n[i])) && (n[i || t] = We(e));
                             }
                             var i = function (e, t) {
                                 return ye.forEach(e, function (e, r) {
@@ -1524,11 +1461,7 @@
                                 });
                             };
                             if (ye.isPlainObject(e) || e instanceof this.constructor) i(e, t);
-                            else if (
-                                ye.isString(e) &&
-                                (e = e.trim()) &&
-                                !/^[-_a-zA-Z0-9^`|~,!#$%&'*+.]+$/.test(e.trim())
-                            )
+                            else if (ye.isString(e) && (e = e.trim()) && !/^[-_a-zA-Z0-9^`|~,!#$%&'*+.]+$/.test(e.trim()))
                                 i(
                                     (function (e) {
                                         var t,
@@ -1559,20 +1492,14 @@
                                     u = (function (e, t) {
                                         var r = ("undefined" != typeof Symbol && e[Symbol.iterator]) || e["@@iterator"];
                                         if (!r) {
-                                            if (
-                                                Array.isArray(e) ||
-                                                (r = O(e)) ||
-                                                (t && e && "number" == typeof e.length)
-                                            ) {
+                                            if (Array.isArray(e) || (r = O(e)) || (t && e && "number" == typeof e.length)) {
                                                 r && (e = r);
                                                 var n = 0,
                                                     o = function () {};
                                                 return {
                                                     s: o,
                                                     n: function () {
-                                                        return n >= e.length
-                                                            ? { done: !0 }
-                                                            : { done: !1, value: e[n++] };
+                                                        return n >= e.length ? { done: !0 } : { done: !1, value: e[n++] };
                                                     },
                                                     e: function (e) {
                                                         throw e;
@@ -1632,11 +1559,7 @@
                                     if (!t) return n;
                                     if (!0 === t)
                                         return (function (e) {
-                                            for (
-                                                var t, r = Object.create(null), n = /([^\s,;=]+)\s*(?:=\s*([^,;]+))?/g;
-                                                (t = n.exec(e));
-
-                                            )
+                                            for (var t, r = Object.create(null), n = /([^\s,;=]+)\s*(?:=\s*([^,;]+))?/g; (t = n.exec(e)); )
                                                 r[t[1]] = t[2];
                                             return r;
                                         })(n);
@@ -1759,11 +1682,7 @@
                     {
                         key: "concat",
                         value: function (e) {
-                            for (
-                                var t = new this(e), r = arguments.length, n = new Array(r > 1 ? r - 1 : 0), o = 1;
-                                o < r;
-                                o++
-                            )
+                            for (var t = new this(e), r = arguments.length, n = new Array(r > 1 ? r - 1 : 0), o = 1; o < r; o++)
                                 n[o - 1] = arguments[o];
                             return (
                                 n.forEach(function (e) {
@@ -1882,8 +1801,7 @@
             };
         return [
             function () {
-                for (var e = Date.now(), t = e - o, u = arguments.length, s = new Array(u), c = 0; c < u; c++)
-                    s[c] = arguments[c];
+                for (var e = Date.now(), t = e - o, u = arguments.length, s = new Array(u), c = 0; c < u; c++) s[c] = arguments[c];
                 t >= i
                     ? a(s, e)
                     : ((r = s),
@@ -1945,10 +1863,7 @@
         ot = De.hasStandardBrowserEnv
             ? (function (e, t) {
                   return function (r) {
-                      return (
-                          (r = new URL(r, De.origin)),
-                          e.protocol === r.protocol && e.host === r.host && (t || e.port === r.port)
-                      );
+                      return (r = new URL(r, De.origin)), e.protocol === r.protocol && e.host === r.host && (t || e.port === r.port);
                   };
               })(new URL(De.origin), De.navigator && /(msie|trident)/i.test(De.navigator.userAgent))
             : function () {
@@ -2073,10 +1988,7 @@
                 c &&
                     s.set(
                         "Authorization",
-                        "Basic " +
-                            btoa(
-                                (c.username || "") + ":" + (c.password ? unescape(encodeURIComponent(c.password)) : "")
-                            )
+                        "Basic " + btoa((c.username || "") + ":" + (c.password ? unescape(encodeURIComponent(c.password)) : ""))
                     ),
                 ye.isFormData(o))
             )
@@ -2183,10 +2095,7 @@
                     }
                     if (p && v.upload) {
                         var g = b(tt(p), 2);
-                        (o = g[0]),
-                            (a = g[1]),
-                            v.upload.addEventListener("progress", o),
-                            v.upload.addEventListener("loadend", a);
+                        (o = g[0]), (a = g[1]), v.upload.addEventListener("progress", o), v.upload.addEventListener("loadend", a);
                     }
                     (s.cancelToken || s.signal) &&
                         ((n = function (t) {
@@ -2464,8 +2373,7 @@
                   })()),
         Et = function (e) {
             try {
-                for (var t = arguments.length, r = new Array(t > 1 ? t - 1 : 0), n = 1; n < t; n++)
-                    r[n - 1] = arguments[n];
+                for (var t = arguments.length, r = new Array(t > 1 ? t - 1 : 0), n = 1; n < t; n++) r[n - 1] = arguments[n];
                 return !!e.apply(void 0, r);
             } catch (e) {
                 return !1;
@@ -2532,11 +2440,7 @@
                                         e.next = 9;
                                         break;
                                     }
-                                    return (
-                                        (r = new Request(De.origin, { method: "POST", body: t })),
-                                        (e.next = 8),
-                                        r.arrayBuffer()
-                                    );
+                                    return (r = new Request(De.origin, { method: "POST", body: t })), (e.next = 8), r.arrayBuffer();
                                 case 8:
                                 case 15:
                                     return e.abrupt("return", e.sent.byteLength);
@@ -2571,10 +2475,7 @@
                         for (;;)
                             switch ((e.prev = e.next)) {
                                 case 0:
-                                    return (
-                                        (n = ye.toFiniteNumber(t.getContentLength())),
-                                        e.abrupt("return", null == n ? Rt(r) : n)
-                                    );
+                                    return (n = ye.toFiniteNumber(t.getContentLength())), e.abrupt("return", null == n ? Rt(r) : n);
                                 case 2:
                                 case "end":
                                     return e.stop();
@@ -2591,40 +2492,7 @@
             (function () {
                 var e = h(
                     s().mark(function e(t) {
-                        var r,
-                            n,
-                            o,
-                            i,
-                            a,
-                            c,
-                            f,
-                            l,
-                            p,
-                            h,
-                            d,
-                            v,
-                            y,
-                            m,
-                            g,
-                            w,
-                            E,
-                            O,
-                            S,
-                            x,
-                            R,
-                            T,
-                            k,
-                            j,
-                            A,
-                            P,
-                            L,
-                            N,
-                            _,
-                            C,
-                            F,
-                            U,
-                            B,
-                            D;
+                        var r, n, o, i, a, c, f, l, p, h, d, v, y, m, g, w, E, O, S, x, R, T, k, j, A, P, L, N, _, C, F, U, B, D;
                         return s().wrap(
                             function (e) {
                                 for (;;)
@@ -2669,9 +2537,7 @@
                                                 break;
                                             }
                                             (S = new Request(n, { method: "POST", body: i, duplex: "half" })),
-                                                ye.isFormData(i) &&
-                                                    (x = S.headers.get("content-type")) &&
-                                                    d.setContentType(x),
+                                                ye.isFormData(i) && (x = S.headers.get("content-type")) && d.setContentType(x),
                                                 S.body &&
                                                     ((R = rt(O, tt(nt(p)))),
                                                     (T = b(R, 2)),
@@ -2801,18 +2667,11 @@
                     var t = b(e, 2),
                         r = t[0],
                         n = t[1];
-                    return (
-                        "adapter ".concat(r, " ") +
-                        (!1 === n ? "is not supported by the environment" : "is not available in the build")
-                    );
+                    return "adapter ".concat(r, " ") + (!1 === n ? "is not supported by the environment" : "is not available in the build");
                 });
                 throw new me(
                     "There is no suitable adapter to dispatch the request " +
-                        (n
-                            ? u.length > 1
-                                ? "since :\n" + u.map(At).join("\n")
-                                : " " + At(u[0])
-                            : "as no adapter specified"),
+                        (n ? (u.length > 1 ? "since :\n" + u.map(At).join("\n") : " " + At(u[0])) : "as no adapter specified"),
                     "ERR_NOT_SUPPORT"
                 );
             }
@@ -2826,8 +2685,7 @@
             Nt(e),
             (e.headers = Ve.from(e.headers)),
             (e.data = Xe.call(e, e.transformRequest)),
-            -1 !== ["post", "put", "patch"].indexOf(e.method) &&
-                e.headers.setContentType("application/x-www-form-urlencoded", !1),
+            -1 !== ["post", "put", "patch"].indexOf(e.method) && e.headers.setContentType("application/x-www-form-urlencoded", !1),
             Lt(e.adapter || Me.adapter)(e).then(
                 function (t) {
                     return Nt(e), (t.data = Xe.call(e, e.transformResponse, t)), (t.headers = Ve.from(t.headers)), t;
@@ -2863,8 +2721,7 @@
             return (
                 t &&
                     !Ut[o] &&
-                    ((Ut[o] = !0),
-                    console.warn(n(o, " has been deprecated since v" + t + " and will be removed in the near future"))),
+                    ((Ut[o] = !0), console.warn(n(o, " has been deprecated since v" + t + " and will be removed in the near future"))),
                 !e || e(r, o, i)
             );
         };
@@ -2912,20 +2769,14 @@
                                                     case 3:
                                                         return e.abrupt("return", e.sent);
                                                     case 6:
-                                                        if (
-                                                            ((e.prev = 6), (e.t0 = e.catch(0)), e.t0 instanceof Error)
-                                                        ) {
+                                                        if (((e.prev = 6), (e.t0 = e.catch(0)), e.t0 instanceof Error)) {
                                                             (n = {}),
-                                                                Error.captureStackTrace
-                                                                    ? Error.captureStackTrace(n)
-                                                                    : (n = new Error()),
+                                                                Error.captureStackTrace ? Error.captureStackTrace(n) : (n = new Error()),
                                                                 (o = n.stack ? n.stack.replace(/^.+\n/, "") : "");
                                                             try {
                                                                 e.t0.stack
                                                                     ? o &&
-                                                                      !String(e.t0.stack).endsWith(
-                                                                          o.replace(/^.+\n.+\n/, "")
-                                                                      ) &&
+                                                                      !String(e.t0.stack).endsWith(o.replace(/^.+\n.+\n/, "")) &&
                                                                       (e.t0.stack += "\n" + o)
                                                                     : (e.t0.stack = o);
                                                             } catch (e) {}
@@ -2968,11 +2819,7 @@
                                     (ye.isFunction(o)
                                         ? (t.paramsSerializer = { serialize: o })
                                         : Bt.assertOptions(o, { encode: Dt.function, serialize: Dt.function }, !0)),
-                                Bt.assertOptions(
-                                    t,
-                                    { baseUrl: Dt.spelling("baseURL"), withXsrfToken: Dt.spelling("withXSRFToken") },
-                                    !0
-                                ),
+                                Bt.assertOptions(t, { baseUrl: Dt.spelling("baseURL"), withXsrfToken: Dt.spelling("withXSRFToken") }, !0),
                                 (t.method = (t.method || this.defaults.method || "get").toLowerCase());
                             var a = i && ye.merge(i.common, i[t.method]);
                             i &&
@@ -2995,11 +2842,7 @@
                                 p = 0;
                             if (!s) {
                                 var h = [_t.bind(this), void 0];
-                                for (
-                                    h.unshift.apply(h, u), h.push.apply(h, f), l = h.length, c = Promise.resolve(t);
-                                    p < l;
-
-                                )
+                                for (h.unshift.apply(h, u), h.push.apply(h, f), l = h.length, c = Promise.resolve(t); p < l; )
                                     c = c.then(h[p++], h[p++]);
                                 return c;
                             }
@@ -3098,11 +2941,7 @@
                         {
                             key: "subscribe",
                             value: function (e) {
-                                this.reason
-                                    ? e(this.reason)
-                                    : this._listeners
-                                      ? this._listeners.push(e)
-                                      : (this._listeners = [e]);
+                                this.reason ? e(this.reason) : this._listeners ? this._listeners.push(e) : (this._listeners = [e]);
                             },
                         },
                         {

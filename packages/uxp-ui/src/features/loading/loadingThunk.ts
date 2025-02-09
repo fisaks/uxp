@@ -1,15 +1,7 @@
 import { AsyncThunkPayloadCreator, createAsyncThunk } from "@reduxjs/toolkit";
 import { AxiosUtil } from "@uxp/common";
 import { clearError, setError } from "../error/errorSlice";
-import {
-    clearLoading,
-    clearProcessed,
-    endAction,
-    LoadingState,
-    setLoading,
-    setProcessed,
-    startAction,
-} from "../loading/loadingSlice";
+import { clearLoading, clearProcessed, endAction, LoadingState, setLoading, setProcessed, startAction } from "../loading/loadingSlice";
 
 export type LoadingKey =
     | "user/whoami"

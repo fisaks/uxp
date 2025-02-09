@@ -1,5 +1,5 @@
-import React from 'react';
-import { Box, Typography, useTheme, TextField } from '@mui/material';
+import React from "react";
+import { Box, Typography, useTheme, TextField } from "@mui/material";
 
 interface ReadOnlyFieldProps {
     label: string;
@@ -12,13 +12,13 @@ const ReadOnlyField: React.FC<ReadOnlyFieldProps> = ({ label, value }) => {
     return (
         <Box
             sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
                 height: 56, // Matches default TextField height
                 border: `1px solid ${theme.palette.divider}`,
-                borderRadius: '4px',
-                padding: '10px',
+                borderRadius: "4px",
+                padding: "10px",
                 backgroundColor: theme.palette.background.paper,
             }}
         >
@@ -26,7 +26,7 @@ const ReadOnlyField: React.FC<ReadOnlyFieldProps> = ({ label, value }) => {
                 {label}
             </Typography>
             <Typography variant="body1" color="text.primary" sx={{ mt: 1 }}>
-                {value || '—'} {/* Show a dash if the value is empty */}
+                {value || "—"} {/* Show a dash if the value is empty */}
             </Typography>
         </Box>
     );

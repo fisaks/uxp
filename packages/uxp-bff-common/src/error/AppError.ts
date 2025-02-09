@@ -10,13 +10,7 @@ export class AppError extends Error {
     constructor(code: ErrorCode, message?: string, params?: Record<string, string | number>);
     constructor(code: ErrorCode, message?: string, params?: Record<string, string | number>, originalError?: Error);
     constructor(statusCode: number, code: ErrorCode, message?: string, params?: Record<string, string | number>);
-    constructor(
-        statusCode: number,
-        code: ErrorCode,
-        message?: string,
-        params?: Record<string, string | number>,
-        originalError?: Error
-    );
+    constructor(statusCode: number, code: ErrorCode, message?: string, params?: Record<string, string | number>, originalError?: Error);
 
     // Unified implementation
     constructor(
@@ -38,8 +32,7 @@ export class AppError extends Error {
             super(codeOrMessage as string);
             this.statusCode = 500;
             this.code = statusCodeOrCode as ErrorCode;
-            this.params =
-                messageOrParams instanceof Error ? undefined : (messageOrParams as Record<string, string | number>);
+            this.params = messageOrParams instanceof Error ? undefined : (messageOrParams as Record<string, string | number>);
             this.originalError = messageOrParams instanceof Error ? messageOrParams : (paramsOrError as Error);
         }
 

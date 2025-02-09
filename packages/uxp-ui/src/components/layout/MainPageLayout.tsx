@@ -17,10 +17,7 @@ export const MainPageLayout: React.FC<PageWrapperProps> = ({ children, pageType,
 
     const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
 
-    const haveLeftSideBar = useMemo(
-        () => !!(pageType === "leftNavigation" && leftSideBar?.menuItems?.length),
-        [pageType, leftSideBar]
-    );
+    const haveLeftSideBar = useMemo(() => !!(pageType === "leftNavigation" && leftSideBar?.menuItems?.length), [pageType, leftSideBar]);
 
     return (
         <>
