@@ -12,7 +12,7 @@ import { Editor, useEditor, UseEditorOptions } from "@tiptap/react";
 
 import StarterKit from "@tiptap/starter-kit";
 import { EditorView } from "prosemirror-view"; //  Import directly from ProseMirror
-import { DependencyList, useRef } from "react";
+import React, { DependencyList, useRef } from "react";
 import { Indent } from "../extensions/Indent";
 import { LineHeight } from "../extensions/LineHeight";
 import { ResizableImage } from "../extensions/ResizableImage";
