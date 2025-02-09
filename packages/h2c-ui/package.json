@@ -25,6 +25,7 @@
         "@reduxjs/toolkit": "^2.3.0",
         "@tiptap/core": "^2.11.5",
         "@tiptap/extension-bullet-list": "^2.11.5",
+        "@tiptap/extension-focus": "^2.11.5",
         "@tiptap/extension-heading": "^2.11.5",
         "@tiptap/extension-image": "^2.11.5",
         "@tiptap/extension-list-item": "^2.11.5",
@@ -35,7 +36,6 @@
         "@tiptap/extension-table-row": "^2.11.5",
         "@tiptap/extension-text-align": "^2.11.5",
         "@tiptap/extension-underline": "^2.11.5",
-        "@tiptap/extension-focus": "^2.11.5",
         "@tiptap/react": "^2.11.5",
         "@tiptap/starter-kit": "^2.11.5",
         "@uxp/common": "workspace:*",
@@ -53,6 +53,7 @@
         "react-dom": "^18.0.0"
     },
     "devDependencies": {
+        "@types/node": "^22.13.1",
         "@types/react": "^18.3.12",
         "@types/redux-logger": "^3.0.13",
         "html-webpack-inject-attributes-plugin": "^1.0.6",

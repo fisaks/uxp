@@ -38,6 +38,7 @@
         "react-dom": "^18.0.0"
     },
     "devDependencies": {
+        "@types/node": "^22.13.1",
         "@types/react": "^18.3.12",
         "@types/redux-logger": "^3.0.13",
         "html-webpack-inject-attributes-plugin": "^1.0.6",
