@@ -1,4 +1,5 @@
 import axios from "axios";
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 const axiosInstance = axios.create({
     baseURL: "/api", // Adjust baseURL as needed

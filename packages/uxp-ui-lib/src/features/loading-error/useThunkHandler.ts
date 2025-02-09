@@ -9,6 +9,7 @@ import { useEffect, useRef, useState } from "react";
  * @param successDuration - How long to keep the `loaded` flag true after success (in ms).
  * @returns [run, loading, error, loaded] - A function to execute the thunk and its states.
  */
+ // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const useThunkHandler = <Returned, Payload = void, RootState = any>(
     thunk: AsyncThunk<Returned, Payload, {}>,
     dispatch: ThunkDispatch<RootState, unknown, UnknownAction>,

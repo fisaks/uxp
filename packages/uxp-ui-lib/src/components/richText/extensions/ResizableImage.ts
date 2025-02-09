@@ -11,7 +11,7 @@ declare module "@tiptap/core" {
         };
     }
 }
-
+ // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const ResizableImage = Image.extend<ImageOptions & { basePath: string }, any>({
     addOptions() {
         return {

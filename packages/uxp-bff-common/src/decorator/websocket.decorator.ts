@@ -114,10 +114,6 @@ type RegisterWebSocketHandlersArgs = {
     dataSource?: DataSource;
     handlers: HandlerConstructor[];
 };
-type WebSocketMessage = {
-    action: string;
-    payload: Record<string, unknown>;
-};
 
 /**
  * Register WebSocket handlers with Fastify

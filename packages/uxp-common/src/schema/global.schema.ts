@@ -31,6 +31,7 @@ export const ValidateGlobalConfigValue: KeywordDefinition = {
     modifying: false,
     async: false,
     errors: true,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     validate: (_schema: any, data: { rootData: GlobalConfigPayload }) => {
         const { key, value } = data.rootData;
         console.log("data", data);

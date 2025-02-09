@@ -6,7 +6,10 @@ export const fetchTemplate = createAsyncThunk("template/fetchTemplate", async (_
     try {
         const response = await axios.get(`${getBaseUrlApi()}/template`);
         return response.data;
-    } catch (error: any) {
-        return rejectWithValue(error.response.data);
+    } catch (error) {
+        if (axios.isAxiosError(error)) {
+            return rejectWithValue(error.response?.data ?? "Unknown error");
+        }
+        return rejectWithValue("An unexpected error occurred");
     }
 });

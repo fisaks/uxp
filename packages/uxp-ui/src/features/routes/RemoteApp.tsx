@@ -14,7 +14,7 @@ declare global {
         };
     }
 }
-
+ // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const fetchPromises: Record<string, Promise<any>> = {};
 
 const RemoteApp: React.FC<RemoteAppProps> = ({ contentUuid, basePath }) => {

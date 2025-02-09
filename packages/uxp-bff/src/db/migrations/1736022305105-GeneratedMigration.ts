@@ -1,10 +1,8 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
-import { PageEntity } from "../entities/PageEntity";
-import { PageAppsEntity } from "../entities/PageAppsEntity";
-import { RouteEntity } from "../entities/RouteEntity";
 import { AppEntity } from "../entities/AppEntity";
-import { TagEntity } from "../entities/TagEntity";
-import { RouteTagsEntity } from "../entities/RouteTagsEntity";
+import { PageAppsEntity } from "../entities/PageAppsEntity";
+import { PageEntity } from "../entities/PageEntity";
+import { RouteEntity } from "../entities/RouteEntity";
 
 export class GeneratedMigration1736022305105 implements MigrationInterface {
     name = "GeneratedMigration1736022305105";

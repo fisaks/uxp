@@ -10,6 +10,7 @@ export const FilterPanel = <T,>({
 }: {
     config: SearchConfig<T>;
     filters: SearchFilterType<T>;
+     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     handleFilterChange: (key: keyof SearchFilterType<T>, value: any) => void;
 }) => (
     <Grid container spacing={2} sx={{ mb: 2 }}>

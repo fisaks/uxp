@@ -7,6 +7,7 @@ import { AppEntity } from "./db/entities/AppEntity";
 
 export function registerRemoteWebSocketHandler({ fastify, dataSource }: { fastify: FastifyInstance; dataSource: DataSource }) {
     fastify.get("/ws/:appid", { websocket: true }, async (clientSocket, request) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const appId = (request.params as any)?.appid;
         const app = await getRemoteApp(dataSource, appId);
 

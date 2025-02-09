@@ -18,5 +18,5 @@ export class CreateMigration1735424119328 implements MigrationInterface {
         pageRepository.delete({});
     }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {}
+    public async down(_queryRunner: QueryRunner): Promise<void> {}
 }

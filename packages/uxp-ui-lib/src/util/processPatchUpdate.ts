@@ -1,6 +1,6 @@
 import { debounce } from "@mui/material";
 import { AsyncThunk } from "@reduxjs/toolkit";
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
 //export type UpdateThunk<T> = (payload: T) => Promise<any>;
 export type UpdateThunk<T> = AsyncThunk<any, T, any>;
 type CreateDebouncedUpdaterArgs<T> = {

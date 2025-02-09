@@ -1,5 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { LockUserResponse, UnlockUserReponse, UpdateUserRolesResponse, UserAdminView, UserPubllic } from "@uxp/common";
+import { LockUserResponse, UnlockUserReponse, UpdateUserRolesResponse, UserAdminView } from "@uxp/common";
 import { lockUser, searchUsers, unlockUser, updateUserRoles, updateUserTokenVersion } from "./adminUserManagementThunk";
 //adminUserManagementSlice
 type AdminUserManagementState = {

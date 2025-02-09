@@ -1,6 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { GlobalConfigData, LatestGlobalConfigResponse, PatchGlobalConfigResponse } from "@uxp/common";
-import { DateTime } from "luxon";
 import { fetchLatestGlobalSettings, patchGlobalSetting } from "./globalConfigThunk";
 
 type GlobalConfigState = {

@@ -16,7 +16,7 @@ interface ValidateFieldOptions<TFormData> {
     value: TFormData[keyof TFormData]; // Field value to validate
     errorMessages?: ValidationErrorMessages<TFormData>;
 }
-
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const validateField = <TFormData extends Record<string, any>>({
     validate,
     formData,

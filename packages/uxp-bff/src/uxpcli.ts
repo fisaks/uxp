@@ -6,6 +6,7 @@ import { UserRole } from "packages/uxp-common/src";
 import { DataSource, Repository } from "typeorm";
 import { BCRYPT_SALT_ROUNDS } from "./config/constant";
 import { User } from "./db/entities/User";
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 let AppDataSource: DataSource;
 const program = new Command();

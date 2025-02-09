@@ -50,6 +50,7 @@ import { getRoutes } from "./route.decorator";
 import { getWebSocketActions } from "./websocket.decorator";
 
 // Centralized Registry for Handlers
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type HandlerConstructor<T = any> = new (...args: any[]) => T;
 
 export const HandlerRegistry = {

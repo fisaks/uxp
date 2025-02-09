@@ -17,7 +17,7 @@ const selectRoutesByTagName = (tagName: string) =>
             .filter((route) => tagOrder.includes(route.identifier))
             .sort((a, b) => tagOrder.indexOf(a.identifier) - tagOrder.indexOf(b.identifier));
     });
-
+ // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const mapRoutesToLinks = (routes: any[]) =>
     routes.map((route) => ({
         link: route.link,

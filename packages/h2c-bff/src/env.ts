@@ -23,6 +23,7 @@ function validateEnv(vars: EnvVariables): EnvVariables {
 
     try {
         fs.ensureDirSync(vars.H2C_FILE_UPLOAD_PATH);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any        
     } catch (error: any) {
         throw new Error(`Failed to create directory at ${vars.H2C_FILE_UPLOAD_PATH}: ${error.message}`);
     }

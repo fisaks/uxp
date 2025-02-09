@@ -47,7 +47,7 @@ declare module "fastify" {
         uxpRaw?: boolean;
     }
 }
-
+ // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function setRaw(req: FastifyRequest, _payload: any, done: any) {
     req["uxpRaw"] = true;
     done();

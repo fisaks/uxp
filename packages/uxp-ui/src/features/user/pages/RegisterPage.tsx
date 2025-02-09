@@ -1,12 +1,12 @@
 import { Link, Typography } from "@mui/material";
-import { RegisterPayload, RegisterResponse, RegisterSchema, ValidationErrorMessages } from "@uxp/common";
-import { handleThunkResult } from "../../../utils/thunkUtils";
+import { RegisterPayload, RegisterSchema, ValidationErrorMessages } from "@uxp/common";
+import { CenteredBox, ErrorTile, FormFieldErrors, FormFieldLabel, FormFieldRefs, LoadingButton, ValidatedTextField } from "@uxp/ui-lib";
 import React, { useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { Link as RouterLink, useNavigate } from "react-router-dom"; // Import for routing
-import { ErrorTile, ValidatedTextField, CenteredBox, FormFieldErrors, FormFieldLabel, FormFieldRefs, LoadingButton } from "@uxp/ui-lib";
 import { ServerErrorTile } from "../../../components";
 import { useAppDispatch } from "../../../hooks";
+import { handleThunkResult } from "../../../utils/thunkUtils";
 import { compileSchema, validateField } from "../../../utils/validationUtils"; // Utility for schema compilation
 import { selectError } from "../../error/errorSelectors";
 import { clearError } from "../../error/errorSlice";
@@ -81,6 +81,7 @@ const RegisterPage: React.FC = () => {
             setFieldErrors((prev) => ({ ...prev, [name]: error }));
         } else {
             setFieldErrors((prev) => {
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 const { [name]: _, ...rest } = prev;
                 return rest;
             });

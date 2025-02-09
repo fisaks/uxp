@@ -36,7 +36,7 @@ fastify.register(fastifyMultipart, {
 });
 
 if (!IsProd) {
-    fastify.addHook("preHandler", async (request, reply) => {
+    fastify.addHook("preHandler", async (request, _reply) => {
         request.log.info({ body: request.body }, "Incoming request payload");
     });
 }

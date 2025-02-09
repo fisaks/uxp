@@ -24,7 +24,7 @@ interface ActionWrapperProps<Returned, Payload, RootState> {
     successDuration?: number;
     children: React.ReactNode;
 }
-
+ // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const ActionWrapper = <Returned, Payload = void, RootState = any>({
     thunk,
     dispatch,

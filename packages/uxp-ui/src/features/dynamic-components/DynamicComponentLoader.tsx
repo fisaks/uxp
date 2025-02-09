@@ -6,6 +6,7 @@ import DynamicComponentErrorBoundary from "./DynamicComponentErrorBoundary";
 interface DynamicComponentLoaderProps {
     componentName: string;
     basePath: string | undefined;
+     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     props?: Record<string, any | undefined>;
 }
 

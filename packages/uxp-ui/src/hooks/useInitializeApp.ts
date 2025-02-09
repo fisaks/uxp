@@ -7,7 +7,6 @@ import { selectIsLoggedInUser } from "../features/user/userSelectors";
 import { whoami } from "../features/user/userThunks";
 import { handleThunkResult } from "../utils/thunkUtils";
 import { useAppDispatch } from "./useAppDispatch";
-import { unwrapResult } from "@reduxjs/toolkit";
 
 export const useInitializeApp = () => {
     const dispatch = useAppDispatch();

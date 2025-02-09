@@ -12,7 +12,7 @@ fastify.register(jwtPlugin);
 
 // Log incoming request payloads
 
-fastify.addHook("preHandler", async (request, reply) => {
+fastify.addHook("preHandler", async (request, _reply) => {
     request.log.info({ body: request.body }, "Incoming request payload");
 });
 

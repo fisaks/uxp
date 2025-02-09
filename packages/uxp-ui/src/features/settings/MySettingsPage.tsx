@@ -1,14 +1,14 @@
 import { FormControlLabel, Paper, Radio, RadioGroup, Typography } from "@mui/material";
 
+import { UserSettingsPayload } from "@uxp/common";
+import { CenteredBox, LoadingButton } from "@uxp/ui-lib";
 import React, { useState } from "react";
 import { useSelector } from "react-redux";
-import { CenteredBox, LoadingButton } from "@uxp/ui-lib";
 import { useAppDispatch } from "../../hooks";
 import { selectIsLoading, selectIsProcessed } from "../loading/loadingSelectors";
 import { selectCurrentUser } from "../user/userSelectors";
 import { selectMySetting } from "./mySettingSelector";
 import { updateMySettings } from "./mySettingThunk";
-import { UserSettingsPayload } from "@uxp/common";
 
 type SettingsDataProps = {
     staleData: UserSettingsPayload;
@@ -18,7 +18,6 @@ const settingsData = [
     {
         title: "Theme",
         content: ({ staleData, setStaleData }: SettingsDataProps) => {
-            const [themeMode, setThemeMode] = useState<string | undefined>();
             const handleThemeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
                 setStaleData((data) => ({ ...data, theme: event.target.value as "light" | "dracula" }));
                 //setThemeMode(event.target.value as "light" | "dracula");

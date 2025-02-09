@@ -1,22 +1,21 @@
-import React from "react";
 import { ExpandMore } from "@mui/icons-material";
 import { Box, Button, Collapse, debounce, Grid, TextField } from "@mui/material";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterLuxon } from "@mui/x-date-pickers/AdapterLuxon";
 import { SearchConfig, SearchFilterType, SearchSortType } from "@uxp/common";
-import { useCallback, useEffect, useImperativeHandle, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useImperativeHandle, useMemo, useState } from "react";
 import { FilterPanel } from "./FilterPanel";
 import { PageSizeSelector } from "./PageSizeSelector";
 import { SortingPanel } from "./SortingPanel";
 
-export type SearchRef<T> = {
+export type SearchRef = {
     triggerSearch: () => void; // Method exposed to parent components
 };
 
 type SearchProps<T> = {
     config: SearchConfig<T>;
     onSearch: (filters: SearchFilterType<T>, sort: SearchSortType<T>[], pageSize: number) => void;
-    searchRef?: React.Ref<SearchRef<T>>;
+    searchRef?: React.Ref<SearchRef>;
 };
 
 export const SearchComponent = <T,>({ config, onSearch, searchRef }: SearchProps<T>) => {
@@ -24,7 +23,7 @@ export const SearchComponent = <T,>({ config, onSearch, searchRef }: SearchProps
     const [sortOptions, setSortOptions] = useState<SearchSortType<T>[]>(config.defaultSort ?? []);
     const [pageSize, setPageSize] = useState<number>(config.deafultPageSize ?? 10);
     const [isAdvancedFiltersVisible, setIsAdvancedFiltersVisible] = useState(false);
-
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleFilterChange = useCallback((key: keyof SearchFilterType<T>, value: any) => {
         setFilters((prev) => ({ ...prev, [key]: value }));
     }, []);

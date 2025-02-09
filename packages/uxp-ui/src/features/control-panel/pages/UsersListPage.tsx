@@ -32,10 +32,10 @@ const UsersListPage: React.FC = () => {
     const pagination = useSelector(selectUserSearchPagination);
     const isLoadingLatest = useSelector(selectIsLoading("user/search"));
     const theme = useTheme();
-    const searchRef = useRef<SearchRef<UserAdminView>>(null);
+    const searchRef = useRef<SearchRef>(null);
 
     useEffect(() => {
-        const a = dispatch(searchUsers(initialRequest));
+        dispatch(searchUsers(initialRequest));
     }, [dispatch]);
 
     const handlePageChange = (_event: React.ChangeEvent<unknown>, page: number) => {
@@ -67,7 +67,7 @@ const UsersListPage: React.FC = () => {
         (uuid: string, onDone: () => void) => {
             dispatch(unlockUser({ uuid })).then(
                 handleThunkResult(
-                    () => {},
+                    () => { },
                     undefined,
                     () => {
                         onDone();
@@ -82,7 +82,7 @@ const UsersListPage: React.FC = () => {
         (uuid: string, onDone: () => void) => {
             dispatch(lockUser({ uuid })).then(
                 handleThunkResult(
-                    () => {},
+                    () => { },
                     undefined,
                     () => {
                         onDone();
@@ -96,7 +96,7 @@ const UsersListPage: React.FC = () => {
         (uuid: string, onDone: () => void) => {
             dispatch(updateUserTokenVersion({ uuid })).then(
                 handleThunkResult(
-                    () => {},
+                    () => { },
                     undefined,
                     () => {
                         onDone();

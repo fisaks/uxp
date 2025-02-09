@@ -203,21 +203,4 @@ export class HouseController {
         return reply.code(204).send();
     }
 
-    @Route("post", "/upload/:uuid", { authenticate: true, roles: ["user"] })
-    @UseQueryRunner()
-    async upload(req: FastifyRequest<{ Params: { uuid: string } }>, reply: FastifyReply, queryRunner: QueryRunner) {
-        const { uuid } = req.params;
-        const data = await req.file();
-        if (!data) {
-            return reply.code(400).send({ error: "No file uploaded" });
-        }
-
-        AppLogger.info(req, { message: `Uploaded file ${data.filename} for uuid ${uuid} ` });
-        const buf = await data.toBuffer();
-
-        AppLogger.info(req, { message: `Uploaded file length ${buf.length}` });
-
-        const fileUrl = `/uploads/${uuid}`;
-        return { url: fileUrl };
-    }
 }

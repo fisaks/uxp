@@ -35,12 +35,15 @@ export const initApplication = (documentRoot: ShadowRoot | Document) => {
 
     // Create a React root
     // Store root globally to avoid duplicate createRoot calls
+    
+    /* eslint-disable @typescript-eslint/no-explicit-any */
     const globalRootKey = "__UXP_APP_ROOT__";
     if (!(globalRootKey in rootElement)) {
         (rootElement as any)[globalRootKey] = ReactDOM.createRoot(rootElement);
     }
 
     const root = (rootElement as any)[globalRootKey];
+    /* eslint-enable @typescript-eslint/no-explicit-any */
     //const root = ReactDOM.createRoot(rootElement);
     //let hotRoot=root;
 

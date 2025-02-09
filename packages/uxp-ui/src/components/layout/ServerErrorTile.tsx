@@ -26,7 +26,6 @@ type ServerErrorTileProps = {
 
 export const ServerErrorTile: React.FC<ServerErrorTileProps> = ({ apiError }) => {
     const errorCodes = useMemo(() => apiError.errors.map((e) => e.code), [apiError]);
-    const hasErrors = errorCodes.length > 0;
 
     return (
         <Alert

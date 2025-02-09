@@ -72,6 +72,7 @@ export class GlobalConfigController {
 
         const defaultConfig: GlobalConfigData = { siteName: "Unified Experience Platform" };
         const newConfig = new GlobalConfigEntity({
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             config: { ...(latestConfig?.config ?? defaultConfig), [key]: value as any },
             updatedBy: loggedInUser!.username,
             updatedAt: DateTime.now(),

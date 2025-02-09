@@ -5,7 +5,7 @@ import { BrowserRouter } from "react-router-dom";
 import HeaderMenu from "./features/header/components/HeaderMenu";
 import UxpRoutes from "./features/routes/UxpRoutes";
 import { ThemeWrapper } from "./features/theme/ThemeWrapper";
-import { useAppDispatch, useInitializeApp } from "./hooks";
+import { useInitializeApp } from "./hooks";
 
 const UxpAppLayot: React.FC = () => {
     return (

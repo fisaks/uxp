@@ -35,13 +35,14 @@ export const patchHouseField = createAsyncThunk(
 
 export const patchBuildingField = createAsyncThunk(
     "house/patchBuildingField",
-    async ({ uuid, field, value }: { uuid: string; field: string; value: any }, { rejectWithValue }) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    async ({ uuid, field, value }: { uuid: string; field: string; value: any }) => {
         const response = await axios.patch<House>(`${getBaseUrlApi()}/house/buildings/${uuid}`, { [field]: value });
         return response.data;
     }
 );
 
-export const uploadFile = createAsyncThunk("file", async ({ uuid, file }: { uuid: string; file: File }, { rejectWithValue }) => {
+export const uploadFile = createAsyncThunk("file", async ({ uuid, file }: { uuid: string; file: File }) => {
     const formData = new FormData();
 
     formData.append("type", "attachment");

@@ -1,5 +1,5 @@
+import { Box } from "@mui/material";
 import React from "react";
-import { Box, useTheme } from "@mui/material";
 import * as styles from "./ImageDisplay.module.css"; // Importing CSS module
 import { getBaseUrlStatic } from "./config";
 

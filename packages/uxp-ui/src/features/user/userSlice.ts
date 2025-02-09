@@ -23,7 +23,7 @@ const userSlice = createSlice({
             .addCase(whoami.fulfilled, (state, action) => {
                 state.user = action.payload?.user;
             })
-            .addCase(logout.fulfilled, (state, action) => {
+            .addCase(logout.fulfilled, (state) => {
                 state.user = undefined;
             });
     },

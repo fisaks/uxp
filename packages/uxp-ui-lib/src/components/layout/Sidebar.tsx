@@ -1,5 +1,5 @@
 import { Drawer, List, ListItem, ListItemText, Toolbar } from "@mui/material";
-import React, { Ref, RefObject } from "react";
+import React, { RefObject } from "react";
 
 export type SidebarMenuItems = {
     label: string;
@@ -34,8 +34,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isDesktop, sidebarOpen, toggle
                     ...(isDesktop
                         ? {}
                         : {
-                              position: "fixed",
-                              top: 0,
+                            position: "fixed",
+                            top: 0,
                               left: 0,
                               height: "100%",
                               zIndex: (theme) => theme.zIndex.drawer + 1,

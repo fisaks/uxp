@@ -16,6 +16,7 @@ type ActionIconButtonProps<Returned, Payload, RootState> = {
 
     children: React.ReactNode;
 };
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const ActionIconButton = <Returned, Payload = void, RootState = any>({
     thunk,
     dispatch,

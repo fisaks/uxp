@@ -10,6 +10,7 @@ type DebouncedPatchTextFieldProps<T> = {
     field: keyof T;
     value?: string;
     disabled?: boolean;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     patchAction: (payload: { entityId: string; field: keyof T; value?: string }) => any; // Generic patch action
     dispatch: (action: ReturnType<DebouncedPatchTextFieldProps<T>["patchAction"]>) => {
         unwrap: () => ReturnType<DebouncedPatchTextFieldProps<T>["patchAction"]>["unwrap"];
