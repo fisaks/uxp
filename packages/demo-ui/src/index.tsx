@@ -4,7 +4,7 @@ import React from "react";
 import ReactDOM from "react-dom/client"; // React 18's new API
 import { Provider } from "react-redux";
 import { createStore } from "./app/store";
-import { getAppOption, initializeConfig } from "./config";
+import { getAppOption, getUxpAppIdentifier, getUxpContentId, initializeConfig } from "./config";
 import DemoApp from "./DemoApp";
 import DemoView from "./DemoView";
 const styleInsert = require("../../tools/src/insert-function.cjs");
@@ -28,11 +28,14 @@ export const initApplication = (documentRoot: ShadowRoot | Document) => {
         throw new Error("Root element not found. Ensure you have an element with id 'root' in your HTML.");
     }
     __webpack_public_path__ = initializeConfig(rootElement) ?? "";
-    console.log("public path", __webpack_public_path__);
+   
     styleInsert.init(container);
     // Create a custom Emotion cache
+    const contentId = getUxpContentId();
+    const appIdentifier = getUxpAppIdentifier();
+    const shadowKey = `${appIdentifier}-${contentId}`.toLowerCase().replace(/[^a-z-]/g, '');
     const shadowCache = createCache({
-        key: `shadow`,
+        key: shadowKey,
         container: container,
     });
 
@@ -54,7 +57,7 @@ export const initApplication = (documentRoot: ShadowRoot | Document) => {
     //let hotRoot=root;
     const appOption = getAppOption<{ main?: keyof typeof APPLICATIONS }>()
     const main: keyof typeof APPLICATIONS = appOption?.main ?? 'DemoApp';
-       
+
 
     const App = APPLICATIONS[main];
     // Render the App component

@@ -14,7 +14,7 @@ declare global {
         };
     }
 }
- // eslint-disable-next-line @typescript-eslint/no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const fetchPromises: Record<string, Promise<any>> = {};
 
 const RemoteApp: React.FC<RemoteAppProps> = ({ contentUuid, basePath }) => {
@@ -97,7 +97,7 @@ const RemoteApp: React.FC<RemoteAppProps> = ({ contentUuid, basePath }) => {
                 Array.from(doc.body.childNodes).forEach((node) => {
                     if (node.nodeName === "SCRIPT") {
                         injectScript(node as HTMLScriptElement, shadowRoot); // Inject into document.body
-                    } else if (basePath && (node as HTMLElement).id === "root") {
+                    } else if (basePath && node.nodeName === "DIV" && (node as HTMLElement).hasAttribute("data-uxp-app-identifier")) {
                         const cloneNode = node.cloneNode(true);
                         (cloneNode as HTMLElement).setAttribute("data-base-route-path", basePath);
                         shadowRoot!.appendChild(cloneNode);

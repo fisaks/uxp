@@ -83,18 +83,32 @@ export class RemoteController {
 
             // Iterate over all divs
             divs.forEach((div) => {
-                // Get all attributes of the div
-                Array.from(div.attributes).forEach((attr) => {
-                    // Check if the attribute name starts with "data-base-url"
-                    if (attr.name.startsWith("data-base-url")) {
-                        // Rewrite the attribute value
-                        const originalValue = attr.value;
-                        div.setAttribute(
-                            attr.name,
-                            buildPath("/api/content/resource", appIdentifier, removeContextPath(originalValue, contextPath))
-                        );
+                // data-base-url is required fo the root div of the remote app
+                if (div.hasAttribute("data-base-url")) {
+                    // Get all attributes of the div
+                    Array.from(div.attributes).forEach((attr) => {
+                        // Check if the attribute name starts with "data-base-url"
+                        if (attr.name.startsWith("data-base-url")) {
+                            // Rewrite the attribute value
+                            const originalValue = attr.value;
+                            div.setAttribute(
+                                attr.name,
+                                buildPath("/api/content/resource", appIdentifier, removeContextPath(originalValue, contextPath))
+                            );
+                        }
+                    });
+                    // Additionally the data-base-route-path attribute is set in RemoteApp.tsx
+                    // which point to the current base navigation path of the page
+                    div.setAttribute("data-uxp-content-id", uuid);
+                    div.setAttribute("data-uxp-app-identifier", appIdentifier);
+
+                    if (config.appOption) {
+                        // Exisiting appOption is overwritten
+                        div.setAttribute("data-app-option", JSON.stringify(config.appOption));
                     }
-                });
+
+                }
+
             });
 
             return reply.type(response.headers["Content-Type"]?.toString() ?? "text/html").send(dom.serialize());

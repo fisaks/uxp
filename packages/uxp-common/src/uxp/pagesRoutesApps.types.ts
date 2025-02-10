@@ -3,6 +3,7 @@ export type AppConfigData = {
     wsPath?: string;
     wsPublic?: boolean;
     indexPage: string;
+    appOption?: Record<string, string | boolean | number | object>;
 };
 
 export type PageAppsConfigData = Partial<AppConfigData> & {};

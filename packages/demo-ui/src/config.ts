@@ -2,6 +2,9 @@ let BASE_URL_API: string;
 let BASE_URL_STATIC: string;
 let BASE_ROUTE_PATH: string | undefined;
 let APP_OPTION: object | undefined;
+let UXP_CONTENT_ID: string | undefined;
+let UXP_APP_IDENTIFIER: string | undefined;
+
 
 export function initializeConfig(rootElement: HTMLElement | null) {
     if (!rootElement) {
@@ -13,6 +16,8 @@ export function initializeConfig(rootElement: HTMLElement | null) {
     const staticUrl = rootElement.getAttribute("data-base-url-static");
     const baseUrl = rootElement.getAttribute("data-base-url");
     const routePath = rootElement.getAttribute("data-base-route-path");
+    UXP_CONTENT_ID = rootElement.getAttribute("data-uxp-content-id") ?? undefined;
+    UXP_APP_IDENTIFIER = rootElement.getAttribute("data-uxp-app-identifier") ?? undefined;
     const appOption = rootElement.getAttribute("data-app-option");
 
     if (!apiUrl || !staticUrl) {
@@ -42,6 +47,12 @@ export function getBaseUrlStatic(): string {
 }
 export function getBaseRoutePath(): string | undefined {
     return BASE_ROUTE_PATH;
+}
+export function getUxpContentId(): string | undefined {
+    return UXP_CONTENT_ID;
+}
+export function getUxpAppIdentifier(): string | undefined {
+    return UXP_APP_IDENTIFIER;
 }
 export function getAppOption<T>(): T | undefined {
     return APP_OPTION ? APP_OPTION as T : undefined;
