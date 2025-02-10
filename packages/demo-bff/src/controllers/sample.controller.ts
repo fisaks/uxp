@@ -2,7 +2,7 @@ import { Route } from "@uxp/bff-common";
 import { FastifyReply, FastifyRequest } from "fastify";
 
 export class SampleController {
-    @Route("get", "/template")
+    @Route("get", "/template" ,{ authenticate: false })
     async template(_req: FastifyRequest, _reply: FastifyReply) {
         return "Hello, world!";
     }

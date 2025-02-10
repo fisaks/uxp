@@ -4,15 +4,10 @@ import React from "react";
 import ReactDOM from "react-dom/client"; // React 18's new API
 import { Provider } from "react-redux";
 import { createStore } from "./app/store";
-import { getAppOption, initializeConfig } from "./config";
-import DemoApp from "./DemoApp";
+import { initializeConfig } from "./config";
 import DemoView from "./DemoView";
 const styleInsert = require("../../tools/src/insert-function.cjs");
 
-const APPLICATIONS = {
-    'DemoView': <DemoView />,
-    'DemoApp': <DemoApp />
-}
 // Extend the Window interface to include __UXP_PORTAL__
 declare const module: __WebpackModuleApi.Module;
 // Get the root element in the HTML
@@ -36,7 +31,6 @@ export const initApplication = (documentRoot: ShadowRoot | Document) => {
         container: container,
     });
 
-    // If you want to have shared state between remote apps, you can create a Redux store outside initApplication
     const store = createStore();
 
     // Create a React root
@@ -52,29 +46,25 @@ export const initApplication = (documentRoot: ShadowRoot | Document) => {
     /* eslint-enable @typescript-eslint/no-explicit-any */
     //const root = ReactDOM.createRoot(rootElement);
     //let hotRoot=root;
-    const appOption = getAppOption<{ main?: keyof typeof APPLICATIONS }>()
-    const main: keyof typeof APPLICATIONS = appOption?.main ?? 'DemoApp';
-       
 
-    const App = APPLICATIONS[main];
     // Render the App component
     root.render(
         <React.StrictMode>
             <Provider store={store}>
                 <CacheProvider value={shadowCache}>
-                    {App}
+                    <DemoView />
                 </CacheProvider>
             </Provider>
         </React.StrictMode>
     );
     if (process.env.NODE_ENV === "development" && module.hot) {
-        module.hot.accept(`./${main}`, () => {
-            const NextDemoApp = require(`./${main}`,).default;
+        module.hot.accept("./DemoView", () => {
+            const NextDemoView = require("./DemoView").default;
             root.render(
                 <React.StrictMode>
                     <Provider store={store}>
                         <CacheProvider value={shadowCache}>
-                            <NextDemoApp />
+                            <NextDemoView />
                         </CacheProvider>
                     </Provider>
                 </React.StrictMode>

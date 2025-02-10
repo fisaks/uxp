@@ -1,6 +1,6 @@
 import { ErrorCodes, UserRole } from "@uxp/common";
 import Ajv, { ValidateFunction } from "ajv";
-import { FastifyInstance } from "fastify";
+import { FastifyInstance, FastifyRequest } from "fastify";
 import "reflect-metadata";
 import { DataSource } from "typeorm";
 import { ACCESS_TOKEN } from "../config/constant";
@@ -114,6 +114,7 @@ type RegisterWebSocketHandlersArgs = {
     dataSource?: DataSource;
     handlers: HandlerConstructor[];
 };
+
 
 /**
  * Register WebSocket handlers with Fastify

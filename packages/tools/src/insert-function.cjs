@@ -1,3 +1,15 @@
+/**
+ * This module is designed to dynamically apply styles to shadow roots that have registered 
+ * for the remote application. It ensures that styles injected into the main document are 
+ * also propagated to all registered shadow roots.
+ * 
+ * ## Features:
+ * - Stores dynamically inserted styles (`elements`).
+ * - Supports multiple shadow roots (`roots`).
+ * - Ensures that dynamically added styles are cloned into all registered shadow roots.
+ * - Uses a UUID-based ID to prevent duplicate style insertions.
+ */
+
 let elements = [];
 let roots = [];
 // Function to initialize parameters at runtime

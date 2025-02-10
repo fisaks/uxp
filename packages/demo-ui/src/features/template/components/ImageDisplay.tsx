@@ -1,7 +1,7 @@
 import { Box } from "@mui/material";
 import React from "react";
 import * as styles from "./ImageDisplay.module.css"; // Importing CSS module
-import { getBaseUrlStatic } from "./config";
+import { getBaseUrlStatic } from "../../../config";
 
 const ImageDisplay: React.FC = () => {
     return (
@@ -14,7 +14,7 @@ const ImageDisplay: React.FC = () => {
                 className={styles.largeImage}
             />
             <img
-                src={require("../static/small-image.jpg")} // Small image bundled with the project
+                src={require("../../../../static/small-image.jpg")} // Small image bundled with the project
                 alt="Small Display"
                 className="global-small-image" // Global CSS class from global.css
             />

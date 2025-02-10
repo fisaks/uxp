@@ -29,6 +29,7 @@ const templateSlice = createSlice({
                 state.value = action.payload;
             })
             .addCase(fetchTemplate.rejected, (state) => {
+                console.error(fetchTemplate.rejected);
                 state.value = "Failed to load template";
             });
     },
