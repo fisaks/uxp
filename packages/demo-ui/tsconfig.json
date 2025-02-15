@@ -19,6 +19,9 @@
         },
         {
             "path": "../uxp-ui-lib"
+        },
+        {
+            "path": "../demo-common"
         }
     ]
 }

@@ -1,7 +1,7 @@
 import { Box } from "@mui/material";
 import React from "react";
 import * as styles from "./ImageDisplay.module.css"; // Importing CSS module
-import { getBaseUrlStatic } from "../../../config";
+import { getBaseUrl } from "../../../config";
 
 const ImageDisplay: React.FC = () => {
     return (
@@ -9,7 +9,7 @@ const ImageDisplay: React.FC = () => {
             {" "}
             {/* Using a CSS module class */}
             <img
-                src={`${getBaseUrlStatic()}/large-image.jpg`} // Large image loaded separately, not bundled
+                src={`${getBaseUrl()}/static/large-image.jpg`} // Large image loaded separately, not bundled
                 alt="Large Display"
                 className={styles.largeImage}
             />

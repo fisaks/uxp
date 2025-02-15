@@ -5,76 +5,92 @@ import { DataSource } from "typeorm";
 import { WebSocket } from "ws";
 import { AppEntity } from "./db/entities/AppEntity";
 
-export function registerRemoteWebSocketHandler({ fastify, dataSource }: { fastify: FastifyInstance; dataSource: DataSource }) {
-    fastify.get("/ws/:appid", { websocket: true }, async (clientSocket, request) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const appId = (request.params as any)?.appid;
-        const app = await getRemoteApp(dataSource, appId);
+export function registerRemoteWebSocketHandler({ fastify: app, dataSource }: { fastify: FastifyInstance; dataSource: DataSource }) {
+    app.register(async function (fastify) {
+        fastify.get("/ws-api/:appid", { websocket: true }, async (clientSocket, request) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const appId = (request.params as any)?.appid;
+            const app = await getRemoteApp(dataSource, appId);
 
-        if (!app || !app.config.wsPath) {
-            clientSocket.send(
-                createErrorMessageResponse(request, `${appId}/remote_action`, {
-                    code: ErrorCodes.NOT_FOUND,
-                    message: `Remote app ${appId} not found or has no WebSocket URL`,
-                })
-            );
-            clientSocket.close();
-            return;
-        }
-
-        let user: Token | undefined;
-
-        // Authentication Check
-        if (request.cookies[ACCESS_TOKEN]) {
-            try {
-                await request.jwtVerify();
-                user = request.user as Token;
-            } catch (err) {
-                AppLogger.warn(request, { message: "Failed to verify WebSocket token", error: err });
+            if (!app) {
+                clientSocket.send(
+                    createErrorMessageResponse(request, `${appId}/remote_action`, {
+                        code: ErrorCodes.NOT_FOUND,
+                        message: `Remote app ${appId} not found`,
+                    }, undefined)
+                );
+                clientSocket.close();
+                return;
             }
-        }
 
-        if (!user && !app.config.wsPublic) {
-            clientSocket.send(
-                createErrorMessageResponse(request, `${appId}/remote_action`, {
-                    code: ErrorCodes.UNAUTHORIZED,
-                    message: `Unauthorized access`,
-                })
-            );
-            clientSocket.close();
+            let user: Token | undefined;
+
+            // Authentication Check
+            if (request.cookies[ACCESS_TOKEN]) {
+                try {
+                    await request.jwtVerify();
+                    user = request.user as Token;
+                } catch (err) {
+                    AppLogger.warn(request, { message: "Failed to verify WebSocket token", error: err });
+                }
+            }
+
+            if (!user && !app.config.wsPublic) {
+                clientSocket.send(
+                    createErrorMessageResponse(request, `${appId}/remote_action`, {
+                        code: ErrorCodes.UNAUTHORIZED,
+                        message: `Unauthorized access`,
+
+                    }, undefined)
+                );
+                clientSocket.close();
+                return;
+            }
+
+            const remoteSocket = await connectToRemoteApp(request, app, 3);
+            if (!remoteSocket) {
+                clientSocket.send(
+                    createErrorMessageResponse(request, `${appId}/remote_action`, {
+                        code: ErrorCodes.INTERNAL_SERVER_ERROR,
+                        message: `Failed to connect to remote WebSocket`,
+                    }, undefined)
+                );
+                clientSocket.close();
+                return;
+            }
+
+            setupWebSocketProxy(clientSocket, remoteSocket, request);
             return;
-        }
-
-        const remoteSocket = await connectToRemoteApp(request, app, 3);
-        if (!remoteSocket) {
-            clientSocket.send(
-                createErrorMessageResponse(request, `${appId}/remote_action`, {
-                    code: ErrorCodes.INTERNAL_SERVER_ERROR,
-                    message: `Failed to connect to remote WebSocket`,
-                })
-            );
-            clientSocket.close();
-            return;
-        }
-
-        setupWebSocketProxy(clientSocket, remoteSocket, request);
-        return;
+        });
     });
 }
 
 const getRemoteApp = async (dataSource: DataSource, appid: string) => {
     return dataSource.getRepository(AppEntity).findOneBy({ name: appid });
 };
-
+const getClientIp = (request: FastifyRequest) => {
+    const realIp = request.ip || "";
+    const existingForwardedFor = request.headers["x-forwarded-for"];
+    return existingForwardedFor
+        ? `${existingForwardedFor}, ${realIp}`  // Append real IP to existing list
+        : realIp
+}
 const connectToRemoteApp = async (request: FastifyRequest, app: AppEntity, maxRetries = 3): Promise<WebSocket | null> => {
     const { baseUrl } = app;
-    const { contextPath, wsPath } = app.config;
-    const wsurl = buildPath(baseUrl, contextPath, wsPath!);
+    const { contextPath,wsPath} = app.config;
+    const wsurl = buildPath(baseUrl, contextPath, wsPath ?? "/ws-api");
     let attempt = 0;
     while (attempt < maxRetries) {
         try {
             AppLogger.info(request, { message: `Connecting to remote WebSocket: ${wsurl}` });
-            const ws = new WebSocket(wsurl);
+
+            const ws = new WebSocket(wsurl, {
+                headers: {
+                    cookie: request.headers.cookie,
+                    "user-agent": request.headers["user-agent"],
+                    "x-forwarded-for": getClientIp(request)
+                }
+            });
             return new Promise((resolve, reject) => {
                 ws.once("open", () => {
                     AppLogger.info(request, { message: `Connected to remote WebSocket: ${wsurl}` });
@@ -150,15 +166,15 @@ function setupWebSocketProxy(clientSocket: WebSocket, remoteSocket: WebSocket, r
         if (clientPongTimeout) clearTimeout(clientPongTimeout);
     });
 
-    remoteSocket.on("message", (message) => {
+    remoteSocket.on("message", (message, isBinary) => {
         if (clientSocket.readyState === WebSocket.OPEN) {
-            clientSocket.send(message);
+            clientSocket.send(isBinary ? message : message.toString());
         }
     });
 
-    clientSocket.on("message", (message) => {
+    clientSocket.on("message", (message, isBinary) => {
         if (remoteSocket.readyState === WebSocket.OPEN) {
-            remoteSocket.send(message);
+            remoteSocket.send(isBinary ? message : message.toString());
         }
     });
 
@@ -175,11 +191,29 @@ function setupWebSocketProxy(clientSocket: WebSocket, remoteSocket: WebSocket, r
 
     remoteSocket.on("error", (error) => {
         AppLogger.error(request, { message: "Remote WebSocket error", error });
-        closeSockets();
+        if (isFatalWebSocketError(error)) {
+            closeSockets();
+        }
     });
 
     clientSocket.on("error", (error) => {
         AppLogger.error(request, { message: "Client WebSocket error", error });
-        closeSockets();
+        if (isFatalWebSocketError(error)) {
+            closeSockets();
+        }
     });
+}
+
+function isFatalWebSocketError(error: any): boolean {
+    if (!error || !error.message) return false;
+
+    const fatalErrors = [
+        "ECONNRESET",
+        "EPIPE",
+        "ECONNREFUSED",
+        "Network is down",
+        "TLS handshake failed",
+    ];
+
+    return fatalErrors.some((fatalError) => error.message.includes(fatalError));
 }

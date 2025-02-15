@@ -1,10 +1,10 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
-import { getBaseUrlApi } from "../../config";
+import { getBaseUrl } from "../../config";
 
 export const fetchTemplate = createAsyncThunk("template/fetchTemplate", async (_, { rejectWithValue }) => {
     try {
-        const response = await axios.get(`${getBaseUrlApi()}/template`);
+        const response = await axios.get(`${getBaseUrl()}/api/template`);
         return response.data;
     } catch (error) {
         if (axios.isAxiosError(error)) {

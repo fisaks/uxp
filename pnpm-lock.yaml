@@ -129,6 +129,9 @@ importers:
 
   packages/demo-bff:
     dependencies:
+      '@demo/common':
+        specifier: workspace:*
+        version: link:../demo-common
       '@fastify/cookie':
         specifier: ^11.0.1
         version: 11.0.1
@@ -209,8 +212,27 @@ importers:
         specifier: ^5.7.2
         version: 5.7.2
 
+  packages/demo-common:
+    dependencies:
+      '@uxp/common':
+        specifier: workspace:*
+        version: link:../uxp-common
+      ajv:
+        specifier: ^8.17.1
+        version: 8.17.1
+      axios:
+        specifier: ^1.7.8
+        version: 1.7.9
+    devDependencies:
+      '@types/node':
+        specifier: ^22.13.1
+        version: 22.13.1
+
   packages/demo-ui:
     dependencies:
+      '@demo/common':
+        specifier: workspace:*
+        version: link:../demo-common
       '@emotion/cache':
         specifier: ^11.14.0
         version: 11.14.0
@@ -687,6 +709,9 @@ importers:
       typeorm:
         specifier: ^0.3.20
         version: 0.3.20(mysql2@3.11.5)(ts-node@10.9.2(@types/node@22.10.1)(typescript@5.7.2))
+      ws:
+        specifier: ^8.18.0
+        version: 8.18.0
     devDependencies:
       '@types/file-type':
         specifier: ^10.9.3
@@ -703,6 +728,9 @@ importers:
       '@types/node':
         specifier: ^22.10.1
         version: 22.10.1
+      '@types/ws':
+        specifier: ^8.5.14
+        version: 8.5.14
 
   packages/uxp-common:
     dependencies:
@@ -7711,20 +7739,20 @@ snapshots:
   '@types/body-parser@1.19.5':
     dependencies:
       '@types/connect': 3.4.38
-      '@types/node': 22.10.1
+      '@types/node': 22.13.1
 
   '@types/bonjour@3.5.13':
     dependencies:
-      '@types/node': 22.10.1
+      '@types/node': 22.13.1
 
   '@types/connect-history-api-fallback@1.5.4':
     dependencies:
       '@types/express-serve-static-core': 5.0.2
-      '@types/node': 22.10.1
+      '@types/node': 22.13.1
 
   '@types/connect@3.4.38':
     dependencies:
-      '@types/node': 22.10.1
+      '@types/node': 22.13.1
 
   '@types/cookie@0.6.0': {}
 
@@ -7742,14 +7770,14 @@ snapshots:
 
   '@types/express-serve-static-core@4.19.6':
     dependencies:
-      '@types/node': 22.10.1
+      '@types/node': 22.13.1
       '@types/qs': 6.9.17
       '@types/range-parser': 1.2.7
       '@types/send': 0.17.4
 
   '@types/express-serve-static-core@5.0.2':
     dependencies:
-      '@types/node': 22.10.1
+      '@types/node': 22.13.1
       '@types/qs': 6.9.17
       '@types/range-parser': 1.2.7
       '@types/send': 0.17.4
@@ -7775,7 +7803,7 @@ snapshots:
   '@types/fs-extra@11.0.4':
     dependencies:
       '@types/jsonfile': 6.1.4
-      '@types/node': 22.10.1
+      '@types/node': 22.13.1
 
   '@types/html-minifier-terser@6.1.0': {}
 
@@ -7783,11 +7811,11 @@ snapshots:
 
   '@types/http-proxy@1.17.15':
     dependencies:
-      '@types/node': 22.10.1
+      '@types/node': 22.13.1
 
   '@types/jsdom@21.1.7':
     dependencies:
-      '@types/node': 22.10.1
+      '@types/node': 22.13.1
       '@types/tough-cookie': 4.0.5
       parse5: 7.2.1
 
@@ -7795,7 +7823,7 @@ snapshots:
 
   '@types/jsonfile@6.1.4':
     dependencies:
-      '@types/node': 22.10.1
+      '@types/node': 22.13.1
 
   '@types/jsonwebtoken@9.0.7':
     dependencies:
@@ -7818,7 +7846,7 @@ snapshots:
 
   '@types/node-forge@1.3.11':
     dependencies:
-      '@types/node': 22.10.1
+      '@types/node': 22.13.1
 
   '@types/node@22.10.1':
     dependencies:
@@ -7858,7 +7886,7 @@ snapshots:
   '@types/send@0.17.4':
     dependencies:
       '@types/mime': 1.3.5
-      '@types/node': 22.10.1
+      '@types/node': 22.13.1
 
   '@types/serve-index@1.9.4':
     dependencies:
@@ -7867,12 +7895,12 @@ snapshots:
   '@types/serve-static@1.15.7':
     dependencies:
       '@types/http-errors': 2.0.4
-      '@types/node': 22.10.1
+      '@types/node': 22.13.1
       '@types/send': 0.17.4
 
   '@types/sockjs@0.3.36':
     dependencies:
-      '@types/node': 22.10.1
+      '@types/node': 22.13.1
 
   '@types/strip-bom@3.0.0': {}
 
@@ -7901,11 +7929,11 @@ snapshots:
 
   '@types/ws@8.5.13':
     dependencies:
-      '@types/node': 22.10.1
+      '@types/node': 22.13.1
 
   '@types/ws@8.5.14':
     dependencies:
-      '@types/node': 22.10.1
+      '@types/node': 22.13.1
 
   '@typescript-eslint/eslint-plugin@8.17.0(@typescript-eslint/parser@8.17.0(eslint@9.16.0)(typescript@5.7.2))(eslint@9.16.0)(typescript@5.7.2)':
     dependencies:
@@ -10100,7 +10128,7 @@ snapshots:
 
   jest-worker@27.5.1:
     dependencies:
-      '@types/node': 22.10.1
+      '@types/node': 22.13.1
       merge-stream: 2.0.0
       supports-color: 8.1.1
 

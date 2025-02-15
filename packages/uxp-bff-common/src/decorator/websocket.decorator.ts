@@ -1,12 +1,14 @@
-import { ErrorCodes, UserRole } from "@uxp/common";
+import { ErrorCodes, UserRole, WebSocketMessage, WebSocketResponse } from "@uxp/common";
 import Ajv, { ValidateFunction } from "ajv";
-import { FastifyInstance, FastifyRequest } from "fastify";
+import { FastifyInstance } from "fastify";
 import "reflect-metadata";
 import { DataSource } from "typeorm";
+import { WebSocket } from "ws";
 import { ACCESS_TOKEN } from "../config/constant";
 import { createErrorMessageResponse } from "../error/errorResponse";
 import { Token } from "../types/token.types";
-import { AppLogger } from "../utils/AppLogger";
+import { AppLogger, RequestMetaData } from "../utils/AppLogger";
+import { WebSocketDetails, WebSocketStore } from "../websocket/WebSocketStore";
 import { HandlerConstructor, HandlerRegistry } from "./handler.registry";
 import { getUseQueryRunnerOptions, UseQueryRunnerOptions } from "./queryrunner.decorator";
 import { hasRequiredRoles, validateMessagePayload, withQueryRunner } from "./request-utils";
@@ -109,159 +111,201 @@ function preloadWebSocketHandlers(fastify: FastifyInstance, handlers: any[]): We
 
     return actionMap;
 }
+
+
+
+
+
 type RegisterWebSocketHandlersArgs = {
     fastify: FastifyInstance;
     dataSource?: DataSource;
     handlers: HandlerConstructor[];
 };
 
-
 /**
  * Register WebSocket handlers with Fastify
  * @param fastify Fastify instance
  * @param handlers Array of handler classes
  */
-export function registerLocalWebSocketHandlers({ fastify, dataSource, handlers }: RegisterWebSocketHandlersArgs) {
-    const actionMap = preloadWebSocketHandlers(fastify, handlers);
+export function registerLocalWebSocketHandlers({ fastify: app, dataSource, handlers }: RegisterWebSocketHandlersArgs) {
+    const actionMap = preloadWebSocketHandlers(app, handlers);
+    const wsStore = WebSocketStore.getInstance();
+    app.register(async function (fastify) {
+        fastify.get("/ws-api", { websocket: true }, async (socket /* WebSocket */, request /* FastifyRequest */) => {
+            AppLogger.info(request, { message: "WebSocket connection established (local)"});
 
-    fastify.get("/ws", { websocket: true }, async (socket /* WebSocket */, request /* FastifyRequest */) => {
-        AppLogger.info(request, { message: "WebSocket connection established (local)" });
-
-        let user: Token | undefined = undefined;
-        if (request.cookies[ACCESS_TOKEN]) {
-            try {
-                await request.jwtVerify();
-                user = request.user as Token;
-            } catch (err: unknown) {
-                AppLogger.error(request, {
-                    message: "Failed to verify access token in WebSocket connection",
-                    error: err,
-                });
-            }
-        }
-
-        const PING_INTERVAL = 30000; // Ping every 30s
-        const PONG_TIMEOUT = 10000; // Wait max 10s for pong
-        let pongReceived = true;
-        let pongTimeout: NodeJS.Timeout | null = null;
-
-        const sendPing = () => {
-            if (socket.readyState !== socket.OPEN) return;
-
-            pongReceived = false;
-            socket.ping();
-
-            // **Set a timeout to check if pong is received in time**
-            pongTimeout = setTimeout(() => {
-                if (!pongReceived) {
-                    AppLogger.warn(request, { message: "Client did not respond to ping. Closing WebSocket." });
-                    socket.close();
+            let user: Token | undefined = undefined;
+            if (request.cookies[ACCESS_TOKEN]) {
+                try {
+                    await request.jwtVerify();
+                    user = request.user as Token;
+                } catch (err: unknown) {
+                    AppLogger.error(request, {
+                        message: "Failed to verify access token in WebSocket connection",
+                        error: err,
+                    });
                 }
-            }, PONG_TIMEOUT);
-        };
-
-        const pingInterval = setInterval(sendPing, PING_INTERVAL);
-
-        socket.on("pong", () => {
-            AppLogger.debug(request, { message: "Pong received from client" });
-            pongReceived = true;
-
-            // **Clear the pong timeout when we get a response**
-            if (pongTimeout) {
-                clearTimeout(pongTimeout);
-                pongTimeout = null;
             }
-        });
+            const requestMeta = AppLogger.extractMetadata(request);
+            if (!requestMeta) {
+                socket.close();
+                return;
+            }
+            const socketDetails: WebSocketDetails = { socket, user, requestMeta };
+            wsStore.addUser(socket, socketDetails);
 
-        socket.on("message", async (message) => {
-            try {
-                const parsedMessage = JSON.parse(message.toString());
+
+
+            const PING_INTERVAL = 30000; // Ping every 30s
+            const PONG_TIMEOUT = 10000; // Wait max 10s for pong
+            let pongReceived = true;
+            let pongTimeout: NodeJS.Timeout | null = null;
+
+            const sendPing = () => {
+                if (socket.readyState !== socket.OPEN) return;
+
+                pongReceived = false;
+                socket.ping();
+
+                // **Set a timeout to check if pong is received in time**
+                pongTimeout = setTimeout(() => {
+                    if (!pongReceived) {
+                        AppLogger.warn(request, { message: "Client did not respond to ping. Closing WebSocket." });
+                        socket.close();
+                    }
+                }, PONG_TIMEOUT);
+            };
+
+            const pingInterval = setInterval(sendPing, PING_INTERVAL);
+
+            socket.on("pong", () => {
+                AppLogger.debug(request, { message: "Pong received from client" });
+                pongReceived = true;
+
+                // **Clear the pong timeout when we get a response**
+                if (pongTimeout) {
+                    clearTimeout(pongTimeout);
+                    pongTimeout = null;
+                }
+            });
+
+            socket.on("message", async (message) => {
+                const parsedMessage = toWebSocketMessage(requestMeta, message);
+                if (!parsedMessage) {
+                    socket.send(
+                        createErrorMessageResponse(request, "unknown", {
+                            code: ErrorCodes.INTERNAL_SERVER_ERROR,
+                            message: `Not able to parse message`,
+                        }, undefined)
+                    );
+                    return;
+                }
                 const action = parsedMessage.action;
                 const payload = parsedMessage.payload;
-                const actionHandler = actionMap[action];
+                const messageId = parsedMessage.id;
 
-                if (!actionHandler) {
-                    socket.send(
-                        createErrorMessageResponse(request, action, {
-                            code: ErrorCodes.NOT_FOUND,
-                            message: `No handler registered for action "${action}`,
-                        })
-                    );
-                    return;
-                }
+                try {
+                    const actionHandler = actionMap[action];
 
-                AppLogger.info(request, {
-                    message: "Processing WebSocket action",
-                    object: { action, roles: user?.roles },
-                });
-
-                const {
-                    handler,
-                    validate,
-                    schemaValidate,
-                    queryRunnerOptions,
-                    authenticate: needsAuthentication,
-                    roles: requiredRoles,
-                } = actionHandler;
-
-                if (needsAuthentication && !user) {
-                    socket.send(
-                        createErrorMessageResponse(request, action, {
-                            code: ErrorCodes.UNAUTHORIZED,
-                            message: "Authentication required",
-                        })
-                    );
-                    return;
-                }
-
-                if (!hasRequiredRoles({ userRoles: user?.roles ?? [], requiredRoles })) {
-                    socket.send(
-                        createErrorMessageResponse(request, action, { code: ErrorCodes.FORBIDDEN, message: "Insufficient permissions" })
-                    );
-                    return;
-                }
-
-                const validation = validateMessagePayload(payload, validate, schemaValidate);
-                if (validation) {
-                    socket.send(
-                        createErrorMessageResponse(
-                            request,
-                            action,
-                            { code: ErrorCodes.VALIDATION, message: validation.message },
-                            validation.errors ?? undefined
-                        )
-                    );
-                    return;
-                }
-
-                await withQueryRunner(dataSource, queryRunnerOptions, async (queryRunner) => {
-                    const args = queryRunner ? [payload, user, queryRunner] : [payload, user];
-                    const result = await handler(...args);
-
-                    if (result) {
-                        socket.send(JSON.stringify({ success: true, data: result }));
+                    if (!actionHandler) {
+                        socket.send(
+                            createErrorMessageResponse(request, action, {
+                                code: ErrorCodes.NOT_FOUND,
+                                message: `No handler registered for action "${action}`,
+                            }, messageId)
+                        );
+                        return;
                     }
-                    return result;
-                });
-            } catch (err: any) {
-                AppLogger.error(request, { message: "Error in WebSocket message", error: err });
 
-                socket.send(
-                    createErrorMessageResponse(request, "unknown", {
-                        code: ErrorCodes.INTERNAL_SERVER_ERROR,
-                        message: "An unexpected error occurred",
-                    })
-                );
-            }
-        });
-        socket.on("error", (error) => {
-            AppLogger.error(request, { message: "WebSocket error occurred", error });
-        });
+                    AppLogger.info(request, {
+                        message: "Processing WebSocket action",
+                        object: { action, messageId, roles: (user as any)?.roles },
+                    });
 
-        socket.on("close", (code, reason) => {
-            AppLogger.info(request, { message: `WebSocket closed (code: ${code}, reason: ${reason.toString()})` });
-            clearInterval(pingInterval);
-            if (pongTimeout) clearTimeout(pongTimeout);
+                    const {
+                        handler,
+                        validate,
+                        schemaValidate,
+                        queryRunnerOptions,
+                        authenticate: needsAuthentication,
+                        roles: requiredRoles,
+                    } = actionHandler;
+
+                    if (needsAuthentication && !user) {
+                        socket.send(
+                            createErrorMessageResponse(request, action, {
+                                code: ErrorCodes.UNAUTHORIZED,
+                                message: "Authentication required",
+                            }, messageId)
+                        );
+                        return;
+                    }
+
+                    if (!hasRequiredRoles({ userRoles: (user as any)?.roles ?? [], requiredRoles })) {
+                        socket.send(
+                            createErrorMessageResponse(request, action, { code: ErrorCodes.FORBIDDEN, message: "Insufficient permissions" }, messageId)
+                        );
+                        return;
+                    }
+
+                    const validation = validateMessagePayload(payload, validate, schemaValidate);
+                    if (validation) {
+                        socket.send(
+                            createErrorMessageResponse(
+                                request,
+                                action,
+                                { code: ErrorCodes.VALIDATION, message: validation.message },
+                                messageId,
+                                validation.errors ?? undefined
+                            )
+                        );
+                        return;
+                    }
+
+                    await withQueryRunner(dataSource, queryRunnerOptions, async (queryRunner) => {
+                        const args = queryRunner ? [socketDetails, parsedMessage, queryRunner] : [socketDetails, parsedMessage];
+                        const result = await handler(...args);
+
+                        if (result) {
+                            socket.send(JSON.stringify({ success: true, id: messageId, action, payload: result } as WebSocketResponse));
+                        }
+                        return result;
+                    });
+                } catch (err: any) {
+                    AppLogger.error(request, { message: "Error in WebSocket message", error: err });
+
+                    socket.send(
+                        createErrorMessageResponse(request, action, {
+                            code: ErrorCodes.INTERNAL_SERVER_ERROR,
+                            message: "An unexpected error occurred",
+                        }, messageId)
+                    );
+                }
+            });
+            socket.on("error", (error) => {
+                AppLogger.error(request, { message: "WebSocket error occurred", error });
+            });
+
+            socket.on("close", (code, reason) => {
+                AppLogger.info(request, { message: `WebSocket closed (code: ${code}, reason: ${reason.toString()})` });
+                wsStore.removeUser(socket);
+                clearInterval(pingInterval);
+                if (pongTimeout) clearTimeout(pongTimeout);
+            });
         });
     });
+}
+
+const toWebSocketMessage = (meta: RequestMetaData, message: Buffer | ArrayBuffer | Buffer[]) => {
+    try {
+        const socketMessage = JSON.parse(message.toString()) as WebSocketMessage;
+        if (socketMessage.action) {
+            return socketMessage;
+        }
+        AppLogger.error(meta, { message: "No Action defined in WebSocket message" });
+    } catch (error) {
+        AppLogger.error(meta, { message: "Failed to parse WebSocket message", error });
+    }
+    return undefined;
+
 }

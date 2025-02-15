@@ -24,6 +24,7 @@
         "@fastify/cookie": "^11.0.1",
         "@fastify/jwt": "^9.0.1",
         "@fastify/websocket": "^11.0.1",
+        "@demo/common": "workspace:*",
         "@uxp/bff-common": "workspace:*",
         "@uxp/common": "workspace:*",
         "ajv": "^8.17.1",

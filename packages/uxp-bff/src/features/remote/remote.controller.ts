@@ -96,6 +96,12 @@ export class RemoteController {
                                 buildPath("/api/content/resource", appIdentifier, removeContextPath(originalValue, contextPath))
                             );
                         }
+                        if (attr.name.startsWith("data-ws-path")) {
+                            div.setAttribute(
+                                attr.name,
+                                buildPath("/ws-api", appIdentifier)
+                            );
+                        }
                     });
                     // Additionally the data-base-route-path attribute is set in RemoteApp.tsx
                     // which point to the current base navigation path of the page

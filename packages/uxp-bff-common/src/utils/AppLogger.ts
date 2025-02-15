@@ -28,6 +28,13 @@ type ErrorLogMessage = LogMessage & {
  * ```
  */
 
+export type RequestMetaData = {
+    uuid?: string;
+    username?: string;
+    ip: string;
+    userAgent: string;
+    requestId: string;
+}
 export class AppLogger {
     private static fastifyLogger: FastifyInstance["log"] | typeof console;
 
@@ -46,9 +53,13 @@ export class AppLogger {
         }
     }
 
-    private static extractMetadata(request?: FastifyRequest): Record<string, unknown> {
+    private static isRequestMetaData(request: FastifyRequest | RequestMetaData): request is RequestMetaData {
+        return (request as RequestMetaData).requestId !== undefined;
+    }
+
+    public static extractMetadata(request?: FastifyRequest): RequestMetaData | undefined {
         if (!request) {
-            return {}; // Return empty metadata if request is not available
+            return undefined;
         }
         return {
             uuid: (request.user as Token)?.uuid,
@@ -56,7 +67,7 @@ export class AppLogger {
             ip: request.ip,
             userAgent: request.headers["user-agent"],
             requestId: request.id,
-        };
+        } as RequestMetaData;
     }
 
     private static mergeData(
@@ -71,40 +82,40 @@ export class AppLogger {
         };
     }
 
-    private static log(request: FastifyRequest | undefined, level: "info" | "warn" | "error" | "debug", message: ErrorLogMessage) {
+    private static log(request: FastifyRequest | RequestMetaData | undefined, level: "info" | "warn" | "error" | "debug", message: ErrorLogMessage) {
         this.ensureInitialized();
 
-        const metadata = this.extractMetadata(request);
+        const metadata = !request ? {} : this.isRequestMetaData(request) ? request : this.extractMetadata(request) ?? {};
         const data = this.mergeData(metadata, message.object, message.error);
 
         this.fastifyLogger[level](data, message.message, ...(message.args ?? []));
     }
 
-    public static info(request: FastifyRequest | undefined, message: LogMessage) {
+    public static info(request: FastifyRequest | RequestMetaData | undefined, message: LogMessage) {
         this.log(request, "info", message);
     }
 
-    public static warn(request: FastifyRequest | undefined, message: ErrorLogMessage) {
+    public static warn(request: FastifyRequest | RequestMetaData | undefined, message: ErrorLogMessage) {
         this.log(request, "warn", message);
     }
 
-    public static error(request: FastifyRequest | undefined, message: ErrorLogMessage) {
+    public static error(request: FastifyRequest | RequestMetaData | undefined, message: ErrorLogMessage) {
         this.log(request, "error", message);
     }
 
-    public static debug(request: FastifyRequest | undefined, message: LogMessage) {
+    public static debug(request: FastifyRequest | RequestMetaData | undefined, message: LogMessage) {
         this.log(request, "debug", message);
     }
 
-    public static infoMessage(request: FastifyRequest | undefined, message: string, ...args: unknown[]) {
+    public static infoMessage(request: FastifyRequest | RequestMetaData | undefined, message: string, ...args: unknown[]) {
         this.info(request, { message, args });
     }
 
-    public static warnMessage(request: FastifyRequest | undefined, message: string, ...args: unknown[]) {
+    public static warnMessage(request: FastifyRequest | RequestMetaData | undefined, message: string, ...args: unknown[]) {
         this.warn(request, { message, args });
     }
 
-    public static errorMessage(request: FastifyRequest | undefined, message: string, ...args: unknown[]) {
+    public static errorMessage(request: FastifyRequest | RequestMetaData | undefined, message: string, ...args: unknown[]) {
         const possibleError = args[args.length - 1];
         const error = possibleError instanceof Error ? possibleError : undefined;
 
@@ -113,7 +124,7 @@ export class AppLogger {
         this.error(request, { message, args: formattedArgs, error });
     }
 
-    public static debugMessage(request: FastifyRequest | undefined, message: string, ...args: unknown[]) {
+    public static debugMessage(request: FastifyRequest | RequestMetaData | undefined, message: string, ...args: unknown[]) {
         this.debug(request, { message, args });
     }
 }

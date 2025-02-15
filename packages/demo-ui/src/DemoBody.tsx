@@ -4,6 +4,7 @@ import { AppBodyContent, LeftSideBar, SidebarMenuItems } from "@uxp/ui-lib";
 import { useMemo } from "react";
 import { Link, Route, Routes, useLocation } from "react-router-dom";
 import { getBaseRoutePath } from "./config";
+import ChatPage from "./features/chat/ChatPage";
 import MiscPage from "./features/template/MiscPage";
 
 
@@ -22,6 +23,13 @@ export const DemoBody = () => {
                 componentProp: "to",
                 active: location.pathname === generateFullLink(basePath, "misc-info"),
             },
+            {
+                label: "WS Chat",
+                link: "chat",
+                component: Link,
+                componentProp: "to",
+                active: location.pathname === generateFullLink(basePath, "chat"),
+            },
         ];
     }, [basePath, location.pathname]);
 
@@ -30,7 +38,8 @@ export const DemoBody = () => {
             <LeftSideBar isDesktop={isDesktop} menuItems={menuItems} />
             <AppBodyContent appHaveOwnLeftSideBar={true}>
                 <Routes>
-                    <Route path="misc-info" element={<MiscPage />} />
+                    <Route path="misc-demo" element={<MiscPage />} />
+                    <Route path="chat"  element={<ChatPage />} />
                     <Route path="*" element={<MiscPage />} />
                 </Routes>
             </AppBodyContent>

@@ -20,6 +20,7 @@ import {
 import "@uxp/bff-common/dist/health/health.controller";
 import { ValidateGlobalConfigValue } from "@uxp/common";
 import path from "path";
+import { registerRemoteWebSocketHandler } from "./registerRemoteWebSocketHandler";
 
 AppDataSource.initialize()
     .then(async () => {
@@ -80,6 +81,7 @@ registerRoutes({
     dataSource: AppDataSource,
     controllers: Array.from(restHandlers),
 });
+registerRemoteWebSocketHandler({ fastify, dataSource: AppDataSource });
 registerLocalWebSocketHandlers({
     fastify,
     dataSource: AppDataSource,
