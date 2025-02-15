@@ -44,12 +44,17 @@ export class CreateMigration1736033971030 implements MigrationInterface {
         const home2CarePage = await pageRepository.save(new PageEntity({ name: "Home 2 Care", identifier: "home-2-care" }));
         const uxpDemoPage = await pageRepository.save(
             new PageEntity({
-                name: "Demo Page",
+                name: "UXP Nav Demo",
                 identifier: "uxp-demo-page",
                 config: { pageType: "leftNavigation", routeLinkGroup: "demo-links" },
             })
         );
-        const uxpDemoPage2 = await pageRepository.save(new PageEntity({ name: "Demo App 2", identifier: "uxp-demo-page-2" }));
+        const multiAppPage = await pageRepository.save(new PageEntity({
+            name: "Multiple Apps Demo",
+            identifier: "multi-app-page",
+            config: { pageType: "leftNavigation", routeLinkGroup: "demo-links" }
+        }));
+        const selfNavDemoPage = await pageRepository.save(new PageEntity({ name: "Self Nav Demo", identifier: "self-nav-app-page" }));
 
         const controlPanelPage = await pageRepository.save(new PageEntity({ name: "Control Panel", identifier: "control-panel" }));
 
@@ -64,9 +69,11 @@ export class CreateMigration1736033971030 implements MigrationInterface {
 
         await pageAppsRepository.save([
             new PageAppsEntity({ page: home2CarePage, app: h2c, order: 1, roles: ["user"] }),
-            new PageAppsEntity({ page: uxpDemoPage, app: demo, order: 1, roles: ["user"] }),
-            new PageAppsEntity({ page: uxpDemoPage2, app: demo, order: 1, roles: ["user"] }),
-            new PageAppsEntity({ page: uxpDemoPage2, app: demo, order: 2, roles: ["user"] }),
+            new PageAppsEntity({ page: uxpDemoPage, app: demo, order: 1, roles: ["user"], config: { "indexPage": "view.html" } }),
+            new PageAppsEntity({ page: selfNavDemoPage, app: demo, order: 1, roles: ["user"] }),
+
+            new PageAppsEntity({ page: multiAppPage, app: demo, order: 1, roles: ["user"], config: { "indexPage": "view.html" } }),
+            new PageAppsEntity({ page: multiAppPage, app: demo, order: 2, roles: ["user"], config: { "indexPage": "view.html" } }),
 
             new PageAppsEntity({ page: loginPage, order: 1, roles: undefined, internalComponent: "LoginPage" }),
             new PageAppsEntity({ page: registerPage, order: 1, roles: undefined, internalComponent: "RegisterPage" }),
@@ -108,6 +115,15 @@ export class CreateMigration1736033971030 implements MigrationInterface {
                 accessType: "role-based",
             }),
             new RouteEntity({
+                identifier: "demo-app-multi-app",
+                routePattern: "/demo-app/multi-app",
+                link: "/demo-app/multi-app",
+                page: multiAppPage,
+                roles: ["user"],
+                //groupName: "header-menu",
+                accessType: "role-based",
+            }),
+            new RouteEntity({
                 identifier: "demo-app",
                 routePattern: "/demo-app/*",
                 link: "/demo-app/",
@@ -117,10 +133,10 @@ export class CreateMigration1736033971030 implements MigrationInterface {
                 accessType: "role-based",
             }),
             new RouteEntity({
-                identifier: "demo-app-2",
-                routePattern: "/demo-app-2/*",
-                link: "/demo-app-2/",
-                page: uxpDemoPage2,
+                identifier: "self-nav-demo-app",
+                routePattern: "/self-nav-demo/*",
+                link: "/self-nav-demo/",
+                page: selfNavDemoPage,
                 roles: ["user"],
                 //groupName: "header-menu",
                 accessType: "role-based",
@@ -206,15 +222,15 @@ export class CreateMigration1736033971030 implements MigrationInterface {
         await this.createRoute(queryRunner, "auth-root", "header-menu", 1);
         await this.createRoute(queryRunner, "home-2-care", "header-menu", 2);
         await this.createRoute(queryRunner, "demo-app", "header-menu", 3);
-        await this.createRoute(queryRunner, "demo-app-2", "header-menu", 4);
+        await this.createRoute(queryRunner, "self-nav-demo-app", "header-menu", 4);
 
         await this.createRoute(queryRunner, "my-settings", "profile-icon", 1);
         await this.createRoute(queryRunner, "my-profile", "profile-icon", 2);
         await this.createRoute(queryRunner, "control-panel-root", "profile-icon", 3);
 
-        await this.createRoute(queryRunner, "home-2-care", "demo-links");
-        await this.createRoute(queryRunner, "demo-app", "demo-links");
-        await this.createRoute(queryRunner, "demo-app-2", "demo-links");
+
+        await this.createRoute(queryRunner, "demo-app", "demo-links",1);
+        await this.createRoute(queryRunner, "demo-app-multi-app", "demo-links",2);
     }
 
     private async createRoute(queryRunner: QueryRunner, routeIdentifier: string, tagName: string, order?: number): Promise<void> {
