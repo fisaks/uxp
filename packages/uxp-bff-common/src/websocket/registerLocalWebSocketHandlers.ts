@@ -215,7 +215,7 @@ const handleWebSocketMessage = async ({ actionMap, socketDetails, message, dataS
         socket.send(
             createErrorMessageResponse(requestMeta, action, {
                 code: ErrorCodes.NOT_FOUND,
-                message: `No handler registered for action "${action}`,
+                message: `No handler registered for action "${action}"`,
             }, messageId)
         );
         return;

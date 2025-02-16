@@ -1,3 +1,4 @@
+import { nanoid } from "@reduxjs/toolkit";
 import { ErrorCodes, WebSocketMessage, WebSocketResponse } from "@uxp/common";
 
 
@@ -133,16 +134,16 @@ export class WebSocketManager<ClientActionPayloadMap extends { [K in keyof Clien
     ): Promise<WebSocketResponse<Action, ServerActionPayloadMap>> {
 
         if (!this.isConnected) {
-            return Promise.reject(new WebSocketTimeoutError(String(action), timeoutMs));
+            return Promise.reject(new Error("WebSocket not connected"));
         }
 
         return new Promise((resolve, reject) => {
-            const id = crypto.randomUUID();
+            const id = nanoid();
 
             const timeout = setTimeout(() => {
                 if (this.pendingRequests.has(id)) {
                     this.pendingRequests.delete(id);
-                    reject(new Error(`WebSocket request for ${String(action)} timed out after ${timeoutMs}ms`));
+                    reject(new WebSocketTimeoutError(String(action), timeoutMs));
                 }
             }, timeoutMs);
 

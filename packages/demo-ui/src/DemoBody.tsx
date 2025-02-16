@@ -6,6 +6,7 @@ import { Link, Route, Routes, useLocation } from "react-router-dom";
 import { getBaseRoutePath } from "./config";
 import ChatPage from "./features/chat/ChatPage";
 import MiscPage from "./features/template/MiscPage";
+import AsyncMessagingPage from "./features/async-ws-msg/AsyncMessagingPage";
 
 
 export const DemoBody = () => {
@@ -30,6 +31,13 @@ export const DemoBody = () => {
                 componentProp: "to",
                 active: location.pathname === generateFullLink(basePath, "chat"),
             },
+            {
+                label: "Async WS Messages",
+                link: "async-ws-msg",
+                component: Link,
+                componentProp: "to",
+                active: location.pathname === generateFullLink(basePath, "async-ws-msg"),
+            },
         ];
     }, [basePath, location.pathname]);
 
@@ -40,6 +48,7 @@ export const DemoBody = () => {
                 <Routes>
                     <Route path="misc-demo" element={<MiscPage />} />
                     <Route path="chat"  element={<ChatPage />} />
+                    <Route path="async-ws-msg"  element={<AsyncMessagingPage />} />
                     <Route path="*" element={<MiscPage />} />
                 </Routes>
             </AppBodyContent>

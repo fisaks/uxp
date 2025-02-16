@@ -1,17 +1,17 @@
 
-import { ClientChatActionPayloadMap, ClientChatActions, ClientChatPayloads, ServerChatActionPayloadMap, ServerChatActions, ServerChatPayloads } from "@demo/common";
-import { useWebSocket, WebSocketEventHandler, WebSocketManager, WebSocketMessageListener } from "@uxp/ui-lib";
+import { AsyncWSMsgActions, ClientAsyncWSMsgActionPayloadMap, ClientAsyncWSMsgPayload, ClientChatActionPayloadMap, ClientChatActions, ClientChatPayloads, ServerAsyncWSMsgActionPayloadMap, ServerAsyncWSMsgPayload, ServerChatActionPayloadMap, ServerChatActions, ServerChatPayloads } from "@demo/common";
+import { useWebSocket, WebSocketEventHandler, WebSocketManager } from "@uxp/ui-lib";
 
 import { getWSPath } from "../config";
 
-export type DemoClientActions = ClientChatActions;
-export type DemoClientPayloads = ClientChatPayloads;
+export type DemoClientActions = ClientChatActions & AsyncWSMsgActions;
+export type DemoClientPayloads = ClientChatPayloads & ClientAsyncWSMsgPayload;
 
-export type DemoServerActions = ServerChatActions;
-export type DemoServerPayloads = ServerChatPayloads;
+export type DemoServerActions = ServerChatActions & AsyncWSMsgActions;
+export type DemoServerPayloads = ServerChatPayloads & ServerAsyncWSMsgPayload;
 
-export type DemoClientActionPayloadMap = ClientChatActionPayloadMap
-export type DemoServerActionPayloadMap = ServerChatActionPayloadMap
+export type DemoClientActionPayloadMap = ClientChatActionPayloadMap & ClientAsyncWSMsgActionPayloadMap
+export type DemoServerActionPayloadMap = ServerChatActionPayloadMap & ServerAsyncWSMsgActionPayloadMap
 
 export type DemoMessageListener = {
     [A in keyof DemoServerActionPayloadMap]: WebSocketEventHandler<A, DemoServerActionPayloadMap>

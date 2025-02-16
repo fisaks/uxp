@@ -21,7 +21,7 @@ export const WebSocketConfig: React.FC<WebSocketConfigProps> = ({ children }) =>
     const demoListeners: DemoMessageListener = useMemo(() => ({
         new_message: (message) => { dispatch(addMessage(message.payload!)) },
         user_joined: (message) => { dispatch(userJoined(message.payload!)) },
-        user_left: (message) => { dispatch(userLeft(message.payload!)) }
+        user_left: (message) => { dispatch(userLeft(message.payload!)) },
     } as DemoMessageListener), [dispatch]);
 
     return <WebSocketProvider wsInstance={ws} listeners={demoListeners}>
