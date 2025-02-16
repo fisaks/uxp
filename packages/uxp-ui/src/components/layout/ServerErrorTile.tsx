@@ -17,6 +17,7 @@ const ERROR_MESSAGES: Record<ErrorCode, string> = {
     USER_OLD_PASSWORD_NOT_MATCH: "The old password you entered is incorrect.",
     RESOURCE_NOT_FOUND: "The requested resource could not be found.",
     PATCH_VERSION_CONFLICT: "Version conflict detected.",
+    DISCONNECTED: "You have been disconnected from the server. Please try again later.",
     // Add more error mappings as needed
 };
 
