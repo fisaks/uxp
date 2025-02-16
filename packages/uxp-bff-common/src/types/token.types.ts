@@ -7,5 +7,6 @@ export type Token = {
     firstName: string;
     lastName: string;
     email: string;
+    sessionId: string;
 };
-export type RefreshToken = { uuid: string; tokenVersion: number };
+export type RefreshToken = { uuid: string; tokenVersion: number, sessionId: string; };

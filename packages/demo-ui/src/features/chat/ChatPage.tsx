@@ -4,23 +4,21 @@ import ChatRoom from "./ChatRoom";
 import ChatRoomList from "./ChatRoomList";
 import ChatUserList from "./ChatUserList";
 
-import { useAppDispatch } from "../../hooks";
-import { connectWebSocket, leaveRoom } from "./chatActions";
+import { useDemoWebSocket } from "../../app/DemoWebSocketManager";
 import { selectCurrentRoom } from "./chatSelector";
 
 const ChatPage = () => {
-    const dispatch = useAppDispatch();
     const currentRoom = useSelector(selectCurrentRoom());
-
+    const { sendMessage } = useDemoWebSocket();
     useEffect(() => {
-        dispatch(connectWebSocket())
 
         return () => {
             if (currentRoom) {
-                leaveRoom(currentRoom);
+                sendMessage("leave_room", { room: currentRoom });
+
             }
         };
-    }, [dispatch, currentRoom]);
+    }, [currentRoom]);
 
     return (
         <div className="chat-page">

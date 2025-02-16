@@ -1,14 +1,17 @@
 import { ACCESS_TOKEN, AppError, AppLogger, REFRESH_TOKEN, RefreshToken, Token } from "@uxp/bff-common";
 import { ErrorCodes } from "@uxp/common";
 import { FastifyInstance, FastifyReply } from "fastify";
+
 import { AccessTokenExpires, RefreshTokenExpires } from "../config/constant";
 
 export function generateAccessToken(fastify: FastifyInstance, payload: Token): string {
-    return fastify.jwt.sign(payload, { expiresIn: AccessTokenExpires });
+    const { email, firstName, lastName, roles, username, uuid, sessionId } = payload
+    return fastify.jwt.sign({ email, firstName, lastName, roles, username, uuid, sessionId }, { expiresIn: AccessTokenExpires });
 }
 
 export function generateRefreshToken(fastify: FastifyInstance, payload: RefreshToken): string {
-    return fastify.jwt.sign(payload, { expiresIn: RefreshTokenExpires });
+    const { uuid, tokenVersion, sessionId } = payload;
+    return fastify.jwt.sign({ uuid, tokenVersion, sessionId }, { expiresIn: RefreshTokenExpires });
 }
 
 export function setAuthCookies(reply: FastifyReply, accessToken: string, refreshToken?: string): FastifyReply {
@@ -22,11 +25,11 @@ export function setAuthCookies(reply: FastifyReply, accessToken: string, refresh
 
     return refreshToken
         ? reply.setCookie(REFRESH_TOKEN, refreshToken, {
-              httpOnly: true,
-              secure: (process.env.SECURE_COOKIE ?? "true").toLowerCase() === "true",
-              sameSite: "strict",
-              path: "/",
-          })
+            httpOnly: true,
+            secure: (process.env.SECURE_COOKIE ?? "true").toLowerCase() === "true",
+            sameSite: "strict",
+            path: "/",
+        })
         : reply;
 }
 

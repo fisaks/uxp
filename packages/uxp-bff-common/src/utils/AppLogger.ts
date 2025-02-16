@@ -34,6 +34,7 @@ export type RequestMetaData = {
     ip: string;
     userAgent: string;
     requestId: string;
+    sessionId?: string;
 }
 export class AppLogger {
     private static fastifyLogger: FastifyInstance["log"] | typeof console;
@@ -67,6 +68,8 @@ export class AppLogger {
             ip: request.ip,
             userAgent: request.headers["user-agent"],
             requestId: request.id,
+            sessionId: (request.user as Token)?.sessionId,
+            
         } as RequestMetaData;
     }
 

@@ -11,7 +11,7 @@ interface ValidatedTextFieldProps<TFormData> {
     inputRef?: React.RefObject<HTMLInputElement>;
     onChange?: (value: string) => void;
     onBlur?: () => void;
-    type?: "text" | "password" | "email" | "number" | "tel" | "url";
+    type?: "text" | "password" | "email" | "number" | "tel" | "url" | "username";
     disabled?: boolean;
     loading?: boolean;
 }
@@ -32,13 +32,14 @@ const ValidatedTextField = <TFormData extends Record<string, string>>({
     const [showPassword, setShowPassword] = useState(false);
 
     const isPasswordField = type === "password";
+    const isUserNameField = type === "username";
     const theme = useTheme();
 
-    const handleMouseDown = () => {
+    const handlePressStart = () => {
         setShowPassword(true);
     };
 
-    const handleMouseUp = () => {
+    const handlePressEnd = () => {
         setShowPassword(false);
     };
 
@@ -59,7 +60,7 @@ const ValidatedTextField = <TFormData extends Record<string, string>>({
             disabled={disabled}
             label={label}
             value={value}
-            type={isPasswordField && showPassword ? "text" : type}
+            type={(isPasswordField && showPassword) || isUserNameField ? "text" : type}
             fullWidth
             margin="normal"
             error={!!error}
@@ -68,18 +69,29 @@ const ValidatedTextField = <TFormData extends Record<string, string>>({
             onChange={(e) => onChange && onChange(e.target.value)}
             onBlur={onBlur}
             slotProps={{
+                htmlInput: isUserNameField ? {
+                    autoCapitalize: "none",
+                    spellCheck: "false",
+                    autoCorrect: "off",
+                    inputMode: "text"
+                } : undefined,
+
                 input: {
+
+
                     endAdornment: (
                         <>
                             {isPasswordField && (
                                 <InputAdornment position="end">
                                     <IconButton
                                         aria-label={showPassword ? "Hide password" : "Show password"}
-                                        onMouseDown={handleMouseDown}
-                                        onMouseUp={handleMouseUp}
-                                        onMouseLeave={handleMouseUp} // Ensures the password hides if the user drags the mouse out
+                                        onMouseDown={handlePressStart}
+                                        onMouseUp={handlePressEnd}
+                                        onMouseLeave={handlePressEnd} // Ensures the password hides if the user drags the mouse out
                                         onKeyDown={handleKeyDown}
                                         onKeyUp={handleKeyUp}
+                                        onTouchStart={handlePressStart}
+                                        onTouchEnd={handlePressEnd}
                                         edge="end"
                                         sx={{
                                             color: theme.palette.primary.main,

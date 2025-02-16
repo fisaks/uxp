@@ -152,10 +152,11 @@ const LoginPage: React.FC = () => {
                     <ValidatedTextField<LoginPayload>
                         key={key}
                         name={key as keyof LoginPayload}
-                        type={key === "password" ? "password" : "text"}
+                        type={key === "password" ? "password" : "username"}
                         label={fieldLabels[key as keyof LoginPayload]}
                         value={formData[key as keyof LoginPayload]}
                         error={fieldErrors[key as keyof LoginPayload]}
+                        
                         inputRef={fieldRefs[key as keyof LoginPayload]}
                         onChange={(value) => handleChange(key as keyof LoginPayload, value)}
                         onBlur={() => handleBlur(key as keyof LoginPayload)}

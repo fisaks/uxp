@@ -8,3 +8,7 @@ export * from "./util/processPatchUpdate";
 export * from "./features/loading-error/loadingErrorSlice";
 export * from "./features/loading-error/useThunkHandler";
 export * from "./features/loading-error/withActionHandler";
+export * from "./features/websocket/WebSocketManager";
+export * from "./features/websocket/WebSocketProvider";
+//export * from "./features/websocket/WebSocketContext";
+export * from "./features/websocket/useWebSocket";

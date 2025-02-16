@@ -1,20 +1,18 @@
 import { useState } from "react";
 import { useSelector } from "react-redux";
-import { useAppDispatch } from "../../hooks";
-import { sendMessage } from "./chatActions";
+import { useDemoWebSocket } from "../../app/DemoWebSocketManager";
 import { selectCurrentRoom, selectRoomMessages } from "./chatSelector";
 
 
 const ChatRoom = () => {
-    const dispatch = useAppDispatch();
     const currentRoom = useSelector(selectCurrentRoom());
     const messages = useSelector(selectRoomMessages());
-
+    const { sendMessage } = useDemoWebSocket();
     const [message, setMessage] = useState("");
 
     const handleSend = () => {
         if (message.trim() && currentRoom) {
-            dispatch(sendMessage(currentRoom, message));
+            sendMessage("send_message", { room: currentRoom, text: message });
             setMessage("");
         }
     };

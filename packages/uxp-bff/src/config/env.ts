@@ -13,8 +13,13 @@ export const requiredKeys = [
     "REMOTE_HOST_DEMO",
     "SECURE_COOKIE",
 ] as const;
+export const optionalKeys = [
+    "LOG_LEVEL",
+    "TZ",
+] as const;
 export type RequiredKeys = (typeof requiredKeys)[number];
-export type EnvVariables = Record<RequiredKeys, string>;
+export type OptionalKeys = (typeof optionalKeys)[number];
+export type EnvVariables = Record<RequiredKeys, string> & Partial<Record<OptionalKeys, string>>;
 
 function validateEnv(vars: EnvVariables): EnvVariables {
     const missingVars = requiredKeys.filter((key) => vars[key] === undefined);

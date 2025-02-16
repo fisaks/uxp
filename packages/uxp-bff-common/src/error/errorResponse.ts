@@ -1,9 +1,9 @@
 // src/utils/errorResponse.ts
 
-import { ApiErrorResponse, ErrorDetail, WebSocketResponse } from "@uxp/common";
+import { ApiErrorResponse, ErrorDetail, GenericWebSocketResponse } from "@uxp/common";
 import { FastifyRequest } from "fastify";
 import { DateTime } from "luxon";
-import { AppLogger } from "../utils/AppLogger";
+import { AppLogger, RequestMetaData } from "../utils/AppLogger";
 
 export const createErrorResponse = (errors: ErrorDetail[], request: FastifyRequest): ApiErrorResponse => {
     return {
@@ -16,7 +16,7 @@ export const createErrorResponse = (errors: ErrorDetail[], request: FastifyReque
     };
 };
 
-export const createErrorMessageResponse = (request: FastifyRequest, action: string, error: ErrorDetail, messageId: string | undefined, details?: object): string => {
+export const createErrorMessageResponse = (request: FastifyRequest | RequestMetaData, action: string, error: ErrorDetail, messageId: string | undefined, details?: object): string => {
     AppLogger.error(request, {
         message: error.message,
 
@@ -28,5 +28,5 @@ export const createErrorMessageResponse = (request: FastifyRequest, action: stri
         id: messageId,
         error,
         errorDetails: details,
-    } as WebSocketResponse);
+    } as GenericWebSocketResponse);
 };

@@ -14,13 +14,15 @@ import {
     HandlerRegistry,
     IsProd,
     jwtPlugin,
-    registerRoutes,
     registerLocalWebSocketHandlers,
+    registerRoutes,
+    Token,
 } from "@uxp/bff-common";
 import "@uxp/bff-common/dist/health/health.controller";
 import { ValidateGlobalConfigValue } from "@uxp/common";
+import { DateTime } from "luxon";
 import path from "path";
-import { registerRemoteWebSocketHandler } from "./registerRemoteWebSocketHandler";
+import { registerRemoteWebSocketHandler } from "./websocket/registerRemoteWebSocketHandler";
 
 AppDataSource.initialize()
     .then(async () => {
@@ -34,7 +36,14 @@ AppDataSource.initialize()
 
 const port = 3001;
 const fastify = Fastify({
-    logger: true,
+    logger: {
+        enabled: true,
+        level: env.LOG_LEVEL ?? "info",
+        timestamp: () => `,"time":"${DateTime.now().setZone(env.TZ ?? "UTC").toISO()}"`,
+        formatters: {
+            level: (label) => ({ level: label.toUpperCase() }),
+        },
+    },
     disableRequestLogging: true,
     ajv: { customOptions: { allErrors: true, $data: true, keywords: [ValidateGlobalConfigValue], coerceTypes: true } },
 });
@@ -44,11 +53,13 @@ fastify.register(fastifyCookie);
 fastify.register(jwtPlugin);
 fastify.register(fastifyWebsocket);
 declare module "fastify" {
+    
     interface FastifyRequest {
         uxpRaw?: boolean;
+    
     }
 }
- // eslint-disable-next-line @typescript-eslint/no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function setRaw(req: FastifyRequest, _payload: any, done: any) {
     req["uxpRaw"] = true;
     done();

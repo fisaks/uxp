@@ -1,4 +1,4 @@
-import { AppError, AppLogger, REFRESH_TOKEN, Route, Token, UseQueryRunner } from "@uxp/bff-common";
+import { AppError, AppLogger, REFRESH_TOKEN, Route, sendErrorResponse, Token, UseQueryRunner } from "@uxp/bff-common";
 import {
     ErrorCodes,
     LockUserPayload,
@@ -23,18 +23,18 @@ import {
     UpdateUserRolesResponse,
     WhoAmIResponse,
 } from "@uxp/common";
-import { sendErrorResponse } from "@uxp/bff-common";
 import bcrypt from "bcrypt";
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { DateTime } from "luxon";
+import { nanoid } from "nanoid";
 import { QueryRunner } from "typeorm";
 import { BCRYPT_SALT_ROUNDS, MAX_FAILD_LOGIN } from "../../config/constant";
-
 import { User } from "../../db/entities/User";
 
 import { UserService } from "../../services/user.service";
 
 import { clearAuthCookies, generateAccessToken, generateRefreshToken, setAuthCookies, verifyRefreshToken } from "../../utils/tokenUtils";
+import { closeAllActiveWebSockets } from "../../websocket/registerRemoteWebSocketHandler";
 
 export class UserController {
     private fastify: FastifyInstance;
@@ -152,9 +152,9 @@ export class UserController {
                 message: "Invalid username or password",
             });
         }
-
-        const accessToken = generateAccessToken(this.fastify, user);
-        const refreshToken = generateRefreshToken(this.fastify, user);
+        const sessionId = nanoid();
+        const accessToken = generateAccessToken(this.fastify, { ...user, sessionId });
+        const refreshToken = generateRefreshToken(this.fastify, { ...user, sessionId });
 
         setAuthCookies(reply, accessToken, refreshToken);
 
@@ -228,7 +228,7 @@ export class UserController {
         await UserService.saveUser(queryRunner, user);
 
         if (!adminRole) {
-            const accessToken = generateAccessToken(this.fastify, user);
+            const accessToken = generateAccessToken(this.fastify, { ...user, sessionId: (req.user as Token).sessionId });
             setAuthCookies(reply, accessToken);
         }
 
@@ -266,8 +266,8 @@ export class UserController {
             }
 
             // Generate new tokens
-            const newAccessToken = generateAccessToken(this.fastify, user);
-            const newRefreshToken = generateRefreshToken(this.fastify, user);
+            const newAccessToken = generateAccessToken(this.fastify, { ...user, sessionId: decoded.sessionId });
+            const newRefreshToken = generateRefreshToken(this.fastify, { ...user, sessionId: decoded.sessionId });
 
             setAuthCookies(reply, newAccessToken, newRefreshToken);
 
@@ -312,10 +312,10 @@ export class UserController {
     @Route("get", "/logout", { authenticate: false })
     @UseQueryRunner()
     async logout(req: FastifyRequest, reply: FastifyReply, queryRunner: QueryRunner) {
-        const { uuid } = req.user as Token;
+        const { uuid, sessionId } = req.user as Token;
         if (uuid) {
             const user = await UserService.findByUuid(queryRunner, uuid);
-
+            closeAllActiveWebSockets(sessionId);
             if (user) {
                 user.tokenVersion += 1;
                 await UserService.saveUser(queryRunner, user);

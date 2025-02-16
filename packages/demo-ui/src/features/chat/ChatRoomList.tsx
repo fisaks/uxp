@@ -1,15 +1,18 @@
 import { useSelector } from "react-redux";
-import { useAppDispatch } from "../../hooks";
-import { joinRoom } from "./chatActions";
+import { useDemoWebSocket } from "../../app/DemoWebSocketManager";
 import { selectChatRooms } from "./chatSelector";
+import { useAppDispatch } from "../../hooks";
+import { setCurrentRoom } from "./chatSlice";
 
 
 const ChatRoomList = () => {
     const dispatch = useAppDispatch();
     const rooms = useSelector(selectChatRooms());
+    const { sendMessage } = useDemoWebSocket();
 
     const handleJoinRoom = (room: string) => {
-        dispatch(joinRoom(room));
+        sendMessage("join_room", { room });
+        dispatch(setCurrentRoom(room));
     };
 
     return (
