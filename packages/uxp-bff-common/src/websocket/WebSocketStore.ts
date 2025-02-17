@@ -31,6 +31,7 @@ export class WebSocketStore {
 
     public removeUser(socket: WebSocket) {
         this.connectedUsers.delete(socket);
+        this.leaveAllTopics(socket);
     }
 
     public getConnectedUsers(): Map<WebSocket, WebSocketDetails> {

@@ -1,4 +1,4 @@
-import { WebSocketMessage, WebSocketResponse } from "@uxp/common";
+import { SchemaValidate, WebSocketMessage, WebSocketResponse } from "@uxp/common";
 
 export type ClientChatActions = "send_message" | "join_room" | "leave_room";
 
@@ -37,3 +37,29 @@ export type ClientChatActionPayloadMap = {
 export type ServerChatActionPayloadMap = {
     [A in ServerChatActions]: ServerChatPayloads[A];
 };
+
+export const SendMessageSchema ={
+
+    type: 'object',
+    properties: {
+        room: { type: 'string', maxLength: 25 },
+        text: {
+            type: 'string',
+            maxLength: 500,
+            pattern: '^[a-zA-Z0-9 .,?!]*$' // Only normal Latin characters, spaces, and common punctuation
+        },
+    },
+    required: ['room', 'text']
+
+}
+
+export const JoinRoomchema = {
+
+    type: 'object',
+    properties: {
+        room: { type: 'string', maxLength: 25 },
+    },
+    required: ['room']
+
+}
+export const LeaveRoomchema = JoinRoomchema;

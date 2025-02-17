@@ -32,3 +32,15 @@ export type ServerAsyncWSMsgActionPayloadMap = {
     [A in AsyncWSMsgActions]: ServerAsyncWSMsgPayloads[A];
 };
 
+
+
+export const AsyncWSMsgSchema = {
+
+    type: 'object',
+    properties: {
+        waitTimeMs: { type: 'number', minimum: 0, maximum: 10000 },
+        responseType: { type: 'string', enum: ["success", "error"] },
+    },
+    required: ['waitTimeMs', 'responseType']
+
+}

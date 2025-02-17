@@ -38,14 +38,14 @@ const AsyncMessagingPage = () => {
     };
 
     return (
-        <Box sx={{ padding: 3, maxWidth: 500, margin: "auto", display: "flex", flexDirection: "column", gap: 2 }}>
-            <Typography variant="h4" component="h1" >WebSocket Async Messaging Demo</Typography>
+        <Box sx={{maxWidth: 700,display: "flex", flexDirection: "column", gap: 2}}>
+            <Typography variant="h1"  >WebSocket Async Messaging Demo</Typography>
             <TextField
                 label="Wait Time (ms)"
                 type="number"
                 value={waitTimeMs}
                 onChange={(e) => setWaitTimeMs(Number(e.target.value))}
-                fullWidth
+
                 margin="normal"
             />
             <TextField
@@ -53,7 +53,7 @@ const AsyncMessagingPage = () => {
                 type="number"
                 value={timeoutMs}
                 onChange={(e) => setTimeoutMs(Number(e.target.value))}
-                fullWidth
+
                 margin="normal"
             />
             <FormControl component="fieldset">

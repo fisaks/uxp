@@ -1,10 +1,10 @@
-import { ClientAsyncWSMsgWebSocketMessage, ServerAsyncWSMsgWebSocketMessage } from "@demo/common";
+import { AsyncWSMsgSchema, ClientAsyncWSMsgWebSocketMessage, ServerAsyncWSMsgWebSocketMessage } from "@demo/common";
 import { WebSocketAction, WebSocketDetails } from "@uxp/bff-common";
 import { ErrorCodes } from "@uxp/common";
 
 export class AsyncWsMsgHandler {
 
-    @WebSocketAction("test_async_message", { authenticate: true })
+    @WebSocketAction("test_async_message", { authenticate: true , schema: AsyncWSMsgSchema})
     public async handleJoinRoom(wsDetails: WebSocketDetails, message: ClientAsyncWSMsgWebSocketMessage<"test_async_message">) {
 
         const { waitTimeMs, responseType } = message.payload

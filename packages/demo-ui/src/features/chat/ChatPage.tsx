@@ -6,22 +6,27 @@ import ChatUserList from "./ChatUserList";
 
 import { useDemoWebSocket } from "../../app/DemoWebSocketManager";
 import { selectCurrentRoom } from "./chatSelector";
+import { setCurrentRoom } from "./chatSlice";
+import { useAppDispatch } from "../../hooks";
+import { Box, Typography } from "@mui/material";
 
 const ChatPage = () => {
     const currentRoom = useSelector(selectCurrentRoom());
     const { sendMessage } = useDemoWebSocket();
+    const dispatch=useAppDispatch();
     useEffect(() => {
 
         return () => {
             if (currentRoom) {
                 sendMessage("leave_room", { room: currentRoom });
-
+                 dispatch(setCurrentRoom(null));
             }
         };
     }, [currentRoom]);
 
     return (
-        <div className="chat-page">
+        <Box sx={{}}>
+            <Typography variant="h1">Chat</Typography>
             <ChatRoomList />
             {currentRoom ? (
                 <div className="chat-container">
@@ -31,7 +36,7 @@ const ChatPage = () => {
             ) : (
                 <p>Select a room to start chatting</p>
             )}
-        </div>
+        </Box>
     );
 };
 

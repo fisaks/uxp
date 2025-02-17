@@ -8,7 +8,7 @@ import { useRichEditor } from "./components/useRichEditor";
 
 interface RichTextEditorProps {
     value: string;
-    label: string;
+    label?: string;
     imageBasePath: string;
     onChange: (content: string) => void;
     onImageUpload: (file: File) => Promise<string>;
@@ -68,9 +68,11 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ label, value, onChange,
             sx={{ padding: 0 }}
             className={`${styles.editorContainer} ${isFullScreen ? styles.fullScreen : ""}`}
         >
-            <Typography variant="caption" color="text.secondary" sx={{ pl: "10px" }}>
-                {label}
-            </Typography>
+            {
+                label && <Typography variant="caption" color="text.secondary" sx={{ pl: "10px" }}>
+                    {label}
+                </Typography>
+            }
             <RichEditorToolbar
                 editor={editor}
                 portalContainerRef={portalContainerRef}

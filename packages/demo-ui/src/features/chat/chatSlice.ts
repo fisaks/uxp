@@ -19,7 +19,7 @@ const chatSlice = createSlice({
     name: "chat",
     initialState,
     reducers: {
-        setCurrentRoom: (state, action: PayloadAction<string>) => {
+        setCurrentRoom: (state, action: PayloadAction<string|null>) => {
             state.currentRoom = action.payload;
             return state;
         },

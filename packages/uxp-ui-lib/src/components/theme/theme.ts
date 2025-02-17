@@ -7,32 +7,32 @@ const baseTheme = createTheme({
     typography: {
         fontFamily: "'Roboto', 'Arial', sans-serif",
         h1: {
-            fontSize: "2.5rem", // 40px
+            fontSize: "2.0rem", // 32px
             fontWeight: 700,
-            lineHeight: 1.2,
+            lineHeight: 1.3,
         },
         h2: {
-            fontSize: "2rem", // 32px
+            fontSize: "1.75rem", 
             fontWeight: 600,
             lineHeight: 1.3,
         },
         h3: {
-            fontSize: "1.75rem", // 28px
+            fontSize: "1.5rem", 
             fontWeight: 500,
             lineHeight: 1.4,
         },
         h4: {
-            fontSize: "1.5rem", // 24px
+            fontSize: "1.25rem", 
             fontWeight: 500,
             lineHeight: 1.5,
         },
         h5: {
-            fontSize: "1.25rem", // 20px
+            fontSize: "1.125rem",
             fontWeight: 400,
             lineHeight: 1.6,
         },
         h6: {
-            fontSize: "1rem", // 16px
+            fontSize: "1rem", 
             fontWeight: 400,
             lineHeight: 1.7,
         },
