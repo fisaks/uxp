@@ -4,6 +4,7 @@ export type HouseData = {
     yearBuilt?: string;
     legalRegistrationNumber?: string;
     details?: Record<string, string>;
+    documentId: string;
     buildings: BuildingData[];
 };
 
@@ -11,6 +12,7 @@ export type BuildingData = {
     uuid: string;
     name: string;
     yearBuilt?: number;
+    documentId: string;
     details?: Record<string, string>;
 };
 

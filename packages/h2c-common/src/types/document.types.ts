@@ -1,0 +1,1 @@
+export type DocumentType="house-details" | "building-details"

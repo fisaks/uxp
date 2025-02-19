@@ -3,15 +3,16 @@ import { ErrorCodes } from "@uxp/common";
 import { ErrorObject } from "ajv";
 import { FastifyError, FastifyReply, FastifyRequest } from "fastify";
 import { AppLogger } from "../utils/AppLogger";
-import { AppError } from "./AppError";
+import { AppError, AppErrorV2 } from "./AppError";
 import { createErrorResponse } from "./errorResponse";
 
 export const errorHandler = (error: FastifyError, request: FastifyRequest, reply: FastifyReply) => {
     // Log the error for debugging
     AppLogger.error(request, { error: error, message: "GLOBAL ERROR HANDLER" + process.env.NODE_ENV });
 
-    if (error instanceof AppError) {
+    if (error instanceof AppError || error instanceof AppErrorV2) {
         handleAppError(error, request, reply);
+
     } else if (error.code === "FST_ERR_VALIDATION") {
         handleAJvError(error, request, reply);
     } else {
@@ -53,7 +54,7 @@ const handleAJvError = (error: FastifyError & { validation?: ErrorObject[] }, re
     );
 };
 
-const handleAppError = (error: AppError, request: FastifyRequest, reply: FastifyReply) => {
+const handleAppError = (error: AppError | AppErrorV2, request: FastifyRequest, reply: FastifyReply) => {
     const statusCode = error.statusCode ?? 500;
     const code = error.code ?? "INTERNAL_SERVER_ERROR";
     const params = error.params;

@@ -45,7 +45,7 @@ export function registerLocalWebSocketHandlers({ fastify: app, dataSource, handl
     app.register(async function (fastify) {
         fastify.get(basePath, { websocket: true }, async (socket /* WebSocket */, request /* FastifyRequest */) => {
             AppLogger.info(request, { message: `WebSocket connection established (local) ${request.ip}` });
-
+            
             const socketDetails = await setupWebSocketConnection(wsStore, socket, request);
             if (!socketDetails) {
                 AppLogger.error(request, { message: "Failed to setup WebSocket connection no request meta data could be created" });

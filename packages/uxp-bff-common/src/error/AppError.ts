@@ -12,6 +12,7 @@ export class AppError extends Error {
     constructor(statusCode: number, code: ErrorCode, message?: string, params?: Record<string, string | number>);
     constructor(statusCode: number, code: ErrorCode, message?: string, params?: Record<string, string | number>, originalError?: Error);
 
+
     // Unified implementation
     constructor(
         statusCodeOrCode: number | string,
@@ -42,6 +43,43 @@ export class AppError extends Error {
         }
 
         // Maintain proper stack trace (only available in V8 environments)
+        if (Error.captureStackTrace) {
+            Error.captureStackTrace(this, this.constructor);
+        }
+    }
+}
+
+
+export class AppErrorV2 extends Error {
+    statusCode: number;
+    code: ErrorCode;
+    params?: Record<string, string | number>;
+    originalError?: Error;
+
+    constructor({
+        statusCode = 500,
+        code,
+        message,
+        params,
+        originalError
+    }: {
+        statusCode?: number;
+        code: ErrorCode;
+        message?: string;
+        params?: Record<string, string | number>;
+        originalError?: Error;
+    }) {
+        super(message);
+
+        this.statusCode = statusCode;
+        this.code = code;
+        this.params = params;
+        this.originalError = originalError;
+
+        if (this.originalError?.stack) {
+            this.stack += `\nCaused by: ${this.originalError.stack}`;
+        }
+
         if (Error.captureStackTrace) {
             Error.captureStackTrace(this, this.constructor);
         }
