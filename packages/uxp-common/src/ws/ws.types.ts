@@ -12,14 +12,14 @@ export type WebSocketAction<ActionPayloadMap> =
 
 
 export type WebSocketMessage<Action extends WebSocketAction<ActionPayloadMap>,
-    ActionPayloadMap extends { [K in keyof ActionPayloadMap]: ActionPayloadMap[K] }> = {
+    ActionPayloadMap extends { [K in WebSocketAction<ActionPayloadMap>]: ActionPayloadMap[K] }> = {
         action: Action;
         id?: string;
         payload: ActionPayloadMap[Action];
     }
 
 export type WebSocketResponse<Action extends WebSocketAction<ActionPayloadMap>,
-    ActionPayloadMap extends { [K in keyof ActionPayloadMap]: ActionPayloadMap[K] }> = {
+    ActionPayloadMap extends { [K in WebSocketAction<ActionPayloadMap>]: ActionPayloadMap[K] }> = {
         action: Action;
         id?: string;
         success: boolean;
