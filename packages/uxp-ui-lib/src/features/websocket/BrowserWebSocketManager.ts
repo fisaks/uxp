@@ -392,11 +392,7 @@ export class BrowserWebSocketManager<
             }
         } catch (error) {
             console.error("[WebSocket] Error sending data:", error);
-            this.globalErrorHandler?.({
-                action: action,
-                error: { code: ErrorCodes.INTERNAL_SERVER_ERROR },
-                errorDetails: { message: "Error sending data", error }
-            });
+            this.handleError(action, { code: ErrorCodes.BROWSER_SEND_ERROR }, { message: "Error sending data", error });
 
         }
     }

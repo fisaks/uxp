@@ -5,6 +5,7 @@ import React, { useMemo } from "react";
 // Error code to message mapping
 const ERROR_MESSAGES: Record<ErrorCode, string> = {
     INTERNAL_SERVER_ERROR: "Something went wrong on our end. Please try again later.",
+    BROWSER_SEND_ERROR: "An error occurred while sending data to the server. Please try again.",
     UNAUTHORIZED: "You are not authorized to perform this action. Please log in and try again.",
     FORBIDDEN: "You do not have the necessary permissions to access this resource.",
     VALIDATION: "One or more fields contain invalid data. Please check and try again.",
