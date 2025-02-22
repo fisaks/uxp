@@ -312,7 +312,7 @@ const toWebSocketMessage = (meta: RequestMetaData, message: Buffer | ArrayBuffer
             ? Buffer.concat(message) // Merge chunked buffers
             : (message as Buffer | ArrayBuffer);
 
-        const receivedPrefix = new TextDecoder("utf-8").decode(
+        const receivedPrefix = msg.byteLength < 4 ? undefined : new TextDecoder("utf-8").decode(
             msg instanceof Buffer ? msg.subarray(0, 4) : msg.slice(0, 4)
         );
         if (receivedPrefix === MAGIC_BINARY_PREFIX) {
