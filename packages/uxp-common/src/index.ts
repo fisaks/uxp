@@ -15,3 +15,4 @@ export * from "./utils/fileUtil";
 export * from "./uxp/pagesRoutesApps.types";
 export * from "./general.types";
 export * from "./ws/ws.types";
+export * from "./ws/websocketUtils"

@@ -1,7 +1,7 @@
 import { Box, FormControl, FormControlLabel, Radio, RadioGroup, TextField, Typography } from "@mui/material";
-import { LoadingButton, WebSocketTimeoutError } from "@uxp/ui-lib";
+import { LoadingButton, WebSocketError, WebSocketTimeoutError } from "@uxp/ui-lib";
 import { useState } from "react";
-import { useDemoWebSocket } from "../../app/DemoWebSocketManager";
+import { useDemoWebSocket } from "../../app/DemoAppBrowserWebSocketManager";
 
 const AsyncMessagingPage = () => {
     const { sendMessageAsync } = useDemoWebSocket();
@@ -17,20 +17,21 @@ const AsyncMessagingPage = () => {
         setResponse(null);
 
         try {
+            // if this resolv we can expect that result in success true
+            // if not the promise will reject and WebSocketError or WebSocketTimeoutError been thrown
             const result = await sendMessageAsync("test_async_message", { waitTimeMs, responseType }, timeoutMs);
 
-            if (result.success) {
-                setResponse(`✅ Success: ${JSON.stringify(result.payload)}`);
-            } else {
-                setResponse(`❌ Not Success: ${JSON.stringify(result.error)}`);
-            }
+            setResponse(`✅ Success: ${JSON.stringify(result.payload)}`);
+
         } catch (error) {
             console.error(error);
-            if (error instanceof WebSocketTimeoutError) {
-                
+            if (error instanceof WebSocketError) {
+                setResponse(`❌ WebSocketError:  action ${error.action} code is ${error.error.code} and message ${error.message}`);
+            } else if (error instanceof WebSocketTimeoutError) {
+
                 setResponse(`⏳ Timeout! Server didn't respond within ${error.timeoutMs}ms for action ${error.action}`);
             } else {
-                setResponse(`❌ Error: ${(error as any).message}`);
+                setResponse(`❌ Unknown Error: ${(error as any).message}`);
             }
         } finally {
             setLoading(false);
@@ -38,7 +39,7 @@ const AsyncMessagingPage = () => {
     };
 
     return (
-        <Box sx={{maxWidth: 700,display: "flex", flexDirection: "column", gap: 2}}>
+        <Box sx={{ maxWidth: 700, display: "flex", flexDirection: "column", gap: 2 }}>
             <Typography variant="h1"  >WebSocket Async Messaging Demo</Typography>
             <TextField
                 label="Wait Time (ms)"

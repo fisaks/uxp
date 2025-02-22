@@ -1,5 +1,5 @@
 import { useSelector } from "react-redux";
-import { useDemoWebSocket } from "../../app/DemoWebSocketManager";
+import { useDemoWebSocket } from "../../app/DemoAppBrowserWebSocketManager";
 import { selectChatRooms } from "./chatSelector";
 import { useAppDispatch } from "../../hooks";
 import { setCurrentRoom } from "./chatSlice";

@@ -1,10 +1,11 @@
 import fastifyCookie from "@fastify/cookie";
+import fastifyMultipart from "@fastify/multipart";
 import fastifyWebsocket from "@fastify/websocket";
 import { AppLogger, errorHandler, HandlerRegistry, jwtPlugin, registerLocalWebSocketHandlers, registerRoutes } from "@uxp/bff-common";
 import Fastify from "fastify";
 import path from "path";
-import fastifyMultipart from "@fastify/multipart";
 import "./env";
+import { DemoAppServerWebSocketManager } from "./ws/DemoAppServerWebSocketManager";
 
 
 const fastify = Fastify({ logger: { enabled: true, level: process.env.LOG_LEVEL ?? "info" } });
@@ -39,10 +40,12 @@ const wsHandlers = HandlerRegistry.getWsHandlers();
 
 console.log("restHandlers", restHandlers);
 console.log("wsHandlers", wsHandlers);
+const wsManager = DemoAppServerWebSocketManager.getInstance()
 
 registerLocalWebSocketHandlers({
     fastify,
     handlers: Array.from(wsHandlers),
+    wsManager
 });
 
 registerRoutes({

@@ -4,7 +4,7 @@ import ChatRoom from "./ChatRoom";
 import ChatRoomList from "./ChatRoomList";
 import ChatUserList from "./ChatUserList";
 
-import { useDemoWebSocket } from "../../app/DemoWebSocketManager";
+import { useDemoWebSocket } from "../../app/DemoAppBrowserWebSocketManager";
 import { selectCurrentRoom } from "./chatSelector";
 import { setCurrentRoom } from "./chatSlice";
 import { useAppDispatch } from "../../hooks";

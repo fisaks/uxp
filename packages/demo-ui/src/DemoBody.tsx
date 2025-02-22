@@ -4,10 +4,11 @@ import { AppBodyContent, LeftSideBar, SidebarMenuItems } from "@uxp/ui-lib";
 import { useMemo } from "react";
 import { Link, Route, Routes, useLocation } from "react-router-dom";
 import { getBaseRoutePath } from "./config";
-import ChatPage from "./features/chat/ChatPage";
-import MiscPage from "./features/template/MiscPage";
 import AsyncMessagingPage from "./features/async-ws-msg/AsyncMessagingPage";
+import BinaryMessagingPage from "./features/binray-ws-msg/BinaryMessagingPage";
+import ChatPage from "./features/chat/ChatPage";
 import RichEditPage from "./features/rich-edit/RichEditPage";
+import MiscPage from "./features/template/MiscPage";
 
 
 export const DemoBody = () => {
@@ -40,6 +41,14 @@ export const DemoBody = () => {
                 active: location.pathname === generateFullLink(basePath, "async-ws-msg"),
             },
             {
+                label: "Binary WS Messages",
+                link: "binary-ws-msg",
+                component: Link,
+                componentProp: "to",
+                active: location.pathname === generateFullLink(basePath, "binary-ws-msg"),
+            },
+
+            {
                 label: "Rich Text Editor",
                 link: "rich-text-editor",
                 component: Link,
@@ -55,9 +64,10 @@ export const DemoBody = () => {
             <AppBodyContent appHaveOwnLeftSideBar={true}>
                 <Routes>
                     <Route path="misc-demo" element={<MiscPage />} />
-                    <Route path="chat"  element={<ChatPage />} />
-                    <Route path="async-ws-msg"  element={<AsyncMessagingPage />} />
-                    <Route path="rich-text-editor"  element={<RichEditPage />} />
+                    <Route path="chat" element={<ChatPage />} />
+                    <Route path="async-ws-msg" element={<AsyncMessagingPage />} />
+                    <Route path="binary-ws-msg" element={<BinaryMessagingPage />} />
+                    <Route path="rich-text-editor" element={<RichEditPage />} />
                     <Route path="*" element={<MiscPage />} />
                 </Routes>
             </AppBodyContent>

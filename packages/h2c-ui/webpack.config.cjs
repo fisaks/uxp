@@ -41,15 +41,7 @@ module.exports = merge(baseConfig, {
         }),
         new htmlWebpackInjectAttributesPlugin({
             "data-uxp-remote-app": process.env.META_TAG,
-        }),
+        })
 
-        new CopyWebpackPlugin({
-            patterns: [
-                {
-                    from: path.resolve(__dirname, "static"), // Source folder (relative to project root)
-                    to: path.resolve(__dirname, "dist/static"), // Destination folder
-                },
-            ],
-        }),
     ],
 });

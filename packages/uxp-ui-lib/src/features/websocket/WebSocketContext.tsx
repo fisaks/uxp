@@ -1,16 +1,23 @@
 import { createContext, useContext } from "react";
-import WebSocketManager from "./WebSocketManager";
+import { BrowserWebSocketManager } from "./BrowserWebSocketManager";
+import { WebSocketAction } from "@uxp/common";
 
-interface WebSocketContextType<Action extends string, Payload> {
-    wsInstance: WebSocketManager<Action, Payload>;
+interface WebSocketContextType<
+    ActionPayloadRequestMap extends { [K in WebSocketAction<ActionPayloadRequestMap>]: ActionPayloadRequestMap[K] },
+    ActionPayloadResponseMap extends { [K in WebSocketAction<ActionPayloadResponseMap>]: ActionPayloadResponseMap[K] }
+> {
+    wsInstance: BrowserWebSocketManager<ActionPayloadRequestMap, ActionPayloadResponseMap>;
 }
 
-export const WebSocketContext = createContext<WebSocketContextType<any, any> | null>(null);
+export const WebSocketContext = createContext<WebSocketContextType<any, any> | undefined>(undefined);
 
-export const useWebSocketContext = <ClientActionPayloadMap, ServerActionPayloadMap>() => {
+export const useWebSocketContext = <
+    ActionPayloadRequestMap extends { [K in WebSocketAction<ActionPayloadRequestMap>]: ActionPayloadRequestMap[K] },
+    ActionPayloadResponseMap extends { [K in WebSocketAction<ActionPayloadResponseMap>]: ActionPayloadResponseMap[K] }
+>() => {
     const context = useContext(WebSocketContext);
     if (!context) {
-        throw new Error("useWebSocket must be used within a WebSocketProvider");
+        throw new Error("useWebSocketContext must be used within a WebSocketProvider");
     }
-    return context.wsInstance as WebSocketManager<ClientActionPayloadMap, ServerActionPayloadMap>;
+    return context.wsInstance as BrowserWebSocketManager<ActionPayloadRequestMap, ActionPayloadResponseMap>;
 };

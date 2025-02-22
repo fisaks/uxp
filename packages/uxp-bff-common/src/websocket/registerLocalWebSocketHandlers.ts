@@ -1,5 +1,5 @@
 
-import { ErrorCodes, GenericWebSocketMessage, GenericWebSocketResponse, UserRole } from "@uxp/common";
+import { ErrorCodes, GenericWebSocketMessage, GenericWebSocketResponse, MAGIC_BINARY_PREFIX, UserRole } from "@uxp/common";
 import Ajv, { ValidateFunction } from "ajv";
 import { FastifyInstance, FastifyRequest } from "fastify";
 import { DataSource } from "typeorm";
@@ -12,7 +12,9 @@ import { getWebSocketActions, WebSocketActionMetadata } from "../decorator/webso
 import { createErrorMessageResponse } from "../error/errorResponse";
 import { Token } from "../types/token.types";
 import { AppLogger, RequestMetaData } from "../utils/AppLogger";
-import { WebSocketDetails, WebSocketStore } from "./WebSocketStore";
+import { GenericServerWebSocketManager, WebSocketDetails } from "./ServerWebSocketManager";
+import { sendWebSocketMessage } from "./websocketUtils";
+
 
 const ajv = new Ajv();
 interface WebSocketActionHandler {
@@ -27,11 +29,13 @@ interface WebSocketActionHandler {
 type WebSocketActionMap = Record<string, WebSocketActionHandler>;
 
 
+
 type RegisterWebSocketHandlersArgs = {
     fastify: FastifyInstance;
     dataSource?: DataSource;
     handlers: HandlerConstructor[];
     basePath?: string;
+    wsManager: GenericServerWebSocketManager
 };
 
 /**
@@ -39,14 +43,14 @@ type RegisterWebSocketHandlersArgs = {
  * @param fastify Fastify instance
  * @param handlers Array of handler classes
  */
-export function registerLocalWebSocketHandlers({ fastify: app, dataSource, handlers, basePath = "/ws-api" }: RegisterWebSocketHandlersArgs) {
+export function registerLocalWebSocketHandlers({ fastify: app, dataSource, handlers, wsManager, basePath = "/ws-api" }: RegisterWebSocketHandlersArgs) {
     const actionMap = preloadWebSocketHandlers(app, handlers);
-    const wsStore = WebSocketStore.getInstance();
+
     app.register(async function (fastify) {
         fastify.get(basePath, { websocket: true }, async (socket /* WebSocket */, request /* FastifyRequest */) => {
             AppLogger.info(request, { message: `WebSocket connection established (local) ${request.ip}` });
-            
-            const socketDetails = await setupWebSocketConnection(wsStore, socket, request);
+
+            const socketDetails = await setupWebSocketConnection(wsManager, socket, request);
             if (!socketDetails) {
                 AppLogger.error(request, { message: "Failed to setup WebSocket connection no request meta data could be created" });
                 socket.close();
@@ -62,7 +66,7 @@ export function registerLocalWebSocketHandlers({ fastify: app, dataSource, handl
 
             socket.on("close", (code, reason) => {
                 AppLogger.info(request, { message: `WebSocket closed (code: ${code}, reason: ${reason.toString()})` });
-                wsStore.removeUser(socket);
+                wsManager.removeUser(socket);
                 cleanupPinPong();
             });
         });
@@ -104,7 +108,7 @@ function preloadWebSocketHandlers(fastify: FastifyInstance, handlers: any[]): We
     return actionMap;
 }
 
-const setupWebSocketConnection = async (wsStore: WebSocketStore, socket: WebSocket, request: FastifyRequest) => {
+const setupWebSocketConnection = async (wsStore: GenericServerWebSocketManager, socket: WebSocket, request: FastifyRequest) => {
 
     let user: Token | undefined = undefined;
     if (request.cookies[ACCESS_TOKEN]) {
@@ -200,24 +204,26 @@ const handleWebSocketMessage = async ({ actionMap, socketDetails, message, dataS
     const parsedMessage = toWebSocketMessage(requestMeta, message);
 
     if (!parsedMessage) {
-        socket.send(
-            createErrorMessageResponse(requestMeta, "unknown", {
+        sendWebSocketMessage({
+            socket,
+            message: createErrorMessageResponse(requestMeta, "unknown", {
                 code: ErrorCodes.INTERNAL_SERVER_ERROR,
                 message: `Not able to parse message`,
             }, undefined)
-        );
+        });
         return;
     }
-    const { action, payload, id: messageId } = parsedMessage;
+    const { action, payload, id: messageId } = parsedMessage.message;
     const actionHandler = actionMap[action];
 
     if (!actionHandler) {
-        socket.send(
-            createErrorMessageResponse(requestMeta, action, {
+        sendWebSocketMessage({
+            socket,
+            message: createErrorMessageResponse(requestMeta, action, {
                 code: ErrorCodes.NOT_FOUND,
                 message: `No handler registered for action "${action}"`,
             }, messageId)
-        );
+        });
         return;
     }
 
@@ -225,7 +231,7 @@ const handleWebSocketMessage = async ({ actionMap, socketDetails, message, dataS
 
         AppLogger.info(requestMeta, {
             message: "Processing WebSocket action",
-            object: { action, messageId, roles: user?.roles },
+            object: { action, messageId, roles: user?.roles, msgType: parsedMessage.type },
         });
 
         const {
@@ -238,64 +244,103 @@ const handleWebSocketMessage = async ({ actionMap, socketDetails, message, dataS
         } = actionHandler;
 
         if (needsAuthentication && !user) {
-            socket.send(
-                createErrorMessageResponse(requestMeta, action, {
+            sendWebSocketMessage({
+                socket,
+                message: createErrorMessageResponse(requestMeta, action, {
                     code: ErrorCodes.UNAUTHORIZED,
                     message: "Authentication required",
                 }, messageId)
-            );
+            });
             return;
         }
 
         if (!hasRequiredRoles({ userRoles: user?.roles ?? [], requiredRoles })) {
-            socket.send(
-                createErrorMessageResponse(requestMeta, action, { code: ErrorCodes.FORBIDDEN, message: "Insufficient permissions" }, messageId)
-            );
+            sendWebSocketMessage({
+                socket,
+                message: createErrorMessageResponse(requestMeta, action, { code: ErrorCodes.FORBIDDEN, message: "Insufficient permissions" }, messageId)
+            });
             return;
         }
 
         const validation = validateMessagePayload(payload, validate, schemaValidate);
         if (validation) {
-            socket.send(
-                createErrorMessageResponse(
+            sendWebSocketMessage({
+                socket,
+                message: createErrorMessageResponse(
                     requestMeta,
                     action,
                     { code: ErrorCodes.VALIDATION, message: validation.message },
                     messageId,
                     validation.errors ?? undefined
                 )
-            );
+            });
             return;
         }
 
         await withQueryRunner(dataSource, queryRunnerOptions, async (queryRunner) => {
-            const args = queryRunner ? [socketDetails, parsedMessage, queryRunner] : [socketDetails, parsedMessage];
+            const args: unknown[] = [socketDetails, parsedMessage.message]
+            if (parsedMessage.data) args.push(parsedMessage.data)
+            if (queryRunner) args.push(queryRunner)
+            //const args = queryRunner ? [socketDetails, parsedMessage.message, parsedMessage.data, queryRunner] : [socketDetails, parsedMessage.message, parsedMessage.data];
             const result = await handler(...args);
 
             if (result) {
-                socket.send(JSON.stringify({ success: true, id: messageId, action, payload: result } as GenericWebSocketResponse));
+                sendWebSocketMessage({
+                    socket,
+                    message: JSON.stringify({ success: true, id: messageId, action, payload: result } as GenericWebSocketResponse)
+                });
             }
             return result;
         });
     } catch (err: any) {
         AppLogger.error(requestMeta, { message: "Error in WebSocket message", error: err });
 
-        socket.send(
-            createErrorMessageResponse(requestMeta, action, {
+        sendWebSocketMessage({
+            socket,
+            message: createErrorMessageResponse(requestMeta, action, {
                 code: ErrorCodes.INTERNAL_SERVER_ERROR,
                 message: "An unexpected error occurred",
             }, messageId)
-        );
+        });
     }
 
 }
 
 const toWebSocketMessage = (meta: RequestMetaData, message: Buffer | ArrayBuffer | Buffer[]) => {
     try {
-        const socketMessage = JSON.parse(message.toString()) as GenericWebSocketMessage;
-        if (socketMessage.action) {
-            return socketMessage;
+        const msg = Array.isArray(message) && message.every((part) => part instanceof Buffer)
+            ? Buffer.concat(message) // Merge chunked buffers
+            : (message as Buffer | ArrayBuffer);
+
+        const receivedPrefix = new TextDecoder("utf-8").decode(
+            msg instanceof Buffer ? msg.subarray(0, 4) : msg.slice(0, 4)
+        );
+        if (receivedPrefix === MAGIC_BINARY_PREFIX) {
+            const dataBuffer = msg instanceof Buffer
+                ? new Uint8Array(msg.buffer, msg.byteOffset, msg.length)
+                : new Uint8Array(msg);
+            const headerLength = new DataView(dataBuffer.buffer).getUint32(4, false);
+            const headerJson = new TextDecoder("utf-8").decode(dataBuffer.slice(8, 8 + headerLength));
+            const header = JSON.parse(headerJson);
+            const binaryData = dataBuffer.slice(8 + headerLength);
+            return {
+                type: "binary",
+                message: header,
+                data: binaryData
+            }
+
+        } else {
+            AppLogger.debug(meta, { message: "Received String WebSocket message" });
+            const socketMessage = JSON.parse(msg.toString()) as GenericWebSocketMessage;
+            if (socketMessage.action) {
+                return {
+                    type: "string",
+                    message: socketMessage
+                }
+
+            }
         }
+
         AppLogger.error(meta, { message: "No Action defined in WebSocket message" });
     } catch (error) {
         AppLogger.error(meta, { message: "Failed to parse WebSocket message", error });

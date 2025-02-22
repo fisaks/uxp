@@ -20,5 +20,5 @@ export * from "./types/token.types";
 export * from "./utils/AppLogger";
 export * from "./utils/multipartUpload";
 export * from "./health/health.controller";
-export * from "./websocket/WebSocketStore";
+export * from "./websocket/ServerWebSocketManager";
 export * from "./websocket/registerLocalWebSocketHandlers";

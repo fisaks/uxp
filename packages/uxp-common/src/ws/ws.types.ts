@@ -1,14 +1,24 @@
 import { ErrorDetail } from "../error/error.types";
 
+export const MAGIC_BINARY_PREFIX = "BIN!";
 
-export type WebSocketMessage<Action extends keyof ActionPayloadMap,
+// Represents both request & response actions
+export type WebSocketActionUnion<ActionPayloadMapRequestMap, ActionPayloadResponseMap> =
+    WebSocketAction<ActionPayloadMapRequestMap> | WebSocketAction<ActionPayloadResponseMap>;
+
+// Represents a single action type (either request OR response)
+export type WebSocketAction<ActionPayloadMap> =
+    Extract<keyof ActionPayloadMap, string>;
+
+
+export type WebSocketMessage<Action extends WebSocketAction<ActionPayloadMap>,
     ActionPayloadMap extends { [K in keyof ActionPayloadMap]: ActionPayloadMap[K] }> = {
         action: Action;
         id?: string;
         payload: ActionPayloadMap[Action];
-    };
+    }
 
-export type WebSocketResponse<Action extends keyof ActionPayloadMap,
+export type WebSocketResponse<Action extends WebSocketAction<ActionPayloadMap>,
     ActionPayloadMap extends { [K in keyof ActionPayloadMap]: ActionPayloadMap[K] }> = {
         action: Action;
         id?: string;
@@ -18,17 +28,9 @@ export type WebSocketResponse<Action extends keyof ActionPayloadMap,
         errorDetails?: object
     }
 
-export type GenericWebSocketMessage = {
-    action: string;
-    id?: string;
-    payload: unknown;
+export type GenericActionPayloadMap = {
+    [key: string]: unknown
 }
 
-export type GenericWebSocketResponse = {
-    action: string;
-    id?: string;
-    success: boolean;
-    payload?: unknown;
-    error?: ErrorDetail
-    errorDetails?: object
-}
+export type GenericWebSocketMessage = WebSocketMessage<string, GenericActionPayloadMap>
+export type GenericWebSocketResponse = WebSocketResponse<string, GenericActionPayloadMap>

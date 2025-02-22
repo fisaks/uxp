@@ -93,11 +93,12 @@ registerRoutes({
     controllers: Array.from(restHandlers),
 });
 registerRemoteWebSocketHandler({ fastify, dataSource: AppDataSource });
+/*
 registerLocalWebSocketHandlers({
     fastify,
     dataSource: AppDataSource,
     handlers: Array.from(wsHandlers),
-});
+});*/
 
 // Start the server :)
 fastify.listen({ port: port, host: "0.0.0.0" }, (err, address) => {

@@ -1,5 +1,9 @@
+import { DemoAppActionPayloadResponseMap } from "@demo/common";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { NewMessagePayload, UserJoinedPayload, UserLeftPayload } from "@demo/common";
+
+export type NewMessagePayload = DemoAppActionPayloadResponseMap["new_message"];
+export type UserJoinedPayload = DemoAppActionPayloadResponseMap["user_joined"];
+export type UserLeftPayload = DemoAppActionPayloadResponseMap["user_left"];
 
 type ChatState = {
     rooms: string[]; // Available chat rooms
@@ -19,7 +23,7 @@ const chatSlice = createSlice({
     name: "chat",
     initialState,
     reducers: {
-        setCurrentRoom: (state, action: PayloadAction<string|null>) => {
+        setCurrentRoom: (state, action: PayloadAction<string | null>) => {
             state.currentRoom = action.payload;
             return state;
         },

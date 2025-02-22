@@ -1,16 +1,16 @@
-import { AsyncWSMsgSchema, ClientAsyncWSMsgWebSocketMessage, ServerAsyncWSMsgWebSocketMessage } from "@demo/common";
+import { AsyncWSMsgSchema, DemoAppRequestMessage, DemoAppResponseMessage } from "@demo/common";
 import { WebSocketAction, WebSocketDetails } from "@uxp/bff-common";
 import { ErrorCodes } from "@uxp/common";
 
-export class AsyncWsMsgHandler {
+export class AsyncWsHandler {
 
     @WebSocketAction("test_async_message", { authenticate: true , schema: AsyncWSMsgSchema})
-    public async handleJoinRoom(wsDetails: WebSocketDetails, message: ClientAsyncWSMsgWebSocketMessage<"test_async_message">) {
+    public async handleAsynMessage(wsDetails: WebSocketDetails, message: DemoAppRequestMessage<"test_async_message">) {
 
         const { waitTimeMs, responseType } = message.payload
 
         setTimeout(() => {
-            const result: ServerAsyncWSMsgWebSocketMessage<"test_async_message"> = {
+            const result: DemoAppResponseMessage<"test_async_message"> = {
                 success: responseType === "success",
                 action: "test_async_message",
                 id: message.id,
