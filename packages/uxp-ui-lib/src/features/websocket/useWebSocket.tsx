@@ -45,7 +45,7 @@ export const useWebSocket = <ActionPayloadRequestMap, ActionPayloadResponseMap>(
     }, [wsInstance]);
 
     const sendBinaryMessage = useCallback(<A extends WebSocketAction<ActionPayloadRequestMap>>
-        (action: A, payload: ActionPayloadRequestMap[A], data: Uint8Array) => {
+        (action: A, payload: ActionPayloadRequestMap[A], data: Uint8Array|ArrayBuffer) => {
         return wsInstance.sendBinaryData({ action, payload }, data);
     }, [wsInstance]);
 

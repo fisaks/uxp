@@ -81,7 +81,7 @@ export const RichEditorToolbar: React.FC<ToolbarProps> = ({
                 tooltipText="Add Actions"
                 container={portalContainerRef.current}
             />
-            <Tooltip title={isFullScreen ? "Exit Full Screen" : "Full Screen"}>
+            <Tooltip title={isFullScreen ? "Exit Full Screen" : "Full Screen"} slotProps={slotProps}>
                 <IconButton onClick={toggleFullScreen}>{isFullScreen ? <FullscreenExitIcon /> : <FullscreenIcon />}</IconButton>
             </Tooltip>
         </div>

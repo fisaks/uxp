@@ -3,7 +3,7 @@ import { LoadingButton } from "@uxp/ui-lib";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { DemoAppErrorHandler, DemoAppWebSocketResponseListener, useDemoWebSocket } from "../../app/DemoAppBrowserWebSocketManager";
 
-const BinaryMessagingPage = () => {
+const BinaryResponsePage = () => {
 
     const [imageUrl, setImageUrl] = useState<string | null>(null);
     // always use useMemo for listeners other wise the message listing on and off feature don't work as espected
@@ -17,11 +17,9 @@ const BinaryMessagingPage = () => {
                 // Depending on where the error occurs—before the handler is chosen or during handler execution—
                 // the system may not know which action was originally intended to handle it.
 
-                console.log("Binary response4", message.payload, data);
-                console.log("Binary response44", data instanceof Uint8Array);
                 if (!data) return;
                 const blob = new Blob([data], { type: "image/jpeg" });
-                console.log("Blob created:", blob);
+
                 const imageUrl = URL.createObjectURL(blob);
 
                 setImageUrl(imageUrl);
@@ -66,7 +64,7 @@ const BinaryMessagingPage = () => {
 
     return (
         <Box sx={{ maxWidth: 700, display: "flex", flexDirection: "column", gap: 2 }}>
-            <Typography variant="h1"  >WebSocket Binary Messaging Demo</Typography>
+            <Typography variant="h1">WebSocket Binary Response Demo</Typography>
             <TextField
                 label="Message"
                 value={message}
@@ -75,7 +73,7 @@ const BinaryMessagingPage = () => {
                 margin="normal"
             />
             <FormControl component="fieldset">
-                <Typography variant="body1">Response Type:</Typography>
+                <Typography variant="body2">Response Type:</Typography>
                 <RadioGroup
                     row
                     value={responseType}
@@ -108,4 +106,4 @@ const BinaryMessagingPage = () => {
     );
 };
 
-export default BinaryMessagingPage;
+export default BinaryResponsePage;

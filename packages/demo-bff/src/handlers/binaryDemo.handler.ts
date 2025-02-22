@@ -11,10 +11,10 @@ export class BinaryDemoHandler {
     private wsManager = DemoAppServerWebSocketManager.getInstance();
 
     @WebSocketAction("get_binary_message", { authenticate: true, schema: BinaryDemoSchema })
-    public async handleBinaryMessage(wsDetails: WebSocketDetails, mes: DemoAppRequestMessage<"get_binary_message">) {
+    public async getBinaryMessage(wsDetails: WebSocketDetails, mes: DemoAppRequestMessage<"get_binary_message">) {
 
         const { message, responseType } = mes.payload
-        const { id } = mes
+
 
         if (responseType === "error") {
             this.wsManager.sendMessage(wsDetails.socket, {
@@ -32,7 +32,6 @@ export class BinaryDemoHandler {
         const header: DemoAppResponseMessage<"binary_response"> = {
             action: "binary_response",
             success: true,
-            id: id,
             ...(message ? { payload: { message: message } } : {})
         }
 
@@ -40,8 +39,21 @@ export class BinaryDemoHandler {
 
     }
 
+    @WebSocketAction("upload_binary_message", { authenticate: true, schema: BinaryDemoSchema })
+    public async uploadBinaryMessage(wsDetails: WebSocketDetails, mes: DemoAppRequestMessage<"upload_binary_message">, data: Uint8Array) {
 
+        const { fileName, mimeTYpe } = mes.payload
 
-    // Generate a 64x64 pixel JPEG with a smiley face 🙂
+        AppLogger.info(wsDetails.requestMeta, { message: "pingin binary response back size:" + data.length });
+        const header: DemoAppResponseMessage<"upload_response"> = {
+            action: "upload_response",
+            success: true,
+            payload: { fileName, mimeTYpe }
+
+        }
+
+        this.wsManager.sendBinaryData(wsDetails.socket, header, data, wsDetails.requestMeta);
+
+    }
 
 }

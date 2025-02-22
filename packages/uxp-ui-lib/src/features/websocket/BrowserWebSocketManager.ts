@@ -299,7 +299,7 @@ export class BrowserWebSocketManager<
 
 
     sendBinaryData<Action extends WebSocketAction<ActionPayloadRequestMap>>
-        (message: WebSocketMessage<Action, ActionPayloadRequestMap>, data: Uint8Array) {
+        (message: WebSocketMessage<Action, ActionPayloadRequestMap>, data: ArrayBuffer|Uint8Array) {
         if (this.socket?.readyState === WebSocket.OPEN) {
             const messageBuffer = createBinaryMessage(message, data);
             this.socket.send(messageBuffer);
