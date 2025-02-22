@@ -16,10 +16,10 @@ export const H2CBody = () => {
         return [
             {
                 label: "House Management",
-                link: "house-info",
+                link: "/house-info",
                 component: Link,
                 componentProp: "to",
-                active: location.pathname === generateFullLink(basePath, "house-info"),
+                active: location.pathname === "/house-info" || location.pathname === "/",
             },
         ];
     }, [basePath, location.pathname]);
@@ -29,7 +29,7 @@ export const H2CBody = () => {
             <LeftSideBar isDesktop={isDesktop} menuItems={menuItems} />
             <AppBodyContent appHaveOwnLeftSideBar={true}>
                 <Routes>
-                    <Route path="house-info" element={<HouseInfoPage />} />
+                    <Route path="/house-info" element={<HouseInfoPage />} />
                     <Route path="*" element={<HouseInfoPage />} />
                 </Routes>
             </AppBodyContent>
