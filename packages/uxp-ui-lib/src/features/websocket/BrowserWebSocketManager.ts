@@ -250,11 +250,7 @@ export class BrowserWebSocketManager<
     sendMessage<Action extends WebSocketAction<ActionPayloadRequestMap>>
         (message: WebSocketMessage<Action, ActionPayloadRequestMap>) {
 
-        if (this.socket?.readyState === WebSocket.OPEN) {
-            this.socket.send(JSON.stringify(message));
-        } else {
-            console.warn("[WebSocket] not connected. Unable to send message.");
-        }
+        this.sendData(message.action, JSON.stringify(message));
     }
 
     sendMessageAsync<Action extends WebSocketAction<ActionPayloadRequestMap>>(
@@ -299,10 +295,10 @@ export class BrowserWebSocketManager<
 
 
     sendBinaryData<Action extends WebSocketAction<ActionPayloadRequestMap>>
-        (message: WebSocketMessage<Action, ActionPayloadRequestMap>, data: ArrayBuffer|Uint8Array) {
+        (message: WebSocketMessage<Action, ActionPayloadRequestMap>, data: ArrayBuffer | Uint8Array) {
         if (this.socket?.readyState === WebSocket.OPEN) {
             const messageBuffer = createBinaryMessage(message, data);
-            this.socket.send(messageBuffer);
+            this.sendData(message.action, messageBuffer);
         } else {
             console.warn("[WebSocket] not connected. Unable to send message.");
         }
@@ -385,6 +381,24 @@ export class BrowserWebSocketManager<
 
     getConnectionStatus() {
         return this.isConnected;
+    }
+
+    private sendData<Action extends WebSocketAction<ActionPayloadRequestMap>>(action: Action, data: string | Uint8Array | ArrayBuffer) {
+        try {
+            if (this.socket?.readyState === WebSocket.OPEN) {
+                this.socket.send(data);
+            } else {
+                console.warn("[WebSocket] not connected. Unable to send message.");
+            }
+        } catch (error) {
+            console.error("[WebSocket] Error sending data:", error);
+            this.globalErrorHandler?.({
+                action: action,
+                error: { code: ErrorCodes.INTERNAL_SERVER_ERROR },
+                errorDetails: { message: "Error sending data", error }
+            });
+
+        }
     }
 
 
