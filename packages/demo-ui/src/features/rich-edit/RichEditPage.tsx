@@ -1,9 +1,9 @@
 import { Box, Typography } from '@mui/material';
 import { RichTextEditor } from '@uxp/ui-lib';
 import axios from "axios";
-import React, { useState } from 'react';
+import React, { useMemo } from 'react';
+import * as Y from "yjs";
 import { getBaseUrl } from '../../config';
-
 type FileUploadResponse = { publicId: string, fileName: string }
 const uploadFile = async (file: File) => {
     const formData = new FormData();
@@ -17,12 +17,9 @@ const uploadFile = async (file: File) => {
     return response.data;
 }
 const RichEditPage: React.FC = () => {
-    const [content, setContent] = useState<string>("");
-
+    const yDoc = useMemo(() => new Y.Doc(), []);
     const handleUploadFile = async (file: File) => {
-
         return await uploadFile(file).then((r) => r.publicId);
-
     };
     return (
         <Box sx={{}}>
@@ -30,8 +27,9 @@ const RichEditPage: React.FC = () => {
 
 
             <RichTextEditor
-                value={content}
-                onChange={(newContent) => setContent(newContent)}
+                label="Rich Text Editor"
+                yDoc={yDoc}
+                editable={true}
                 onImageUpload={(file) => handleUploadFile(file)}
                 imageBasePath={`${getBaseUrl()}/api/file`}
             />

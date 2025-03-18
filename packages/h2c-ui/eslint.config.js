@@ -4,5 +4,6 @@ export default [
     ...baseConfig, // Inherit from root config
     {
         files: ["**/*.tsx", "**/*.ts"], // React TypeScript files
-    },
+
+    }
 ];

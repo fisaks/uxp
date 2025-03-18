@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "../../../app/store";
 
@@ -9,31 +9,30 @@ import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { Box, Collapse, IconButton, List, ListItem, ListItemText, Typography, useTheme } from "@mui/material";
 import { ActionIconButton, DebouncedPatchTextField, RichTextEditor, withErrorHandler, withLoading } from "@uxp/ui-lib";
-import { getBaseUrlApi } from "../../../config";
 
 import { selectAllHouses } from "../houseSelectors";
 import { deleteHouse, patchHouseField, uploadFile } from "../houseThunks";
+import { DocumentEditor, DocumentEditorRef } from "../../document/components/DocumentEditor";
 
 const HouseList: React.FC = () => {
     const dispatch: AppDispatch = useDispatch();
     const houses = useSelector(selectAllHouses);
     const theme = useTheme();
+    const documentRef=useRef<DocumentEditorRef>(null);
 
     const [expandedHouseId, setExpandedHouseId] = useState<string | null>(null);
     const [editMode, setEditMode] = useState(false);
-    const [content, setContent] = useState<string>("");
+
     const handleExpandHouse = (houseId: string) => {
         setExpandedHouseId(expandedHouseId === houseId ? null : houseId);
         setEditMode(false);
     };
 
     const handleEditToggle = () => {
+        if(editMode) {
+            documentRef.current?.save();
+        }
         setEditMode(!editMode);
-    };
-    const handleUploadFile = (uuid: string, file: File) => {
-        return dispatch(uploadFile({ uuid, file }))
-            .unwrap()
-            .then((r) => r.publicId);
     };
 
     return (
@@ -114,13 +113,8 @@ const HouseList: React.FC = () => {
                                             dispatch={dispatch}
                                             patchAction={patchHouseField}
                                         />
-                                        <RichTextEditor
-                                            label="Additional House Details"
-                                            value={content}
-                                            onChange={(newContent) => setContent(newContent)}
-                                            onImageUpload={(file) => handleUploadFile(house.uuid, file)}
-                                            imageBasePath={`${getBaseUrlApi()}/file`}
-                                        />
+                                        <DocumentEditor documentId={house.documentId} editable={editMode} ref={documentRef} />
+                                         
                                     </Box>
                                 </Box>
                             </Box>

@@ -17,7 +17,7 @@ export class DocumentEntity {
     @PrimaryGeneratedColumn()
     id!: number;
 
-    @Column({ type: "char", length: 21, unique: true, nullable: false })
+    @Column({ type: "char", length: 21, nullable: false })
     documentId!: string;
 
     @Column({ type: "varchar", length: 50, nullable: false })
@@ -26,8 +26,8 @@ export class DocumentEntity {
     @Column({ type: "varchar", length: 150, nullable: true })
     name!: string;
 
-    @Column({ type: "json", nullable: false })
-    content!: any; // JSON from TipTap
+    @Column({ type: "mediumblob", nullable: true })
+    content!: Buffer | null | undefined; 
 
     @Column({ type: "boolean", default: false })
     deleted!: boolean; // Soft delete flag

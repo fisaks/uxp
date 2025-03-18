@@ -2,7 +2,6 @@ import { configureStore } from "@reduxjs/toolkit";
 import { remoteAppReducer } from "@uxp/ui-lib";
 import { createLogger } from "redux-logger";
 
-import templateReducer from "../features/template/templateSlice";
 import houseReducer from "../features/house/houseSlice";
 import loadingErrorReducer from "../features/loading-error/loadingErrorSlice";
 
@@ -14,7 +13,7 @@ export const createStore = () => {
 
     return configureStore({
         reducer: {
-            template: templateReducer,
+
             remoteApp: remoteAppReducer,
             loadingError: loadingErrorReducer,
             houses: houseReducer,

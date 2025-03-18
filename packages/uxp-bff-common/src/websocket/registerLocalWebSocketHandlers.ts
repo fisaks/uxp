@@ -319,7 +319,7 @@ const toWebSocketMessage = (meta: RequestMetaData, message: Buffer | ArrayBuffer
             const dataBuffer = msg instanceof Buffer
                 ? new Uint8Array(msg.buffer, msg.byteOffset, msg.length)
                 : new Uint8Array(msg);
-            const headerLength = new DataView(dataBuffer.buffer).getUint32(4, false);
+            const headerLength = new DataView(dataBuffer.buffer, dataBuffer.byteOffset, dataBuffer.byteLength).getUint32(4, false);
             const headerJson = new TextDecoder("utf-8").decode(dataBuffer.slice(8, 8 + headerLength));
             const header = JSON.parse(headerJson);
             const binaryData = dataBuffer.slice(8 + headerLength);

@@ -23,6 +23,14 @@ export const initApplication = (documentRoot: ShadowRoot | Document) => {
     const container = documentRoot instanceof Document ? documentRoot.head : documentRoot;
     const rootElement = documentRoot.getElementById("root");
 
+    if (!(documentRoot as Document).createRange) {
+        (documentRoot as Document).createRange = () => {
+            const range = document.createRange(); // createRange is used by tiptap and shadow dom don't have it
+            range.selectNodeContents(documentRoot);
+            return range;
+        }
+    }
+
     // Ensure the root element exists before rendering
     if (!rootElement) {
         throw new Error("Root element not found. Ensure you have an element with id 'root' in your HTML.");

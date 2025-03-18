@@ -24,3 +24,4 @@ export * from "./theme/theme";
 export * from "./theme/UxpTheme";
 export * from "./search/SearchComponent";
 export { default as RichTextEditor } from "./richText/RichTextEditor";
+export * from "./richText/RichTextEditor";

@@ -1,5 +1,5 @@
 import { BuildingData, HouseData } from "@h2c/common";
-import { AppErrorV2, AppLogger } from "@uxp/bff-common";
+import { AppErrorV2, AppLogger, RequestMetaData } from "@uxp/bff-common";
 import { FastifyRequest } from "fastify";
 import _ from "lodash";
 import { DateTime } from "luxon";
@@ -22,14 +22,14 @@ export const DefaultBuildingData: Omit<BuildingData, "uuid" | "documentId"> = Ob
 
 export class HouseService {
     private queryRunner: QueryRunner;
-    private request: FastifyRequest;
-    constructor(request: FastifyRequest, queryRunner: QueryRunner) {
+    private requestMeta: RequestMetaData ;
+    constructor(requestMeta: FastifyRequest | RequestMetaData, queryRunner: QueryRunner) {
         this.queryRunner = queryRunner;
-        this.request = request;
+        this.requestMeta = AppLogger.extractMetadata(requestMeta,true)!;
     }
 
     async addHouse(): Promise<HouseEntity> {
-        const docService = new DocumentService(this.request, this.queryRunner);
+        const docService = new DocumentService(this.requestMeta, this.queryRunner);
         const houseDetails = await docService.createDocument("house-details");
         const newHouse = new HouseEntity({
             data: { ...DefaultHouseData, documentId: houseDetails.documentId },
@@ -39,7 +39,7 @@ export class HouseService {
 
         const savedHouse = await this.saveHouse(newHouse);
 
-        AppLogger.info(this.request, { message: `Created new house ${savedHouse.uuid}` });
+        AppLogger.info(this.requestMeta, { message: `Created new house ${savedHouse.uuid}` });
         return savedHouse;
 
     }
@@ -59,7 +59,7 @@ export class HouseService {
         }
 
         const updatedHouse = await this.saveHouse(house);
-        AppLogger.info(this.request, { message: `Updated house ${uuid} with key ${key} and value ${value}` });
+        AppLogger.info(this.requestMeta, { message: `Updated house ${uuid} with key ${key} and value ${value}` });
         return updatedHouse;;
 
     }
@@ -73,12 +73,12 @@ export class HouseService {
         }
 
         await this.ensureHouseData(house);
-        const docService = new DocumentService(this.request, this.queryRunner);
+        const docService = new DocumentService(this.requestMeta, this.queryRunner);
         const buildingDetails = await docService.createDocument("building-details");
         house.data.buildings.push({ ...DefaultBuildingData, uuid: uuidv4(), documentId: buildingDetails.documentId });
 
         const updatedHouse = await this.saveHouse(house);
-        AppLogger.info(this.request, { message: `Added building to house ${uuid}` });
+        AppLogger.info(this.requestMeta, { message: `Added building to house ${uuid}` });
         return updatedHouse;
 
     }
@@ -97,10 +97,10 @@ export class HouseService {
 
         if (removed) {
             const updatedHouse = await this.saveHouse(house);
-            AppLogger.info(this.request, { message: `Removed building ${buildingUuid} from house ${uuidHouse}` });
+            AppLogger.info(this.requestMeta, { message: `Removed building ${buildingUuid} from house ${uuidHouse}` });
             return updatedHouse;
         } else {
-            AppLogger.info(this.request, {
+            AppLogger.info(this.requestMeta, {
                 message: `Building ${buildingUuid} was already removed from house ${uuidHouse} earlier`,
             });
             return house;
@@ -141,14 +141,14 @@ export class HouseService {
         house.removed = true;
         house.removedAt = DateTime.now();
         await this.saveHouse(house);
-        AppLogger.info(this.request, { message: `Deleted house ${uuid}` });
+        AppLogger.info(this.requestMeta, { message: `Deleted house ${uuid}` });
 
     }
 
     // Ensure house data is initialized
     private async ensureHouseData(house: HouseEntity) {
         if (!house.data) {
-            const docService = new DocumentService(this.request, this.queryRunner);
+            const docService = new DocumentService(this.requestMeta, this.queryRunner);
             const houseDetails = await docService.createDocument("house-details");
             house.data = { ...DefaultHouseData, documentId: houseDetails.documentId };
         }
@@ -156,7 +156,7 @@ export class HouseService {
             house.data.buildings = [];
         }
         if (!house.data.documentId) {
-            const docService = new DocumentService(this.request, this.queryRunner);
+            const docService = new DocumentService(this.requestMeta, this.queryRunner);
             const houseDetails = await docService.createDocument("house-details");
             house.data = { ...house.data, documentId: houseDetails.documentId };
         }

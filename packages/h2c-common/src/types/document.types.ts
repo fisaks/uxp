@@ -1,39 +1,36 @@
-import { WebSocketMessage } from "@uxp/common";
+import { MessagePayloadSchema } from "@uxp/common"
 
 export type DocumentType = "house-details" | "building-details"
 
-type ClientDocumentActions = "document:subscribe" | "document:save"
-type ClientDocumentBinaryActions = "document:update" | "document:full"
-
-
-export type DocumentSubscribePayload = {
-    "documentId": string;
-}
-export type DocumentUpdatePayload = {
-    "documentId": string;
-    "update": Uint8Array
-}
-
-export type DocumentSavePayload = {
-    "documentId": string;
-}
-
-export type ClientDocumentPayloads = {
-    "document:subscribe": DocumentSubscribePayload;
-    "document:update": DocumentUpdatePayload;
-    "document:save": DocumentSavePayload;
-};
-
-export type BinaryHeader = {
-    action: ClientDocumentBinaryActions
+export type DocumentIdPayload = {
     documentId: string
 }
-//type ServerDocumentActions="document:subscribe"
+export type DocumentFullPayload = {
+    documentId: string
+    type: DocumentType,
+}
+export type DocumentActionPayloadRequestMap = {
+    "document:subscribe": DocumentIdPayload
 
+    "document:update": DocumentIdPayload
+    "document:save": DocumentIdPayload
+    "document:delete": DocumentIdPayload
+    "document:full": DocumentIdPayload
+    "document:unsubscribe": DocumentIdPayload
+}
 
+export type DocumentActionPayloadResponseMap = {
+    "document:full": DocumentFullPayload
+    "document:updated": DocumentIdPayload
+    "document:saved": DocumentIdPayload
+    "document:unsubscribed": DocumentIdPayload
+}
 
-export type ClientChatActionPayloadMap = {
-    [A in ClientDocumentActions]: ClientDocumentPayloads[A];
-};
+export const DocumentIdSchema: MessagePayloadSchema<DocumentIdPayload> = {
 
-export type DocumentMessage<Action extends keyof ClientChatActionPayloadMap> = WebSocketMessage<Action, ClientChatActionPayloadMap>;
+    type: 'object',
+    properties: {
+        documentId: { type: 'string', minLength: 21, maxLength: 21 },
+    },
+    required: ['documentId']
+}

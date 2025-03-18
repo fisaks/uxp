@@ -10,7 +10,7 @@ export class SnapshotEntity {
     @Column({ type: "char", length: 21 }) // Same documentId as in `documents`
     documentId!: string;
 
-    @Column({ type: "longblob" }) // Stores Y.js update in binary format
+    @Column({ type: "blob" }) // Stores Y.js update in binary format
     update!: Buffer;
 
     @CreateDateColumn({

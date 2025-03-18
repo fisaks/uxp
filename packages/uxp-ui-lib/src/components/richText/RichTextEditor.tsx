@@ -1,26 +1,29 @@
 import { Paper, Typography } from "@mui/material";
 import { EditorContent } from "@tiptap/react";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useMemo, useRef, useState} from "react";
 import * as styles from "./RichTextEditor.module.css";
 import { FloatingImageToolbar } from "./components/FloatingImageToolbar";
 import { RichEditorToolbar } from "./components/RichEditorToolbar";
 import { useRichEditor } from "./components/useRichEditor";
+import "prosemirror-view/style/prosemirror.css";
+import * as Y from "yjs";
+
+
 
 interface RichTextEditorProps {
-    value: string;
     label?: string;
     imageBasePath: string;
-    onChange: (content: string) => void;
     onImageUpload: (file: File) => Promise<string>;
+    yDoc: Y.Doc;
+    editable?: boolean
 }
 
-const RichTextEditor: React.FC<RichTextEditorProps> = ({ label, value, onChange, onImageUpload, imageBasePath }) => {
+const RichTextEditor =({ label, onImageUpload, imageBasePath, yDoc, editable = true }:RichTextEditorProps) => {
     const portalContainerRef = useRef<HTMLDivElement | null>(null);
     const editorRootContainerRef = useRef<HTMLDivElement | null>(null);
     const [isFullScreen, setIsFullScreen] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [imageToolbarPos, setImageToolbarPos] = useState<{ top: number; left: number } | null>(null);
-
     const triggerImageUpload = useCallback(() => {
         fileInputRef.current?.click();
     }, [fileInputRef.current]);
@@ -28,22 +31,15 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ label, value, onChange,
     const slotProps = useMemo(() => ({ popper: { container: portalContainerRef.current } }), [portalContainerRef.current]);
 
     const editor = useRichEditor({
-        content: value,
-        onUpdate: ({ editor }) => {
-            console.log(editor.getJSON());
-            onChange(editor.getHTML());
-        },
         editorRootContainerRef,
         setImageToolbarPos,
         triggerImageUpload,
         imageBasePath,
-    });
+        editable: editable,
+        yDoc: yDoc,
 
-    useEffect(() => {
-        if (editor && editor.getHTML() !== value) {
-            editor.commands.setContent(value);
-        }
-    }, [value, editor]);
+    }, [editable]);
+
 
     const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         if (event.target.files && event.target.files.length > 0) {
@@ -73,20 +69,20 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ label, value, onChange,
                     {label}
                 </Typography>
             }
-            <RichEditorToolbar
+            {editable && <RichEditorToolbar
                 editor={editor}
                 portalContainerRef={portalContainerRef}
                 isFullScreen={isFullScreen}
                 toggleFullScreen={toggleFullScreen}
                 triggerImageUpload={triggerImageUpload}
                 slotProps={slotProps}
-            />
-            <FloatingImageToolbar
+            />}
+            {editable && <FloatingImageToolbar
                 editor={editor}
                 imagePos={imageToolbarPos}
                 slotProps={slotProps}
                 onClick={() => setImageToolbarPos(null)}
-            />
+            />}
             <input type="file" ref={fileInputRef} style={{ display: "none" }} accept="image/*" onChange={handleImageUpload} />
 
             <EditorContent editor={editor} className={styles.editorWrapper} />

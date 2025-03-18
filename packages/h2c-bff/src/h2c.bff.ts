@@ -1,10 +1,13 @@
 import fastifyCookie from "@fastify/cookie";
 import fastifyMultipart from "@fastify/multipart";
-import { AppLogger, errorHandler, HandlerRegistry, IsProd, jwtPlugin, registerRoutes } from "@uxp/bff-common";
+import fastifyWebsocket from "@fastify/websocket";
+import { AppLogger, errorHandler, HandlerRegistry, IsProd, jwtPlugin, registerLocalWebSocketHandlers, registerRoutes } from "@uxp/bff-common";
 import "@uxp/bff-common/dist/health/health.controller";
 import Fastify from "fastify";
 import path from "path";
 import env from "./env";
+import { H2CAppServerWebSocketManager } from "./ws/H2CAppServerWebSocketManager";
+import { DateTime } from "luxon";
 
 const { AppDataSource } = require("./db/typeorm.config");
 
@@ -18,9 +21,19 @@ AppDataSource.initialize()
     })
     .catch((err: Error) => console.error("Error during Data Source initialization", err));
 
-const fastify = Fastify({ logger: true, ajv: { customOptions: { allErrors: true, $data: true } } });
+const fastify = Fastify({ 
+    logger: {
+        enabled: true,
+        level: env.LOG_LEVEL ?? "info",
+        timestamp: () => `,"time":"${DateTime.now().setZone(env.TZ ?? "UTC").toISO()}"`,
+        formatters: {
+            level: (label) => ({ level: label.toUpperCase() }),
+        },
+    }
+    , ajv: { customOptions: { allErrors: true, $data: true } } });
 AppLogger.initialize(fastify.log);
 fastify.setErrorHandler(errorHandler);
+fastify.register(fastifyWebsocket,);
 fastify.register(fastifyCookie);
 fastify.register(jwtPlugin);
 fastify.register(fastifyMultipart, {
@@ -41,10 +54,21 @@ if (!IsProd) {
     });
 }
 
-HandlerRegistry.discoverHandlers(path.join(__dirname, "./controllers"));
+HandlerRegistry.discoverHandlers([path.join(__dirname, "./controllers"), path.join(__dirname, "./handlers")]);
 const restHandlers = HandlerRegistry.getRestHandlers();
+const wsHandlers = HandlerRegistry.getWsHandlers();
 
 console.log("restHandlers", restHandlers);
+console.log("wsHandlers", wsHandlers);
+
+const wsManager = H2CAppServerWebSocketManager.getInstance()
+
+registerLocalWebSocketHandlers({
+    fastify,
+    handlers: Array.from(wsHandlers),
+    wsManager,
+    dataSource: AppDataSource
+});
 
 registerRoutes({
     fastify,

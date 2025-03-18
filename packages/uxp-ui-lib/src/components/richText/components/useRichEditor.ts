@@ -1,21 +1,19 @@
-import BulletList from "@tiptap/extension-bullet-list";
 import Focus from "@tiptap/extension-focus";
-import Heading from "@tiptap/extension-heading";
-import ListItem from "@tiptap/extension-list-item";
-import OrderedList from "@tiptap/extension-ordered-list";
 import Table from "@tiptap/extension-table";
 import TableCell from "@tiptap/extension-table-cell";
 import TableHeader from "@tiptap/extension-table-header";
 import TableRow from "@tiptap/extension-table-row";
 import Underline from "@tiptap/extension-underline";
 import { Editor, useEditor, UseEditorOptions } from "@tiptap/react";
-
+import Collaboration from "@tiptap/extension-collaboration";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorView } from "prosemirror-view"; //  Import directly from ProseMirror
 import React, { DependencyList, useRef } from "react";
+import * as Y from "yjs";
 import { Indent } from "../extensions/Indent";
 import { LineHeight } from "../extensions/LineHeight";
 import { ResizableImage } from "../extensions/ResizableImage";
+
 
 type UseEditorMenuOptions = {
     editorRootContainerRef: React.RefObject<HTMLDivElement | null>;
@@ -23,20 +21,33 @@ type UseEditorMenuOptions = {
     triggerImageUpload: () => void;
     imageBasePath: string;
 };
+type CollaborationOptions = {
+    yDoc: Y.Doc;
+}
+
 export const useRichEditor = (
-    { editorRootContainerRef, setImageToolbarPos, triggerImageUpload, ...options }: UseEditorOptions & UseEditorMenuOptions,
+    { editorRootContainerRef, setImageToolbarPos, triggerImageUpload, yDoc, ...options }: UseEditorOptions & UseEditorMenuOptions & CollaborationOptions,
     deps?: DependencyList
 ) => {
     let timeoutRef = useRef<NodeJS.Timeout | null>(null); //
     const editor = useEditor(
         {
+            ...options,
+            autofocus: true,
+            enableContentCheck:true,
+            onContentError: (error) => {
+                console.error("Content Error", error);
+            },
+            onDrop: (event) => {
+                console.log("Dropped", event);
+            },
             extensions: [
-                StarterKit,
+                StarterKit.configure({
+                    history: false,
+                    heading: { levels: [1, 2, 3, 4, 5, 6] },
+                }),
                 Underline,
                 ResizableImage.configure({ basePath: options.imageBasePath }),
-                BulletList,
-                OrderedList,
-                ListItem,
                 LineHeight,
                 Indent,
                 Table.configure({ resizable: true }).extend({
@@ -58,8 +69,9 @@ export const useRichEditor = (
                 Focus.configure({}),
                 TableHeader,
                 TableCell,
-                Heading.configure({ levels: [1, 2, 3, 4, 5, 6] }),
-
+                Collaboration.configure({
+                    document: yDoc, // ✅ Uses shared Y.js state
+                }),
                 ...(options?.extensions ?? []),
             ],
             editorProps: {
@@ -70,7 +82,6 @@ export const useRichEditor = (
                 handleKeyDown: combinedKeyDownHandlers(triggerImageUpload),
                 ...(options?.editorProps ?? {}),
             },
-            ...options,
         },
         deps
     );
@@ -84,18 +95,18 @@ const combinedHandleClick =
         setImageToolbarPos: UseEditorMenuOptions["setImageToolbarPos"],
         timeoutRef: React.MutableRefObject<NodeJS.Timeout | null>
     ) =>
-    (view: EditorView, pos: number, event: MouseEvent) => {
-        const handlers = [
-            (v: EditorView, p: number, e: MouseEvent) => handleImageClick(v, p, e, setImageToolbarPos, timeoutRef, editorRootContainerRef),
-            (v: EditorView, p: number, e: MouseEvent) => handleTableClick(v, p, e, editor),
-        ];
+        (view: EditorView, pos: number, event: MouseEvent) => {
+            const handlers = [
+                (v: EditorView, p: number, e: MouseEvent) => handleImageClick(v, p, e, setImageToolbarPos, timeoutRef, editorRootContainerRef),
+                (v: EditorView, p: number, e: MouseEvent) => handleTableClick(v, p, e, editor),
+            ];
 
-        for (const handler of handlers) {
-            if (handler(view, pos, event)) return; //  Stop processing if a handler handled the event
-        }
+            for (const handler of handlers) {
+                if (handler(view, pos, event)) return; //  Stop processing if a handler handled the event
+            }
 
-        setImageToolbarPos(null); // Default fallback if no handlers processed the event
-    };
+            setImageToolbarPos(null); // Default fallback if no handlers processed the event
+        };
 
 const handleImageClick = (
     view: EditorView,

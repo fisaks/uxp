@@ -83,24 +83,37 @@ export class ServerWebSocketManager<
     }
 
     public broadcastToTopic<Action extends Extract<keyof ActionPayloadResponseMap, string>>
-        (topic: string, message: WebSocketResponse<Action, ActionPayloadResponseMap>, requestMetaData?: RequestMetaData) {
+        (topic: string, message: WebSocketResponse<Action, ActionPayloadResponseMap>,
+            requestMetaData?: RequestMetaData, excludeSocket?: WebSocket) {
 
-        AppLogger.info(undefined, {
+        AppLogger.info(requestMetaData, {
             message: `Broadcasting to topic '${topic}' (${this.topics.get(topic)?.size ?? 0} clients)`
         });
         const data = JSON.stringify(message);
 
-        this.topics.get(topic)?.forEach((socket) => this.sendData(socket, data, requestMetaData));
+        this.topics.get(topic)?.forEach((socket) => {
+            if (socket !== excludeSocket) {
+                this.sendData(socket, data, requestMetaData);
+            }
+        });
+
     }
 
     public broadcastBinaryDataToTopic<Action extends Extract<keyof ActionPayloadResponseMap, string>>
-        (topic: string, header: WebSocketResponse<Action, ActionPayloadResponseMap>, data: Uint8Array|Buffer, requestMetaData?: RequestMetaData) {
+        (topic: string,
+            header: WebSocketResponse<Action, ActionPayloadResponseMap>, data: Uint8Array | Buffer,
+            requestMetaData?: RequestMetaData, excludeSocket?: WebSocket) {
 
-        AppLogger.info(undefined, {
+        AppLogger.info(requestMetaData, {
             message: `Broadcasting binary to topic '${topic}' (${this.topics.get(topic)?.size ?? 0} clients)`
         });
         const messageBuffer = createBinaryMessage(header, data);
-        this.topics.get(topic)?.forEach((socket) => this.sendData(socket, messageBuffer, requestMetaData));
+        this.topics.get(topic)?.forEach((socket) => {
+            if (socket !== excludeSocket) {
+                this.sendData(socket, messageBuffer, requestMetaData);
+            }
+        });
+
 
     }
 
@@ -110,7 +123,7 @@ export class ServerWebSocketManager<
     }
 
     public sendBinaryData<Action extends Extract<keyof ActionPayloadResponseMap, string>>
-        (socket: WebSocket, header: WebSocketResponse<Action, ActionPayloadResponseMap>, data: Uint8Array|Buffer, requestMetaData?: RequestMetaData) {
+        (socket: WebSocket, header: WebSocketResponse<Action, ActionPayloadResponseMap>, data: Uint8Array | Buffer, requestMetaData?: RequestMetaData) {
         const message = createBinaryMessage(header, data);
         return this.sendData(socket, message, requestMetaData);
 

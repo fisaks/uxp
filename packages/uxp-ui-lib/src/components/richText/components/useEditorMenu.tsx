@@ -13,10 +13,11 @@ import TableChartIcon from "@mui/icons-material/TableChart";
 import TableRowsIcon from "@mui/icons-material/TableRows";
 import TitleIcon from "@mui/icons-material/Title";
 import TableColumnsIcon from "@mui/icons-material/ViewColumn";
-import { Level } from "@tiptap/extension-heading";
 import { Editor } from "@tiptap/react";
 import { useMemo } from "react";
 import { MenuItemType } from "../../layout/RecursiveMenuItem";
+
+type HeadingLevel=  1 | 2 | 3 | 4 | 5 | 6;
 
 export const userEditorMenu = ({ editor, triggerImageUpload }: { editor: Editor | null; triggerImageUpload: () => void }) => {
     // Define grouped menu items
@@ -70,7 +71,7 @@ export const userEditorMenu = ({ editor, triggerImageUpload }: { editor: Editor 
                             editor
                                 ?.chain()
                                 .focus()
-                                .toggleHeading({ level: level as Level })
+                                .toggleHeading({ level: level as  HeadingLevel})
                                 .run(),
                     })),
                     {

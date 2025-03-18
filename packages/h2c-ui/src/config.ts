@@ -1,6 +1,9 @@
-let BASE_URL_API: string;
-let BASE_URL_STATIC: string;
+let BASE_URL: string;
 let BASE_ROUTE_PATH: string | undefined;
+let APP_OPTION: object | undefined;
+let UXP_CONTENT_ID: string | undefined;
+let UXP_APP_IDENTIFIER: string | undefined;
+let WS_PATH: string | undefined;
 
 export function initializeConfig(rootElement: HTMLElement | null) {
     if (!rootElement) {
@@ -8,35 +11,42 @@ export function initializeConfig(rootElement: HTMLElement | null) {
     }
 
     // Read data attributes from the root element
-    const apiUrl = rootElement.getAttribute("data-base-url-api");
-    const staticUrl = rootElement.getAttribute("data-base-url-static");
     const baseUrl = rootElement.getAttribute("data-base-url");
-    const routePath = rootElement.getAttribute("data-base-route-path");
+    BASE_ROUTE_PATH = rootElement.getAttribute("data-base-route-path") ?? undefined;
+    UXP_CONTENT_ID = rootElement.getAttribute("data-uxp-content-id") ?? undefined;
+    UXP_APP_IDENTIFIER = rootElement.getAttribute("data-uxp-app-identifier") ?? undefined;
+    WS_PATH = rootElement.getAttribute("data-ws-path") ?? undefined;
+    const appOption = rootElement.getAttribute("data-app-option");
 
-    if (!apiUrl || !staticUrl) {
+    if (!baseUrl) {
         throw new Error("Base URLs are not defined in data attributes!");
     }
 
-    // Assign the values to global variables
-    BASE_URL_API = apiUrl;
-    BASE_URL_STATIC = staticUrl;
-    BASE_ROUTE_PATH = routePath ?? undefined;
+    BASE_URL = baseUrl;
+
+    APP_OPTION = appOption ? JSON.parse(appOption) : undefined;
     return baseUrl?.endsWith("/") ? baseUrl : baseUrl + "/";
 }
 
-export function getBaseUrlApi(): string {
-    if (!BASE_URL_API) {
-        throw new Error("BASE_URL_API is not initialized. Call initializeConfig() first.");
+export function getBaseUrl(): string {
+    if (!BASE_URL) {
+        throw new Error("BASE_URL is not initialized. Call initializeConfig() first.");
     }
-    return BASE_URL_API;
+    return BASE_URL;
 }
 
-export function getBaseUrlStatic(): string {
-    if (!BASE_URL_STATIC) {
-        throw new Error("BASE_URL_STATIC is not initialized. Call initializeConfig() first.");
-    }
-    return BASE_URL_STATIC;
+export function getWSPath(): string | undefined {
+    return WS_PATH;
 }
 export function getBaseRoutePath(): string | undefined {
     return BASE_ROUTE_PATH;
+}
+export function getUxpContentId(): string | undefined {
+    return UXP_CONTENT_ID;
+}
+export function getUxpAppIdentifier(): string | undefined {
+    return UXP_APP_IDENTIFIER;
+}
+export function getAppOption<T>(): T | undefined {
+    return APP_OPTION ? APP_OPTION as T : undefined;
 }

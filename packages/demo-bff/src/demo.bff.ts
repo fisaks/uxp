@@ -35,7 +35,7 @@ fastify.addHook("preHandler", async (request, _reply) => {
 HandlerRegistry.discoverHandlers([path.join(__dirname, "./controllers"), path.join(__dirname, "./handlers")]);
 const restHandlers = HandlerRegistry.getRestHandlers();
 
-console.log("restHandlers", restHandlers);
+
 const wsHandlers = HandlerRegistry.getWsHandlers();
 
 console.log("restHandlers", restHandlers);

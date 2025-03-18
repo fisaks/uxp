@@ -1,5 +1,5 @@
 import { FileEntities, FileEntityType, FileUploadResponse } from "@h2c/common";
-import { AppErrorV2, AppLogger, handleMultipartUpload } from "@uxp/bff-common";
+import { AppErrorV2, AppLogger, handleMultipartUpload, RequestMetaData } from "@uxp/bff-common";
 import { getPublicFileName } from "@uxp/common";
 import { FastifyRequest } from "fastify";
 import fs from "fs-extra";
@@ -11,10 +11,17 @@ import env from "../env";
 const PreFlightFolder = path.join(env.H2C_FILE_UPLOAD_PATH, ".pre-flight");
 
 export class FileUploadService {
-    constructor(private request: FastifyRequest, private queryRunner: QueryRunner) { }
 
-    async uploadFiles() {
-        const files = await handleMultipartUpload<FileEntityType>(this.request, PreFlightFolder, FileEntities);
+    private queryRunner: QueryRunner;
+    private requestMeta: RequestMetaData;
+    constructor(requestMeta: FastifyRequest | RequestMetaData, queryRunner: QueryRunner) {
+        this.queryRunner = queryRunner;
+        this.requestMeta = AppLogger.extractMetadata(requestMeta, true)!;
+    }
+
+
+    async uploadFiles(request: FastifyRequest) {
+        const files = await handleMultipartUpload<FileEntityType>(request, PreFlightFolder, FileEntities);
         const fileRepo = this.queryRunner.manager.getRepository(FileUploadEntity);
         const response: FileUploadResponse[] = [];
         const movedFiles: string[] = [];
@@ -37,13 +44,13 @@ export class FileUploadService {
                 });
                 const newFileEntity = await fileRepo.save(fileEntity);
 
-                AppLogger.info(this.request, {
+                AppLogger.info(this.requestMeta, {
                     message: `Uploaded file ${file.filename} with public id ${file.publicId} and internal id ${newFileEntity.id}`,
                 });
                 response.push({ publicId: newFileEntity.publicId, fileName: getPublicFileName(newFileEntity.fileName) });
             }
         } catch (error) {
-            AppLogger.error(this.request, {
+            AppLogger.error(this.requestMeta, {
                 message: "File upload failed, doing rollback",
                 error: error,
             });

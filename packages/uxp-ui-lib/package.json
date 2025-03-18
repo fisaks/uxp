@@ -26,18 +26,16 @@
         "@mui/x-date-pickers": "^7.23.6",
         "@reduxjs/toolkit": "^2.3.0",
         "@tiptap/core": "^2.11.5",
-        "@tiptap/extension-bullet-list": "^2.11.5",
         "@tiptap/extension-focus": "^2.11.5",
-        "@tiptap/extension-heading": "^2.11.5",
         "@tiptap/extension-image": "^2.11.5",
-        "@tiptap/extension-list-item": "^2.11.5",
-        "@tiptap/extension-ordered-list": "^2.11.5",
         "@tiptap/extension-table": "^2.11.5",
         "@tiptap/extension-table-cell": "^2.11.5",
         "@tiptap/extension-table-header": "^2.11.5",
         "@tiptap/extension-table-row": "^2.11.5",
         "@tiptap/extension-text-align": "^2.11.5",
         "@tiptap/extension-underline": "^2.11.5",
+        "@tiptap/extension-collaboration": "^2.11.5",
+        "@tiptap/extension-collaboration-cursor": "^2.11.5",
         "@tiptap/react": "^2.11.5",
         "@tiptap/starter-kit": "^2.11.5",
         "@uxp/common": "workspace:*",
@@ -45,7 +43,9 @@
         "react": "^18.0.0",
         "react-dom": "^18.0.0",
         "react-redux": "^9.1.2",
-        "uuid": "^11.0.3"
+        "uuid": "^11.0.3",
+        "yjs": "^13.6.23",
+        "y-prosemirror": "^1.2.17"
     },
     "peerDependenciesMeta": {
         "@tiptap/core": {
@@ -60,19 +60,7 @@
         "@tiptap/starter-kit": {
             "optional": true
         },
-        "@tiptap/extension-bullet-list": {
-            "optional": true
-        },
-        "@tiptap/extension-heading": {
-            "optional": true
-        },
         "@tiptap/extension-image": {
-            "optional": true
-        },
-        "@tiptap/extension-list-item": {
-            "optional": true
-        },
-        "@tiptap/extension-ordered-list": {
             "optional": true
         },
         "@tiptap/extension-table": {
@@ -92,6 +80,19 @@
         },
         "@tiptap/extension-underline": {
             "optional": true
+        },  
+        "@tiptap/extension-collaboration": {
+            "optional": true
+        },  
+        "@tiptap/extension-collaboration-cursor": {
+            "optional": true
+        },  
+    
+        "yjs": {
+            "optional": true
+        },
+        "y-prosemirror": {
+            "optional": true
         }
     },
     "devDependencies": {
@@ -104,5 +105,9 @@
         "cpx": "^1.5.0",
         "prosemirror-view": "^1.37.2",
         "webpack-bundle-analyzer": "^4.10.2"
+    },
+    "dependencies": {
+        
+        
     }
 }

@@ -36,6 +36,14 @@ module.exports = merge(baseConfig, {
                 secure: false, // If the backend is using HTTP, not HTTPS
             },
             {
+                context: ["/h2c/ws-api"], // Match paths starting with /api
+                target: "http://localhost:3011", // Backend server
+                ws: true,
+                changeOrigin: true, // Handle host header changes
+                pathRewrite: { "^/h2c/ws-api": "/ws-api" },
+                secure: false, // If the backend is using HTTP, not HTTPS
+            },
+            {
                 context: ["/h2c/"], // Match paths starting with /api
                 target: "http://localhost:3010", // Backend server
                 changeOrigin: true, // Handle host header changes

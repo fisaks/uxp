@@ -31,7 +31,7 @@ module.exports = merge(baseConfig, {
                 target: "http://localhost:3021", // Backend server
                 ws: true,
                 changeOrigin: true, // Handle host header changes
-                pathRewrite: { "^/demo/ws": "/ws" },
+                pathRewrite: { "^/demo/ws-api": "/ws-api" },
                 secure: false, // If the backend is using HTTP, not HTTPS
             },
 

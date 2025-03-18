@@ -1,5 +1,6 @@
 import { FastifyInstance, FastifyRequest } from "fastify";
 
+import { AppErrorV2 } from "../error/AppError";
 import { Token } from "../types/token.types";
 
 type LogMessage = {
@@ -58,9 +59,15 @@ export class AppLogger {
         return (request as RequestMetaData).requestId !== undefined;
     }
 
-    public static extractMetadata(request?: FastifyRequest): RequestMetaData | undefined {
+    public static extractMetadata(request?: FastifyRequest | RequestMetaData, required = false): RequestMetaData | undefined {
         if (!request) {
+            if (required) {
+                throw new AppErrorV2({ statusCode: 500, code: "INTERNAL_SERVER_ERROR", message: "Request metadata is required" });
+            }
             return undefined;
+        }
+        if (this.isRequestMetaData(request)) {
+            return request;
         }
         return {
             uuid: (request.user as Token)?.uuid,
@@ -69,7 +76,7 @@ export class AppLogger {
             userAgent: request.headers["user-agent"],
             requestId: request.id,
             sessionId: (request.user as Token)?.sessionId,
-            
+
         } as RequestMetaData;
     }
 

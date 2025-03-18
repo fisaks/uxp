@@ -34,12 +34,12 @@ export const RichEditorToolbar: React.FC<ToolbarProps> = ({
         <div className={`${styles.toolbar}`}>
             {/* Undo / Redo */}
             <Tooltip title="Undo (Ctrl + Z)" slotProps={slotProps}>
-                <IconButton onClick={() => editor.chain().focus().undo().run()}>
+                <IconButton onClick={() => editor.commands.undo()}>
                     <UndoIcon />
                 </IconButton>
             </Tooltip>
             <Tooltip title="Redo (Ctrl + Shift + Z)" slotProps={slotProps}>
-                <IconButton onClick={() => editor.chain().focus().redo().run()}>
+                <IconButton onClick={() => editor.commands.redo()}>
                     <RedoIcon />
                 </IconButton>
             </Tooltip>
