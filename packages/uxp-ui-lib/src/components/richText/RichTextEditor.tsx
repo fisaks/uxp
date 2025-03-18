@@ -1,12 +1,13 @@
 import { Paper, Typography } from "@mui/material";
 import { EditorContent } from "@tiptap/react";
-import React, { useCallback, useMemo, useRef, useState} from "react";
+import "prosemirror-view/style/prosemirror.css";
+import React, { useCallback, useMemo, useRef, useState } from "react";
+import * as Y from "yjs";
 import * as styles from "./RichTextEditor.module.css";
 import { FloatingImageToolbar } from "./components/FloatingImageToolbar";
+import { LinkEdit } from "./components/LinkEdit";
 import { RichEditorToolbar } from "./components/RichEditorToolbar";
 import { useRichEditor } from "./components/useRichEditor";
-import "prosemirror-view/style/prosemirror.css";
-import * as Y from "yjs";
 
 
 
@@ -18,12 +19,13 @@ interface RichTextEditorProps {
     editable?: boolean
 }
 
-const RichTextEditor =({ label, onImageUpload, imageBasePath, yDoc, editable = true }:RichTextEditorProps) => {
+const RichTextEditor = ({ label, onImageUpload, imageBasePath, yDoc, editable = true }: RichTextEditorProps) => {
     const portalContainerRef = useRef<HTMLDivElement | null>(null);
     const editorRootContainerRef = useRef<HTMLDivElement | null>(null);
     const [isFullScreen, setIsFullScreen] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [imageToolbarPos, setImageToolbarPos] = useState<{ top: number; left: number } | null>(null);
+    const [linkEl, setLinkEl] = useState<null | HTMLAnchorElement>(null);
     const triggerImageUpload = useCallback(() => {
         fileInputRef.current?.click();
     }, [fileInputRef.current]);
@@ -33,6 +35,7 @@ const RichTextEditor =({ label, onImageUpload, imageBasePath, yDoc, editable = t
     const editor = useRichEditor({
         editorRootContainerRef,
         setImageToolbarPos,
+        setLinkEl,
         triggerImageUpload,
         imageBasePath,
         editable: editable,
@@ -40,6 +43,12 @@ const RichTextEditor =({ label, onImageUpload, imageBasePath, yDoc, editable = t
 
     }, [editable]);
 
+    const applyLink = useCallback((href: string | undefined | null) => {
+        if (href && href.trim()) {
+            editor?.chain().focus().extendMarkRange('link').setLink({ href }).run()
+        }
+        setLinkEl(null);
+    }, [editor]);
 
     const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         if (event.target.files && event.target.files.length > 0) {
@@ -83,6 +92,13 @@ const RichTextEditor =({ label, onImageUpload, imageBasePath, yDoc, editable = t
                 slotProps={slotProps}
                 onClick={() => setImageToolbarPos(null)}
             />}
+            {editable && linkEl && <LinkEdit
+                applyLink={applyLink}
+                linkEl={linkEl}
+                setLinkEl={setLinkEl}
+                container={slotProps.popper.container as HTMLElement} />
+            }
+
             <input type="file" ref={fileInputRef} style={{ display: "none" }} accept="image/*" onChange={handleImageUpload} />
 
             <EditorContent editor={editor} className={styles.editorWrapper} />

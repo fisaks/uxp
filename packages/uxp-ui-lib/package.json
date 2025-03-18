@@ -31,6 +31,7 @@
         "@tiptap/extension-table": "^2.11.5",
         "@tiptap/extension-table-cell": "^2.11.5",
         "@tiptap/extension-table-header": "^2.11.5",
+        "@tiptap/extension-link": "^2.11.5",
         "@tiptap/extension-table-row": "^2.11.5",
         "@tiptap/extension-text-align": "^2.11.5",
         "@tiptap/extension-underline": "^2.11.5",
@@ -66,6 +67,9 @@
         "@tiptap/extension-table": {
             "optional": true
         },
+        "@tiptap/extension-link": {
+            "optional": true
+        },
         "@tiptap/extension-table-cell": {
             "optional": true
         },
@@ -80,14 +84,13 @@
         },
         "@tiptap/extension-underline": {
             "optional": true
-        },  
+        },
         "@tiptap/extension-collaboration": {
             "optional": true
-        },  
+        },
         "@tiptap/extension-collaboration-cursor": {
             "optional": true
-        },  
-    
+        },
         "yjs": {
             "optional": true
         },
@@ -106,8 +109,5 @@
         "prosemirror-view": "^1.37.2",
         "webpack-bundle-analyzer": "^4.10.2"
     },
-    "dependencies": {
-        
-        
-    }
+    "dependencies": {}
 }

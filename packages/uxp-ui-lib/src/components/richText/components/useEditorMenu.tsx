@@ -9,6 +9,8 @@ import FormatQuoteIcon from "@mui/icons-material/FormatQuote";
 import FormatStrikethroughIcon from "@mui/icons-material/FormatStrikethrough";
 import FormatUnderlinedIcon from "@mui/icons-material/FormatUnderlined";
 import ImageIcon from "@mui/icons-material/Image";
+import LinkIcon from "@mui/icons-material/Link";
+import LinkOffIcon from "@mui/icons-material/LinkOff";
 import TableChartIcon from "@mui/icons-material/TableChart";
 import TableRowsIcon from "@mui/icons-material/TableRows";
 import TitleIcon from "@mui/icons-material/Title";
@@ -17,7 +19,7 @@ import { Editor } from "@tiptap/react";
 import { useMemo } from "react";
 import { MenuItemType } from "../../layout/RecursiveMenuItem";
 
-type HeadingLevel=  1 | 2 | 3 | 4 | 5 | 6;
+type HeadingLevel = 1 | 2 | 3 | 4 | 5 | 6;
 
 export const userEditorMenu = ({ editor, triggerImageUpload }: { editor: Editor | null; triggerImageUpload: () => void }) => {
     // Define grouped menu items
@@ -48,6 +50,12 @@ export const userEditorMenu = ({ editor, triggerImageUpload }: { editor: Editor 
                 onClick: () => editor?.chain().focus().toggleStrike().run(),
             },
             {
+                icon: () => editor?.isActive("link") ? <LinkOffIcon /> : <LinkIcon />,
+                label: () => editor?.isActive("link") ? "Unlink" : "Link",
+                tooltip: "Link/Unlink (Ctrl + L)",
+                onClick: () => editor?.commands.toggleLinkCustom(),
+            },
+            {
                 icon: <FormatLineSpacingIcon />,
                 label: "Line Height",
                 children: [
@@ -71,7 +79,7 @@ export const userEditorMenu = ({ editor, triggerImageUpload }: { editor: Editor 
                             editor
                                 ?.chain()
                                 .focus()
-                                .toggleHeading({ level: level as  HeadingLevel})
+                                .toggleHeading({ level: level as HeadingLevel })
                                 .run(),
                     })),
                     {

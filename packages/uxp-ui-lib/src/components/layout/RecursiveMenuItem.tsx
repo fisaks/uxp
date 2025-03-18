@@ -3,8 +3,8 @@ import { ListItemIcon, ListItemText, Menu, MenuItem, ModalProps, Tooltip, Toolti
 import React, { useState } from "react";
 
 export type MenuItemType = {
-    label?: string;
-    icon?: React.ReactNode;
+    label?: string | (() => string);
+    icon?: React.ReactNode | (() => React.ReactNode);
     tooltip?: string;
     disabled?: boolean;
     onClick?: () => void;
@@ -44,8 +44,8 @@ export const RecursiveMenuItem: React.FC<{
                     onMouseEnter={!item.disabled && item.children ? handleSubmenuOpen : undefined}
                     onMouseLeave={!item.disabled && item.children ? handleSubmenuClose : undefined}
                 >
-                    {item.icon && <ListItemIcon>{item.icon}</ListItemIcon>}
-                    {item.label && <ListItemText primary={item.label} />}
+                    {item.icon && <ListItemIcon>{typeof item.icon === "function" ? item.icon() : item.icon}</ListItemIcon>}
+                    {item.label && <ListItemText primary={typeof item.label === "function" ? item.label() : item.label} />}
                     {item.children && <ChevronRightIcon />}
                     {item.children && (
                         <Menu

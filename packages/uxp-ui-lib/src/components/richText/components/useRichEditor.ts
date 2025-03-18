@@ -1,11 +1,12 @@
+import Collaboration from "@tiptap/extension-collaboration";
 import Focus from "@tiptap/extension-focus";
+import Link from '@tiptap/extension-link';
 import Table from "@tiptap/extension-table";
 import TableCell from "@tiptap/extension-table-cell";
 import TableHeader from "@tiptap/extension-table-header";
 import TableRow from "@tiptap/extension-table-row";
 import Underline from "@tiptap/extension-underline";
 import { Editor, useEditor, UseEditorOptions } from "@tiptap/react";
-import Collaboration from "@tiptap/extension-collaboration";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorView } from "prosemirror-view"; //  Import directly from ProseMirror
 import React, { DependencyList, useRef } from "react";
@@ -13,20 +14,23 @@ import * as Y from "yjs";
 import { Indent } from "../extensions/Indent";
 import { LineHeight } from "../extensions/LineHeight";
 import { ResizableImage } from "../extensions/ResizableImage";
-
+import { CustomLink } from "../extensions/CustomLink";
 
 type UseEditorMenuOptions = {
     editorRootContainerRef: React.RefObject<HTMLDivElement | null>;
     setImageToolbarPos: React.Dispatch<React.SetStateAction<{ top: number; left: number } | null>>;
     triggerImageUpload: () => void;
     imageBasePath: string;
+    setLinkEl: React.Dispatch<React.SetStateAction<null | HTMLAnchorElement>>;
+
+
 };
 type CollaborationOptions = {
     yDoc: Y.Doc;
 }
 
 export const useRichEditor = (
-    { editorRootContainerRef, setImageToolbarPos, triggerImageUpload, yDoc, ...options }: UseEditorOptions & UseEditorMenuOptions & CollaborationOptions,
+    { editorRootContainerRef, setImageToolbarPos, setLinkEl, triggerImageUpload, yDoc, ...options }: UseEditorOptions & UseEditorMenuOptions & CollaborationOptions,
     deps?: DependencyList
 ) => {
     let timeoutRef = useRef<NodeJS.Timeout | null>(null); //
@@ -34,7 +38,7 @@ export const useRichEditor = (
         {
             ...options,
             autofocus: true,
-            enableContentCheck:true,
+            enableContentCheck: true,
             onContentError: (error) => {
                 console.error("Content Error", error);
             },
@@ -50,6 +54,15 @@ export const useRichEditor = (
                 ResizableImage.configure({ basePath: options.imageBasePath }),
                 LineHeight,
                 Indent,
+                CustomLink.configure({
+                    openOnClick: !options.editable, // Open links in a new tab when clicked
+                    autolink: true,     // Automatically detect and format links
+                    linkOnPaste: true,  // Automatically turn pasted links into clickable links
+                    HTMLAttributes: {
+                        rel: "noopener noreferrer",
+                        target: "_blank",
+                    }
+                }),
                 Table.configure({ resizable: true }).extend({
                     addKeyboardShortcuts() {
                         return {
@@ -76,7 +89,7 @@ export const useRichEditor = (
             ],
             editorProps: {
                 handleClick: (view, pos, event) => {
-                    combinedHandleClick(editor, editorRootContainerRef, setImageToolbarPos, timeoutRef)(view, pos, event);
+                    combinedHandleClick(editor, editorRootContainerRef, setImageToolbarPos, timeoutRef, setLinkEl)(view, pos, event);
                 },
 
                 handleKeyDown: combinedKeyDownHandlers(triggerImageUpload),
@@ -93,12 +106,14 @@ const combinedHandleClick =
         editor: Editor | null,
         editorRootContainerRef: UseEditorMenuOptions["editorRootContainerRef"],
         setImageToolbarPos: UseEditorMenuOptions["setImageToolbarPos"],
-        timeoutRef: React.MutableRefObject<NodeJS.Timeout | null>
+        timeoutRef: React.MutableRefObject<NodeJS.Timeout | null>,
+        setLinkEl: React.Dispatch<React.SetStateAction<null | HTMLAnchorElement>>
     ) =>
         (view: EditorView, pos: number, event: MouseEvent) => {
             const handlers = [
                 (v: EditorView, p: number, e: MouseEvent) => handleImageClick(v, p, e, setImageToolbarPos, timeoutRef, editorRootContainerRef),
                 (v: EditorView, p: number, e: MouseEvent) => handleTableClick(v, p, e, editor),
+                (v: EditorView, p: number, e: MouseEvent) => handleLinkClick(v, p, e, setLinkEl),
             ];
 
             for (const handler of handlers) {
@@ -141,7 +156,7 @@ const handleImageClick = (
     return true; // Returning true means this handler handled the event
 };
 
-const handleTableClick = (view: EditorView, pos: number, event: MouseEvent, editor: Editor | null) => {
+const handleTableClick = (view: EditorView, _pos: number, event: MouseEvent, editor: Editor | null) => {
     const shadowRoot = view.dom.getRootNode();
     const clickedElement = (shadowRoot as ShadowRoot).elementFromPoint(event.clientX, event.clientY);
 
@@ -157,6 +172,21 @@ const handleTableClick = (view: EditorView, pos: number, event: MouseEvent, edit
 
     return true; // Returning true means this handler handled the event
 };
+const handleLinkClick = (
+    view: EditorView,
+    _pos: number,
+    event: MouseEvent,
+    setLinkEl: React.Dispatch<React.SetStateAction<null | HTMLAnchorElement>>
+) => {
+    const shadowRoot = view.dom.getRootNode();
+    const clickedElement = (shadowRoot as ShadowRoot).elementFromPoint(event.clientX, event.clientY);
+
+    if (clickedElement?.tagName !== "A") return false;
+    setLinkEl(event.target as HTMLAnchorElement);
+
+    return true;
+};
+
 
 const combinedKeyDownHandlers = (triggerImageUpload: () => void) => (view: EditorView, event: KeyboardEvent) => {
     const handlers = [(v: EditorView, e: KeyboardEvent) => handleInsertImage(triggerImageUpload, v, e)];
