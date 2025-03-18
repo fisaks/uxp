@@ -1,6 +1,7 @@
 import Collaboration from "@tiptap/extension-collaboration";
 import Focus from "@tiptap/extension-focus";
-import Link from '@tiptap/extension-link';
+import Subscript from "@tiptap/extension-subscript";
+import Superscript from "@tiptap/extension-superscript";
 import Table from "@tiptap/extension-table";
 import TableCell from "@tiptap/extension-table-cell";
 import TableHeader from "@tiptap/extension-table-header";
@@ -11,10 +12,10 @@ import StarterKit from "@tiptap/starter-kit";
 import { EditorView } from "prosemirror-view"; //  Import directly from ProseMirror
 import React, { DependencyList, useRef } from "react";
 import * as Y from "yjs";
+import { CustomLink } from "../extensions/CustomLink";
 import { Indent } from "../extensions/Indent";
 import { LineHeight } from "../extensions/LineHeight";
 import { ResizableImage } from "../extensions/ResizableImage";
-import { CustomLink } from "../extensions/CustomLink";
 
 type UseEditorMenuOptions = {
     editorRootContainerRef: React.RefObject<HTMLDivElement | null>;
@@ -62,6 +63,14 @@ export const useRichEditor = (
                         rel: "noopener noreferrer",
                         target: "_blank",
                     }
+                }),
+                Subscript,
+                Superscript.extend({
+                    addKeyboardShortcuts() {
+                        return {
+                            "Ctrl-Shift-,": () => this.editor.commands.toggleSuperscript(),
+                        };
+                    },
                 }),
                 Table.configure({ resizable: true }).extend({
                     addKeyboardShortcuts() {

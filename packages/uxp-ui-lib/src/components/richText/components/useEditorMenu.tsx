@@ -5,6 +5,8 @@ import FormatItalicIcon from "@mui/icons-material/FormatItalic";
 import FormatLineSpacingIcon from "@mui/icons-material/FormatLineSpacing";
 import FormatListBulletedIcon from "@mui/icons-material/FormatListBulleted";
 import FormatListNumberedIcon from "@mui/icons-material/FormatListNumbered";
+import SubscriptIcon from '@mui/icons-material/Subscript';
+import Superscript from '@mui/icons-material/Superscript';
 import FormatQuoteIcon from "@mui/icons-material/FormatQuote";
 import FormatStrikethroughIcon from "@mui/icons-material/FormatStrikethrough";
 import FormatUnderlinedIcon from "@mui/icons-material/FormatUnderlined";
@@ -90,7 +92,18 @@ export const userEditorMenu = ({ editor, triggerImageUpload }: { editor: Editor 
                     },
                 ],
             },
-
+            {
+                icon: <SubscriptIcon />,
+                label: "Subscript",
+                tooltip: "Subscript (Ctrl + ,)",
+                onClick: () => editor?.chain().focus().toggleSubscript().run(),
+            },
+            {
+                icon: <Superscript />,
+                label: "Superscript",
+                tooltip: "Superscript (Ctrl + Shift + ,)",
+                onClick: () => editor?.chain().focus().toggleSuperscript().run(),
+            },
             {
                 icon: <CodeIcon />,
                 label: "Code",
