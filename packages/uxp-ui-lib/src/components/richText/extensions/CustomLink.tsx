@@ -28,10 +28,8 @@ export const CustomLink = Link.extend({
                             ""
                         ).trim();
 
-
                         const url = selectedText.includes("://") ? selectedText : `//${selectedText}`;
                         chain().focus().setLink({ href: url, target: "_blank" }).run();
-
 
                         return true;
                     },
