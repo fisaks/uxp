@@ -10,11 +10,16 @@ export interface RichTextEditorProps {
     editable?: boolean
 }
 
+
+export type LinkEditPopupProps = {
+    href: string
+    setHref: (editor: Editor, href: string) => void;
+    popupPos: { top: number; left: number };
+}
 export interface RichEditorUIState extends RichTextEditorProps {
-    linkTagToEdit: HTMLAnchorElement | null;
-    setLinkTagToEdit: (el: HTMLAnchorElement | null) => void;
-    linkEditPopupPos: { top: number; left: number } | null;
-    setLinkEditPopupPos: (pos: { top: number; left: number } | null) => void;
+
+    linkEditPopupProps: LinkEditPopupProps | null;
+    setLinkEditPopupProps: (props: LinkEditPopupProps | null) => void;
     imageToolbarPos: { top: number; left: number } | null;
     setImageToolbarPos: (pos: { top: number; left: number } | null) => void;
     portalContainerRef: React.RefObject<HTMLDivElement>;
@@ -38,9 +43,8 @@ const RichEditorContext = createContext<RichEditorUIState | undefined>(undefined
 
 export function RichEditorProvider({ children, ...props }: { children: ReactNode } & RichTextEditorProps) {
 
-    const [linkTagToEdit, setLinkTagToEdit] = useState<HTMLAnchorElement | null>(null);
+    const [linkEditPopupProps, setLinkEditPopupProps] = useState<LinkEditPopupProps | null>(null);
     const [imageToolbarPos, setImageToolbarPos] = useState<{ top: number; left: number } | null>(null);
-    const [linkEditPopupPos, setLinkEditPopupPos] = useState<{ top: number; left: number } | null>(null);
     const [isFullScreen, setIsFullScreen] = useState(false);
     const [editor, setEditor] = useState<Editor | undefined>();
     const [hasCamera, setHasCamera] = useState<boolean | undefined>(undefined);
@@ -61,24 +65,16 @@ export function RichEditorProvider({ children, ...props }: { children: ReactNode
     return (
         <RichEditorContext.Provider value={{
             ...props,
-            linkTagToEdit,
-            setLinkTagToEdit,
-            linkEditPopupPos,
-            setLinkEditPopupPos,
-            imageToolbarPos,
-            setImageToolbarPos,
+            linkEditPopupProps, setLinkEditPopupProps,
+            imageToolbarPos, setImageToolbarPos,
             portalContainerRef,
             editorRootContainerRef,
-            isFullScreen,
-            toggleFullScreen,
-            editor,
-            setEditor,
-            hasCamera,
-            setHasCamera,
-            registerCameraCapture,
-            triggerCameraCapture: () => triggerCameraCaptureRef?.current(),
-            triggerImageUpload: () => triggerImageUploadRef?.current(),
-            registerTriggerImageUpload
+            isFullScreen, toggleFullScreen,
+            editor, setEditor,
+            hasCamera, setHasCamera,
+            registerCameraCapture, triggerCameraCapture: () => triggerCameraCaptureRef?.current(),
+            registerTriggerImageUpload, triggerImageUpload: () => triggerImageUploadRef?.current(),
+
         }}>
             {children}
         </RichEditorContext.Provider>

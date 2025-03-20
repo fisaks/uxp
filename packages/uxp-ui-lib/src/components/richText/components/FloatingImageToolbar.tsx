@@ -12,7 +12,7 @@ import * as styles from "../RichTextEditor.module.css";
 
 export const FloatingImageToolbar = () => {
     const theme = useTheme();
-    const { editor, imageToolbarPos, setLinkEditPopupPos, setImageToolbarPos, portalContainerRef } = useRichEditorUI();
+    const { editor, imageToolbarPos, setLinkEditPopupProps, editorRootContainerRef, setImageToolbarPos, portalContainerRef } = useRichEditorUI();
 
 
     if (!editor || !imageToolbarPos) return null;
@@ -29,13 +29,17 @@ export const FloatingImageToolbar = () => {
     };
 
 
-    const showLinkEditPopup = (event: React.MouseEvent<HTMLElement>) => {
+    const showLinkEditPopup = (_event: React.MouseEvent<HTMLElement>) => {
+
+        setLinkEditPopupProps({
+            href: imageLink,
+            popupPos: imageToolbarPos,
+            setHref: (editorArg, href) => {
+                editorArg.commands.setImageLink(href);
+            }
+        });
         hideFloatingToolbar();
 
-        setLinkEditPopupPos({
-            top: event.clientY,
-            left: event.clientX
-        });
     };
     const removeLinkFromImage = (_event: React.MouseEvent<HTMLElement>) => {
         hideFloatingToolbar();

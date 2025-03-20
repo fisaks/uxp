@@ -2,51 +2,47 @@ import CloseIcon from "@mui/icons-material/Close";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import SaveIcon from "@mui/icons-material/Save";
 
-import { IconButton, Popover, TextField, Tooltip } from "@mui/material";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { IconButton, Paper, TextField, Tooltip, useTheme } from "@mui/material";
+import { useEffect, useState } from "react";
 import { useRichEditorUI } from "../RichEditorContext";
+import * as styles from "../RichTextEditor.module.css";
 
 export const LinkEdit = () => {
 
-
-    const { editor, linkTagToEdit, setLinkTagToEdit, portalContainerRef, linkEditPopupPos, setLinkEditPopupPos } = useRichEditorUI();
-    const slotProps = useMemo(() => ({ popper: { container: portalContainerRef.current } }), [portalContainerRef.current]);
+    const theme = useTheme();
+    const { editor, setLinkEditPopupProps, linkEditPopupProps, portalContainerRef } = useRichEditorUI();
+    const slotProps = { popper: { container: portalContainerRef.current } };
     const [linkUrl, setLinkUrl] = useState("");
 
     useEffect(() => {
-        setLinkUrl(linkTagToEdit?.href ?? "");
-    }, [linkTagToEdit]);
+        setLinkUrl(linkEditPopupProps?.href ?? "");
+    }, [linkEditPopupProps?.href]);
 
-    useEffect(() => {
-        setLinkUrl(editor?.getAttributes("image").href ?? "");
-    }, [linkEditPopupPos]);
-    const open = useMemo(() => Boolean(linkTagToEdit) || !!linkEditPopupPos, [linkTagToEdit, linkEditPopupPos])
-
-    const applyLink = useCallback((href: string | undefined | null) => {
-        if (!!linkEditPopupPos) {
-            editor?.commands.setImageLink(href as string | null);
-        }
-        else if (href && href.trim()) {
-            editor?.chain().focus().extendMarkRange('link').setLink({ href }).run()
-        }
-        setLinkTagToEdit(null);
-        setLinkEditPopupPos(null);
-    }, [editor, linkEditPopupPos]);
-    const cancel = () => {
-        setLinkTagToEdit(null)
-        setLinkEditPopupPos(null);
+    const applyLink = (href: string | undefined | null) => {
+        linkEditPopupProps?.setHref(editor!, href ?? "");
+        closeLinkEditor();
+    };
+    const openLink = () => {
+        if (linkUrl) window.open(linkUrl, "_blank");
+    };
+    const closeLinkEditor = () => {
+        setLinkEditPopupProps(null)
     }
 
-    return <Popover
-        container={portalContainerRef.current}
-        open={open}
-        anchorEl={linkTagToEdit ?? undefined}
-        onClose={() => setLinkTagToEdit(null)}
-        anchorReference={linkEditPopupPos ? "anchorPosition" : "anchorEl"}
-        anchorPosition={linkEditPopupPos ? { top: linkEditPopupPos.top, left: linkEditPopupPos.left } : undefined}
-        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-        transformOrigin={{ vertical: "top", horizontal: "left" }}
+    if (linkEditPopupProps === null || !editor) return null;
+
+    return <Paper
+        className={styles.floatingToolbar}
+        elevation={4}
+        style={{
+            position: "absolute",
+            top: `${linkEditPopupProps.popupPos.top}px`,
+            left: `${linkEditPopupProps.popupPos.left}px`,
+            backgroundColor: theme.palette.background.default,
+            color: theme.palette.text.primary,
+        }}
     >
+
         <div style={{ padding: "10px", display: "flex", alignItems: "center", gap: "4px" }}>
             <TextField
                 variant="outlined"
@@ -64,17 +60,17 @@ export const LinkEdit = () => {
             </Tooltip>
             {linkUrl && (
                 <Tooltip title="Open Link" slotProps={slotProps}>
-                    <IconButton size="small" color="secondary" onClick={() => window.open(linkUrl, "_blank")}>
+                    <IconButton size="small" color="secondary" onClick={openLink}>
                         <OpenInNewIcon />
                     </IconButton>
                 </Tooltip>
             )}
             <Tooltip title="Discard" slotProps={slotProps}>
-                <IconButton onClick={cancel} size="small">
+                <IconButton onClick={closeLinkEditor} size="small">
                     <CloseIcon />
                 </IconButton>
             </Tooltip>
         </div>
-    </Popover >
+    </Paper >
 
 }
