@@ -2,25 +2,48 @@ import CloseIcon from "@mui/icons-material/Close";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import SaveIcon from "@mui/icons-material/Save";
 
-import { IconButton, Popover, PopoverProps, TextField, Tooltip } from "@mui/material";
-import { useMemo, useState } from "react";
-type LinkEditProps = {
+import { IconButton, Popover, TextField, Tooltip } from "@mui/material";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRichEditorUI } from "../RichEditorContext";
 
-    linkEl: HTMLAnchorElement
-    setLinkEl: React.Dispatch<React.SetStateAction<null | HTMLAnchorElement>>;
-    applyLink: (l: string) => void;
-    container: PopoverProps["container"];
-}
-export const LinkEdit = ({ applyLink, linkEl, setLinkEl, container }: LinkEditProps) => {
-    const [linkUrl, setLinkUrl] = useState(linkEl.href);
+export const LinkEdit = () => {
 
-    const slotProps = useMemo(() => ({ popper: { container: container } }), [container]);
+
+    const { editor, linkTagToEdit, setLinkTagToEdit, portalContainerRef, linkEditPopupPos, setLinkEditPopupPos } = useRichEditorUI();
+    const slotProps = useMemo(() => ({ popper: { container: portalContainerRef.current } }), [portalContainerRef.current]);
+    const [linkUrl, setLinkUrl] = useState("");
+
+    useEffect(() => {
+        setLinkUrl(linkTagToEdit?.href ?? "");
+    }, [linkTagToEdit]);
+
+    useEffect(() => {
+        setLinkUrl(editor?.getAttributes("image").href ?? "");
+    }, [linkEditPopupPos]);
+    const open = useMemo(() => Boolean(linkTagToEdit) || !!linkEditPopupPos, [linkTagToEdit, linkEditPopupPos])
+
+    const applyLink = useCallback((href: string | undefined | null) => {
+        if (!!linkEditPopupPos) {
+            editor?.commands.setImageLink(href as string | null);
+        }
+        else if (href && href.trim()) {
+            editor?.chain().focus().extendMarkRange('link').setLink({ href }).run()
+        }
+        setLinkTagToEdit(null);
+        setLinkEditPopupPos(null);
+    }, [editor, linkEditPopupPos]);
+    const cancel = () => {
+        setLinkTagToEdit(null)
+        setLinkEditPopupPos(null);
+    }
 
     return <Popover
-        container={container}
-        open={Boolean(linkEl)}
-        anchorEl={linkEl}
-        onClose={() => setLinkEl(null)}
+        container={portalContainerRef.current}
+        open={open}
+        anchorEl={linkTagToEdit ?? undefined}
+        onClose={() => setLinkTagToEdit(null)}
+        anchorReference={linkEditPopupPos ? "anchorPosition" : "anchorEl"}
+        anchorPosition={linkEditPopupPos ? { top: linkEditPopupPos.top, left: linkEditPopupPos.left } : undefined}
         anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
         transformOrigin={{ vertical: "top", horizontal: "left" }}
     >
@@ -32,7 +55,7 @@ export const LinkEdit = ({ applyLink, linkEl, setLinkEl, container }: LinkEditPr
                 value={linkUrl}
                 onChange={(e) => setLinkUrl(e.target.value)}
                 autoFocus
-                
+
             />
             <Tooltip title="Apply" slotProps={slotProps}>
                 <IconButton onClick={() => applyLink(linkUrl)} size="small" color="primary" >
@@ -47,7 +70,7 @@ export const LinkEdit = ({ applyLink, linkEl, setLinkEl, container }: LinkEditPr
                 </Tooltip>
             )}
             <Tooltip title="Discard" slotProps={slotProps}>
-                <IconButton onClick={() => setLinkEl(null)} size="small">
+                <IconButton onClick={cancel} size="small">
                     <CloseIcon />
                 </IconButton>
             </Tooltip>

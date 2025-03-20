@@ -8,6 +8,7 @@ declare module "@tiptap/core" {
              * Inserts an image with additional attributes
              */
             setImage: (options: { src: string; alt?: string; title?: string; width?: string; float?: string }) => ReturnType;
+            setImageLink: (href: string | null) => ReturnType;
         };
     }
 }
@@ -26,8 +27,29 @@ export const ResizableImage = Image.extend<ImageOptions & { basePath: string }, 
             width: { default: "100%" }, // Default width
             draggable: { default: false }, // Allow dragging
             float: { default: "" },
+            href: { default: null }
         };
     },
+    addCommands() {
+        return {
+          ...this.parent?.(),
+  
+          setImageLink:
+            (href: string | null) =>
+            ({ state,dispatch }) => {
+                console.log("setImageLink", href);
+              const { selection } = state;
+              const node = state.doc.nodeAt(selection.from);
+              if (!node || node.type.name !== "image") return false;
+              console.log("setImageLink node", node);
+              const newAttrs = { ...node.attrs, href };
+              dispatch?.(state.tr.setNodeMarkup(selection.from, undefined, newAttrs));
+    
+              return true;
+            },
+        };
+      },
+    
 
     addNodeView() {
         return ({ node, editor }) => {
@@ -42,7 +64,18 @@ export const ResizableImage = Image.extend<ImageOptions & { basePath: string }, 
             img.src = buildPath(this.options.basePath, node.attrs.src);
             img.style.width = node.attrs.width;
             img.draggable = false;
-            dom.appendChild(img);
+
+            if (node.attrs.href) {
+                const link = document.createElement("a");
+                link.href = node.attrs.href;
+                link.target = "_blank";
+                link.appendChild(img);
+                dom.appendChild(link);
+              } else {
+                dom.appendChild(img);
+              }
+
+            
 
             const handle = document.createElement("div");
             handle.classList.add("resize-handle");

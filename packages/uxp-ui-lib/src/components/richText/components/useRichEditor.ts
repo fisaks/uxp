@@ -7,37 +7,25 @@ import TableCell from "@tiptap/extension-table-cell";
 import TableHeader from "@tiptap/extension-table-header";
 import TableRow from "@tiptap/extension-table-row";
 import Underline from "@tiptap/extension-underline";
-import { Editor, useEditor, UseEditorOptions } from "@tiptap/react";
+import { Editor, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorView } from "prosemirror-view"; //  Import directly from ProseMirror
-import React, { DependencyList, useRef } from "react";
-import * as Y from "yjs";
+import React, { useRef } from "react";
 import { CustomLink } from "../extensions/CustomLink";
 import { Indent } from "../extensions/Indent";
 import { LineHeight } from "../extensions/LineHeight";
 import { ResizableImage } from "../extensions/ResizableImage";
+import { RichEditorUIState, useRichEditorUI } from "../RichEditorContext";
 
-type UseEditorMenuOptions = {
-    editorRootContainerRef: React.RefObject<HTMLDivElement | null>;
-    setImageToolbarPos: React.Dispatch<React.SetStateAction<{ top: number; left: number } | null>>;
-    triggerImageUpload: () => void;
-    imageBasePath: string;
-    setLinkEl: React.Dispatch<React.SetStateAction<null | HTMLAnchorElement>>;
-
-
-};
-type CollaborationOptions = {
-    yDoc: Y.Doc;
-}
 
 export const useRichEditor = (
-    { editorRootContainerRef, setImageToolbarPos, setLinkEl, triggerImageUpload, yDoc, ...options }: UseEditorOptions & UseEditorMenuOptions & CollaborationOptions,
-    deps?: DependencyList
 ) => {
+    const { setEditor, editorRootContainerRef, triggerImageUpload, setImageToolbarPos, setLinkTagToEdit, imageBasePath, editable, yDoc } = useRichEditorUI();
     let timeoutRef = useRef<NodeJS.Timeout | null>(null); //
     const editor = useEditor(
         {
-            ...options,
+
+            editable: editable,
             autofocus: true,
             enableContentCheck: true,
             onContentError: (error) => {
@@ -52,11 +40,11 @@ export const useRichEditor = (
                     heading: { levels: [1, 2, 3, 4, 5, 6] },
                 }),
                 Underline,
-                ResizableImage.configure({ basePath: options.imageBasePath }),
+                ResizableImage.configure({ basePath: imageBasePath }),
                 LineHeight,
                 Indent,
                 CustomLink.configure({
-                    openOnClick: !options.editable, // Open links in a new tab when clicked
+                    openOnClick: !editable, // Open links in a new tab when clicked
                     autolink: true,     // Automatically detect and format links
                     linkOnPaste: true,  // Automatically turn pasted links into clickable links
                     HTMLAttributes: {
@@ -94,35 +82,40 @@ export const useRichEditor = (
                 Collaboration.configure({
                     document: yDoc, // ✅ Uses shared Y.js state
                 }),
-                ...(options?.extensions ?? []),
+
             ],
             editorProps: {
                 handleClick: (view, pos, event) => {
-                    combinedHandleClick(editor, editorRootContainerRef, setImageToolbarPos, timeoutRef, setLinkEl)(view, pos, event);
+                    combinedHandleClick(editor, editorRootContainerRef, setImageToolbarPos, timeoutRef, setLinkTagToEdit)(view, pos, event);
                 },
 
                 handleKeyDown: combinedKeyDownHandlers(triggerImageUpload),
-                ...(options?.editorProps ?? {}),
+                
             },
+            onCreate: ({ editor }) => {
+                setEditor(editor);
+
+            }
         },
-        deps
+        [editable]
     );
+
     return editor;
 };
 
 const combinedHandleClick =
     (
         editor: Editor | null,
-        editorRootContainerRef: UseEditorMenuOptions["editorRootContainerRef"],
-        setImageToolbarPos: UseEditorMenuOptions["setImageToolbarPos"],
+        editorRootContainerRef: RichEditorUIState["editorRootContainerRef"],
+        setImageToolbarPos: RichEditorUIState["setImageToolbarPos"],
         timeoutRef: React.MutableRefObject<NodeJS.Timeout | null>,
-        setLinkEl: React.Dispatch<React.SetStateAction<null | HTMLAnchorElement>>
+        setLinkTagToEdit: RichEditorUIState["setLinkTagToEdit"]
     ) =>
         (view: EditorView, pos: number, event: MouseEvent) => {
             const handlers = [
                 (v: EditorView, p: number, e: MouseEvent) => handleImageClick(v, p, e, setImageToolbarPos, timeoutRef, editorRootContainerRef),
                 (v: EditorView, p: number, e: MouseEvent) => handleTableClick(v, p, e, editor),
-                (v: EditorView, p: number, e: MouseEvent) => handleLinkClick(v, p, e, setLinkEl),
+                (v: EditorView, p: number, e: MouseEvent) => handleLinkClick(v, p, e, setLinkTagToEdit),
             ];
 
             for (const handler of handlers) {
@@ -136,19 +129,25 @@ const handleImageClick = (
     view: EditorView,
     pos: number,
     event: MouseEvent,
-    setImageToolbarPos: UseEditorMenuOptions["setImageToolbarPos"],
+    setImageToolbarPos: RichEditorUIState["setImageToolbarPos"],
     timeoutRef: React.MutableRefObject<NodeJS.Timeout | null>,
-    editorRootContainerRef: UseEditorMenuOptions["editorRootContainerRef"]
+    editorRootContainerRef: RichEditorUIState["editorRootContainerRef"]
 ) => {
-    const node = view.state.doc.nodeAt(pos);
+    //const node = view.state.doc.nodeAt(pos);
+    const el=(event.target as HTMLElement|null);
+    
+    //if (node?.type.name !== "image" || el?.tagName!===) return false;
+    if(el?.tagName!=="IMG") {
+        setImageToolbarPos(null);
+        return false;
+    }
 
-    if (node?.type.name !== "image") return false;
-
-    const shadowRoot = view.dom.getRootNode();
-    const clickedElement = (shadowRoot as ShadowRoot).elementFromPoint(event.clientX, event.clientY);
+    //const shadowRoot = view.dom.getRootNode();
+    //const clickedElement = (shadowRoot as ShadowRoot).elementFromPoint(event.clientX, event.clientY);
     const containerRect = editorRootContainerRef.current?.getBoundingClientRect();
-
-    if (clickedElement?.tagName === "IMG") {
+    //console.log("image clicked")
+    //if (clickedElement?.tagName === "IMG") {
+      //  console.log("image clicked",event.clientY - (containerRect?.top ?? 0),event.clientX - (containerRect?.left ?? 0))
         setImageToolbarPos({
             top: event.clientY - (containerRect?.top ?? 0),
             left: event.clientX - (containerRect?.left ?? 0),
@@ -158,9 +157,9 @@ const handleImageClick = (
             clearTimeout(timeoutRef.current);
         }
         timeoutRef.current = setTimeout(() => setImageToolbarPos(null), 5000);
-    } else {
-        setImageToolbarPos(null);
-    }
+    //} else {
+    //  setImageToolbarPos(null);
+    //}
 
     return true; // Returning true means this handler handled the event
 };
@@ -185,13 +184,13 @@ const handleLinkClick = (
     view: EditorView,
     _pos: number,
     event: MouseEvent,
-    setLinkEl: React.Dispatch<React.SetStateAction<null | HTMLAnchorElement>>
+    setLinkTagToEdit: RichEditorUIState["setLinkTagToEdit"]
 ) => {
     const shadowRoot = view.dom.getRootNode();
     const clickedElement = (shadowRoot as ShadowRoot).elementFromPoint(event.clientX, event.clientY);
 
     if (clickedElement?.tagName !== "A") return false;
-    setLinkEl(event.target as HTMLAnchorElement);
+    setLinkTagToEdit(event.target as HTMLAnchorElement);
 
     return true;
 };

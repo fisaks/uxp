@@ -1,25 +1,17 @@
-import { Paper, Typography } from "@mui/material";
-import { EditorContent } from "@tiptap/react";
 import "prosemirror-view/style/prosemirror.css";
-import React, { useCallback, useMemo, useRef, useState } from "react";
-import * as Y from "yjs";
-import * as styles from "./RichTextEditor.module.css";
-import { FloatingImageToolbar } from "./components/FloatingImageToolbar";
-import { LinkEdit } from "./components/LinkEdit";
-import { RichEditorToolbar } from "./components/RichEditorToolbar";
-import { useRichEditor } from "./components/useRichEditor";
+import { RichEditorProvider, RichTextEditorProps } from "./RichEditorContext";
+import { RichTextEditorContent } from "./RichTextEditorContent";
 
 
-
-interface RichTextEditorProps {
-    label?: string;
-    imageBasePath: string;
-    onImageUpload: (file: File) => Promise<string>;
-    yDoc: Y.Doc;
-    editable?: boolean
+export function RichTextEditor(props: RichTextEditorProps) {
+    return (
+        <RichEditorProvider {...props}>
+            <RichTextEditorContent />
+        </RichEditorProvider>
+    );
 }
 
-const RichTextEditor = ({ label, onImageUpload, imageBasePath, yDoc, editable = true }: RichTextEditorProps) => {
+/*const RichTextEditorContent = () => {
     const portalContainerRef = useRef<HTMLDivElement | null>(null);
     const editorRootContainerRef = useRef<HTMLDivElement | null>(null);
     const [isFullScreen, setIsFullScreen] = useState(false);
@@ -32,20 +24,16 @@ const RichTextEditor = ({ label, onImageUpload, imageBasePath, yDoc, editable = 
 
     const slotProps = useMemo(() => ({ popper: { container: portalContainerRef.current } }), [portalContainerRef.current]);
 
-    const editor = useRichEditor({
-        editorRootContainerRef,
-        setImageToolbarPos,
-        setLinkEl,
-        triggerImageUpload,
-        imageBasePath,
-        editable: editable,
-        yDoc: yDoc,
-
-    }, [editable]);
+    const editor = useRichEditor({}, [editable]);
 
     const applyLink = useCallback((href: string | undefined | null) => {
-        if (href && href.trim()) {
+
+        if (editor?.getAttributes("image")) {
+            editor?.commands.setImageLink(href as string | null);
+        }
+        else if (href && href.trim()) {
             editor?.chain().focus().extendMarkRange('link').setLink({ href }).run()
+
         }
         setLinkEl(null);
     }, [editor]);
@@ -63,6 +51,14 @@ const RichTextEditor = ({ label, onImageUpload, imageBasePath, yDoc, editable = 
     const toggleFullScreen = () => {
         setIsFullScreen(!isFullScreen);
     };
+    const setImageLink = (el: HTMLElement, link: string | null) => {
+        console.log("setImageLink", el, link);
+        if (link === null) {
+            editor?.commands.setImageLink(null);
+        } else {
+            setLinkEl(el as HTMLAnchorElement);
+        }
+    }
 
     if (!editor) return null;
 
@@ -90,6 +86,7 @@ const RichTextEditor = ({ label, onImageUpload, imageBasePath, yDoc, editable = 
                 editor={editor}
                 imagePos={imageToolbarPos}
                 slotProps={slotProps}
+                onLink={setImageLink}
                 onClick={() => setImageToolbarPos(null)}
             />}
             {editable && linkEl && <LinkEdit
@@ -107,5 +104,5 @@ const RichTextEditor = ({ label, onImageUpload, imageBasePath, yDoc, editable = 
         </Paper>
     );
 };
-
+*/
 export default RichTextEditor;

@@ -1,3 +1,4 @@
+import CameraAltIcon from "@mui/icons-material/CameraAlt";
 import CodeIcon from "@mui/icons-material/Code";
 import DeleteIcon from "@mui/icons-material/Delete";
 import FormatBoldIcon from "@mui/icons-material/FormatBold";
@@ -5,26 +6,26 @@ import FormatItalicIcon from "@mui/icons-material/FormatItalic";
 import FormatLineSpacingIcon from "@mui/icons-material/FormatLineSpacing";
 import FormatListBulletedIcon from "@mui/icons-material/FormatListBulleted";
 import FormatListNumberedIcon from "@mui/icons-material/FormatListNumbered";
-import SubscriptIcon from '@mui/icons-material/Subscript';
-import Superscript from '@mui/icons-material/Superscript';
 import FormatQuoteIcon from "@mui/icons-material/FormatQuote";
 import FormatStrikethroughIcon from "@mui/icons-material/FormatStrikethrough";
 import FormatUnderlinedIcon from "@mui/icons-material/FormatUnderlined";
 import ImageIcon from "@mui/icons-material/Image";
 import LinkIcon from "@mui/icons-material/Link";
 import LinkOffIcon from "@mui/icons-material/LinkOff";
+import SubscriptIcon from '@mui/icons-material/Subscript';
+import Superscript from '@mui/icons-material/Superscript';
 import TableChartIcon from "@mui/icons-material/TableChart";
 import TableRowsIcon from "@mui/icons-material/TableRows";
 import TitleIcon from "@mui/icons-material/Title";
 import TableColumnsIcon from "@mui/icons-material/ViewColumn";
-import { Editor } from "@tiptap/react";
 import { useMemo } from "react";
 import { MenuItemType } from "../../layout/RecursiveMenuItem";
+import { useRichEditorUI } from "../RichEditorContext";
 
 type HeadingLevel = 1 | 2 | 3 | 4 | 5 | 6;
 
-export const userEditorMenu = ({ editor, triggerImageUpload }: { editor: Editor | null; triggerImageUpload: () => void }) => {
-    // Define grouped menu items
+export const userEditorMenu = () => {
+    const { editor, triggerImageUpload, triggerCameraCapture, hasCamera } = useRichEditorUI();
     const editItems: MenuItemType[] = useMemo(
         () => [
             {
@@ -56,6 +57,7 @@ export const userEditorMenu = ({ editor, triggerImageUpload }: { editor: Editor 
                 label: () => editor?.isActive("link") ? "Unlink" : "Link",
                 tooltip: "Link/Unlink (Ctrl + L)",
                 onClick: () => editor?.commands.toggleLinkCustom(),
+                //onClick: () => editor?.commands.setImageLink("foioo.com"),
             },
             {
                 icon: <FormatLineSpacingIcon />,
@@ -134,6 +136,13 @@ export const userEditorMenu = ({ editor, triggerImageUpload }: { editor: Editor 
                 onClick: triggerImageUpload,
             },
             {
+                icon: <CameraAltIcon />,
+                label: "Capture Image",
+                disabled: !hasCamera,
+                onClick: triggerCameraCapture,
+            },
+
+            {
                 icon: <FormatListBulletedIcon />,
                 label: "Lists",
                 children: [
@@ -207,7 +216,7 @@ export const userEditorMenu = ({ editor, triggerImageUpload }: { editor: Editor 
                 ],
             },
         ],
-        [editor]
+        [editor,hasCamera]
     );
 
     return [editItems, addItems];

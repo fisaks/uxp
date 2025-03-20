@@ -6,30 +6,18 @@ import FullscreenIcon from "@mui/icons-material/Fullscreen";
 import FullscreenExitIcon from "@mui/icons-material/FullscreenExit";
 import RedoIcon from "@mui/icons-material/Redo";
 import UndoIcon from "@mui/icons-material/Undo";
-import { IconButton, Tooltip, TooltipProps } from "@mui/material";
-import { Editor } from "@tiptap/core";
-import React, { RefObject } from "react";
+import { IconButton, Tooltip } from "@mui/material";
+import { useMemo } from "react";
 import MultiLevelMenu from "../../layout/MultiLevelMenu";
+import { useRichEditorUI } from "../RichEditorContext";
 import * as styles from "../RichTextEditor.module.css";
 import { userEditorMenu } from "./useEditorMenu";
 
-type ToolbarProps = {
-    editor: Editor;
-    portalContainerRef: RefObject<HTMLDivElement | null>;
-    isFullScreen: boolean;
-    toggleFullScreen: () => void;
-    triggerImageUpload: () => void;
-    slotProps: TooltipProps["slotProps"];
-};
-export const RichEditorToolbar: React.FC<ToolbarProps> = ({
-    editor,
-    portalContainerRef,
-    isFullScreen,
-    toggleFullScreen,
-    slotProps,
-    triggerImageUpload,
-}) => {
-    const [editItems, addItems] = userEditorMenu({ editor, triggerImageUpload });
+export const RichEditorToolbar = () => {
+    const { editor, portalContainerRef, isFullScreen, toggleFullScreen } = useRichEditorUI();
+    const [editItems, addItems] = userEditorMenu();
+    const slotProps = useMemo(() => ({ popper: { container: portalContainerRef.current } }), [portalContainerRef.current]);
+    if (!editor) return null;
     return (
         <div className={`${styles.toolbar}`}>
             {/* Undo / Redo */}
