@@ -23,6 +23,7 @@
         "@mui/material": "^6.1.8",
         "@mui/utils": "^6.1.10",
         "@reduxjs/toolkit": "^2.3.0",
+        "react-resizable": "^3.0.5",
         "@demo/common": "workspace:*",
         "@uxp/common": "workspace:*",
         "@uxp/ui-lib": "workspace:*",

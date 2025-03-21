@@ -13,3 +13,5 @@
 * [ ] Add a elastic search for document search?
 
 
+## UI
+ * [ ] Update the ResizableImage to use ReactNodeViewRenderer

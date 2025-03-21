@@ -1,11 +1,16 @@
 import { Node, mergeAttributes } from "@tiptap/core";
+import { ReactNodeViewRenderer } from "@tiptap/react";
 import { buildPath } from "@uxp/common";
+import VideoNode, { AlignmentStyles } from "../nodes/VideoNode";
 
 type VideoAttributes = {
     src: string;
     controls?: boolean;
     autoplay?: boolean;
     loop?: boolean;
+    width?: number | string;
+    height?: number | string;
+    align?: "left" | "center" | "right";
 };
 
 type VideoOptions = {
@@ -14,11 +19,7 @@ type VideoOptions = {
 declare module "@tiptap/core" {
     interface Commands<ReturnType> {
         video: {
-            /**
-             * Inserts an image with additional attributes
-             */
             setVideo: (options: VideoAttributes) => ReturnType;
-
         };
     }
 }
@@ -29,7 +30,7 @@ export const Video = Node.create({
     atom: true,
     addOptions() {
         return {
-            basePath: "", // ✅ Default base path
+            basePath: "",
         } as VideoOptions;
     },
 
@@ -39,6 +40,15 @@ export const Video = Node.create({
             controls: { default: true },
             autoplay: { default: false },
             loop: { default: false },
+            width: { default: null, },
+            height: { default: null, },
+            align: {
+                default: "center",
+                parseHTML: (element) => element.getAttribute("data-align") || "center",
+                renderHTML: (attrs) => {
+                    return { "data-align": attrs.align };
+                },
+            },
         };
     },
 
@@ -47,11 +57,13 @@ export const Video = Node.create({
     },
 
     renderHTML({ node, HTMLAttributes }) {
-        const { src, ...attrs } = HTMLAttributes;
+        const { src, align, ...attrs } = HTMLAttributes;
         const fullSrc = buildPath(this.options.basePath, src);
 
-
-        return ["video", mergeAttributes(attrs, { src: fullSrc })];
+        return ["video", mergeAttributes(attrs, {
+            src: fullSrc,
+            style: AlignmentStyles[align || "center"],
+        })];
     },
     addCommands() {
         return {
@@ -65,4 +77,16 @@ export const Video = Node.create({
                     },
         };
     },
+
+
+    addNodeView() {
+        const basePath = this.options.basePath;
+
+        const WrappedVideoNode = (props: any) => {
+            return <VideoNode {...props} basePath={basePath} />;
+        };
+
+        return ReactNodeViewRenderer(WrappedVideoNode, {});
+    },
+
 });

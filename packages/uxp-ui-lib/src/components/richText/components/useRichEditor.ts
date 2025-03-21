@@ -10,7 +10,7 @@ import Underline from "@tiptap/extension-underline";
 import { useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorView } from "prosemirror-view"; //  Import directly from ProseMirror
-import React, { useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import { CustomLink } from "../extensions/CustomLink";
 import { Indent } from "../extensions/Indent";
 import { LineHeight } from "../extensions/LineHeight";
@@ -47,7 +47,7 @@ export const useRichEditor = (
                 LineHeight,
                 Indent,
                 CustomLink.configure({
-                    openOnClick: !editable, // Open links in a new tab when clicked
+                    openOnClick: false,
                     autolink: true,     // Automatically detect and format links
                     linkOnPaste: true,  // Automatically turn pasted links into clickable links
                     HTMLAttributes: {
@@ -99,11 +99,14 @@ export const useRichEditor = (
             onCreate: ({ editor }) => {
                 setEditor(editor);
 
-            }
+            },
         },
-        [editable]
+        []
     );
 
+    useEffect(() => {
+        editor?.setEditable(editable ?? false);
+    }, [editable]);
     return editor;
 };
 
@@ -204,7 +207,6 @@ const handleLinkClick = (
             editor.chain().focus().extendMarkRange('link').setLink({ href }).run()
         }
     });
-
     return true;
 };
 
