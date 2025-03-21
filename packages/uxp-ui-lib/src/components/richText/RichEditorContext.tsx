@@ -16,6 +16,11 @@ export type LinkEditPopupProps = {
     setHref: (editor: Editor, href: string) => void;
     popupPos: { top: number; left: number };
 }
+type CameraCapture = {
+    image: RichEditorUIState["triggerImageCapture"]
+    video: RichEditorUIState["triggerVideoCapture"]
+
+}
 export interface RichEditorUIState extends RichTextEditorProps {
 
     linkEditPopupProps: LinkEditPopupProps | null;
@@ -35,8 +40,9 @@ export interface RichEditorUIState extends RichTextEditorProps {
     triggerImageUpload: () => void;
     registerTriggerImageUpload: (func: RichEditorUIState["triggerImageUpload"]) => void;
 
-    triggerCameraCapture: () => void;
-    registerCameraCapture: (func: RichEditorUIState["triggerCameraCapture"]) => void;
+    triggerImageCapture: () => void;
+    triggerVideoCapture: () => void;
+    registerCameraCapture: (props: CameraCapture) => void
 }
 
 const RichEditorContext = createContext<RichEditorUIState | undefined>(undefined);
@@ -51,13 +57,15 @@ export function RichEditorProvider({ children, ...props }: { children: ReactNode
     const portalContainerRef = useRef<HTMLDivElement | null>(null);
     const editorRootContainerRef = useRef<HTMLDivElement | null>(null);
     const triggerImageUploadRef = useRef<() => void>(() => { });
-    const triggerCameraCaptureRef = useRef<() => void>(() => { });
+    const triggerImageCaptureRef = useRef<() => void>(() => { });
+    const triggerVideoCaptureRef = useRef<() => void>(() => { });
 
     const registerTriggerImageUpload = (fn: () => void) => {
         triggerImageUploadRef.current = fn;
     };
-    const registerCameraCapture = (fn: () => void) => {
-        triggerCameraCaptureRef.current = fn;
+    const registerCameraCapture = (props: CameraCapture) => {
+        triggerImageCaptureRef.current = props.image;
+        triggerVideoCaptureRef.current = props.video;
     };
     const toggleFullScreen = () => {
         setIsFullScreen(!isFullScreen);
@@ -72,7 +80,9 @@ export function RichEditorProvider({ children, ...props }: { children: ReactNode
             isFullScreen, toggleFullScreen,
             editor, setEditor,
             hasCamera, setHasCamera,
-            registerCameraCapture, triggerCameraCapture: () => triggerCameraCaptureRef?.current(),
+            registerCameraCapture,
+            triggerImageCapture: () => triggerImageCaptureRef?.current(),
+            triggerVideoCapture: () => triggerVideoCaptureRef?.current(),
             registerTriggerImageUpload, triggerImageUpload: () => triggerImageUploadRef?.current(),
 
         }}>

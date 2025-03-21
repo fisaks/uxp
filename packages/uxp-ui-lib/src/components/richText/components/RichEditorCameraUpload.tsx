@@ -16,7 +16,8 @@ const checkCamera = async () => {
     }
 };
 export function RichEditorCameraUpload() {
-    const cameraInputRef = useRef<HTMLInputElement>(null);
+    const imageInputRef = useRef<HTMLInputElement>(null);
+    const videoInputRef = useRef<HTMLInputElement>(null);
 
     const { onImageUpload, editor, registerCameraCapture, setHasCamera } = useRichEditorUI();
 
@@ -25,9 +26,11 @@ export function RichEditorCameraUpload() {
     }, []);
 
     const triggerImageUpload = () => {
-        cameraInputRef.current?.click();
+        imageInputRef.current?.click();
     }
-
+    const triggerVideoUpload = () => {
+        videoInputRef.current?.click();
+    }
     const handleImageCapture = async (event: React.ChangeEvent<HTMLInputElement>) => {
         if (event.target.files && event.target.files.length > 0) {
             const file = event.target.files[0];
@@ -37,9 +40,22 @@ export function RichEditorCameraUpload() {
             }
         }
     };
+    const handleVideoCapture = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        if (!event.target.files?.length) return;
+        const file = event.target.files[0];
+        const videoUrl = await onImageUpload(file);
+        if (videoUrl) {
+            editor?.chain().focus().setVideo({ src: videoUrl }).run();
+        }
+    };
 
 
-    registerCameraCapture(triggerImageUpload);
 
-    return <input type="file" ref={cameraInputRef} style={{ display: "none" }} accept="image/*" capture="environment" onChange={handleImageCapture} />;
+    registerCameraCapture({ image: triggerImageUpload, video: triggerVideoUpload });
+
+    return <>
+        <input type="file" ref={imageInputRef} style={{ display: "none" }} accept="image/*" capture="environment" onChange={handleImageCapture} />
+        <input ref={videoInputRef} type="file" accept="video/*" capture="environment" style={{ display: "none" }} onChange={handleVideoCapture} />
+    </>
+
 }

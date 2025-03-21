@@ -116,6 +116,11 @@
 .editorContainer table {
     border: 1px solid transparent;
 }
+.editorContainer video {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
 
 .editorContainer :global(.has-focus) table td,
 .editorContainer :global(.has-focus) table th,

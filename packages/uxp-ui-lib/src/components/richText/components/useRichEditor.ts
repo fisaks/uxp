@@ -15,6 +15,7 @@ import { CustomLink } from "../extensions/CustomLink";
 import { Indent } from "../extensions/Indent";
 import { LineHeight } from "../extensions/LineHeight";
 import { ResizableImage } from "../extensions/ResizableImage";
+import { Video } from "../extensions/Video";
 import { RichEditorUIState, useRichEditorUI } from "../RichEditorContext";
 
 
@@ -84,6 +85,7 @@ export const useRichEditor = (
                 Collaboration.configure({
                     document: yDoc, // ✅ Uses shared Y.js state
                 }),
+                Video.configure({ basePath: imageBasePath })
 
             ],
             editorProps: {

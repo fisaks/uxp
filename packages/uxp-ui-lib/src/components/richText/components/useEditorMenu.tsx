@@ -17,6 +17,7 @@ import Superscript from '@mui/icons-material/Superscript';
 import TableChartIcon from "@mui/icons-material/TableChart";
 import TableRowsIcon from "@mui/icons-material/TableRows";
 import TitleIcon from "@mui/icons-material/Title";
+import VideoCameraFrontIcon from "@mui/icons-material/VideoCameraFront";
 import TableColumnsIcon from "@mui/icons-material/ViewColumn";
 import { useMemo } from "react";
 import { MenuItemType } from "../../layout/RecursiveMenuItem";
@@ -25,7 +26,7 @@ import { useRichEditorUI } from "../RichEditorContext";
 type HeadingLevel = 1 | 2 | 3 | 4 | 5 | 6;
 
 export const userEditorMenu = () => {
-    const { editor, triggerImageUpload, triggerCameraCapture, hasCamera } = useRichEditorUI();
+    const { editor, triggerImageUpload, triggerImageCapture, triggerVideoCapture, hasCamera } = useRichEditorUI();
     const editItems: MenuItemType[] = useMemo(
         () => [
             {
@@ -139,7 +140,13 @@ export const userEditorMenu = () => {
                 icon: <CameraAltIcon />,
                 label: "Capture Image",
                 disabled: !hasCamera,
-                onClick: triggerCameraCapture,
+                onClick: triggerImageCapture,
+            },
+            {
+                icon: <VideoCameraFrontIcon />,
+                label: "Record Video",
+                disabled: !hasCamera,
+                onClick: triggerVideoCapture,
             },
 
             {
@@ -216,7 +223,7 @@ export const userEditorMenu = () => {
                 ],
             },
         ],
-        [editor,hasCamera]
+        [editor, hasCamera]
     );
 
     return [editItems, addItems];
