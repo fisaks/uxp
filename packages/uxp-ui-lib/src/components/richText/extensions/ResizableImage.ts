@@ -52,7 +52,7 @@ export const ResizableImage = Image.extend<ImageOptions & { basePath: string }, 
     
 
     addNodeView() {
-        return ({ node, editor }) => {
+        return ({ node, editor,getPos }) => {
             const dom = document.createElement("div");
             dom.classList.add("resizable-image-wrapper");
 
@@ -116,7 +116,12 @@ export const ResizableImage = Image.extend<ImageOptions & { basePath: string }, 
                 const newWidth = Math.max(50, startWidth + (clientX - startX));
                 img.style.width = `${newWidth}px`;
 
-                editor.chain().updateAttributes("image", { width: `${newWidth}px` });
+               //editor.chain().updateAttributes("image", { width: `${newWidth}px` });
+                const transaction = editor.state.tr.setNodeMarkup(getPos(), undefined, {
+                    ...node.attrs,
+                    width: `${newWidth}px`
+                });
+                editor.view.dispatch(transaction);
             };
 
             const stopResize = () => {

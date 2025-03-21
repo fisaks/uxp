@@ -23,11 +23,25 @@ declare module "@tiptap/core" {
         };
     }
 }
+const removeBasePath = (basePath: string, src: string) => {
+    try {
+        const url = new URL(src, window.location.origin);
+        const fullBase = new URL(buildPath(basePath, "/"), window.location.origin).toString();
 
+        if (url.toString().startsWith(fullBase)) {
+            return decodeURIComponent(url.pathname.replace(basePath, ""));
+        }
+    } catch {
+    }
+
+    return src;
+}
 export const Video = Node.create({
     name: "video",
     group: "block",
     atom: true,
+    draggable: true,
+    selectable: true,
     addOptions() {
         return {
             basePath: "",
@@ -36,10 +50,21 @@ export const Video = Node.create({
 
     addAttributes() {
         return {
-            src: { default: null },
-            controls: { default: true },
-            autoplay: { default: false },
-            loop: { default: false },
+            src: {
+                default: null, parseHTML: (element) => {
+                    let cleanSrc = element.getAttribute("src") ?? "";
+                    return removeBasePath(this.options.basePath, cleanSrc);
+                }
+            },
+            controls: {
+                default: true,
+            },
+            autoplay: {
+                default: false,
+            },
+            loop: {
+                default: false,
+            },
             width: { default: null, },
             height: { default: null, },
             align: {
@@ -53,7 +78,9 @@ export const Video = Node.create({
     },
 
     parseHTML() {
-        return [{ tag: "video" }];
+        return [{
+            tag: "video",
+        }];
     },
 
     renderHTML({ node, HTMLAttributes }) {
