@@ -10,6 +10,7 @@ import FormatQuoteIcon from "@mui/icons-material/FormatQuote";
 import FormatStrikethroughIcon from "@mui/icons-material/FormatStrikethrough";
 import FormatUnderlinedIcon from "@mui/icons-material/FormatUnderlined";
 import ImageIcon from "@mui/icons-material/Image";
+import VideoFileIcon from "@mui/icons-material/VideoFile";
 import LinkIcon from "@mui/icons-material/Link";
 import LinkOffIcon from "@mui/icons-material/LinkOff";
 import SubscriptIcon from '@mui/icons-material/Subscript';
@@ -26,7 +27,7 @@ import { useRichEditorUI } from "../RichEditorContext";
 type HeadingLevel = 1 | 2 | 3 | 4 | 5 | 6;
 
 export const userEditorMenu = () => {
-    const { editor, triggerImageUpload, triggerImageCapture, triggerVideoCapture, hasCamera } = useRichEditorUI();
+    const { editor, triggerImageUpload, triggerVideoUpload, triggerImageCapture, triggerVideoCapture, hasCamera } = useRichEditorUI();
     const editItems: MenuItemType[] = useMemo(
         () => [
             {
@@ -136,6 +137,12 @@ export const userEditorMenu = () => {
                 tooltip: "Insert Image (Ctrl + Shift + I)",
                 onClick: triggerImageUpload,
             },
+            {
+                icon: <VideoFileIcon />,
+                label: "Insert Video",
+                onClick: triggerVideoUpload,
+            },
+
             {
                 icon: <CameraAltIcon />,
                 label: "Capture Image",

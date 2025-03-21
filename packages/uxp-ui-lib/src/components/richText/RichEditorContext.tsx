@@ -17,6 +17,10 @@ export type LinkEditPopupProps = {
     popupPos: { top: number; left: number };
 }
 type CameraCapture = {
+    image: RichEditorUIState["triggerImageUpload"]
+    video: RichEditorUIState["triggerVideoUpload"]
+}
+type FileUpload = {
     image: RichEditorUIState["triggerImageCapture"]
     video: RichEditorUIState["triggerVideoCapture"]
 
@@ -38,7 +42,8 @@ export interface RichEditorUIState extends RichTextEditorProps {
     toggleFullScreen: () => void;
 
     triggerImageUpload: () => void;
-    registerTriggerImageUpload: (func: RichEditorUIState["triggerImageUpload"]) => void;
+    triggerVideoUpload: () => void;
+    registerImageUpload: (props: FileUpload) => void
 
     triggerImageCapture: () => void;
     triggerVideoCapture: () => void;
@@ -57,11 +62,13 @@ export function RichEditorProvider({ children, ...props }: { children: ReactNode
     const portalContainerRef = useRef<HTMLDivElement | null>(null);
     const editorRootContainerRef = useRef<HTMLDivElement | null>(null);
     const triggerImageUploadRef = useRef<() => void>(() => { });
+    const triggerVideoUploadRef = useRef<() => void>(() => { });
     const triggerImageCaptureRef = useRef<() => void>(() => { });
     const triggerVideoCaptureRef = useRef<() => void>(() => { });
 
-    const registerTriggerImageUpload = (fn: () => void) => {
-        triggerImageUploadRef.current = fn;
+    const registerImageUpload = (props: FileUpload) => {
+        triggerImageUploadRef.current = props.image;;
+        triggerVideoUploadRef.current = props.video;
     };
     const registerCameraCapture = (props: CameraCapture) => {
         triggerImageCaptureRef.current = props.image;
@@ -83,7 +90,9 @@ export function RichEditorProvider({ children, ...props }: { children: ReactNode
             registerCameraCapture,
             triggerImageCapture: () => triggerImageCaptureRef?.current(),
             triggerVideoCapture: () => triggerVideoCaptureRef?.current(),
-            registerTriggerImageUpload, triggerImageUpload: () => triggerImageUploadRef?.current(),
+            registerImageUpload,
+            triggerImageUpload: () => triggerImageUploadRef?.current(),
+            triggerVideoUpload: () => triggerVideoUploadRef?.current(),
 
         }}>
             {children}
