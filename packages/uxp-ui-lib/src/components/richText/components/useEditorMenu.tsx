@@ -58,7 +58,7 @@ export const userEditorMenu = () => {
             {
                 icon: () => editor?.isActive("link") ? <LinkOffIcon /> : <LinkIcon />,
                 label: () => editor?.isActive("link") ? "Unlink" : "Link",
-                tooltip: "Link/Unlink (Ctrl + L)",
+                tooltip: "Link/Unlink (Ctrl + Shift + K)",
                 onClick: () => editor?.commands.toggleLinkCustom(),
                 //onClick: () => editor?.commands.setImageLink("foioo.com"),
             },

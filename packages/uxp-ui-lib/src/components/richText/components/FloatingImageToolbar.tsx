@@ -5,15 +5,32 @@ import LinkIcon from "@mui/icons-material/Link";
 import LinkOffIcon from "@mui/icons-material/LinkOff";
 
 import { IconButton, Paper, Tooltip, useTheme } from "@mui/material";
-import React from "react";
+import React, { useLayoutEffect, useState } from "react";
 import { useRichEditorUI } from "../RichEditorContext";
 import * as styles from "../RichTextEditor.module.css";
 
 
 export const FloatingImageToolbar = () => {
     const theme = useTheme();
-    const { editor, imageToolbarPos, setLinkEditPopupProps, editorRootContainerRef, setImageToolbarPos, portalContainerRef } = useRichEditorUI();
+    const { editor, imageToolbarPos, setLinkEditPopupProps, editorRootContainerRef, setImageToolbarPos, portalContainerRef, } = useRichEditorUI();
+    const [adjustedLeft, setAdjustedLeft] = useState<number | null>(null);
+    
+    useLayoutEffect(() => {
+        if (!imageToolbarPos || !editorRootContainerRef.current) return;
+        const containerRect = editorRootContainerRef.current.getBoundingClientRect();
+        const containerWidth=containerRect.width;
 
+        const originalLeft = imageToolbarPos.left;
+        const popupMaxWidth = 220;
+        
+        const overflow = (originalLeft + popupMaxWidth) - containerWidth;
+
+        if (overflow > 0) {
+            setAdjustedLeft(Math.max(originalLeft - overflow, 0));
+        } else {
+            setAdjustedLeft(originalLeft);
+        }
+    }, [imageToolbarPos,editorRootContainerRef]);
 
     if (!editor || !imageToolbarPos) return null;
 
@@ -53,7 +70,7 @@ export const FloatingImageToolbar = () => {
             style={{
                 position: "absolute",
                 top: `${imageToolbarPos.top}px`,
-                left: `${imageToolbarPos.left}px`,
+                left: adjustedLeft !== null ? `${adjustedLeft}px` : "-9999px",
                 backgroundColor: theme.palette.background.default, // Use theme background
                 color: theme.palette.text.primary, // Ensure good contrast
             }}
