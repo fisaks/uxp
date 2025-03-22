@@ -23,13 +23,14 @@ declare module "@tiptap/core" {
         };
     }
 }
-const removeBasePath = (basePath: string, src: string) => {
+export const removeBasePath = (basePath: string, src: string) => {
     try {
         const url = new URL(src, window.location.origin);
         const fullBase = new URL(buildPath(basePath, "/"), window.location.origin).toString();
 
         if (url.toString().startsWith(fullBase)) {
-            return decodeURIComponent(url.pathname.replace(basePath, ""));
+            const p = decodeURIComponent(url.pathname.replace(basePath, ""));
+            return p.startsWith("/") ? p.slice(1) : p;
         }
     } catch {
     }

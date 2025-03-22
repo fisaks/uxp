@@ -11,6 +11,7 @@ import FormatStrikethroughIcon from "@mui/icons-material/FormatStrikethrough";
 import FormatUnderlinedIcon from "@mui/icons-material/FormatUnderlined";
 import ImageIcon from "@mui/icons-material/Image";
 import VideoFileIcon from "@mui/icons-material/VideoFile";
+import AttachFileIcon from "@mui/icons-material/AttachFile";
 import LinkIcon from "@mui/icons-material/Link";
 import LinkOffIcon from "@mui/icons-material/LinkOff";
 import SubscriptIcon from '@mui/icons-material/Subscript';
@@ -27,7 +28,7 @@ import { useRichEditorUI } from "../RichEditorContext";
 type HeadingLevel = 1 | 2 | 3 | 4 | 5 | 6;
 
 export const userEditorMenu = () => {
-    const { editor, triggerImageUpload, triggerVideoUpload, triggerImageCapture, triggerVideoCapture, hasCamera } = useRichEditorUI();
+    const { editor, triggerUpload, hasCamera } = useRichEditorUI();
     const editItems: MenuItemType[] = useMemo(
         () => [
             {
@@ -135,25 +136,29 @@ export const userEditorMenu = () => {
                 icon: <ImageIcon />,
                 label: "Insert Image",
                 tooltip: "Insert Image (Ctrl + Shift + I)",
-                onClick: triggerImageUpload,
+                onClick: () => triggerUpload("image","file"),
             },
             {
                 icon: <VideoFileIcon />,
                 label: "Insert Video",
-                onClick: triggerVideoUpload,
+                onClick:  () => triggerUpload("video","file"),
             },
-
+            {
+                icon: <AttachFileIcon />,
+                label: "Insert Attachment",
+                onClick:  () => triggerUpload("document","file"),
+            },
             {
                 icon: <CameraAltIcon />,
                 label: "Capture Image",
                 disabled: !hasCamera,
-                onClick: triggerImageCapture,
+                onClick:  () => triggerUpload("image","camera"),
             },
             {
                 icon: <VideoCameraFrontIcon />,
                 label: "Record Video",
                 disabled: !hasCamera,
-                onClick: triggerVideoCapture,
+                onClick:  () => triggerUpload("video","camera"),
             },
 
             {

@@ -4,10 +4,9 @@ import { useRichEditorUI } from "./RichEditorContext";
 import * as styles from "./RichTextEditor.module.css";
 import { FloatingImageToolbar } from "./components/FloatingImageToolbar";
 import { LinkEdit } from "./components/LinkEdit";
-import { RichEditorFileUpload } from "./components/RichEditorFileUpload";
 import { RichEditorToolbar } from "./components/RichEditorToolbar";
+import { RichEditorUploadManager } from "./components/RichEditorUploadManager";
 import { useRichEditor } from "./components/useRichEditor";
-import { RichEditorCameraUpload } from "./components/RichEditorCameraUpload";
 
 export const RichTextEditorContent = () => {
     const { editor, editorRootContainerRef, portalContainerRef, isFullScreen, label, editable } = useRichEditorUI();
@@ -30,8 +29,7 @@ export const RichTextEditorContent = () => {
 
             {editable && <RichEditorToolbar />}
             {editable && <FloatingImageToolbar />}
-            {editable && <RichEditorFileUpload />}
-            {editable && <RichEditorCameraUpload />}
+            {editable && <RichEditorUploadManager />}
 
             {editable && <LinkEdit />}
 

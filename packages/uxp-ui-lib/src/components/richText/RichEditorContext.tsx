@@ -16,15 +16,12 @@ export type LinkEditPopupProps = {
     setHref: (editor: Editor, href: string) => void;
     popupPos: { top: number; left: number };
 }
-type CameraCapture = {
-    image: RichEditorUIState["triggerImageUpload"]
-    video: RichEditorUIState["triggerVideoUpload"]
-}
-type FileUpload = {
-    image: RichEditorUIState["triggerImageCapture"]
-    video: RichEditorUIState["triggerVideoCapture"]
+export type UploadType = "image" | "video" | "document";
+export type UploadSource = "file" | "camera";
 
-}
+export type UploadTriggerMap = Partial<Record<UploadType, () => void>>;
+export type TriggerRegistry = Record<UploadSource, UploadTriggerMap>;
+
 export interface RichEditorUIState extends RichTextEditorProps {
 
     linkEditPopupProps: LinkEditPopupProps | null;
@@ -41,13 +38,11 @@ export interface RichEditorUIState extends RichTextEditorProps {
     isFullScreen: boolean,
     toggleFullScreen: () => void;
 
-    triggerImageUpload: () => void;
-    triggerVideoUpload: () => void;
-    registerImageUpload: (props: FileUpload) => void
-
-    triggerImageCapture: () => void;
-    triggerVideoCapture: () => void;
-    registerCameraCapture: (props: CameraCapture) => void
+    registerUploadTrigger: (
+        triggers: UploadTriggerMap,
+        options?: { source?: UploadSource }
+    ) => void;
+    triggerUpload: (type: UploadType, source?: UploadSource) => void;
 }
 
 const RichEditorContext = createContext<RichEditorUIState | undefined>(undefined);
@@ -61,19 +56,31 @@ export function RichEditorProvider({ children, ...props }: { children: ReactNode
     const [hasCamera, setHasCamera] = useState<boolean | undefined>(undefined);
     const portalContainerRef = useRef<HTMLDivElement | null>(null);
     const editorRootContainerRef = useRef<HTMLDivElement | null>(null);
-    const triggerImageUploadRef = useRef<() => void>(() => { });
-    const triggerVideoUploadRef = useRef<() => void>(() => { });
-    const triggerImageCaptureRef = useRef<() => void>(() => { });
-    const triggerVideoCaptureRef = useRef<() => void>(() => { });
+    const triggerRegistry = useRef<TriggerRegistry>({
+        file: {},
+        camera: {},
+      });
+    
+      const registerUploadTrigger = (
+        triggers: UploadTriggerMap,
+        options?: { source?: UploadSource }
+      ) => {
+        const source = options?.source ?? "file";
+        triggerRegistry.current[source] = {
+          ...triggerRegistry.current[source],
+          ...triggers,
+        };
+      };
+    
+      const triggerUpload = (type: UploadType, source: UploadSource = "file") => {
+        const trigger = triggerRegistry.current[source]?.[type];
+        if (trigger) {
+          trigger();
+        } else {
+          console.warn(`No upload trigger registered for [${type}] from [${source}]`);
+        }
+      };
 
-    const registerImageUpload = (props: FileUpload) => {
-        triggerImageUploadRef.current = props.image;;
-        triggerVideoUploadRef.current = props.video;
-    };
-    const registerCameraCapture = (props: CameraCapture) => {
-        triggerImageCaptureRef.current = props.image;
-        triggerVideoCaptureRef.current = props.video;
-    };
     const toggleFullScreen = () => {
         setIsFullScreen(!isFullScreen);
     };
@@ -87,12 +94,9 @@ export function RichEditorProvider({ children, ...props }: { children: ReactNode
             isFullScreen, toggleFullScreen,
             editor, setEditor,
             hasCamera, setHasCamera,
-            registerCameraCapture,
-            triggerImageCapture: () => triggerImageCaptureRef?.current(),
-            triggerVideoCapture: () => triggerVideoCaptureRef?.current(),
-            registerImageUpload,
-            triggerImageUpload: () => triggerImageUploadRef?.current(),
-            triggerVideoUpload: () => triggerVideoUploadRef?.current(),
+            registerUploadTrigger,
+            triggerUpload,
+
 
         }}>
             {children}

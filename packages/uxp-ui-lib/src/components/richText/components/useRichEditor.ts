@@ -11,12 +11,13 @@ import { useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorView } from "prosemirror-view"; //  Import directly from ProseMirror
 import React, { useEffect, useRef } from "react";
+import { Attachment } from "../extensions/Attachment";
 import { CustomLink } from "../extensions/CustomLink";
 import { Indent } from "../extensions/Indent";
 import { LineHeight } from "../extensions/LineHeight";
 import { ResizableImage } from "../extensions/ResizableImage";
 import { Video } from "../extensions/Video";
-import { RichEditorUIState, useRichEditorUI } from "../RichEditorContext";
+import { RichEditorUIState, UploadSource, UploadType, useRichEditorUI } from "../RichEditorContext";
 
 
 
@@ -48,7 +49,7 @@ export const useRichEditor = (
                 Indent,
                 CustomLink.configure({
                     openOnClick: false,
-                    autolink: true,     // Automatically detect and format links
+                    autolink: false,     // Automatically detect and format links
                     linkOnPaste: true,  // Automatically turn pasted links into clickable links
                     HTMLAttributes: {
                         rel: "noopener noreferrer",
@@ -85,7 +86,8 @@ export const useRichEditor = (
                 Collaboration.configure({
                     document: yDoc, // ✅ Uses shared Y.js state
                 }),
-                Video.configure({ basePath: imageBasePath })
+                Video.configure({ basePath: imageBasePath }),
+                Attachment.configure({ basePath: imageBasePath }),
 
             ],
             editorProps: {
@@ -100,6 +102,9 @@ export const useRichEditor = (
                 setEditor(editor);
 
             },
+            onUpdate: ({ editor }) => {
+                console.log("onUpdate", editor.getJSON());
+            }
         },
         []
     );
@@ -211,18 +216,18 @@ const handleLinkClick = (
 };
 
 
-const combinedKeyDownHandlers = ({ triggerImageUpload }: RichEditorUIState) => (view: EditorView, event: KeyboardEvent) => {
-    const handlers = [(v: EditorView, e: KeyboardEvent) => handleInsertImage(triggerImageUpload, v, e)];
+const combinedKeyDownHandlers = ({ triggerUpload }: RichEditorUIState) => (view: EditorView, event: KeyboardEvent) => {
+    const handlers = [(v: EditorView, e: KeyboardEvent) => handleInsertImage(triggerUpload, v, e)];
 
     for (const handler of handlers) {
         if (handler(view, event)) return; //  Stop processing if a handler handled the event
     }
 };
 
-const handleInsertImage = (triggerImageUpload: () => void, _view: EditorView, event: KeyboardEvent) => {
+const handleInsertImage = (triggerUpload: (type: UploadType, source?: UploadSource) => void, _view: EditorView, event: KeyboardEvent) => {
     if (event.ctrlKey && event.shiftKey && event.key === "I") {
         event.preventDefault();
-        triggerImageUpload();
+        triggerUpload("image", "file");
         return true;
     }
     return false;

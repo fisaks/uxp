@@ -1,4 +1,5 @@
 
+import { markInputRule, mergeAttributes } from "@tiptap/core";
 import Link from "@tiptap/extension-link";
 
 declare module "@tiptap/core" {
@@ -16,7 +17,7 @@ export const CustomLink = Link.extend({
             ...this.parent?.(),
             toggleLinkCustom:
                 () =>
-                    ({ editor, chain}) => {
+                    ({ editor, chain }) => {
                         if (editor.isActive("link")) {
                             chain().focus().unsetLink().run();
                             return true;
@@ -35,10 +36,23 @@ export const CustomLink = Link.extend({
                     },
         };
     },
-
+    parseHTML() {
+        console.log("parseHTML custom");
+        const baseRules = this.parent?.() ?? [];
+        return baseRules.map(rule => ({
+            ...rule,
+            tag: 'a[href]:not([data-attachment])',
+        } as any));
+    },
+    /*renderHTML({ HTMLAttributes }) {
+        console.log("renderHTML custom", HTMLAttributes);
+        
+        return ['a', mergeAttributes(this.options.HTMLAttributes, HTMLAttributes), 0]
+    },*/
     addKeyboardShortcuts() {
         return {
             "Mod-Shift-K": () => this.editor.commands.toggleLinkCustom(),
         };
     },
+
 });
