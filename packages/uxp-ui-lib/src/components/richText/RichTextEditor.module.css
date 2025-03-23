@@ -157,6 +157,11 @@
     display: block;
 }
 
+:global(.ProseMirror):not([contenteditable="true"]) :global(.ProseMirror-selectednode) {
+    /* Prevents the blue outline from appearing in view mode*/
+    outline: none !important;
+}
+
 .floatingToolbar {
     border-radius: 8px;
     padding: 4px;

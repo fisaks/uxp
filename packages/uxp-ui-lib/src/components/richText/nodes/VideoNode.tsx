@@ -1,11 +1,13 @@
 // VideoComponent.tsx
+
 import FormatAlignJustify from "@mui/icons-material/FormatAlignJustify";
 import FormatAlignLeftIcon from "@mui/icons-material/FormatAlignLeft";
 import FormatAlignRightIcon from "@mui/icons-material/FormatAlignRight";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import LockIcon from "@mui/icons-material/Lock";
 import LockOpenIcon from "@mui/icons-material/LockOpen";
 
-import { IconButton, Paper, Tooltip, useMediaQuery, useTheme } from "@mui/material";
+import { IconButton, Paper, Stack, Tooltip, Typography, useMediaQuery, useTheme } from "@mui/material";
 import { NodeViewProps, NodeViewWrapper } from "@tiptap/react";
 import { buildPath } from "@uxp/common";
 import React, { useEffect, useMemo, useRef } from "react";
@@ -29,8 +31,6 @@ const VideoNode: React.FC<VideoNodeProps> = ({ node, updateAttributes, basePath,
     const isMobile = useMediaQuery(theme.breakpoints.down("sm"))
     const { editable, portalContainerRef } = useRichEditorUI();
     const [aspectLocked, setAspectLocked] = React.useState(true);
-
-    const [dragging, setDragging] = React.useState(false);
 
     const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -92,36 +92,21 @@ const VideoNode: React.FC<VideoNodeProps> = ({ node, updateAttributes, basePath,
         const containerBox = containerRef.current.getBoundingClientRect();
 
         // Calculate video left position relative to container
+
         const relativeLeft = videoBox.left - containerBox.left + videoBox.width / 2;
-        setToolbarLeft(relativeLeft);
+
+        setToolbarLeft(Math.max(relativeLeft, 100)); // min 100 left so it don't overflow to the left
     }, [width, height, align, selected]); // run when these change
 
-    const handleDragStart = (e: React.DragEvent) => {
-        e.stopPropagation();
-        e.preventDefault();
-        e.dataTransfer?.clearData();
-        e.dataTransfer?.setDragImage(new Image(), 0, 0);
-        
-    };
-    const handleDragStop = (e: React.DragEvent) => {
-        setDragging(false)
-    }
-
     return (
-        <NodeViewWrapper contentEditable={false} className="uxp-video-node" draggable={selected && editable}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragStop}
+        <NodeViewWrapper contentEditable={false} className="uxp-video-node" draggable={false}
 
             style={{ position: "relative", ...AlignmentStyles[isMobile ? "center" : align], }}>
 
             <div
-                data-drag-handle
+                data-drag-handle={selected ? "true" : undefined}
                 ref={containerRef}
-                onDragStart={() => setDragging(true)}
-                onDragEnd={handleDragStop}
-    
                 style={{
-
                     width: "100%",
                     maxWidth: "100%",
                     display: "inline-block"
@@ -133,7 +118,7 @@ const VideoNode: React.FC<VideoNodeProps> = ({ node, updateAttributes, basePath,
                     width={Number(Math.min(width, containerWidth) || 320)}
                     height={Number(height || 180)}
                     onResizeStop={handleResizeStop}
-                    resizeHandles={editable ? ["se", "nw", "sw", "ne", "e", "n", "w", "s"] : []}
+                    resizeHandles={editable && !selected ? ["se", "nw", "sw", "ne", "e", "n", "w", "s"] : []}
                     lockAspectRatio={aspectLocked}
 
                 >
@@ -152,7 +137,7 @@ const VideoNode: React.FC<VideoNodeProps> = ({ node, updateAttributes, basePath,
                     />
 
                 </ResizableBox>
-                {editable && selected && !dragging && (
+                {editable && selected && (
 
                     <Paper
                         className={styles.floatingToolbar}
@@ -172,31 +157,38 @@ const VideoNode: React.FC<VideoNodeProps> = ({ node, updateAttributes, basePath,
 
                         }}
                     >
-                        <Tooltip title="Float Left" slotProps={slotProps}>
-                            <IconButton onClick={() => setAlign("left")} sx={{ ...(align === "left" ? activeAlign : {}) }}>
-                                <FormatAlignLeftIcon />
-                            </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Float Right" slotProps={slotProps}>
-                            <IconButton onClick={() => setAlign("right")} sx={{ ...(align === "right" ? activeAlign : {}) }}>
-                                <FormatAlignRightIcon />
-                            </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Remove Float" slotProps={slotProps} sx={{ ...(align === "center" ? activeAlign : {}) }}>
+                        <Stack spacing={1} alignItems="center">
+                            <Stack direction="row" spacing={1}>
+                                <Tooltip title="Float Left" slotProps={slotProps}>
+                                    <IconButton onClick={() => setAlign("left")} sx={{ ...(align === "left" ? activeAlign : {}) }}>
+                                        <FormatAlignLeftIcon />
+                                    </IconButton>
+                                </Tooltip>
+                                <Tooltip title="Float Right" slotProps={slotProps}>
+                                    <IconButton onClick={() => setAlign("right")} sx={{ ...(align === "right" ? activeAlign : {}) }}>
+                                        <FormatAlignRightIcon />
+                                    </IconButton>
+                                </Tooltip>
+                                <Tooltip title="Remove Float" slotProps={slotProps} sx={{ ...(align === "center" ? activeAlign : {}) }}>
 
-                            <IconButton onClick={() => setAlign("center")}>
-                                <FormatAlignJustify />
-                            </IconButton>
-                        </Tooltip>
-                        <Tooltip title={aspectLocked ? "Unlock Aspect Ratio" : "Lock Aspect Ratio"} slotProps={slotProps}>
-                            <IconButton
-                                onClick={() => setAspectLocked((prev) => !prev)}
-                                sx={aspectLocked ? activeAlign : {}}
-                            >
-                                {aspectLocked ? <LockIcon /> : <LockOpenIcon />}
-                            </IconButton>
-                        </Tooltip>
-
+                                    <IconButton onClick={() => setAlign("center")}>
+                                        <FormatAlignJustify />
+                                    </IconButton>
+                                </Tooltip>
+                                <Tooltip title={aspectLocked ? "Unlock Aspect Ratio" : "Lock Aspect Ratio"} slotProps={slotProps}>
+                                    <IconButton
+                                        onClick={() => setAspectLocked((prev) => !prev)}
+                                        sx={aspectLocked ? activeAlign : {}}
+                                    >
+                                        {aspectLocked ? <LockIcon /> : <LockOpenIcon />}
+                                    </IconButton>
+                                </Tooltip>
+                            </Stack>
+                            <Stack direction="row" alignItems="center" spacing={1}>
+                                <InfoOutlinedIcon sx={{ color: 'info.main' }} fontSize="small" />
+                                <Typography variant="subtitle2" color="info">Unselect to resize</Typography>
+                            </Stack>
+                        </Stack>
                     </Paper>
                 )}
 
