@@ -12,20 +12,21 @@ import StarterKit from "@tiptap/starter-kit";
 import { EditorView } from "prosemirror-view"; //  Import directly from ProseMirror
 import React, { useEffect, useRef } from "react";
 
+import Attachment from "../extensions/Attachment";
 import { CustomLink } from "../extensions/CustomLink";
+import { DropExtension } from "../extensions/DropExtension";
 import { Indent } from "../extensions/Indent";
 import { LineHeight } from "../extensions/LineHeight";
 import { ResizableImage } from "../extensions/ResizableImage";
 import { Video } from "../extensions/Video";
 import { RichEditorUIState, UploadSource, UploadType, useRichEditorUI } from "../RichEditorContext";
-import Attachment from "../extensions/Attachment";
 
 
 
 export const useRichEditor = (
 ) => {
     const editorState = useRichEditorUI();
-    const { setEditor, imageBasePath, editable, yDoc } = editorState;
+    const { setEditor, imageBasePath, editable, yDoc, fileDropHandler } = editorState;
     let timeoutRef = useRef<NodeJS.Timeout | null>(null); //
     const editor = useEditor(
         {
@@ -89,6 +90,7 @@ export const useRichEditor = (
                 }),
                 Video.configure({ basePath: imageBasePath }),
                 Attachment.configure({ basePath: imageBasePath }),
+                DropExtension.configure({ handleFileDrop: fileDropHandler ?? (() => { }) })
 
             ],
             editorProps: {

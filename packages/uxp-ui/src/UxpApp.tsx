@@ -7,7 +7,7 @@ import UxpRoutes from "./features/routes/UxpRoutes";
 import { ThemeWrapper } from "./features/theme/ThemeWrapper";
 import { useInitializeApp } from "./hooks";
 
-const UxpAppLayot: React.FC = () => {
+const UxpAppLayout: React.FC = () => {
     return (
         <BrowserRouter>
             <HeaderMenu />
@@ -23,7 +23,7 @@ const UxpApp: React.FC = () => {
         <Loading />
     ) : (
         <ThemeWrapper>
-            <UxpAppLayot />
+            <UxpAppLayout />
         </ThemeWrapper>
     );
 };

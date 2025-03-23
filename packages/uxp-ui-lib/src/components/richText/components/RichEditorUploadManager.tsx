@@ -1,4 +1,5 @@
 import { Editor } from "@tiptap/core";
+import { TextSelection } from "prosemirror-state";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { UploadSource, UploadType, useRichEditorUI } from "../RichEditorContext";
 
@@ -35,7 +36,7 @@ export function RichEditorUploadManager() {
     const inputRef = useRef<HTMLInputElement>(null);
     const [config, setConfig] = useState<UploadConfig | null>(null);
 
-    const { editor, onImageUpload, registerUploadTrigger, setHasCamera } = useRichEditorUI();
+    const { editor, onImageUpload, registerUploadTrigger, setHasCamera, registerFileDropHandler } = useRichEditorUI();
 
     const uploadConfig: Record<UploadType, UploadConfig> = useMemo(() => ({
         image: {
@@ -62,7 +63,6 @@ export function RichEditorUploadManager() {
     useEffect(() => {
         checkCamera().then(setHasCamera);
     }, []);
-
     const triggerUpload = (uploadType: UploadType, source: UploadSource) => {
         if (!inputRef.current) return;
 
@@ -105,7 +105,21 @@ export function RichEditorUploadManager() {
         }
         event.target.value = "";
     };
+    const dropHandler = async (files: File[]) => {
+        if (!editor) return;
+        for (const file of files) {
+            let uploadType: UploadType = "document";
+            if (file.type.startsWith("image/")) uploadType = "image";
+            else if (file.type.startsWith("video/")) uploadType = "video";
 
+            const config = uploadConfig[uploadType];
+            const url = await config.handler(file);
+            if (url) {
+                config.command(editor, url, { name: file.name, mimetype: file.type });
+            }
+        }
+    }
+    registerFileDropHandler(dropHandler);
     // Register all triggers
     registerUploadTrigger({
         image: () => triggerUpload("image", "file"),

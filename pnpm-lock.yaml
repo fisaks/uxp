@@ -338,6 +338,9 @@ importers:
       axios:
         specifier: ^1.7.8
         version: 1.7.9
+      prosemirror-state:
+        specifier: ^1.4.3
+        version: 1.4.3
       react:
         specifier: ^18.0.0
         version: 18.3.1
@@ -617,6 +620,9 @@ importers:
       axios:
         specifier: ^1.7.8
         version: 1.7.9
+      prosemirror-state:
+        specifier: ^1.4.3
+        version: 1.4.3
       react:
         specifier: ^18.0.0
         version: 18.3.1
@@ -1024,6 +1030,9 @@ importers:
       luxon:
         specifier: ^3.5.0
         version: 3.5.0
+      prosemirror-state:
+        specifier: ^1.4.3
+        version: 1.4.3
       react:
         specifier: ^18.0.0
         version: 18.3.1

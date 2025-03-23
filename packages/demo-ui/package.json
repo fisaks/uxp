@@ -42,6 +42,7 @@
         "@tiptap/extension-collaboration": "^2.11.5",
         "@tiptap/extension-collaboration-cursor": "^2.11.5",
         "y-prosemirror": "^1.2.17",
+        "prosemirror-state": "^1.4.3",
         "@tiptap/react": "^2.11.5",
         "@tiptap/starter-kit": "^2.11.5",
         "ajv": "^8.17.1",

@@ -49,6 +49,7 @@
         "react-resizable": "^3.0.5",
         "uuid": "^11.0.3",
         "y-prosemirror": "^1.2.17",
+        "prosemirror-state": "^1.4.3",
         "yjs": "^13.6.23"
     },
     "peerDependenciesMeta": {
@@ -108,6 +109,9 @@
         },
         "react-resizable": {
             "optional": true
+        },
+        "prosemirror-state": {
+            "optional": true
         }
     },
     "devDependencies": {
@@ -121,5 +125,6 @@
         "cpx": "^1.5.0",
         "prosemirror-view": "^1.37.2",
         "webpack-bundle-analyzer": "^4.10.2"
-    }
+    },
+    "dependencies": {}
 }

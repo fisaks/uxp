@@ -12,7 +12,7 @@ declare module "@tiptap/core" {
         };
     }
 }
- // eslint-disable-next-line @typescript-eslint/no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const ResizableImage = Image.extend<ImageOptions & { basePath: string }, any>({
     addOptions() {
         return {
@@ -32,27 +32,33 @@ export const ResizableImage = Image.extend<ImageOptions & { basePath: string }, 
     },
     addCommands() {
         return {
-          ...this.parent?.(),
-  
-          setImageLink:
-            (href: string | null) =>
-            ({ state,dispatch }) => {
-                console.log("setImageLink", href);
-              const { selection } = state;
-              const node = state.doc.nodeAt(selection.from);
-              if (!node || node.type.name !== "image") return false;
-              console.log("setImageLink node", node);
-              const newAttrs = { ...node.attrs, href };
-              dispatch?.(state.tr.setNodeMarkup(selection.from, undefined, newAttrs));
-    
-              return true;
+            ...this.parent?.(),
+            setImage: options => ({ commands }) => {
+                return commands.insertContent([{
+                    type: this.name,
+                    attrs: options,
+                },
+                {
+                    type: "paragraph",
+                }])
             },
+            setImageLink:
+                (href: string | null) =>
+                    ({ state, dispatch }) => {
+                        const { selection } = state;
+                        const node = state.doc.nodeAt(selection.from);
+                        if (!node || node.type.name !== "image") return false;
+                        const newAttrs = { ...node.attrs, href };
+                        dispatch?.(state.tr.setNodeMarkup(selection.from, undefined, newAttrs));
+
+                        return true;
+                    },
         };
-      },
-    
+    },
+
 
     addNodeView() {
-        return ({ node, editor,getPos }) => {
+        return ({ node, editor, getPos }) => {
             const dom = document.createElement("div");
             dom.classList.add("resizable-image-wrapper");
 
@@ -71,11 +77,11 @@ export const ResizableImage = Image.extend<ImageOptions & { basePath: string }, 
                 link.target = "_blank";
                 link.appendChild(img);
                 dom.appendChild(link);
-              } else {
+            } else {
                 dom.appendChild(img);
-              }
+            }
 
-            
+
 
             const handle = document.createElement("div");
             handle.classList.add("resize-handle");
@@ -116,7 +122,7 @@ export const ResizableImage = Image.extend<ImageOptions & { basePath: string }, 
                 const newWidth = Math.max(50, startWidth + (clientX - startX));
                 img.style.width = `${newWidth}px`;
 
-               //editor.chain().updateAttributes("image", { width: `${newWidth}px` });
+                //editor.chain().updateAttributes("image", { width: `${newWidth}px` });
                 const transaction = editor.state.tr.setNodeMarkup(getPos(), undefined, {
                     ...node.attrs,
                     width: `${newWidth}px`
