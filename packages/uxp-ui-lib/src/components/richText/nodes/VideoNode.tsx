@@ -76,7 +76,7 @@ const VideoNode: React.FC<VideoNodeProps> = ({ node, updateAttributes, basePath,
     }, []);
 
 
-    const handleResize = (_event: any, { size }: { size: { width: number; height: number } }) => {
+    const handleResizeStop = (_event: any, { size }: { size: { width: number; height: number } }) => {
         updateAttributes({ width: Math.min(size.width, containerWidth), height: size.height });
     };
 
@@ -108,13 +108,14 @@ const VideoNode: React.FC<VideoNodeProps> = ({ node, updateAttributes, basePath,
     }
 
     return (
-        <NodeViewWrapper className="video-node" draggable={selected && editable}
+        <NodeViewWrapper contentEditable={false} className="uxp-video-node" draggable={selected && editable}
             onDragStart={handleDragStart}
             onDragEnd={handleDragStop}
 
             style={{ position: "relative", ...AlignmentStyles[isMobile ? "center" : align], }}>
 
             <div
+                data-drag-handle
                 ref={containerRef}
                 onDragStart={() => setDragging(true)}
                 onDragEnd={handleDragStop}
@@ -125,12 +126,13 @@ const VideoNode: React.FC<VideoNodeProps> = ({ node, updateAttributes, basePath,
                     maxWidth: "100%",
                     display: "inline-block"
                 }}>
+
                 <ResizableBox
-                    minConstraints={[50, 50]}
+                    minConstraints={[100, 100]}
                     maxConstraints={[containerWidth, Infinity]}
                     width={Number(Math.min(width, containerWidth) || 320)}
                     height={Number(height || 180)}
-                    onResizeStop={handleResize}
+                    onResizeStop={handleResizeStop}
                     resizeHandles={editable ? ["se", "nw", "sw", "ne", "e", "n", "w", "s"] : []}
                     lockAspectRatio={aspectLocked}
 
@@ -146,7 +148,7 @@ const VideoNode: React.FC<VideoNodeProps> = ({ node, updateAttributes, basePath,
                         width="100%"
 
                         height="100%"
-                        style={{ display: "block", backgroundColor: "#000" }}
+                        style={{ display: "block", backgroundColor: "#000", pointerEvents: editable ? "none" : "auto" }}
                     />
 
                 </ResizableBox>
