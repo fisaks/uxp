@@ -11,6 +11,7 @@ type CommandOption = {
 type UploadConfig = {
     accept: string;
     capture?: string;
+    multiple?: boolean
     handler: (file: File) => Promise<string | undefined>;
     command: (editor: Editor, url: string, options?: CommandOption) => void;
 }
@@ -66,6 +67,7 @@ export function RichEditorUploadManager() {
         if (!inputRef.current) return;
 
         const isCamera = source === "camera";
+        const multiple = !isCamera;
 
         const currentConfig: UploadConfig = {
             ...uploadConfig[uploadType],
@@ -74,6 +76,8 @@ export function RichEditorUploadManager() {
         setConfig(currentConfig);
 
         inputRef.current.accept = currentConfig.accept;
+        inputRef.current.multiple = multiple
+
         if (currentConfig.capture) {
             inputRef.current.setAttribute("capture", currentConfig.capture);
         } else {
@@ -84,11 +88,19 @@ export function RichEditorUploadManager() {
     };
 
     const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (file && config) {
-            const url = await config.handler(file);
-            if (editor && url) {
-                config.command(editor, url, { name: file.name, mimetype: file.type });
+        const files = event.target.files;
+        if (!files || !config || !editor) return;
+        for (const file of Array.from(files)) {
+            if (file && config) {
+                try {
+                    const url = await config.handler(file);
+                    if (url) {
+                        config.command(editor, url, { name: file.name, mimetype: file.type });
+
+                    }
+                } catch (err) {
+                    console.error(`Upload failed for ${file.name}:`, err);
+                }
             }
         }
         event.target.value = "";

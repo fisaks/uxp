@@ -12,7 +12,7 @@ declare module '@tiptap/core' {
 
 
 type AttachmentAttributes = {
-    href: string;
+    url: string;
     name: string;
     mimetype?: string;
 
