@@ -3,12 +3,16 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { UploadSource, UploadType, useRichEditorUI } from "../RichEditorContext";
 
 
+type CommandOption = {
+    name: string;
+    mimetype: string;
+}
 
 type UploadConfig = {
     accept: string;
     capture?: string;
     handler: (file: File) => Promise<string | undefined>;
-    command: (editor: Editor, url: string, options?: any) => void;
+    command: (editor: Editor, url: string, options?: CommandOption) => void;
 }
 
 const checkCamera = async (): Promise<boolean> => {
@@ -46,9 +50,10 @@ export function RichEditorUploadManager() {
         document: {
             accept: ".pdf,.doc,.docx,.xls,.xlsx,.zip,.txt",
             handler: onImageUpload,
-            command: (editor, url, fileName) => {
-                const name = fileName ? fileName : decodeURIComponent(url.split("/").pop() || "").trim() || "Download file";
-                editor?.commands.insertAttachment({ href: url, name });
+            command: (editor, url, options) => {
+
+                const name = options?.name ? options.name : decodeURIComponent(url.split("/").pop() || "").trim() || "Download file";
+                editor?.commands.insertAttachment({ url: url, name, mimetype: options?.mimetype });
             },
         },
     }), [onImageUpload]);
@@ -83,7 +88,7 @@ export function RichEditorUploadManager() {
         if (file && config) {
             const url = await config.handler(file);
             if (editor && url) {
-                config.command(editor, url, file.name);
+                config.command(editor, url, { name: file.name, mimetype: file.type });
             }
         }
         event.target.value = "";

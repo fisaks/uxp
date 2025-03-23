@@ -11,13 +11,14 @@ import { useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorView } from "prosemirror-view"; //  Import directly from ProseMirror
 import React, { useEffect, useRef } from "react";
-import { Attachment } from "../extensions/Attachment";
+
 import { CustomLink } from "../extensions/CustomLink";
 import { Indent } from "../extensions/Indent";
 import { LineHeight } from "../extensions/LineHeight";
 import { ResizableImage } from "../extensions/ResizableImage";
 import { Video } from "../extensions/Video";
 import { RichEditorUIState, UploadSource, UploadType, useRichEditorUI } from "../RichEditorContext";
+import Attachment from "../extensions/Attachment";
 
 
 

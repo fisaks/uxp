@@ -165,3 +165,20 @@
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
     z-index: 10;
 }
+
+.editorContainer :global(.uxp-editor-attachment-node) span {
+    text-decoration: underline;
+    text-decoration-color: transparent;
+    text-underline-offset: 2px;
+    transition:
+        text-decoration-color 0.2s ease,
+        font-size 0.2s ease;
+    font-size: 0.875rem;
+    /* Default font size (e.g., 14px) */
+}
+
+.editorContainer :global(.uxp-editor-attachment-node):hover span {
+    text-decoration-color: inherit;
+    font-size: 0.92rem;
+    /* Slightly larger on hover */
+}
