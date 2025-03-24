@@ -15,3 +15,7 @@
 
 ## UI
  * [ ] Update the ResizableImage to use ReactNodeViewRenderer
+ * [ ] Show upload progress in tiptap
+ * [ ] take youtube plugin in to use in tiptap
+ * [ ] take collaboration info extension in to use in tiptap
+ * [ ] create a file manager for uploaded files
