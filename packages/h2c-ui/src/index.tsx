@@ -14,6 +14,9 @@ declare const module: __WebpackModuleApi.Module;
 
 //let hotRoot:ReactDOM.Root|undefined;
 
+const ENABLE_STRICT_MODE = false;
+
+
 export const initApplication = (documentRoot: ShadowRoot | Document) => {
     const container = documentRoot instanceof Document ? documentRoot.head : documentRoot;
     const rootElement = documentRoot.getElementById("root");
@@ -52,29 +55,32 @@ export const initApplication = (documentRoot: ShadowRoot | Document) => {
     //let hotRoot=root;
 
     // Render the App component
-    root.render(
-        <React.StrictMode>
+    const renderApp = (AppComponent: React.ComponentType) => {
+        const AppTree = (
             <Provider store={store}>
                 <CacheProvider value={shadowCache}>
-                    <H2CApp />
+                    <AppComponent />
                 </CacheProvider>
             </Provider>
-        </React.StrictMode>
-    );
+        );
+
+        const RootApp = ENABLE_STRICT_MODE ? (
+            <React.StrictMode>{AppTree}</React.StrictMode>
+        ) : (
+            AppTree
+        );
+
+        root.render(RootApp);
+    }
+    renderApp(H2CApp);
+
     if (process.env.NODE_ENV === "development" && module.hot) {
         module.hot.accept("./H2CApp", () => {
             const NextH2CApp = require("./H2CApp").default;
-            root.render(
-                <React.StrictMode>
-                    <Provider store={store}>
-                        <CacheProvider value={shadowCache}>
-                            <NextH2CApp />
-                        </CacheProvider>
-                    </Provider>
-                </React.StrictMode>
-            );
+            renderApp(NextH2CApp);
         });
     }
+
 };
 if (!window.__UXP_PORTAL__) {
     initApplication(document);

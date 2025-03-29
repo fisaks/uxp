@@ -2,6 +2,8 @@ import { Node, mergeAttributes } from "@tiptap/core";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 import { buildPath } from "@uxp/common";
 import VideoNode, { AlignmentStyles } from "../nodes/VideoNode";
+import { findNodeById } from "./extensionUtil";
+import { UploadPlaceholder } from "./UploadPlaceholder";
 
 type VideoAttributes = {
     src: string;
@@ -19,7 +21,8 @@ type VideoOptions = {
 declare module "@tiptap/core" {
     interface Commands<ReturnType> {
         video: {
-            setVideo: (options: VideoAttributes) => ReturnType;
+            setVideo: (attrs: VideoAttributes) => ReturnType;
+            insertVideoAtPlaceholder: (id: string, attrs: VideoAttributes) => ReturnType;
         };
     }
 }
@@ -95,13 +98,32 @@ export const Video = Node.create({
     },
     addCommands() {
         return {
+            insertVideoAtPlaceholder: (id, attrs) => ({ state, dispatch }) => {
+                const pos = findNodeById(state, id, UploadPlaceholder.name);
+
+                if (pos === null) return false;
+
+                const placeholderNode = state.doc.nodeAt(pos);
+                if (!placeholderNode || placeholderNode.type.name !== UploadPlaceholder.name) return false;
+
+                const videoNode = state.schema.nodes.video.create(attrs);
+
+                const tr = state.tr.replaceWith(pos, pos + 1, videoNode);
+
+                if (dispatch) {
+                    dispatch(tr);
+                }
+
+                return true;
+
+            },
             setVideo:
-                (options) =>
+                (attrs) =>
                     ({ commands }) => {
                         return commands.insertContent([
                             {
                                 type: "video",
-                                attrs: options,
+                                attrs: attrs,
                             },
                             {
                                 type: "paragraph",

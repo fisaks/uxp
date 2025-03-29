@@ -1,13 +1,23 @@
 import { Editor } from "@tiptap/core";
 import { createContext, ReactNode, useContext, useRef, useState } from "react";
 import * as Y from "yjs";
+import { UploadListener, UploadStartedWithTrackingId, UploadStatus } from "../../features/upload-tracking/uploadTracking.types";
+
+
+export type UploadedFileDetails = { publicId: string; fileName: string };
+
 
 export interface RichTextEditorProps {
   label?: string;
   imageBasePath: string;
-  onImageUpload: (file: File) => Promise<string>;
   yDoc: Y.Doc;
   editable?: boolean
+  startUpload: (file: File) => UploadStartedWithTrackingId;
+  cancelUpload?: (id: string) => void;
+  retryUpload?: (id: string) => UploadStartedWithTrackingId;
+  subscribeToUploadStatus?: (callback: UploadListener) => () => void;
+  getUploadStatus?: (id: string) => UploadStatus | undefined;
+
 }
 
 
@@ -16,11 +26,12 @@ export type LinkEditPopupProps = {
   setHref: (editor: Editor, href: string) => void;
   popupPos: { top: number; left: number };
 }
+
 export type UploadType = "image" | "video" | "document";
 export type UploadSource = "file" | "camera";
-
 export type UploadTriggerMap = Partial<Record<UploadType, () => void>>;
 export type TriggerRegistry = Record<UploadSource, UploadTriggerMap> & {};
+
 
 export interface RichEditorUIState extends RichTextEditorProps {
 
@@ -44,7 +55,10 @@ export interface RichEditorUIState extends RichTextEditorProps {
   ) => void;
   triggerUpload: (type: UploadType, source?: UploadSource) => void;
   registerFileDropHandler: (fn: (files: File[]) => void) => void;
+  registerRetryHandler: (fn: (id: string) => void) => void;
   fileDropHandler: ((files: File[]) => void) | null;
+  retryHandler: ((id: string) => void) | null;
+
 }
 
 const RichEditorContext = createContext<RichEditorUIState | undefined>(undefined);
@@ -54,12 +68,14 @@ export function RichEditorProvider({ children, ...props }: { children: ReactNode
   const [linkEditPopupProps, setLinkEditPopupProps] = useState<LinkEditPopupProps | null>(null);
   const [imageToolbarPos, setImageToolbarPos] = useState<{ top: number; left: number } | null>(null);
 
+
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [editor, setEditor] = useState<Editor | undefined>();
   const [hasCamera, setHasCamera] = useState<boolean | undefined>(undefined);
   const portalContainerRef = useRef<HTMLDivElement | null>(null);
   const editorRootContainerRef = useRef<HTMLDivElement | null>(null);
   const fileDropHandler = useRef<((files: File[]) => void) | null>(null);
+  const retryHandler = useRef<((id: string) => void) | null>(null);
   const triggerRegistry = useRef<TriggerRegistry>({
     file: {},
     camera: {},
@@ -69,6 +85,9 @@ export function RichEditorProvider({ children, ...props }: { children: ReactNode
     fileDropHandler.current = fn
   };
 
+  const registerRetryHandler = (fn: (id: string) => void) => {
+    retryHandler.current = fn
+  };
 
   const registerUploadTrigger = (
     triggers: UploadTriggerMap,
@@ -93,6 +112,7 @@ export function RichEditorProvider({ children, ...props }: { children: ReactNode
   const toggleFullScreen = () => {
     setIsFullScreen(!isFullScreen);
   };
+
   return (
     <RichEditorContext.Provider value={{
       ...props,
@@ -105,7 +125,9 @@ export function RichEditorProvider({ children, ...props }: { children: ReactNode
       hasCamera, setHasCamera,
       registerUploadTrigger,
       triggerUpload,
-      fileDropHandler: (files:File[]) => fileDropHandler.current && fileDropHandler.current(files), registerFileDropHandler
+      fileDropHandler: (files: File[]) => fileDropHandler.current && fileDropHandler.current(files), registerFileDropHandler,
+      registerRetryHandler,
+      retryHandler: (id: string) => retryHandler.current && retryHandler.current(id),
 
     }}>
       {children}

@@ -37,7 +37,7 @@ export const CustomLink = Link.extend({
         };
     },
     parseHTML() {
-        console.log("parseHTML custom");
+
         const baseRules = this.parent?.() ?? [];
         return baseRules.map(rule => ({
             ...rule,

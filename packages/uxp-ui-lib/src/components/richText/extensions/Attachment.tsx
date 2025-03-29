@@ -1,11 +1,14 @@
 import { Node, mergeAttributes } from '@tiptap/core';
 import { ReactNodeViewRenderer } from '@tiptap/react';
 import AttachmentNode from '../nodes/AttachmentNode';
+import { findNodeById } from './extensionUtil';
+import { UploadPlaceholder } from './UploadPlaceholder';
 
 declare module '@tiptap/core' {
     interface Commands<ReturnType> {
         attachment: {
             insertAttachment: (attrs: AttachmentAttributes) => ReturnType;
+            insertAttachmentAtPlaceholder: (id: string, attrs: AttachmentAttributes) => ReturnType;
         };
     }
 }
@@ -64,6 +67,26 @@ const Attachment = Node.create({
 
     addCommands() {
         return {
+            insertAttachmentAtPlaceholder: (id, attrs) => ({ state, dispatch }) => {
+                const pos = findNodeById(state, id, UploadPlaceholder.name);
+
+                if (pos === null) return false;
+
+                const placeholderNode = state.doc.nodeAt(pos);
+                if (!placeholderNode || placeholderNode.type.name !== UploadPlaceholder.name) return false;
+
+                const attachmentNode = state.schema.nodes.attachment.create(attrs);
+
+                const tr = state.tr.replaceWith(pos, pos + 1, attachmentNode);
+
+                if (dispatch) {
+                    dispatch(tr);
+                }
+
+                return true;
+
+            },
+
             insertAttachment:
                 (attrs) =>
                     ({ commands }) => {

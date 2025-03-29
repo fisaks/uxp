@@ -1,11 +1,3 @@
-.editorContainer2 {
-    border: 1px solid transparent;
-    min-height: 150px;
-    padding: 0px;
-    overflow-wrap: break-word;
-    outline: none;
-}
-
 .editorContainer {
     border: 1px solid transparent;
     min-height: 150px;
@@ -160,6 +152,26 @@
 :global(.ProseMirror):not([contenteditable="true"]) :global(.ProseMirror-selectednode) {
     /* Prevents the blue outline from appearing in view mode*/
     outline: none !important;
+
+}
+
+:global(.ProseMirror):focus {
+    outline: none;
+    border-style: solid;
+
+    border-color: var(--editor-focus-color, #1976d2);
+}
+
+:global(.ProseMirror) {
+    border: 1px solid transparent;
+    /* keep the border space always */
+    border-radius: 4px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+:global(.ProseMirror-selectednode) {
+    outline-color: var(--editor-focus-color, #1976d2);
+   
 }
 
 .floatingToolbar {

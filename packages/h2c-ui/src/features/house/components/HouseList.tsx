@@ -11,7 +11,7 @@ import { Box, Collapse, IconButton, List, ListItem, ListItemText, Typography, us
 import { ActionIconButton, DebouncedPatchTextField, RichTextEditor, withErrorHandler, withLoading } from "@uxp/ui-lib";
 
 import { selectAllHouses } from "../houseSelectors";
-import { deleteHouse, patchHouseField, uploadFile } from "../houseThunks";
+import { deleteHouse, patchHouseField } from "../houseThunks";
 import { DocumentEditor, DocumentEditorRef } from "../../document/components/DocumentEditor";
 
 const HouseList: React.FC = () => {

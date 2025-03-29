@@ -18,6 +18,7 @@ import { DropExtension } from "../extensions/DropExtension";
 import { Indent } from "../extensions/Indent";
 import { LineHeight } from "../extensions/LineHeight";
 import { ResizableImage } from "../extensions/ResizableImage";
+import { UploadPlaceholder } from "../extensions/UploadPlaceholder";
 import { Video } from "../extensions/Video";
 import { RichEditorUIState, UploadSource, UploadType, useRichEditorUI } from "../RichEditorContext";
 
@@ -35,10 +36,10 @@ export const useRichEditor = (
             autofocus: true,
             enableContentCheck: true,
             onContentError: (error) => {
-                console.error("Content Error", error);
+                console.error("[useRichEditor] Content Error", error);
             },
             onDrop: (event) => {
-                console.log("Dropped", event);
+                console.log("[useRichEditor] Dropped", event);
             },
             extensions: [
                 StarterKit.configure({
@@ -90,7 +91,8 @@ export const useRichEditor = (
                 }),
                 Video.configure({ basePath: imageBasePath }),
                 Attachment.configure({ basePath: imageBasePath }),
-                DropExtension.configure({ handleFileDrop: fileDropHandler ?? (() => { }) })
+                DropExtension.configure({ handleFileDrop: fileDropHandler ?? (() => { console.info("[useRichEditor] no fileDropHandler defined")}) }),
+                UploadPlaceholder
 
             ],
             editorProps: {
@@ -105,9 +107,9 @@ export const useRichEditor = (
                 setEditor(editor);
 
             },
-            onUpdate: ({ editor }) => {
-                console.log("onUpdate", editor.getJSON());
-            }
+          //  onUpdate: ({ editor }) => {
+            //    console.log("[useRichEditor] onUpdate", editor.getJSON());
+            //}
         },
         []
     );

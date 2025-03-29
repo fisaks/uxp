@@ -1,4 +1,3 @@
-import { UXP_DEVICE_ID } from "@uxp/ui-lib";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { fetchLatestGlobalSettings } from "../features/global-config/globalConfigThunk";
@@ -39,15 +38,6 @@ export const useInitializeApp = () => {
             )
         );
     }, [dispatch, isLoggedInUser]);
-
-    useEffect(() => {
-        let id = localStorage.getItem(UXP_DEVICE_ID);
-        if (!id) {
-            id = crypto.randomUUID(); // or nanoid
-            localStorage.setItem(UXP_DEVICE_ID, id);
-        }
-
-    }, []);
 
     return loading;
 };

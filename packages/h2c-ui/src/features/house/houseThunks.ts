@@ -1,5 +1,6 @@
 import { FileUploadResponse, House } from "@h2c/common";
 import { createAsyncThunk } from "@reduxjs/toolkit";
+import { OnProgressHandler } from "@uxp/ui-lib";
 import axios from "axios";
 import { getBaseUrl } from "../../config";
 import { createLoadingErrorAwareThunk } from "../loading-error/loadingErrorSlice";
@@ -42,7 +43,7 @@ export const patchBuildingField = createAsyncThunk(
     }
 );
 
-export const uploadFile = createAsyncThunk("file", async ({ file }: { file: File }) => {
+/*export const uploadFile = createAsyncThunk("file", async ({ file, onProgress, aborter }: { file: File, onProgress?: OnProgressHandler, aborter?: AbortSignal }) => {
     const formData = new FormData();
 
     formData.append("type", "attachment");
@@ -50,6 +51,9 @@ export const uploadFile = createAsyncThunk("file", async ({ file }: { file: File
 
     const response = await axios.post<FileUploadResponse>(`${getBaseUrl()}/api/file`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
+        onUploadProgress: (onProgress ? (e) => onProgress({ total: e.total, loaded: e.loaded }) : undefined),
+        signal: aborter
     });
     return response.data;
 });
+*/

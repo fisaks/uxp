@@ -1,5 +1,5 @@
 import { Box, Typography } from '@mui/material';
-import { RichTextEditor } from '@uxp/ui-lib';
+import { RichTextEditor, UploadResultWithTrackingId, UploadStartedWithTrackingId } from '@uxp/ui-lib';
 import axios from "axios";
 import React, { useMemo } from 'react';
 import * as Y from "yjs";
@@ -18,8 +18,12 @@ const uploadFile = async (file: File) => {
 }
 const RichEditPage: React.FC = () => {
     const yDoc = useMemo(() => new Y.Doc(), []);
-    const handleUploadFile = async (file: File) => {
-        return await uploadFile(file).then((r) => r.publicId);
+    const handleUploadFile = (file: File) => {
+        const promise = uploadFile(file).then((response) => ({ id: "1", ...response } as UploadResultWithTrackingId));
+        return {
+            id: "1",
+            promise
+        } as UploadStartedWithTrackingId
     };
     return (
         <Box sx={{}}>
@@ -30,7 +34,7 @@ const RichEditPage: React.FC = () => {
                 label="Rich Text Editor"
                 yDoc={yDoc}
                 editable={true}
-                onImageUpload={(file) => handleUploadFile(file)}
+                startUpload={(file) => handleUploadFile(file)}
                 imageBasePath={`${getBaseUrl()}/api/file`}
             />
         </Box>

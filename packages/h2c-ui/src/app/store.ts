@@ -1,5 +1,5 @@
 import { configureStore } from "@reduxjs/toolkit";
-import { remoteAppReducer } from "@uxp/ui-lib";
+import { remoteAppReducer,uploadTrackingReducer } from "@uxp/ui-lib";
 import { createLogger } from "redux-logger";
 
 import houseReducer from "../features/house/houseSlice";
@@ -17,6 +17,7 @@ export const createStore = () => {
             remoteApp: remoteAppReducer,
             loadingError: loadingErrorReducer,
             houses: houseReducer,
+            uploadTracking: uploadTrackingReducer,
         },
         devTools: process.env.NODE_ENV === "development",
         middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(logger),

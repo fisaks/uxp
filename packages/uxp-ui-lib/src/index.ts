@@ -9,6 +9,13 @@ export { default as remoteAppReducer } from "./features/remote-app/remoteAppSlic
 export * from "./features/websocket/BrowserWebSocketManager";
 export * from "./features/websocket/WebSocketProvider";
 export * from "./util/processPatchUpdate";
-//export * from "./features/websocket/WebSocketContext";
 export * from "./features/websocket/useWebSocket";
 export * from "./hooks/useUxpDeviceId";
+export * from "./features/upload-tracking/uploadTrackingSlice";
+export { default as uploadTrackingReducer } from "./features/upload-tracking/uploadTrackingSlice";
+export * from "./features/upload-tracking/uploadTrackingThunks";
+export * from "./features/upload-tracking/uploadTracking.types";
+export * from "./features/upload-tracking/uploadTrackingSubscriptions";
+export * from "./features/upload-tracking/uploadTrackingSelectors";
+export * from "./features/upload-tracking/uploadTrackingHook";
+

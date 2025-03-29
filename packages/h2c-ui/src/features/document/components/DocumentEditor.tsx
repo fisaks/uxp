@@ -1,14 +1,14 @@
 
-import { RichTextEditor } from "@uxp/ui-lib";
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef } from "react";
+import { RichTextEditor, useUploadTracker } from "@uxp/ui-lib";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo } from "react";
 import { useDispatch } from "react-redux";
 import * as Y from "yjs";
 import { H2CAppErrorHandler, H2CAppWebSocketResponseListener, useH2CWebSocket } from "../../../app/H2CAppBrowserWebSocketManager";
 import { AppDispatch } from "../../../app/store";
 import { getBaseUrl } from "../../../config";
-import { uploadFile } from "../../house/houseThunks";
 
 import { H2CAppResponseMessage } from "@h2c/common";
+
 
 export interface DocumentEditorRef {
     save: () => Promise<H2CAppResponseMessage<"document:saved">>;
@@ -22,30 +22,22 @@ type DocumentEditorProps = {
 
 export const DocumentEditor = forwardRef<DocumentEditorRef, DocumentEditorProps>(({ documentId, editable }, ref) => {
 
-
-
-    const dispatch: AppDispatch = useDispatch();
-    const subscribed = useRef<boolean>(false);
     const yDoc = useMemo(() => new Y.Doc(), []);
-
+    const uploadTracker = useUploadTracker()
     const imageBasePath = useMemo(() => `${getBaseUrl()}/api/file`, []);
 
     const listeners = useMemo(() => {
         return {
             "document:full": (message, data) => {
-                console.log("Received document:full", message);
+                console.info("[DocumentEditor] Received document:full", message);
                 if (message.payload?.documentId === documentId && data) {
-                    subscribed.current = false;
-
                     Y.applyUpdate(yDoc, data, "server")
-                    //console.log("Received document:full dom 2", yDoc.getXmlFragment("default").toArray().map(node => node.toString()).join(""));
-                    subscribed.current = true;
-
+                    yDoc.emit("load", [yDoc]);
                 }
 
             },
             "document:updated": (message, data) => {
-                console.log("Received document:updated", message);
+                console.info("[DocumentEditor] Received document:updated", message);
                 if (message.payload?.documentId === documentId && data) {
                     Y.applyUpdate(yDoc, data, "server");
                 }
@@ -56,6 +48,7 @@ export const DocumentEditor = forwardRef<DocumentEditorRef, DocumentEditorProps>
 
 
     const errorHandler: H2CAppErrorHandler = useCallback((({ action, error, errorDetails }) => {
+        console.error("[DocumentEditor] Error", action, error, errorDetails);
         return false;
     }) as H2CAppErrorHandler, [])
 
@@ -63,21 +56,18 @@ export const DocumentEditor = forwardRef<DocumentEditorRef, DocumentEditorProps>
 
     useImperativeHandle(ref, () => ({
         save: async () => {
+            console.info("[DocumentEditor] Saving document", documentId);
             const response = await sendMessageAsync("document:save", { documentId });
             return response as H2CAppResponseMessage<"document:saved">
         },
 
     }));
-
-    const handleUploadFile = useCallback((file: File) => {
-        return dispatch(uploadFile({ file }))
-            .unwrap()
-            .then((r) => r.publicId);
-    }, []);
+   
     useEffect(() => {
 
         const updateHandler = (update: Uint8Array, origin: any, doc: Y.Doc) => {
-            if (origin === "server" || !subscribed.current) return;
+            console.info("[DocumentEditor] Yjs update from", origin);
+            if (origin === "server") return;
 
             sendBinaryMessage("document:update", { documentId }, update);
         }
@@ -98,12 +88,12 @@ export const DocumentEditor = forwardRef<DocumentEditorRef, DocumentEditorProps>
         }
     }, [documentId]);
 
-    return subscribed && <RichTextEditor
+    return <RichTextEditor
         label="Edit Document"
         imageBasePath={imageBasePath}
         yDoc={yDoc}
         editable={editable}
-        onImageUpload={handleUploadFile}
+        {...uploadTracker}
     />
 
 });

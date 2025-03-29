@@ -1,5 +1,7 @@
 import Image, { ImageOptions } from "@tiptap/extension-image";
 import { buildPath } from "@uxp/common";
+import { findNodeById } from "./extensionUtil";
+import { UploadPlaceholder } from "./UploadPlaceholder";
 
 declare module "@tiptap/core" {
     interface Commands<ReturnType> {
@@ -8,6 +10,7 @@ declare module "@tiptap/core" {
              * Inserts an image with additional attributes
              */
             setImage: (options: { src: string; alt?: string; title?: string; width?: string; float?: string }) => ReturnType;
+            insertImageAtPlaceholder: (id: string, attrs: { src: string; alt?: string; title?: string; width?: string; float?: string }, pos?: number) => ReturnType;
             setImageLink: (href: string | null) => ReturnType;
         };
     }
@@ -33,10 +36,30 @@ export const ResizableImage = Image.extend<ImageOptions & { basePath: string }, 
     addCommands() {
         return {
             ...this.parent?.(),
-            setImage: options => ({ commands }) => {
+            insertImageAtPlaceholder: (id, attrs) => ({ state, dispatch }) => {
+                const pos = findNodeById(state, id, UploadPlaceholder.name);
+
+                if (pos === null) return false;
+
+                const placeholderNode = state.doc.nodeAt(pos);
+                if (!placeholderNode || placeholderNode.type.name !== UploadPlaceholder.name) return false;
+
+                const imageNode = state.schema.nodes.image.create(attrs);
+
+                const tr = state.tr.replaceWith(pos, pos + 1, imageNode);
+
+                if (dispatch) {
+                    dispatch(tr);
+                }
+
+                return true;
+
+            },
+
+            setImage: attrs => ({ commands }) => {
                 return commands.insertContent([{
                     type: this.name,
-                    attrs: options,
+                    attrs: attrs,
                 },
                 {
                     type: "paragraph",
