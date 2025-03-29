@@ -2,6 +2,7 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 import { getBaseUrl } from "../../config";
 import { createLoadingErrorAwareThunk } from "../loading-error/loadingErrorSlice";
+import { House } from "@h2c/common";
 
 export const fetcHouses = createLoadingErrorAwareThunk("houses/fetch", async () => {
     await new Promise((resolve) => setTimeout(resolve, 1000));
