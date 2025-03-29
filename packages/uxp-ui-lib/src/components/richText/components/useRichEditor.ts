@@ -22,6 +22,7 @@ import { ResizableImage } from "../extensions/ResizableImage";
 import { UploadPlaceholder } from "../extensions/UploadPlaceholder";
 import { Video } from "../extensions/Video";
 import { RichEditorUIState, UploadSource, UploadType, useRichEditorUI } from "../RichEditorContext";
+import { Youtube } from "../extensions/Youtube";
 
 
 
@@ -51,6 +52,7 @@ export const useRichEditor = (
                 ResizableImage.configure({ basePath: imageBasePath }),
                 LineHeight,
                 Indent,
+                Youtube,
                 CustomLink.configure({
                     openOnClick: false,
                     autolink: false,     // Automatically detect and format links
@@ -161,7 +163,10 @@ const handleImageClick = (
         setImageToolbarPos(null);
         return false;
     }
-
+    if (el.hasAttribute("data-youtube-id")) {
+        setImageToolbarPos(null);
+        return false;
+    }
     //const shadowRoot = view.dom.getRootNode();
     //const clickedElement = (shadowRoot as ShadowRoot).elementFromPoint(event.clientX, event.clientY);
     const containerRect = editorRootContainerRef.current?.getBoundingClientRect();
