@@ -1,5 +1,7 @@
 import { Editor } from "@tiptap/core";
 import { useEffect, useRef } from "react";
+import { useSelector } from "react-redux";
+import { selectCurrentUser } from "../../../features/remote-app/remoteAppSelectors";
 import { useUxpDeviceId } from "../../../hooks/useUxpDeviceId";
 import { UploadSource, UploadType, useRichEditorUI } from "../RichEditorContext";
 import { findNodeByType } from "../extensions/extensionUtil";
@@ -61,6 +63,7 @@ const getUploadType = ({ type }: { type: string }): UploadType => {
 export function RichEditorUploadManager() {
     const inputRef = useRef<HTMLInputElement>(null);
     const deviceId = useUxpDeviceId();
+    const user = useSelector(selectCurrentUser);
     const {
         editor,
         registerUploadTrigger,
@@ -208,7 +211,7 @@ export function RichEditorUploadManager() {
                 status: 'uploading',
                 progress: 0,
                 speed: 0,
-                uploaderName: "TODO: it was me", // TODO get user name
+                uploaderName: `${user?.username ?? "Unknown user"}`,
                 deviceId,
             });
 

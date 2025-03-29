@@ -644,6 +644,9 @@ importers:
       y-prosemirror:
         specifier: ^1.2.17
         version: 1.2.17(prosemirror-model@1.24.1)(prosemirror-state@1.4.3)(prosemirror-view@1.37.2)(y-protocols@1.0.6(yjs@13.6.23))(yjs@13.6.23)
+      y-protocols:
+        specifier: ^1.0.6
+        version: 1.0.6(yjs@13.6.23)
       yjs:
         specifier: ^13.6.23
         version: 13.6.23
@@ -1051,6 +1054,9 @@ importers:
       y-prosemirror:
         specifier: ^1.2.17
         version: 1.2.17(prosemirror-model@1.24.1)(prosemirror-state@1.4.3)(prosemirror-view@1.37.2)(y-protocols@1.0.6(yjs@13.6.23))(yjs@13.6.23)
+      y-protocols:
+        specifier: ^1.0.6
+        version: 1.0.6(yjs@13.6.23)
       yjs:
         specifier: ^13.6.23
         version: 13.6.23

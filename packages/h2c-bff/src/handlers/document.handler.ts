@@ -57,4 +57,23 @@ export class DocumentHandler {
 
         await documentService.saveDocument(documentId, message.id);
     }
+
+    @WebSocketAction("document:awareness", { authenticate: true, schema: DocumentIdSchema })
+    @UseQueryRunner()
+    public async updateAwareness(
+        wsDetails: WebSocketDetails,
+        message: H2CAppRequestMessage<"document:awareness">,
+        data: Uint8Array,
+        queryRunner: QueryRunner
+    ) {
+        const { documentId } = message.payload;
+
+        const documentService = new DocumentService(wsDetails.requestMeta, queryRunner);
+
+        await documentService.updateAwareness(wsDetails.socket, documentId, data);
+
+        // if async is used just confirm to the client with same message payload it has been handled
+        return message.id ? message.payload : undefined;
+    }
+
 }

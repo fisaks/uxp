@@ -12,6 +12,7 @@ import { useRichEditor } from "./components/useRichEditor";
 export const RichTextEditorContent = () => {
     const { editor, editorRootContainerRef, portalContainerRef, isFullScreen, label, editable } = useRichEditorUI();
     const theme = useTheme();
+    const isDarkMode = theme.palette.mode === 'dark';
     useRichEditor();
     if (!editor) return null;
 
@@ -23,6 +24,8 @@ export const RichTextEditorContent = () => {
             sx={{ padding: 0 }}
             style={{
                 '--editor-focus-color': theme.palette.primary.main,
+                '--editor-awareness-text': isDarkMode ? '#fff' : '#0d0d0d'
+
             } as React.CSSProperties}
             className={`${styles.editorContainer} ${isFullScreen ? styles.fullScreen : ""}`}
         >
@@ -34,7 +37,7 @@ export const RichTextEditorContent = () => {
             {editable && <RichEditorToolbar />}
             {editable && <FloatingImageToolbar />}
             {editable && <LinkEdit />}
-            
+
             <RichEditorUploadManager />
 
             {/* The actual Editor */}

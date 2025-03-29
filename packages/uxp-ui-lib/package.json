@@ -50,6 +50,7 @@
         "uuid": "^11.0.3",
         "y-prosemirror": "^1.2.17",
         "prosemirror-state": "^1.4.3",
+        "y-protocols": "^1.0.6",
         "yjs": "^13.6.23"
     },
     "peerDependenciesMeta": {
@@ -111,6 +112,9 @@
             "optional": true
         },
         "prosemirror-state": {
+            "optional": true
+        },
+        "y-protocols": {
             "optional": true
         }
     },

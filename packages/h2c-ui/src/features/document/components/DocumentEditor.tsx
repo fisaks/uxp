@@ -1,13 +1,14 @@
 
-import { RichTextEditor, useUploadTracker } from "@uxp/ui-lib";
+import { RichTextEditor, selectCurrentUser, useCollaborativeDoc, useUploadTracker } from "@uxp/ui-lib";
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo } from "react";
-import { useDispatch } from "react-redux";
 import * as Y from "yjs";
 import { H2CAppErrorHandler, H2CAppWebSocketResponseListener, useH2CWebSocket } from "../../../app/H2CAppBrowserWebSocketManager";
-import { AppDispatch } from "../../../app/store";
 import { getBaseUrl } from "../../../config";
 
 import { H2CAppResponseMessage } from "@h2c/common";
+import { useSelector } from "react-redux";
+import { applyAwarenessUpdate, Awareness, encodeAwarenessUpdate } from "y-protocols/awareness";
+import { useTheme } from "@mui/material";
 
 
 export interface DocumentEditorRef {
@@ -20,9 +21,12 @@ type DocumentEditorProps = {
     editable?: boolean
 }
 
+
 export const DocumentEditor = forwardRef<DocumentEditorRef, DocumentEditorProps>(({ documentId, editable }, ref) => {
 
-    const yDoc = useMemo(() => new Y.Doc(), []);
+
+    const {yDoc, awareness} =useCollaborativeDoc()
+
     const uploadTracker = useUploadTracker()
     const imageBasePath = useMemo(() => `${getBaseUrl()}/api/file`, []);
 
@@ -41,7 +45,13 @@ export const DocumentEditor = forwardRef<DocumentEditorRef, DocumentEditorProps>
                 if (message.payload?.documentId === documentId && data) {
                     Y.applyUpdate(yDoc, data, "server");
                 }
-            }
+            },
+            "document:awareness": (message, data) => {
+                if (message.payload?.documentId === documentId && data) {
+                    console.log("[DocumentEditor] Received awareness update");
+                    applyAwarenessUpdate(awareness, data, "server");
+                }
+            },
 
         } as H2CAppWebSocketResponseListener
     }, [])
@@ -53,6 +63,21 @@ export const DocumentEditor = forwardRef<DocumentEditorRef, DocumentEditorProps>
     }) as H2CAppErrorHandler, [])
 
     const { sendBinaryMessage, sendMessage, sendMessageAsync } = useH2CWebSocket(listeners, errorHandler);
+    useEffect(() => {
+        const onAwarenessUpdate = (
+            { added, updated, removed }: { added: number[]; updated: number[]; removed: number[] },
+            origin: any
+        ) => {
+            console.log("[useRichEditor] Awareness update", { added, updated, removed }, origin);
+
+            const changedClients = [...added, ...updated, ...removed];
+            const update = encodeAwarenessUpdate(awareness, changedClients);
+            sendBinaryMessage("document:awareness", { documentId }, update);
+        };
+
+        awareness.on("update", onAwarenessUpdate);
+        return () => awareness.off("update", onAwarenessUpdate);
+    }, [awareness, documentId, sendBinaryMessage]);
 
     useImperativeHandle(ref, () => ({
         save: async () => {
@@ -62,7 +87,7 @@ export const DocumentEditor = forwardRef<DocumentEditorRef, DocumentEditorProps>
         },
 
     }));
-   
+
     useEffect(() => {
 
         const updateHandler = (update: Uint8Array, origin: any, doc: Y.Doc) => {
@@ -92,6 +117,7 @@ export const DocumentEditor = forwardRef<DocumentEditorRef, DocumentEditorProps>
         label="Edit Document"
         imageBasePath={imageBasePath}
         yDoc={yDoc}
+        awareness={awareness}
         editable={editable}
         {...uploadTracker}
     />

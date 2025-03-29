@@ -8,6 +8,13 @@ type BroadcastDocumentUpdate = {
     update: Uint8Array,
     requestMeta: RequestMetaData
 }
+
+type BroadcastDocumentAwareness = {
+    sender: WebSocket,
+    documentId: string,
+    update: Uint8Array,
+    requestMeta: RequestMetaData
+}
 type BroadcastDocumentSave = {
 
     documentId: string,
@@ -58,5 +65,16 @@ export class H2CAppServerWebSocketManager extends ServerWebSocketManager<H2CAppA
         this.broadcastToTopic(`document:${documentId}`, header, requestMeta);
     }
 
+    public broadcastDocumentAwareness({ sender, documentId, update, requestMeta }: BroadcastDocumentAwareness) {
+        const header: H2CAppResponseMessage<"document:awareness"> = {
+            action: "document:awareness",
+            success: true,
+            payload: {
+                documentId,
+            },
+
+        }
+        this.broadcastBinaryDataToTopic(`document:${documentId}`, header, update, requestMeta, sender);
+    }
 
 }

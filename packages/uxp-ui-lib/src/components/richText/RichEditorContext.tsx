@@ -2,6 +2,7 @@ import { Editor } from "@tiptap/core";
 import { createContext, ReactNode, useContext, useRef, useState } from "react";
 import * as Y from "yjs";
 import { UploadListener, UploadStartedWithTrackingId, UploadStatus } from "../../features/upload-tracking/uploadTracking.types";
+import { Awareness } from "y-protocols/awareness";
 
 
 export type UploadedFileDetails = { publicId: string; fileName: string };
@@ -11,6 +12,7 @@ export interface RichTextEditorProps {
   label?: string;
   imageBasePath: string;
   yDoc: Y.Doc;
+  awareness?: Awareness;
   editable?: boolean
   startUpload: (file: File) => UploadStartedWithTrackingId;
   cancelUpload?: (id: string) => void;

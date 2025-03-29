@@ -3,12 +3,10 @@ import { AppErrorV2, AppLogger, RequestMetaData } from "@uxp/bff-common";
 import { FastifyRequest } from "fastify";
 import { QueryRunner } from "typeorm";
 import { WebSocket } from "ws";
-import { DOMParser } from "xmldom";
 import * as Y from "yjs";
 import { DocumentEntity } from "../db/entities/DocumentEntity";
 import { SnapshotEntity } from "../db/entities/DSnapshotEntity";
 import { H2CAppServerWebSocketManager } from "../ws/H2CAppServerWebSocketManager";
-import { last } from "lodash";
 
 export class DocumentService {
     private queryRunner: QueryRunner;
@@ -28,7 +26,7 @@ export class DocumentService {
     async createDocument(documentType: DocumentType, name?: string): Promise<DocumentEntity> {
         const docRepo = this.queryRunner.manager.getRepository(DocumentEntity);
         return docRepo.save(new DocumentEntity({
-            documentType,  name
+            documentType, name
         }));
     }
 
@@ -104,25 +102,25 @@ export class DocumentService {
 
         const baseDoc = new Y.Doc();
         const yXmlFragment = baseDoc.getXmlFragment("default");
-       // if (yXmlFragment.length === 0) {
-         //   yXmlFragment.insert(0, [new Y.XmlElement("root")]);
+        // if (yXmlFragment.length === 0) {
+        //   yXmlFragment.insert(0, [new Y.XmlElement("root")]);
         //}
         //yXmlFragment.delete(0, yXmlFragment.length);
         //const parser = new DOMParser();
         //const xmlDoc = parser.parseFromString(`<root>${latestDoc.content}</root>`, "text/xml");
 
         //for (let i = 0; i < xmlDoc.documentElement.childNodes.length; i++) {
-           // console.log(xmlDoc.documentElement.childNodes[i].nodeType,(xmlDoc.documentElement.childNodes[i] as any).tagName)
-          //  this.travelHtmlToYjs(yXmlFragment, xmlDoc.documentElement.childNodes[i]);
+        // console.log(xmlDoc.documentElement.childNodes[i].nodeType,(xmlDoc.documentElement.childNodes[i] as any).tagName)
+        //  this.travelHtmlToYjs(yXmlFragment, xmlDoc.documentElement.childNodes[i]);
         //}
-        
+
         //const stateV=Y.encodeStateVector(baseDoc)
         //const yDoc = new Y.Doc();
         //Y.applyUpdate(yDoc, Y.encodeStateAsUpdate(baseDoc));
-        if(latestDoc.content){
+        if (latestDoc.content) {
             Y.applyUpdate(baseDoc, new Uint8Array(latestDoc.content));
         }
-        
+
         //const baseState=Y.encodeStateAsUpdate(yDoc, stateV)
         //Y.applyUpdate(yDoc, baseState);
         //const baseState = Y.encodeStateAsUpdate(baseDoc);
@@ -140,19 +138,19 @@ export class DocumentService {
         //const stateVector2=Y.encodeStateVector(updates);
         //const diff1 = Y.encodeStateAsUpdate(baseDoc, stateVector2)
         for (const snapshot of snapshots) {
-            console.log(`🔹 Snapshot:`,JSON.stringify( Y.decodeUpdate(new Uint8Array(snapshot.update))));
+            console.log(`🔹 Snapshot:`, JSON.stringify(Y.decodeUpdate(new Uint8Array(snapshot.update))));
 
-          Y.applyUpdate(baseDoc, new Uint8Array(snapshot.update));
-         }
-         //const baseState = Y.encodeStateAsUpdate(baseDoc);
-         
-         //console.log(`🔹 mergedUpdate:`,JSON.stringify( Y.decodeUpdate(new Uint8Array(mergedUpdate))));
-         //Y.applyUpdate(yDoc, baseState); 
-         //Y.applyUpdate(yDoc, diff1); 
-         //Y.applyUpdate(yDoc, mergedUpdate); 
-         //Y.applyUpdate(yDoc, baseState); 
-         //Y.applyUpdate(baseDoc, stateVector2); 
-         console.log("📜 Final document content:", baseDoc.getXmlFragment("default").toArray().map(node => node.toString()).join(""));
+            Y.applyUpdate(baseDoc, new Uint8Array(snapshot.update));
+        }
+        //const baseState = Y.encodeStateAsUpdate(baseDoc);
+
+        //console.log(`🔹 mergedUpdate:`,JSON.stringify( Y.decodeUpdate(new Uint8Array(mergedUpdate))));
+        //Y.applyUpdate(yDoc, baseState); 
+        //Y.applyUpdate(yDoc, diff1); 
+        //Y.applyUpdate(yDoc, mergedUpdate); 
+        //Y.applyUpdate(yDoc, baseState); 
+        //Y.applyUpdate(baseDoc, stateVector2); 
+        console.log("📜 Final document content:", baseDoc.getXmlFragment("default").toArray().map(node => node.toString()).join(""));
 
         return {
             documentType: latestDoc.documentType,
@@ -160,8 +158,12 @@ export class DocumentService {
         }
 
     }
+
+    async updateAwareness(socket: WebSocket, documentId: string, update: Uint8Array) {
+        this.wsManager.broadcastDocumentAwareness({ sender: socket, documentId, update, requestMeta: this.requestMeta });
+    }
+
     private travelHtmlToYjs(yXmlFragment: Y.XmlFragment, node: Node) {
-        console.log(node.nodeType,(node as any).tagName)
         if (node.nodeType === 1) {
             const element = node as Element;
             const yElement = new Y.XmlElement(element.tagName)

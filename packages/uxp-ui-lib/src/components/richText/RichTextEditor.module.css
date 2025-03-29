@@ -199,3 +199,30 @@
     font-size: 0.92rem;
     /* Slightly larger on hover */
 }
+
+/* Give a remote user a caret */
+:global(.collaboration-cursor__caret) {
+    border-left: 1px solid var(--editor-focus-color);
+    border-right: 1px solid var(--editor-focus-color);
+    margin-left: -1px;
+    margin-right: -1px;
+    pointer-events: none;
+    position: relative;
+    word-break: normal;
+  }
+
+  /* Render the username above the caret */
+  :global(.collaboration-cursor__label) {
+    border-radius: 3px 3px 3px 0;
+    color: var(--editor-awareness-text);
+    font-size: 12px;
+    font-style: normal;
+    font-weight: 600;
+    left: -1px;
+    line-height: normal;
+    padding: 0.1rem 0.3rem;
+    position: absolute;
+    top: -1.4em;
+    user-select: none;
+    white-space: nowrap;
+  }

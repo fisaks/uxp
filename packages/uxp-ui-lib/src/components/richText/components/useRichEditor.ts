@@ -12,6 +12,7 @@ import StarterKit from "@tiptap/starter-kit";
 import { EditorView } from "prosemirror-view"; //  Import directly from ProseMirror
 import React, { useEffect, useRef } from "react";
 
+import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
 import Attachment from "../extensions/Attachment";
 import { CustomLink } from "../extensions/CustomLink";
 import { DropExtension } from "../extensions/DropExtension";
@@ -27,7 +28,7 @@ import { RichEditorUIState, UploadSource, UploadType, useRichEditorUI } from "..
 export const useRichEditor = (
 ) => {
     const editorState = useRichEditorUI();
-    const { setEditor, imageBasePath, editable, yDoc, fileDropHandler } = editorState;
+    const { setEditor, imageBasePath, editable, yDoc, fileDropHandler, awareness } = editorState;
     let timeoutRef = useRef<NodeJS.Timeout | null>(null); //
     const editor = useEditor(
         {
@@ -89,9 +90,12 @@ export const useRichEditor = (
                 Collaboration.configure({
                     document: yDoc, // ✅ Uses shared Y.js state
                 }),
+                ...(awareness ? [CollaborationCursor.configure({
+                    provider: { awareness },
+                })] : []),
                 Video.configure({ basePath: imageBasePath }),
                 Attachment.configure({ basePath: imageBasePath }),
-                DropExtension.configure({ handleFileDrop: fileDropHandler ?? (() => { console.info("[useRichEditor] no fileDropHandler defined")}) }),
+                DropExtension.configure({ handleFileDrop: fileDropHandler ?? (() => { console.info("[useRichEditor] no fileDropHandler defined") }) }),
                 UploadPlaceholder
 
             ],
@@ -107,7 +111,7 @@ export const useRichEditor = (
                 setEditor(editor);
 
             },
-          //  onUpdate: ({ editor }) => {
+            //  onUpdate: ({ editor }) => {
             //    console.log("[useRichEditor] onUpdate", editor.getJSON());
             //}
         },
@@ -117,6 +121,7 @@ export const useRichEditor = (
     useEffect(() => {
         editor?.setEditable(editable ?? false);
     }, [editable]);
+
     return editor;
 };
 
