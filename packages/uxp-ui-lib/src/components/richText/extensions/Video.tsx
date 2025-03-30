@@ -1,9 +1,10 @@
 import { Node, mergeAttributes } from "@tiptap/core";
 import { ReactNodeViewRenderer } from "@tiptap/react";
 import { buildPath } from "@uxp/common";
-import VideoNode, { AlignmentStyles } from "../nodes/VideoNode";
+import VideoNode from "../nodes/VideoNode";
 import { findNodeById } from "./extensionUtil";
 import { UploadPlaceholder } from "./UploadPlaceholder";
+import { AlignmentStyles } from "../nodes/utils/videoHelpers";
 
 type VideoAttributes = {
     src: string;
@@ -71,6 +72,8 @@ export const Video = Node.create({
             },
             width: { default: null, },
             height: { default: null, },
+            aspectLocked: { default: true },
+            aspectRatio: { default: 16 / 9 },
             align: {
                 default: "center",
                 parseHTML: (element) => element.getAttribute("data-align") || "center",
@@ -135,13 +138,8 @@ export const Video = Node.create({
 
 
     addNodeView() {
-        const basePath = this.options.basePath;
 
-        const WrappedVideoNode = (props: any) => {
-            return <VideoNode {...props} basePath={basePath} />;
-        };
-
-        return ReactNodeViewRenderer(WrappedVideoNode, {});
+        return ReactNodeViewRenderer(VideoNode);
     },
 
 });

@@ -20,6 +20,9 @@ export const Youtube = Node.create({
             width: { default: 640 },
             height: { default: 480 },
             start: { default: 0 },
+            align: { default: 'center' },
+            aspectLocked: { default: true },
+            aspectRatio: { default: 16 / 9 },
         }
     },
 

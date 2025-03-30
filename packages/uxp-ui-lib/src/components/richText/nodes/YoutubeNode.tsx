@@ -1,97 +1,121 @@
+import { useMediaQuery, useTheme } from '@mui/material'
 import { NodeViewProps, NodeViewWrapper } from '@tiptap/react'
 import React, { useEffect, useRef, useState } from 'react'
-import { ResizableBox } from 'react-resizable'
 import 'react-resizable/css/styles.css'
 import { useRichEditorUI } from '../RichEditorContext'
 
-const YoutubeNode: React.FC<NodeViewProps> = ({ node, updateAttributes, editor, selected }) => {
-    const { videoId, width, height, start } = node.attrs
-    const { editable, } = useRichEditorUI();
-    const [containerWidth, setContainerWidth] = React.useState<number>(800);
-    const [maxConstraints, setMaxConstraints] = useState<[number, number]>([800, 450])
-    const [aspectRatio, setAspectRatio] = useState<number>(width / height || (16 / 9))
+import "react-resizable/css/styles.css"
+import { FloatingVideoToolbar } from "./components/FloatingVideoToolbar"
+import { ResizableMediaBox } from "./components/ResizableMediaBox.tsx"
+import { AlignmentStyles } from "./utils/videoHelpers"
 
-    const containerRef = useRef<HTMLDivElement>(null);
+
+const YoutubeNode: React.FC<NodeViewProps> = ({ node, updateAttributes, selected }) => {
+
+    const { videoId, width, height, start, align, aspectLocked, aspectRatio } = node.attrs
+    const { editable, portalContainerRef } = useRichEditorUI()
+    const theme = useTheme()
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
+
+    const imageRef = useRef<HTMLImageElement>(null)
+    const containerRef = useRef<HTMLDivElement>(null)
+    const [toolbarLeft, setToolbarLeft] = useState<number | null>(null)
+    const slotProps = { popper: { container: portalContainerRef.current } }
+
+
+
 
     useEffect(() => {
-        if (!containerRef.current) return;
-
-        const observer = new ResizeObserver(([entry]) => {
-            const width = entry.contentRect.width;
-            const maxWidth = width
-            const maxHeight = Math.round(maxWidth / aspectRatio)
-
-            setMaxConstraints([maxWidth, maxHeight])
-            setContainerWidth(width);
-        });
-
-        observer.observe(containerRef.current);
-        return () => observer.disconnect();
-    }, []);
-
-    const onResizeStop = (_: any, data: any) => {
-        updateAttributes({
-            width: data.size.width,
-            height: data.size.height,
-        })
-    }
+        if (!imageRef.current || !containerRef.current) return
+        const imageBox = imageRef.current.getBoundingClientRect()
+        const containerBox = containerRef.current.getBoundingClientRect()
+        const relativeLeft = imageBox.left - containerBox.left + imageBox.width / 2
+        setToolbarLeft(Math.max(relativeLeft, 100))
+    }, [width, height, align, selected])
 
     const embedUrl = `https://www.youtube-nocookie.com/embed/${videoId}?start=${start}`
     const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`
 
     return (
-        <NodeViewWrapper className="youtube-wrapper" contentEditable={false} draggable={false}>
-            <div
-                data-drag-handle={selected ? "true" : undefined}
-                ref={containerRef}
+        <NodeViewWrapper
+            className="youtube-wrapper"
+            contentEditable={false}
+            draggable={false}
+            style={{ position: 'relative', ...AlignmentStyles[isMobile ? 'center' : align] }}
+        >
+            <div ref={containerRef} data-drag-handle={selected ? "true" : undefined}
                 style={{
                     width: "100%",
                     maxWidth: "100%",
                     display: "inline-block"
-                }}>
-
-                <ResizableBox
-                    minConstraints={[100, 100]}
-                    maxConstraints={maxConstraints}
-                    width={Number(Math.min(width, containerWidth) || 320)}
-                    height={Number(height || 180)}
-
-                    onResizeStop={onResizeStop}
-                    lockAspectRatio={true}
-                    resizeHandles={editable && !selected ? ["se", "nw", "sw", "ne", "e", "n", "w", "s"] : []}
+                }}
+            >
+                <ResizableMediaBox
+                    width={width}
+                    height={height}
+                    aspectLocked={aspectLocked}
+                    aspectRatio={aspectRatio}
+                    editable={!!editable}
+                    selected={selected}
+                    onResizeStop={({ width, height }) => updateAttributes({ width, height })}
                 >
                     {editable ? (
-                        <img
-                            draggable={false}
-                            src={thumbnailUrl}
-                            alt="YouTube video thumbnail"
-                            data-youtube-id={videoId}
-                            onLoad={(e) => {
-                                const img = e.currentTarget
-                                const naturalWidth = img.naturalWidth
-                                const naturalHeight = img.naturalHeight
-                                console.log("naturalWidth", naturalWidth, "naturalHeight", naturalHeight,naturalWidth / naturalHeight)
-                                setAspectRatio(naturalWidth / naturalHeight)
-
-                            }}
-                            style={{
-                                width: '100%',
-                                maxWidth: "100%",
-                                height: '100%',
-                                objectFit: 'cover',
-                                border: 0,
-                            }}
-                        />
+                        <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+                            <img
+                                ref={imageRef}
+                                draggable={false}
+                                src={thumbnailUrl}
+                                alt="YouTube video thumbnail"
+                                data-youtube-id={videoId}
+                                onLoad={(e) => {
+                                    const img = e.currentTarget
+                                    const naturalWidth = img.naturalWidth
+                                    const naturalHeight = img.naturalHeight
+                                    const ratio = naturalWidth / naturalHeight
+                                    ratio != aspectRatio && updateAttributes({ aspectRatio: naturalWidth / naturalHeight });
+                                }}
+                                style={{
+                                    width: '100%',
+                                    height: '100%',
+                                    objectFit: 'cover',
+                                    border: 0,
+                                }}
+                            />
+                            <div
+                                style={{
+                                    position: 'absolute',
+                                    top: '50%',
+                                    left: '50%',
+                                    transform: 'translate(-50%, -50%)',
+                                    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                                    borderRadius: '50%',
+                                    padding: '12px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                }}
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="white">
+                                    <path d="M8 5v14l11-7z" />
+                                </svg>
+                            </div>
+                        </div>
                     ) : (
-                        <iframe
-                            width="100%"
-                            height="100%"
-                            src={embedUrl}
-                            title="YouTube video"
-                            allowFullScreen
-                        />
+                        <iframe width="100%" height="100%" src={embedUrl} title="YouTube video" allowFullScreen />
                     )}
-                </ResizableBox>
+                </ResizableMediaBox>
+
+                {editable && selected && (
+                    <FloatingVideoToolbar
+                        align={align}
+                        aspectLocked={aspectLocked}
+                        onAlignChange={(value) => updateAttributes({ align: value })}
+                        onAspectToggle={() => updateAttributes({ aspectLocked: !aspectLocked })}
+                        toolbarLeft={toolbarLeft}
+                        height={height}
+                        slotProps={slotProps}
+                    />
+                )}
             </div>
         </NodeViewWrapper>
     )
