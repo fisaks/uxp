@@ -5,19 +5,19 @@ import { createLoadingErrorAwareThunk } from "../loading-error/loadingErrorSlice
 import { House } from "@h2c/common";
 
 export const fetcHouses = createLoadingErrorAwareThunk("houses/fetch", async () => {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    //await new Promise((resolve) => setTimeout(resolve, 1000));
     const response = await axios.get<House[]>(`${getBaseUrl()}/api/houses`);
     return response.data;
 });
 
 export const addHouse = createAsyncThunk("houses/add", async () => {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    //await new Promise((resolve) => setTimeout(resolve, 1000));
     const response = await axios.post<House>(`${getBaseUrl()}/api/houses`);
     return response.data;
 });
 
 export const deleteHouse = createAsyncThunk("houses/delete", async (houseuuid: string) => {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    //await new Promise((resolve) => setTimeout(resolve, 1000));
     await axios.delete(`${getBaseUrl()}/api/houses/${houseuuid}`);
     return houseuuid;
 });

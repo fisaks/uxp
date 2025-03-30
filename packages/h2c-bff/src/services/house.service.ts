@@ -9,14 +9,14 @@ import { HouseEntity } from "../db/entities/HouseEntity";
 import { DocumentService } from "./document.servcie";
 
 export const DefaultHouseData: Omit<HouseData, "documentId"> = Object.freeze({
-    name: "New House",
-    address: "Unknown Address",
+    name: "",
+    address: "",
     details: {},
     buildings: [],
 });
 
 export const DefaultBuildingData: Omit<BuildingData, "uuid" | "documentId"> = Object.freeze({
-    name: "New Building",
+    name: "",
     details: {},
 });
 

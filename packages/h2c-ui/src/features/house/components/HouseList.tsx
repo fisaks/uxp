@@ -18,7 +18,7 @@ const HouseList: React.FC = () => {
     const dispatch: AppDispatch = useDispatch();
     const houses = useSelector(selectAllHouses);
     const theme = useTheme();
-    const documentRef=useRef<DocumentEditorRef>(null);
+    const documentRef = useRef<DocumentEditorRef>(null);
 
     const [expandedHouseId, setExpandedHouseId] = useState<string | null>(null);
     const [editMode, setEditMode] = useState(false);
@@ -29,7 +29,7 @@ const HouseList: React.FC = () => {
     };
 
     const handleEditToggle = () => {
-        if(editMode) {
+        if (editMode) {
             documentRef.current?.save();
         }
         setEditMode(!editMode);
@@ -49,7 +49,8 @@ const HouseList: React.FC = () => {
                                 "&:hover": { backgroundColor: theme.palette.action.hover },
                             }}
                         >
-                            <ListItemText primary={house.name} />
+                            <ListItemText primary={house.name || "Please fill in house details"}
+                                primaryTypographyProps={{ sx: { color: !house.name ? theme.palette.warning.main : undefined } }} />
                             <ActionIconButton
                                 thunk={deleteHouse}
                                 dispatch={dispatch}
@@ -114,7 +115,7 @@ const HouseList: React.FC = () => {
                                             patchAction={patchHouseField}
                                         />
                                         <DocumentEditor documentId={house.documentId} editable={editMode} ref={documentRef} />
-                                         
+
                                     </Box>
                                 </Box>
                             </Box>

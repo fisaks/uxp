@@ -1,5 +1,5 @@
 
-import { Dispatch } from '@reduxjs/toolkit';
+import { Dispatch, nanoid } from '@reduxjs/toolkit';
 import { TrackingProgressEvent, UploadHandler, UploadResultWithTrackingId, UploadStartedWithTrackingId } from './uploadTracking.types';
 import {
     activeUploads,
@@ -55,7 +55,7 @@ export function startUploadTracking(
     file: File,
     dispatch: Dispatch
 ): UploadStartedWithTrackingId {
-    const id = crypto.randomUUID();
+    const id = nanoid();
     const promise = internalStartUpload(file, id, dispatch);
     return { id, promise };
 }
@@ -82,7 +82,7 @@ export function startMultipleUploadsTracking(
     dispatch: Dispatch
 ): UploadStartedWithTrackingId[] {
     return files.map(file => {
-        const id = crypto.randomUUID();
+        const id = nanoid();
         const promise = internalStartUpload(file, id, dispatch);
         return { id, promise };
     });
