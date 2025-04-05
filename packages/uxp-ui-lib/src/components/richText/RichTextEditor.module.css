@@ -209,10 +209,10 @@
     pointer-events: none;
     position: relative;
     word-break: normal;
-  }
+}
 
-  /* Render the username above the caret */
-  :global(.collaboration-cursor__label) {
+/* Render the username above the caret */
+:global(.collaboration-cursor__label) {
     border-radius: 3px 3px 3px 0;
     color: var(--editor-awareness-text);
     font-size: 12px;
@@ -225,4 +225,4 @@
     top: -1.4em;
     user-select: none;
     white-space: nowrap;
-  }
+}

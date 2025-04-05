@@ -1,5 +1,5 @@
 
-import { RichTextEditor, useCollaborativeDoc, useUploadTracker } from "@uxp/ui-lib";
+import { RichTextEditor, useCollaborativeDoc, useUploadTracker, YDocVersionDetail } from "@uxp/ui-lib";
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useState } from "react";
 import * as Y from "yjs";
 import { H2CAppErrorHandler, H2CAppWebSocketResponseListener, useH2CWebSocket } from "../../../app/H2CAppBrowserWebSocketManager";
@@ -10,7 +10,7 @@ import { applyAwarenessUpdate, encodeAwarenessUpdate } from "y-protocols/awarene
 
 
 export interface DocumentEditorRef {
-    save: () => Promise<H2CAppResponseMessage<"document:saved">>;
+    save: () => Promise<YDocVersionDetail>;
 
 }
 
@@ -81,12 +81,18 @@ export const DocumentEditor = forwardRef<DocumentEditorRef, DocumentEditorProps>
         return () => awareness.off("update", onAwarenessUpdate);
     }, [awareness, documentId, sendBinaryMessage]);
 
+    const onSaveVersion = useCallback(async () => {
+        console.info("[DocumentEditor] Saving version", documentId);
+        const response = await sendMessageAsync("document:save", { documentId }) as H2CAppResponseMessage<"document:saved">;
+        const versionCreated = response.payload?.versionCreated;
+        const versionId = response.payload?.versionId;
+        const createdAt = response.payload?.createdAt;
+        return { createdAt, versionId, newVersion: versionCreated } as YDocVersionDetail;
+
+    }, [documentId, sendMessageAsync]);
+
     useImperativeHandle(ref, () => ({
-        save: async () => {
-            console.info("[DocumentEditor] Saving document", documentId);
-            const response = await sendMessageAsync("document:save", { documentId });
-            return response as H2CAppResponseMessage<"document:saved">
-        },
+        save: onSaveVersion,
 
     }));
 
@@ -122,6 +128,7 @@ export const DocumentEditor = forwardRef<DocumentEditorRef, DocumentEditorProps>
         awareness={awareness}
         editable={editable}
         notice={editorNotice}
+        onSaveVersion={onSaveVersion}
         {...uploadTracker}
     />
 

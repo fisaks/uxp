@@ -1,13 +1,14 @@
-import { Paper, Typography, useTheme } from "@mui/material";
+import { Box, Paper, Typography, useTheme } from "@mui/material";
 import { EditorContent } from "@tiptap/react";
 import { useRichEditorUI } from "./RichEditorContext";
 import * as styles from "./RichTextEditor.module.css";
+import { EditorStatusNotice } from "./components/EditorStatusNotice";
 import { FloatingImageToolbar } from "./components/FloatingImageToolbar";
 import { LinkEdit } from "./components/LinkEdit";
+import { MoreMenu } from "./components/MoreMenu";
 import { RichEditorToolbar } from "./components/RichEditorToolbar";
 import { RichEditorUploadManager } from "./components/RichEditorUploadManager";
 import { useRichEditor } from "./components/useRichEditor";
-import { EditorStatusNotice } from "./components/EditorStatusNotice";
 
 
 export const RichTextEditorContent = () => {
@@ -31,10 +32,24 @@ export const RichTextEditorContent = () => {
             className={`${styles.editorContainer} ${isFullScreen ? styles.fullScreen : ""}`}
         >
 
-            {label && <Typography variant="caption" color="text.secondary" sx={{ pl: "10px" }}>
-                {label}
-            </Typography>}
-
+            <Box
+                sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    px: 1,
+                    pt: 1,
+                    minHeight: 32, // optional, keeps row height consistent even without label
+                }}
+            >
+                {label ? (
+                    <Typography variant="caption" color="text.secondary" sx={{ pl: "10px" }}>
+                        {label}
+                    </Typography>) : (
+                    <Box />
+                )}
+                <MoreMenu />
+            </Box>
             {editable && <RichEditorToolbar />}
             {editable && <FloatingImageToolbar />}
             {editable && <LinkEdit />}

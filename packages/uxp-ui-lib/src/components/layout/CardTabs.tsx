@@ -1,6 +1,7 @@
 import AddIcon from "@mui/icons-material/Add";
 import { Box, Tab, Tabs, useTheme } from "@mui/material";
 import React, { forwardRef, useImperativeHandle, useMemo, useRef, useState } from "react";
+import { SANITIZE_TABS_PROPS, SanitizedProps } from "../../util/SanitizedProps";
 import { AsyncIconButton } from "../forms/AsyncIconButton";
 
 export type CardTab = {
@@ -72,13 +73,16 @@ export const CardTabs = forwardRef<CardTabsHandle, CardTabsProps>(({ tabs, child
             >
                 {tabs.map((tab, idx) => (
 
-                    <Tab label={tab.label} icon={tab.icon} iconPosition={tab.icon ? "start" : undefined} title={tab.hint} />
+                    <Tab key={`${tab.label}_${idx}`} label={tab.label} icon={tab.icon} iconPosition={tab.icon ? "start" : undefined} title={tab.hint} />
 
 
                 ))}
-                {addTab && <AsyncIconButton onClick={handleAddTab} tooltip="Add Another Building" tooltipPortal={portalRef}>
-                    <AddIcon />
-                </AsyncIconButton>}
+                {addTab && <SanitizedProps keys={SANITIZE_TABS_PROPS}>
+                    <AsyncIconButton onClick={handleAddTab}
+                        tooltip="Add Another Building"
+                        tooltipPortal={portalRef}>
+                        <AddIcon />
+                    </AsyncIconButton></SanitizedProps>}
             </Tabs>
 
             <Box

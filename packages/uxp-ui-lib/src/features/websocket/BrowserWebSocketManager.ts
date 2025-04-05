@@ -16,11 +16,13 @@ export type WebSocketResponseEventHandler<Action extends WebSocketAction<ActionP
 export class WebSocketTimeoutError<ActionPayloadRequestMap, ActionPayloadResponseMap> extends Error {
     action: WebSocketActionUnion<ActionPayloadRequestMap, ActionPayloadResponseMap>;
     timeoutMs: number;
+    error: ErrorDetail;
 
     constructor(action: WebSocketActionUnion<ActionPayloadRequestMap, ActionPayloadResponseMap>, timeoutMs: number) {
         super(`WebSocket request for '${action}' timed out after ${timeoutMs}ms`);
         this.name = "WebSocketTimeoutError";
         this.action = action;
+        this.error = { code: ErrorCodes.TIMEOUT };
         this.timeoutMs = timeoutMs;
     }
 }

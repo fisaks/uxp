@@ -8,8 +8,6 @@ import * as Y from "yjs";
 import { DocumentEntity } from "../db/entities/DocumentEntity";
 import { SnapshotEntity } from "../db/entities/DSnapshotEntity";
 import { H2CAppServerWebSocketManager } from "../ws/H2CAppServerWebSocketManager";
-import { HouseEntity } from "../db/entities/HouseEntity";
-import { last } from "lodash";
 
 export class DocumentService {
     private queryRunner: QueryRunner;
@@ -67,24 +65,41 @@ export class DocumentService {
         this.wsManager.broadcastDocumentUpdate({ updater: socket, documentId, update, requestMeta: this.requestMeta });
 
     }
+
     async saveDocument(documentId: string, asyncId: string | undefined) {
 
+        const fullDocument = await this.getFullDocument(documentId);
         const documentRepo = this.queryRunner.manager.getRepository(DocumentEntity);
         const snapshotRepo = this.queryRunner.manager.getRepository(SnapshotEntity);
-        const fullDocument = await this.getFullDocument(documentId);
+        let versionId = fullDocument.versionId;
+        let createdAt = fullDocument.createdAt;
+        let createVersion = fullDocument.haveSnapshots;
 
-        const newDocument = documentRepo.create({
-            documentId,
-            content: Buffer.from(Y.encodeStateAsUpdate(fullDocument.document)),
-            documentType: fullDocument.documentType,
-            deleted: fullDocument.deleted,
-            removedAt: fullDocument.deleted ? DateTime.now() : undefined
+        if (createVersion) {
+            const newDocument = documentRepo.create({
+                documentId,
+                content: Buffer.from(Y.encodeStateAsUpdate(fullDocument.document)),
+                documentType: fullDocument.documentType,
+                deleted: fullDocument.deleted,
+                
+                removedAt: fullDocument.deleted ? DateTime.now() : undefined
+            });
+            const saved = await documentRepo.save(newDocument);
+            await snapshotRepo.delete({ documentId });
+            versionId = saved.id;
+            createdAt = DateTime.now();
+        }
+
+        this.wsManager.broadcastDocumentSave({
+            payload: {
+                documentId: documentId,
+                createdAt: createdAt.toUTC().toISO()!,
+                versionId: versionId,
+                versionCreated: createVersion
+            }, requestMeta: this.requestMeta, id: asyncId
         });
-        await documentRepo.save(newDocument);
-        await snapshotRepo.delete({ documentId });
 
-        this.wsManager.broadcastDocumentSave({ documentId, requestMeta: this.requestMeta, id: asyncId });
-        AppLogger.info(this.requestMeta, { message: `Saved document ${documentId}` });
+        AppLogger.info(this.requestMeta, { message: `Saved document ${documentId} ` });
     }
 
     async getFullDocument(documentId: string) {
@@ -98,7 +113,7 @@ export class DocumentService {
 
 
         if (!latestDoc) {
-            throw new AppErrorV2({ statusCode: 404, code: "NOT_FOUND", message: `Document not found by id ${documentId}` });
+            throw new AppErrorV2({ statusCode: 404, code: "NOT_FOUND", message: `Document not found by id ${documentId} ` });
 
         }
 
@@ -109,7 +124,7 @@ export class DocumentService {
         //}
         //yXmlFragment.delete(0, yXmlFragment.length);
         //const parser = new DOMParser();
-        //const xmlDoc = parser.parseFromString(`<root>${latestDoc.content}</root>`, "text/xml");
+        //const xmlDoc = parser.parseFromString(`< root > ${ latestDoc.content } </root>`, "text/xml");
 
         //for (let i = 0; i < xmlDoc.documentElement.childNodes.length; i++) {
         // console.log(xmlDoc.documentElement.childNodes[i].nodeType,(xmlDoc.documentElement.childNodes[i] as any).tagName)
@@ -157,7 +172,10 @@ export class DocumentService {
         return {
             documentType: latestDoc.documentType,
             document: baseDoc,
-            deleted: latestDoc.deleted
+            deleted: latestDoc.deleted,
+            haveSnapshots: snapshots.length > 0,
+            versionId: latestDoc.id,
+            createdAt: latestDoc.createdAt,
         }
 
     }

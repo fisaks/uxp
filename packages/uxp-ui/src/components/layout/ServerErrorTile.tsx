@@ -19,6 +19,7 @@ const ERROR_MESSAGES: Record<ErrorCode, string> = {
     RESOURCE_NOT_FOUND: "The requested resource could not be found.",
     PATCH_VERSION_CONFLICT: "Version conflict detected.",
     DISCONNECTED: "You have been disconnected from the server. Please try again later.",
+    TIMEOUT: "The request timed out. Please check your connection and try again.",
     // Add more error mappings as needed
 };
 

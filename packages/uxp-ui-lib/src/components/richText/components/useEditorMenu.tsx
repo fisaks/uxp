@@ -136,29 +136,29 @@ export const userEditorMenu = () => {
                 icon: <ImageIcon />,
                 label: "Insert Image",
                 tooltip: "Insert Image (Ctrl + Shift + I)",
-                onClick: () => triggerUpload("image","file"),
+                onClick: () => triggerUpload("image", "file"),
             },
             {
                 icon: <VideoFileIcon />,
                 label: "Insert Video",
-                onClick:  () => triggerUpload("video","file"),
+                onClick: () => triggerUpload("video", "file"),
             },
             {
                 icon: <AttachFileIcon />,
                 label: "Insert Attachment",
-                onClick:  () => triggerUpload("document","file"),
+                onClick: () => triggerUpload("document", "file"),
             },
             {
                 icon: <CameraAltIcon />,
                 label: "Capture Image",
                 disabled: !hasCamera,
-                onClick:  () => triggerUpload("image","camera"),
+                onClick: () => triggerUpload("image", "camera"),
             },
             {
                 icon: <VideoCameraFrontIcon />,
                 label: "Record Video",
                 disabled: !hasCamera,
-                onClick:  () => triggerUpload("video","camera"),
+                onClick: () => triggerUpload("video", "camera"),
             },
 
             {

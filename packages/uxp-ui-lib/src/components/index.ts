@@ -15,6 +15,8 @@ export * from "./forms/AsyncIconButton";
 
 //.layout
 export * from "./layout/AppBodyContent";
+export * from "./layout/InLineError";
+export * from "./layout/InlineSuccess";
 export { default as CenteredBox } from "./layout/CenteredBox";
 export * from "./layout/LeftSideBar";
 export * from "./layout/LinearProgressWithLabel";
@@ -30,11 +32,11 @@ export * from "./layout/CardTabs";
 
 export * from "./richText/RichTextEditor";
 export { default as RichTextEditor } from "./richText/RichTextEditor";
-import { UploadedFileDetails } from "./richText/RichEditorContext";
+import { UploadedFileDetails ,YDocVersionDetail} from "./richText/RichEditorContext";
 
 
 export * from "./search/SearchComponent";
 export * from "./theme/theme";
 export * from "./theme/UxpTheme";
-export type { UploadedFileDetails };
+export type { UploadedFileDetails ,YDocVersionDetail};
 

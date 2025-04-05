@@ -1,4 +1,4 @@
-import { H2CAppActionPayloadRequestMap, H2CAppActionPayloadResponseMap, H2CAppResponseMessage } from "@h2c/common";
+import { DocumentSavedPayload, H2CAppActionPayloadRequestMap, H2CAppActionPayloadResponseMap, H2CAppResponseMessage } from "@h2c/common";
 import { RequestMetaData, ServerWebSocketManager } from "@uxp/bff-common";
 import { WebSocket } from "ws";
 
@@ -17,9 +17,15 @@ type BroadcastDocumentAwareness = {
 }
 type BroadcastDocumentSave = {
 
+    payload: DocumentSavedPayload,
+    id: string | undefined
+    requestMeta: RequestMetaData
+}
+type BroadcastDocumentDeleted = {
     documentId: string,
     id: string | undefined
     requestMeta: RequestMetaData
+
 }
 
 export class H2CAppServerWebSocketManager extends ServerWebSocketManager<H2CAppActionPayloadRequestMap, H2CAppActionPayloadResponseMap> {
@@ -51,21 +57,20 @@ export class H2CAppServerWebSocketManager extends ServerWebSocketManager<H2CAppA
 
         this.broadcastBinaryDataToTopic(`document:${documentId}`, header, update, requestMeta, updater);
     }
-    public broadcastDocumentSave({ documentId, requestMeta, id }: BroadcastDocumentSave) {
+    public broadcastDocumentSave({ payload, requestMeta, id }: BroadcastDocumentSave) {
         const header: H2CAppResponseMessage<"document:saved"> = {
             action: "document:saved",
             id: id,
             success: true,
             payload: {
-                documentId,
+                ...payload,
             },
-
         }
 
-        this.broadcastToTopic(`document:${documentId}`, header, requestMeta);
+        this.broadcastToTopic(`document:${payload.documentId}`, header, requestMeta);
     }
 
-    public broadcastDocumentDeleted({ documentId, requestMeta, id }: BroadcastDocumentSave) {
+    public broadcastDocumentDeleted({ documentId, requestMeta, id }: BroadcastDocumentDeleted) {
         const header: H2CAppResponseMessage<"document:deleted"> = {
             action: "document:deleted",
             id: id,

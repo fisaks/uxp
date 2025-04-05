@@ -9,6 +9,8 @@ export type DocumentFullPayload = {
     documentId: string
     type: DocumentType,
 }
+export type DocumentSavedPayload = DocumentIdPayload & { versionId: number, createdAt: string, versionCreated: boolean }
+
 export type DocumentActionPayloadRequestMap = {
     "document:subscribe": DocumentIdPayload
 
@@ -23,7 +25,7 @@ export type DocumentActionPayloadRequestMap = {
 export type DocumentActionPayloadResponseMap = {
     "document:full": DocumentFullPayload
     "document:updated": DocumentIdPayload
-    "document:saved": DocumentIdPayload
+    "document:saved": DocumentSavedPayload
     "document:deleted": DocumentIdPayload
     "document:unsubscribed": DocumentIdPayload
     "document:awareness": DocumentIdPayload

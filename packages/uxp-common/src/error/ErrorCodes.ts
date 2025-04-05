@@ -14,6 +14,7 @@ export const ErrorCodes = {
     RESOURCE_NOT_FOUND: "RESOURCE_NOT_FOUND",
     USER_OLD_PASSWORD_NOT_MATCH: "USER_OLD_PASSWORD_NOT_MATCH",
     DISCONNECTED: "DISCONNECTED",
+    TIMEOUT: "TIMEOUT",
 } as const;
 
 export type ErrorCode = keyof typeof ErrorCodes;

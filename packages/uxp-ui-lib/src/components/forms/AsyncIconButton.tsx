@@ -3,9 +3,9 @@ import {
     IconButton,
     IconButtonProps
 } from "@mui/material";
-import React, { useState } from "react";
-import { WithOptionalTooltip } from "../layout/WithOptionalTooltip";
+import React from "react";
 import { useSafeState } from "../../hooks/useSafeState";
+import { WithOptionalTooltip } from "../layout/WithOptionalTooltip";
 
 type AsyncIconButtonProps = {
     children: React.ReactNode;

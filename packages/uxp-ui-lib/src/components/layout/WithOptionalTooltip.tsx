@@ -5,18 +5,37 @@ type WithOptionalTooltipProps = {
     tooltip?: string;
     portalContainer?: React.RefObject<HTMLElement | null>;
     children: React.ReactElement;
+    error?: boolean
+    success?: boolean
 };
 
 export const WithOptionalTooltip: React.FC<WithOptionalTooltipProps> = ({
     tooltip,
     children,
     portalContainer,
+    error,
+    success
 
 }) => {
     if (!tooltip) return children;
 
+    const colorProps = error ? {
+        tooltip: {
+            sx: {
+                backgroundColor: 'error.main',
+                color: 'error.contrastText',
+            }
+        }
+    } : {
+        tooltip: {
+            sx: {
+                backgroundColor: 'success.main',
+                color: 'success.contrastText',
+            }
+        }
+    };
     const slotProps = portalContainer && portalContainer.current ? {
-        popper: { container: portalContainer.current }
+        popper: { container: portalContainer.current },
     } : {
         popper: {
             disablePortal: true,
@@ -25,7 +44,11 @@ export const WithOptionalTooltip: React.FC<WithOptionalTooltipProps> = ({
     return (
         <Tooltip
             title={tooltip}
-            slotProps={slotProps}
+            slotProps={{
+                ...slotProps,
+                ...(error || success ? colorProps : {})
+            }}
+
         >
             <span>
                 {children}

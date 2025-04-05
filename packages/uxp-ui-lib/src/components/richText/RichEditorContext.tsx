@@ -7,6 +7,11 @@ import { Awareness } from "y-protocols/awareness";
 
 export type UploadedFileDetails = { publicId: string; fileName: string };
 
+export type YDocVersionDetail = {
+  versionId?: string | undefined | null;
+  createdAt?: string | undefined | null;
+  newVersion?: boolean | undefined | null;
+}
 
 export interface RichTextEditorProps {
   label?: string;
@@ -19,6 +24,7 @@ export interface RichTextEditorProps {
   retryUpload?: (id: string) => UploadStartedWithTrackingId;
   subscribeToUploadStatus?: (callback: UploadListener) => () => void;
   getUploadStatus?: (id: string) => UploadStatus | undefined;
+  onSaveVersion?: () => Promise<YDocVersionDetail>;
   notice?: string
 }
 
