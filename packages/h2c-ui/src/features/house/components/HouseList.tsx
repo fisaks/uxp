@@ -90,7 +90,7 @@ const HouseList: React.FC = () => {
                         <Collapse in={expandedHouseId === house.uuid} timeout="auto" unmountOnExit>
                             <Box sx={{ backgroundColor: theme.palette.background.paper }}>
                                 <CardTabs tabs={[{ label: house.name, icon: <HouseIcon /> }, ...(house.buildings.map((building) => ({ label: building.name || "New Building", icon: <WbShadeIcon /> })))]}
-                                    addTab={() => addBuildingTab(house.uuid)}
+                                    addTab={editMode ? () => addBuildingTab(house.uuid) : undefined}
                                 >
                                     <HousePanel
                                         house={house}
