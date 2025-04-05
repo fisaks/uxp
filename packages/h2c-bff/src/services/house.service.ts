@@ -117,11 +117,16 @@ export class HouseService {
 
         await this.ensureHouseData(house);
         const initialLength = house.data.buildings.length;
+        const buildingDocumentId = house.data.buildings.find(b => b.uuid === buildingUuid)?.documentId;
         house.data.buildings = house.data.buildings.filter((b) => b.uuid !== buildingUuid);
         const removed = house.data.buildings.length < initialLength; // Return true if a building was removed
 
         if (removed) {
             const updatedHouse = await this.saveHouse(house);
+            const docService = new DocumentService(this.requestMeta, this.queryRunner);
+
+            if (buildingDocumentId)
+                await docService.removeDocument(buildingDocumentId);
             AppLogger.info(this.requestMeta, { message: `Removed building ${buildingUuid} from house ${uuidHouse}` });
             return updatedHouse;
         } else {

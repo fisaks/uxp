@@ -59,7 +59,7 @@ export class HouseController {
         roles: ["user"],
         schema: RemoveBuildingSchema,
     })
-    @UseQueryRunner()
+    @UseQueryRunner({ transactional: true })
     async removeBuilding(
         req: FastifyRequest<{ Params: { uuidHouse: string; uuidBuilding: string } }>,
         reply: FastifyReply,
