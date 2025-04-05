@@ -157,6 +157,7 @@ export class HouseService {
         });
     }
     async deleteHouse(uuid: string): Promise<void> {
+        const docService = new DocumentService(this.requestMeta, this.queryRunner);
         const house = await this.findHouseByUuid(uuid);
 
         if (!house) {
@@ -166,6 +167,14 @@ export class HouseService {
         house.removed = true;
         house.removedAt = DateTime.now();
         await this.saveHouse(house);
+
+        const docIds = [
+            house.data.documentId,
+            ...house.data.buildings.map(b => b.documentId)
+        ].filter((id): id is string => !!id); // filter out undefined/null
+
+        await Promise.all(docIds.map(id => docService.removeDocument(id)));
+
         AppLogger.info(this.requestMeta, { message: `Deleted house ${uuid}` });
 
     }

@@ -116,7 +116,7 @@ export class HouseController {
      * Marks a house as removed
      */
     @Route("delete", "/houses/:uuid", { authenticate: true, roles: ["user"] })
-    @UseQueryRunner()
+    @UseQueryRunner({transactional: true})
     async deleteHouse(req: FastifyRequest<{ Params: { uuid: string } }>, reply: FastifyReply, queryRunner: QueryRunner) {
         const { uuid } = req.params;
 

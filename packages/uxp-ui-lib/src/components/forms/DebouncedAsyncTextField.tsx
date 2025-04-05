@@ -1,9 +1,10 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 
-import ReplayIcon from "@mui/icons-material/Replay";
 import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
+import ReplayIcon from "@mui/icons-material/Replay";
 import { Box, CircularProgress, debounce, IconButton, InputAdornment, TextField, TextFieldProps, useTheme } from "@mui/material";
 import { useSafeState } from "../../hooks/useSafeState";
+import { mapApiErrorsToMessageString } from "../../util/browserErrorMessage";
 import { WithOptionalTooltip } from "../layout/WithOptionalTooltip";
 
 type DebouncedAsyncTextFieldProps<T> = {
@@ -23,30 +24,33 @@ const DebouncedAsyncTextField = <T,>({
 
     const [localValue, setLocalValue] = useSafeState(value);
     const [loading, setLoading] = useSafeState(false);
-    const [error, setError] = useState(false);
+    const [error, setError] = useState<string | undefined>(undefined);
 
-    const debouncedUpdate = useCallback(debounce(async (newValue?: string) => {
-        setError(false);
+    const doUpdate = useCallback(async (newValue?: string) => {
+        setError(undefined);
         setLoading(true);
         try {
             const result = asyncAction({ field, value: newValue });
             await Promise.resolve(result);
         } catch (error) {
-            setError(true);
+            console.error("Error in async action", error);
+            setError(mapApiErrorsToMessageString(error));
         } finally {
             setLoading(false);
         }
-    }, 500),[asyncAction, field]);
+    }, [asyncAction, field]);
+
+    const debouncedUpdate = useMemo(() => debounce(doUpdate, 500), [doUpdate]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newValue = e.target.value;
         setLocalValue(newValue);
         debouncedUpdate(newValue);
-        props.onChange?.(e);
+        props.onChange?.(e); //  call possible original onClick handler
     };
 
     const handleRetry = () => {
-        debouncedUpdate(localValue);
+        doUpdate(localValue,);
     };
 
     return (
@@ -54,20 +58,18 @@ const DebouncedAsyncTextField = <T,>({
             {...props}
             value={localValue}
             onChange={handleChange}
-            error={error}
+            error={!!error}
             helperText={
                 error ? (
-                    <Box sx={{ display: "flex", alignItems: "center" }}>
-                        Error occurred
+                    <Box component="span" sx={{ display: "flex", alignItems: "center" }}>
+                        <span>{error}</span>
                         <WithOptionalTooltip tooltip="Retry" >
                             <IconButton size="small" sx={{ ml: 1 }} onClick={handleRetry}>
                                 <ReplayIcon fontSize="small" />
                             </IconButton>
                         </WithOptionalTooltip>
                     </Box>
-                ) : (
-                    ""
-                )
+                ) : undefined
             }
             slotProps={{
                 ...props.slotProps,

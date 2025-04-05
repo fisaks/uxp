@@ -9,6 +9,7 @@ export { default as remoteAppReducer } from "./features/remote-app/remoteAppSlic
 export * from "./features/websocket/BrowserWebSocketManager";
 export * from "./features/websocket/WebSocketProvider";
 export * from "./util/processPatchUpdate";
+export * from "./util/browserErrorMessage";
 export * from "./features/websocket/useWebSocket";
 export * from "./hooks/useUxpDeviceId";
 export * from "./hooks/useSafeState";

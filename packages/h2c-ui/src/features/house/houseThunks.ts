@@ -1,5 +1,6 @@
 import { House } from "@h2c/common";
 import { createAsyncThunk } from "@reduxjs/toolkit";
+import { AxiosUtil } from "@uxp/common";
 import axios from "axios";
 import { getBaseUrl } from "../../config";
 import { createLoadingErrorAwareThunk } from "../loading-error/loadingErrorSlice";
@@ -24,13 +25,18 @@ export const deleteHouse = createAsyncThunk("houses/delete", async (houseuuid: s
 
 export const patchHouseField = createAsyncThunk(
     "house/patchHouseField",
-    async ({ entityId, field, value }: { entityId: string; field: string; value?: string }) => {
+    async ({ entityId, field, value }: { entityId: string; field: string; value?: string }, { rejectWithValue }) => {
         //await new Promise((resolve) => setTimeout(resolve, 1000));
-        const response = await axios.patch<House>(`${getBaseUrl()}/api/houses/${entityId}`, {
-            key: field,
-            value: value,
-        });
-        return response.data;
+        try {
+            const response = await axios.patch<House>(`${getBaseUrl()}/api/houses/${entityId}`, {
+                key: field,
+                value: value,
+            });
+            return response.data;
+        } catch (e: unknown) {
+            const error = AxiosUtil.getErrorResponse(e);
+            return rejectWithValue(error);
+        }
     }
 );
 

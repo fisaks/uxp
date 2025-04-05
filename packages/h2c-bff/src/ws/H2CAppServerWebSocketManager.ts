@@ -65,6 +65,18 @@ export class H2CAppServerWebSocketManager extends ServerWebSocketManager<H2CAppA
         this.broadcastToTopic(`document:${documentId}`, header, requestMeta);
     }
 
+    public broadcastDocumentDeleted({ documentId, requestMeta, id }: BroadcastDocumentSave) {
+        const header: H2CAppResponseMessage<"document:deleted"> = {
+            action: "document:deleted",
+            id: id,
+            success: true,
+            payload: {
+                documentId,
+            },
+        }
+        this.broadcastToTopic(`document:${documentId}`, header, requestMeta);
+    }
+
     public broadcastDocumentAwareness({ sender, documentId, update, requestMeta }: BroadcastDocumentAwareness) {
         const header: H2CAppResponseMessage<"document:awareness"> = {
             action: "document:awareness",

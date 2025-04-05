@@ -19,3 +19,15 @@
  * [X] take youtube plugin in to use in tiptap
  * [x] take collaboration info extension in to use in tiptap
  * [ ] create a file manager for uploaded files
+
+## House Management
+ * [ ] Placement of remove building icon
+ * [ ] Mark the house as named version
+ * [ ] Print and export the house with buildings
+ * [ ] Drag and drop the order of buildings
+
+ 
+## Document Editor
+ * [ ] Add ... in the menu to create version
+ * [ ] Add export in the menu open new html window where you have action print or export as pdf using html2pdf in the browser
+ * [ ] Add compare versions to ...

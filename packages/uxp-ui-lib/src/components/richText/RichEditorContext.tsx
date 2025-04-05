@@ -19,7 +19,7 @@ export interface RichTextEditorProps {
   retryUpload?: (id: string) => UploadStartedWithTrackingId;
   subscribeToUploadStatus?: (callback: UploadListener) => () => void;
   getUploadStatus?: (id: string) => UploadStatus | undefined;
-
+  notice?: string
 }
 
 

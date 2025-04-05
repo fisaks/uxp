@@ -24,6 +24,7 @@ export type DocumentActionPayloadResponseMap = {
     "document:full": DocumentFullPayload
     "document:updated": DocumentIdPayload
     "document:saved": DocumentIdPayload
+    "document:deleted": DocumentIdPayload
     "document:unsubscribed": DocumentIdPayload
     "document:awareness": DocumentIdPayload
 }

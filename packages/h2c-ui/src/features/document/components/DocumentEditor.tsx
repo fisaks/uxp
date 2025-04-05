@@ -1,14 +1,12 @@
 
-import { RichTextEditor, selectCurrentUser, useCollaborativeDoc, useUploadTracker } from "@uxp/ui-lib";
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo } from "react";
+import { RichTextEditor, useCollaborativeDoc, useUploadTracker } from "@uxp/ui-lib";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useState } from "react";
 import * as Y from "yjs";
 import { H2CAppErrorHandler, H2CAppWebSocketResponseListener, useH2CWebSocket } from "../../../app/H2CAppBrowserWebSocketManager";
 import { getBaseUrl } from "../../../config";
 
 import { H2CAppResponseMessage } from "@h2c/common";
-import { useSelector } from "react-redux";
-import { applyAwarenessUpdate, Awareness, encodeAwarenessUpdate } from "y-protocols/awareness";
-import { useTheme } from "@mui/material";
+import { applyAwarenessUpdate, encodeAwarenessUpdate } from "y-protocols/awareness";
 
 
 export interface DocumentEditorRef {
@@ -30,7 +28,7 @@ export const DocumentEditor = forwardRef<DocumentEditorRef, DocumentEditorProps>
 
     const uploadTracker = useUploadTracker()
     const imageBasePath = useMemo(() => `${getBaseUrl()}/api/file`, []);
-
+    const [editorNotice, setEditorNotice] = useState<string | undefined>();
     const listeners = useMemo(() => {
         return {
             "document:full": (message, data) => {
@@ -53,6 +51,9 @@ export const DocumentEditor = forwardRef<DocumentEditorRef, DocumentEditorProps>
                     applyAwarenessUpdate(awareness, data, "server");
                 }
             },
+            "document:deleted": (message) => {
+                setEditorNotice("This document is deleted. Edits won’t be preserved unless it’s restored.")
+            }
 
         } as H2CAppWebSocketResponseListener
     }, [])
@@ -120,6 +121,7 @@ export const DocumentEditor = forwardRef<DocumentEditorRef, DocumentEditorProps>
         yDoc={yDoc}
         awareness={awareness}
         editable={editable}
+        notice={editorNotice}
         {...uploadTracker}
     />
 

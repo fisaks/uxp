@@ -1,12 +1,15 @@
 import { DocumentType } from "@h2c/common";
 import { AppErrorV2, AppLogger, RequestMetaData } from "@uxp/bff-common";
 import { FastifyRequest } from "fastify";
+import { DateTime } from "luxon";
 import { QueryRunner } from "typeorm";
 import { WebSocket } from "ws";
 import * as Y from "yjs";
 import { DocumentEntity } from "../db/entities/DocumentEntity";
 import { SnapshotEntity } from "../db/entities/DSnapshotEntity";
 import { H2CAppServerWebSocketManager } from "../ws/H2CAppServerWebSocketManager";
+import { HouseEntity } from "../db/entities/HouseEntity";
+import { last } from "lodash";
 
 export class DocumentService {
     private queryRunner: QueryRunner;
@@ -70,19 +73,18 @@ export class DocumentService {
         const snapshotRepo = this.queryRunner.manager.getRepository(SnapshotEntity);
         const fullDocument = await this.getFullDocument(documentId);
 
-        //const yXmlFragment = fullDocument.document.getXmlFragment("default");
-        //const xmlContent = yXmlFragment.toArray().map(node => node.toString()).join("");
-        //const xmlContent =yXmlFragment.toDOM()
         const newDocument = documentRepo.create({
             documentId,
             content: Buffer.from(Y.encodeStateAsUpdate(fullDocument.document)),
-            documentType: fullDocument.documentType
+            documentType: fullDocument.documentType,
+            deleted: fullDocument.deleted,
+            removedAt: fullDocument.deleted ? DateTime.now() : undefined
         });
         await documentRepo.save(newDocument);
         await snapshotRepo.delete({ documentId });
 
         this.wsManager.broadcastDocumentSave({ documentId, requestMeta: this.requestMeta, id: asyncId });
-
+        AppLogger.info(this.requestMeta, { message: `Saved document ${documentId}` });
     }
 
     async getFullDocument(documentId: string) {
@@ -101,7 +103,7 @@ export class DocumentService {
         }
 
         const baseDoc = new Y.Doc();
-        const yXmlFragment = baseDoc.getXmlFragment("default");
+        // const yXmlFragment = baseDoc.getXmlFragment("default");
         // if (yXmlFragment.length === 0) {
         //   yXmlFragment.insert(0, [new Y.XmlElement("root")]);
         //}
@@ -150,13 +152,20 @@ export class DocumentService {
         //Y.applyUpdate(yDoc, mergedUpdate); 
         //Y.applyUpdate(yDoc, baseState); 
         //Y.applyUpdate(baseDoc, stateVector2); 
-        console.log("📜 Final document content:", baseDoc.getXmlFragment("default").toArray().map(node => node.toString()).join(""));
+        //console.log("📜 Final document content:", baseDoc.getXmlFragment("default").toArray().map(node => node.toString()).join(""));
 
         return {
             documentType: latestDoc.documentType,
-            document: baseDoc
+            document: baseDoc,
+            deleted: latestDoc.deleted
         }
 
+    }
+    async removeDocument(documentId: string, asyncId?: string | undefined) {
+        const documentRepo = this.queryRunner.manager.getRepository(DocumentEntity);
+        await documentRepo.update({ documentId }, { deleted: true, removedAt: DateTime.now() });
+        this.wsManager.broadcastDocumentDeleted({ documentId, requestMeta: this.requestMeta, id: asyncId });
+        AppLogger.info(this.requestMeta, { message: `Deleted document ${documentId}` });
     }
 
     async updateAwareness(socket: WebSocket, documentId: string, update: Uint8Array) {
