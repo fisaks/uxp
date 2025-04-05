@@ -1,4 +1,4 @@
-import { AddFieldKeySchema, FieldKeyByTypeSchema, FieldKeyType, NewFieldKeyPayload } from "@h2c/common";
+import { AddFieldKeySchema, FieldKeyByTypeSchema, FieldKeyType, NewFieldKeyPayload, RemoveFieldKeyPayload, RemoveFieldKeySchema } from "@h2c/common";
 import { Route, UseQueryRunner } from "@uxp/bff-common";
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { QueryRunner } from "typeorm";
@@ -16,7 +16,7 @@ export class FieldKeyController {
     async getFieldKeys(req: FastifyRequest<{ Querystring: { types: FieldKeyType | FieldKeyType[] } }>, reply: FastifyReply, queryRunner: QueryRunner) {
         const service = new FieldKeysService(req, queryRunner);
         const { types } = req.query;
-       
+
         const keys = await service.getAllByType(types);
         return keys;
     }
@@ -29,4 +29,14 @@ export class FieldKeyController {
         const key = await service.add(req.body.type, req.body.key);
         return key;
     }
+
+    @Route("delete", "/field-keys", { authenticate: true, roles: ["user"], schema: RemoveFieldKeySchema })
+    @UseQueryRunner()
+    async removeKey(req: FastifyRequest<{ Querystring: RemoveFieldKeyPayload }>, reply: FastifyReply, queryRunner: QueryRunner) {
+        const service = new FieldKeysService(req, queryRunner);
+
+        await service.remove(req.query.type, req.query.key);
+
+    }
+
 }

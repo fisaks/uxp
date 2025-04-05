@@ -1,6 +1,6 @@
 import { House } from "@h2c/common";
 import { createSlice } from "@reduxjs/toolkit";
-import { addHouse, deleteHouse, fetcHouses, patchHouseField } from "./houseThunks";
+import { addBuilding, addHouse, deleteHouse, fetcHouses, patchBuildingField, patchHouseField, removeBuilding } from "./houseThunks";
 
 type HouseState = {
     houses: House[];
@@ -26,7 +26,16 @@ const houseSlice = createSlice({
             })
             .addCase(patchHouseField.fulfilled, (state, action) => {
                 state.houses = [...state.houses.map((h) => (h.uuid === action.payload.uuid ? action.payload : h))];
-            });
+            })
+            .addCase(addBuilding.fulfilled, (state, action) => {
+                state.houses = state.houses.map((h) => h.uuid === action.payload.uuid ? action.payload : h);
+            })
+            .addCase(removeBuilding.fulfilled, (state, action) => {
+                state.houses = state.houses.map((h) => h.uuid === action.payload.uuid ? action.payload : h);
+            })
+            .addCase(patchBuildingField.fulfilled, (state, action) => {
+                state.houses = [...state.houses.map((h) => (h.uuid === action.payload.uuid ? action.payload : h))];
+            })
     },
 });
 

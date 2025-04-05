@@ -1,4 +1,4 @@
-import { AddBuildingSchema, HousePatchPayload, HousePatchSchema, RemoveBuildingSchema } from "@h2c/common";
+import { AddBuildingSchema, BuildingPatchSchema, HousePatchPayload, HousePatchSchema, RemoveBuildingSchema } from "@h2c/common";
 import { Route, UseQueryRunner } from "@uxp/bff-common";
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { QueryRunner } from "typeorm";
@@ -71,6 +71,23 @@ export class HouseController {
         const house = await houseService.removeBuilding(uuidHouse, uuidBuilding);
         return reply.code(200).send(HouseMapper.mapToHouseResponse(house));
     }
+
+    @Route("patch", "/houses/:uuidHouse/buildings/:uuidBuilding", { authenticate: true, roles: ["user"], schema: BuildingPatchSchema })
+    @UseQueryRunner()
+    async patchBuilding(
+        req: FastifyRequest<{ Params: { uuidHouse: string, uuidBuilding: string }; Body: HousePatchPayload }>,
+        reply: FastifyReply,
+        queryRunner: QueryRunner
+    ) {
+        const { uuidHouse, uuidBuilding } = req.params;
+        const { key, value } = req.body;
+
+        const houseService = new HouseService(req, queryRunner);
+        const updatedHouse = await houseService.patchBuilding(uuidHouse, uuidBuilding, key, value);
+
+        return reply.code(200).send(HouseMapper.mapToHouseResponse(updatedHouse));
+    }
+
 
     /**
      * GET /houses/:uuid

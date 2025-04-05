@@ -11,7 +11,7 @@ export type HouseData = {
 export type BuildingData = {
     uuid: string;
     name: string;
-    yearBuilt?: number;
+    yearBuilt?: string;
     documentId: string;
     details?: Record<string, string>;
 };
@@ -26,6 +26,11 @@ export type House = {
 } & HouseData;
 
 export type HousePatchPayload = {
+    key: string;
+    value?: string | null; // The new value for that field
+};
+
+export type BuildingPatchPayload = {
     key: string;
     value?: string | null; // The new value for that field
 };

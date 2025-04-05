@@ -1,14 +1,15 @@
 import { FormControlLabel, Paper, Radio, RadioGroup, Typography } from "@mui/material";
 
-import { UserSettingsPayload } from "@uxp/common";
+import { ThemeKeys, UserSettingsPayload } from "@uxp/common";
 import { CenteredBox, LoadingButton } from "@uxp/ui-lib";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import { useAppDispatch } from "../../hooks";
 import { selectIsLoading, selectIsProcessed } from "../loading/loadingSelectors";
 import { selectCurrentUser } from "../user/userSelectors";
 import { selectMySetting } from "./mySettingSelector";
 import { updateMySettings } from "./mySettingThunk";
+import Snowfall from "../theme/Snowfall";
 
 type SettingsDataProps = {
     staleData: UserSettingsPayload;
@@ -19,7 +20,7 @@ const settingsData = [
         title: "Theme",
         content: ({ staleData, setStaleData }: SettingsDataProps) => {
             const handleThemeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-                setStaleData((data) => ({ ...data, theme: event.target.value as "light" | "dracula" }));
+                setStaleData((data) => ({ ...data, theme: event.target.value as ThemeKeys }));
                 //setThemeMode(event.target.value as "light" | "dracula");
             };
 
@@ -27,6 +28,12 @@ const settingsData = [
                 <RadioGroup value={staleData.theme} onChange={handleThemeChange}>
                     <FormControlLabel value="light" control={<Radio />} label="Light Theme" />
                     <FormControlLabel value="dracula" control={<Radio />} label="Dracula Theme" />
+                    <FormControlLabel value="starWarsDarkSide" control={<Radio />} label="Star Wars Dark Side" />
+                    <FormControlLabel value="rebelAlliance" control={<Radio />} label="Rebel Alliance" />
+                    <FormControlLabel value="tatooine" control={<Radio />} label="Tatooine" />
+                    <FormControlLabel value="sunset" control={<Radio />} label="Sunset" />
+                    <FormControlLabel value="windsOfWinter" control={<Radio />} label="Winds Of Winter" />
+
                 </RadioGroup>
             );
         },
@@ -40,7 +47,7 @@ const MySettingsPage: React.FC = () => {
     const user = useSelector(selectCurrentUser());
     const [staleData, setStaleData] = useState<UserSettingsPayload>({ theme: mySetting?.theme });
     const dispatch = useAppDispatch();
-
+    const snow = useMemo(() => <Snowfall />, []);
     const update = () => {
         dispatch(updateMySettings(staleData));
     };
@@ -77,6 +84,7 @@ const MySettingsPage: React.FC = () => {
             >
                 Update Settings
             </LoadingButton>
+            {mySetting?.theme === "windsOfWinter" && snow}
         </CenteredBox>
     );
 };

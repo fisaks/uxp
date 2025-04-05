@@ -14,6 +14,7 @@ const H2CApp: React.FC = () => {
     return (
         <WebSocketConfig>
             <UxpTheme>
+
                 <RemoteAppListener />
 
                 <BrowserRouter basename={basePath}>

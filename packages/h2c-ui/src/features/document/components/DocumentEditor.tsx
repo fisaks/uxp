@@ -19,13 +19,14 @@ export interface DocumentEditorRef {
 type DocumentEditorProps = {
     documentId: string;
     editable?: boolean
+    label?: string
 }
 
 
-export const DocumentEditor = forwardRef<DocumentEditorRef, DocumentEditorProps>(({ documentId, editable }, ref) => {
+export const DocumentEditor = forwardRef<DocumentEditorRef, DocumentEditorProps>(({ documentId, editable, label }, ref) => {
 
 
-    const {yDoc, awareness} =useCollaborativeDoc()
+    const { yDoc, awareness } = useCollaborativeDoc()
 
     const uploadTracker = useUploadTracker()
     const imageBasePath = useMemo(() => `${getBaseUrl()}/api/file`, []);
@@ -114,7 +115,7 @@ export const DocumentEditor = forwardRef<DocumentEditorRef, DocumentEditorProps>
     }, [documentId]);
 
     return <RichTextEditor
-        label="Edit Document"
+        label={label ?? "Edit Document"}
         imageBasePath={imageBasePath}
         yDoc={yDoc}
         awareness={awareness}

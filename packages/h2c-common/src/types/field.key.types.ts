@@ -1,4 +1,4 @@
-export const fieldKeyTypes = ["building", "test"] as const;
+export const fieldKeyTypes = ["building"] as const;
 export type FieldKeyType = (typeof fieldKeyTypes)[number];
 
 export type FieldKey = {
@@ -13,6 +13,11 @@ export type NewFieldKeyPayload = {
     key: string
     type: FieldKeyType
 }
+export type RemoveFieldKeyPayload = {
+    key: string
+    type: FieldKeyType
+}
+
 export type GetFieldKeyByTypeResponse = {
     [key in FieldKeyType]?: FieldKey[];
 }

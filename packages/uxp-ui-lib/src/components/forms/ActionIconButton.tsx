@@ -4,6 +4,7 @@ import { Box, Button, CircularProgress, IconButton, Popover, Tooltip, Typography
 import { AsyncThunk, ThunkDispatch, UnknownAction } from "@reduxjs/toolkit";
 import React, { MouseEventHandler, useEffect, useMemo, useRef, useState } from "react";
 import { useThunkHandler } from "../../features/loading-error/useThunkHandler";
+import { WithOptionalTooltip } from "../layout/WithOptionalTooltip";
 
 type ActionIconButtonProps<Returned, Payload, RootState> = {
     thunk: AsyncThunk<Returned, Payload, {}>;
@@ -13,7 +14,7 @@ type ActionIconButtonProps<Returned, Payload, RootState> = {
     successDuration?: number;
     errorDuration?: number;
     tooltip?: string;
-
+    tooltipPortal?: React.RefObject<HTMLElement | null>;
     children: React.ReactNode;
 };
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -26,6 +27,7 @@ export const ActionIconButton = <Returned, Payload = void, RootState = any>({
     confirmMessage,
     children,
     tooltip,
+    tooltipPortal
 }: ActionIconButtonProps<Returned, Payload, RootState>) => {
     const [trigger, isLoading, error, done] = useThunkHandler(thunk, dispatch, successDuration);
     const theme = useTheme();
@@ -75,8 +77,9 @@ export const ActionIconButton = <Returned, Payload = void, RootState = any>({
 
     return (
         <div ref={drawerRootRef}>
-            <Tooltip title={tooltip} slotProps={{ popper: { container: drawerRootRef.current } }}>
+            <WithOptionalTooltip tooltip={tooltip} portalContainer={tooltipPortal}>
                 <IconButton
+                    aria-label={tooltip}
                     disabled={isLoading || done}
                     ref={buttonRef}
                     onClick={handleActionClick}
@@ -88,7 +91,7 @@ export const ActionIconButton = <Returned, Payload = void, RootState = any>({
                 >
                     {isLoading ? <CircularProgress size={24} /> : done ? <CheckCircleOutline color="success" /> : children}
                 </IconButton>
-            </Tooltip>
+            </WithOptionalTooltip>
 
             <Popover
                 container={drawerRootRef.current}

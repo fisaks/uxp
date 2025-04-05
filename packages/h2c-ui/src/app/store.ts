@@ -3,6 +3,7 @@ import { remoteAppReducer,uploadTrackingReducer } from "@uxp/ui-lib";
 import { createLogger } from "redux-logger";
 
 import houseReducer from "../features/house/houseSlice";
+import fieldKeyReducer from "../features/field-key/fieldKeySlice";
 import loadingErrorReducer from "../features/loading-error/loadingErrorSlice";
 
 export const createStore = () => {
@@ -18,6 +19,7 @@ export const createStore = () => {
             loadingError: loadingErrorReducer,
             houses: houseReducer,
             uploadTracking: uploadTrackingReducer,
+            fieldKeys: fieldKeyReducer
         },
         devTools: process.env.NODE_ENV === "development",
         middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(logger),

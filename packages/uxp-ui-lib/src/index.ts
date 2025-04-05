@@ -11,6 +11,7 @@ export * from "./features/websocket/WebSocketProvider";
 export * from "./util/processPatchUpdate";
 export * from "./features/websocket/useWebSocket";
 export * from "./hooks/useUxpDeviceId";
+export * from "./hooks/useSafeState";
 export * from "./hooks/useCollaborativeDoc";
 export * from "./features/upload-tracking/uploadTrackingSlice";
 export { default as uploadTrackingReducer } from "./features/upload-tracking/uploadTrackingSlice";

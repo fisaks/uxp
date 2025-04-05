@@ -1,6 +1,6 @@
 import { createLoadingErrorSlice } from "@uxp/ui-lib";
 
-const actionNames = ["houses/fetch"] as const;
+const actionNames = ["houses/fetch", "fieldKeys/fetch", "fieldKeys/add", "fieldKeys/remove"] as const;
 export type AppGlobalActionNames = (typeof actionNames)[number];
 
 const { createLoadingErrorAwareThunk, selectActionError, selectActionIsLoaded, selectActionIsLoading, slice } = createLoadingErrorSlice(

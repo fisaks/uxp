@@ -1,5 +1,5 @@
 import { SchemaValidate } from "@uxp/common";
-import { HousePatchPayload } from "../types/house.types";
+import { BuildingPatchPayload, HousePatchPayload } from "../types/house.types";
 
 export const HousePatchSchema: SchemaValidate<HousePatchPayload, undefined, { uuid: string }> = {
     body: {
@@ -8,7 +8,18 @@ export const HousePatchSchema: SchemaValidate<HousePatchPayload, undefined, { uu
             key: {
                 type: "string",
                 pattern:
-                    "^(name|address|yearBuilt|legalRegistrationNumber|details\\.[a-zA-Z0-9_]{1,50}|buildings\\[\\d+\\]\\.[a-zA-Z0-9_]{1,50})$",
+                    [
+                        "^(",
+                        "name|",
+                        "address|",
+                        "yearBuilt|",
+                        "legalRegistrationNumber|",
+                        "details\\.[\\p{Any}]{1,50}|",
+                        "buildings\\[\\d+\\]\\.yearBuilt|",
+                        "buildings\\[\\d+\\]\\.name|",
+                        "buildings\\[\\d+\\]\\.details\\.[\\p{Any}]{1,50}",
+                        ")$"
+                    ].join("")
             },
             value: { type: "string", nullable: true, maxLength: 512 }, // Allow any value type
         },
@@ -21,6 +32,36 @@ export const HousePatchSchema: SchemaValidate<HousePatchPayload, undefined, { uu
             uuid: { type: "string", format: "uuid" },
         },
         required: ["uuid"],
+    },
+};
+
+export const BuildingPatchSchema: SchemaValidate<BuildingPatchPayload, undefined, { uuidHouse: string, uuidBuilding: string }> = {
+    body: {
+        type: "object",
+        properties: {
+            key: {
+                type: "string",
+                pattern:
+                    [
+                        "^(",
+                        "name|",
+                        "yearBuilt|",
+                        "details\\.[\\p{Any}]{1,50}|",
+                        ")$"
+                    ].join("")
+            },
+            value: { type: "string", nullable: true, maxLength: 512 }, // Allow any value type
+        },
+        required: ["key"],
+        additionalProperties: false,
+    },
+    params: {
+        type: "object",
+        properties: {
+            uuidHouse: { type: "string", format: "uuid" },
+            uuidBuilding: { type: "string", format: "uuid" },
+        },
+        required: ["uuidHouse", "uuidBuilding"],
     },
 };
 

@@ -22,10 +22,10 @@ export const DefaultBuildingData: Omit<BuildingData, "uuid" | "documentId"> = Ob
 
 export class HouseService {
     private queryRunner: QueryRunner;
-    private requestMeta: RequestMetaData ;
+    private requestMeta: RequestMetaData;
     constructor(requestMeta: FastifyRequest | RequestMetaData, queryRunner: QueryRunner) {
         this.queryRunner = queryRunner;
-        this.requestMeta = AppLogger.extractMetadata(requestMeta,true)!;
+        this.requestMeta = AppLogger.extractMetadata(requestMeta, true)!;
     }
 
     async addHouse(): Promise<HouseEntity> {
@@ -60,6 +60,31 @@ export class HouseService {
 
         const updatedHouse = await this.saveHouse(house);
         AppLogger.info(this.requestMeta, { message: `Updated house ${uuid} with key ${key} and value ${value}` });
+        return updatedHouse;;
+
+    }
+
+    async patchBuilding(uuidHouse: string, uuidBuilding: string, key: string, value: string | null | undefined): Promise<HouseEntity> {
+
+        const house = await this.findHouseByUuid(uuidHouse);
+        if (!house) {
+            throw new AppErrorV2({ statusCode: 404, code: "NOT_FOUND", message: `House not found by uuid ${uuidHouse}` });
+        }
+        await this.ensureHouseData(house);
+
+        house.data.buildings = house.data.buildings.map((building) => {
+            if (building.uuid === uuidBuilding) {
+                if (value === undefined) {
+                    _.unset(building, key);
+                } else {
+                    _.set(building, key, value);
+                }
+            }
+            return building;
+        });
+
+        const updatedHouse = await this.saveHouse(house);
+        AppLogger.info(this.requestMeta, { message: `Updated building ${uuidBuilding} from house ${uuidHouse} with key ${key} and value ${value}` });
         return updatedHouse;;
 
     }

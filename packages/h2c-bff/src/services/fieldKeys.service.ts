@@ -1,5 +1,5 @@
 import { FieldKeyType, FieldKeyWithType, GetFieldKeyByTypeResponse } from "@h2c/common";
-import { AppErrorV2, AppLogger, RequestMetaData } from "@uxp/bff-common";
+import { AppLogger, RequestMetaData } from "@uxp/bff-common";
 import { FastifyRequest } from "fastify";
 import { QueryRunner } from "typeorm";
 import { FieldKeyEntity } from "../db/entities/FieldKeyEntity";
@@ -35,7 +35,6 @@ export class FieldKeysService {
     async add(type: FieldKeyType, key: string): Promise<FieldKeyWithType> {
         const repo = this.queryRunner.manager.getRepository(FieldKeyEntity);
         const trimmed = key.trim();
-        if (!trimmed) throw new AppErrorV2({ statusCode: 400, code: "VALIDATION", message: "Key cannot be empty" });
 
         const normalized = trimmed.toLowerCase();
 
@@ -49,6 +48,16 @@ export class FieldKeysService {
         });
 
         return await repo.save(newKey).then(key => ({ key: key.key, normalizedKey: key.normalizedKey, type: key.type } as FieldKeyWithType));
+    }
+
+    async remove(type: FieldKeyType, key: string): Promise<void> {
+        const repo = this.queryRunner.manager.getRepository(FieldKeyEntity);
+        const trimmed = key.trim();
+
+        const normalized = trimmed.toLowerCase();
+
+        await repo.delete({ type, normalizedKey: normalized });
+
     }
 
 }

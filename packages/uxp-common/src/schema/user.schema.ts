@@ -134,7 +134,7 @@ export const UserSettingsSchema: SchemaValidate<Required<UserSettingsPayload>> =
         type: "object",
         properties: {
             //theme: { type: "string", enum: ["dracula", "light"] },
-            theme: { type: "string", enum: ["dracula", "light"] },
+            theme: { type: "string", enum: ["dracula", "light", "starWarsDarkSide", "tatooine", "rebelAlliance", "sunset","windsOfWinter"] },
         },
         required: [],
     },

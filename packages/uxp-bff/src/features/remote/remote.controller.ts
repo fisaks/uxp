@@ -143,7 +143,9 @@ export class RemoteController {
     ) {
         const { appIdentifier } = req.params;
 
-        const resourcePath = req.raw.url!.replace(`/api/content/resource/${appIdentifier}/`, "");
+        const fullPath = req.raw.url!.replace(`/api/content/resource/${appIdentifier}/`, "");
+        const [resourcePath, rawQuery] = fullPath.split("?", 2); // Split on first '?'
+
 
         const app = (await queryRunner.manager.getRepository(AppEntity).findOneBy({ identifier: appIdentifier })) as AppEntity | null;
 
@@ -163,8 +165,11 @@ export class RemoteController {
             const config = { ...(app.config ?? {}) };
             const { contextPath } = config;
             const { baseUrl } = app;
-            const targetUrl = buildUrlWithParams({ hostname: baseUrl, contextPath, resourceParts: [resourcePath] });
+            let targetUrl = buildUrlWithParams({ hostname: baseUrl, contextPath, resourceParts: [resourcePath] });
 
+            if (rawQuery) {
+                targetUrl += `?${rawQuery}`; // Append query string manually
+            }
             AppLogger.info(req, { message: `Remote url is ${targetUrl}` });
 
             const reqHeaders = { ...req.headers };
