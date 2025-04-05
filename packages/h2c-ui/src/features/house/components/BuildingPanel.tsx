@@ -30,7 +30,7 @@ export const BuildingPanel = ({ building, houseUuid, editMode }: BuildingPanelPr
 
                     <Grid2 container spacing={2} columns={{ xs: 12, md: 12, }}>
 
-                        <Grid2 size={{ xs: 12, md: 10 }} >
+                        <Grid2 size={{ xs: 12, md: 10 }} sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                             <DebouncedAsyncTextField<BuildingData>
                                 fullWidth
                                 label="Building Name"
@@ -40,6 +40,15 @@ export const BuildingPanel = ({ building, houseUuid, editMode }: BuildingPanelPr
                                 asyncAction={handlePatchBuildingField}
 
                             />
+                            {editMode && <ActionIconButton
+                                thunk={removeBuilding}
+                                dispatch={dispatch}
+                                payload={{ houseUuid: houseUuid, buildingUuid: building.uuid }}
+                                confirmMessage={building.name ? `Are you sure you want to delete the ${building.name} building?` : "Are you sure you want to delete this building?"}
+                                tooltip={`Delete Building ${building.name}`}
+                            >
+                                <DeleteIcon sx={{ color: theme.palette.error.main }} />
+                            </ActionIconButton>}
                         </Grid2>
                         <Grid2 size={{ xs: 12, md: 2 }}>
                             <DebouncedAsyncTextField<BuildingData>
@@ -90,16 +99,6 @@ export const BuildingPanel = ({ building, houseUuid, editMode }: BuildingPanelPr
                     </Grid2>
                 </Box>
             </Box>
-            <ActionIconButton
-                thunk={removeBuilding}
-                dispatch={dispatch}
-                payload={{ houseUuid: houseUuid, buildingUuid: building.uuid }}
-                confirmMessage={building.name ? `Are you sure you want to delete the ${building.name} building?` : "Are you sure you want to delete this building?"}
-                tooltip="Delete Building"
-            >
-                <DeleteIcon sx={{ color: theme.palette.error.main }} />
-            </ActionIconButton>
-
         </Box>
     );
 }
