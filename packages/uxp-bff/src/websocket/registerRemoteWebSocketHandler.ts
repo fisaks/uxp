@@ -52,7 +52,7 @@ export function registerRemoteWebSocketHandler({ fastify: app, dataSource }: { f
 
             const remoteSocket = await connectToRemoteApp(request, app, MAX_CONNECT_ATTEMPTS);
             if (!remoteSocket) {
-                return sendErrorAndClose(clientSocket, request, `uxp/remote_action`,
+                return sendErrorAndClose(clientSocket, request, `uxp/remote_connection`,
                     {
                         code: ErrorCodes.INTERNAL_SERVER_ERROR,
                         message: `Failed to connect to remote WebSocket`,
@@ -303,7 +303,7 @@ function setupWebSocketProxy(clientSocket: WebSocket, remoteSocket: WebSocket, r
 
             client.socket.send(
                 createErrorMessageResponse(request, "uxp/remote_connection", {
-                    code: ErrorCodes.INTERNAL_SERVER_ERROR,
+                    code: ErrorCodes.DISCONNECTED,
                     message: "Remote WebSocket closed",
                 }, undefined)
             );

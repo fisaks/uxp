@@ -14,7 +14,7 @@ export type WebSocketResponseEventHandler<Action extends WebSocketAction<ActionP
     (message: WebSocketResponse<Action, ActionPayloadMap>, data?: Uint8Array) => void;
 
 export type ReconnectDetails = {
-    phase: "scheduled" | "trying" | "success" | "failed";
+    phase: "scheduled" | "trying" | "success" | "failed" | "remote_recovering" | "remote_down" | "remote_up";
     delay?: number;
     reconnectAttempts: number;
     maxReconnectAttempts: number;
@@ -198,11 +198,26 @@ export class BrowserWebSocketManager<
                 return;
             }
 
-
+            if (message.action === "uxp/remote_connection") {
+                if (!message.success) {
+                    this.handleReconnect({
+                        phase: message.error?.code === ErrorCodes.DISCONNECTED ? "remote_recovering" : "remote_down",
+                        reconnectAttempts: 1,
+                        maxReconnectAttempts: 1
+                    });
+                } else {
+                    this.handleReconnect({
+                        phase: "remote_up",
+                        reconnectAttempts: 1,
+                        maxReconnectAttempts: 1
+                    });
+                }
+            }
             if (!message.success && message.error) {
                 this.handleError(message.action, message.error, message.errorDetails);
                 return;
             }
+
 
             this.dispatchMessage(message);
         } catch (error) {
