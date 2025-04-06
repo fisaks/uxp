@@ -1,6 +1,7 @@
 
 import { H2CAppActionPayloadRequestMap, H2CAppActionPayloadResponseMap } from "@h2c/common";
-import { BrowserWebSocketManager, ErrorHandler, useWebSocket, WebSocketResponseListenerObj } from "@uxp/ui-lib";
+import { WebSocketAction } from "@uxp/common";
+import { BrowserWebSocketManager, ErrorHandler, SubscriptionOptions, useWebSocket, useWebSocketSubscription, WebSocketResponseListenerObj } from "@uxp/ui-lib";
 import { getWSPath } from "../config";
 
 export type H2CAppWebSocketResponseListener = WebSocketResponseListenerObj<H2CAppActionPayloadResponseMap>
@@ -28,3 +29,9 @@ export class H2CAppBrowserWebSocketManager extends BrowserWebSocketManager<H2CAp
 
 export const useH2CWebSocket = (listeners?: H2CAppWebSocketResponseListener, onError?: H2CAppErrorHandler) =>
     useWebSocket<H2CAppActionPayloadRequestMap, H2CAppActionPayloadResponseMap>(listeners, onError);
+const ResubscribeOn = ["uxp/remote_connection"] as WebSocketAction<H2CAppActionPayloadResponseMap>[];
+export const useH2CWebSocketSubscription = <A extends WebSocketAction<H2CAppActionPayloadRequestMap>>(options: Omit<SubscriptionOptions<H2CAppActionPayloadRequestMap, H2CAppActionPayloadResponseMap, A>, "resubscribeOn">) =>
+    useWebSocketSubscription<H2CAppActionPayloadRequestMap, H2CAppActionPayloadResponseMap, A>({
+        ...options,
+        resubscribeOn: ResubscribeOn,
+    });

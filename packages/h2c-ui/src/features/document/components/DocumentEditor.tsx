@@ -2,7 +2,7 @@
 import { RichTextEditor, useCollaborativeDoc, useUploadTracker, YDocVersionDetail } from "@uxp/ui-lib";
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useState } from "react";
 import * as Y from "yjs";
-import { H2CAppErrorHandler, H2CAppWebSocketResponseListener, useH2CWebSocket } from "../../../app/H2CAppBrowserWebSocketManager";
+import { H2CAppErrorHandler, H2CAppWebSocketResponseListener, useH2CWebSocket, useH2CWebSocketSubscription } from "../../../app/H2CAppBrowserWebSocketManager";
 import { getBaseUrl } from "../../../config";
 
 import { H2CAppResponseMessage } from "@h2c/common";
@@ -61,10 +61,13 @@ export const DocumentEditor = forwardRef<DocumentEditorRef, DocumentEditorProps>
 
     const errorHandler: H2CAppErrorHandler = useCallback((({ action, error, errorDetails }) => {
         console.error("[DocumentEditor] Error", action, error, errorDetails);
+        if(action.startsWith("document:")) {
+            setEditorNotice("We are receiving errors from the server. Document updates may not be saved. Please try again later.");
+        }
         return false;
     }) as H2CAppErrorHandler, [])
 
-    const { sendBinaryMessage, sendMessage, sendMessageAsync } = useH2CWebSocket(listeners, errorHandler);
+    const { sendBinaryMessage, sendMessageAsync } = useH2CWebSocket(listeners, errorHandler);
     useEffect(() => {
         const onAwarenessUpdate = (
             { added, updated, removed }: { added: number[]; updated: number[]; removed: number[] },
@@ -113,13 +116,18 @@ export const DocumentEditor = forwardRef<DocumentEditorRef, DocumentEditorProps>
 
     }, []);
 
+    useH2CWebSocketSubscription({
+        action: "document:subscribe",
+        payload: { documentId }
+    });
 
-    useEffect(() => {
-        sendMessage("document:subscribe", { documentId })
-        return () => {
-            sendMessage("document:unsubscribe", { documentId })
-        }
-    }, [documentId]);
+
+    /*    useEffect(() => {
+            sendMessage("document:subscribe", { documentId })
+            return () => {
+                sendMessage("document:unsubscribe", { documentId })
+            }
+        }, [documentId]);*/
 
     return <RichTextEditor
         label={label ?? "Edit Document"}

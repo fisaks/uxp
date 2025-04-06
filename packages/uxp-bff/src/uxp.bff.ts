@@ -1,5 +1,3 @@
-process.env.TZ = "UTC";
-
 import fastifyWebsocket from "@fastify/websocket";
 import Fastify, { FastifyRequest } from "fastify";
 import env from "./config/env";
@@ -14,9 +12,7 @@ import {
     HandlerRegistry,
     IsProd,
     jwtPlugin,
-    registerLocalWebSocketHandlers,
-    registerRoutes,
-    Token,
+    registerRoutes
 } from "@uxp/bff-common";
 import "@uxp/bff-common/dist/health/health.controller";
 import { ValidateGlobalConfigValue } from "@uxp/common";
@@ -53,10 +49,10 @@ fastify.register(fastifyCookie);
 fastify.register(jwtPlugin);
 fastify.register(fastifyWebsocket);
 declare module "fastify" {
-    
+
     interface FastifyRequest {
         uxpRaw?: boolean;
-    
+
     }
 }
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

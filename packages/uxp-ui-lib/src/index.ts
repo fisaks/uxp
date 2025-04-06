@@ -12,6 +12,7 @@ export * from "./util/processPatchUpdate";
 export * from "./util/browserErrorMessage";
 export * from "./util/SanitizedProps";
 export * from "./features/websocket/useWebSocket";
+export * from "./features/websocket/useWebSocketSubscription";
 export * from "./hooks/useUxpDeviceId";
 export * from "./hooks/useSafeState";
 export * from "./hooks/useCollaborativeDoc";

@@ -29,6 +29,7 @@ export type DocumentActionPayloadResponseMap = {
     "document:deleted": DocumentIdPayload
     "document:unsubscribed": DocumentIdPayload
     "document:awareness": DocumentIdPayload
+    
 }
 
 export const DocumentIdSchema: MessagePayloadSchema<DocumentIdPayload> = {

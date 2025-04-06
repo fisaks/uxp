@@ -1,5 +1,5 @@
 import { ACCESS_TOKEN, AppLogger, createErrorMessageResponse, Token } from "@uxp/bff-common";
-import { buildPath, ErrorCodes, ErrorDetail } from "@uxp/common";
+import { buildPath, ErrorCodes, ErrorDetail, GenericWebSocketResponse } from "@uxp/common";
 import { FastifyInstance, FastifyRequest } from "fastify";
 import { DataSource } from "typeorm";
 import { RawData, WebSocket } from "ws";
@@ -20,7 +20,7 @@ export function registerRemoteWebSocketHandler({ fastify: app, dataSource }: { f
             const app = await getRemoteApp(dataSource, appId);
 
             if (!app) {
-                return sendErrorAndClose(clientSocket, request, `${appId}/remote_action`,
+                return sendErrorAndClose(clientSocket, request, `uxp/remote_action`,
                     {
                         code: ErrorCodes.NOT_FOUND,
                         message: `Remote app ${appId} not found`
@@ -41,7 +41,7 @@ export function registerRemoteWebSocketHandler({ fastify: app, dataSource }: { f
             }
 
             if (!user && !app.config.wsPublic) {
-                return sendErrorAndClose(clientSocket, request, `${appId}/remote_action`,
+                return sendErrorAndClose(clientSocket, request, `uxp/remote_action`,
                     {
                         code: ErrorCodes.UNAUTHORIZED,
                         message: `Unauthorized access`,
@@ -52,7 +52,7 @@ export function registerRemoteWebSocketHandler({ fastify: app, dataSource }: { f
 
             const remoteSocket = await connectToRemoteApp(request, app, MAX_CONNECT_ATTEMPTS);
             if (!remoteSocket) {
-                return sendErrorAndClose(clientSocket, request, `${appId}/remote_action`,
+                return sendErrorAndClose(clientSocket, request, `uxp/remote_action`,
                     {
                         code: ErrorCodes.INTERNAL_SERVER_ERROR,
                         message: `Failed to connect to remote WebSocket`,
@@ -300,11 +300,24 @@ function setupWebSocketProxy(clientSocket: WebSocket, remoteSocket: WebSocket, r
         stopMessageForwarding();
 
         if (client.socket.readyState === WebSocket.OPEN) {
+
+            client.socket.send(
+                createErrorMessageResponse(request, "uxp/remote_connection", {
+                    code: ErrorCodes.INTERNAL_SERVER_ERROR,
+                    message: "Remote WebSocket closed",
+                }, undefined)
+            );
+
             const newRemoteSocket = await reconnectRemoteSocket(request, app, client.socket);
             if (!newRemoteSocket) {
                 closeSockets();
                 return;
             }
+            client.socket.send(
+                JSON.stringify({
+                    success: true,
+                    action: "uxp/remote_connection",
+                }));
             sockets[REMOTE].socket.removeAllListeners();
             const newRemote = setupPingPong(newRemoteSocket, request, "remote");
             newRemote.socket.on("error", onRemoteError);

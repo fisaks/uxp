@@ -1,4 +1,5 @@
 import { ErrorDetail } from "../error/error.types";
+import { ErrorCode } from "../error/ErrorCodes";
 
 export const MAGIC_BINARY_PREFIX = "BIN!";
 
@@ -34,3 +35,13 @@ export type GenericActionPayloadMap = {
 
 export type GenericWebSocketMessage = WebSocketMessage<string, GenericActionPayloadMap>
 export type GenericWebSocketResponse = WebSocketResponse<string, GenericActionPayloadMap>
+
+export type RemoteActionFailedPayload = {
+    code: ErrorCode
+    message?: string
+}
+export type UxpActionPayloadResponseMap = {
+    "uxp/remote_action": RemoteActionFailedPayload
+    "uxp/remote_connection": undefined
+
+}

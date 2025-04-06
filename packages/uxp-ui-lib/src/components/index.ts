@@ -17,6 +17,8 @@ export * from "./forms/AsyncIconButton";
 export * from "./layout/AppBodyContent";
 export * from "./layout/InLineError";
 export * from "./layout/InlineSuccess";
+export * from "./layout/GlobalErrorOverlay";
+export * from "./layout/ReconnectBanner";
 export { default as CenteredBox } from "./layout/CenteredBox";
 export * from "./layout/LeftSideBar";
 export * from "./layout/LinearProgressWithLabel";

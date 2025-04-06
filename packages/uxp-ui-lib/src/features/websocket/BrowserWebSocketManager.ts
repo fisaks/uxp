@@ -13,6 +13,13 @@ export type WebSocketResponseListener<Action extends WebSocketAction<ActionPaylo
 export type WebSocketResponseEventHandler<Action extends WebSocketAction<ActionPayloadMap>, ActionPayloadMap> =
     (message: WebSocketResponse<Action, ActionPayloadMap>, data?: Uint8Array) => void;
 
+export type ReconnectDetails = {
+    phase: "scheduled" | "trying" | "success" | "failed";
+    delay?: number;
+    reconnectAttempts: number;
+    maxReconnectAttempts: number;
+}
+export type ReconnectListener = (details: ReconnectDetails) => void
 export class WebSocketTimeoutError<ActionPayloadRequestMap, ActionPayloadResponseMap> extends Error {
     action: WebSocketActionUnion<ActionPayloadRequestMap, ActionPayloadResponseMap>;
     timeoutMs: number;
@@ -80,7 +87,7 @@ export class BrowserWebSocketManager<
 
     private errorHandlers: ErrorHandler<ActionPayloadRequestMap, ActionPayloadResponseMap>[] = [];
     private globalErrorHandler?: ErrorHandler<ActionPayloadRequestMap, ActionPayloadResponseMap>;
-
+    private reconnectListeners: ReconnectListener[] = [];
 
     protected constructor(protected url: string) { }
 
@@ -99,10 +106,18 @@ export class BrowserWebSocketManager<
                 clearTimeout(this.reconnectTimeoutId);
                 this.reconnectTimeoutId = null;
             }
+            if (this.isReconnecting) {
+                this.handleReconnect({
+                    phase: "success",
+                    reconnectAttempts: this.reconnectAttempts,
+                    maxReconnectAttempts: this.maxReconnectAttempts
+                });
+            }
             this.reconnectAttempts = 0;
             this.isConnected = true;
             this.isReconnecting = false;
             this.reconnectTimeout = INITIAL_RECONNECT_TIMEOUT;
+
         };
 
         this.socket.onmessage = (event) => {
@@ -128,6 +143,14 @@ export class BrowserWebSocketManager<
                 return;
             }
             console.warn(`[WebSocket] Disconnected (code: ${event.code}, reason: ${event.reason || "Unknown"})`);
+            if (this.isReconnecting) {
+                this.handleReconnect({
+                    phase: "failed",
+                    reconnectAttempts: this.reconnectAttempts,
+                    maxReconnectAttempts: this.maxReconnectAttempts
+                });
+
+            }
             this.reconnect();
         };
     }
@@ -152,6 +175,16 @@ export class BrowserWebSocketManager<
         if (!isHandled && this.globalErrorHandler) {
             this.globalErrorHandler({ action, error, errorDetails });
         }
+    }
+
+    private handleReconnect(details: ReconnectDetails) {
+        this.reconnectListeners.forEach((listener) => {
+            try {
+                listener(details);
+            } catch (error) {
+                console.error("[WebSocket] Error in reconnect listener:", error);
+            }
+        });
     }
 
     private handleTextMessage(data: string) {
@@ -227,12 +260,14 @@ export class BrowserWebSocketManager<
     }
 
 
-
-    private reconnect() {
-        if (this.isReconnecting) {
-            console.warn("[WebSocket] Reconnect already in progress, skipping.");
-            return;
+    clearReconnectDetails() {
+        this.reconnectAttempts = 0;
+        if (this.reconnectTimeoutId) {
+            clearTimeout(this.reconnectTimeoutId);
+            this.reconnectTimeoutId = null;
         }
+    }
+    private reconnect() {
 
         if (this.reconnectAttempts >= this.maxReconnectAttempts) {
             console.error("[WebSocket] Max reconnection attempts reached. Giving up.");
@@ -243,8 +278,18 @@ export class BrowserWebSocketManager<
         console.log(`[WebSocket] Reconnecting in ${delay / 1000} seconds...`);
 
         this.reconnectAttempts++;
-
+        this.handleReconnect({
+            phase: "scheduled",
+            delay,
+            reconnectAttempts: this.reconnectAttempts,
+            maxReconnectAttempts: this.maxReconnectAttempts
+        });
         this.reconnectTimeoutId = setTimeout(() => {
+            this.handleReconnect({
+                phase: "trying",
+                reconnectAttempts: this.reconnectAttempts,
+                maxReconnectAttempts: this.maxReconnectAttempts
+            });
             this.connect();
         }, delay);
     }
@@ -298,12 +343,8 @@ export class BrowserWebSocketManager<
 
     sendBinaryData<Action extends WebSocketAction<ActionPayloadRequestMap>>
         (message: WebSocketMessage<Action, ActionPayloadRequestMap>, data: ArrayBuffer | Uint8Array) {
-        if (this.socket?.readyState === WebSocket.OPEN) {
-            const messageBuffer = createBinaryMessage(message, data);
-            this.sendData(message.action, messageBuffer);
-        } else {
-            console.warn("[WebSocket] not connected. Unable to send message.");
-        }
+        const messageBuffer = createBinaryMessage(message, data);
+        this.sendData(message.action, messageBuffer);
     }
 
 
@@ -380,6 +421,14 @@ export class BrowserWebSocketManager<
     offError(handler: ErrorHandler<ActionPayloadRequestMap, ActionPayloadResponseMap>) {
         this.errorHandlers = this.errorHandlers.filter((h) => h !== handler);
     }
+    onReconnect(handler: ReconnectListener) {
+        if (!this.reconnectListeners.includes(handler)) {
+            this.reconnectListeners.push(handler);
+        }
+    }
+    offReconnect(handler: ReconnectListener) {
+        this.reconnectListeners = this.reconnectListeners.filter((h) => h !== handler);
+    }
 
     getConnectionStatus() {
         return this.isConnected;
@@ -391,6 +440,7 @@ export class BrowserWebSocketManager<
                 this.socket.send(data);
             } else {
                 console.warn("[WebSocket] not connected. Unable to send message.");
+                this.handleError(action, { code: ErrorCodes.BROWSER_SEND_ERROR }, { message: "Error sending data" });
             }
         } catch (error) {
             console.error("[WebSocket] Error sending data:", error);

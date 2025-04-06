@@ -1,7 +1,8 @@
 import { WebSocketAction } from "@uxp/common";
 import { useEffect, useRef } from "react";
-import { BrowserWebSocketManager, ErrorHandler, WebSocketResponseEventHandler, WebSocketResponseListenerObj } from "./BrowserWebSocketManager";
+import { BrowserWebSocketManager, ErrorHandler, ReconnectDetails, ReconnectListener, WebSocketResponseEventHandler, WebSocketResponseListenerObj } from "./BrowserWebSocketManager";
 import { WebSocketContext } from "./WebSocketContext";
+
 
 
 
@@ -12,6 +13,7 @@ interface WebSocketProviderProps<
     wsInstance: BrowserWebSocketManager<ActionPayloadRequestMap, ActionPayloadResponseMap>;
     listeners: WebSocketResponseListenerObj<ActionPayloadResponseMap>
     onError: ErrorHandler<ActionPayloadRequestMap, ActionPayloadResponseMap>,
+    reconnectListener?: ReconnectListener;
     children: React.ReactNode;
 }
 
@@ -19,6 +21,7 @@ export const WebSocketProvider = <ActionPayloadRequestMap, ActionPayloadResponse
     wsInstance,
     listeners,
     onError,
+    reconnectListener,
     children,
 }: WebSocketProviderProps<ActionPayloadRequestMap, ActionPayloadResponseMap>) => {
     const eventHandlersAttached = useRef(false);
@@ -52,6 +55,16 @@ export const WebSocketProvider = <ActionPayloadRequestMap, ActionPayloadResponse
             wsInstance.setGlobalErrorHandler(undefined);
         };
     }, [wsInstance, onError]);
+
+    useEffect(() => {
+        if (reconnectListener) {
+            wsInstance.onReconnect(reconnectListener);
+        }
+        return () => {
+            if (reconnectListener)
+                wsInstance.offReconnect(reconnectListener)
+        };
+    }, [wsInstance, reconnectListener]);
 
     return <WebSocketContext.Provider value={{ wsInstance }}>
         {children}
