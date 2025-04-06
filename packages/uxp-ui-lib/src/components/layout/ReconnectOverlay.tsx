@@ -69,6 +69,17 @@ export const ReconnectOverlay: React.FC<ReconnectOverlayProps> = ({ details, onR
     const [inUseDetails, setInUseDetails] = useState<ReconnectDetails | undefined>(undefined);
     const remoteError = useRef(false);
 
+    const handleDismissed = () => {
+        setDismissed(true);
+        setVisible(false);
+        remoteError.current = false;
+        if (progressTimer.current) {
+            clearInterval(progressTimer.current);
+            progressTimer.current = null;
+        }
+        setProgress(100);
+    };
+
     useEffect(() => {
         if (!details) {
             setVisible(false);
@@ -146,35 +157,42 @@ export const ReconnectOverlay: React.FC<ReconnectOverlayProps> = ({ details, onR
     return (
         <Fade in={visible && !dismissed} timeout={{ enter: 2000, exit: 3000 }}  >
             <Box
-                sx={{
+                sx={(theme) => ({
                     position: 'fixed',
                     top: 0,
                     left: 0,
                     right: 0,
                     bottom: 0,
                     zIndex: 2000,
-                    backgroundColor: 'rgba(255, 255, 255, 0.3)', // light blur tone
+                    backgroundColor: theme.palette.mode === 'dark'
+                        ? 'rgba(0, 0, 0, 0.4)'
+                        : 'rgba(255, 255, 255, 0.4)',
                     backdropFilter: 'blur(6px)',
                     WebkitBackdropFilter: 'blur(6px)', // Safari support
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     pointerEvents: 'auto', // block clicks
-                }}
+                })}
             >
                 <Paper
                     elevation={6}
-                    sx={{
+                    sx={(theme) => ({
                         width: '100%',
                         maxWidth: 500,
                         m: 2,
                         p: 3,
                         textAlign: 'center',
                         pointerEvents: 'auto',
-                        border: '1px solid',
-                        borderColor: 'divider',
-                        backdropFilter: 'blur(2px)',
-                    }}
+                        bgcolor: theme.palette.background.paper,
+                        color: theme.palette.text.primary,
+                        border: `1px solid ${theme.palette.divider}`,
+                        borderRadius: 2,
+                        boxShadow: theme.shadows[6],
+                        backdropFilter: 'blur(4px)',
+
+
+                    })}
                 >
                     <Box sx={{ mb: 2 }}>{IconMap[inUseDetails?.phase]}</Box>
 
@@ -198,15 +216,7 @@ export const ReconnectOverlay: React.FC<ReconnectOverlayProps> = ({ details, onR
                             <Button variant="contained" onClick={() => window.location.reload()}>
                                 Reload Window
                             </Button>
-                            {onRetryNow && inUseDetails.phase === 'remote_down' && (
-                                <Button variant="contained" onClick={() => {
-                                    remoteError.current = false;
-                                    onRetryNow()
-                                }}>
-                                    Retry Now
-                                </Button>
-                            )}
-                            <Button variant="text" onClick={() => setDismissed(true)}>
+                            <Button variant="text" onClick={handleDismissed}>
                                 Dismiss
                             </Button>
                         </Box>
@@ -220,7 +230,7 @@ export const ReconnectOverlay: React.FC<ReconnectOverlayProps> = ({ details, onR
                                     Retry Now
                                 </Button>
                             )}
-                            <Button variant="text" onClick={() => setDismissed(true)}>
+                            <Button variant="text" onClick={handleDismissed}>
                                 Dismiss
                             </Button>
                         </Box>

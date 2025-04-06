@@ -12,15 +12,16 @@ const H2CApp: React.FC = () => {
         configureUploadHandler(uploadAttachment)
     }, []);
     return (
-        <WebSocketConfig>
-            <UxpTheme>
+        <UxpTheme>
+            <WebSocketConfig>
+
                 <RemoteAppListener />
 
                 <BrowserRouter basename={basePath}>
                     <H2CBody />
                 </BrowserRouter>
-            </UxpTheme>
-        </WebSocketConfig>
+            </WebSocketConfig>
+        </UxpTheme>
     );
 };
 
