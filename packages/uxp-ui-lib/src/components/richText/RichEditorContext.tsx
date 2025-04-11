@@ -1,14 +1,16 @@
 import { Editor } from "@tiptap/core";
 import { createContext, ReactNode, useContext, useRef, useState } from "react";
+import { Awareness } from "y-protocols/awareness";
 import * as Y from "yjs";
 import { UploadListener, UploadStartedWithTrackingId, UploadStatus } from "../../features/upload-tracking/uploadTracking.types";
-import { Awareness } from "y-protocols/awareness";
+import { DateTime } from "luxon";
 
 
 export type UploadedFileDetails = { publicId: string; fileName: string };
 
 export type YDocVersionDetail = {
-  versionId?: string | undefined | null;
+  documentId?: string
+  versionId?: string;
   createdAt?: string | undefined | null;
   newVersion?: boolean | undefined | null;
 }
@@ -19,12 +21,14 @@ export interface RichTextEditorProps {
   yDoc: Y.Doc;
   awareness?: Awareness;
   editable?: boolean
-  startUpload: (file: File) => UploadStartedWithTrackingId;
+  hideMenu?: boolean
+  startUpload?: (file: File) => UploadStartedWithTrackingId;
   cancelUpload?: (id: string) => void;
   retryUpload?: (id: string) => UploadStartedWithTrackingId;
   subscribeToUploadStatus?: (callback: UploadListener) => () => void;
   getUploadStatus?: (id: string) => UploadStatus | undefined;
   onSaveVersion?: () => Promise<YDocVersionDetail>;
+  onPrintExport?: (documentId: string, versionId: string) => void;
   notice?: string
 }
 

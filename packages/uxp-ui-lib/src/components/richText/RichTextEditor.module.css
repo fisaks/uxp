@@ -67,6 +67,11 @@
     padding: 5px;
 }
 
+:global(.print-preview) div[role="textbox"] {
+    padding: 0;
+}
+
+
 /* Optional: Reduce spacing for all blocks */
 .editorContainer * {
     margin: 0;
@@ -171,7 +176,7 @@
 
 :global(.ProseMirror-selectednode) {
     outline-color: var(--editor-focus-color, #1976d2);
-   
+
 }
 
 .floatingToolbar {
@@ -225,4 +230,77 @@
     top: -1.4em;
     user-select: none;
     white-space: nowrap;
+}
+
+.paper {
+    width: 210mm;
+    margin: 10mm auto;
+    min-height: 297mm;
+    padding: 20mm;
+    background: white;
+    color: black;
+    box-shadow: 0 0 10mm rgba(0, 0, 0, 0.1);
+    box-sizing: border-box;
+}
+
+.paper:global(.landscape) {
+    width: 297mm;
+    height: 210mm;
+}
+
+.pdfWrapper :global(.MuiChip-root) {
+    background-color: #ddd !important;
+    color: #000 !important;
+    border: 1px solid #999 !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+}
+
+.pdfWrapper :global(.MuiSvgIcon-root) {
+    color: #000 !important;
+}
+
+.pdfExport :global(.MuiSvgIcon-root) {
+    width: 1em !important;
+    height: 1em !important;
+    font-size: 1rem !important;
+    vertical-align: middle !important;
+}
+
+.pdfExport :global(.uxp-video-node) :global(.react-resizable) {
+    position: relative;
+    border: #000 solid 1px;
+    background: #f8f8f8;
+    overflow: hidden;
+}
+
+/* The play icon */
+.pdfExport :global(.uxp-video-node) :global(.react-resizable)::after,
+.pdfExport :global(.node-youtube) :global(.react-resizable)::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    transform: translate(-50%, -50%);
+    border-left: 20px solid #333;
+    border-top: 12px solid transparent;
+    border-bottom: 12px solid transparent;
+    opacity: 0.7;
+}
+
+.pdfWrapper {
+    color: black;
+}
+
+@media print {
+    .paper {
+        width: auto;
+        height: auto;
+        margin: 0mm;
+        padding: 0;
+        box-shadow: none;
+        background: white;
+    }
 }

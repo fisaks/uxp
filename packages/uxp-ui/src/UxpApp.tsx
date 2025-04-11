@@ -1,4 +1,4 @@
-import { Loading } from "@uxp/ui-lib";
+import { Loading, QUERY_PARAMS_PRINT_VIEW, useQuery } from "@uxp/ui-lib";
 import React from "react";
 import { BrowserRouter } from "react-router-dom";
 
@@ -8,12 +8,15 @@ import { ThemeWrapper } from "./features/theme/ThemeWrapper";
 import { useInitializeApp } from "./hooks";
 
 const UxpAppLayout: React.FC = () => {
+    const query = useQuery()
+    const printView = query.get(QUERY_PARAMS_PRINT_VIEW) === "true";
+
     return (
-        <BrowserRouter>
-            <HeaderMenu />
+        <>
+            {!printView && <HeaderMenu />}
 
             <UxpRoutes />
-        </BrowserRouter>
+        </>
     );
 };
 const UxpApp: React.FC = () => {
@@ -23,7 +26,9 @@ const UxpApp: React.FC = () => {
         <Loading />
     ) : (
         <ThemeWrapper>
-            <UxpAppLayout />
+            <BrowserRouter>
+                <UxpAppLayout />
+            </BrowserRouter>
         </ThemeWrapper>
     );
 };

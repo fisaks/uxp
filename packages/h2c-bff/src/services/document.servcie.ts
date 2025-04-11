@@ -65,6 +65,10 @@ export class DocumentService {
         this.wsManager.broadcastDocumentUpdate({ updater: socket, documentId, update, requestMeta: this.requestMeta });
 
     }
+    async updateDocumentName(documentId: string, name: string | undefined) {
+        const documentRepo = this.queryRunner.manager.getRepository(DocumentEntity);
+        await documentRepo.update({ documentId }, { name });
+    }
 
     async saveDocument(documentId: string, asyncId: string | undefined) {
 
@@ -81,7 +85,7 @@ export class DocumentService {
                 content: Buffer.from(Y.encodeStateAsUpdate(fullDocument.document)),
                 documentType: fullDocument.documentType,
                 deleted: fullDocument.deleted,
-                
+
                 removedAt: fullDocument.deleted ? DateTime.now() : undefined
             });
             const saved = await documentRepo.save(newDocument);
@@ -100,6 +104,31 @@ export class DocumentService {
         });
 
         AppLogger.info(this.requestMeta, { message: `Saved document ${documentId} ` });
+    }
+
+    async getDocumentVersion(documentId: string, versionId: number, includeDeleted?: boolean) {
+        const documentRepo = this.queryRunner.manager.getRepository(DocumentEntity);
+
+        const docVersion = await documentRepo.findOne({
+            where: { documentId, id: versionId, ...(includeDeleted ? {} : { deleted: false }) },
+        });
+
+        if (!docVersion || !docVersion.content) {
+            throw new AppErrorV2({ statusCode: 404, code: "NOT_FOUND", message: `Document not found by id ${documentId} and version ${versionId}` });
+
+        }
+
+        const baseDoc = new Y.Doc();
+        Y.applyUpdate(baseDoc, new Uint8Array(docVersion.content));
+
+        return {
+            document: Y.encodeStateAsUpdate(baseDoc),
+            deleted: docVersion.deleted,
+            removedAt: docVersion.removedAt,
+            createdAt: docVersion.createdAt,
+            name: docVersion.name,
+            type: docVersion.documentType,
+        }
     }
 
     async getFullDocument(documentId: string) {

@@ -6,6 +6,7 @@ import { Provider } from "react-redux";
 import { createStore } from "./app/store";
 import { initializeConfig } from "./config";
 import H2CApp from "./H2CApp";
+import { ShadowRootProvider } from "@uxp/ui-lib";
 const styleInsert = require("../../tools/src/insert-function.cjs");
 
 // Extend the Window interface to include __UXP_PORTAL__
@@ -59,7 +60,9 @@ export const initApplication = (documentRoot: ShadowRoot | Document) => {
         const AppTree = (
             <Provider store={store}>
                 <CacheProvider value={shadowCache}>
-                    <AppComponent />
+                    <ShadowRootProvider documentRoot={documentRoot}>
+                        <AppComponent />
+                    </ShadowRootProvider>
                 </CacheProvider>
             </Provider>
         );

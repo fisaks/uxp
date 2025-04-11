@@ -4,6 +4,7 @@ import PrintIcon from '@mui/icons-material/Print';
 import PublishedWithChangesIcon from '@mui/icons-material/PublishedWithChanges';
 import SaveAsIcon from '@mui/icons-material/SaveAs';
 import { Box, CircularProgress } from "@mui/material";
+import { formatUtcIsoToLocal } from '@uxp/common';
 import { useMemo } from "react";
 import { useSafeState } from '../../../hooks/useSafeState';
 import { mapApiErrorsToMessageString } from '../../../util/browserErrorMessage';
@@ -12,10 +13,9 @@ import InlineSuccess from '../../layout/InlineSuccess';
 import MultiLevelMenu from "../../layout/MultiLevelMenu";
 import { MenuItemType } from "../../layout/RecursiveMenuItem";
 import { useRichEditorUI } from "../RichEditorContext";
-import { formatUtcIsoToLocal } from '@uxp/common';
 
 export const MoreMenu = () => {
-    const { editor, portalContainerRef, editable, onSaveVersion } = useRichEditorUI();
+    const { editor, portalContainerRef, editable, onSaveVersion, onPrintExport, } = useRichEditorUI();
     const [loading, setLoading] = useSafeState(false);
     const [error, setError] = useSafeState<string | undefined>(undefined);
     const [success, setSuccess] = useSafeState<{ message: string, newVersion: boolean } | undefined>(undefined);
@@ -36,6 +36,7 @@ export const MoreMenu = () => {
                 newVersion: false
             });
             console.log("Version saved successfully", response);
+            return response;
         } catch (error) {
             console.error("Type of error:", typeof error);
             console.error("Error saving version:", error, "Type of error:", typeof error);
@@ -43,20 +44,28 @@ export const MoreMenu = () => {
         } finally {
             setLoading(false);
         }
+        return;
+    }
+
+    const handlePrint = async () => {
+        const doc = await handleVersionSave();
+        if (doc && onPrintExport && doc.documentId && doc.versionId) {
+            onPrintExport(doc.documentId, doc.versionId);
+        }
     }
     const moreItems: MenuItemType[] = useMemo(
         () => [
             {
                 icon: <SaveAsIcon />,
-                disabled: !editable || !onSaveVersion,
+                disabled: !onSaveVersion,
                 label: "Save Version",
                 onClick: handleVersionSave,
             },
             {
                 icon: <PrintIcon />,
                 label: "Print/Export",
-                disabled: true,
-                onClick: () => { }
+                disabled: !onPrintExport || !onSaveVersion,
+                onClick: handlePrint
             },
             {
                 icon: <HistoryIcon />,

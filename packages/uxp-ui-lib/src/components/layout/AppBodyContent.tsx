@@ -1,5 +1,6 @@
 import { Box, useMediaQuery, useTheme } from "@mui/material";
 import React from "react";
+import { useQuery } from "../../hooks/useQuery";
 
 /**
  * Props for the AppBodyContent component.
@@ -28,11 +29,12 @@ type BodyContentProps = {
 export const AppBodyContent: React.FC<BodyContentProps> = ({ children, appHaveOwnLeftSideBar: haveLeftSideBar }) => {
     const theme = useTheme();
     const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
-
+    const query = useQuery();
+    const printView = query.get("printView") === "true";
     return (
         <Box
             sx={{
-                pt: 1,
+                pt: printView ? 0 : 1,
                 ml: isDesktop && haveLeftSideBar ? "15rem" : 0,
             }}
         >

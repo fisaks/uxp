@@ -29,15 +29,17 @@ export * from "./layout/withErrorHandler";
 export * from "./layout/OutlinedBox";
 export * from "./layout/WithOptionalTooltip";
 export * from "./layout/CardTabs";
+export * from "./layout/ErrorDisplay";
 
 
 export * from "./richText/RichTextEditor";
+export * from "./richText/RichEditorPreview";
 export { default as RichTextEditor } from "./richText/RichTextEditor";
 import { UploadedFileDetails ,YDocVersionDetail} from "./richText/RichEditorContext";
-
+export type { UploadedFileDetails ,YDocVersionDetail};
 
 export * from "./search/SearchComponent";
 export * from "./theme/theme";
 export * from "./theme/UxpTheme";
-export type { UploadedFileDetails ,YDocVersionDetail};
+
 

@@ -6,7 +6,7 @@ import FullscreenIcon from "@mui/icons-material/Fullscreen";
 import FullscreenExitIcon from "@mui/icons-material/FullscreenExit";
 import RedoIcon from "@mui/icons-material/Redo";
 import UndoIcon from "@mui/icons-material/Undo";
-import { IconButton, Tooltip } from "@mui/material";
+import { Box, IconButton, Tooltip } from "@mui/material";
 import { useMemo } from "react";
 import MultiLevelMenu from "../../layout/MultiLevelMenu";
 import { useRichEditorUI } from "../RichEditorContext";
@@ -19,7 +19,7 @@ export const RichEditorToolbar = () => {
     const slotProps = useMemo(() => ({ popper: { container: portalContainerRef.current } }), [portalContainerRef.current]);
     if (!editor) return null;
     return (
-        <div className={`${styles.toolbar}`}>
+        <Box className={`${styles.toolbar}`} sx={{ '@media print': { display: 'none' } }}>
             {/* Undo / Redo */}
             <Tooltip title="Undo (Ctrl + Z)" slotProps={slotProps}>
                 <IconButton onClick={() => editor.commands.undo()}>
@@ -72,6 +72,6 @@ export const RichEditorToolbar = () => {
             <Tooltip title={isFullScreen ? "Exit Full Screen" : "Full Screen"} slotProps={slotProps}>
                 <IconButton onClick={toggleFullScreen}>{isFullScreen ? <FullscreenExitIcon /> : <FullscreenIcon />}</IconButton>
             </Tooltip>
-        </div>
+        </Box>
     );
 };

@@ -59,6 +59,10 @@ export class HouseService {
         }
 
         const updatedHouse = await this.saveHouse(house);
+        if (key === "name") {
+            const docService = new DocumentService(this.requestMeta, this.queryRunner);
+            await docService.updateDocumentName(house.data.documentId, value ?? undefined);
+        }
         AppLogger.info(this.requestMeta, { message: `Updated house ${uuid} with key ${key} and value ${value}` });
         return updatedHouse;;
 
@@ -84,6 +88,14 @@ export class HouseService {
         });
 
         const updatedHouse = await this.saveHouse(house);
+        if (key === "name") {
+            const documentId = house.data.buildings.find(b => b.uuid === uuidBuilding)?.documentId
+            if (documentId) {
+                const docService = new DocumentService(this.requestMeta, this.queryRunner);
+                await docService.updateDocumentName(documentId, value ?? undefined);
+            }
+        }
+
         AppLogger.info(this.requestMeta, { message: `Updated building ${uuidBuilding} from house ${uuidHouse} with key ${key} and value ${value}` });
         return updatedHouse;;
 

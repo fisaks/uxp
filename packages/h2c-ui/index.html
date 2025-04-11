@@ -1,39 +1,37 @@
 <!doctype html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-        <title>Home2Care</title>
-        <script src="/h2c/static/libs/development/react.development.js" data-uxp-remove="true"></script>
-        <script src="/h2c/static/libs/development/react-dom.development.js" data-uxp-remove="true"></script>
-        <script src="/h2c/static/libs/development/emotion-react.development.js" data-uxp-remove="true"></script>
-        <script src="/h2c/static/libs/development/emotion-styled.development.js" data-uxp-remove="true"></script>
-        <script src="/h2c/static/libs/development/axios.development.js" data-uxp-remove="true"></script>
-        <script data-uxp-remove="true">
-            window.uxp = {
-                defaultTheme: "dracula",
-                getUser: () => {
-                    return {
-                        id: 1,
-                        username: "localuser",
-                        firstName: "Local",
-                        lastName: "Tester",
-                        email: "local@test.com",
-                        roles: ["user"],
-                        createdAt: "2024-12-09T22:22:58.555+02:00",
-                    };
-                },
-            };
-        </script>
-    </head>
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <body>
-        <div
-            id="root"
-            data-base-route-path="/h2c"
-            data-base-url="/h2c/"
-            data-ws-path="/h2c/ws-api"
-        ></div>
-    </body>
+    <title>Home2Care</title>
+    <script src="/h2c/static/libs/development/react.development.js" data-uxp-remove="true"></script>
+    <script src="/h2c/static/libs/development/react-dom.development.js" data-uxp-remove="true"></script>
+    <script src="/h2c/static/libs/development/emotion-react.development.js" data-uxp-remove="true"></script>
+    <script src="/h2c/static/libs/development/emotion-styled.development.js" data-uxp-remove="true"></script>
+    <script src="/h2c/static/libs/development/axios.development.js" data-uxp-remove="true"></script>
+    <script data-uxp-remove="true">
+        window.uxp = {
+            defaultTheme: "dracula",
+            getUser: () => {
+                return {
+                    id: 1,
+                    username: "localuser",
+                    firstName: "Local",
+                    lastName: "Tester",
+                    email: "local@test.com",
+                    roles: ["user"],
+                    createdAt: "2024-12-09T22:22:58.555+02:00",
+                };
+            },
+        };
+    </script>
+  
+</head>
+
+<body>
+    <div id="root" data-base-route-path="/h2c" data-base-url="/h2c" data-ws-path="/h2c/ws-api"></div>
+</body>
+
 </html>

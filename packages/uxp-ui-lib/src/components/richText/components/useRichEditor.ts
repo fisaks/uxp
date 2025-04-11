@@ -7,7 +7,7 @@ import TableCell from "@tiptap/extension-table-cell";
 import TableHeader from "@tiptap/extension-table-header";
 import TableRow from "@tiptap/extension-table-row";
 import Underline from "@tiptap/extension-underline";
-import { useEditor } from "@tiptap/react";
+import { Extension, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { EditorView } from "prosemirror-view"; //  Import directly from ProseMirror
 import React, { useEffect, useRef } from "react";
@@ -23,7 +23,7 @@ import { UploadPlaceholder } from "../extensions/UploadPlaceholder";
 import { Video } from "../extensions/Video";
 import { RichEditorUIState, UploadSource, UploadType, useRichEditorUI } from "../RichEditorContext";
 import { Youtube } from "../extensions/Youtube";
-
+import * as Y from "yjs";
 
 
 export const useRichEditor = (
@@ -43,64 +43,7 @@ export const useRichEditor = (
             onDrop: (event) => {
                 console.log("[useRichEditor] Dropped", event);
             },
-            extensions: [
-                StarterKit.configure({
-                    history: false,
-                    heading: { levels: [1, 2, 3, 4, 5, 6] },
-                }),
-                Underline,
-                ResizableImage.configure({ basePath: imageBasePath }),
-                LineHeight,
-                Indent,
-                Youtube,
-                CustomLink.configure({
-                    openOnClick: false,
-                    autolink: false,     // Automatically detect and format links
-                    linkOnPaste: true,  // Automatically turn pasted links into clickable links
-                    HTMLAttributes: {
-                        rel: "noopener noreferrer",
-                        target: "_blank",
-                    }
-                }),
-                Subscript,
-                Superscript.extend({
-                    addKeyboardShortcuts() {
-                        return {
-                            "Ctrl-Shift-,": () => this.editor.commands.toggleSuperscript(),
-                        };
-                    },
-                }),
-                Table.configure({ resizable: true }).extend({
-                    addKeyboardShortcuts() {
-                        return {
-                            "Ctrl-Alt-Shift-Insert": () => this.editor.commands.insertTable({ rows: 3, cols: 3 }),
-                            "Ctrl-Insert": () => this.editor.commands.addColumnBefore(),
-                            "Ctrl-Shift-Insert": () => this.editor.commands.addColumnAfter(),
-                            "Alt-Insert": () => this.editor.commands.addRowBefore(),
-                            "Alt-Shift-Insert": () => this.editor.commands.addRowAfter(),
-
-                            "Ctrl-Delete": () => this.editor.commands.deleteColumn(),
-                            "Alt-Delete": () => this.editor.commands.deleteRow(),
-                            "Ctrl-Alt-Shift-Delete": () => this.editor.commands.deleteTable(),
-                        };
-                    },
-                }),
-                TableRow,
-                Focus.configure({}),
-                TableHeader,
-                TableCell,
-                Collaboration.configure({
-                    document: yDoc, // ✅ Uses shared Y.js state
-                }),
-                ...(awareness ? [CollaborationCursor.configure({
-                    provider: { awareness },
-                })] : []),
-                Video.configure({ basePath: imageBasePath }),
-                Attachment.configure({ basePath: imageBasePath }),
-                DropExtension.configure({ handleFileDrop: fileDropHandler ?? (() => { console.info("[useRichEditor] no fileDropHandler defined") }) }),
-                UploadPlaceholder
-
-            ],
+            extensions: getRichEditorExtensions({ basePath: imageBasePath, yDoc, awareness, fileDropHandler, forPreview: false }),
             editorProps: {
                 handleClick: (view, pos, event) => {
                     combinedHandleClick(editorState, timeoutRef)(view, pos, event);
@@ -126,6 +69,86 @@ export const useRichEditor = (
 
     return editor;
 };
+
+// in shared/editor/getExtensions.ts
+export function getRichEditorExtensions(opts: {
+    basePath: string;
+    yDoc?: Y.Doc;
+    awareness?: any;
+    fileDropHandler?: ((files: File[]) => void) | null;
+    forPreview?: boolean;
+}) {
+    const {
+        basePath,
+        yDoc,
+        awareness,
+        fileDropHandler,
+        forPreview = false,
+    } = opts;
+
+    return [
+        StarterKit.configure({
+            history: false,
+            heading: { levels: [1, 2, 3, 4, 5, 6] },
+        }),
+        Underline,
+        ResizableImage.configure({ basePath }),
+        LineHeight,
+        Indent,
+        Youtube,
+        CustomLink.configure({
+            openOnClick: false,
+            autolink: false,     // Automatically detect and format links
+            linkOnPaste: true,  // Automatically turn pasted links into clickable links
+            HTMLAttributes: {
+                rel: "noopener noreferrer",
+                target: "_blank",
+            },
+        }),
+        Subscript,
+        Superscript.extend({
+            ...(forPreview ? {} : {
+                addKeyboardShortcuts() {
+                    return {
+                        "Ctrl-Shift-,": () => this.editor.commands.toggleSuperscript(),
+                    };
+                }
+            })
+        }),
+        Table.configure({ resizable: true }).extend({
+            ...(forPreview ? {} : {
+                addKeyboardShortcuts() {
+                    return {
+                        "Ctrl-Alt-Shift-Insert": () => this.editor.commands.insertTable({ rows: 3, cols: 3 }),
+                        "Ctrl-Insert": () => this.editor.commands.addColumnBefore(),
+                        "Ctrl-Shift-Insert": () => this.editor.commands.addColumnAfter(),
+                        "Alt-Insert": () => this.editor.commands.addRowBefore(),
+                        "Alt-Shift-Insert": () => this.editor.commands.addRowAfter(),
+
+                        "Ctrl-Delete": () => this.editor.commands.deleteColumn(),
+                        "Alt-Delete": () => this.editor.commands.deleteRow(),
+                        "Ctrl-Alt-Shift-Delete": () => this.editor.commands.deleteTable(),
+                    };
+                }
+            }),
+        }),
+        TableRow,
+        TableHeader,
+        TableCell,
+        Focus.configure({}),
+        Video.configure({ basePath }),
+        Attachment.configure({ basePath }),
+        UploadPlaceholder,
+        ...(yDoc ? [Collaboration.configure({ document: yDoc })] : []),
+        ...(awareness ? [CollaborationCursor.configure({ provider: { awareness } })] : []),
+        ...(fileDropHandler ? [DropExtension.configure({
+            handleFileDrop: fileDropHandler,
+        })] : []),
+
+
+    ] as Extension[];
+}
+
 
 const combinedHandleClick =
     (

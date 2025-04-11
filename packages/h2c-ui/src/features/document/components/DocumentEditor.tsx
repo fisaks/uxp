@@ -3,9 +3,10 @@ import { RichTextEditor, useCollaborativeDoc, useUploadTracker, YDocVersionDetai
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useState } from "react";
 import * as Y from "yjs";
 import { H2CAppErrorHandler, H2CAppWebSocketResponseListener, useH2CWebSocket, useH2CWebSocketSubscription } from "../../../app/H2CAppBrowserWebSocketManager";
-import { getBaseUrl } from "../../../config";
+import { getBaseRoutePath, getBaseUrl } from "../../../config";
 
 import { H2CAppResponseMessage } from "@h2c/common";
+import { buildPath } from "@uxp/common";
 import { applyAwarenessUpdate, encodeAwarenessUpdate } from "y-protocols/awareness";
 
 
@@ -61,7 +62,7 @@ export const DocumentEditor = forwardRef<DocumentEditorRef, DocumentEditorProps>
 
     const errorHandler: H2CAppErrorHandler = useCallback((({ action, error, errorDetails }) => {
         console.error("[DocumentEditor] Error", action, error, errorDetails);
-        if(action.startsWith("document:")) {
+        if (action.startsWith("document:")) {
             setEditorNotice("We are receiving errors from the server. Document updates may not be saved. Please try again later.");
         }
         return false;
@@ -90,10 +91,18 @@ export const DocumentEditor = forwardRef<DocumentEditorRef, DocumentEditorProps>
         const versionCreated = response.payload?.versionCreated;
         const versionId = response.payload?.versionId;
         const createdAt = response.payload?.createdAt;
-        return { createdAt, versionId, newVersion: versionCreated } as YDocVersionDetail;
+        const docId = response.payload?.documentId;
+        return { documentId: docId, createdAt, versionId: `${versionId}`, newVersion: versionCreated } as YDocVersionDetail;
 
     }, [documentId, sendMessageAsync]);
 
+    const onPrintExport = useCallback(async (documentId: string, versionId: string) => {
+        console.info("[DocumentEditor] Exporting document", documentId, versionId);
+
+
+        const previewPath = buildPath(getBaseRoutePath() ?? "/", "document-preview", documentId, versionId);
+        window.open(`${previewPath}?printView=true`, `doc-${documentId}-${versionId}`);
+    }, []);
     useImperativeHandle(ref, () => ({
         save: onSaveVersion,
 
@@ -137,6 +146,7 @@ export const DocumentEditor = forwardRef<DocumentEditorRef, DocumentEditorProps>
         editable={editable}
         notice={editorNotice}
         onSaveVersion={onSaveVersion}
+        onPrintExport={onPrintExport}
         {...uploadTracker}
     />
 

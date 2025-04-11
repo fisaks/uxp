@@ -12,7 +12,7 @@ import { useRichEditor } from "./components/useRichEditor";
 
 
 export const RichTextEditorContent = () => {
-    const { editor, editorRootContainerRef, portalContainerRef, isFullScreen, label, editable, notice } = useRichEditorUI();
+    const { editor, editorRootContainerRef, portalContainerRef, isFullScreen, label, editable, notice, hideMenu } = useRichEditorUI();
     const theme = useTheme();
     const isDarkMode = theme.palette.mode === 'dark';
     useRichEditor();
@@ -32,24 +32,27 @@ export const RichTextEditorContent = () => {
             className={`${styles.editorContainer} ${isFullScreen ? styles.fullScreen : ""}`}
         >
 
-            <Box
-                sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    px: 1,
-                    pt: 1,
-                    minHeight: 32, // optional, keeps row height consistent even without label
-                }}
-            >
-                {label ? (
-                    <Typography variant="caption" color="text.secondary" sx={{ pl: "10px" }}>
-                        {label}
-                    </Typography>) : (
-                    <Box />
-                )}
-                <MoreMenu />
-            </Box>
+            {!hideMenu &&
+                <Box
+                    sx={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        px: 1,
+                        pt: 1,
+                        minHeight: 32, // optional, keeps row height consistent even without label
+                        '@media print': { display: 'none' }
+                    }}
+                >
+                    {label ? (
+                        <Typography variant="caption" color="text.secondary" sx={{ pl: "10px" }}>
+                            {label}
+                        </Typography>) : (
+                        <Box />
+                    )}
+                    <MoreMenu />
+                </Box>
+            }
             {editable && <RichEditorToolbar />}
             {editable && <FloatingImageToolbar />}
             {editable && <LinkEdit />}

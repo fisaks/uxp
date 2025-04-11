@@ -43,15 +43,17 @@
         "@tiptap/starter-kit": "^2.11.5",
         "@uxp/common": "workspace:*",
         "luxon": "^3.5.0",
+        "prosemirror-state": "^1.4.3",
         "react": "^18.0.0",
         "react-dom": "^18.0.0",
         "react-redux": "^9.1.2",
         "react-resizable": "^3.0.5",
         "uuid": "^11.0.3",
         "y-prosemirror": "^1.2.17",
-        "prosemirror-state": "^1.4.3",
         "y-protocols": "^1.0.6",
-        "yjs": "^13.6.23"
+        "yjs": "^13.6.23",
+        "html2pdf.js": "^0.10.3",
+        "react-router-dom": "^7.0.1"
     },
     "peerDependenciesMeta": {
         "@tiptap/core": {
@@ -115,6 +117,12 @@
             "optional": true
         },
         "y-protocols": {
+            "optional": true
+        },
+        "html2pdf.js": {
+            "optional": true
+        },
+        "react-router-dom": {
             "optional": true
         }
     },

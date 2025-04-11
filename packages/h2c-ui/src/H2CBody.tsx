@@ -1,17 +1,19 @@
 import { useMediaQuery, useTheme } from "@mui/material";
 import { generateFullLink } from "@uxp/common";
-import { AppBodyContent, LeftSideBar, SidebarMenuItems } from "@uxp/ui-lib";
+import { AppBodyContent, LeftSideBar, QUERY_PARAMS_PRINT_VIEW, SidebarMenuItems, useQuery } from "@uxp/ui-lib";
 import { useMemo } from "react";
 import { Link, Route, Routes, useLocation } from "react-router-dom";
 import { getBaseRoutePath } from "./config";
 import HouseInfoPage from "./features/house/pages/HouseInfoPage";
+import { DocumentPreview } from "./features/document/DocumentPreview";
 
 export const H2CBody = () => {
     const theme = useTheme();
     const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
     const location = useLocation();
     const basePath = useMemo(() => getBaseRoutePath(), []);
-
+    const query = useQuery()
+    const printView = query.get(QUERY_PARAMS_PRINT_VIEW) === "true";
     const menuItems: SidebarMenuItems[] = useMemo(() => {
         return [
             {
@@ -21,15 +23,17 @@ export const H2CBody = () => {
                 componentProp: "to",
                 active: location.pathname === "/house-info" || location.pathname === "/",
             },
+
         ];
     }, [basePath, location.pathname]);
 
     return (
         <>
-            <LeftSideBar isDesktop={isDesktop} menuItems={menuItems} />
-            <AppBodyContent appHaveOwnLeftSideBar={true}>
+            {!printView && <LeftSideBar isDesktop={isDesktop} menuItems={menuItems} />}
+            <AppBodyContent appHaveOwnLeftSideBar={!printView}>
                 <Routes>
                     <Route path="/house-info" element={<HouseInfoPage />} />
+                    <Route path="/document-preview/:documentId/:version" element={<DocumentPreview />} />
                     <Route path="*" element={<HouseInfoPage />} />
                 </Routes>
             </AppBodyContent>
