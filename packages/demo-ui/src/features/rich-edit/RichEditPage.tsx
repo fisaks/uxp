@@ -33,6 +33,7 @@ const RichEditPage: React.FC = () => {
             <RichTextEditor
                 label="Rich Text Editor"
                 yDoc={yDoc}
+                docInstanceId={1}
                 editable={true}
                 startUpload={(file) => handleUploadFile(file)}
                 imageBasePath={`${getBaseUrl()}/api/file`}
