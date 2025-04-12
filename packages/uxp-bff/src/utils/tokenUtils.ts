@@ -1,6 +1,7 @@
 import { ACCESS_TOKEN, AppError, AppLogger, REFRESH_TOKEN, RefreshToken, Token } from "@uxp/bff-common";
 import { ErrorCodes } from "@uxp/common";
 import { FastifyInstance, FastifyReply } from "fastify";
+import ms from "ms";
 
 import { AccessTokenExpires, RefreshTokenExpires } from "../config/constant";
 
@@ -23,12 +24,14 @@ export function setAuthCookies(reply: FastifyReply, accessToken: string, refresh
         path: "/",
     });
 
+
     return refreshToken
         ? reply.setCookie(REFRESH_TOKEN, refreshToken, {
             httpOnly: true,
             secure: (process.env.SECURE_COOKIE ?? "true").toLowerCase() === "true",
             sameSite: "strict",
             path: "/",
+            expires: new Date(Date.now() + ms(RefreshTokenExpires))
         })
         : reply;
 }
