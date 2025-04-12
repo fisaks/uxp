@@ -30,6 +30,7 @@ export * from "./layout/OutlinedBox";
 export * from "./layout/WithOptionalTooltip";
 export * from "./layout/CardTabs";
 export * from "./layout/ErrorDisplay";
+export * from "./layout/AsyncContent";
 
 
 export * from "./richText/RichTextEditor";

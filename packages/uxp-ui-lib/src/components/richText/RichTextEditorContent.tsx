@@ -1,7 +1,5 @@
 import { Box, Paper, Typography, useTheme } from "@mui/material";
 import { EditorContent } from "@tiptap/react";
-import { useRichEditorUI } from "./RichEditorContext";
-import * as styles from "./RichTextEditor.module.css";
 import { EditorStatusNotice } from "./components/EditorStatusNotice";
 import { FloatingImageToolbar } from "./components/FloatingImageToolbar";
 import { LinkEdit } from "./components/LinkEdit";
@@ -9,10 +7,14 @@ import { MoreMenu } from "./components/MoreMenu";
 import { RichEditorToolbar } from "./components/RichEditorToolbar";
 import { RichEditorUploadManager } from "./components/RichEditorUploadManager";
 import { useRichEditor } from "./components/useRichEditor";
+import { useRichEditorUI } from "./RichEditorContext";
+import { RichEditorHistoryDrawer } from "./RichEditorHistoryDrawer";
+import * as styles from "./RichTextEditor.module.css";
+import { RichEditorPreviewOverlay } from "./RichEditorPreviewOverlay";
 
 
 export const RichTextEditorContent = () => {
-    const { editor, editorRootContainerRef, portalContainerRef, isFullScreen, label, editable, notice, hideMenu } = useRichEditorUI();
+    const { editor, editorRootContainerRef, portalContainerRef, isFullScreen, label, editable, notice, hideMenu, historyDrawerRef ,previewOverlayRef} = useRichEditorUI();
     const theme = useTheme();
     const isDarkMode = theme.palette.mode === 'dark';
     useRichEditor();
@@ -58,6 +60,8 @@ export const RichTextEditorContent = () => {
             {editable && <LinkEdit />}
 
             <RichEditorUploadManager />
+            <RichEditorHistoryDrawer ref={historyDrawerRef} />
+            <RichEditorPreviewOverlay ref={previewOverlayRef} />
 
             {/* The actual Editor */}
             <EditorContent editor={editor} className={styles.editorWrapper} />

@@ -8,6 +8,7 @@ import { getBaseRoutePath, getBaseUrl } from "../../../config";
 import { H2CAppResponseMessage } from "@h2c/common";
 import { buildPath } from "@uxp/common";
 import { applyAwarenessUpdate, encodeAwarenessUpdate } from "y-protocols/awareness";
+import { getDocument, getVersions } from "../document.api";
 
 
 export interface DocumentEditorRef {
@@ -103,6 +104,19 @@ export const DocumentEditor = forwardRef<DocumentEditorRef, DocumentEditorProps>
         const previewPath = buildPath(getBaseRoutePath() ?? "/", "document-preview", documentId, versionId);
         window.open(`${previewPath}?printView=true`, `doc-${documentId}-${versionId}`);
     }, []);
+
+    const loadHistory = useCallback(async () => {
+        return getVersions(documentId);
+    }, [documentId]);
+
+    const loadVersion = useCallback(async (version: string) => {
+        return getDocument(documentId, version);
+    }, [documentId]);
+
+    const restoreVersion = useCallback(async (versionId: string) => {
+        return;
+    }, [documentId]);
+
     useImperativeHandle(ref, () => ({
         save: onSaveVersion,
 
@@ -147,6 +161,9 @@ export const DocumentEditor = forwardRef<DocumentEditorRef, DocumentEditorProps>
         notice={editorNotice}
         onSaveVersion={onSaveVersion}
         onPrintExport={onPrintExport}
+        loadHistory={loadHistory}
+        loadVersion={loadVersion}
+        restoreVersion={restoreVersion}
         {...uploadTracker}
     />
 

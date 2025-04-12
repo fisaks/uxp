@@ -29,7 +29,7 @@ export type DocumentActionPayloadResponseMap = {
     "document:deleted": DocumentIdPayload
     "document:unsubscribed": DocumentIdPayload
     "document:awareness": DocumentIdPayload
-    
+
 }
 
 export const DocumentIdSchema: MessagePayloadSchema<DocumentIdPayload> = {
@@ -40,3 +40,16 @@ export const DocumentIdSchema: MessagePayloadSchema<DocumentIdPayload> = {
     },
     required: ['documentId']
 }
+
+export type DocumentVersions = {
+    documentId: string;
+    documentName: string;
+    snapshot?: boolean;
+    versions: DocumentVersionEntry[];
+}
+export type DocumentVersionEntry = {
+    version: number;
+    documentName: string;
+    createdAt: string;
+};
+

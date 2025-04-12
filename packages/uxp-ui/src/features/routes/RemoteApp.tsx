@@ -1,5 +1,5 @@
 import { Loading } from "@uxp/ui-lib";
-import axios from "axios";
+import axiosInstance from "../../app/axiosInstance";
 import React, { useEffect, useRef, useState } from "react";
 
 interface RemoteAppProps {
@@ -26,7 +26,7 @@ const RemoteApp: React.FC<RemoteAppProps> = ({ contentUuid, basePath }) => {
 
             try {
                 // Fetch the index.html using Axios or actually the indexPage defined in app or the override defined in tha page apps
-                const response = await axios.get(`/api/content/index/${contentUuid}`, {
+                const response = await axiosInstance.get(`/content/index/${contentUuid}`, {
                     headers: {
                         "Content-Type": "text/html",
                     },

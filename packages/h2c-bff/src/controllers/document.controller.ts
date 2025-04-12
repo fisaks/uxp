@@ -1,7 +1,7 @@
 import { Route, Token, UseQueryRunner } from "@uxp/bff-common";
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 
-import { GetDocumentSchema } from "@h2c/common";
+import { GetDocumentSchema, GetVersionsSchema } from "@h2c/common";
 import { QueryRunner } from "typeorm";
 import { DocumentService } from "../services/document.servcie";
 
@@ -12,9 +12,9 @@ export class DocumentController {
         this.fastify = fastify;
     }
 
-    @Route("get", "/document/:documentId/:version", { authenticate: true, roles: ["user"], schema: GetDocumentSchema })
+    @Route("get", "/documents/:documentId/versions/:version", { authenticate: true, roles: ["user"], schema: GetDocumentSchema })
     @UseQueryRunner()
-    async getDocument(req: FastifyRequest<{ Params: { documentId: string, version: number } }>, reply: FastifyReply, queryRunner: QueryRunner) {
+    async getDocument(req: FastifyRequest<{ Params: { documentId: string, version: number | 'snapshot' } }>, reply: FastifyReply, queryRunner: QueryRunner) {
         const documentService = new DocumentService(req, queryRunner);
         const { documentId, version } = req.params;
         const roles = (req.user as Token).roles
@@ -33,4 +33,13 @@ export class DocumentController {
         reply.send(document.document);
 
     }
+    @Route("get", "/documents/:documentId/versions", { authenticate: true, roles: ["user"], schema: GetVersionsSchema })
+    @UseQueryRunner()
+    async getVersions(req: FastifyRequest<{ Params: { documentId: string } }>, reply: FastifyReply, queryRunner: QueryRunner) {
+        const documentService = new DocumentService(req, queryRunner);
+        const { documentId } = req.params;
+        const response = await documentService.getDocumentVersions(documentId)
+        reply.send(response);
+    }
+
 }

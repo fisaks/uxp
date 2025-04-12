@@ -54,7 +54,12 @@ export const PrintPreviewToolbar = ({ documentName, setDocumentName, handleExpor
 
     return (
         <AppBar position="sticky" id="preview-toolbar" sx={{ top: 0, display: 'print', '@media print': { display: 'none' } }}>
-            <Toolbar sx={{ flexWrap: 'wrap', gap: 1 }}>
+            <Toolbar sx={{
+                flexWrap: 'wrap', gap: 1, justifyContent: {
+                    xs: 'flex-start', md: 'center',
+                }
+            }}>
+
                 <IconButton edge="start" color="inherit" onClick={() => window.close()}>
                     <CloseIcon />
                 </IconButton>
@@ -62,7 +67,7 @@ export const PrintPreviewToolbar = ({ documentName, setDocumentName, handleExpor
                     variant="standard"
                     value={documentName}
                     onChange={(e) => setDocumentName(e.target.value)}
-                    sx={{ flex: 1, minWidth: 200 }}
+                    sx={{ flex: 1, minWidth: 170, maxWidth: 450 }}
                     placeholder="Document name"
                     slotProps={{
                         input: {

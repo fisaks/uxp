@@ -2,7 +2,7 @@ import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import { Box, Button, Typography } from '@mui/material';
 import React from 'react';
 
-type ErrorDisplayProps = {
+export type ErrorDisplayProps = {
     message?: string;
     onRetry?: () => void;
     retryLabel?: string;

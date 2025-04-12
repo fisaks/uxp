@@ -1,4 +1,4 @@
-import { DocumentType } from "@h2c/common";
+import { DocumentType, DocumentVersionEntry, DocumentVersions } from "@h2c/common";
 import { AppErrorV2, AppLogger, RequestMetaData } from "@uxp/bff-common";
 import { FastifyRequest } from "fastify";
 import { DateTime } from "luxon";
@@ -106,29 +106,66 @@ export class DocumentService {
         AppLogger.info(this.requestMeta, { message: `Saved document ${documentId} ` });
     }
 
-    async getDocumentVersion(documentId: string, versionId: number, includeDeleted?: boolean) {
+    async getDocumentVersion(documentId: string, versionId: number | 'snapshot', includeDeleted?: boolean) {
+
+        if (versionId === "snapshot") {
+            const docSnapshot = await this.getFullDocument(documentId);
+            return {
+                document: Y.encodeStateAsUpdate(docSnapshot.document),
+                deleted: docSnapshot.deleted,
+                removedAt: docSnapshot.removedAt,
+                createdAt: docSnapshot.createdAt,
+                name: docSnapshot.name,
+                type: docSnapshot.documentType,
+            }
+        } else {
+            const documentRepo = this.queryRunner.manager.getRepository(DocumentEntity);
+
+            const docVersion = await documentRepo.findOne({
+                where: { documentId, id: versionId, ...(includeDeleted ? {} : { deleted: false }) },
+            });
+
+            if (!docVersion || !docVersion.content) {
+                throw new AppErrorV2({ statusCode: 404, code: "NOT_FOUND", message: `Document not found by id ${documentId} and version ${versionId}` });
+
+            }
+
+            const baseDoc = new Y.Doc();
+            Y.applyUpdate(baseDoc, new Uint8Array(docVersion.content));
+
+            return {
+                document: Y.encodeStateAsUpdate(baseDoc),
+                deleted: docVersion.deleted,
+                removedAt: docVersion.removedAt,
+                createdAt: docVersion.createdAt,
+                name: docVersion.name,
+                type: docVersion.documentType,
+            }
+        }
+
+
+    }
+
+    async getDocumentVersions(documentId: string) {
         const documentRepo = this.queryRunner.manager.getRepository(DocumentEntity);
-
-        const docVersion = await documentRepo.findOne({
-            where: { documentId, id: versionId, ...(includeDeleted ? {} : { deleted: false }) },
+        const snapshotRepo = this.queryRunner.manager.getRepository(SnapshotEntity);
+        const docVersions = await documentRepo.find({
+            where: { documentId },
+            order: { id: "DESC" },
         });
-
-        if (!docVersion || !docVersion.content) {
-            throw new AppErrorV2({ statusCode: 404, code: "NOT_FOUND", message: `Document not found by id ${documentId} and version ${versionId}` });
-
+        if (!docVersions || docVersions.length === 0) {
+            throw new AppErrorV2({ statusCode: 404, code: "NOT_FOUND", message: `No document version found by id ${documentId} ` });
         }
+        const versions: DocumentVersionEntry[] = docVersions.map((docVersion) => ({
+            version: docVersion.id,
+            documentName: docVersion.name ?? "",
+            createdAt: docVersion.createdAt.toUTC().toISO()!,
+        }));
+        const snapshots = await snapshotRepo.findOne({ where: { documentId } });
+        const { name } = docVersions[0];
 
-        const baseDoc = new Y.Doc();
-        Y.applyUpdate(baseDoc, new Uint8Array(docVersion.content));
+        return { documentId, documentName: name, snapshot: !!snapshots, versions } as DocumentVersions
 
-        return {
-            document: Y.encodeStateAsUpdate(baseDoc),
-            deleted: docVersion.deleted,
-            removedAt: docVersion.removedAt,
-            createdAt: docVersion.createdAt,
-            name: docVersion.name,
-            type: docVersion.documentType,
-        }
     }
 
     async getFullDocument(documentId: string) {
@@ -205,6 +242,8 @@ export class DocumentService {
             haveSnapshots: snapshots.length > 0,
             versionId: latestDoc.id,
             createdAt: latestDoc.createdAt,
+            removedAt: latestDoc.removedAt,
+            name: latestDoc.name,
         }
 
     }

@@ -23,6 +23,7 @@ export * from "./features/websocket/WebSocketProvider";
 export * from "./hooks/useCollaborativeDoc";
 export * from "./hooks/useQuery";
 export * from "./hooks/useSafeState";
+export * from "./hooks/useAsyncData";
 export * from "./hooks/useUxpDeviceId";
 export * from "./util/browserErrorMessage";
 export * from "./util/processPatchUpdate";

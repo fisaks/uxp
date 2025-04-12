@@ -202,6 +202,7 @@ export function RichEditorUploadManager() {
         if (!editor) return;
         console.info("[RichEditorUploadManager] Starting upload for file:", file.name);
         try {
+            if(!startUpload) return;
             const { id, promise } = startUpload(file);
             editor?.commands.insertUploadPlaceholder({
                 id,

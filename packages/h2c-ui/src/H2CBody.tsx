@@ -1,11 +1,10 @@
 import { useMediaQuery, useTheme } from "@mui/material";
-import { generateFullLink } from "@uxp/common";
 import { AppBodyContent, LeftSideBar, QUERY_PARAMS_PRINT_VIEW, SidebarMenuItems, useQuery } from "@uxp/ui-lib";
 import { useMemo } from "react";
 import { Link, Route, Routes, useLocation } from "react-router-dom";
 import { getBaseRoutePath } from "./config";
+import { DocumentPrintPreviewPage } from "./features/document/DocumentPrintPreviewPage";
 import HouseInfoPage from "./features/house/pages/HouseInfoPage";
-import { DocumentPreview } from "./features/document/DocumentPreview";
 
 export const H2CBody = () => {
     const theme = useTheme();
@@ -33,7 +32,7 @@ export const H2CBody = () => {
             <AppBodyContent appHaveOwnLeftSideBar={!printView}>
                 <Routes>
                     <Route path="/house-info" element={<HouseInfoPage />} />
-                    <Route path="/document-preview/:documentId/:version" element={<DocumentPreview />} />
+                    <Route path="/document-preview/:documentId/:version" element={<DocumentPrintPreviewPage />} />
                     <Route path="*" element={<HouseInfoPage />} />
                 </Routes>
             </AppBodyContent>

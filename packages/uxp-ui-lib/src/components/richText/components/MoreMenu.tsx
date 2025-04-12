@@ -15,7 +15,7 @@ import { MenuItemType } from "../../layout/RecursiveMenuItem";
 import { useRichEditorUI } from "../RichEditorContext";
 
 export const MoreMenu = () => {
-    const { editor, portalContainerRef, editable, onSaveVersion, onPrintExport, } = useRichEditorUI();
+    const { editor, portalContainerRef, editable, onSaveVersion, onPrintExport, loadHistory, historyDrawerRef } = useRichEditorUI();
     const [loading, setLoading] = useSafeState(false);
     const [error, setError] = useSafeState<string | undefined>(undefined);
     const [success, setSuccess] = useSafeState<{ message: string, newVersion: boolean } | undefined>(undefined);
@@ -53,6 +53,11 @@ export const MoreMenu = () => {
             onPrintExport(doc.documentId, doc.versionId);
         }
     }
+
+    const handleHistory = async () => {
+        if (!loadHistory) return;
+        historyDrawerRef.current?.open();
+    }
     const moreItems: MenuItemType[] = useMemo(
         () => [
             {
@@ -70,8 +75,8 @@ export const MoreMenu = () => {
             {
                 icon: <HistoryIcon />,
                 label: "View History",
-                disabled: true,
-                onClick: () => { }
+                disabled: !loadHistory,
+                onClick: handleHistory
             },
         ], [editor, editable])
 
