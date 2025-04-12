@@ -13,6 +13,7 @@ import { EditorView } from "prosemirror-view"; //  Import directly from ProseMir
 import React, { useEffect, useRef } from "react";
 
 import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
+import * as Y from "yjs";
 import Attachment from "../extensions/Attachment";
 import { CustomLink } from "../extensions/CustomLink";
 import { DropExtension } from "../extensions/DropExtension";
@@ -21,15 +22,14 @@ import { LineHeight } from "../extensions/LineHeight";
 import { ResizableImage } from "../extensions/ResizableImage";
 import { UploadPlaceholder } from "../extensions/UploadPlaceholder";
 import { Video } from "../extensions/Video";
-import { RichEditorUIState, UploadSource, UploadType, useRichEditorUI } from "../RichEditorContext";
 import { Youtube } from "../extensions/Youtube";
-import * as Y from "yjs";
+import { RichEditorUIState, UploadSource, UploadType, useRichEditorUI } from "../RichEditorContext";
 
 
 export const useRichEditor = (
 ) => {
     const editorState = useRichEditorUI();
-    const { setEditor, imageBasePath, editable, yDoc, fileDropHandler, awareness } = editorState;
+    const { docInstanceId,setEditor, imageBasePath, editable, yDoc, fileDropHandler, awareness } = editorState;
     let timeoutRef = useRef<NodeJS.Timeout | null>(null); //
     const editor = useEditor(
         {
@@ -54,13 +54,13 @@ export const useRichEditor = (
             },
             onCreate: ({ editor }) => {
                 setEditor(editor);
-
+                console.log("[useRichEditor] Editor created",awareness?.getLocalState());
             },
             //  onUpdate: ({ editor }) => {
             //    console.log("[useRichEditor] onUpdate", editor.getJSON());
             //}
         },
-        []
+        [docInstanceId]
     );
 
     useEffect(() => {

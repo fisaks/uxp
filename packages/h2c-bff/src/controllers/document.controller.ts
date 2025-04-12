@@ -1,7 +1,7 @@
 import { Route, Token, UseQueryRunner } from "@uxp/bff-common";
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 
-import { GetDocumentSchema, GetVersionsSchema } from "@h2c/common";
+import { GetDocumentSchema, GetVersionsSchema, RestoreDocumentVersionSchema } from "@h2c/common";
 import { QueryRunner } from "typeorm";
 import { DocumentService } from "../services/document.servcie";
 
@@ -42,4 +42,12 @@ export class DocumentController {
         reply.send(response);
     }
 
+    @Route("post", "/documents/:documentId/versions/:version/restore", { authenticate: true, roles: ["user"], schema: RestoreDocumentVersionSchema })
+    @UseQueryRunner()
+    async restoreDocumentVersion(req: FastifyRequest<{ Params: { documentId: string, version: number } }>, reply: FastifyReply, queryRunner: QueryRunner) {
+        const documentService = new DocumentService(req, queryRunner);
+        const { documentId, version } = req.params;
+        const response = await documentService.restoreVersion(documentId, version);
+        reply.send({ version: response });
+    }
 }

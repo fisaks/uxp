@@ -1,22 +1,25 @@
 import CloseIcon from '@mui/icons-material/Close';
+import RestoreIcon from '@mui/icons-material/Restore';
 import {
     Box,
-    Button,
+    Grid2,
     IconButton,
     Paper,
+    Tooltip,
     Typography,
     useMediaQuery,
-    useTheme,
+    useTheme
 } from '@mui/material';
 import { EditorContent, useEditor } from '@tiptap/react';
 import { DateTime } from 'luxon';
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useState } from 'react';
 import * as Y from 'yjs';
 import { useAsyncManualLoadWithPayload } from '../../hooks/useAsyncData';
-import { getRichEditorExtensions } from './components/useRichEditor';
-import { DocumentVersion, useRichEditorUI } from './RichEditorContext';
-import * as styles from "./RichTextEditor.module.css";
+import { AsyncIconButton } from '../forms/AsyncIconButton';
 import { AsyncContent } from '../layout/AsyncContent';
+import { getRichEditorExtensions } from './components/useRichEditor';
+import { useRichEditorUI } from './RichEditorContext';
+import * as styles from "./RichTextEditor.module.css";
 
 export type DocumentPreviewMeta = {
     version: string;
@@ -29,14 +32,16 @@ export type DocumentPreviewMeta = {
 
 export type RichEditorPreviewOverlayHandler = {
     open: (meta: DocumentPreviewMeta) => void;
-};
+    close: () => void;
+  };
 
 export const RichEditorPreviewOverlay = forwardRef<RichEditorPreviewOverlayHandler>((_, ref) => {
     const [yDoc, setYDoc] = useState<Y.Doc | undefined>(undefined);
     const [meta, setMeta] = useState<DocumentPreviewMeta | undefined>(undefined);
 
     const theme = useTheme();
-    const { imageBasePath, loadVersion } = useRichEditorUI();
+    const { imageBasePath, loadVersion, portalContainerRef, restoreVersion, historyDrawerRef } = useRichEditorUI();
+    const tooltipSlotProps = { popper: { container: portalContainerRef.current } }
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     const asyncLoadVersion = useCallback(async (version: string) => {
         if (!loadVersion) return;
@@ -58,6 +63,9 @@ export const RichEditorPreviewOverlay = forwardRef<RichEditorPreviewOverlayHandl
             load(meta.version);
             window.history.pushState({ previewOpen: true }, '');
         },
+        close: () => {
+            handleClose();
+        }
     }), [load]);
 
     useEffect(() => {
@@ -69,6 +77,25 @@ export const RichEditorPreviewOverlay = forwardRef<RichEditorPreviewOverlayHandl
         return () => window.removeEventListener('popstate', handler);
     }, [meta, yDoc]);
 
+    const handleClose = useCallback(() => {
+        if (meta) setMeta(undefined);
+        if (yDoc) setYDoc(undefined);
+    }, [meta, yDoc]);
+
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && !!meta) {
+                handleClose();
+                e.stopPropagation();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown, true);
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown, true);
+        };
+    }, [handleClose]);
+
     const editor = useEditor({
         editable: false,
         extensions: getRichEditorExtensions({
@@ -78,12 +105,19 @@ export const RichEditorPreviewOverlay = forwardRef<RichEditorPreviewOverlayHandl
         }),
     }, [yDoc, imageBasePath]);
 
-    const handleClose = () => {
-        if (meta) setMeta(undefined);
-        if (yDoc) setYDoc(undefined);
+    const handleRestore = async () => {
+        if (!restoreVersion || !meta?.version) return;
+
+        return restoreVersion(meta.version).then((d) => {
+            handleClose();
+            historyDrawerRef.current?.close();
+            return d;
+        })
     }
 
     if (!meta) return null;
+
+    const restoreVersionDisabled = !restoreVersion || loading || !!error || meta.version === "snapshot"
 
     return (
         <Box
@@ -102,28 +136,49 @@ export const RichEditorPreviewOverlay = forwardRef<RichEditorPreviewOverlayHandl
                 flexDirection: 'column',
             }}
         >
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 2 }}>
-                <Typography variant="subtitle1">Previewing Version {meta.version}</Typography>
-                <Button
-                    variant="contained"
-                    onClick={async () => {
-                        //await state.onRestore();
-                        handleClose();
-                    }}
-                >
-                    Restore This Version
-                </Button>
-                <IconButton onClick={handleClose} size="small">
-                    <CloseIcon fontSize="small" />
-                </IconButton>
+            <Box sx={{ px: 2, pt: 2 }}>
+                {/* Row 1: Toolbar */}
+                <Grid2 container alignItems="center" spacing={2}>
+                    <Grid2 size={{ xs: 2 }}>
+                        <AsyncIconButton onClick={handleRestore} size="small" tooltip="Restore This Version"
+                            disabled={restoreVersionDisabled}
+                            tooltipPortal={portalContainerRef} >
+                            <RestoreIcon fontSize="small" />
+                        </AsyncIconButton>
+                    </Grid2>
+
+                    <Grid2 size={{ xs: 8 }} sx={{ textAlign: 'center' }}>
+                        <Typography variant="subtitle1">
+                            Previewing Version {meta.version}
+                        </Typography>
+                    </Grid2>
+
+                    <Grid2 size={{ xs: 2 }} sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                        <Tooltip title="Close Version Window" slotProps={tooltipSlotProps}>
+                            <IconButton onClick={handleClose} size="small">
+                                <CloseIcon fontSize="small" />
+                            </IconButton>
+                        </Tooltip>
+                    </Grid2>
+                </Grid2>
+
+                {/* Row 2: Metadata */}
+                <Grid2 container alignItems="center" sx={{ mt: 1 }}>
+                    <Grid2 size={{ xs: 2 }}>
+                        {meta.createdAt && (
+                            <Typography variant="caption" color="text.secondary">
+                                {DateTime.fromISO(meta.createdAt).toFormat('d.M.yyyy HH:mm:ss')}
+                            </Typography>
+                        )}
+                    </Grid2>
+
+                    <Grid2 size={{ xs: 8 }} sx={{ textAlign: 'center' }}>
+                        <Typography variant="caption" color="text.secondary">
+                            {meta.documentName}
+                        </Typography>
+                    </Grid2>
+                </Grid2>
             </Box>
-
-            {meta.createdAt && (
-                <Typography variant="caption" sx={{ px: 2 }} color="text.secondary">
-                    {DateTime.fromISO(meta.createdAt).toFormat('d.M.yyyy HH:mm:ss')}
-                </Typography>
-            )}
-
             <AsyncContent loading={loading} error={error} props={{ loading: { sx: { mt: 2, mb: 4 } } }} onRetry={() => load(meta.version)}>
                 <Paper elevation={3} sx={{ margin: 1, overflow: 'auto' }}
                     className={`${styles.editorContainer} `}>

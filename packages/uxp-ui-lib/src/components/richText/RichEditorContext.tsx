@@ -39,6 +39,7 @@ export interface RichTextEditorProps {
     label?: string;
     imageBasePath: string;
     yDoc: Y.Doc;
+    docInstanceId: number,
     awareness?: Awareness;
     editable?: boolean
     hideMenu?: boolean

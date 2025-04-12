@@ -60,9 +60,9 @@ export const RichTextEditorContent = () => {
             {editable && <LinkEdit />}
 
             <RichEditorUploadManager />
-            <RichEditorHistoryDrawer ref={historyDrawerRef} />
+            
             <RichEditorPreviewOverlay ref={previewOverlayRef} />
-
+            <RichEditorHistoryDrawer ref={historyDrawerRef} />
             {/* The actual Editor */}
             <EditorContent editor={editor} className={styles.editorWrapper} />
             <EditorStatusNotice notice={notice} />

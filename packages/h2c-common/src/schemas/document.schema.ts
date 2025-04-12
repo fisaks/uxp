@@ -5,12 +5,24 @@ export const GetDocumentSchema: SchemaValidate<undefined, undefined, { documentI
         type: "object",
         properties: {
             documentId: { type: "string", minLength: 21, maxLength: 21, pattern: "^[a-zA-Z0-9_-]+$" },
-            version: { 
+            version: {
                 anyOf: [
                     { type: "number", minimum: 0 },
                     { type: "string", enum: ["snapshot"] }
                 ]
             },
+        },
+        required: ["documentId", "version"],
+        additionalProperties: false,
+    },
+};
+
+export const RestoreDocumentVersionSchema: SchemaValidate<undefined, undefined, { documentId: string, version: number | "snapshot" }> = {
+    params: {
+        type: "object",
+        properties: {
+            documentId: { type: "string", minLength: 21, maxLength: 21, pattern: "^[a-zA-Z0-9_-]+$" },
+            version: { type: "number", minimum: 0 },
         },
         required: ["documentId", "version"],
         additionalProperties: false,

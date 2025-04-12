@@ -1,12 +1,13 @@
 import { Box, Button, Drawer, Grid2, Link, List, ListItem, Radio, Toolbar, Typography, useTheme } from "@mui/material";
 import { DateTime } from "luxon";
-import { forwardRef, useImperativeHandle, useState } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
 import { useAsyncManualLoad } from "../../hooks/useAsyncData";
 import { AsyncContent } from "../layout/AsyncContent";
 import { useRichEditorUI } from "./RichEditorContext";
 
 export type RichEditorHistoryDrawerHandle = {
     open: () => void;
+    close: () => void;
 };
 
 export const RichEditorHistoryDrawer = forwardRef<RichEditorHistoryDrawerHandle>((props, ref) => {
@@ -23,7 +24,17 @@ export const RichEditorHistoryDrawer = forwardRef<RichEditorHistoryDrawerHandle>
             load();
             setOpen(true);
         },
+        close: () => {
+            setOpen(false);
+
+        }
     }));
+    useEffect(() => {
+        if (!open) {
+            setDiffA(undefined);
+            setDiffB(undefined);
+        }
+    }, [open])
 
     const handlePreview = (version: string) => {
         if (!loadVersion || !data) return;
@@ -32,7 +43,7 @@ export const RichEditorHistoryDrawer = forwardRef<RichEditorHistoryDrawerHandle>
     }
 
     return (
-        <Drawer anchor="right" open={open} onClose={handleClose} container={portalContainerRef.current}  >
+        <Drawer anchor="right" open={open} onClose={handleClose} container={portalContainerRef.current} >
             <Box sx={{ p: 2, minWidth: "300px" }}>
                 <Box sx={{
                     position: 'sticky',

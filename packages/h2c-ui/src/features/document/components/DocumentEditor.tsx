@@ -8,7 +8,7 @@ import { getBaseRoutePath, getBaseUrl } from "../../../config";
 import { H2CAppResponseMessage } from "@h2c/common";
 import { buildPath } from "@uxp/common";
 import { applyAwarenessUpdate, encodeAwarenessUpdate } from "y-protocols/awareness";
-import { getDocument, getVersions } from "../document.api";
+import { getDocument, getVersions, restoreDocumentVersion } from "../document.api";
 
 
 export interface DocumentEditorRef {
@@ -26,31 +26,34 @@ type DocumentEditorProps = {
 export const DocumentEditor = forwardRef<DocumentEditorRef, DocumentEditorProps>(({ documentId, editable, label }, ref) => {
 
 
-    const { yDoc, awareness } = useCollaborativeDoc()
+    const { yDoc, awareness, yDocRef, awarenessRef, replaceDocState, docInstanceId } = useCollaborativeDoc()
 
     const uploadTracker = useUploadTracker()
     const imageBasePath = useMemo(() => `${getBaseUrl()}/api/file`, []);
     const [editorNotice, setEditorNotice] = useState<string | undefined>();
+
     const listeners = useMemo(() => {
         return {
             "document:full": (message, data) => {
                 console.info("[DocumentEditor] Received document:full", message);
                 if (message.payload?.documentId === documentId && data) {
-                    Y.applyUpdate(yDoc, data, "server")
-                    yDoc.emit("load", [yDoc]);
+                    const newYdoc = new Y.Doc();
+                    Y.applyUpdate(newYdoc, data, "server")
+                    replaceDocState(newYdoc);
+                    newYdoc.emit("load", [newYdoc]);
                 }
 
             },
             "document:updated": (message, data) => {
                 console.info("[DocumentEditor] Received document:updated", message);
                 if (message.payload?.documentId === documentId && data) {
-                    Y.applyUpdate(yDoc, data, "server");
+                    Y.applyUpdate(yDocRef.current, data, "server");
                 }
             },
             "document:awareness": (message, data) => {
                 if (message.payload?.documentId === documentId && data) {
                     console.log("[DocumentEditor] Received awareness update");
-                    applyAwarenessUpdate(awareness, data, "server");
+                    applyAwarenessUpdate(awarenessRef.current, data, "server");
                 }
             },
             "document:deleted": (message) => {
@@ -58,7 +61,7 @@ export const DocumentEditor = forwardRef<DocumentEditorRef, DocumentEditorProps>
             }
 
         } as H2CAppWebSocketResponseListener
-    }, [])
+    }, [documentId, replaceDocState])
 
 
     const errorHandler: H2CAppErrorHandler = useCallback((({ action, error, errorDetails }) => {
@@ -70,6 +73,7 @@ export const DocumentEditor = forwardRef<DocumentEditorRef, DocumentEditorProps>
     }) as H2CAppErrorHandler, [])
 
     const { sendBinaryMessage, sendMessageAsync } = useH2CWebSocket(listeners, errorHandler);
+
     useEffect(() => {
         const onAwarenessUpdate = (
             { added, updated, removed }: { added: number[]; updated: number[]; removed: number[] },
@@ -84,43 +88,7 @@ export const DocumentEditor = forwardRef<DocumentEditorRef, DocumentEditorProps>
 
         awareness.on("update", onAwarenessUpdate);
         return () => awareness.off("update", onAwarenessUpdate);
-    }, [awareness, documentId, sendBinaryMessage]);
-
-    const onSaveVersion = useCallback(async () => {
-        console.info("[DocumentEditor] Saving version", documentId);
-        const response = await sendMessageAsync("document:save", { documentId }) as H2CAppResponseMessage<"document:saved">;
-        const versionCreated = response.payload?.versionCreated;
-        const versionId = response.payload?.versionId;
-        const createdAt = response.payload?.createdAt;
-        const docId = response.payload?.documentId;
-        return { documentId: docId, createdAt, versionId: `${versionId}`, newVersion: versionCreated } as YDocVersionDetail;
-
-    }, [documentId, sendMessageAsync]);
-
-    const onPrintExport = useCallback(async (documentId: string, versionId: string) => {
-        console.info("[DocumentEditor] Exporting document", documentId, versionId);
-
-
-        const previewPath = buildPath(getBaseRoutePath() ?? "/", "document-preview", documentId, versionId);
-        window.open(`${previewPath}?printView=true`, `doc-${documentId}-${versionId}`);
-    }, []);
-
-    const loadHistory = useCallback(async () => {
-        return getVersions(documentId);
-    }, [documentId]);
-
-    const loadVersion = useCallback(async (version: string) => {
-        return getDocument(documentId, version);
-    }, [documentId]);
-
-    const restoreVersion = useCallback(async (versionId: string) => {
-        return;
-    }, [documentId]);
-
-    useImperativeHandle(ref, () => ({
-        save: onSaveVersion,
-
-    }));
+    }, [docInstanceId, documentId, sendBinaryMessage]);
 
     useEffect(() => {
 
@@ -137,26 +105,53 @@ export const DocumentEditor = forwardRef<DocumentEditorRef, DocumentEditorProps>
             yDoc.off("update", updateHandler);
         };
 
-    }, []);
+    }, [docInstanceId, documentId]);
 
     useH2CWebSocketSubscription({
         action: "document:subscribe",
         payload: { documentId }
     });
 
+    const onSaveVersion = useCallback(async () => {
+        console.info("[DocumentEditor] Saving version", documentId);
+        const response = await sendMessageAsync("document:save", { documentId }) as H2CAppResponseMessage<"document:saved">;
+        const versionCreated = response.payload?.versionCreated;
+        const versionId = response.payload?.versionId;
+        const createdAt = response.payload?.createdAt;
+        const docId = response.payload?.documentId;
+        return { documentId: docId, createdAt, versionId: `${versionId}`, newVersion: versionCreated } as YDocVersionDetail;
 
-    /*    useEffect(() => {
-            sendMessage("document:subscribe", { documentId })
-            return () => {
-                sendMessage("document:unsubscribe", { documentId })
-            }
-        }, [documentId]);*/
+    }, [documentId, sendMessageAsync]);
+
+    const onPrintExport = useCallback(async (documentId: string, versionId: string) => {
+        const previewPath = buildPath(getBaseRoutePath() ?? "/", "document-preview", documentId, versionId);
+        window.open(`${previewPath}?printView=true`, `doc-${documentId}-${versionId}`);
+    }, []);
+
+    const loadHistory = useCallback(async () => {
+        return getVersions(documentId);
+    }, [documentId]);
+
+    const loadVersion = useCallback(async (version: string) => {
+        return getDocument(documentId, version);
+    }, [documentId]);
+
+    const restoreVersion = useCallback(async (versionId: string) => {
+        await restoreDocumentVersion(documentId, versionId);
+        return
+    }, [documentId]);
+
+    useImperativeHandle(ref, () => ({
+        save: onSaveVersion,
+    }));
+
 
     return <RichTextEditor
         label={label ?? "Edit Document"}
         imageBasePath={imageBasePath}
         yDoc={yDoc}
-        awareness={awareness}
+        docInstanceId={docInstanceId}
+        awareness={awarenessRef.current}
         editable={editable}
         notice={editorNotice}
         onSaveVersion={onSaveVersion}

@@ -1,5 +1,5 @@
 import { useTheme } from '@mui/material/styles';
-import { useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Awareness } from 'y-protocols/awareness';
 import * as Y from 'yjs';
@@ -18,26 +18,43 @@ const getRandomCursorColor = (pool: string[]): string => {
     return pool[Math.floor(Math.random() * pool.length)];
 }
 
-export const useCollaborativeDoc = () => {
+export const useCollaborativeDoc = (initialDoc?: Y.Doc) => {
     const user = useSelector(selectCurrentUser);
     const theme = useTheme();
     const isDarkMode = theme.palette.mode === 'dark';
     const colorPool = isDarkMode ? darkThemeCursorColors : lightThemeCursorColors;
+    const [docInstanceId, setDocInstanceId] = useState(0);
 
-    const [yDoc, awareness] = useMemo(() => {
-        const y = new Y.Doc();
-        const a = new Awareness(y);
-        return [y, a] as const;
+
+    const cursorColorRef = useRef(getRandomCursorColor(colorPool));
+
+    const yDocRef = useRef<Y.Doc>(initialDoc ?? new Y.Doc());
+    const awarenessRef = useRef<Awareness>(new Awareness(yDocRef.current));
+
+    // Setup local awareness state
+    useEffect(() => {
+        console.log("Awareness instance replaced 2", user?.username);
+        awarenessRef.current.setLocalStateField('user', {
+            name: user?.username ?? 'Unknown user',
+            color: cursorColorRef.current,
+        });
+    }, [user?.username, docInstanceId]);
+
+    const replaceDocState = useCallback((newDoc: Y.Doc) => {
+
+        yDocRef.current = newDoc;
+        awarenessRef.current = new Awareness(newDoc);
+        setDocInstanceId((v) => v + 1);
+
     }, []);
 
-    useEffect(() => {
+    return {
+        yDoc: yDocRef.current,
+        awareness: awarenessRef.current,
+        replaceDocState,
+        yDocRef,
+        awarenessRef,
+        docInstanceId
+    };
+};
 
-        const cursorColor = getRandomCursorColor(colorPool);
-        awareness.setLocalStateField('user', {
-            name: user?.username ?? "Unknown user",
-            color: cursorColor,
-        });
-    }, [user?.username, colorPool]);
-
-    return { yDoc, awareness };
-}

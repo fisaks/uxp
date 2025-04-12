@@ -108,7 +108,7 @@ export const RichEditorPreview = ({ content, imageBasePath, docId, title, versio
                 setPrintSettings={setPrintSettings}
             />
             <Box id="document-content" className={`${styles.paper} ${printSettings.orientation === 'landscape' ? 'landscape' : ''}`}                >
-                {yDoc && <RichEditorProvider imageBasePath={imageBasePath} editable={false} yDoc={yDoc}  >
+                {yDoc && <RichEditorProvider imageBasePath={imageBasePath} editable={false} yDoc={yDoc} docInstanceId={version} >
 
                     <Box ref={pdfWrapperRef} className={`${styles.editorContainer} ${styles.pdfWrapper} print-preview`}>
                         {printSettings.includeHeader && <Box

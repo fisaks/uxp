@@ -258,6 +258,39 @@ export class DocumentService {
         this.wsManager.broadcastDocumentAwareness({ sender: socket, documentId, update, requestMeta: this.requestMeta });
     }
 
+    async restoreVersion(documentId: string, versionId: number) {
+        const documentRepo = this.queryRunner.manager.getRepository(DocumentEntity);
+
+        await this.saveDocument(documentId, undefined);
+
+        const docVersion = await documentRepo.findOne({
+            where: { documentId, id: versionId },
+        });
+
+        if (!docVersion || !docVersion.content) {
+            throw new AppErrorV2({ statusCode: 404, code: "NOT_FOUND", message: `Document not found by id ${documentId} and version ${versionId}` });
+        }
+        const newVersion = documentRepo.create({
+            documentId,
+            content: docVersion.content,
+            documentType: docVersion.documentType,
+            deleted: docVersion.deleted,
+            removedAt: docVersion.removedAt,
+            name: docVersion.name
+        });
+        const saved = await documentRepo.save(newVersion);
+
+        const baseDoc = new Y.Doc();
+        Y.applyUpdate(baseDoc, new Uint8Array(docVersion.content));
+        this.wsManager.broadcastDocumentRestored({
+            documentId: documentId,
+            documentType: docVersion.documentType,
+            document: Y.encodeStateAsUpdate(baseDoc),
+            requestMeta: this.requestMeta
+        })
+        return saved.id;
+    }
+
     private travelHtmlToYjs(yXmlFragment: Y.XmlFragment, node: Node) {
         if (node.nodeType === 1) {
             const element = node as Element;
