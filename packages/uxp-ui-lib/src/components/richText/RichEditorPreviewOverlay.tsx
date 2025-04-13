@@ -33,7 +33,7 @@ export type DocumentPreviewMeta = {
 export type RichEditorPreviewOverlayHandler = {
     open: (meta: DocumentPreviewMeta) => void;
     close: () => void;
-  };
+};
 
 export const RichEditorPreviewOverlay = forwardRef<RichEditorPreviewOverlayHandler>((_, ref) => {
     const [yDoc, setYDoc] = useState<Y.Doc | undefined>(undefined);
@@ -140,8 +140,10 @@ export const RichEditorPreviewOverlay = forwardRef<RichEditorPreviewOverlayHandl
                 {/* Row 1: Toolbar */}
                 <Grid2 container alignItems="center" spacing={2}>
                     <Grid2 size={{ xs: 2 }}>
-                        <AsyncIconButton onClick={handleRestore} size="small" tooltip="Restore This Version"
+                        <AsyncIconButton onClick={handleRestore} size="small"
                             disabled={restoreVersionDisabled}
+                            disabledTooltip={meta.version === "snapshot" ? "Cannot restore snapshot version" : "Cannot restore version"}
+                            tooltip="Restore This Version"
                             tooltipPortal={portalContainerRef} >
                             <RestoreIcon fontSize="small" />
                         </AsyncIconButton>

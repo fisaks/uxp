@@ -1,10 +1,11 @@
 import { Editor } from "@tiptap/core";
-import { createContext, ReactNode, useContext, useRef, useState } from "react";
+import { createContext, ReactNode, useContext, useEffect, useRef, useState } from "react";
 import { Awareness } from "y-protocols/awareness";
 import * as Y from "yjs";
 import { UploadListener, UploadStartedWithTrackingId, UploadStatus } from "../../features/upload-tracking/uploadTracking.types";
 import { RichEditorHistoryDrawerHandle } from "./RichEditorHistoryDrawer";
 import { RichEditorPreviewOverlayHandler } from "./RichEditorPreviewOverlay";
+import { RichEditorDiffDialogHandle } from "./RichEditorDiffDialog";
 
 
 export type UploadedFileDetails = { publicId: string; fileName: string };
@@ -79,6 +80,7 @@ export interface RichEditorUIState extends RichTextEditorProps {
     editorRootContainerRef: React.RefObject<HTMLDivElement>;
     historyDrawerRef: React.RefObject<RichEditorHistoryDrawerHandle>;
     previewOverlayRef: React.RefObject<RichEditorPreviewOverlayHandler>;
+    diffDialogRef: React.RefObject<RichEditorDiffDialogHandle>;
     editor?: Editor
     setEditor: (editor: Editor) => void;
     hasCamera: boolean | undefined;
@@ -96,17 +98,18 @@ export interface RichEditorUIState extends RichTextEditorProps {
     registerRetryHandler: (fn: (id: string) => void) => void;
     fileDropHandler: ((files: File[]) => void) | null;
     retryHandler: ((id: string) => void) | null;
-
+    setEditable: React.Dispatch<React.SetStateAction<boolean | undefined>>
+    propEditable: boolean | undefined
 }
 
 const RichEditorContext = createContext<RichEditorUIState | undefined>(undefined);
 
-export function RichEditorProvider({ children, ...props }: { children: ReactNode } & RichTextEditorProps) {
+export function RichEditorProvider({ children, editable: propEditable, ...props }: { children: ReactNode } & RichTextEditorProps) {
 
     const [linkEditPopupProps, setLinkEditPopupProps] = useState<LinkEditPopupProps | null>(null);
     const [imageToolbarPos, setImageToolbarPos] = useState<{ top: number; left: number } | null>(null);
 
-
+    const [editable, setEditable] = useState<boolean | undefined>(propEditable);
     const [isFullScreen, setIsFullScreen] = useState(false);
     const [editor, setEditor] = useState<Editor | undefined>();
     const [hasCamera, setHasCamera] = useState<boolean | undefined>(undefined);
@@ -116,10 +119,12 @@ export function RichEditorProvider({ children, ...props }: { children: ReactNode
     const retryHandler = useRef<((id: string) => void) | null>(null);
     const historyDrawerRef = useRef<RichEditorHistoryDrawerHandle>(null);
     const previewOverlayRef = useRef<RichEditorPreviewOverlayHandler>(null);
+    const diffDialogRef = useRef<RichEditorDiffDialogHandle>(null);
     const triggerRegistry = useRef<TriggerRegistry>({
         file: {},
         camera: {},
     });
+    useEffect(() => { setEditable(propEditable) }, [propEditable])
 
     const registerFileDropHandler = (fn: (files: File[]) => void) => {
         fileDropHandler.current = fn
@@ -169,7 +174,11 @@ export function RichEditorProvider({ children, ...props }: { children: ReactNode
             registerRetryHandler,
             retryHandler: (id: string) => retryHandler.current && retryHandler.current(id),
             historyDrawerRef,
-            previewOverlayRef
+            previewOverlayRef,
+            diffDialogRef,
+            editable,
+            setEditable,
+            propEditable
         }}>
             {children}
         </RichEditorContext.Provider>

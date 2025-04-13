@@ -35,7 +35,7 @@ type UseAsyncManualWithPayloadLoadResult<TResult, TPayload> = {
     loading: boolean;
     error: string | undefined;
     data: TResult | undefined;
-    load: (payload: TPayload) => Promise<void>;
+    load: (payload: TPayload) => Promise<TResult | undefined>;
     reset: () => void;
 };
 
@@ -156,8 +156,10 @@ export function useAsyncManualLoadWithPayload<TResult, TPayload>(
         try {
             const result = await fetch(payload);
             setData(result);
+            return result;
         } catch (err) {
             setError(mapApiErrorsToMessageString(err, options?.errorCodeMessage));
+            return undefined;
         } finally {
             setLoading(false);
         }

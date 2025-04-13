@@ -11,10 +11,11 @@ import { useRichEditorUI } from "./RichEditorContext";
 import { RichEditorHistoryDrawer } from "./RichEditorHistoryDrawer";
 import * as styles from "./RichTextEditor.module.css";
 import { RichEditorPreviewOverlay } from "./RichEditorPreviewOverlay";
+import { RichEditorDiffDialog } from "./RichEditorDiffDialog";
 
 
 export const RichTextEditorContent = () => {
-    const { editor, editorRootContainerRef, portalContainerRef, isFullScreen, label, editable, notice, hideMenu, historyDrawerRef ,previewOverlayRef} = useRichEditorUI();
+    const { editor, editorRootContainerRef, portalContainerRef, isFullScreen, label, editable, notice, hideMenu, historyDrawerRef ,previewOverlayRef, diffDialogRef} = useRichEditorUI();
     const theme = useTheme();
     const isDarkMode = theme.palette.mode === 'dark';
     useRichEditor();
@@ -62,6 +63,7 @@ export const RichTextEditorContent = () => {
             <RichEditorUploadManager />
             
             <RichEditorPreviewOverlay ref={previewOverlayRef} />
+            <RichEditorDiffDialog ref={diffDialogRef} />
             <RichEditorHistoryDrawer ref={historyDrawerRef} />
             {/* The actual Editor */}
             <EditorContent editor={editor} className={styles.editorWrapper} />

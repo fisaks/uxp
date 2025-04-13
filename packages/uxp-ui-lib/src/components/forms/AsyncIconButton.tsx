@@ -10,6 +10,7 @@ import { WithOptionalTooltip } from "../layout/WithOptionalTooltip";
 type AsyncIconButtonProps = {
     children: React.ReactNode;
     tooltip?: string;
+    disabledTooltip?: string;
     tooltipPortal?: React.RefObject<HTMLElement | null>;
     onClick?: (event: React.MouseEvent<HTMLButtonElement>) => Promise<unknown>;
 } & Omit<IconButtonProps, "children" | "onClick">;
@@ -18,6 +19,7 @@ export const AsyncIconButton: React.FC<AsyncIconButtonProps> = ({
     children,
     onClick,
     tooltip,
+    disabledTooltip,
     tooltipPortal,
     ...props
 }) => {
@@ -42,7 +44,7 @@ export const AsyncIconButton: React.FC<AsyncIconButtonProps> = ({
 
 
 
-    return (<WithOptionalTooltip tooltip={tooltip} portalContainer={tooltipPortal}>
+    return (<WithOptionalTooltip tooltip={props.disabled && disabledTooltip ? disabledTooltip : tooltip} portalContainer={tooltipPortal}>
         <IconButton
             {...props}
             aria-label={tooltip}

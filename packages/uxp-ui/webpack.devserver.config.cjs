@@ -16,6 +16,11 @@ module.exports = merge(baseConfig, {
                 directory: path.resolve(__dirname, "../../public/static/libs"), // Serve files from the dist folder
                 publicPath: "/static/libs",
             },
+            {
+                directory: path.resolve(__dirname, "../../public/static"), // Serve files from the dist folder
+                publicPath: "/static",
+            },
+
         ],
         port: 3000, // Port for the development server
         hot: true, // Enable hot module replacement
