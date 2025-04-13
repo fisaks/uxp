@@ -131,15 +131,21 @@ const VersionListItem = ({ version, createdAt, setDiffA, diffB, setDiffB, diffA,
                 {!isMobile && <>
                     <Grid2 size={{ xs: 2 }} sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
                         <Radio
-                            checked={diffA === `${version}`}
-                            onChange={() => setDiffA(`${version}`)}
+                            checked={diffA === version}
+                            onClick={() => {
+                                diffB !== version && setDiffA(diffA === version ? undefined : version);
+                            }}
+
                             inputProps={{ 'aria-label': `Select A for version ${version}` }}
                         />
                     </Grid2>
                     <Grid2 size={{ xs: 2 }} sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
                         <Radio
-                            checked={diffB === `${version}`}
-                            onChange={() => setDiffB(`${version}`)}
+                            checked={diffB === version}
+                            onClick={() => {
+                                diffA !== version && setDiffB(diffB === version ? undefined : version);
+                            }}
+
                             inputProps={{ 'aria-label': `Select B for version ${version}` }}
                         />
                     </Grid2>
