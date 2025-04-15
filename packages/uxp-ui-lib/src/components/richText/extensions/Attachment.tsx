@@ -57,8 +57,22 @@ const Attachment = Node.create({
         }];
     },
 
-    renderHTML({ HTMLAttributes }) {
-        return ['attachment-node', mergeAttributes(HTMLAttributes)];
+
+    renderHTML({ node }) {
+        return [
+            'span',
+            {
+                'data-type': 'attachment',
+                'data-id': node.attrs.id,
+                'data-name': node.attrs.name,
+                'data-url': node.attrs.url,
+                class: 'uxp-editor-attachment-node uxp-editor-attachment-html',
+            },
+            [
+                'span',
+                node.attrs.name || 'Attachment',
+            ]
+        ];
     },
 
     addNodeView() {

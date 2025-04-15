@@ -114,7 +114,7 @@ export class DocumentService {
                 document: Y.encodeStateAsUpdate(docSnapshot.document),
                 deleted: docSnapshot.deleted,
                 removedAt: docSnapshot.removedAt,
-                createdAt: docSnapshot.createdAt,
+                createdAt: DateTime.now(),
                 name: docSnapshot.name,
                 type: docSnapshot.documentType,
             }

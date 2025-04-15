@@ -9,17 +9,17 @@ import { useEffect, useRef, useState } from "react";
  * @param successDuration - How long to keep the `loaded` flag true after success (in ms).
  * @returns [run, loading, error, loaded] - A function to execute the thunk and its states.
  */
- // eslint-disable-next-line @typescript-eslint/no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const useThunkHandler = <Returned, Payload = void, RootState = any>(
-    thunk: AsyncThunk<Returned, Payload, {}>,
+    thunk: AsyncThunk<Returned, Payload , {}>,
     dispatch: ThunkDispatch<RootState, unknown, UnknownAction>,
     successDuration: number = 2000 // Default to 2 seconds
 ): [
-    (payload: Payload) => Promise<Returned | undefined>,
-    boolean, // loading
-    ApiErrorResponse | null, // error
-    boolean, // loaded
-] => {
+        (payload: Payload) => Promise<Returned | undefined>,
+        boolean, // loading
+        ApiErrorResponse | null, // error
+        boolean, // loaded
+    ] => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<ApiErrorResponse | null>(null);
     const [loaded, setLoaded] = useState(false);
@@ -39,7 +39,8 @@ export const useThunkHandler = <Returned, Payload = void, RootState = any>(
         setLoaded(false);
         clearSuccessTimeout();
         try {
-            const result = await dispatch(thunk(payload)).unwrap();
+            // TODO caused by https://github.com/reduxjs/redux-toolkit/issues/4885
+            const result = await dispatch(thunk(payload as Payload & undefined)).unwrap();
             setTimeout(() => setLoaded(true), 0);
 
             // Automatically reset `loaded` after the specified duration

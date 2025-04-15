@@ -29,7 +29,8 @@ export const createDebouncedUpdater = <T>({
 
         try {
             // Perform the current update
-            await dispatch(updateThunk(payload))
+            // TODO caused by https://github.com/reduxjs/redux-toolkit/issues/4885
+            await dispatch(updateThunk(payload as T & undefined))
                 .unwrap()
                 .then((result: any) => {
                     if (successHandler) {

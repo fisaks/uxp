@@ -26,34 +26,52 @@
         "@mui/x-date-pickers": "^7.23.6",
         "@reduxjs/toolkit": "^2.3.0",
         "@tiptap/core": "^2.11.5",
+        "@tiptap/extension-blockquote": "^2.11.5",
+        "@tiptap/extension-bold": "^2.11.5",
+        "@tiptap/extension-bullet-list": "^2.11.5",
+        "@tiptap/extension-code": "^2.11.5",
+        "@tiptap/extension-code-block": "^2.11.5",
         "@tiptap/extension-collaboration": "^2.11.5",
         "@tiptap/extension-collaboration-cursor": "^2.11.5",
+        "@tiptap/extension-document": "^2.11.5",
+        "@tiptap/extension-dropcursor": "^2.11.5",
         "@tiptap/extension-focus": "^2.11.5",
+        "@tiptap/extension-gapcursor": "^2.11.5",
+        "@tiptap/extension-hard-break": "^2.11.5",
+        "@tiptap/extension-heading": "^2.11.5",
+        "@tiptap/extension-horizontal-rule": "^2.11.5",
         "@tiptap/extension-image": "^2.11.5",
+        "@tiptap/extension-italic": "^2.11.5",
         "@tiptap/extension-link": "^2.11.5",
+        "@tiptap/extension-list-item": "^2.11.5",
+        "@tiptap/extension-ordered-list": "^2.11.5",
+        "@tiptap/extension-paragraph": "^2.11.5",
+        "@tiptap/extension-strike": "^2.11.5",
         "@tiptap/extension-subscript": "^2.11.5",
         "@tiptap/extension-superscript": "^2.11.5",
         "@tiptap/extension-table": "^2.11.5",
         "@tiptap/extension-table-cell": "^2.11.5",
         "@tiptap/extension-table-header": "^2.11.5",
         "@tiptap/extension-table-row": "^2.11.5",
+        "@tiptap/extension-text": "^2.11.5",
         "@tiptap/extension-text-align": "^2.11.5",
         "@tiptap/extension-underline": "^2.11.5",
         "@tiptap/react": "^2.11.5",
-        "@tiptap/starter-kit": "^2.11.5",
         "@uxp/common": "workspace:*",
+        "diff": "^7.0.0",
+        "html2pdf.js": "^0.10.3",
         "luxon": "^3.5.0",
+        "prosemirror-model": "^1.25.0",
         "prosemirror-state": "^1.4.3",
         "react": "^18.0.0",
         "react-dom": "^18.0.0",
         "react-redux": "^9.1.2",
         "react-resizable": "^3.0.5",
+        "react-router-dom": "^7.0.1",
         "uuid": "^11.0.3",
         "y-prosemirror": "^1.2.17",
         "y-protocols": "^1.0.6",
-        "yjs": "^13.6.23",
-        "html2pdf.js": "^0.10.3",
-        "react-router-dom": "^7.0.1"
+        "yjs": "^13.6.23"
     },
     "peerDependenciesMeta": {
         "@tiptap/core": {
@@ -104,6 +122,57 @@
         "@tiptap/extension-collaboration-cursor": {
             "optional": true
         },
+        "@tiptap/extension-blockquote": {
+            "optional": true
+        },
+        "@tiptap/extension-bullet-list": {
+            "optional": true
+        },
+        "@tiptap/extension-code-block": {
+            "optional": true
+        },
+        "@tiptap/extension-document": {
+            "optional": true
+        },
+        "@tiptap/extension-hard-break": {
+            "optional": true
+        },
+        "@tiptap/extension-heading": {
+            "optional": true
+        },
+        "@tiptap/extension-horizontal-rule": {
+            "optional": true
+        },
+        "@tiptap/extension-list-item": {
+            "optional": true
+        },
+        "@tiptap/extension-ordered-list": {
+            "optional": true
+        },
+        "@tiptap/extension-paragraph": {
+            "optional": true
+        },
+        "@tiptap/extension-text": {
+            "optional": true
+        },
+        "@tiptap/extension-bold": {
+            "optional": true
+        },
+        "@tiptap/extension-code": {
+            "optional": true
+        },
+        "@tiptap/extension-italic": {
+            "optional": true
+        },
+        "@tiptap/extension-strike": {
+            "optional": true
+        },
+        "@tiptap/extension-dropcursor": {
+            "optional": true
+        },
+        "@tiptap/extension-gapcursor": {
+            "optional": true
+        },
         "yjs": {
             "optional": true
         },
@@ -124,9 +193,16 @@
         },
         "react-router-dom": {
             "optional": true
+        },
+        "prosemirror-model": {
+            "optional": true
+        },
+        "diff": {
+            "optional": true
         }
     },
     "devDependencies": {
+        "@types/diff": "^7.0.2",
         "@types/luxon": "^3.4.2",
         "@types/node": "^22.13.1",
         "@types/react": "^18.3.12",
@@ -137,6 +213,5 @@
         "cpx": "^1.5.0",
         "prosemirror-view": "^1.37.2",
         "webpack-bundle-analyzer": "^4.10.2"
-    },
-    "dependencies": {}
+    }
 }

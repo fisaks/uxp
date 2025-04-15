@@ -8,14 +8,14 @@ import { RichEditorToolbar } from "./components/RichEditorToolbar";
 import { RichEditorUploadManager } from "./components/RichEditorUploadManager";
 import { useRichEditor } from "./components/useRichEditor";
 import { useRichEditorUI } from "./RichEditorContext";
-import { RichEditorHistoryDrawer } from "./RichEditorHistoryDrawer";
-import * as styles from "./RichTextEditor.module.css";
-import { RichEditorPreviewOverlay } from "./RichEditorPreviewOverlay";
 import { RichEditorDiffDialog } from "./RichEditorDiffDialog";
+import { RichEditorHistoryDrawer } from "./RichEditorHistoryDrawer";
+import { RichEditorPreviewOverlay } from "./RichEditorPreviewOverlay";
+import * as styles from "./RichTextEditor.module.css";
 
 
 export const RichTextEditorContent = () => {
-    const { editor, editorRootContainerRef, portalContainerRef, isFullScreen, label, editable, notice, hideMenu, historyDrawerRef ,previewOverlayRef, diffDialogRef} = useRichEditorUI();
+    const { editor, editorRootContainerRef, portalContainerRef, isFullScreen, label, editable, notice, hideMenu, historyDrawerRef, previewOverlayRef, diffDialogRef } = useRichEditorUI();
     const theme = useTheme();
     const isDarkMode = theme.palette.mode === 'dark';
     useRichEditor();
@@ -29,7 +29,10 @@ export const RichTextEditorContent = () => {
             sx={{ padding: 0 }}
             style={{
                 '--editor-focus-color': theme.palette.primary.main,
-                '--editor-awareness-text': isDarkMode ? '#fff' : '#0d0d0d'
+                '--editor-awareness-text': isDarkMode ? '#fff' : '#0d0d0d',
+                '--mui-color-success': theme.palette.success.main,
+                '--mui-color-error': theme.palette.error.main,
+                '--mui-color-warning': theme.palette.warning.main
 
             } as React.CSSProperties}
             className={`${styles.editorContainer} ${isFullScreen ? styles.fullScreen : ""}`}

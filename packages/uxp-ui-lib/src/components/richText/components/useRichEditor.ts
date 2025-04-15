@@ -1,14 +1,33 @@
+import Blockquote from '@tiptap/extension-blockquote';
+import BulletList from '@tiptap/extension-bullet-list';
+import CodeBlock from '@tiptap/extension-code-block';
 import Collaboration from "@tiptap/extension-collaboration";
+import Document from '@tiptap/extension-document';
 import Focus from "@tiptap/extension-focus";
+import HardBreak from '@tiptap/extension-hard-break';
+import Heading from '@tiptap/extension-heading';
+import HorizontalRule from '@tiptap/extension-horizontal-rule';
+import ListItem from '@tiptap/extension-list-item';
+import OrderedList from '@tiptap/extension-ordered-list';
+import Paragraph from '@tiptap/extension-paragraph';
 import Subscript from "@tiptap/extension-subscript";
 import Superscript from "@tiptap/extension-superscript";
 import Table from "@tiptap/extension-table";
 import TableCell from "@tiptap/extension-table-cell";
 import TableHeader from "@tiptap/extension-table-header";
 import TableRow from "@tiptap/extension-table-row";
+import Text from '@tiptap/extension-text';
 import Underline from "@tiptap/extension-underline";
 import { Extension, useEditor } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
+
+import Bold from '@tiptap/extension-bold';
+import Code from '@tiptap/extension-code';
+import Italic from '@tiptap/extension-italic';
+import Strike from '@tiptap/extension-strike';
+
+import DropCursor from '@tiptap/extension-dropcursor';
+import GapCursor from '@tiptap/extension-gapcursor';
+
 import { EditorView } from "prosemirror-view"; //  Import directly from ProseMirror
 import React, { useEffect, useRef } from "react";
 
@@ -29,7 +48,7 @@ import { RichEditorUIState, UploadSource, UploadType, useRichEditorUI } from "..
 export const useRichEditor = (
 ) => {
     const editorState = useRichEditorUI();
-    const { docInstanceId,setEditor, imageBasePath, editable, yDoc, fileDropHandler, awareness } = editorState;
+    const { docInstanceId, setEditor, imageBasePath, editable, yDoc, fileDropHandler, awareness } = editorState;
     let timeoutRef = useRef<NodeJS.Timeout | null>(null); //
     const editor = useEditor(
         {
@@ -54,7 +73,7 @@ export const useRichEditor = (
             },
             onCreate: ({ editor }) => {
                 setEditor(editor);
-                console.log("[useRichEditor] Editor created",awareness?.getLocalState());
+                console.log("[useRichEditor] Editor created", awareness?.getLocalState());
             },
             //  onUpdate: ({ editor }) => {
             //    console.log("[useRichEditor] onUpdate", editor.getJSON());
@@ -87,10 +106,26 @@ export function getRichEditorExtensions(opts: {
     } = opts;
 
     return [
-        StarterKit.configure({
-            history: false,
-            heading: { levels: [1, 2, 3, 4, 5, 6] },
-        }),
+        Document,
+        Text,
+        Paragraph,
+        Heading.configure({ levels: [1, 2, 3, 4, 5, 6] }),
+        Blockquote,
+        CodeBlock,
+        HorizontalRule,
+        HardBreak,
+        BulletList,
+        OrderedList,
+        ListItem,
+
+        Bold,
+        Code,
+        Italic,
+        Strike,
+
+        DropCursor,
+        GapCursor,
+
         Underline,
         ResizableImage.configure({ basePath }),
         LineHeight,

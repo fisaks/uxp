@@ -53,6 +53,7 @@ export const RichEditorHistoryDrawer = forwardRef<RichEditorHistoryDrawerHandle>
     }
     const handleDiff = () => {
         if (!diffA || !diffB) return;
+        previewOverlayRef.current?.close();
         diffDialogRef.current?.open(diffA, diffB);
     }
     return (

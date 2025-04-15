@@ -92,7 +92,7 @@ export const draculaTheme = createTheme(
                 secondary: "#6272a4",
             },
             error: { main: "#ff5555" },
-            warning: { main: "#f1fa8c" },
+            warning: { main: "#e1d81e" },
             info: { main: "#8be9fd" },
             success: { main: "#50fa7b" },
         },
