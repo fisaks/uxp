@@ -5,6 +5,9 @@ export const DiffWrapper = Node.create({
   group: 'block',
   content: 'block+',
   defining: true,
+  selectable: false,
+  atom: false,
+
 
   addAttributes() {
     return {

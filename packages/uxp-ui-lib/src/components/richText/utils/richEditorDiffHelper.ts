@@ -85,6 +85,14 @@ function diffTextContentArrays(
             if (diff.b) resultB.push(diff.b);
             continue;
         }
+        if (wordA?.other && !wordB?.other) {
+            resultA.push(createDiffWrapper('removed', [wordA.other]));
+            if (wordB.text) resultB.push(createDiffMark('added', wordB.text, wordB.marks));
+        }
+        if (!wordA?.other && wordB?.other) {
+            resultB.push(createDiffWrapper('added', [wordB.other]));
+            if (wordA.text) resultA.push(createDiffMark('removed', wordA.text, wordA.marks));
+        }
         if (!wordA.text && !wordB.text) {
             console.error("Both words are null or undefined", wordA, wordB);
             continue;

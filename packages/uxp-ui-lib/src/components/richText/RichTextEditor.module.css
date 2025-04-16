@@ -108,17 +108,17 @@
     margin: 0;
 }
 
+.editorContainer table,
 .editorContainer table td,
-.editorContainer table th,
-.editorContainer table {
-    border: 1px solid transparent;
+.editorContainer table th {
+    border: 1px solid transparent !important;
 }
 
 
-.editorContainer :global(.has-focus) table td,
-.editorContainer :global(.has-focus) table th,
-.editorContainer :global(.has-focus) table {
-    border: 1px solid #bbb;
+.editorContainer :global(table.has-focus),
+.editorContainer :global(table.has-focus) td,
+.editorContainer :global(table.has-focus) th {
+    border: 1px solid #bbb !important;
 }
 
 .editorContainer :global(.resizable-image-wrapper) {
@@ -345,3 +345,11 @@
 .editorWrapper [data-diff='modified'], .diffLegendModified {
     background-color: var(--mui-color-warning);
 }
+.editorWrapper :global(.diff-wrapper) + :global(.ProseMirror-trailingBreak) {
+    display: none;
+}
+.editorWrapper :global(.diff-wrapper):has(> span:only-child) {
+    display: inline;
+  }
+  
+  

@@ -125,13 +125,13 @@ export class DocumentService {
                 where: { documentId, id: versionId, ...(includeDeleted ? {} : { deleted: false }) },
             });
 
-            if (!docVersion || !docVersion.content) {
+            if (!docVersion) {
                 throw new AppErrorV2({ statusCode: 404, code: "NOT_FOUND", message: `Document not found by id ${documentId} and version ${versionId}` });
 
             }
 
             const baseDoc = new Y.Doc();
-            Y.applyUpdate(baseDoc, new Uint8Array(docVersion.content));
+            if (docVersion.content) Y.applyUpdate(baseDoc, new Uint8Array(docVersion.content));
 
             return {
                 document: Y.encodeStateAsUpdate(baseDoc),
@@ -221,7 +221,7 @@ export class DocumentService {
         //const stateVector2=Y.encodeStateVector(updates);
         //const diff1 = Y.encodeStateAsUpdate(baseDoc, stateVector2)
         for (const snapshot of snapshots) {
-            console.log(`🔹 Snapshot:`, JSON.stringify(Y.decodeUpdate(new Uint8Array(snapshot.update))));
+            // console.log(`🔹 Snapshot:`, JSON.stringify(Y.decodeUpdate(new Uint8Array(snapshot.update))));
 
             Y.applyUpdate(baseDoc, new Uint8Array(snapshot.update));
         }
