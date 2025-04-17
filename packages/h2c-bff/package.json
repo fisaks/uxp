@@ -18,7 +18,7 @@
         "typeorm:generate": "pnpm clean && pnpm tsc --build && pnpm typeorm migration:generate ./src/db/migrations/GeneratedMigration -d ./dist/db/typeorm.config.js",
         "typeorm:run": "pnpm clean && pnpm tsc --build && pnpm typeorm migration:run -d ./dist/db/typeorm.config.js",
         "typeorm:create": "pnpm clean && pnpm tsc --build && pnpm typeorm migration:create ./src/db/migrations/CreateMigration",
-        "typeorm:revert": "pnpm clean && pnpm typeorm migration:revert -d ./dist/db/typeorm.config.js"
+        "typeorm:revert": "pnpm clean && pnpm tsc --build && pnpm typeorm migration:revert -d ./dist/db/typeorm.config.js"
     },
     "dependencies": {
         "@fastify/cookie": "^11.0.1",

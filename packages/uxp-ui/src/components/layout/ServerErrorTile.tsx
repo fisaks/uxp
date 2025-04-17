@@ -20,6 +20,7 @@ const ERROR_MESSAGES: Record<ErrorCode, string> = {
     PATCH_VERSION_CONFLICT: "Version conflict detected.",
     DISCONNECTED: "You have been disconnected from the server. Please try again later.",
     TIMEOUT: "The request timed out. Please check your connection and try again.",
+    INVALID_STATE: "The application is in an invalid state. Please refresh the page.",
     // Add more error mappings as needed
 };
 

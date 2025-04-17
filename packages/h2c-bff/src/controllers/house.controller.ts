@@ -1,4 +1,4 @@
-import { AddBuildingSchema, BuildingPatchSchema, HousePatchPayload, HousePatchSchema, RemoveBuildingSchema } from "@h2c/common";
+import { AddBuildingSchema, BuildingPatchSchema, HouseCreateVersionPayload, HouseCreateVersionResponse, HouseCreateVersionSchema, HouseDeleteSchema, HouseGetSchema, HouseGetVersionSchema, HouseGetVersionsSchema, HousePatchPayload, HousePatchSchema, HouseRestoreVersionSchema, RemoveBuildingSchema } from "@h2c/common";
 import { Route, UseQueryRunner } from "@uxp/bff-common";
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { QueryRunner } from "typeorm";
@@ -93,7 +93,7 @@ export class HouseController {
      * GET /houses/:uuid
      * Fetches the JSON data for a specific house
      */
-    @Route("get", "/houses/:uuid", { authenticate: true, roles: ["user"] })
+    @Route("get", "/houses/:uuid", { authenticate: true, roles: ["user"], schema: HouseGetSchema })
     @UseQueryRunner()
     async getHouse(req: FastifyRequest<{ Params: { uuid: string } }>, reply: FastifyReply, queryRunner: QueryRunner) {
         const { uuid } = req.params;
@@ -115,8 +115,8 @@ export class HouseController {
      * DELETE /houses/:uuid
      * Marks a house as removed
      */
-    @Route("delete", "/houses/:uuid", { authenticate: true, roles: ["user"] })
-    @UseQueryRunner({transactional: true})
+    @Route("delete", "/houses/:uuid", { authenticate: true, roles: ["user"], schema: HouseDeleteSchema })
+    @UseQueryRunner({ transactional: true })
     async deleteHouse(req: FastifyRequest<{ Params: { uuid: string } }>, reply: FastifyReply, queryRunner: QueryRunner) {
         const { uuid } = req.params;
 
@@ -124,5 +124,51 @@ export class HouseController {
         await houseService.deleteHouse(uuid);
         return reply.code(204).send();
     }
+
+    @Route("post", "/houses/:uuid/versions", { authenticate: true, roles: ["user"], schema: HouseCreateVersionSchema })
+    @UseQueryRunner()
+    async createHouseVersion(req: FastifyRequest<{ Params: { uuid: string }, Body: HouseCreateVersionPayload }>, reply: FastifyReply, queryRunner: QueryRunner) {
+        const { uuid } = req.params;
+        const { label } = req.body;
+
+        const houseService = new HouseService(req, queryRunner);
+        const version = await houseService.createHouseVersion(uuid, label);
+
+        return reply.code(200).send({ version, uuid } satisfies HouseCreateVersionResponse);
+    }
+
+    @Route("get", "/houses/:uuid/versions", { authenticate: true, roles: ["user"], schema: HouseGetVersionsSchema })
+    @UseQueryRunner()
+    async getAllVersions(req: FastifyRequest<{ Params: { uuid: string } }>, reply: FastifyReply, queryRunner: QueryRunner) {
+        const { uuid } = req.params;
+
+        const houseService = new HouseService(req, queryRunner);
+        const versions = await houseService.getAllHouseVersions(uuid);
+
+        return reply.code(200).send(versions.map(HouseMapper.toHouseVersionResponse));
+    }
+
+    @Route("get", "/houses/:uuid/versions/:version", { authenticate: true, roles: ["user"], schema: HouseGetVersionSchema })
+    @UseQueryRunner()
+    async getOneVersion(req: FastifyRequest<{ Params: { uuid: string, version: number } }>, reply: FastifyReply, queryRunner: QueryRunner) {
+        const { uuid, version } = req.params;
+
+        const houseService = new HouseService(req, queryRunner);
+        const houseVersion = await houseService.getOneHouseVersion(uuid, version);
+
+        return reply.code(200).send(HouseMapper.toHouseVersionResponse(houseVersion));
+
+    }
+    @Route("post", "/houses/:uuid/versions/:version/restore", { authenticate: true, roles: ["user"], schema: HouseRestoreVersionSchema })
+    @UseQueryRunner({ transactional: true })
+    async restoreHouseVersion(req: FastifyRequest<{ Params: { uuid: string, version: number }, Body: HouseCreateVersionPayload }>, reply: FastifyReply, queryRunner: QueryRunner) {
+        const { uuid, version } = req.params;
+
+        const houseService = new HouseService(req, queryRunner);
+        await houseService.restoreHouseVersion(uuid, version);
+
+        return reply.code(204).send();
+    }
+
 
 }

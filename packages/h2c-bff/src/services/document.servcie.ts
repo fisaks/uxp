@@ -103,7 +103,8 @@ export class DocumentService {
             }, requestMeta: this.requestMeta, id: asyncId
         });
 
-        AppLogger.info(this.requestMeta, { message: `Saved document ${documentId} ` });
+        AppLogger.info(this.requestMeta, { message: `Saved document ${documentId} version ${versionId}` });
+        return versionId;
     }
 
     async getDocumentVersion(documentId: string, versionId: number | 'snapshot', includeDeleted?: boolean) {

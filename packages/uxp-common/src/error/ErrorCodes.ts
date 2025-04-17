@@ -16,6 +16,7 @@ export const ErrorCodes = {
     USER_OLD_PASSWORD_NOT_MATCH: "USER_OLD_PASSWORD_NOT_MATCH",
     DISCONNECTED: "DISCONNECTED",
     TIMEOUT: "TIMEOUT",
+    INVALID_STATE: "INVALID_STATE",
 } as const;
 
 export type ErrorCode = keyof typeof ErrorCodes;

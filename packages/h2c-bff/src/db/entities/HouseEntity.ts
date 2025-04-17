@@ -52,6 +52,7 @@ export class HouseEntity {
     })
     removedAt?: DateTime;
 
+    // Optimistic locking
     @VersionColumn()
     version!: number;
 }

@@ -6,6 +6,7 @@ import { DateTime } from "luxon";
 import { QueryRunner } from "typeorm";
 import { v4 as uuidv4 } from "uuid";
 import { HouseEntity } from "../db/entities/HouseEntity";
+import { HouseVersionEntity } from "../db/entities/HouseVersionEntity";
 import { DocumentService } from "./document.servcie";
 
 export const DefaultHouseData: Omit<HouseData, "documentId"> = Object.freeze({
@@ -46,10 +47,7 @@ export class HouseService {
 
     async patchHouse(uuid: string, key: string, value: string | null | undefined): Promise<HouseEntity> {
 
-        const house = await this.findHouseByUuid(uuid);
-        if (!house) {
-            throw new AppErrorV2({ statusCode: 404, code: "NOT_FOUND", message: `House not found by uuid ${uuid}` });
-        }
+        const house = await this.findOneHouse(uuid);
         await this.ensureHouseData(house);
 
         if (value === undefined) {
@@ -70,10 +68,7 @@ export class HouseService {
 
     async patchBuilding(uuidHouse: string, uuidBuilding: string, key: string, value: string | null | undefined): Promise<HouseEntity> {
 
-        const house = await this.findHouseByUuid(uuidHouse);
-        if (!house) {
-            throw new AppErrorV2({ statusCode: 404, code: "NOT_FOUND", message: `House not found by uuid ${uuidHouse}` });
-        }
+        const house = await this.findOneHouse(uuidHouse);
         await this.ensureHouseData(house);
 
         house.data.buildings = house.data.buildings.map((building) => {
@@ -103,7 +98,7 @@ export class HouseService {
 
     async addBuilding(uuid: string): Promise<HouseEntity> {
 
-        const house = await this.findHouseByUuid(uuid);
+        const house = await this.findOneHouse(uuid);
 
         if (!house) {
             throw new AppErrorV2({ statusCode: 404, code: "NOT_FOUND", message: `House not found by uuid ${uuid}` });
@@ -121,11 +116,7 @@ export class HouseService {
     }
 
     async removeBuilding(uuidHouse: string, buildingUuid: string): Promise<HouseEntity> {
-        const house = await this.findHouseByUuid(uuidHouse);
-
-        if (!house) {
-            throw new AppErrorV2({ statusCode: 404, code: "NOT_FOUND", message: `House not found by uuid ${uuidHouse}` });
-        }
+        const house = await this.findOneHouse(uuidHouse);
 
         await this.ensureHouseData(house);
         const initialLength = house.data.buildings.length;
@@ -151,7 +142,7 @@ export class HouseService {
     }
 
     async findOneHouse(uuid: string): Promise<HouseEntity> {
-        const house = await this.findHouseByUuid(uuid);
+        const house = await this.findHouseByUuid(uuid, false);
         if (!house) {
             throw new AppErrorV2({ statusCode: 404, code: "NOT_FOUND", message: `House not found by uuid ${uuid}` });
         }
@@ -167,7 +158,7 @@ export class HouseService {
     }
 
     // Fetch house by UUID
-    async findHouseByUuid(uuid: string, includeRemoved = false): Promise<HouseEntity | null> {
+    async findHouseByUuid(uuid: string, includeRemoved: boolean): Promise<HouseEntity | null> {
         const houseRepo = this.queryRunner.manager.getRepository(HouseEntity);
         return houseRepo.findOne({
             where: { uuid, removed: includeRemoved ? undefined : false },
@@ -175,11 +166,7 @@ export class HouseService {
     }
     async deleteHouse(uuid: string): Promise<void> {
         const docService = new DocumentService(this.requestMeta, this.queryRunner);
-        const house = await this.findHouseByUuid(uuid);
-
-        if (!house) {
-            throw new AppErrorV2({ statusCode: 404, code: "NOT_FOUND", message: `House not found by uuid ${uuid}` });
-        }
+        const house = await this.findOneHouse(uuid);
 
         house.removed = true;
         house.removedAt = DateTime.now();
@@ -220,6 +207,60 @@ export class HouseService {
         return houseRepo.save(house);
     }
 
+    async createHouseVersion(uuid: string, label: string | undefined): Promise<number> {
+        const houseVersionRepo = this.queryRunner.manager.getRepository(HouseVersionEntity);
+        const house = await this.findOneHouse(uuid);
+        if (house.removed) {
+            throw new AppErrorV2({ statusCode: 400, code: "INVALID_STATE", message: `Cannot create version of a removed house (${uuid})` });
+        }
+        const docService = new DocumentService(this.requestMeta, this.queryRunner);
+        docService.saveDocument
+        house.data.documentId
+        const houseVersion = await houseVersionRepo.save({
+            uuid: house.uuid,
+            data: house.data,
+            label: label
+        });
+        AppLogger.info(this.requestMeta, { message: `Created new version ${houseVersion.id} for house ${uuid}` });
+        return houseVersion.id;
+    }
 
+    async getAllHouseVersions(uuid: string) {
+        const houseVersionRepo = this.queryRunner.manager.getRepository(HouseVersionEntity);
+        const houseVersions = await houseVersionRepo.find({
+            where: { uuid },
+            order: { id: "DESC" },
+        });
+        return houseVersions;
+    }
+
+    async getOneHouseVersion(uuid: string, version: number) {
+        const houseVersionRepo = this.queryRunner.manager.getRepository(HouseVersionEntity);
+        const houseVersion = await houseVersionRepo.findOne({
+            where: { id: version, uuid },
+        });
+        if (!houseVersion) {
+            throw new AppErrorV2({ statusCode: 404, code: "NOT_FOUND", message: `House version ${version} not found by uuid ${uuid}` });
+        }
+
+        return houseVersion;
+    }
+
+    async restoreHouseVersion(uuid: string, version: number) {
+        const houseVersion = await this.getOneHouseVersion(uuid, version);
+
+        const house = await this.findOneHouse(uuid);
+
+        await this.createHouseVersion(uuid, `Backup for restoration of version ${version}`);
+
+        await this.saveHouse({
+            ...house,
+            data: houseVersion.data,
+            updatedAt: DateTime.now(),
+        })
+
+        AppLogger.info(this.requestMeta, { message: `Restored house ${uuid} to version ${version}` });
+
+    }
 
 }

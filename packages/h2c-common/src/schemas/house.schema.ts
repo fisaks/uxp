@@ -1,5 +1,5 @@
 import { SchemaValidate } from "@uxp/common";
-import { BuildingPatchPayload, HousePatchPayload } from "../types/house.types";
+import { BuildingPatchPayload, HouseCreateVersionPayload, HousePatchPayload } from "../types/house.types";
 
 export const HousePatchSchema: SchemaValidate<HousePatchPayload, undefined, { uuid: string }> = {
     body: {
@@ -75,6 +75,7 @@ export const HouseGetSchema: SchemaValidate<undefined, undefined, { uuid: string
     },
 };
 export const HouseDeleteSchema = HouseGetSchema;
+
 export const AddBuildingSchema = HouseGetSchema;
 export const RemoveBuildingSchema: SchemaValidate<undefined, undefined, { uuidHouse: string; uuidBuilding: string }> = {
     params: {
@@ -86,3 +87,34 @@ export const RemoveBuildingSchema: SchemaValidate<undefined, undefined, { uuidHo
         required: ["uuidHouse", "uuidBuilding"],
     },
 };
+
+export const HouseCreateVersionSchema: SchemaValidate<HouseCreateVersionPayload, undefined, { uuid: string }> = {
+    params: {
+        type: "object",
+        properties: {
+            uuid: { type: "string", format: "uuid" },
+        },
+        required: ["uuid"],
+    },
+    body: {
+        type: "object",
+        properties: {
+            label: { type: "string", maxLength: 50, nullable: true },
+        },
+        required: [],
+        additionalProperties: false,
+    },
+}
+
+export const HouseGetVersionsSchema = HouseGetSchema;
+export const HouseGetVersionSchema: SchemaValidate<undefined, undefined, { uuid: string, version: number }> = {
+    params: {
+        type: "object",
+        properties: {
+            uuid: { type: "string", format: "uuid" },
+            version: { type: "number", minimum: 1 },
+        },
+        required: ["uuid", "version"],
+    },
+};
+export const HouseRestoreVersionSchema=HouseGetVersionSchema;
