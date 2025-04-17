@@ -1,4 +1,4 @@
-import { HouseData } from "@h2c/common";
+import { HouseData, HouseDataVersion } from "@h2c/common";
 import { Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn } from "typeorm";
 
 import { DateTime } from "luxon";
@@ -13,7 +13,7 @@ export class HouseVersionEntity {
     uuid!: string; // matches HouseEntity.uuid
 
     @Column({ type: "json", nullable: false })
-    data!: HouseData;
+    data!: HouseDataVersion;
 
     @CreateDateColumn({
         type: "timestamp",

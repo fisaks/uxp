@@ -8,8 +8,9 @@ export type HouseData = {
     buildings: BuildingData[];
 };
 
-export type HouseDataVersion=HouseData & {
+export type HouseDataVersion = Omit<HouseData, "buildings"> & {
     documentVersion: number;
+    buildings: BuildingDataVersion[];
 }
 export type BuildingData = {
     uuid: string;
@@ -19,7 +20,7 @@ export type BuildingData = {
     details?: Record<string, string>;
 };
 
-export type BuildingDataVersion=BuildingData & {
+export type BuildingDataVersion = BuildingData & {
     documentVersion: number;
 }
 
@@ -52,7 +53,7 @@ export type HouseCreateVersionResponse = {
 export type HouseGetVersionResponse = {
     uuid: string;
     version: number;
-    data: HouseData;
+    data: HouseDataVersion;
     createdAt: string;
     label?: string;
 }

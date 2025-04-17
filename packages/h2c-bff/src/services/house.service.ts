@@ -1,4 +1,4 @@
-import { BuildingData, HouseData } from "@h2c/common";
+import { BuildingData, BuildingDataVersion, HouseData } from "@h2c/common";
 import { AppErrorV2, AppLogger, RequestMetaData } from "@uxp/bff-common";
 import { FastifyRequest } from "fastify";
 import _ from "lodash";
@@ -214,11 +214,21 @@ export class HouseService {
             throw new AppErrorV2({ statusCode: 400, code: "INVALID_STATE", message: `Cannot create version of a removed house (${uuid})` });
         }
         const docService = new DocumentService(this.requestMeta, this.queryRunner);
-        docService.saveDocument
-        house.data.documentId
+
+        const houseDocumentVersion = await docService.saveDocument(house.data.documentId, undefined);
+        const buildings: BuildingDataVersion[] = []
+        for (const building of house.data.buildings) {
+            const buildingDocumentVersion = await docService.saveDocument(building.documentId, undefined);
+            buildings.push({ ...building, documentVersion: buildingDocumentVersion })
+        }
+
         const houseVersion = await houseVersionRepo.save({
             uuid: house.uuid,
-            data: house.data,
+            data: {
+                ...house.data,
+                documentVersion: houseDocumentVersion,
+                buildings
+            },
             label: label
         });
         AppLogger.info(this.requestMeta, { message: `Created new version ${houseVersion.id} for house ${uuid}` });
@@ -255,12 +265,21 @@ export class HouseService {
 
         await this.saveHouse({
             ...house,
-            data: houseVersion.data,
+            data: {
+                ...HouseService.stripDocumentVersion(houseVersion.data),
+                buildings: houseVersion.data.buildings.map(HouseService.stripDocumentVersion),
+            },
             updatedAt: DateTime.now(),
         })
 
         AppLogger.info(this.requestMeta, { message: `Restored house ${uuid} to version ${version}` });
 
     }
+
+    private static stripDocumentVersion<T extends { documentVersion?: unknown }>(obj: T): Omit<T, "documentVersion"> {
+        const { documentVersion: _, ...rest } = obj;
+        return rest;
+    }
+
 
 }
