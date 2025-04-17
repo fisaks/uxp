@@ -1,4 +1,4 @@
-import { BuildingData, BuildingDataVersion, HouseData } from "@h2c/common";
+import { BuildingData, BuildingDataVersion, HouseData, HouseDataVersion } from "@h2c/common";
 import { AppErrorV2, AppLogger, RequestMetaData } from "@uxp/bff-common";
 import { FastifyRequest } from "fastify";
 import _ from "lodash";
@@ -216,22 +216,19 @@ export class HouseService {
         const docService = new DocumentService(this.requestMeta, this.queryRunner);
 
         const houseDocumentVersion = await docService.saveDocument(house.data.documentId, undefined);
+
         const buildings: BuildingDataVersion[] = []
         for (const building of house.data.buildings) {
             const buildingDocumentVersion = await docService.saveDocument(building.documentId, undefined);
             buildings.push({ ...building, documentVersion: buildingDocumentVersion })
         }
-
-        const houseVersion = await houseVersionRepo.save({
-            uuid: house.uuid,
-            data: {
-                ...house.data,
-                documentVersion: houseDocumentVersion,
-                buildings
-            },
-            label: label
-        });
-        AppLogger.info(this.requestMeta, { message: `Created new version ${houseVersion.id} for house ${uuid}` });
+        const houseVersionData: HouseDataVersion = {
+            ...house.data,
+            documentVersion: houseDocumentVersion,
+            buildings
+        }
+        const houseVersion = await houseVersionRepo.save({ uuid: house.uuid, label: label, data: houseVersionData });
+        AppLogger.info(this.requestMeta, { message: `Created new version 122 ${houseVersion.id} for house ${uuid}` });
         return houseVersion.id;
     }
 

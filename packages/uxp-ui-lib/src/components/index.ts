@@ -12,6 +12,7 @@ export { default as ReloadIconButton } from "./forms/ReloadIconButton";
 export { default as ValidatedTextField } from "./forms/ValidatedTextField";
 export * from "./forms/GhostHintAutocomplete";
 export * from "./forms/AsyncIconButton";
+export * from "./forms/AsyncButton";
 
 //.layout
 export * from "./layout/AppBodyContent";

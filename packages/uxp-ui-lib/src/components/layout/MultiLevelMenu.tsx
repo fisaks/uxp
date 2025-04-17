@@ -1,26 +1,40 @@
 import { Button, IconButton, Menu, ModalProps, Tooltip } from "@mui/material";
-import React, { useMemo, useState } from "react";
+import React, { MouseEventHandler, useMemo, useState } from "react";
 import { MenuItemType, RecursiveMenuItem } from "./RecursiveMenuItem";
 
-interface MultiLevelMenuProps {
-    menuItems: MenuItemType[];
+interface MultiLevelMenuProps<T = void> {
+    menuItems: MenuItemType<T>[];
+    itemData?: T;
     triggerLabel?: string;
     triggerIcon?: React.ReactNode;
     tooltipText?: string;
     container?: ModalProps["container"];
+    onClick?: MouseEventHandler<HTMLButtonElement> | undefined;
+
 }
 
-const MultiLevelMenu: React.FC<MultiLevelMenuProps> = ({ menuItems, triggerLabel, triggerIcon, tooltipText, container }) => {
+const MultiLevelMenu = <T,>({
+    menuItems,
+    triggerLabel,
+    triggerIcon,
+    tooltipText,
+    container,
+    onClick,
+    itemData,
+}: MultiLevelMenuProps<T>) => {
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
     const slotProps = useMemo(() => ({ popper: { container } }), [container]);
 
-    const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    const handleMenuOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
         setAnchorEl(event.currentTarget);
+        event.stopPropagation();
+        onClick?.(event);
     };
 
     const handleMenuClose = () => {
         setAnchorEl(null);
+
     };
 
     return (
@@ -36,7 +50,7 @@ const MultiLevelMenu: React.FC<MultiLevelMenuProps> = ({ menuItems, triggerLabel
 
             <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose} container={container}>
                 {menuItems.map((item, index) => (
-                    <RecursiveMenuItem key={index} item={item} container={container} slotProps={slotProps} onClose={handleMenuClose} />
+                    <RecursiveMenuItem key={index} item={item} container={container} slotProps={slotProps} onClose={handleMenuClose} itemData={itemData} />
                 ))}
             </Menu>
         </div>

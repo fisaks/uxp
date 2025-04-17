@@ -2,21 +2,30 @@ import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import { ListItemIcon, ListItemText, Menu, MenuItem, ModalProps, Tooltip, TooltipProps } from "@mui/material";
 import React, { useState } from "react";
 
-export type MenuItemType = {
+export type MenuItemType<T = void> = {
     label?: string | (() => string);
     icon?: React.ReactNode | (() => React.ReactNode);
     tooltip?: string;
     disabled?: boolean;
-    onClick?: () => void;
-    children?: MenuItemType[];
-};
+    onClick?: (data?: T) => void;
 
-export const RecursiveMenuItem: React.FC<{
+    children?: MenuItemType<T>[];
+};
+type RecursiveMenuItemProps<T = void> = {
     slotProps: TooltipProps["slotProps"];
-    item: MenuItemType;
+    itemData?: T;
+    item: MenuItemType<T>;
     container?: ModalProps["container"];
     onClose: () => void;
-}> = ({ item, container, slotProps, onClose }) => {
+};
+export const RecursiveMenuItem: <T>(props: RecursiveMenuItemProps<T>) => React.ReactElement | null = ({
+    item,
+    container,
+    slotProps,
+    itemData,
+    onClose,
+}) => {
+
     const [submenuAnchorEl, setSubmenuAnchorEl] = useState<null | HTMLElement>(null);
 
     const handleSubmenuOpen = (event: React.MouseEvent<HTMLElement>) => {
@@ -30,7 +39,7 @@ export const RecursiveMenuItem: React.FC<{
     };
     const handleClick = () => {
         if (!item.disabled && item.onClick) {
-            item.onClick();
+            item.onClick(itemData);
             onClose();
         }
     };

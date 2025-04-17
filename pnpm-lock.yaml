@@ -722,6 +722,9 @@ importers:
       html2pdf.js:
         specifier: ^0.10.3
         version: 0.10.3
+      luxon:
+        specifier: ^3.5.0
+        version: 3.6.1
       prosemirror-state:
         specifier: ^1.4.3
         version: 1.4.3
@@ -753,6 +756,9 @@ importers:
         specifier: ^13.6.23
         version: 13.6.24
     devDependencies:
+      '@types/luxon':
+        specifier: ^3.4.2
+        version: 3.6.2
       '@types/node':
         specifier: ^22.13.1
         version: 22.14.1

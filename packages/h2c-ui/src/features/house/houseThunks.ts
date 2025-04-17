@@ -1,4 +1,4 @@
-import { House } from "@h2c/common";
+import { House, HouseCreateVersionPayload } from "@h2c/common";
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { AxiosUtil } from "@uxp/common";
 import axios from "axios";
@@ -64,6 +64,17 @@ export const patchBuildingField = createAsyncThunk(
             key: field,
             value: value,
         });
+        return response.data;
+    }
+);
+
+export const createHouseVersion = createAsyncThunk(
+    "house/createVersion",
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    async ({ uuidHouse, label }: { uuidHouse: string, label?: string }) => {
+        //await new Promise((resolve) => setTimeout(resolve, 1000));
+        const response = await axios.post(`${getBaseUrl()}/api/houses/${uuidHouse}/versions`,
+            { label } satisfies HouseCreateVersionPayload);
         return response.data;
     }
 );

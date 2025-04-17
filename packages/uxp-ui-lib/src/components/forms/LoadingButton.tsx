@@ -10,7 +10,12 @@ interface LoadingButtonProps extends ButtonProps {
     error?: boolean;
     errorText?: string;
 }
-
+/**
+ * This is Controlled Button Component for loading error and done state
+ * Look at AsyncButton for a uncontrolled Component regarding loading error and done state
+ * @param param0 
+ * @returns 
+ */
 const LoadingButton: React.FC<LoadingButtonProps> = ({ isLoading, done, doneText, error, errorText, children, startIcon, ...props }) => {
     const divRef = useRef<HTMLDivElement | null>(null);
     const buttonRef = useRef<HTMLButtonElement | null>(null);
