@@ -8,7 +8,7 @@ interface InlineErrorProps {
     portalContainer?: React.RefObject<HTMLElement | null>;
 }
 
-const InlineError: React.FC<InlineErrorProps> = ({ message, small = false, portalContainer }) => {
+export const InlineError: React.FC<InlineErrorProps> = ({ message, small = false, portalContainer }) => {
 
     return (
         <WithOptionalTooltip tooltip={message} portalContainer={portalContainer} error>

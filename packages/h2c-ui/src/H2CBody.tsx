@@ -5,6 +5,7 @@ import { Link, Route, Routes, useLocation } from "react-router-dom";
 import { getBaseRoutePath } from "./config";
 import { DocumentPrintPreviewPage } from "./features/document/DocumentPrintPreviewPage";
 import HouseInfoPage from "./features/house/pages/HouseInfoPage";
+import { HousePrintPreviewPage } from "./features/house/pages/HousePrintPreviewPage";
 
 export const H2CBody = () => {
     const theme = useTheme();
@@ -32,6 +33,7 @@ export const H2CBody = () => {
             <AppBodyContent appHaveOwnLeftSideBar={!printView}>
                 <Routes>
                     <Route path="/house-info" element={<HouseInfoPage />} />
+                    <Route path="/house-info/preview/:houseId/:version" element={<HousePrintPreviewPage />} />
                     <Route path="/document-preview/:documentId/:version" element={<DocumentPrintPreviewPage />} />
                     <Route path="*" element={<HouseInfoPage />} />
                 </Routes>

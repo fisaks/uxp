@@ -3,6 +3,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import PrintIcon from '@mui/icons-material/Print';
 import SettingsIcon from '@mui/icons-material/Settings';
+import UndoIcon from '@mui/icons-material/Undo';
 import {
     AppBar,
     FormControlLabel,
@@ -14,9 +15,9 @@ import {
     Toolbar,
     Tooltip
 } from '@mui/material';
-import { usePortalContainer } from '../../../features/shadow-root/ShadowRootContext';
 
 import { MouseEvent, useState } from 'react';
+import { usePortalContainer } from '../../features/shadow-root/ShadowRootContext';
 
 export type PrintSettings = {
     orientation: 'portrait' | 'landscape';
@@ -31,8 +32,9 @@ type PrintPreviewToolbarProps = {
     handleExportPDF: () => void;
     printSettings: PrintSettings
     setPrintSettings: (settings: PrintSettings) => void;
+    resetDocumentName?: () => void;
 }
-export const PrintPreviewToolbar = ({ documentName, setDocumentName, handleExportPDF, handlePrint, printSettings, setPrintSettings }: PrintPreviewToolbarProps) => {
+export const PrintPreviewToolbar = ({ documentName, setDocumentName, handleExportPDF, handlePrint, printSettings, setPrintSettings, resetDocumentName }: PrintPreviewToolbarProps) => {
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
     const portalContainerRef = usePortalContainer();
@@ -71,16 +73,23 @@ export const PrintPreviewToolbar = ({ documentName, setDocumentName, handleExpor
                     placeholder="Document name"
                     slotProps={{
                         input: {
-                            endAdornment: documentName ? (
-                                <IconButton
-                                    size="small"
-                                    onClick={() => setDocumentName('')}
-                                    edge="end"
-                                    sx={{ color: 'inherit' }}
-                                >
-                                    <ClearIcon fontSize="small" />
+
+                            endAdornment: (<>
+                                {documentName ? (
+                                    <IconButton
+                                        size="small"
+                                        onClick={() => setDocumentName('')}
+                                        edge="end"
+                                        sx={{ color: 'inherit' }}
+                                    >
+                                        <ClearIcon fontSize="small" />
+                                    </IconButton>
+                                ) : undefined}
+                                <IconButton onClick={resetDocumentName} edge="end" size="small">
+                                    <UndoIcon fontSize="small" />
                                 </IconButton>
-                            ) : undefined,
+
+                            </>),
                         }
                     }}
 

@@ -30,7 +30,6 @@ export type HouseSummary = {
 };
 export type House = {
     uuid: string;
-    version: number;
 } & HouseData;
 
 export type HousePatchPayload = {
@@ -49,6 +48,8 @@ export type HouseCreateVersionPayload = {
 export type HouseCreateVersionResponse = {
     uuid: string;
     version: number;
+    label?: string;
+    new: boolean
 }
 export type HouseGetVersionResponse = {
     uuid: string;

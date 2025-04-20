@@ -67,14 +67,3 @@ export const patchBuildingField = createAsyncThunk(
         return response.data;
     }
 );
-
-export const createHouseVersion = createAsyncThunk(
-    "house/createVersion",
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    async ({ uuidHouse, label }: { uuidHouse: string, label?: string }) => {
-        //await new Promise((resolve) => setTimeout(resolve, 1000));
-        const response = await axios.post(`${getBaseUrl()}/api/houses/${uuidHouse}/versions`,
-            { label } satisfies HouseCreateVersionPayload);
-        return response.data;
-    }
-);

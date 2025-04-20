@@ -25,3 +25,7 @@ export const usePortalContainer = () => {
     const context = useShadowRoot();
     return context!.portalRef.current;
 }
+export const usePortalContainerRef = () => {
+    const context = useShadowRoot();
+    return context!.portalRef;
+}

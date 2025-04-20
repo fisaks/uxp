@@ -6,12 +6,12 @@
     "module": "dist/index.js",
     "types": "dist/index.d.ts",
     "scripts": {
-        "build": "pnpm tsc --build && pnpm cpx 'src/**/*.module.css' dist/",
+        "build": "pnpm tsc --build && pnpm cpx 'src/**/*.css' dist/",
         "clean": "pnpm rimraf --glob -v tsconfig.tsbuildinfo dist build_types",
         "test": "pnpm jest",
         "lint": "pnpm eslint .",
         "lint:fix": "pnpm eslint . --fix",
-        "watch": "pnpm concurrently --kill-others \"tsc --watch\" \"cpx 'src/**/*.module.css' dist/ --watch\""
+        "watch": "pnpm concurrently --kill-others \"tsc --watch\" \"cpx 'src/**/*.css' dist/ --watch\""
     },
     "keywords": [],
     "author": "",

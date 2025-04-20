@@ -1,3 +1,4 @@
+import { HouseCreateVersionResponse } from "@h2c/common";
 import ClearIcon from "@mui/icons-material/Clear";
 import SaveAsIcon from "@mui/icons-material/SaveAs";
 import UndoIcon from "@mui/icons-material/Undo";
@@ -12,7 +13,7 @@ import {
     TextField,
     Tooltip,
 } from '@mui/material';
-import { AsyncButton, usePortalContainer } from '@uxp/ui-lib';
+import { AsyncButton, usePortalContainer, useSafeState } from '@uxp/ui-lib';
 import { DateTime } from 'luxon';
 import {
     forwardRef,
@@ -20,8 +21,8 @@ import {
     useImperativeHandle,
     useState
 } from 'react';
-import { useAppDispatch } from '../../../hooks';
-import { createHouseVersion } from '../houseThunks';
+import { createHouseVersion } from "../house.api";
+
 
 type HouseToMakeVersionOf = {
     uuid: string, houseName: string
@@ -31,12 +32,13 @@ export interface HouseVersionLabelDialogRef {
 }
 
 const HouseVersionLabelDialog = forwardRef<HouseVersionLabelDialogRef>((_, ref) => {
-    const dispatch = useAppDispatch();
+
     const container = usePortalContainer();
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useSafeState(false);
     const [house, setHouse] = useState<HouseToMakeVersionOf | undefined>(undefined);
     const [label, setLabel] = useState('');
-    const [saving, setSaving] = useState(false);
+    const [saving, setSaving] = useSafeState(false);
+    const [doneText, setDoneText] = useSafeState("");
 
     const createDefaultLabel = useCallback((houseName: String) => {
         return `${houseName || "House"} - ${DateTime.now().toFormat('d.M.yyyy HH:mm:ss')}`;
@@ -52,9 +54,16 @@ const HouseVersionLabelDialog = forwardRef<HouseVersionLabelDialogRef>((_, ref) 
     const handleSave = async () => {
         const trimmed = label.trim();
         if (!trimmed || !house) return;
+        setDoneText("");
         setSaving(true);
         try {
-            return await dispatch(createHouseVersion({ uuidHouse: house?.uuid, label: trimmed })).unwrap();
+            const response = await createHouseVersion({ uuidHouse: house?.uuid, label: trimmed });
+            if (response.new) {
+                setDoneText("Version created");
+            } else {
+                setDoneText(`Version already exists`);
+            }
+            return response;
         } finally {
             setSaving(false);
         }
@@ -110,7 +119,7 @@ const HouseVersionLabelDialog = forwardRef<HouseVersionLabelDialogRef>((_, ref) 
                     onClick={handleSave}
                     afterDone={() => setOpen(false)}
                     disabled={!label.trim()} variant="contained"
-                    doneText='Version created'
+                    doneText={doneText}
                     loadingText='Creating version'
                     startIcon={<SaveAsIcon />}
                 >

@@ -1,4 +1,4 @@
-import { BuildingData, BuildingDataVersion, HouseData, HouseDataVersion } from "@h2c/common";
+import { BuildingData, BuildingDataVersion, HouseCreateVersionResponse, HouseData, HouseDataVersion } from "@h2c/common";
 import { AppErrorV2, AppLogger, RequestMetaData } from "@uxp/bff-common";
 import { FastifyRequest } from "fastify";
 import _ from "lodash";
@@ -39,7 +39,6 @@ export class HouseService {
         });
 
         const savedHouse = await this.saveHouse(newHouse);
-
         AppLogger.info(this.requestMeta, { message: `Created new house ${savedHouse.uuid}` });
         return savedHouse;
 
@@ -207,7 +206,7 @@ export class HouseService {
         return houseRepo.save(house);
     }
 
-    async createHouseVersion(uuid: string, label: string | undefined): Promise<number> {
+    async createHouseVersion(uuid: string, label: string | undefined): Promise<HouseCreateVersionResponse> {
         const houseVersionRepo = this.queryRunner.manager.getRepository(HouseVersionEntity);
         const house = await this.findOneHouse(uuid);
         if (house.removed) {
@@ -227,9 +226,14 @@ export class HouseService {
             documentVersion: houseDocumentVersion,
             buildings
         }
+        const latestVersion = await this.getLatestHouseVersion(house.uuid);
+        if (latestVersion && _.isEqual(houseVersionData, latestVersion.data)) {
+            AppLogger.info(this.requestMeta, { message: `House ${uuid} version ${latestVersion?.id} is the same as the new one. No new version created.` });
+            return { uuid, version: latestVersion.id, new: false, label: latestVersion.label };
+        }
         const houseVersion = await houseVersionRepo.save({ uuid: house.uuid, label: label, data: houseVersionData });
         AppLogger.info(this.requestMeta, { message: `Created new version 122 ${houseVersion.id} for house ${uuid}` });
-        return houseVersion.id;
+        return { uuid, version: houseVersion.id, new: true, label: label };
     }
 
     async getAllHouseVersions(uuid: string) {
@@ -239,6 +243,15 @@ export class HouseService {
             order: { id: "DESC" },
         });
         return houseVersions;
+    }
+
+    async getLatestHouseVersion(uuid: string) {
+        const houseVersionRepo = this.queryRunner.manager.getRepository(HouseVersionEntity);
+        const latestHouseVersion = await houseVersionRepo.findOne({
+            where: { uuid },
+            order: { id: "DESC" },
+        });
+        return latestHouseVersion;
     }
 
     async getOneHouseVersion(uuid: string, version: number) {

@@ -1,4 +1,4 @@
-import { AddBuildingSchema, BuildingPatchSchema, HouseCreateVersionPayload, HouseCreateVersionResponse, HouseCreateVersionSchema, HouseDeleteSchema, HouseGetSchema, HouseGetVersionSchema, HouseGetVersionsSchema, HousePatchPayload, HousePatchSchema, HouseRestoreVersionSchema, RemoveBuildingSchema } from "@h2c/common";
+import { AddBuildingSchema, BuildingPatchSchema, HouseCreateVersionPayload, HouseCreateVersionSchema, HouseDeleteSchema, HouseGetSchema, HouseGetVersionSchema, HouseGetVersionsSchema, HousePatchPayload, HousePatchSchema, HouseRestoreVersionSchema, RemoveBuildingSchema } from "@h2c/common";
 import { Route, UseQueryRunner } from "@uxp/bff-common";
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { QueryRunner } from "typeorm";
@@ -134,7 +134,7 @@ export class HouseController {
         const houseService = new HouseService(req, queryRunner);
         const version = await houseService.createHouseVersion(uuid, label);
 
-        return reply.code(200).send({ version, uuid } satisfies HouseCreateVersionResponse);
+        return reply.code(200).send(version);
     }
 
     @Route("get", "/houses/:uuid/versions", { authenticate: true, roles: ["user"], schema: HouseGetVersionsSchema })

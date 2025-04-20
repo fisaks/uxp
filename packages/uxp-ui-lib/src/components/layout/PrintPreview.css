@@ -1,0 +1,43 @@
+.uxp-print-paper {
+    width: 210mm;
+    margin: 10mm auto;
+    min-height: 297mm;
+    padding: 20mm;
+    background: white;
+    color: black;
+    box-shadow: 0 0 10mm rgba(0, 0, 0, 0.1);
+    box-sizing: border-box;
+}
+
+.uxp-print-paper.landscape {
+    width: 297mm;
+    height: 210mm;
+}
+
+.uxp-print-header {
+    padding-top: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 12px;
+    font-size: 0.9rem;
+    font-family: "Times New Roman", Times, serif;
+    margin-bottom: 12px;
+}
+
+.uxp-print-document * {
+    color: #000 !important;
+}
+
+@media print {
+    .uxp-print-paper {
+
+        margin: 0mm;
+        padding: 0;
+        box-shadow: none;
+        background: white;
+    }
+
+
+}
