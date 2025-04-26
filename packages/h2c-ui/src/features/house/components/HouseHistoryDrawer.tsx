@@ -1,5 +1,5 @@
 import { House } from "@h2c/common";
-import { Box, Button, Drawer, DrawerProps, Grid2, Link, List, ListItem, Radio, Toolbar, Typography, useMediaQuery, useTheme } from "@mui/material";
+import { Box, Button, Drawer, Grid2, Link, List, ListItem, Portal, Radio, Toolbar, Typography, useMediaQuery, useTheme } from "@mui/material";
 import { AsyncContent, useAsyncManualLoadWithPayload, usePortalContainerRef } from "@uxp/ui-lib";
 import { DateTime } from "luxon";
 import { useEffect, useState } from "react";
@@ -7,22 +7,20 @@ import { fetchHouseVersions } from "../house.api";
 import { HousePreviewOverlay } from "./HousePreviewOverlay";
 
 type HouseHistoryDrawerProps = {
-    onClose: DrawerProps['onClose'];
+    onClose: () => void;
     open: boolean;
     house: House;
-    onPreview: (version: string) => void;
 }
 
-export const HouseHistoryDrawer = ({ open, onClose, house, onPreview }: HouseHistoryDrawerProps) => {
+export const HouseHistoryDrawer = ({ open, onClose, house }: HouseHistoryDrawerProps) => {
 
     const portalContainerRef = usePortalContainerRef();
     const [diffA, setDiffA] = useState<string | undefined>(undefined);
     const [diffB, setDiffB] = useState<string | undefined>(undefined);
-
+    const [previewVersion, setPreviewVersion] = useState<string | undefined>(undefined);
     const theme = useTheme()
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     const { loading, error, data, load } = useAsyncManualLoadWithPayload(fetchHouseVersions);
-
 
     useEffect(() => {
         if (!open) {
@@ -87,14 +85,20 @@ export const HouseHistoryDrawer = ({ open, onClose, house, onPreview }: HouseHis
                 </Box>
                 <Box sx={{ mb: 2 }} >
                     <List >
-                        <VersionListItem version={"snapshot"} diffA={diffA} diffB={diffB} setDiffA={setDiffA} setDiffB={setDiffB} onPreview={onPreview} isMobile={isMobile} />
+                        <VersionListItem version={"snapshot"} diffA={diffA} diffB={diffB} setDiffA={setDiffA} setDiffB={setDiffB} onPreview={setPreviewVersion} isMobile={isMobile} />
 
-                        {data?.map((v) => (<VersionListItem key={v.version} version={`${v.version}`} label={v.label} createdAt={v.createdAt} diffA={diffA} diffB={diffB} setDiffA={setDiffA} setDiffB={setDiffB} onPreview={onPreview} isMobile={isMobile} />))}
+                        {data?.map((v) => (<VersionListItem key={v.version} version={`${v.version}`} label={v.label} createdAt={v.createdAt} diffA={diffA} diffB={diffB} setDiffA={setDiffA} setDiffB={setDiffB} onPreview={setPreviewVersion} isMobile={isMobile} />))}
 
                     </List>
                 </Box>
             </Box>
-
+            <Portal container={portalContainerRef.current}>
+                <HousePreviewOverlay uuidHouse={house.uuid} houseVersion={previewVersion} onClose={() => { setPreviewVersion(undefined) }}
+                    onRestore={() => {
+                        setPreviewVersion(undefined);
+                        onClose();
+                    }} />
+            </Portal>
         </Drawer >
     );
 };
@@ -113,7 +117,7 @@ const VersionListItem = ({ version, label, createdAt, setDiffA, diffB, setDiffB,
                     <Link onClick={() => onPreview(version)}>
                         Version {version}
                     </Link>
-                    {label && (<><br/><Typography variant="caption" color="text.secondary">{label}</Typography></>)}
+                    {label && (<><br /><Typography variant="caption" color="text.secondary">{label}</Typography></>)}
                     <Typography variant="body2" color="text.secondary">{`${(createdAt ? DateTime.fromISO(createdAt) : DateTime.now()).toFormat('d.M.yyyy HH:mm:ss')}`}</Typography>
                 </Grid2>
                 {!isMobile && <>

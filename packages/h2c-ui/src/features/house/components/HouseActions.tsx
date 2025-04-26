@@ -8,7 +8,7 @@ import { AppDispatch } from "../../../app/store";
 
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
-import { CircularProgress, IconButton, Portal, useTheme } from "@mui/material";
+import { CircularProgress, IconButton, useTheme } from "@mui/material";
 import { ActionIconButton, InlineError, mapApiErrorsToMessageString, MenuItemType, MultiLevelMenu, usePortalContainerRef, useSafeState, WithOptionalTooltip } from "@uxp/ui-lib";
 
 import { deleteHouse } from "../houseThunks";
@@ -19,7 +19,6 @@ import { House } from '@h2c/common';
 import { getBaseRoutePath } from '../../../config';
 import { createHouseVersion } from '../house.api';
 import { HouseHistoryDrawer } from './HouseHistoryDrawer';
-import { HousePreviewOverlay } from './HousePreviewOverlay';
 import HouseVersionLabelDialog from './HouseVersionLabelDialog';
 
 type HouseActionsProps = {
@@ -34,7 +33,6 @@ export const HouseActions = ({ house, handleEditToggle }: HouseActionsProps) => 
     const [error, setError] = useSafeState<string | undefined>(undefined);
     const [historyDrawerOpen, setHistoryDrawerOpen] = useState(false);
     const [versionLabelDialogOpen, setVersionLabelDialogOpen] = useState(false);
-    const [previewVersion, setPreviewVersion] = useState<string | undefined>(undefined);
 
     const handleVersionSave = () => {
         setVersionLabelDialogOpen(true);
@@ -112,13 +110,7 @@ export const HouseActions = ({ house, handleEditToggle }: HouseActionsProps) => 
         {error && <InlineError message={error} small portalContainer={portalContainer} />}
 
         <HouseVersionLabelDialog open={versionLabelDialogOpen} onClose={() => setVersionLabelDialogOpen(false)} house={house} />
-        <HouseHistoryDrawer open={historyDrawerOpen} onClose={() => setHistoryDrawerOpen(false)} house={house} onPreview={(version) => setPreviewVersion(version)} />
-        <Portal container={portalContainer.current}>
-            <HousePreviewOverlay uuidHouse={house.uuid} houseVersion={previewVersion} onClose={() => { setPreviewVersion(undefined) }}
-                onRestore={() => {
-                    setPreviewVersion(undefined);
-                    setHistoryDrawerOpen(false);
-                }} />
-        </Portal>
+        <HouseHistoryDrawer open={historyDrawerOpen} onClose={() => setHistoryDrawerOpen(false)} house={house} />
+
     </>
 }
