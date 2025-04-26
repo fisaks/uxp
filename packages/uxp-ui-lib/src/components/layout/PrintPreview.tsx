@@ -96,7 +96,12 @@ export const PrintPreview = ({ title, children, defaultSetting, meta, onPrinterS
             setPrintSettings={handlePrintSettings}
             resetDocumentName={resetDocumentName}
         />
-        <Box className={`uxp-print-paper ${printSettings.orientation === 'landscape' ? 'landscape' : ''}`}>
+        <Box className={`uxp-print-paper ${printSettings.orientation === 'landscape' ? 'landscape' : ''}`}
+            sx={{
+                '& .uxp-read-only-text-field-label': {
+                    backgroundColor: '#fff', 
+                },
+            }}>
             <Box ref={pdfWrapperRef} className="uxp-pdf-wrapper">
                 {printSettings.includeHeader && <Box
                     className="uxp-print-header"

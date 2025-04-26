@@ -165,9 +165,8 @@ export class HouseController {
         const { uuid, version } = req.params;
 
         const houseService = new HouseService(req, queryRunner);
-        await houseService.restoreHouseVersion(uuid, version);
-
-        return reply.code(204).send();
+        const restoredHouse = await houseService.restoreHouseVersion(uuid, version);
+        return reply.code(200).send(HouseMapper.mapToHouseResponse(restoredHouse));
     }
 
 

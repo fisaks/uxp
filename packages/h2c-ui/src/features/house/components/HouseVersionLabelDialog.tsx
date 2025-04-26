@@ -1,4 +1,4 @@
-import { HouseCreateVersionResponse } from "@h2c/common";
+import { House } from "@h2c/common";
 import ClearIcon from "@mui/icons-material/Clear";
 import SaveAsIcon from "@mui/icons-material/SaveAs";
 import UndoIcon from "@mui/icons-material/Undo";
@@ -16,9 +16,8 @@ import {
 import { AsyncButton, usePortalContainer, useSafeState } from '@uxp/ui-lib';
 import { DateTime } from 'luxon';
 import {
-    forwardRef,
     useCallback,
-    useImperativeHandle,
+    useEffect,
     useState
 } from 'react';
 import { createHouseVersion } from "../house.api";
@@ -30,12 +29,15 @@ type HouseToMakeVersionOf = {
 export interface HouseVersionLabelDialogRef {
     open: (house: HouseToMakeVersionOf) => void;
 }
-
-const HouseVersionLabelDialog = forwardRef<HouseVersionLabelDialogRef>((_, ref) => {
+type HouseVersionLabelDialogProps = {
+    open: boolean;
+    onClose: () => void;
+    house: House
+}
+const HouseVersionLabelDialog = ({ open, onClose, house }: HouseVersionLabelDialogProps) => {
 
     const container = usePortalContainer();
-    const [open, setOpen] = useSafeState(false);
-    const [house, setHouse] = useState<HouseToMakeVersionOf | undefined>(undefined);
+
     const [label, setLabel] = useState('');
     const [saving, setSaving] = useSafeState(false);
     const [doneText, setDoneText] = useSafeState("");
@@ -43,13 +45,16 @@ const HouseVersionLabelDialog = forwardRef<HouseVersionLabelDialogRef>((_, ref) 
     const createDefaultLabel = useCallback((houseName: String) => {
         return `${houseName || "House"} - ${DateTime.now().toFormat('d.M.yyyy HH:mm:ss')}`;
     }, []);
-    useImperativeHandle(ref, () => ({
-        open: (arg) => {
-            setHouse(arg);
-            setLabel(createDefaultLabel(arg.houseName));
-            setOpen(true);
-        },
-    }));
+
+    useEffect(() => {
+        if (!open) {
+            setLabel("");
+
+        }
+        if (open) {
+            setLabel(createDefaultLabel(house.name));
+        }
+    }, [open, house])
 
     const handleSave = async () => {
         const trimmed = label.trim();
@@ -64,14 +69,14 @@ const HouseVersionLabelDialog = forwardRef<HouseVersionLabelDialogRef>((_, ref) 
                 setDoneText(`Version already exists`);
             }
             return response;
-        } finally {
+        } finally {false
             setSaving(false);
         }
     };
 
     return (
-        <Dialog open={open} onClose={() => setOpen(false)} maxWidth="xs" fullWidth container={container}>
-            <DialogTitle>Create {house?.houseName || "House"} Version</DialogTitle>
+        <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth container={container}>
+            <DialogTitle>Create {house.name || "House"} Version</DialogTitle>
             <DialogContent>
                 <TextField
                     autoFocus
@@ -98,7 +103,7 @@ const HouseVersionLabelDialog = forwardRef<HouseVersionLabelDialogRef>((_, ref) 
                                             </Tooltip>
                                         }
                                         <Tooltip title="Revert to default">
-                                            <IconButton onClick={() => setLabel(createDefaultLabel(house?.houseName ?? ""))} edge="end" size="small">
+                                            <IconButton onClick={() => setLabel(createDefaultLabel(house?.name ?? ""))} edge="end" size="small">
                                                 <UndoIcon fontSize="small" />
                                             </IconButton>
                                         </Tooltip>
@@ -111,13 +116,13 @@ const HouseVersionLabelDialog = forwardRef<HouseVersionLabelDialogRef>((_, ref) 
             </DialogContent>
             <DialogActions>
                 <Button
-                    onClick={() => setOpen(false)}
+                    onClick={() => onClose()}
                     disabled={saving}>
                     Cancel
                 </Button>
                 <AsyncButton
                     onClick={handleSave}
-                    afterDone={() => setOpen(false)}
+                    afterDone={() => onClose()}
                     disabled={!label.trim()} variant="contained"
                     doneText={doneText}
                     loadingText='Creating version'
@@ -130,6 +135,6 @@ const HouseVersionLabelDialog = forwardRef<HouseVersionLabelDialogRef>((_, ref) 
             </DialogActions>
         </Dialog>
     );
-});
+};
 
 export default HouseVersionLabelDialog;

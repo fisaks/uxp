@@ -1,4 +1,4 @@
-import { HouseCreateVersionPayload, HouseCreateVersionResponse, HouseGetVersionResponse } from "@h2c/common";
+import { House, HouseCreateVersionPayload, HouseCreateVersionResponse, HouseGetVersionResponse } from "@h2c/common";
 import { AxiosUtil } from "@uxp/common";
 import axios from "axios";
 import { getBaseUrl } from "../../config";
@@ -24,3 +24,24 @@ export const fetchHouseVersion = async (uuidHouse: string, version: number) => {
         throw error;
     }
 };
+
+export const fetchHouse = async (uuidHouse: string) => {
+    try {
+        const response = await axios.get<House>(`${getBaseUrl()}/api/houses/${uuidHouse}`);
+        return response.data;
+    } catch (e: unknown) {
+        const error = AxiosUtil.getErrorResponse(e);
+        throw error;
+    }
+};
+
+export const fetchHouseVersions = async (uuidHouse: string) => {
+    try {
+        const response = await axios.get<HouseGetVersionResponse[]>(`${getBaseUrl()}/api/houses/${uuidHouse}/versions`);
+        return response.data;
+    } catch (e: unknown) {
+        const error = AxiosUtil.getErrorResponse(e);
+        throw error;
+    }
+};
+

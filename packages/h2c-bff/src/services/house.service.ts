@@ -273,7 +273,7 @@ export class HouseService {
 
         await this.createHouseVersion(uuid, `Backup for restoration of version ${version}`);
 
-        await this.saveHouse({
+        const restoredHouse = await this.saveHouse({
             ...house,
             data: {
                 ...HouseService.stripDocumentVersion(houseVersion.data),
@@ -283,7 +283,7 @@ export class HouseService {
         })
 
         AppLogger.info(this.requestMeta, { message: `Restored house ${uuid} to version ${version}` });
-
+        return restoredHouse;
     }
 
     private static stripDocumentVersion<T extends { documentVersion?: unknown }>(obj: T): Omit<T, "documentVersion"> {

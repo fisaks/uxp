@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 
 import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
 import ReplayIcon from "@mui/icons-material/Replay";
@@ -41,6 +41,12 @@ const DebouncedAsyncTextField = <T,>({
     }, [asyncAction, field]);
 
     const debouncedUpdate = useMemo(() => debounce(doUpdate, 500), [doUpdate]);
+    useEffect(() => {
+        if (value !== undefined) {
+            setLocalValue(value);
+        }
+    }
+        , [value]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newValue = e.target.value;

@@ -15,16 +15,17 @@ export const ReadOnlyTextField = ({
     <Box sx={{ position: 'relative', mb: 2, ...(sx ?? {}) }}>
         {/* Floating Label */}
         <Typography
-            sx={{
+            className='uxp-read-only-text-field-label'
+            sx={(theme) => ({
                 position: 'absolute',
                 top: -7,
                 left: 8,
                 px: '4px',
-                backgroundColor: 'white', // ensure it overlaps the border cleanly
+                backgroundColor: theme.palette.background.paper,
                 fontSize: '0.75rem',
                 lineHeight: 1,
-                color: 'rgba(0, 0, 0, 0.6)',
-            }}
+                color: theme.palette.text.secondary,
+            })}
         >
             {label}
         </Typography>

@@ -1,12 +1,10 @@
-import { AsyncContent, mapApiErrorsToMessageString, PrintPreview, ReadOnlyTextField, useSafeState } from "@uxp/ui-lib";
+import { AsyncContent, mapApiErrorsToMessageString, PrintPreview, useSafeState } from "@uxp/ui-lib";
 
 
 import { HouseGetVersionResponse } from "@h2c/common";
-import { Box, Divider, Grid2 } from "@mui/material";
 import { useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { DocumentPreview } from "../../document/components/DocumentPreview";
-import { FieldKeyViewer } from "../../field-key/FieldKeyViewer";
+import { HousePreview } from "../components/HousePreview";
 import { fetchHouseVersion } from "../house.api";
 
 
@@ -48,86 +46,8 @@ export const HousePrintPreviewPage = () => {
         noContent={!house ? "No House loaded" : undefined}
         onRetry={loadHouseVersion}
     >
-        <PrintPreview title={house?.name} meta={{}} >
-            <Box sx={{ mt: 0, pt: 2 }}>
-
-                <Grid2 container spacing={2} >
-
-                    <Grid2 size={6} >
-                        <ReadOnlyTextField
-                            label="House Name"
-                            value={house?.name}
-                        />
-                    </Grid2>
-                    <Grid2 size={2}>
-                        <ReadOnlyTextField
-                            label="Year Built"
-                            value={house?.yearBuilt ?? " "}
-                        />
-                    </Grid2>
-                    <Grid2 size={4}>
-                        <ReadOnlyTextField
-                            label="Legal Registration Number"
-                            value={house?.legalRegistrationNumber ?? " "}
-                        />
-                    </Grid2>
-                    <Grid2 size={12}>
-                        <ReadOnlyTextField
-                            label="Address"
-                            value={house?.address ?? " "}
-                        />
-                    </Grid2>
-                    <Grid2 size={12}>
-                        <Divider textAlign="center" sx={{ fontWeight: 'bold' }}>Additional Details</Divider>
-
-                        <FieldKeyViewer
-                            printLayout
-                            value={house?.details ?? {}}
-                        />
-
-                    </Grid2>
-                    <Grid2 size={12}>
-                        <Divider textAlign="center" sx={{ fontWeight: 'bold' }}>{house?.name} Notes</Divider>
-                        <DocumentPreview documentId={house?.documentId!} version={`${house?.documentVersion}`} />
-                    </Grid2>
-                    {house?.buildings?.map((building) => (<>
-                        <Grid2 key={building.uuid} size={12}>
-                            <Divider textAlign="center" sx={{ fontWeight: 'bold' }}>{building.name}</Divider>
-                        </Grid2>
-                        <Grid2 size={6} >
-                            <ReadOnlyTextField
-                                label="Building Name"
-                                value={building?.name}
-                            />
-                        </Grid2>
-                        <Grid2 size={2}>
-                            <ReadOnlyTextField
-                                label="Year Built"
-                                value={building?.yearBuilt ?? " "}
-                            />
-                        </Grid2>
-
-                        <Grid2 size={12}>
-                            <Divider textAlign="center" sx={{ fontWeight: 'bold' }}>{building.name} Additional Details</Divider>
-
-                            <FieldKeyViewer
-                                printLayout
-                                value={building?.details ?? {}}
-                            />
-
-                        </Grid2>
-
-
-                        <Grid2 size={12}>
-                            <Divider textAlign="center" sx={{ fontWeight: 'bold' }}>{building?.name} Notes</Divider>
-                            <DocumentPreview documentId={building.documentId} version={`${building.documentVersion}`} />
-                        </Grid2>
-
-                    </>
-
-                    ))}
-                </Grid2>
-            </Box>
+        <PrintPreview title={house?.name} meta={{ version: `${houseVersion?.version}`, createdAt: houseVersion?.createdAt }} >
+            <HousePreview houseVersion={houseVersion} />
 
         </PrintPreview>
     </AsyncContent >)

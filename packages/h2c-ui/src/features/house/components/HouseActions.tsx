@@ -2,13 +2,13 @@ import HistoryIcon from '@mui/icons-material/History';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import PrintIcon from '@mui/icons-material/Print';
 import SaveAsIcon from '@mui/icons-material/SaveAs';
-import React, { useMemo, useRef } from "react";
+import React, { useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "../../../app/store";
 
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
-import { CircularProgress, IconButton, useTheme } from "@mui/material";
+import { CircularProgress, IconButton, Portal, useTheme } from "@mui/material";
 import { ActionIconButton, InlineError, mapApiErrorsToMessageString, MenuItemType, MultiLevelMenu, usePortalContainerRef, useSafeState, WithOptionalTooltip } from "@uxp/ui-lib";
 
 import { deleteHouse } from "../houseThunks";
@@ -18,12 +18,9 @@ import { buildPath } from '@uxp/common';
 import { House } from '@h2c/common';
 import { getBaseRoutePath } from '../../../config';
 import { createHouseVersion } from '../house.api';
-import HouseVersionLabelDialog, { HouseVersionLabelDialogRef } from './HouseVersionLabelDialog';
-
-type HouseArgument = {
-    uuid: string;
-    houseName: string;
-}
+import { HouseHistoryDrawer } from './HouseHistoryDrawer';
+import { HousePreviewOverlay } from './HousePreviewOverlay';
+import HouseVersionLabelDialog from './HouseVersionLabelDialog';
 
 type HouseActionsProps = {
     house: House;
@@ -32,20 +29,21 @@ type HouseActionsProps = {
 export const HouseActions = ({ house, handleEditToggle }: HouseActionsProps) => {
     const dispatch: AppDispatch = useDispatch();
     const portalContainer = usePortalContainerRef();
-    const houseVersionRef = useRef<HouseVersionLabelDialogRef>(null);
     const theme = useTheme();
     const [loading, setLoading] = useSafeState(false);
     const [error, setError] = useSafeState<string | undefined>(undefined);
+    const [historyDrawerOpen, setHistoryDrawerOpen] = useState(false);
+    const [versionLabelDialogOpen, setVersionLabelDialogOpen] = useState(false);
+    const [previewVersion, setPreviewVersion] = useState<string | undefined>(undefined);
 
-    const handleVersionSave = (arg?: HouseArgument) => {
-        if (!arg) return;
-        houseVersionRef.current?.open(arg);
+    const handleVersionSave = () => {
+        setVersionLabelDialogOpen(true);
     }
-    const handlePrint = async (arg?: HouseArgument) => {
-        if (!arg) return;
+    const handlePrint = async () => {
+
         try {
             setLoading(true);
-            const response = await createHouseVersion({ uuidHouse: arg.uuid, label: `` });
+            const response = await createHouseVersion({ uuidHouse: house.uuid, label: `${house.name} Version for printing` });
             const previewPath = buildPath(getBaseRoutePath() ?? "/", "house-info/preview", response.uuid, `${response.version}`);
             window.open(`${previewPath}?printView=true`, `house-${response.uuid}-${response.version}`);
 
@@ -56,10 +54,11 @@ export const HouseActions = ({ house, handleEditToggle }: HouseActionsProps) => 
             setLoading(false);
         }
     }
-    const handleHistory = (arg?: HouseArgument) => {
+    const handleHistory = () => {
+        setHistoryDrawerOpen(true)
     }
 
-    const moreItems: MenuItemType<HouseArgument>[] = useMemo(
+    const moreItems: MenuItemType[] = useMemo(
         () => [
             {
                 icon: <SaveAsIcon />,
@@ -77,7 +76,7 @@ export const HouseActions = ({ house, handleEditToggle }: HouseActionsProps) => 
             {
                 icon: <HistoryIcon />,
                 label: "View History",
-                disabled: true,
+                disabled: false,
                 onClick: handleHistory,
 
             },
@@ -104,7 +103,6 @@ export const HouseActions = ({ house, handleEditToggle }: HouseActionsProps) => 
         </WithOptionalTooltip>
         <MultiLevelMenu
             menuItems={moreItems}
-            itemData={{ uuid: house.uuid, houseName: house.name }}
             triggerIcon={<MoreVertIcon />}
             tooltipText="More"
             container={portalContainer.current}
@@ -113,6 +111,14 @@ export const HouseActions = ({ house, handleEditToggle }: HouseActionsProps) => 
         {loading && <CircularProgress size={15} />}
         {error && <InlineError message={error} small portalContainer={portalContainer} />}
 
-        <HouseVersionLabelDialog ref={houseVersionRef} />
+        <HouseVersionLabelDialog open={versionLabelDialogOpen} onClose={() => setVersionLabelDialogOpen(false)} house={house} />
+        <HouseHistoryDrawer open={historyDrawerOpen} onClose={() => setHistoryDrawerOpen(false)} house={house} onPreview={(version) => setPreviewVersion(version)} />
+        <Portal container={portalContainer.current}>
+            <HousePreviewOverlay uuidHouse={house.uuid} houseVersion={previewVersion} onClose={() => { setPreviewVersion(undefined) }}
+                onRestore={() => {
+                    setPreviewVersion(undefined);
+                    setHistoryDrawerOpen(false);
+                }} />
+        </Portal>
     </>
 }
