@@ -121,9 +121,11 @@ export class DocumentService {
             }
         } else {
             const documentRepo = this.queryRunner.manager.getRepository(DocumentEntity);
+            AppLogger.debug(this.requestMeta, { message: `Getting document ${documentId} version ${versionId} includeDeleted ${includeDeleted}` });
 
             const docVersion = await documentRepo.findOne({
-                where: { documentId, id: versionId, ...(includeDeleted ? {} : { deleted: false }) },
+                withDeleted: includeDeleted,
+                where: { documentId, id: versionId },
             });
 
             if (!docVersion) {

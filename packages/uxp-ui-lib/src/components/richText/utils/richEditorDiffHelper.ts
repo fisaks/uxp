@@ -278,4 +278,3 @@ export function generateRichTextDiffFromJson(
 ): { a: JSONContent; b: JSONContent } {
     return deepDiff(jsonA, jsonB, wordDiff) as { a: JSONContent, b: JSONContent };
 }
-

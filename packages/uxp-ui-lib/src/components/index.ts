@@ -39,6 +39,9 @@ export * from "./layout/PrintPreview";
 
 export * from "./richText/RichTextEditor";
 export * from "./richText/RichEditorPreview";
+export * from "./richText/utils/richEditorDiffHelper";
+export * from "./richText/utils/richEditorHelper";
+
 export { default as RichTextEditor } from "./richText/RichTextEditor";
 import { UploadedFileDetails ,YDocVersionDetail} from "./richText/RichEditorContext";
 export type { UploadedFileDetails ,YDocVersionDetail};

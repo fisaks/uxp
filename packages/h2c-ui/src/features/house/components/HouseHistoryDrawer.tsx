@@ -4,6 +4,7 @@ import { AsyncContent, useAsyncManualLoadWithPayload, usePortalContainerRef } fr
 import { DateTime } from "luxon";
 import { useEffect, useState } from "react";
 import { fetchHouseVersions } from "../house.api";
+import { HouseDiffDialog } from "./HouseDiffDialog";
 import { HousePreviewOverlay } from "./HousePreviewOverlay";
 
 type HouseHistoryDrawerProps = {
@@ -17,6 +18,7 @@ export const HouseHistoryDrawer = ({ open, onClose, house }: HouseHistoryDrawerP
     const portalContainerRef = usePortalContainerRef();
     const [diffA, setDiffA] = useState<string | undefined>(undefined);
     const [diffB, setDiffB] = useState<string | undefined>(undefined);
+    const [openDiffDialog, setOpenDiffDialog] = useState(false);
     const [previewVersion, setPreviewVersion] = useState<string | undefined>(undefined);
     const theme = useTheme()
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -37,7 +39,7 @@ export const HouseHistoryDrawer = ({ open, onClose, house }: HouseHistoryDrawerP
     }
 
     const handleDiff = () => {
-
+        setOpenDiffDialog(true)
     }
     return (
         <Drawer anchor="right" open={open} onClose={onClose} container={portalContainerRef.current} >
@@ -92,6 +94,8 @@ export const HouseHistoryDrawer = ({ open, onClose, house }: HouseHistoryDrawerP
                     </List>
                 </Box>
             </Box>
+            <HouseDiffDialog aVersionId={diffA} bVersionId={diffB} uuidHouse={house.uuid}
+                open={openDiffDialog} onClose={() => { setOpenDiffDialog(false) }} onRestore={() => setOpenDiffDialog(false)} />
             <Portal container={portalContainerRef.current}>
                 <HousePreviewOverlay uuidHouse={house.uuid} houseVersion={previewVersion} onClose={() => { setPreviewVersion(undefined) }}
                     onRestore={() => {

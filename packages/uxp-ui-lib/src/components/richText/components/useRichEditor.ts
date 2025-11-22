@@ -29,7 +29,7 @@ import DropCursor from '@tiptap/extension-dropcursor';
 import GapCursor from '@tiptap/extension-gapcursor';
 
 import { EditorView } from "prosemirror-view"; //  Import directly from ProseMirror
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 import CollaborationCursor from "@tiptap/extension-collaboration-cursor";
 import * as Y from "yjs";
@@ -48,6 +48,7 @@ import { RichEditorUIState, UploadSource, UploadType, useRichEditorUI } from "..
 export const useRichEditor = (
 ) => {
     const editorState = useRichEditorUI();
+    const [editorMounted, setEditorMounted] = useState(false)
     const { docInstanceId, setEditor, imageBasePath, editable, yDoc, fileDropHandler, awareness } = editorState;
     let timeoutRef = useRef<NodeJS.Timeout | null>(null); //
     const editor = useEditor(
@@ -72,8 +73,7 @@ export const useRichEditor = (
 
             },
             onCreate: ({ editor }) => {
-                setEditor(editor);
-                console.log("[useRichEditor] Editor created", awareness?.getLocalState());
+                setEditorMounted(true)
             },
             //  onUpdate: ({ editor }) => {
             //    console.log("[useRichEditor] onUpdate", editor.getJSON());
@@ -83,8 +83,19 @@ export const useRichEditor = (
     );
 
     useEffect(() => {
-        editor?.setEditable(editable ?? false);
+        queueMicrotask(() => {
+            editor?.setEditable(editable ?? false);
+        });
     }, [editable]);
+
+    useEffect(() => {
+        if (editorMounted && editor) {
+            queueMicrotask(() => {
+                setEditor(editor);
+                console.log("[useRichEditor] Editor created", awareness?.getLocalState());
+            })
+        }
+    }, [editor, editorMounted]);
 
     return editor;
 };

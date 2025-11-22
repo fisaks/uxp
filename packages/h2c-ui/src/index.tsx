@@ -1,12 +1,12 @@
 import createCache from "@emotion/cache";
 import { CacheProvider } from "@emotion/react";
+import { ShadowRootProvider } from "@uxp/ui-lib";
 import React from "react";
 import ReactDOM from "react-dom/client"; // React 18's new API
 import { Provider } from "react-redux";
 import { createStore } from "./app/store";
 import { initializeConfig } from "./config";
 import H2CApp from "./H2CApp";
-import { ShadowRootProvider } from "@uxp/ui-lib";
 const styleInsert = require("../../tools/src/insert-function.cjs");
 
 // Extend the Window interface to include __UXP_PORTAL__

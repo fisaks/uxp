@@ -82,6 +82,7 @@
         "react-dom": "^18.0.0"
     },
     "devDependencies": {
+        "@types/diff": "^7.0.2",
         "@types/node": "^22.13.1",
         "@types/react": "^18.3.12",
         "@types/redux-logger": "^3.0.13",

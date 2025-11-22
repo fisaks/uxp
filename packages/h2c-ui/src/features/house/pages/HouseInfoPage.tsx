@@ -7,7 +7,7 @@ import { Box, Typography, useTheme } from "@mui/material";
 import { LoadingButton, ReloadIconButton, useThunkHandler } from "@uxp/ui-lib";
 import { selectActionError, selectActionIsLoading } from "../../loading-error/loadingErrorSlice";
 import HouseList from "../components/HouseList";
-import { addHouse, fetcHouses } from "../houseThunks";
+import { addHouse, fetchHouses } from "../houseThunks";
 
 const HouseInfoPage: React.FC = () => {
     const dispatch: AppDispatch = useDispatch();
@@ -17,7 +17,7 @@ const HouseInfoPage: React.FC = () => {
     const [dispatchAddHouse, addHouseLoading, addHouseError, addHouseDone] = useThunkHandler(addHouse, dispatch);
 
     const loadHouses = useCallback(() => {
-        dispatch(fetcHouses({}));
+        dispatch(fetchHouses({}));
     }, []);
 
     const handleAddHouse = useCallback(() => {
