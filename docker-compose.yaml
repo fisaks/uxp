@@ -20,6 +20,18 @@ services:
         command: >
             sh -c "/uxp-initdb/generate-init-scripts.sh && /uxp-initdb/run-sql-scripts.sh & docker-entrypoint.sh mysqld"
 
+    mqtt:
+        image: eclipse-mosquitto:2
+        container_name: uxp-mqtt
+        restart: unless-stopped
+        ports: ["2883:1883"]
+        volumes:
+            - ./mosquitto/config:/mosquitto/config
+            - ./mosquitto/data:/mosquitto/data
+            - ./mosquitto/log:/mosquitto/log
+            
+        command: ["mosquitto", "-c", "/mosquitto/config/mosquitto.conf"]
+        
     bff-server:
         build:
             context: ./

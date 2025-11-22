@@ -16,3 +16,6 @@ packages/uxp-bff/build_types
 .history
 build_types
 packages/uxp-bff/src/db/private-migrations/
+
+mosquitto/data/
+mosquitto/log/
