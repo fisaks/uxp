@@ -35,7 +35,8 @@
     "nanoid": "^3.3.4",
     "reflect-metadata": "^0.2.2",
     "typeorm": "^0.3.20",
-    "ws": "^8.18.0"
+    "ws": "^8.18.0",
+    "mqtt": "^5.14.1"
   },
   "devDependencies": {
     "@types/file-type": "^10.9.3",

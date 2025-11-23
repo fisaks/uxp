@@ -1,0 +1,29 @@
+{
+    "name": "@uhn/common",
+    "description": "A shared library for non UI reusable utilities, types, and components in the scope of Unified Home Network.",
+    "version": "1.0.0",
+    "main": "dist/index.js",
+    "module": "dist/index.esm.js",
+    "types": "dist/index.d.ts                                                                                                                   ",
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "scripts": {
+        "build": "pnpm tsc --build",
+        "dev": "pnpm ts-node-dev --respawn src/index.ts",
+        "clean": "pnpm rimraf --glob -v dist tsconfig.tsbuildinfo",
+        "watch": "pnpm tsc --watch",
+        "lint": "pnpm eslint .",
+        "lint:fix": "pnpm eslint . --fix"
+    },
+    "dependencies": {
+        "@uxp/common": "workspace:*"
+    },
+    "peerDependencies": {
+        "ajv": "^8.17.1",
+        "axios": "^1.7.8"
+    },
+    "devDependencies": {
+        "@types/node": "^22.13.1"
+    }
+}

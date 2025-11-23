@@ -1,0 +1,52 @@
+{
+    "name": "@uhn/ui",
+    "description": "The React-based user interface for the Unified Home Network application",
+    "version": "1.0.0",
+    "types": "build_types/index.d.ts",
+    "scripts": {
+        "start": "pnpm webpack serve --config webpack.devserver.config.cjs",
+        "build": "pnpm webpack --config webpack.production.config.cjs",
+        "build-dev": "pnpm webpack --config webpack.config.cjs",
+        "lint": "pnpm eslint .",
+        "lint:fix": "pnpm eslint . --fix",
+        "clean": "pnpm rimraf -v --glob dist build_types tsconfig.tsbuildinfo"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "@emotion/cache": "^11.14.0",
+        "@emotion/react": "^11.13.5",
+        "@emotion/styled": "^11.13.5",
+        "@fontsource/roboto": "^5.1.0",
+        "@mui/icons-material": "^6.1.8",
+        "@mui/material": "^6.1.8",
+        "@mui/utils": "^6.1.10",
+        "@reduxjs/toolkit": "^2.3.0",
+        "luxon": "^3.5.0",
+
+        "@uxp/common": "workspace:*",
+        "@uxp/ui-lib": "workspace:*",
+        "@uhn/common": "workspace:*",
+        "ajv": "^8.17.1",
+        "ajv-errors": "^3.0.0",
+        "ajv-formats": "^3.0.1",
+        "axios": "^1.7.8",
+        "react-redux": "^9.1.2",
+        "react-resizable": "^3.0.5",
+        "react-router-dom": "^7.0.1",
+        "redux-logger": "^3.0.6"
+    },
+    "peerDependencies": {
+        "react": "^18.0.0",
+        "react-dom": "^18.0.0"
+    },
+    "devDependencies": {
+        "@types/node": "^22.13.1",
+        "@types/react": "^18.3.12",
+        "@types/redux-logger": "^3.0.13",
+        "html-webpack-inject-attributes-plugin": "^1.0.6",
+        "webpack-bundle-analyzer": "^4.10.2",
+        "@types/luxon": "^3.4.2"
+    }
+}

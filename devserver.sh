@@ -67,7 +67,7 @@ start_dev_env() {
     tmux split-window -v -t $SESSION_NAME:1
     tmux select-pane -t 0
     tmux split-window -h -t $SESSION_NAME:1
-    tmux select-pane -t 2
+    tmux select-pane -t 2MASTER
     tmux split-window -h -t $SESSION_NAME:1
     tmux send-keys -t $SESSION_NAME:1.0 "pnpm run start:demo-bff" C-m
     tmux send-keys -t $SESSION_NAME:1.1 "pnpm run start:demo-app" C-m
@@ -80,9 +80,16 @@ start_dev_env() {
     
     tmux new-window -t $SESSION_NAME -n 'uhn'
     tmux split-window -v -t $SESSION_NAME:2
+    tmux split-window -v -t $SESSION_NAME:2
+    tmux split-window -h -t $SESSION_NAME:2
     tmux select-pane -t 0
+    tmux resize-pane -y 10%
+    tmux select-pane -t 1
+    tmux resize-pane -y 45%
     tmux send-keys -t $SESSION_NAME:2.0 "docker logs -f uxp-mqtt" C-m
     tmux send-keys -t $SESSION_NAME:2.1 "mosquitto_sub -h localhost -p 2883 -t "uhn/#" -v" C-m
+    tmux send-keys -t $SESSION_NAME:2.2 "pnpm run start:uhn-master" C-m
+    tmux send-keys -t $SESSION_NAME:2.3 "pnpm run start:uhn-app" C-m
 
     
     # Select the first tab

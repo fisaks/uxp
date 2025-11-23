@@ -1,18 +1,16 @@
 import { envLoader } from "@uxp/bff-common";
-
+import fs from "fs-extra";
 envLoader(__dirname);
 
 export const requiredKeys = [
-    "MYSQL_UXP_DATABASE",
-    "MYSQL_UXP_USER",
-    "MYSQL_UXP_PASSWORD",
+    "MYSQL_UHN_DATABASE",
+    "MYSQL_UHN_USER",
+    "MYSQL_UHN_PASSWORD",
     "DATABASE_HOST",
     "DATABASE_PORT",
     "JWT_SECRET",
-    "REMOTE_HOST_H2C",
-    "REMOTE_HOST_UHN",
-    "REMOTE_HOST_DEMO",
-    "SECURE_COOKIE",
+    "UHN_FILE_UPLOAD_PATH",
+    "UHN_MQTT_BROKER_URL",
 ] as const;
 export const optionalKeys = [
     "LOG_LEVEL",
@@ -28,6 +26,14 @@ function validateEnv(vars: EnvVariables): EnvVariables {
     if (missingVars.length > 0) {
         throw new Error(`Missing required environment variables: ${missingVars.join(", ")}`);
     }
+
+    try {
+        fs.ensureDirSync(vars.UHN_FILE_UPLOAD_PATH);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any        
+    } catch (error: any) {
+        throw new Error(`Failed to create directory at ${vars.UHN_FILE_UPLOAD_PATH}: ${error.message}`);
+    }
+
     return vars;
 }
 

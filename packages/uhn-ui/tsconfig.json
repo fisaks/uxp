@@ -1,0 +1,27 @@
+{
+    "extends": "../../tsconfig.json",
+    "compilerOptions": {
+        "outDir": "./dist",
+        "rootDir": "./src", // Treat src as the root for inputs
+        "declarationDir": "./build_types",
+        "module": "ESNext",
+        "target": "ES2021",
+        "jsx": "react-jsx",
+        "strict": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true
+    },
+    "include": ["src/**/*"],
+    "exclude": ["node_modules", "dist"],
+    "references": [
+        {
+            "path": "../uhn-common"
+        },
+        {
+            "path": "../uxp-common"
+        },
+        {
+            "path": "../uxp-ui-lib"
+        }
+    ]
+}

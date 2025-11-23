@@ -22,3 +22,4 @@ export * from "./utils/multipartUpload";
 export * from "./health/health.controller";
 export * from "./websocket/ServerWebSocketManager";
 export * from "./websocket/registerLocalWebSocketHandlers";
+export * from "./services/mqtt.service";
