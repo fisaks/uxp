@@ -1,5 +1,4 @@
-import { JSONSchemaType } from "ajv";
-
+import Ajv, { JSONSchemaType, ValidateFunction } from "ajv";
 export type AjvKeyword =
     | "type"
     | "minLength"
@@ -27,3 +26,4 @@ export type SchemaValidate<TBody = object, TQuerystring = undefined, TParams = u
 export type ValidationErrorMessages<T = string> = Partial<Record<AjvKeyword, Partial<Record<T extends string ? string : keyof T, string>>>>;
 
 export type MessagePayloadSchema<T> = JSONSchemaType<T>;
+

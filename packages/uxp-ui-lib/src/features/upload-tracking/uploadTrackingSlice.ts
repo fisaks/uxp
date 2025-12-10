@@ -1,10 +1,11 @@
 
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { UploadResult, UploadStatus } from './uploadTracking.types';
+import { UploadStatus } from './uploadTracking.types';
 import { notifyUploadListeners } from './uploadTrackingSubscriptions';
+import { ErrorCode } from '@uxp/common';
 
 export type UploadTrackingState = {
-    uploads: Record<string, UploadStatus>;
+    uploads: Record<string, UploadStatus<any>>;
 }
 
 const initialState: UploadTrackingState = {
@@ -13,13 +14,13 @@ const initialState: UploadTrackingState = {
 
 export const activeUploads: Record<string, { controller: AbortController, file: File }> = {};
 
-const cloneUpload = (upload: UploadStatus) => ({ ...upload, file: { ...upload.file }});
+const cloneUpload = (upload: UploadStatus<any>) => ({ ...upload, file: { ...upload.file }});
 
 const uploadsSlice = createSlice({
     name: 'uploads',
     initialState,
     reducers: {
-        uploadStarted(state, action: PayloadAction<{ id: string; file: UploadStatus["file"], startedAt: number }>) {
+        uploadStarted(state, action: PayloadAction<{ id: string; file: UploadStatus<unknown>["file"], startedAt: number }>) {
             const { id, file, startedAt } = action.payload;
             state.uploads[id] = {
                 id,
@@ -40,26 +41,25 @@ const uploadsSlice = createSlice({
                 notifyUploadListeners(upload.id, cloneUpload(upload));
             }
         },
-        uploadSucceeded(state, { payload }: PayloadAction<{ id: string; result: UploadResult }>) {
+        uploadSucceeded(state, { payload }: PayloadAction<{ id: string; result: unknown }>) {
             const upload = state.uploads[payload.id];
             if (upload) {
                 // Maybe we could remove the upload here from the list
                 upload.status = 'done';
-                upload.publicId = payload.result.publicId;
-                upload.fileName = payload.result.fileName;
+                upload.result = payload.result;
                 notifyUploadListeners(upload.id, cloneUpload(upload));
                 delete activeUploads[payload.id];
             }
         },
         uploadFailed(
             state,
-            { payload }: PayloadAction<{ id: string; error?: string; canceled?: boolean }>
+            { payload }: PayloadAction<{ id: string; errorCode?: ErrorCode; canceled?: boolean }>
         ) {
             const upload = state.uploads[payload.id];
             if (upload) {
                 upload.status = payload.canceled ? 'canceled' : 'error';
                 if (!payload.canceled) {
-                    upload.errorMessage = payload.error;
+                    upload.errorCode = payload.errorCode;
                 }
                 notifyUploadListeners(upload.id, cloneUpload(upload));
             }

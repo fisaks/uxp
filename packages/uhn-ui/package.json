@@ -24,7 +24,7 @@
         "@mui/utils": "^6.1.10",
         "@reduxjs/toolkit": "^2.3.0",
         "luxon": "^3.5.0",
-
+        "@mui/lab": "6.0.0-beta.22",
         "@uxp/common": "workspace:*",
         "@uxp/ui-lib": "workspace:*",
         "@uhn/common": "workspace:*",

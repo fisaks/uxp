@@ -3,12 +3,12 @@ import { base64ToBinaryString, DeviceStatePayload, UHNAppActionPayloadResponseMa
 
 export type TopicMessagePayload = UHNAppActionPayloadResponseMap["topic:message"];
 
-type ChatState = {
+type TopicTraceState = {
     trace: TopicMessagePayload[];
     topicPattern?:string
 }
 
-const initialState: ChatState = {
+const initialState: TopicTraceState = {
     trace: [],
 };
 

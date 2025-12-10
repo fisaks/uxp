@@ -1,5 +1,5 @@
 // src/plugins/errorHandler.ts
-import { ErrorCodes } from "@uxp/common";
+import { ErrorCode, ErrorCodes } from "@uxp/common";
 import { ErrorObject } from "ajv";
 import { FastifyError, FastifyReply, FastifyRequest } from "fastify";
 import { AppLogger } from "../utils/AppLogger";
@@ -74,7 +74,7 @@ const handleAppError = (error: AppError | AppErrorV2, request: FastifyRequest, r
 };
 const handleGeneralError = (error: FastifyError, request: FastifyRequest, reply: FastifyReply) => {
     const statusCode = error.statusCode || 500;
-    const code = "INTERNAL_SERVER_ERROR";
+    const code = mapErrorCode(error.code)
     const params = undefined;
 
     // Create a structured error response
@@ -91,3 +91,11 @@ const handleGeneralError = (error: FastifyError, request: FastifyRequest, reply:
 
     reply.status(statusCode).send(response);
 };
+const mapErrorCode = (code: string): ErrorCode => {
+    switch (code) {
+        case "FST_REQ_FILE_TOO_LARGE":
+            return ErrorCodes.FILE_TOO_LARGE;
+        default:
+            return ErrorCodes.INTERNAL_SERVER_ERROR;
+    }
+}

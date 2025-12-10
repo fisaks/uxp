@@ -35,7 +35,10 @@ export type DocumentVersion = {
     removedAt?: string,
     version: string
 }
-
+export type RichTextUploadResult = {
+    publicId: string;
+    fileName: string;
+}
 export interface RichTextEditorProps {
     label?: string;
     imageBasePath: string;
@@ -44,11 +47,11 @@ export interface RichTextEditorProps {
     awareness?: Awareness;
     editable?: boolean
     hideMenu?: boolean
-    startUpload?: (file: File) => UploadStartedWithTrackingId;
+    startUpload?: (file: File) => UploadStartedWithTrackingId<RichTextUploadResult>;
     cancelUpload?: (id: string) => void;
-    retryUpload?: (id: string) => UploadStartedWithTrackingId;
-    subscribeToUploadStatus?: (callback: UploadListener) => () => void;
-    getUploadStatus?: (id: string) => UploadStatus | undefined;
+    retryUpload?: (id: string) => UploadStartedWithTrackingId<RichTextUploadResult>;
+    subscribeToUploadStatus?: (callback: UploadListener<RichTextUploadResult>) => () => void;
+    getUploadStatus?: (id: string) => UploadStatus<RichTextUploadResult> | undefined;
     onSaveVersion?: () => Promise<YDocVersionDetail>;
     onPrintExport?: (documentId: string, versionId: string) => void;
     loadHistory?: () => Promise<DocumentHistory>

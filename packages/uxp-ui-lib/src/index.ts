@@ -28,4 +28,5 @@ export * from "./hooks/useUxpDeviceId";
 export * from "./util/browserErrorMessage";
 export * from "./util/processPatchUpdate";
 export * from "./util/SanitizedProps";
+export * from "./util/formatFileSize";
 

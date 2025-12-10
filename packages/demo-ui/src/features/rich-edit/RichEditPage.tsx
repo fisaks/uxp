@@ -19,11 +19,11 @@ const uploadFile = async (file: File) => {
 const RichEditPage: React.FC = () => {
     const yDoc = useMemo(() => new Y.Doc(), []);
     const handleUploadFile = (file: File) => {
-        const promise = uploadFile(file).then((response) => ({ id: "1", ...response } as UploadResultWithTrackingId));
+        const promise = uploadFile(file).then((response) => ({ id: "1", ...response } as UploadResultWithTrackingId<FileUploadResponse>));
         return {
             id: "1",
             promise
-        } as UploadStartedWithTrackingId
+        } as UploadStartedWithTrackingId<FileUploadResponse>;
     };
     return (
         <Box sx={{}}>

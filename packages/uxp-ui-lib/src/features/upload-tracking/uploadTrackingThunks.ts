@@ -9,15 +9,15 @@ import {
     uploadSucceeded,
     UploadTrackingState,
 } from './uploadTrackingSlice';
+import { AxiosUtil } from '@uxp/common';
 
-let uploadHandler: UploadHandler | undefined;
+//let uploadHandler: UploadHandler | undefined;
 
-export function configureUploadHandler(handler: UploadHandler) {
+/*export function configureUploadHandler(handler: UploadHandler) {
     uploadHandler = handler;
-}
+}*/
 
-async function internalStartUpload(file: File, id: string, dispatch: Dispatch): Promise<UploadResultWithTrackingId> {
-    if (!uploadHandler) throw new Error('Upload handler not configured');
+async function internalStartUpload<UploadResult>(file: File, id: string, uploadHandler: UploadHandler<UploadResult>, dispatch: Dispatch): Promise<UploadResultWithTrackingId<UploadResult>> {
 
     const controller = new AbortController();
     const startedAt = Date.now();
@@ -42,29 +42,33 @@ async function internalStartUpload(file: File, id: string, dispatch: Dispatch): 
     try {
         const result = await promise;
         dispatch(uploadSucceeded({ id, result }));
-        return { id, ...result };
-    } catch (error: any) {
-        const isCanceled = error?.name === 'CanceledError' || error?.code === 'ERR_CANCELED';
-        dispatch(uploadFailed({ id, error: isCanceled ? undefined : error.message, canceled: isCanceled }));
-        throw error;
+        return { id, result };
+    } catch (e: any) {
+        const isCanceled = e?.name === 'CanceledError' || e?.code === 'ERR_CANCELED';
+        const errorCode = isCanceled ? undefined : AxiosUtil.getMainErrorCode(e);
+
+        dispatch(uploadFailed({ id, errorCode, canceled: isCanceled }));
+        return { id, error: e };
     }
 }
 
 
-export function startUploadTracking(
+export function startUploadTracking<UploadResult>(
     file: File,
+    uploadHandler: UploadHandler<UploadResult>,
     dispatch: Dispatch
-): UploadStartedWithTrackingId {
+): UploadStartedWithTrackingId<UploadResult> {
     const id = nanoid();
-    const promise = internalStartUpload(file, id, dispatch);
+    const promise = internalStartUpload(file, id, uploadHandler, dispatch);
     return { id, promise };
 }
 
-export function retryUploadTracking(
+export function retryUploadTracking<UploadResult>(
     id: string,
     getUploads: () => UploadTrackingState["uploads"],
+    uploadHandler: UploadHandler<UploadResult>,
     dispatch: Dispatch
-): UploadStartedWithTrackingId {
+): UploadStartedWithTrackingId<UploadResult> {
     console.info('[UploadTracking] Retrying upload with id:', id,getUploads());
    
     if (!activeUploads[id]?.file) throw new Error('No file in memory to retry');
@@ -72,18 +76,19 @@ export function retryUploadTracking(
     if (!upload || !['error', 'canceled'].includes(upload.status)) throw new Error('File is not in a retryable state');
     
     const promise = internalStartUpload(
-        activeUploads[id].file, id, dispatch);
+        activeUploads[id].file, id, uploadHandler, dispatch);
 
     return { id, promise };
 }
 
-export function startMultipleUploadsTracking(
+export function startMultipleUploadsTracking<UploadResult>(
     files: File[],
+    uploadHandler: UploadHandler<UploadResult>,
     dispatch: Dispatch
-): UploadStartedWithTrackingId[] {
+): UploadStartedWithTrackingId<UploadResult>[] {
     return files.map(file => {
         const id = nanoid();
-        const promise = internalStartUpload(file, id, dispatch);
+        const promise = internalStartUpload(file, id, uploadHandler, dispatch);
         return { id, promise };
     });
 }

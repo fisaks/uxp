@@ -20,6 +20,7 @@
         "@emotion/styled": "^11.13.5",
         "@fontsource/roboto": "^5.1.0",
         "@mui/icons-material": "^6.1.8",
+
         "@mui/material": "^6.1.8",
         "@mui/utils": "^6.1.10",
         "@reduxjs/toolkit": "^2.3.0",

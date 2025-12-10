@@ -1,6 +1,6 @@
 import axios, { AxiosError } from "axios";
 import { ApiErrorResponse } from "../error/error.types";
-import { ErrorCodes } from "../error/ErrorCodes";
+import { ErrorCode, ErrorCodes } from "../error/ErrorCodes";
 
 export class AxiosUtil {
     static isAxiosError(error: unknown): error is AxiosError {
@@ -45,5 +45,8 @@ export class AxiosUtil {
             );
         }
         return false;
+    }
+    static getMainErrorCode(error: unknown): ErrorCode {
+        return this.getErrorResponse(error).errors[0]?.code || ErrorCodes.INTERNAL_SERVER_ERROR;
     }
 }

@@ -7,6 +7,7 @@ import { WebSocketConfig } from "./WebSocketConfig";
 
 const UHNApp: React.FC = () => {
     const basePath = useMemo(() => getBaseRoutePath(), []);
+
     return (
         <UxpTheme>
             <WebSocketConfig>

@@ -5,6 +5,9 @@ import { selectCurrentUser } from "../../../features/remote-app/remoteAppSelecto
 import { useUxpDeviceId } from "../../../hooks/useUxpDeviceId";
 import { UploadSource, UploadType, useRichEditorUI } from "../RichEditorContext";
 import { findNodeByType } from "../extensions/extensionUtil";
+import { mapApiErrorCodeToMessage } from "../../../util/browserErrorMessage";
+
+
 
 //Metadata of the upload passed to the insert command
 type UploadMeta = {
@@ -121,20 +124,20 @@ export function RichEditorUploadManager() {
                     continue;
                 }
                 console.info("[RichEditorUploadManager] Updating upload placeholder with latest status:", id, status);
-                const { progress, speed, errorMessage } = status;
+                const { progress, speed, errorCode } = status;
                 editor.commands.updateUploadPlaceholder(id, {
                     progress,
                     speed,
                     status: status.status,
-                    errorMessage,
+                    errorMessage: errorCode ? mapApiErrorCodeToMessage(errorCode) : undefined,
                 });
 
-                if (status.status === "done" && status.publicId && status.fileName) {
+                if (status.status === "done" && status.result?.publicId && status.result?.fileName) {
                     console.info("[RichEditorUploadManager] Upload done, replacing placeholder:", id);
                     const config = UPLOAD_COMMAND_CONFIG[getUploadType(status.file)];
-                    config.command(editor, id, status.publicId, {
+                    config.command(editor, id, status.result.publicId, {
                         localFileName: status.file.name,
-                        serverFileName: status.fileName,
+                        serverFileName: status.result.fileName,
                         mimetype: status.file.type,
                     });
                 }
@@ -186,12 +189,14 @@ export function RichEditorUploadManager() {
         try {
             const { promise } = retryUpload(id);
 
-            const result = await promise;
-            config.command(editor, id, result.publicId, {
-                localFileName: file.name,
-                serverFileName: result.fileName,
-                mimetype: file.type,
-            });
+            const p = await promise;
+            if (p.result) {
+                config.command(editor, id, p.result.publicId, {
+                    localFileName: file.name,
+                    serverFileName: p.result.fileName,
+                    mimetype: file.type,
+                });
+            }
 
         } catch (err) {
             console.error(`[RichEditorUploadManager] Retry failed for ${file.name}:`, err);
@@ -202,7 +207,7 @@ export function RichEditorUploadManager() {
         if (!editor) return;
         console.info("[RichEditorUploadManager] Starting upload for file:", file.name);
         try {
-            if(!startUpload) return;
+            if (!startUpload) return;
             const { id, promise } = startUpload(file);
             editor?.commands.insertUploadPlaceholder({
                 id,
@@ -216,12 +221,14 @@ export function RichEditorUploadManager() {
                 deviceId,
             });
 
-            const result = await promise;
-            config.command(editor, id, result.publicId, {
-                localFileName: file.name,
-                serverFileName: result.fileName,
-                mimetype: file.type,
-            });
+            const p = await promise;
+            if (p.result) {
+                config.command(editor, id, p.result.publicId, {
+                    localFileName: file.name,
+                    serverFileName: p.result.fileName,
+                    mimetype: file.type,
+                });
+            }
 
         } catch (err) {
             console.error(`[RichEditorUploadManager] Upload failed for ${file.name}:`, err);

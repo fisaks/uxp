@@ -16,6 +16,9 @@
     "exclude": ["node_modules", "dist"],
     "references": [
         {
+            "path": "../uhn-blueprint"
+        },
+        {
             "path": "../uhn-common"
         },
         {

@@ -3,7 +3,9 @@ import { AppBodyContent, LeftSideBar, QUERY_PARAMS_PRINT_VIEW, SidebarMenuItems,
 import { useMemo } from "react";
 import { Link, Route, Routes, useLocation } from "react-router-dom";
 import { getBaseRoutePath } from "./config";
+import { UploadBlueprintPage } from "./features/blueprint/pages/UploadBlueprintPage";
 import { TopicTracePage } from "./features/topic-trace/pages/TopicTracePage";
+import { BlueprintListPage } from "./features/blueprint/pages/BlueprintListPage";
 
 export const UHNBody = () => {
     const theme = useTheme();
@@ -21,6 +23,22 @@ export const UHNBody = () => {
                 componentProp: "to",
                 active: location.pathname === "/topic-trace" || location.pathname === "/",
             },
+            {
+                label: "Blueprints",
+                link: "/blueprints",
+                component: Link,
+                componentProp: "to",
+                active: location.pathname === "/blueprints",
+                children: [
+                    {
+                        label: "Upload Blueprint",
+                        link: `/blueprints/upload`,
+                        component: Link,
+                        componentProp: "to",
+                        active: location.pathname === "/blueprints/upload",
+                    },
+                ]
+            }
 
         ];
     }, [basePath, location.pathname]);
@@ -31,9 +49,11 @@ export const UHNBody = () => {
             <AppBodyContent appHaveOwnLeftSideBar={!printView}>
                 <Routes>
                     <Route path="/topic-trace" element={<TopicTracePage />} />
+                    <Route path="/blueprints" element={<BlueprintListPage />} />
+                    <Route path="/blueprints/upload" element={<UploadBlueprintPage />} />
                     <Route path="*" element={<TopicTracePage />} />
                 </Routes>
-                
+
             </AppBodyContent>
         </>
     );

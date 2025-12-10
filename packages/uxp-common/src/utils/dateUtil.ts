@@ -35,3 +35,10 @@ export function formatUtcIsoToLocal(
         return isoUtc;
     }
 }
+
+export const toUxpTimeFormat =(str:string|null|undefined):string|null|undefined=>{
+    if(!str){
+        return str;
+    }
+    return DateTime.fromISO(str).toFormat('d.M.yyyy HH:mm:ss');
+}

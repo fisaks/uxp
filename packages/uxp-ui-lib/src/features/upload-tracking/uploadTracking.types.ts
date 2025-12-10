@@ -1,4 +1,6 @@
-export type UploadStatus = {
+import { ErrorCode } from "@uxp/common";
+
+export type UploadStatus<UploadResult> = {
     id: string;
     file: {
         lastModified: number
@@ -9,20 +11,15 @@ export type UploadStatus = {
     progress: number;
     speed: number;
     status: 'uploading' | 'done' | 'error' | 'canceled';
-    errorMessage?: string;
-    publicId?: string;
-    fileName?: string;
+    errorCode?: ErrorCode;
     startedAt?: number;
+    result?: UploadResult;
 };
 
-export type UploadResult = {
-    publicId: string;
-    fileName: string;
-};
-export type UploadResultWithTrackingId = UploadResult & { id: string };
-export type UploadStartedWithTrackingId = { id: string, promise: Promise<UploadResultWithTrackingId> };
+export type UploadResultWithTrackingId<UploadResult> = { id: string, error?: any, result?: UploadResult };
+export type UploadStartedWithTrackingId<UploadResult> = { id: string, promise: Promise<UploadResultWithTrackingId<UploadResult>> };
 
-export type UploadHandler = (
+export type UploadHandler<UploadResult> = (
     file: File,
     onProgress?: (e: TrackingProgressEvent) => void,
     signal?: AbortSignal
@@ -34,4 +31,4 @@ export type TrackingProgressEvent = {
     total: number | undefined;
     loaded: number;
 }
-export type UploadListener = (id: string, status: UploadStatus) => void;
+export type UploadListener<UploadResult> = (id: string, status: UploadStatus<UploadResult>) => void;

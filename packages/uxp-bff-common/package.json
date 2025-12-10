@@ -36,7 +36,8 @@
     "reflect-metadata": "^0.2.2",
     "typeorm": "^0.3.20",
     "ws": "^8.18.0",
-    "mqtt": "^5.14.1"
+    "mqtt": "^5.14.1",
+    "unzipper": "^0.12.3"
   },
   "devDependencies": {
     "@types/file-type": "^10.9.3",
@@ -44,6 +45,7 @@
     "@types/jsonwebtoken": "^9.0.7",
     "@types/luxon": "^3.4.2",
     "@types/node": "^22.10.1",
-    "@types/ws": "^8.5.14"
+    "@types/ws": "^8.5.14",
+    "@types/unzipper": "^0.10.3"
   }
 }

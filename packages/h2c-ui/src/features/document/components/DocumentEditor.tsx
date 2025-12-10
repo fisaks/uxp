@@ -9,6 +9,7 @@ import { H2CAppResponseMessage } from "@h2c/common";
 import { buildPath } from "@uxp/common";
 import { applyAwarenessUpdate, encodeAwarenessUpdate } from "y-protocols/awareness";
 import { getDocument, getVersions, restoreDocumentVersion } from "../document.api";
+import { uploadAttachment } from "../../upload/multipartUpload";
 
 
 export interface DocumentEditorRef {
@@ -28,7 +29,7 @@ export const DocumentEditor = forwardRef<DocumentEditorRef, DocumentEditorProps>
 
     const { yDoc, awareness, yDocRef, awarenessRef, replaceDocState, docInstanceId } = useCollaborativeDoc()
 
-    const uploadTracker = useUploadTracker()
+    const uploadTracker = useUploadTracker(uploadAttachment)
     const imageBasePath = useMemo(() => `${getBaseUrl()}/api/file`, []);
     const [editorNotice, setEditorNotice] = useState<string | undefined>();
 
