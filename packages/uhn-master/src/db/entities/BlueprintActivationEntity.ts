@@ -9,7 +9,11 @@ export class BlueprintActivationEntity {
     @PrimaryGeneratedColumn()
     id!: number;
 
-    @ManyToOne(() => BlueprintEntity, { nullable: false ,onDelete: "CASCADE" })
+    constructor(init?: Partial<BlueprintActivationEntity>) {
+        Object.assign(this, init);
+    }
+
+    @ManyToOne(() => BlueprintEntity, { nullable: false, onDelete: "CASCADE" })
     @JoinColumn({ name: 'blueprint_id' })
     blueprint!: BlueprintEntity;
 

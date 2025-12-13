@@ -2,7 +2,7 @@ import type {
     AnyResource,
     DigitalInputResource,
     AnalogInputResource,
-} from "./resource";
+} from "./resource_old";
 import type { RuleContext } from "./context";
 
 export type ThresholdDirection = "rising" | "falling";

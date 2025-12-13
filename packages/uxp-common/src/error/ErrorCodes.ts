@@ -25,6 +25,8 @@ export const ErrorCodes = {
     BLUEPRINT_JSON_INVALID: "BLUEPRINT_JSON_INVALID",
     BLUEPRINT_JSON_VALIDATION_FAILED: "BLUEPRINT_JSON_VALIDATION_FAILED",
     ACTIVE_BLUEPRINT_DELETE_FORBIDDEN: "ACTIVE_BLUEPRINT_DELETE_FORBIDDEN",
+    BLUEPRINT_ACTIVATION_FAILED: "BLUEPRINT_ACTIVATION_FAILED",
+    BLUEPRINT_DEACTIVATION_FAILED: "BLUEPRINT_DEACTIVATION_FAILED",
 } as const;
 
 export const ErrorMessages: Record<ErrorCode, string> = {
@@ -53,6 +55,8 @@ export const ErrorMessages: Record<ErrorCode, string> = {
     BLUEPRINT_JSON_INVALID: "The blueprint.json file is invalid or malformed.",
     BLUEPRINT_JSON_VALIDATION_FAILED: "The blueprint.json file failed validation against the required schema.",
     ACTIVE_BLUEPRINT_DELETE_FORBIDDEN: "Cannot delete an active blueprint version.",
+    BLUEPRINT_ACTIVATION_FAILED: "Failed to activate the blueprint due to an internal error.",
+    BLUEPRINT_DEACTIVATION_FAILED: "Failed to deactivate the blueprint due to an internal error.",
     // Add more error mappings as needed
 };
 export type ErrorCode = keyof typeof ErrorCodes;

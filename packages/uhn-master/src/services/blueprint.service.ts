@@ -1,5 +1,5 @@
 import { BlueprintActivationDetails, BlueprintFileTypes, BlueprintUploadResponse, UhnFileType } from "@uhn/common";
-import { AppErrorV2, AppLogger, ensureDir, handleMultipartUpload, moveFile, pathExists, removeFile, RequestMetaData, Token } from "@uxp/bff-common";
+import { AppErrorV2, AppLogger, ensureDir, extractZip, handleMultipartUpload, moveFile, pathExists, removeFile, RequestMetaData, Token } from "@uxp/bff-common";
 import { FastifyRequest } from "fastify";
 import fs from "fs-extra";
 import { DateTime } from "luxon";
@@ -9,40 +9,38 @@ import { BlueprintActivationEntity } from "../db/entities/BlueprintActivationEnt
 import { BlueprintEntity } from "../db/entities/BlueprintEntity";
 import env from "../env";
 import { readBlueprintMetadataFromZip } from "../util/blueprint.util";
+import { BlueprintFileService } from "./blueprint-file.service";
+import { BlueprintRepository } from "../repositories/blueprint.repository";
+import { BlueprintActivationRepository } from "../repositories/blueprint-activation.repository";
+import { find } from "lodash";
 
-const PreFlightFolder = path.join(env.UHN_FILE_UPLOAD_PATH, ".pre-flight");
 
 export class BlueprintService {
     private queryRunner: QueryRunner;
     private requestMeta: RequestMetaData;
+    private fileService: BlueprintFileService;
+    private blueprintRepo: BlueprintRepository
+    private activationRepo: BlueprintActivationRepository
+
     constructor(requestMeta: FastifyRequest | RequestMetaData, queryRunner: QueryRunner) {
         this.queryRunner = queryRunner;
         this.requestMeta = AppLogger.extractMetadata(requestMeta, true)!;
+        this.fileService = new BlueprintFileService(this.requestMeta);
+        this.blueprintRepo = new BlueprintRepository(queryRunner);
+        this.activationRepo = new BlueprintActivationRepository(queryRunner);
     }
 
     async uploadBlueprint(request: FastifyRequest) {
-        const files = await handleMultipartUpload<UhnFileType>(request, PreFlightFolder, BlueprintFileTypes);
-        const blueprintRepo = this.queryRunner.manager.getRepository(BlueprintEntity);
-        const user = (request.user as Token)
-        if (files.files.length === 0) {
-            throw new AppErrorV2({ statusCode: 400, code: "NO_FILES_UPLOADED", message: "No blueprint files uploaded" });
-        }
-        if (files.files.length > 1) {
-            throw new AppErrorV2({ statusCode: 400, code: "ONLY_SINGLE_FILE_ALLOWED", message: "Multiple blueprint files uploaded, only one is allowed" });
-        }
-        const file = files.files[0];
-        if (file.mimetype !== "application/zip") {
-            throw new AppErrorV2({ statusCode: 400, code: "INVALID_FILE_TYPE", message: "Invalid blueprint file type, only zip files are allowed" });
-        }
+        const upload = await this.fileService.handleAndValidateUpload(request);
+        const user = request.user as Token
 
-        const zipFilepath = path.join(PreFlightFolder, file.filename);
-        const metadata = await readBlueprintMetadataFromZip(zipFilepath);
-        const version = await this.getNextBlueprintVersion(metadata.identifier);
+        //const zipFilepath = path.join(PreFlightFolder, file.filename);
+        const metadata = await readBlueprintMetadataFromZip(upload.zipPath);
+        const version = await this.blueprintRepo.getNextBlueprintVersion(metadata.identifier)
 
-        const blueprintFolder = path.join(env.UHN_FILE_UPLOAD_PATH, files.fileType, metadata.identifier, `v${version}`)
-        const blueprintZip = path.join(blueprintFolder, `${metadata.identifier}-v${version}.zip`);
-        await ensureDir(blueprintFolder);
-        await moveFile(zipFilepath, blueprintZip);
+        const { blueprintZip } = await this.fileService.moveAndOrganizeUploadedBlueprint(upload.zipPath, upload.fileType, metadata.identifier, version);
+
+
         // TODO move this to activation
         //const sourceDir = path.join(blueprintFolder, "source");
         //await extractZip(blueprintZip, sourceDir);
@@ -59,7 +57,8 @@ export class BlueprintService {
             uploadedBy: user.username,
 
         });
-        const newBlueprint = await blueprintRepo.save(blueprintEntity);
+        const newBlueprint = await this.blueprintRepo.save(blueprintEntity)
+
         AppLogger.info(this.requestMeta, {
             message: `Uploaded blueprint ${metadata.name} with identifier ${metadata.identifier} version ${version} and internal id ${newBlueprint.id}`,
         });
@@ -67,23 +66,10 @@ export class BlueprintService {
         return { identifier: metadata.identifier, version } satisfies BlueprintUploadResponse;
     }
 
-    private async getNextBlueprintVersion(identifier: string): Promise<number> {
-        const repo = this.queryRunner.manager.getRepository(BlueprintEntity);
-
-        const last = await repo.findOne({
-            where: { identifier },
-            order: { version: 'DESC' },
-        });
-
-        return last ? last.version + 1 : 1;
-    }
 
     async deactivateBlueprint(identifier: string, version: number, deActivatedBy: string) {
-        const blueprintRepo = this.queryRunner.manager.getRepository(BlueprintEntity);
-        const activationRepo = this.queryRunner.manager.getRepository(BlueprintActivationEntity);
 
-        // Find blueprint to deactivate
-        const toDeactivate = await blueprintRepo.findOne({ where: { identifier, version } });
+        const toDeactivate = await this.blueprintRepo.findByIdentifierAndVersion(identifier, version);
         if (!toDeactivate) {
             throw new AppErrorV2({ statusCode: 404, code: "RESOURCE_NOT_FOUND", message: `Blueprint ${identifier} v${version} not found` });
         }
@@ -91,24 +77,21 @@ export class BlueprintService {
         if (toDeactivate.active === false) {
             return toDeactivate;
         }
+        await this.fileService.removeActiveBluePrint();
+    
         toDeactivate.active = false;
         const deactivatedAt = DateTime.now();
         toDeactivate.lastDeactivatedAt = deactivatedAt;
         toDeactivate.lastDeactivatedBy = deActivatedBy;
-        await blueprintRepo.save(toDeactivate);
+        await this.blueprintRepo.save(toDeactivate);
         // close activation period
-        const lastActivation = await activationRepo.findOne({
-            where: { blueprint: { id: toDeactivate.id }, deactivatedAt: IsNull() },
-            order: { activatedAt: "DESC" }
-        });
-
+        const lastActivation = await this.activationRepo.findLastActiveForBlueprint(toDeactivate.id)
+     
         if (lastActivation) {
             lastActivation.deactivatedAt = deactivatedAt;
             lastActivation.deactivatedBy = deActivatedBy;
-            await activationRepo.save(lastActivation);
+            await this.activationRepo.save(lastActivation);
         }
-
-
 
         AppLogger.info(this.requestMeta, {
             message: `Deactivated blueprint ${identifier} v${version} globally by ${deActivatedBy}`
@@ -118,17 +101,14 @@ export class BlueprintService {
     }
 
     async activateBlueprint(identifier: string, version: number, activatedBy: string) {
-        const blueprintRepo = this.queryRunner.manager.getRepository(BlueprintEntity);
-        const activationRepo = this.queryRunner.manager.getRepository(BlueprintActivationEntity);
-
-        // Find blueprint to activate
-        const toActivate = await blueprintRepo.findOne({ where: { identifier, version } });
+    
+        const toActivate = await this.blueprintRepo.findByIdentifierAndVersion(identifier,version);
         if (!toActivate) {
             throw new AppErrorV2({ statusCode: 404, code: "RESOURCE_NOT_FOUND", message: `Blueprint ${identifier} v${version} not found` });
         }
 
         // Find globally active blueprint
-        const currentlyActive = await blueprintRepo.findOne({ where: { active: true } });
+        const currentlyActive = await this.blueprintRepo.findActive();
 
         // If another blueprint is active, deactivate it
         if (currentlyActive && currentlyActive.id !== toActivate.id) {
@@ -136,20 +116,18 @@ export class BlueprintService {
             const deactivatedAt = DateTime.now();
             currentlyActive.lastDeactivatedAt = deactivatedAt;
             currentlyActive.lastDeactivatedBy = activatedBy;
-            await blueprintRepo.save(currentlyActive);
+            await this.blueprintRepo.save(currentlyActive);
 
             // close activation period
-            const lastActivation = await activationRepo.findOne({
-                where: { blueprint: { id: currentlyActive.id }, deactivatedAt: IsNull() },
-                order: { activatedAt: "DESC" }
-            });
-
+            const lastActivation = await this.activationRepo.findLastActiveForBlueprint(currentlyActive.id);
+         
             if (lastActivation) {
                 lastActivation.deactivatedAt = deactivatedAt;
                 lastActivation.deactivatedBy = activatedBy;
-                await activationRepo.save(lastActivation);
+                await this.activationRepo.save(lastActivation);
             }
         }
+        this.fileService.activateBlueprint(toActivate.zipPath);
 
         // Activate new version
         toActivate.active = true;
@@ -159,15 +137,15 @@ export class BlueprintService {
         toActivate.lastActivatedBy = activatedBy;
         toActivate.lastDeactivatedAt = undefined;
         toActivate.lastDeactivatedBy = undefined;
-        await blueprintRepo.save(toActivate);
+        await this.blueprintRepo.save(toActivate);
 
         // Create activation record
-        const activation = activationRepo.create({
+        const activation = new BlueprintActivationEntity({
             blueprint: toActivate,
             activatedAt: activatedAt,
             activatedBy
         });
-        await activationRepo.save(activation);
+        await this.activationRepo.save(activation);
 
         AppLogger.info(this.requestMeta, {
             message: `Activated blueprint ${identifier} v${version} globally by ${activatedBy}`
@@ -180,24 +158,22 @@ export class BlueprintService {
      * Delete a blueprint version.
      */
     async deleteBlueprint(identifier: string, version: number, deletedBy: string) {
-        const blueprintRepo = this.queryRunner.manager.getRepository(BlueprintEntity);
-
-        const blueprint = await blueprintRepo.findOneOrFail({ where: { identifier, version } });
+        
+        const blueprint = await this.blueprintRepo.findByIdentifierAndVersion(identifier,version);
+        if(!blueprint) {
+            return {identifier,version}
+        }
         if (blueprint.active) {
             throw new AppErrorV2({ statusCode: 400, code: "ACTIVE_BLUEPRINT_DELETE_FORBIDDEN", message: "Cannot delete active blueprint version" });
         }
 
-        await blueprintRepo.remove(blueprint);
+        await this.fileService.deleteBlueprintZip(blueprint.zipPath);
+        await this.blueprintRepo.remove(blueprint);
 
         AppLogger.info(this.requestMeta, {
             message: `Deleted blueprint ${identifier} v${version} by ${deletedBy}`,
         });
-
-        await removeFile(blueprint.zipPath).catch(err => {
-            AppLogger.warn(this.requestMeta, {
-                message: `Failed to delete blueprint file at ${blueprint.zipPath}: ${err.message}`,
-            });
-        });
+     
         return { identifier, version };
     }
 
@@ -206,9 +182,8 @@ export class BlueprintService {
      * Returns: Array<{ identifier, name, versions: BlueprintEntity[] }>
      */
     async listBlueprints(): Promise<Array<{ identifier: string, name: string, versions: BlueprintEntity[] }>> {
-        const blueprintRepo = this.queryRunner.manager.getRepository(BlueprintEntity);
-        const all = await blueprintRepo.find({ order: { identifier: "ASC", version: "DESC" } });
-
+           const all = await this.blueprintRepo.findAllSorted();
+           
         const grouped: Record<string, { identifier: string, name: string, versions: BlueprintEntity[] }> = {};
         for (const bp of all) {
             if (!grouped[bp.identifier]) {
@@ -220,10 +195,8 @@ export class BlueprintService {
     }
 
     async getActivationLogForVersion(identifier: string, version: number) {
-        const blueprintRepo = this.queryRunner.manager.getRepository(BlueprintEntity);
-        const activationRepo = this.queryRunner.manager.getRepository(BlueprintActivationEntity);
-
-        const blueprint = await blueprintRepo.findOne({ where: { identifier, version } });
+    
+        const blueprint = await this.blueprintRepo.findByIdentifierAndVersion(identifier,version);
         if (!blueprint) {
             throw new AppErrorV2({
                 statusCode: 404,
@@ -232,10 +205,7 @@ export class BlueprintService {
             });
         }
 
-        const activations = await activationRepo.find({
-            where: { blueprint: { id: blueprint.id } },
-            order: { activatedAt: "DESC" },
-        });
+        const activations = await this.activationRepo.findAllForBlueprint(blueprint.id)
 
         return activations.map(a => ({
             identifier: blueprint.identifier,
@@ -248,13 +218,8 @@ export class BlueprintService {
     }
 
     async getActivationLogs(limit: number = 100) {
-        const activationRepo = this.queryRunner.manager.getRepository(BlueprintActivationEntity);
-
-        const activations = await activationRepo.find({
-            relations: ["blueprint"],
-            order: { activatedAt: "DESC" },
-            take: limit,
-        });
+      
+        const activations = await this.activationRepo.findAll(limit);
 
         return activations.map(a => ({
             identifier: a.blueprint.identifier,

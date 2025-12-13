@@ -11,6 +11,7 @@ export const requiredKeys = [
     "JWT_SECRET",
     "UHN_FILE_UPLOAD_PATH",
     "UHN_MQTT_BROKER_URL",
+    "UHN_WORKSPACE_PATH",
 ] as const;
 export const optionalKeys = [
     "LOG_LEVEL",
@@ -29,9 +30,15 @@ function validateEnv(vars: EnvVariables): EnvVariables {
 
     try {
         fs.ensureDirSync(vars.UHN_FILE_UPLOAD_PATH);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any        
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any        
     } catch (error: any) {
         throw new Error(`Failed to create directory at ${vars.UHN_FILE_UPLOAD_PATH}: ${error.message}`);
+    }
+    try {
+        fs.ensureDirSync(vars.UHN_WORKSPACE_PATH);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any        
+    } catch (error: any) {
+        throw new Error(`Failed to create directory at ${vars.UHN_WORKSPACE_PATH}: ${error.message}`);
     }
 
     return vars;

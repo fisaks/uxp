@@ -1,4 +1,4 @@
-import type { AnyResource } from "./resource";
+import type { AnyResource } from "./resource_old";
 
 export interface StateSnapshot<TValue = unknown> {
     /** for digital inputs/outputs */
