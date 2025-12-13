@@ -1,9 +1,10 @@
-import { BlueprintActivationDetails, BlueprintUploadResponse } from "@uhn/common";
+import { BlueprintUploadResponse } from "@uhn/common";
 import { AppErrorV2, AppLogger, Token } from "@uxp/bff-common";
 import { FastifyRequest } from "fastify";
 import { DateTime } from "luxon";
 import { BlueprintActivationEntity } from "../db/entities/BlueprintActivationEntity";
 import { BlueprintEntity } from "../db/entities/BlueprintEntity";
+import { BlueprintMapper } from "../mappers/blueprint.mapper";
 import { BlueprintActivationRepository } from "../repositories/blueprint-activation.repository";
 import { BlueprintRepository } from "../repositories/blueprint.repository";
 import { BlueprintFileUtil } from "../util/blueprint-file.util";
@@ -16,18 +17,11 @@ export class BlueprintService {
         const upload = await BlueprintFileUtil.handleAndValidateUpload(request);
         const user = request.user as Token
 
-        //const zipFilepath = path.join(PreFlightFolder, file.filename);
         const metadata = await readBlueprintMetadataFromZip(upload.zipPath);
         const version = await BlueprintRepository.getNextBlueprintVersion(metadata.identifier)
 
         const { blueprintZip } = await BlueprintFileUtil.moveAndOrganizeUploadedBlueprint(upload.zipPath, upload.fileType, metadata.identifier, version);
 
-
-        // TODO move this to activation
-        //const sourceDir = path.join(blueprintFolder, "source");
-        //await extractZip(blueprintZip, sourceDir);
-        //const compiledDir = path.join(blueprintFolder, "compiled");
-        // await compileBlueprint(sourceDir, compiledDir);
         const blueprintEntity = new BlueprintEntity({
             identifier: metadata.identifier,
             name: metadata.name,
@@ -189,28 +183,14 @@ export class BlueprintService {
 
         const activations = await BlueprintActivationRepository.findAllForBlueprint(blueprint.id)
 
-        return activations.map(a => ({
-            identifier: blueprint.identifier,
-            version: blueprint.version,
-            activatedAt: a.activatedAt.toISO()!,
-            activatedBy: a.activatedBy,
-            deactivatedAt: a.deactivatedAt?.toISO?.() ?? undefined,
-            deactivatedBy: a.deactivatedBy,
-        } satisfies BlueprintActivationDetails));
+        return activations.map(a => (BlueprintMapper.toBlueprintActivationDetail(blueprint, a)));
     }
 
     async getActivationLogs(limit: number = 100) {
 
         const activations = await BlueprintActivationRepository.findAll(limit);
 
-        return activations.map(a => ({
-            identifier: a.blueprint.identifier,
-            version: a.blueprint.version,
-            activatedAt: a.activatedAt.toISO(),
-            activatedBy: a.activatedBy,
-            deactivatedAt: a.deactivatedAt?.toISO?.(),
-            deactivatedBy: a.deactivatedBy,
-        }));
+        return activations.map(a => BlueprintMapper.toBlueprintActivationDetail(a.blueprint, a));
     }
 
 
