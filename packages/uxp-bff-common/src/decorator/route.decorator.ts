@@ -10,6 +10,7 @@ import { AppLogger } from "../utils/AppLogger";
 import { HandlerConstructor, HandlerRegistry } from "./handler.registry";
 import { getUseQueryRunnerOptions } from "./queryrunner.decorator";
 import { hasRequiredRoles, withQueryRunner } from "./request-utils";
+import { runWithRequestContext } from "./request-context";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -148,7 +149,11 @@ export function registerRoutes({ fastify, dataSource, controllers, basePath = "/
 
                     return await withQueryRunner(dataSource, queryRunnerOptions, async (queryRunner) => {
                         const args = queryRunner ? [request, reply, queryRunner] : [request, reply];
-                        return await originalHandler(...args);
+                        const user = request.user as Token;
+                        const requestMeta = AppLogger.extractMetadata(request, true);
+                        return runWithRequestContext({ queryRunner, requestMeta, user }, async () => {
+                            return await originalHandler(...args);
+                        });
                     });
                 },
             });

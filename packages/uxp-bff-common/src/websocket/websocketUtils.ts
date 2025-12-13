@@ -5,7 +5,7 @@ export const sendWebSocketMessage = ({
     socket, message, requestMetaData, onClosed, onFailure
 }: {
     socket: WebSocket;
-    message: string | Buffer | ArrayBufferLike;
+    message: string | Buffer | ArrayBufferLike | Uint8Array;
 
     requestMetaData?: RequestMetaData
     onClosed?: (socket: WebSocket) => void;

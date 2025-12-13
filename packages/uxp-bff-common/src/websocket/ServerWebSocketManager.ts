@@ -128,7 +128,7 @@ export class ServerWebSocketManager<
         return this.sendData(socket, message, requestMetaData);
 
     }
-    private sendData(socket: WebSocket, data: string | Buffer | ArrayBufferLike, requestMetaData?: RequestMetaData) {
+    private sendData(socket: WebSocket, data: string | Buffer | ArrayBufferLike | Uint8Array, requestMetaData?: RequestMetaData) {
         return sendWebSocketMessage({
             socket,
             message: data,

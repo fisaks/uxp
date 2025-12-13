@@ -8,19 +8,20 @@ import { BlueprintService } from "../services/blueprint.service";
 
 export class BlueprintController {
     private fastify: FastifyInstance;
-
+    private blueprintService: BlueprintService;
     constructor(fastify: FastifyInstance) {
         this.fastify = fastify;
+        this.blueprintService = new BlueprintService();
     }
 
     @Route("post", "/upload-blueprint", { authenticate: true, roles: ["admin"] })
     @UseQueryRunner({ transactional: true })
     async uploadBlueprint(req: FastifyRequest, _reply: FastifyReply, queryRunner: QueryRunner) {
-        const blueprintService = new BlueprintService(req, queryRunner);
+
         const user = (req.user as Token)
         AppLogger.info(req, { message: `Blueprint upload initiated by ${user.username}` });
 
-        return await blueprintService.uploadBlueprint(req);
+        return await this.blueprintService.uploadBlueprint(req);
     }
 
     @Route("post", "/blueprints/:identifier/:version/activate", { authenticate: true, roles: ["admin"], schema: ActivateBlueprintSchema })
@@ -30,8 +31,7 @@ export class BlueprintController {
         const user = (req.user as Token)
         AppLogger.info(req, { message: `Blueprint ${identifier} v${version} was activated by ${user.username}` });
 
-        const blueprintService = new BlueprintService(req, queryRunner);
-        const result = await blueprintService.activateBlueprint(identifier, version, user.username);
+        const result = await this.blueprintService.activateBlueprint(identifier, version, user.username);
         return BlueprintMapper.toBlueprintVersion(result);
     }
 
@@ -42,8 +42,7 @@ export class BlueprintController {
         const user = (req.user as Token)
         AppLogger.info(req, { message: `Blueprint ${identifier} v${version} was deactivated by ${user.username}` });
 
-        const blueprintService = new BlueprintService(req, queryRunner);
-        const result = await blueprintService.deactivateBlueprint(identifier, version, user.username);
+        const result = await this.blueprintService.deactivateBlueprint(identifier, version, user.username);
         return BlueprintMapper.toBlueprintVersion(result);
     }
 
@@ -55,15 +54,13 @@ export class BlueprintController {
         const user = (req.user as Token)
         AppLogger.info(req, { message: `Blueprint ${identifier} v${version} was deleted by ${user.username}` });
 
-        const blueprintService = new BlueprintService(req, queryRunner);
-        return await blueprintService.deleteBlueprint(identifier, version, user.username);
+        return await this.blueprintService.deleteBlueprint(identifier, version, user.username);
     }
 
     @Route("get", "/blueprints", { authenticate: true, roles: ["admin"] })
     @UseQueryRunner({ transactional: false })
     async listBlueprints(req: FastifyRequest, _reply: FastifyReply, queryRunner: QueryRunner) {
-        const blueprintService = new BlueprintService(req, queryRunner);
-        const groups = await blueprintService.listBlueprints();
+        const groups = await this.blueprintService.listBlueprints();
         // Map to DTO structure
         return groups.map(group => ({
             identifier: group.identifier,
@@ -76,8 +73,7 @@ export class BlueprintController {
     @UseQueryRunner({ transactional: false })
     async getAllBlueprintActivations(req: FastifyRequest, _reply: FastifyReply, queryRunner: QueryRunner) {
         const { limit } = req.query as { limit?: number };
-        const blueprintService = new BlueprintService(req, queryRunner);
-        return await blueprintService.getActivationLogs(limit);
+        return await this.blueprintService.getActivationLogs(limit);
     }
 
 
@@ -91,8 +87,7 @@ export class BlueprintController {
         queryRunner: QueryRunner
     ) {
         const { identifier, version } = req.params as { identifier: string, version: number };
-        const blueprintService = new BlueprintService(req, queryRunner);
-        return await blueprintService.getActivationLogForVersion(identifier, version);
+        return await this.blueprintService.getActivationLogForVersion(identifier, version);
     }
 
     @Route("get", "/blueprints/:identifier/:version/download", { authenticate: true, roles: ["admin"], schema: DownloadBlueprintSchema })
@@ -102,8 +97,7 @@ export class BlueprintController {
         const user = (req.user as Token)
         AppLogger.info(req, { message: `Blueprint ${identifier} v${version} was downloaded ${user.username}` });
 
-        const blueprintService = new BlueprintService(req, queryRunner);
-        const { mimeType, name, stream } = await blueprintService.getBlueprintVersionStream(identifier, version);
+        const { mimeType, name, stream } = await this.blueprintService.getBlueprintVersionStream(identifier, version);
         reply.header("Content-Type", mimeType);
         reply.header("Content-Disposition", `attachment; filename="${name}"`);
         stream.on('error', err => {

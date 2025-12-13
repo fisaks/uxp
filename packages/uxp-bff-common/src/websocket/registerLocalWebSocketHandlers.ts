@@ -14,6 +14,7 @@ import { Token } from "../types/token.types";
 import { AppLogger, RequestMetaData } from "../utils/AppLogger";
 import { GenericServerWebSocketManager, WebSocketDetails } from "./ServerWebSocketManager";
 import { sendWebSocketMessage } from "./websocketUtils";
+import { runWithRequestContext } from "../decorator/request-context";
 
 
 const ajv = new Ajv();
@@ -282,7 +283,9 @@ const handleWebSocketMessage = async ({ actionMap, socketDetails, message, dataS
             if (parsedMessage.data) args.push(parsedMessage.data)
             if (queryRunner) args.push(queryRunner)
             //const args = queryRunner ? [socketDetails, parsedMessage.message, parsedMessage.data, queryRunner] : [socketDetails, parsedMessage.message, parsedMessage.data];
-            const result = await handler(...args);
+            const result = await runWithRequestContext({ queryRunner, requestMeta, user }, async () => {
+                return await handler(...args);
+            });
 
             if (result) {
                 sendWebSocketMessage({

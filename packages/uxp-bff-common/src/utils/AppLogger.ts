@@ -2,6 +2,7 @@ import { FastifyInstance, FastifyRequest } from "fastify";
 
 import { AppErrorV2 } from "../error/AppError";
 import { Token } from "../types/token.types";
+import { getRequestContext } from "../decorator/request-context";
 
 type LogMessage = {
     message?: string;
@@ -37,6 +38,14 @@ export type RequestMetaData = {
     requestId: string;
     sessionId?: string;
 }
+
+type InfoLogArgs =
+    | [requestMeta: FastifyRequest | RequestMetaData | undefined, payload: LogMessage]
+    | [payload: LogMessage]; // con
+type ErrorLogArgs =
+    | [requestMeta: FastifyRequest | RequestMetaData | undefined, payload: ErrorLogMessage]
+    | [payload: ErrorLogMessage]; // con
+
 export class AppLogger {
     private static fastifyLogger: FastifyInstance["log"] | typeof console;
 
@@ -100,41 +109,55 @@ export class AppLogger {
 
         this.fastifyLogger[level](data, message.message, ...(message.args ?? []));
     }
+    public static extractRequestMetaFromArgs(args: InfoLogArgs): [RequestMetaData | undefined, LogMessage | ErrorLogMessage] {
+        if (args.length === 2 ) {
+            return [args[0] as RequestMetaData | undefined, args[1]];
+        } else if (args.length === 1) {
+            const ctx = getRequestContext();
+            return [ctx.requestMeta, args[0]];
+        }
+        throw new Error("Invalid number of arguments");
 
-    public static info(request: FastifyRequest | RequestMetaData | undefined, message: LogMessage) {
+    }
+
+    public static info(...args: InfoLogArgs) {
+        const [request, message] = this.extractRequestMetaFromArgs(args);
         this.log(request, "info", message);
     }
 
-    public static warn(request: FastifyRequest | RequestMetaData | undefined, message: ErrorLogMessage) {
+    public static warn(...args: ErrorLogArgs) {
+        const [request, message] = this.extractRequestMetaFromArgs(args);
         this.log(request, "warn", message);
     }
-
-    public static error(request: FastifyRequest | RequestMetaData | undefined, message: ErrorLogMessage) {
+    
+    public static error(...args: ErrorLogArgs) {
+        const [request, message] = this.extractRequestMetaFromArgs(args);
         this.log(request, "error", message);
     }
 
-    public static debug(request: FastifyRequest | RequestMetaData | undefined, message: LogMessage) {
+    public static debug(...args: InfoLogArgs) {
+        const [request, message] = this.extractRequestMetaFromArgs(args);
         this.log(request, "debug", message);
     }
 
-    public static infoMessage(request: FastifyRequest | RequestMetaData | undefined, message: string, ...args: unknown[]) {
-        this.info(request, { message, args });
-    }
-
-    public static warnMessage(request: FastifyRequest | RequestMetaData | undefined, message: string, ...args: unknown[]) {
-        this.warn(request, { message, args });
-    }
-
-    public static errorMessage(request: FastifyRequest | RequestMetaData | undefined, message: string, ...args: unknown[]) {
-        const possibleError = args[args.length - 1];
-        const error = possibleError instanceof Error ? possibleError : undefined;
-
-        const formattedArgs = error ? args.slice(0, -1) : args;
-
-        this.error(request, { message, args: formattedArgs, error });
-    }
-
-    public static debugMessage(request: FastifyRequest | RequestMetaData | undefined, message: string, ...args: unknown[]) {
-        this.debug(request, { message, args });
-    }
+    /*    public static infoMessage(request: FastifyRequest | RequestMetaData | undefined, message: string, ...args: unknown[]) {
+            this.info(request, { message, args });
+        }
+    
+        public static warnMessage(request: FastifyRequest | RequestMetaData | undefined, message: string, ...args: unknown[]) {
+            this.warn(request, { message, args });
+        }
+    
+        public static errorMessage(request: FastifyRequest | RequestMetaData | undefined, message: string, ...args: unknown[]) {
+            const possibleError = args[args.length - 1];
+            const error = possibleError instanceof Error ? possibleError : undefined;
+    
+            const formattedArgs = error ? args.slice(0, -1) : args;
+    
+            this.error(request, { message, args: formattedArgs, error });
+        }
+    
+        public static debugMessage(request: FastifyRequest | RequestMetaData | undefined, message: string, ...args: unknown[]) {
+            this.debug(request, { message, args });
+        }*/
 }

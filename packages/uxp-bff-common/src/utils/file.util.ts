@@ -21,6 +21,9 @@ export async function removeFile(filePath: string) {
         await fs.unlink(filePath);
     }
 }
+export async function removeDir(dirPath: string) {
+    await fs.remove(dirPath);
+}
 export async function removeFiles(filePaths: string[]) {
     await Promise.all(filePaths.map(removeFile));
 }
