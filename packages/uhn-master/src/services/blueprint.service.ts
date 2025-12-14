@@ -10,7 +10,7 @@ import { BlueprintRepository } from "../repositories/blueprint.repository";
 import { BlueprintFileUtil } from "../util/blueprint-file.util";
 import { BlueprintMetaDataUtil } from "../util/blueprint-metadata.util";
 import { BlueprintCompileUtil } from "../util/blueprint-compiler.util";
-import { error } from "console";
+
 
 
 
@@ -132,7 +132,6 @@ export class BlueprintService {
         }
 
         await BlueprintRepository.save(toActivate);
-
 
         AppLogger.info({
             message: `Activated blueprint ${identifier} v${version} globally by ${activatedBy}`

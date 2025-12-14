@@ -1,5 +1,5 @@
 import { ResourceBase, ResourceType } from "@uhn/blueprint";
-import { ListResourcesResponse, WorkerCommand, WorkerResponse, } from "@uhn/common";
+import { ListResourcesResponse, ReadyCommand, WorkerCommand, WorkerResponse, } from "@uhn/common";
 import fs from "fs-extra";
 import path from "path";
 
@@ -83,3 +83,4 @@ process.stdin.on("data", (chunk) => {
         }
     }
 });
+process.stdout.write(JSON.stringify({ cmd: "ready" } satisfies ReadyCommand) + "\n");

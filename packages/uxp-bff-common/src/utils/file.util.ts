@@ -32,6 +32,7 @@ export const pathExists = fs.pathExists;
 
 export const readFile = fs.readFile;
 export const writeFile = fs.writeFile;
+export const fileExists = fs.exists;
 
 export const createReadStream = fs.createReadStream;
 export const createWriteStream = fs.createWriteStream;
