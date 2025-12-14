@@ -4,6 +4,7 @@ import DownloadIcon from "@mui/icons-material/Download";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import HistoryIcon from "@mui/icons-material/History";
+import ArticleIcon from "@mui/icons-material/Article";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import PauseIcon from "@mui/icons-material/Pause";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
@@ -15,20 +16,20 @@ import {
     Button,
     Chip,
     Collapse,
-    LinearProgress,
     List,
     ListItem,
     Typography
 } from "@mui/material";
 import { Blueprint, BlueprintStatus, BlueprintVersion } from "@uhn/common";
 import { toUxpTimeFormat } from "@uxp/common";
-import { ConfirmDialog, InlineError, LinearFetchLine, Loading, mapApiErrorsToMessageString, MenuItemType, MultiLevelMenu, usePortalContainerRef, withErrorHandler, withLoading } from "@uxp/ui-lib";
+import { ConfirmDialog, InlineError, LinearFetchLine, Loading, mapApiErrorsToMessageString, MenuItemType, MultiLevelMenu, usePortalContainerRef, withErrorHandler, withLoading, WithOptionalTooltip } from "@uxp/ui-lib";
 import React, { useMemo, useState } from "react";
 import { useAppDispatch } from "../../../app/store";
 
 import { getBaseUrl } from "../../../config";
 import { useActivateBlueprintMutation, useDeactivateBlueprintMutation, useDeleteBlueprintMutation, useFetchBlueprintsQuery } from "../blueprint.api";
-import { openActivationListDialog } from "../blueprintSlice";
+import { openActivationListDialog, openBlueprintVersionLogDialog } from "../blueprintSlice";
+import { error } from "console";
 
 
 type BlueprintListProps = {
@@ -58,8 +59,8 @@ const BlueprintList: React.FC<BlueprintListProps> = ({ maxVersionsToShow, }) => 
 
     return (
         <Box>
-            <LinearFetchLine isFetching={isFetching } />
-            <List sx={{pt:"4px"}}>
+            <LinearFetchLine isFetching={isFetching} />
+            <List sx={{ pt: "4px" }}>
                 {blueprints.map((blueprint) => (
                     <BlueprintAccordion
                         key={blueprint.identifier}
@@ -181,6 +182,9 @@ const BlueprintVersionRow: React.FC<{ blueprintVersion: BlueprintVersion }> = ({
     const handleShowHistory = () => {
         dispatch(openActivationListDialog({ identifier: blueprintVersion.identifier, version: blueprintVersion.version }));
     };
+    const handleBlueprintLog = () => {
+        dispatch(openBlueprintVersionLogDialog({ identifier: blueprintVersion.identifier, version: blueprintVersion.version }));
+    }
 
     const actionItems: MenuItemType[] = [
         {
@@ -202,6 +206,11 @@ const BlueprintVersionRow: React.FC<{ blueprintVersion: BlueprintVersion }> = ({
             onClick: () => handleShowHistory(),
         },
         {
+            icon: <ArticleIcon />, // or another icon, e.g. <ListAltIcon />
+            label: "Show log",
+            onClick: () => handleBlueprintLog(),
+        },
+        {
             icon: <DeleteIcon />,
             disabled: blueprintVersion.active,
             label: "Delete",
@@ -209,7 +218,9 @@ const BlueprintVersionRow: React.FC<{ blueprintVersion: BlueprintVersion }> = ({
         },
     ];
     const { active, version, status, uploadedAt, uploadedBy, activatedAt, activatedBy, deactivatedAt,
-        deactivatedBy, metadata, compileLog, validationLog } = blueprintVersion
+        deactivatedBy, metadata, errorSummary } = blueprintVersion
+    const errorTooltip = errorSummary ? errorSummary.length > 200 ? errorSummary.slice(0, 200) + "..." : errorSummary : undefined
+
     return (
         <>
             <ListItem
@@ -241,12 +252,15 @@ const BlueprintVersionRow: React.FC<{ blueprintVersion: BlueprintVersion }> = ({
                             v{version}
                         </Typography>
                         {active && <Chip label="Active" color="success" size="small" sx={{ ml: 1 }} />}
-                        <Chip
-                            label={status}
-                            color={statusColor(status)}
-                            size="small"
-                            sx={{ ml: 2 }}
-                        />
+                        <WithOptionalTooltip tooltip={errorTooltip}
+                            portalContainer={portalContainer} error={!!errorTooltip}>
+                            <Chip
+                                label={status}
+                                color={statusColor(status)}
+                                size="small"
+                                sx={{ ml: 2 }}
+                            />
+                        </WithOptionalTooltip>
 
                     </Box>
                     <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
@@ -282,24 +296,15 @@ const BlueprintVersionRow: React.FC<{ blueprintVersion: BlueprintVersion }> = ({
                             <Box sx={{ pt: 1 }}>
                                 {/* Show only if available */}
                                 {metadata && <MetadataFields metadata={metadata} />}
-                                {compileLog && (
+                                {errorSummary && (
                                     <Box sx={{ mt: 1 }}>
-                                        <Typography fontWeight={500}>Compile Log:</Typography>
+                                        <Typography fontWeight={500}>Error summary:</Typography>
                                         <pre style={{ fontSize: "0.85rem", whiteSpace: "pre-wrap" }}>
-                                            {compileLog.slice(0, 200)} {/* preview, or full */}
-                                            {compileLog.length > 200 && <span>... (truncated)</span>}
+                                            {errorSummary}
                                         </pre>
                                     </Box>
                                 )}
-                                {validationLog && (
-                                    <Box sx={{ mt: 1 }}>
-                                        <Typography fontWeight={500}>Validation Log:</Typography>
-                                        <pre style={{ fontSize: "0.85rem", whiteSpace: "pre-wrap" }}>
-                                            {validationLog.slice(0, 200)}
-                                            {validationLog.length > 200 && <span>... (truncated)</span>}
-                                        </pre>
-                                    </Box>
-                                )}
+
                             </Box>
                         </Collapse>
                     </Box>

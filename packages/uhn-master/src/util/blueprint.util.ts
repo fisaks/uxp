@@ -8,56 +8,6 @@ import unzipper from 'unzipper';
 import { analyzeBlueprintDependencies } from './blueprint-deps.util';
 import { writeJson } from 'fs-extra';
 
-const ajv = new Ajv({
-    allErrors: true,
-    strict: false,
-});
-
-const validateBlueprintMetadataAjv = ajv.compile(BlueprintMetadataSchema);
-
-export function validateBlueprintMetadata(data: unknown): BlueprintMetadata {
-    if (!validateBlueprintMetadataAjv(data)) {
-        const errorText = ajv.errorsText(validateBlueprintMetadataAjv.errors, {
-            separator: "; ",
-        });
-
-        throw new AppErrorV2({
-            statusCode: 400,
-            code: "BLUEPRINT_JSON_VALIDATION_FAILED",
-            message: `Invalid blueprint metadata: ${errorText}`,
-            params: { errors: errorText }
-        });
-    }
-
-    return data as BlueprintMetadata;
-}
-
-
-export async function readBlueprintMetadataFromZip(zipPath: string): Promise<BlueprintMetadata> {
-    const directory = await unzipper.Open.file(zipPath);
-
-    const entry = directory.files.find(f => f.path === 'blueprint.json');
-    if (!entry) {
-        throw new AppErrorV2({
-            statusCode: 400,
-            code: "MISSING_BLUEPRINT_JSON",
-            message: 'Missing blueprint.json in blueprint zip'
-        });
-    }
-    const content = await entry.buffer();
-    let raw: unknown;
-    try {
-        raw = JSON.parse(content.toString("utf-8"));
-    } catch (err) {
-        throw new AppErrorV2({
-            statusCode: 400,
-            code: "BLUEPRINT_JSON_INVALID",
-            message: "blueprint.json is not valid JSON",
-        });
-    }
-    return validateBlueprintMetadata(raw);
-
-}
 
 export async function compileBlueprint(sourceDir: string, outDir: string) {
     await ensureDir(outDir);

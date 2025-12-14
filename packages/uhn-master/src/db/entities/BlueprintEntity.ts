@@ -89,8 +89,14 @@ export class BlueprintEntity {
     validationLog?: string | null;
 
     @Column({ type: 'text', nullable: true })
+    installLog?: string | null;
+
+    @Column({ type: 'text', nullable: true })
     compileLog?: string | null;
 
+    @Column({ type: 'varchar', length: 1024, nullable: true })
+    errorSummary?: string | null;
+    
     @Column({ type: 'boolean', default: false })
     active!: boolean;
 }

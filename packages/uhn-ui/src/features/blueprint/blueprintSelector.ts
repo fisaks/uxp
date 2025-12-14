@@ -14,6 +14,11 @@ export const selectActivationLog = createSelector(
     (blueprintState) => blueprintState.activationLog
 );
 
+export const selectBlueprintVersionLog = createSelector(
+    selectBlueprintState,
+    (blueprintState) => blueprintState.blueprintVersionLog
+);
+
 export const selectBlueprintVersion = (blueprints?: Blueprint[], version?: BlueprintIdentifierVersion) => {
     if (!version || !blueprints) return undefined;
     return blueprints.find((bp) => bp.identifier === version.identifier)

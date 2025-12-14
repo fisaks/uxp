@@ -1,7 +1,7 @@
 import { AppLogger, Route, Token, UseQueryRunner } from "@uxp/bff-common";
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 
-import { ActivateBlueprintSchema, DeleteBlueprintVersionSchema, DownloadBlueprintSchema, ListActivationsForVersionSchema, ListActivationsSchema } from "@uhn/common";
+import { ActivateBlueprintSchema, BlueprintVersionLogSchema, DeleteBlueprintVersionSchema, DownloadBlueprintSchema, ListActivationsForVersionSchema, ListActivationsSchema } from "@uhn/common";
 import { BlueprintMapper } from "../mappers/blueprint.mapper";
 import { BlueprintService } from "../services/blueprint.service";
 
@@ -87,6 +87,19 @@ export class BlueprintController {
         const { identifier, version } = req.params as { identifier: string, version: number };
         return await this.blueprintService.getActivationLogForVersion(identifier, version);
     }
+
+      @Route("get", "/blueprints/:identifier/:version/log", {
+        authenticate: true, roles: ["admin"], schema: BlueprintVersionLogSchema
+    })
+    @UseQueryRunner({ transactional: false })
+    async getBlueprintLog(
+        req: FastifyRequest,
+        _reply: FastifyReply
+    ) {
+        const { identifier, version } = req.params as { identifier: string, version: number };
+        return await this.blueprintService.getLogForVersion(identifier, version);
+    }
+
 
     @Route("get", "/blueprints/:identifier/:version/download", { authenticate: true, roles: ["admin"], schema: DownloadBlueprintSchema })
     @UseQueryRunner({ transactional: false })

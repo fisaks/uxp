@@ -4,6 +4,7 @@ import { FastifyRequest } from "fastify";
 import fs, { ensureDir } from "fs-extra";
 import path from "path";
 import env from "../env";
+import unzipper from 'unzipper';
 
 const PreFlightFolder = path.join(env.UHN_FILE_UPLOAD_PATH, ".pre-flight");
 const ActiveBlueprintFolder = path.join(env.UHN_WORKSPACE_PATH, "blueprint");
@@ -99,7 +100,8 @@ async function activateBlueprint(toActivateZipPath: string) {
 
     await removeActiveBlueprint();
     try {
-        await extractZip(toActivateZipPath, ActiveBlueprintFolder);
+        const srcDir=path.join(ActiveBlueprintFolder,"src")
+        await extractZip(toActivateZipPath, srcDir);
     } catch (err) {
         AppLogger.error({
             message: `Failed to extract blueprint zip during activation:`,
@@ -120,7 +122,14 @@ async function getBlueprintStream(blueprintZipPath: string) {
     return fs.createReadStream(blueprintZipPath)
 }
 
+async function extractFileFromZip(zipPath: string, filename: string): Promise<Buffer | undefined> {
+    const directory = await unzipper.Open.file(zipPath);
+    const entry = directory.files.find(f => f.path === filename);
+    return entry?.buffer();
+}
+
 export const BlueprintFileUtil = {
+    ActiveBlueprintFolder,
     handleAndValidateUpload,
     moveAndOrganizeUploadedBlueprint,
     extractBlueprintZipToActive,
@@ -128,4 +137,5 @@ export const BlueprintFileUtil = {
     removeActiveBlueprint,
     activateBlueprint,
     getBlueprintStream,
+    extractFileFromZip
 };

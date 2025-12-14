@@ -8,7 +8,10 @@ import { BlueprintMapper } from "../mappers/blueprint.mapper";
 import { BlueprintActivationRepository } from "../repositories/blueprint-activation.repository";
 import { BlueprintRepository } from "../repositories/blueprint.repository";
 import { BlueprintFileUtil } from "../util/blueprint-file.util";
-import { readBlueprintMetadataFromZip } from "../util/blueprint.util";
+import { BlueprintMetaDataUtil } from "../util/blueprint-metadata.util";
+import { BlueprintCompileUtil } from "../util/blueprint-compiler.util";
+import { error } from "console";
+
 
 
 export class BlueprintService {
@@ -17,7 +20,7 @@ export class BlueprintService {
         const upload = await BlueprintFileUtil.handleAndValidateUpload(request);
         const user = request.user as Token
 
-        const metadata = await readBlueprintMetadataFromZip(upload.zipPath);
+        const metadata = await BlueprintMetaDataUtil.readBlueprintMetadataFromZip(upload.zipPath);
         const version = await BlueprintRepository.getNextBlueprintVersion(metadata.identifier)
 
         const { blueprintZip } = await BlueprintFileUtil.moveAndOrganizeUploadedBlueprint(upload.zipPath, upload.fileType, metadata.identifier, version);
@@ -104,24 +107,32 @@ export class BlueprintService {
             }
         }
         await BlueprintFileUtil.activateBlueprint(toActivate.zipPath);
-
+        const result = await BlueprintCompileUtil.compileBlueprint({
+            blueprintFolder: BlueprintFileUtil.ActiveBlueprintFolder,
+            identifier: toActivate.identifier,
+        });
         // Activate new version
-        toActivate.active = true;
-        toActivate.status = 'installed';
-        const activatedAt = DateTime.now();
-        toActivate.lastActivatedAt = activatedAt;
-        toActivate.lastActivatedBy = activatedBy;
-        toActivate.lastDeactivatedAt = undefined;
-        toActivate.lastDeactivatedBy = undefined;
+        toActivate.active = result.success ? true : false;
+        toActivate.status = result.success ? 'installed' : 'failed';
+        toActivate.compileLog = result.compileLog;
+        toActivate.installLog = result.installLog;
+        toActivate.errorSummary = result.errorSummary;
+        if (result.success) {
+            const activatedAt = DateTime.now();
+            toActivate.lastActivatedAt = activatedAt;
+            toActivate.lastActivatedBy = activatedBy;
+            toActivate.lastDeactivatedAt = undefined;
+            toActivate.lastDeactivatedBy = undefined;
+            const activation = new BlueprintActivationEntity({
+                blueprint: toActivate,
+                activatedAt: activatedAt,
+                activatedBy
+            });
+            await BlueprintActivationRepository.save(activation);
+        }
+
         await BlueprintRepository.save(toActivate);
 
-        // Create activation record
-        const activation = new BlueprintActivationEntity({
-            blueprint: toActivate,
-            activatedAt: activatedAt,
-            activatedBy
-        });
-        await BlueprintActivationRepository.save(activation);
 
         AppLogger.info({
             message: `Activated blueprint ${identifier} v${version} globally by ${activatedBy}`
@@ -193,6 +204,18 @@ export class BlueprintService {
         return activations.map(a => BlueprintMapper.toBlueprintActivationDetail(a.blueprint, a));
     }
 
+    async getLogForVersion(identifier: string, version: number) {
+        const blueprint = await BlueprintRepository.findByIdentifierAndVersion(identifier, version);
+        if (!blueprint) {
+            throw new AppErrorV2({
+                statusCode: 404,
+                code: "RESOURCE_NOT_FOUND",
+                message: `Blueprint ${identifier} v${version} not found`,
+            });
+        }
+
+        return BlueprintMapper.toBlueprintVersionLog(blueprint);
+    }
 
     async getBlueprintVersionStream(identifier: string, version: number) {
         const blueprint = await BlueprintRepository.findByIdentifierAndVersion(identifier, version);

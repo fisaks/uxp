@@ -1,0 +1,16 @@
+
+import { ResourceBase, ResourceType } from "@uhn/blueprint";
+
+export type ListResourcesCommand = {
+  id: string;
+  cmd: "listResources";
+};
+export type WorkerCommand = ListResourcesCommand; // | MoreCommands
+
+export type ListResourcesResponse = {
+  id: string;
+  resources: ResourceBase<ResourceType>[];
+};
+
+export type ErrorResponse = { id: string | null; error: string };
+export type WorkerResponse = ListResourcesResponse | ErrorResponse;

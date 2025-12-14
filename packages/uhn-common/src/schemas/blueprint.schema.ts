@@ -29,6 +29,7 @@ export const ActivateBlueprintSchema = BlueprintVersionUrlParamsSchema;
 export const DeleteBlueprintVersionSchema = BlueprintVersionUrlParamsSchema;
 export const DownloadBlueprintSchema = BlueprintVersionUrlParamsSchema;
 export const ListActivationsForVersionSchema = BlueprintVersionUrlParamsSchema;
+export const BlueprintVersionLogSchema = BlueprintVersionUrlParamsSchema;
 export const ListActivationsSchema: SchemaValidate<undefined, { limit?: number }, undefined> = {
     querystring: {
         type: "object",

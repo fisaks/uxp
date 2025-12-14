@@ -17,7 +17,8 @@
         "lint:fix": "pnpm eslint . --fix"
     },
     "dependencies": {
-        "@uxp/common": "workspace:*"
+        "@uxp/common": "workspace:*",
+        "@uhn/blueprint": "workspace:*"
     },
     "peerDependencies": {
         "ajv": "^8.17.1",

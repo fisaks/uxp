@@ -8,6 +8,7 @@ import { useFetchBlueprintsQuery } from "../blueprint.api";
 import { openActivationListDialog } from "../blueprintSlice";
 import BlueprintActivationListDialog from "../components/BlueprintActivationListDialog";
 import BlueprintList from "../components/BlueprintList";
+import { BlueprintVersionLogDialog } from "../components/BlueprintVersionLogDialog";
 
 
 export const BlueprintListPage: React.FC = () => {
@@ -44,6 +45,7 @@ export const BlueprintListPage: React.FC = () => {
                         error={error ? "An error occurred while fetching blueprints" : undefined} />
                 </Paper>
                 <BlueprintActivationListDialog />
+                <BlueprintVersionLogDialog />
 
             </Box>
         </Box>

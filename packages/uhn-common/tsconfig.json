@@ -14,7 +14,8 @@
     "exclude": ["node_modules", "dist"],
     "references": [
         {
-            "path": "../uxp-common"
+            "path": "../uxp-common",
+            "path": "../uhn-blueprint"
         }
     ]
 }

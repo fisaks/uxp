@@ -792,6 +792,9 @@ importers:
 
   packages/uhn-common:
     dependencies:
+      '@uhn/blueprint':
+        specifier: workspace:*
+        version: link:../uhn-blueprint
       '@uxp/common':
         specifier: workspace:*
         version: link:../uxp-common
@@ -1029,6 +1032,52 @@ importers:
       webpack-bundle-analyzer:
         specifier: ^4.10.2
         version: 4.10.2
+
+  packages/uhn-worker:
+    dependencies:
+      '@uhn/blueprint':
+        specifier: workspace:*
+        version: link:../uhn-blueprint
+      '@uhn/common':
+        specifier: workspace:*
+        version: link:../uhn-common
+      fs-extra:
+        specifier: ^11.3.0
+        version: 11.3.0
+      luxon:
+        specifier: ^3.5.0
+        version: 3.6.1
+      nanoid:
+        specifier: ^3.3.4
+        version: 3.3.11
+      path:
+        specifier: ^0.12.7
+        version: 0.12.7
+      uuid:
+        specifier: ^11.0.3
+        version: 11.1.0
+    devDependencies:
+      '@types/fs-extra':
+        specifier: ^11.0.4
+        version: 11.0.4
+      '@types/luxon':
+        specifier: ^3.4.2
+        version: 3.6.2
+      '@types/node':
+        specifier: ^22.10.1
+        version: 22.14.1
+      '@types/uuid':
+        specifier: ^10.0.0
+        version: 10.0.0
+      ts-node:
+        specifier: ^10.9.2
+        version: 10.9.2(@types/node@22.14.1)(typescript@5.8.3)
+      ts-node-dev:
+        specifier: ^2.0.0
+        version: 2.0.0(@types/node@22.14.1)(typescript@5.8.3)
+      typescript:
+        specifier: ^5.7.2
+        version: 5.8.3
 
   packages/uxp-bff:
     dependencies:

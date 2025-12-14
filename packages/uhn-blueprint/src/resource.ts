@@ -1,7 +1,9 @@
-export type ResourceBase = {
+export type ResourceType = "digitalInput" | "digitalOutput";
+export type ResourceBase<TType extends ResourceType> = {
     id?: string;
     name?: string;
     description?: string;
+    type: TType;
     edge: string;
     device?: number | string;
     pin?: number;
@@ -13,8 +15,7 @@ export type DigitalInputResourceBase<
     TEdge extends string = string,
     TDevice extends string | number = string | number,
     TPin extends number = number
-> = ResourceBase & {
-    type: "digitalInput";
+> = ResourceBase<"digitalInput"> & {
     edge: TEdge;
     device: TDevice;
     pin: TPin;
@@ -28,8 +29,7 @@ export type DigitalOutputResourceBase<
     TEdge extends string = string,
     TDevice extends string | number = string | number,
     TPin extends number = number
-> = ResourceBase & {
-    type: "digitalOutput";
+> = ResourceBase<"digitalOutput"> & {
     edge: TEdge;
     device: TDevice;
     pin: TPin;

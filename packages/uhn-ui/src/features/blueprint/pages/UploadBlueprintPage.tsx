@@ -17,6 +17,7 @@ import { uhnApi } from "../../../app/uhnApi";
 import { useFetchBlueprintsQuery } from "../blueprint.api";
 import BlueprintActivationListDialog from "../components/BlueprintActivationListDialog";
 import BlueprintList from "../components/BlueprintList";
+import { BlueprintVersionLogDialog } from "../components/BlueprintVersionLogDialog";
 
 
 const ErrorMessage: ErrorCodeMessageMap = {
@@ -204,6 +205,7 @@ export const UploadBlueprintPage = () => {
                     error={blueprintsError ? "An error occurred while fetching blueprints" : undefined} />
             </Paper>
             <BlueprintActivationListDialog />
+            <BlueprintVersionLogDialog />
 
         </Box>
 

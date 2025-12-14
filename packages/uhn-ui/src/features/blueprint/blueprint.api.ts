@@ -1,7 +1,8 @@
 import {
     Blueprint,
     BlueprintActivationDetails,
-    BlueprintVersion
+    BlueprintVersion,
+    BlueprintVersionLog
 } from '@uhn/common';
 import { uhnApi } from '../../app/uhnApi';
 import { getBaseUrl } from '../../config';
@@ -36,7 +37,17 @@ export const blueprintApi = uhnApi.injectEndpoints({
             }),
             providesTags: ['BlueprintActivations'],
         }),
-
+        fetchBlueprintVersionLog: builder.query<
+            BlueprintVersionLog,
+            { identifier: string; version: number }
+        >({
+            query: ({ identifier, version }) => ({
+                url: `${getBaseUrl()}/api/blueprints/${identifier}/${version}/log`,
+            }),
+            providesTags: (_r, _e, arg) => [
+                { type: 'Blueprints', id: `${arg.identifier}-${arg.version}-log` }
+            ],
+        }),
         activateBlueprint: builder.mutation<
             BlueprintVersion,
             { identifier: string; version: number }
@@ -78,6 +89,7 @@ export const {
     useFetchBlueprintsQuery,
     useFetchBlueprintVersionActivationsQuery,
     useFetchBlueprintActivationsQuery,
+    useFetchBlueprintVersionLogQuery,
     useActivateBlueprintMutation,
     useDeactivateBlueprintMutation,
     useDeleteBlueprintMutation,

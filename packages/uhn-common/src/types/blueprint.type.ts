@@ -44,8 +44,18 @@ export type BlueprintVersion = {
     uploadedBy: string;
     metadata: BlueprintMetadata;
     downloadUrl: string;
-    compileLog?: string;
+    errorSummary?: string;
+  
+};
+
+export type BlueprintVersionLog = {
+    identifier: string;
+    version: number;
+    status: BlueprintStatus;
     validationLog?: string;
+    compileLog?: string;
+    installLog?: string;
+    errorSummary?: string;
 };
 
 export type Blueprint = {
