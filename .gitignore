@@ -4,6 +4,8 @@
 node_modules
 package-lock.json
 
+/out/*
+!/out/docs/
 # Serverless directories
 dist
 tsconfig.tsbuildinfo
