@@ -1,5 +1,5 @@
 import { BlueprintFileTypes, UhnFileType } from "@uhn/common";
-import { AppErrorV2, AppLogger, extractZip, handleMultipartUpload, moveFile, pathExists, removeDir, removeFile, UploadedFile } from "@uxp/bff-common";
+import { AppErrorV2, AppLogger, extractZip, fileExists, handleMultipartUpload, moveFile, pathExists, removeDir, removeFile, UploadedFile } from "@uxp/bff-common";
 import { FastifyRequest } from "fastify";
 import fs, { ensureDir } from "fs-extra";
 import path from "path";
@@ -100,7 +100,7 @@ async function activateBlueprint(toActivateZipPath: string) {
 
     await removeActiveBlueprint();
     try {
-        const srcDir=path.join(ActiveBlueprintFolder,"src")
+        const srcDir = path.join(ActiveBlueprintFolder, "src")
         await extractZip(toActivateZipPath, srcDir);
     } catch (err) {
         AppLogger.error({
@@ -127,6 +127,15 @@ async function extractFileFromZip(zipPath: string, filename: string): Promise<Bu
     const entry = directory.files.find(f => f.path === filename);
     return entry?.buffer();
 }
+async function activeBlueprintExists(): Promise<boolean> {
+    const blueprintJson = path.join(ActiveBlueprintFolder, "src", "blueprint.json")
+    return await pathExists(ActiveBlueprintFolder) && await fileExists(blueprintJson);
+}
+async function writePrettyJson(filename: string, data: unknown) {
+    const filePath = path.join(ActiveBlueprintFolder, filename);
+    const json = JSON.stringify(data, null, 2); // 2-space indentation
+    await fs.writeFile(filePath, json, "utf8");
+}
 
 export const BlueprintFileUtil = {
     ActiveBlueprintFolder,
@@ -137,5 +146,7 @@ export const BlueprintFileUtil = {
     removeActiveBlueprint,
     activateBlueprint,
     getBlueprintStream,
-    extractFileFromZip
+    extractFileFromZip,
+    activeBlueprintExists,
+    writePrettyJson
 };

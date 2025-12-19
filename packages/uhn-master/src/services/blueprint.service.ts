@@ -10,6 +10,7 @@ import { BlueprintRepository } from "../repositories/blueprint.repository";
 import { BlueprintFileUtil } from "../util/blueprint-file.util";
 import { BlueprintMetaDataUtil } from "../util/blueprint-metadata.util";
 import { BlueprintCompileUtil } from "../util/blueprint-compiler.util";
+import { blueprintRuntimeService } from "./blueprint-runtime.service";
 
 
 
@@ -71,6 +72,7 @@ export class BlueprintService {
             lastActivation.deactivatedBy = deActivatedBy;
             await BlueprintActivationRepository.save(lastActivation);
         }
+        await blueprintRuntimeService.stop();
 
         AppLogger.info({
             message: `Deactivated blueprint ${identifier} v${version} globally by ${deActivatedBy}`
@@ -91,20 +93,7 @@ export class BlueprintService {
 
         // If another blueprint is active, deactivate it
         if (currentlyActive && currentlyActive.id !== toActivate.id) {
-            currentlyActive.active = false;
-            const deactivatedAt = DateTime.now();
-            currentlyActive.lastDeactivatedAt = deactivatedAt;
-            currentlyActive.lastDeactivatedBy = activatedBy;
-            await BlueprintRepository.save(currentlyActive);
-
-            // close activation period
-            const lastActivation = await BlueprintActivationRepository.findLastActiveForBlueprint(currentlyActive.id);
-
-            if (lastActivation) {
-                lastActivation.deactivatedAt = deactivatedAt;
-                lastActivation.deactivatedBy = activatedBy;
-                await BlueprintActivationRepository.save(lastActivation);
-            }
+            await this.deactivateBlueprint(currentlyActive.identifier, currentlyActive.version, activatedBy);
         }
         await BlueprintFileUtil.activateBlueprint(toActivate.zipPath);
         const result = await BlueprintCompileUtil.compileBlueprint({
@@ -133,6 +122,9 @@ export class BlueprintService {
 
         await BlueprintRepository.save(toActivate);
 
+        if (result.success) {
+            await blueprintRuntimeService.start();
+        }
         AppLogger.info({
             message: `Activated blueprint ${identifier} v${version} globally by ${activatedBy}`
         });

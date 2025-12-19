@@ -5,7 +5,7 @@ export type ResourceBase<TType extends ResourceType> = {
     description?: string;
     type: TType;
     edge: string;
-    device?: number | string;
+    device?: string;
     pin?: number;
 };
 export type InputType = "toggle" | "push";

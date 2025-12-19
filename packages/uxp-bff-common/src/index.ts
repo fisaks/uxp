@@ -7,7 +7,7 @@ export { default as envLoader } from "./config/envLoader";
 export * from "./decorator/handler.registry";
 export * from "./decorator/queryrunner.decorator";
 export * from "./decorator/request-utils";
-export { RequestContext, getRequestContext } from "./decorator/request-context";
+export { RequestContext, getRequestContext, runBackgroundTask } from "./decorator/request-context";
 export * from "./decorator/route.decorator";
 export * from "./decorator/websocket.decorator";
 export * from "./error/AppError";

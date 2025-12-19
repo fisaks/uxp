@@ -1,6 +1,6 @@
 import { AppLogger, MqttService } from "@uxp/bff-common";
 import { env } from "process";
-import { SubscriptionService } from "./subscription.service";
+import { subscriptionService } from "./subscription.service";
 
 export const MASTER_STATUS_TOPIC = "uhn/master/status";
 const mqttService = new MqttService({
@@ -21,7 +21,7 @@ const mqttService = new MqttService({
     },
     onConnect: () => {
         AppLogger.info(undefined, { message: `[MQTT Service] Connected to broker at ${env.UHN_MQTT_BROKER_URL}` });
-        SubscriptionService.getInstance().init();
+        subscriptionService.init();
         mqttService.publish(MASTER_STATUS_TOPIC, "online", { qos: 1, retain: true });
     },
 

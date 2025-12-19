@@ -2,6 +2,18 @@
 import { ResourceBase, ResourceType } from "@uhn/blueprint";
 
 
+export type ResourceErrorCode =
+  | "duplicate-id"
+  | "duplicate-address"
+  | "missing-id"
+
+export type RuntimeResourceBase<TType extends ResourceType> =
+  Omit<ResourceBase<TType>, 'id' | 'name'> & {
+    id: string;
+    name: string;
+    errors?: ResourceErrorCode[];
+  };
+
 export type ListResourcesCommand = {
   id: string;
   cmd: "listResources";
@@ -10,7 +22,7 @@ export type WorkerCommand = ListResourcesCommand; // | MoreCommands
 
 export type ListResourcesResponse = {
   id: string;
-  resources: ResourceBase<ResourceType>[];
+  resources: RuntimeResourceBase<ResourceType>[];
 };
 export type ReadyCommand = {
   cmd: "ready";

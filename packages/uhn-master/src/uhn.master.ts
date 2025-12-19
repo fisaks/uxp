@@ -4,22 +4,28 @@ import fastifyWebsocket from "@fastify/websocket";
 import { AppLogger, errorHandler, HandlerRegistry, IsProd, jwtPlugin, registerLocalWebSocketHandlers, registerRoutes } from "@uxp/bff-common";
 import "@uxp/bff-common/dist/health/health.controller";
 import Fastify from "fastify";
+import { DateTime } from "luxon";
 import path from "path";
 import env from "./env";
-import { DateTime } from "luxon";
-import mqttService from "./services/mqtt.service";
-import { UHNAppServerWebSocketManager } from "./ws/UHNAppServerWebSocketManager";
 
+import { startBlueprintRuntimeServices } from "./services/blueprint-runtime.service";
+import mqttService from "./services/mqtt.service";
+import "./services/blueprint-resource.service";
+
+import { UHNAppServerWebSocketManager } from "./ws/UHNAppServerWebSocketManager";
+import { setupWebDispatchers } from "./dispatchers";
 
 const { AppDataSource } = require("./db/typeorm.config");
 
+
 AppDataSource.initialize()
-    .then(() => {
+    .then(async () => {
         console.log(`Database connected to ${env.MYSQL_UHN_DATABASE} at ${env.DATABASE_HOST}:${env.DATABASE_PORT}`);
         console.log(
             "Entities:",
             AppDataSource.entityMetadatas.map((meta: { name: string }) => meta.name)
         );
+        await startBlueprintRuntimeServices();
     })
     .catch((err: Error) => console.error("Error during Data Source initialization", err));
 
@@ -81,7 +87,7 @@ registerRoutes({
     dataSource: AppDataSource,
     controllers: Array.from(restHandlers),
 });
-
+setupWebDispatchers();
 const port = 3031;
 
 fastify.listen({ port: port, host: "0.0.0.0" }, (err, address) => {

@@ -39,7 +39,7 @@ export class BlueprintEntity {
 
     @Column({
         type: 'enum',
-        enum: ['uploaded', 'validated', 'compiled', 'installed', 'failed', 'archived'],
+        enum: ['uploaded', 'installed', 'failed'],
         default: 'uploaded',
     })
     status!: BlueprintStatus;

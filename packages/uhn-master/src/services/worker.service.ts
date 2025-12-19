@@ -1,3 +1,4 @@
+//services/worker.service.ts
 import type { ErrorResponse, WorkerCommandMap, WorkerResponse } from "@uhn/common";
 import { AppErrorV2, AppLogger, fileExists, pathExists, readFile, removeFile, writeFile } from "@uxp/bff-common";
 import { ChildProcess, spawn, SpawnOptions } from "child_process";

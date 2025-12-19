@@ -2,11 +2,9 @@ import { UhnFileType } from "./file.type";
 
 export type BlueprintStatus =
     | 'uploaded'
-    | 'validated'
-    | 'compiled'
     | 'installed'
-    | 'failed'
-    | 'archived';
+    | 'failed';
+
 
 export type BlueprintMetadata = {
     identifier: string;

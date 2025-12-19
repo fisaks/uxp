@@ -46,11 +46,13 @@ type ErrorLogArgs =
     | [requestMeta: FastifyRequest | RequestMetaData | undefined, payload: ErrorLogMessage]
     | [payload: ErrorLogMessage]; // con
 
+export type LogLevel="fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent"; 
 export class AppLogger {
     private static fastifyLogger: FastifyInstance["log"] | typeof console;
-
+    private static level: LogLevel = "info";
     public static initialize(logger: FastifyInstance["log"]) {
         if (!this.fastifyLogger) {
+            this.level = logger.level as LogLevel;
             this.fastifyLogger = logger;
         } else {
             console.warn("AppLogger has already been initialized. Initialization skipped.");
@@ -106,7 +108,7 @@ export class AppLogger {
 
         const metadata = !request ? {} : this.isRequestMetaData(request) ? request : this.extractMetadata(request) ?? {};
         const data = this.mergeData(metadata, message.object, message.error);
-
+        this.fastifyLogger
         this.fastifyLogger[level](data, message.message, ...(message.args ?? []));
     }
     public static extractRequestMetaFromArgs(args: InfoLogArgs): [RequestMetaData | undefined, LogMessage | ErrorLogMessage] {
@@ -138,6 +140,9 @@ export class AppLogger {
     public static debug(...args: InfoLogArgs) {
         const [request, message] = this.extractRequestMetaFromArgs(args);
         this.log(request, "debug", message);
+    }
+    public static isDebugLevel(): boolean {
+        return this.level === "debug" || this.level === "trace";
     }
 
     /*    public static infoMessage(request: FastifyRequest | RequestMetaData | undefined, message: string, ...args: unknown[]) {

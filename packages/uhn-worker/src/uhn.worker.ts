@@ -1,5 +1,5 @@
 import { ResourceBase, ResourceType } from "@uhn/blueprint";
-import { ListResourcesResponse, ReadyCommand, WorkerCommand, WorkerResponse, } from "@uhn/common";
+import { ListResourcesResponse, ReadyCommand, RuntimeResourceBase, WorkerCommand, WorkerResponse, } from "@uhn/common";
 import fs from "fs-extra";
 import path from "path";
 
@@ -21,8 +21,8 @@ function isResourceObject(obj: unknown): obj is ResourceBase<ResourceType> {
         "edge" in obj && "type" in obj &&
         typeof obj.edge === "string" && typeof obj.type === "string");
 }
-async function collectResources(): Promise<ResourceBase<ResourceType>[]> {
-    const allResources: ResourceBase<ResourceType>[] = [];
+async function collectResources(): Promise<RuntimeResourceBase<ResourceType>[]> {
+    const allResources: RuntimeResourceBase<ResourceType>[] = [];
     if (!(await fs.pathExists(resourcesDir))) {
         console.error(`ERROR: resources directory not found: ${resourcesDir}`);
         return [];
@@ -36,9 +36,11 @@ async function collectResources(): Promise<ResourceBase<ResourceType>[]> {
         const mod = require(filePath);
         for (const [exportName, resource] of Object.entries(mod)) {
             if (isResourceObject(resource)) {
-                if (!resource.id) resource.id = exportName;
-                if (!resource.name) resource.name = humanizeConstName(exportName);
-                allResources.push(resource);
+                allResources.push({
+                    ...resource,
+                    id: exportName,
+                    name: humanizeConstName(exportName),
+                });
             } else {
                 console.warn(
                     `[worker] Skipped non-resource export "${exportName}" in "${file}"`

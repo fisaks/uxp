@@ -1,3 +1,4 @@
+import { AppLogger } from "@uxp/bff-common";
 import { UHNAppServerWebSocketManager } from "../ws/UHNAppServerWebSocketManager";
 
 export class DeviceStateService {
@@ -13,6 +14,7 @@ export class DeviceStateService {
 
     handleDeviceState(topic: string, payload: unknown) {
         this.deviceStates.set(topic, payload);
+        AppLogger.debug(undefined, { message: `Device state updated for topic ${topic} `,object: {payload:payload} });
 
         UHNAppServerWebSocketManager.getInstance().broadcastTopicMessage({
             payload: { topic, message: payload }

@@ -39,8 +39,6 @@ type BlueprintListProps = {
 const statusColor = (status: BlueprintStatus) => {
     switch (status) {
         case "failed": return "error";
-        case "compiled": return "info";
-        case "validated": return "info";
         case "installed": return "success";
         case "uploaded": return "warning";
         default: return "default";
