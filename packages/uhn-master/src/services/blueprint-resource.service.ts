@@ -2,9 +2,9 @@ import { ResourceBase, ResourceType } from "@uhn/blueprint";
 import { ResourceErrorCode, RuntimeResourceBase } from "@uhn/common";
 import { AppLogger } from "@uxp/bff-common";
 import { EventEmitter } from "events";
+import { BlueprintFileUtil } from "../util/blueprint-file.util";
 import { blueprintRuntimeService } from "./blueprint-runtime.service";
 import { workerService } from "./worker.service";
-import { BlueprintFileUtil } from "../util/blueprint-file.util";
 
 type ResourceList = RuntimeResourceBase<ResourceType>[];
 type ResourceValidationError = {
@@ -13,8 +13,13 @@ type ResourceValidationError = {
     conflictingId?: string;
     details?: string;
 };
+export type ResourceEventMap = {
+    resourcesReloaded: [resources: ResourceList];
+    error: [error: unknown];
+    resourcesCleared: [];
+};
 
-class BlueprintResourceService extends EventEmitter {
+class BlueprintResourceService extends EventEmitter<ResourceEventMap> {
     private resources: ResourceList = [];
     private loading = false;
     private validationErrors: ResourceValidationError[] = [];
@@ -98,7 +103,7 @@ class BlueprintResourceService extends EventEmitter {
         this.validationErrors = [];
         const idMap = new Map<string, RuntimeResourceBase<ResourceType>>();
         const addressMap = new Map<string, RuntimeResourceBase<ResourceType>>();
-        const getAddressKey = (resource: Pick<RuntimeResourceBase<ResourceType>, "edge" | "device" | "pin"|"type">): string | undefined => {
+        const getAddressKey = (resource: Pick<RuntimeResourceBase<ResourceType>, "edge" | "device" | "pin" | "type">): string | undefined => {
             if (resource.edge !== undefined && resource.device !== undefined && resource.pin !== undefined) {
                 return `${resource.edge}:${resource.device}:${resource.type}:${resource.pin}`;
             }

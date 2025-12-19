@@ -7,6 +7,11 @@ import { nanoid } from "nanoid";
 import path from "path";
 import env from "../env";
 
+type WorkerEventMap = {
+    message: [response: Omit<WorkerResponse, "id">];
+    stderr: [chunk: string];
+    exit: [code: number | null, signal: NodeJS.Signals | null];
+};
 
 const PID_FILE = `${env.UHN_WORKSPACE_PATH}/worker.pid`;
 
@@ -141,7 +146,7 @@ async function killChildProcess(
 }
 
 
-class WorkerService extends EventEmitter {
+class WorkerService extends EventEmitter<WorkerEventMap> {
     private worker: ChildProcess | null = null;
     private buffer = "";
     private pendingResponses = new Map<

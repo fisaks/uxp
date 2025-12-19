@@ -3,7 +3,7 @@ import EventEmitter from "events";
 import { subscriptionService } from "./subscription.service";
 import { AppLogger } from "@uxp/bff-common";
 
-export type CatalogEventMap = {
+type CatalogEventMap = {
     catalogChanged: [edge: string, payload: EdgeCatalog];
 };
 

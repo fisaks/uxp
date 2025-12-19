@@ -5,7 +5,11 @@ import { BlueprintFileUtil } from "../util/blueprint-file.util";
 import { workerService } from "./worker.service";
 const { AppDataSource } = require("../db/typeorm.config");
 
-class BlueprintRuntimeService extends EventEmitter {
+type RuntimeEventMap = {
+    workerReady: [];
+    workerStopped: [];
+};
+class BlueprintRuntimeService extends EventEmitter<RuntimeEventMap> {
     private shouldRestart = true;
     private running = false;
     private restartAttempts = 0;
