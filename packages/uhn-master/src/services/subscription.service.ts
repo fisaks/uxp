@@ -1,8 +1,5 @@
 import { AppLogger } from "@uxp/bff-common";
 import { EventEmitter } from "events";
-import { UHNAppServerWebSocketManager } from "../ws/UHNAppServerWebSocketManager";
-import { CatalogService } from "./catalog.service";
-import { DeviceStateService } from "./device-state.service";
 import mqttService from "./mqtt.service";
 
 export type SubscriptionEventMap = {
@@ -36,29 +33,21 @@ class SubscriptionService extends EventEmitter<SubscriptionEventMap> {
         mqttService.subscribe("uhn/+/device/+/state", (topic, payload) => {
             const parsed = tryParseJson(payload);
             this.emit("deviceState", topic, parsed);
-            DeviceStateService.getInstance().handleDeviceState(topic, payload)
         });
 
         mqttService.subscribe("uhn/+/catalog", (topic, payload) => {
             const parsed = tryParseJson(payload);
             this.emit("catalog", topic, parsed);
-            //CatalogService.getInstance().handleCatalog(topic, payload)
         });
 
         mqttService.subscribe("uhn/+/cmd", (topic, payload) => {
             const parsed = tryParseJson(payload);
             this.emit("cmd", topic, parsed);
-            // UHNAppServerWebSocketManager.getInstance().broadcastTopicMessage({
-            //   payload: { topic, message: parsed }
-            // })
         });
 
         mqttService.subscribe("uhn/+/device/+/cmd", (topic, payload) => {
             const parsed = tryParseJson(payload);
             this.emit("deviceCmd", topic, parsed);
-            //UHNAppServerWebSocketManager.getInstance().broadcastTopicMessage({
-            //  payload: { topic, message: payload }
-            // })
         });
         AppLogger.info(undefined, { message: "[SubscriptionService] MQTT subscriptions initialized and events emitting" });
 

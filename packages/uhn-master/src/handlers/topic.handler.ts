@@ -5,7 +5,7 @@ import { TopicPatternSchema, UHNAppRequestMessage } from "@uhn/common";
 
 export class TopicHandler {
     private topicService: TopicService;
-    constructor() { 
+    constructor() {
         this.topicService = new TopicService();
     }
     @WebSocketAction("topic:subscribe", { authenticate: true, schema: TopicPatternSchema })
@@ -13,9 +13,9 @@ export class TopicHandler {
         wsDetails: WebSocketDetails,
         message: UHNAppRequestMessage<"topic:subscribe">
     ) {
-        
+
         const { topicPattern } = message.payload;
-            AppLogger.info(wsDetails.requestMeta, {
+        AppLogger.info(wsDetails.requestMeta, {
             message: `Subscribing to topic pattern: ${message.payload.topicPattern}`
         });
         this.topicService.subscribeToTopicPattern(wsDetails.socket, topicPattern);
