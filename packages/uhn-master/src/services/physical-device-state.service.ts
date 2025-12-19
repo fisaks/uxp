@@ -4,7 +4,7 @@ import { EventEmitter } from "events";
 import { subscriptionService } from "./subscription.service";
 
 
-export type SubscriptionEventMap = {
+export type StateEventMap = {
     stateChanged: [urn: string, payload: DeviceState];
 };
 
@@ -41,7 +41,7 @@ function extractEdgeDeviceFromTopic(topic: string): { edge: string; device: stri
     };
 }
 
-class PhysicalDeviceStateService extends EventEmitter<SubscriptionEventMap> {
+class PhysicalDeviceStateService extends EventEmitter<StateEventMap> {
     // Implementation of the service
     private lastDeviceStates: Map<string, DeviceState> = new Map();
     private static initialized = false;
