@@ -13,6 +13,7 @@ export * from "./utils/axiosUtil";
 export * from "./utils/urlUtil";
 export * from "./utils/fileUtil";
 export * from "./utils/dateUtil";
+export * from "./utils/equalUtil";
 export * from "./uxp/pagesRoutesApps.types";
 export * from "./general.types";
 export * from "./ws/ws.types";

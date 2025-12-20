@@ -5,3 +5,4 @@ export * from "./types/worker.type";
 export * from "./types/file.type";
 export * from "./util/data.util";
 export * from "./schemas/blueprint.schema";
+export * from "./util/resource.util";

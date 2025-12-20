@@ -19,6 +19,7 @@ export type DeviceState = {
     analogOutputs?: Buffer;
     analogInputs?: Buffer;
     raw: DeviceStatePayload;
+    emittedAt: number;
 };
 function isDeviceStatePayload(obj: unknown): obj is DeviceStatePayload {
     return (
@@ -91,7 +92,8 @@ class PhysicalDeviceStateService extends EventEmitter<StateEventMap> {
             analogInputs,
             analogOutputs,
             errors: payload.errors,
-            raw: payload
+            raw: payload,
+            emittedAt: Date.now(),
         };
 
         // URN for device: uhn:<edge>:<device>

@@ -19,8 +19,8 @@ export type DigitalInputResourceBase<
     edge: TEdge;
     device: TDevice;
     pin: TPin;
-    inputKind: TInputKind;
-    inputType: InputType;
+    inputKind: TInputKind; //defined by project like "button" | "pir" | "lightSensor" etc.
+    inputType: InputType;//"toggle" | "push"
 };
 
 // Digital Output Resource (generic)
@@ -33,7 +33,7 @@ export type DigitalOutputResourceBase<
     edge: TEdge;
     device: TDevice;
     pin: TPin;
-    outputKind: TOutputKind;
+    outputKind: TOutputKind; //defined by project like "relay" | "socket" | "light" | "indicator" etc
 };
 
 

@@ -6,6 +6,16 @@ export type ResourceErrorCode =
   | "duplicate-id"
   | "duplicate-address"
   | "missing-id"
+  | "unknown-edge"
+  | "unknown-device"
+  | "invalid-pin";
+
+export type ResourceValidationError = {
+  type: ResourceErrorCode;
+  resourceId?: string;
+  conflictingId?: string;
+  details?: string;
+};
 
 export type RuntimeResourceBase<TType extends ResourceType> =
   Omit<ResourceBase<TType>, 'id' | 'name'> & {

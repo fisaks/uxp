@@ -16,7 +16,7 @@ function humanizeConstName(name: string): string {
         .replace(/([a-z])([A-Z])/g, "$1 $2")
         .replace(/^./, c => c.toUpperCase());
 }
-function isResourceObject(obj: unknown): obj is ResourceBase<ResourceType> {
+function isResourceObject(obj: unknown): obj is RuntimeResourceBase<ResourceType> {
     return (typeof obj === "object" && obj !== null &&
         "edge" in obj && "type" in obj &&
         typeof obj.edge === "string" && typeof obj.type === "string");
