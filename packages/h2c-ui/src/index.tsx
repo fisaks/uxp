@@ -83,7 +83,14 @@ export const initApplication = (documentRoot: ShadowRoot | Document) => {
             renderApp(NextH2CApp);
         });
     }
-
+    return () => {
+        try {
+            root!.unmount();
+        } finally {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            delete (rootElement as any)[globalRootKey];
+        }
+    };
 };
 if (!window.__UXP_PORTAL__) {
     initApplication(document);

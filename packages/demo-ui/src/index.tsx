@@ -36,7 +36,7 @@ export const initApplication = (documentRoot: ShadowRoot | Document) => {
         throw new Error("Root element not found. Ensure you have an element with id 'root' in your HTML.");
     }
     __webpack_public_path__ = initializeConfig(rootElement) ?? "";
-   
+
     styleInsert.init(container);
     // Create a custom Emotion cache
     const contentId = getUxpContentId();
@@ -92,6 +92,14 @@ export const initApplication = (documentRoot: ShadowRoot | Document) => {
             );
         });
     }
+    return () => {
+        try {
+            root!.unmount();
+        } finally {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            delete (rootElement as any)[globalRootKey];
+        }
+    };
 };
 if (!window.__UXP_PORTAL__) {
     initApplication(document);

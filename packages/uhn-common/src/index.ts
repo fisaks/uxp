@@ -3,6 +3,8 @@ export * from "./types/websocket-uhn-app.type";
 export * from "./types/blueprint.type";
 export * from "./types/worker.type";
 export * from "./types/file.type";
+export * from "./types/uhn-message.type";
+export * from "./types/runtime.type";
 export * from "./util/data.util";
 export * from "./schemas/blueprint.schema";
 export * from "./util/resource.util";

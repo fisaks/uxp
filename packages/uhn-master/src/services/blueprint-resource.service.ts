@@ -1,5 +1,5 @@
 import { ResourceType } from "@uhn/blueprint";
-import { makeAddressKey, ResourceErrorCode, ResourceValidationError, RuntimeResourceBase } from "@uhn/common";
+import { makeAddressKey, ResourceErrorCode, resourceIdMatcher, ResourceList, ResourceValidationError, RuntimeResourceBase } from "@uhn/common";
 import { AppLogger } from "@uxp/bff-common";
 import { EventEmitter } from "events";
 import { BlueprintFileUtil } from "../util/blueprint-file.util";
@@ -7,7 +7,7 @@ import { blueprintRuntimeService } from "./blueprint-runtime.service";
 import { physicalCatalogService } from "./physical-catalog.service";
 import { workerService } from "./worker.service";
 
-type ResourceList = RuntimeResourceBase<ResourceType>[];
+
 export type ResourceEventMap = {
     resourcesReloaded: [resources: ResourceList, validationErrors: ResourceValidationError[]];
     error: [error: unknown];
@@ -226,8 +226,12 @@ class BlueprintResourceService extends EventEmitter<ResourceEventMap> {
                                 `Resource has invalid pin '${resource.pin}' for device '${resource.device}' on edge '${resource.edge}'.`
                             );
                         }
+                    } else if ((resource.type === "digitalInput" || resource.type === "digitalOutput") && typeof resource.pin !== "number") {
+                        addErr("missing-pin", `Resource '${resource.id ?? resource.name ?? "[unnamed]"}' is missing 'pin'.`);
                     }
                 }
+            } else {
+                addErr("missing-address", `Resource '${resource.id ?? resource.name ?? "[unnamed]"}' is missing address information (edge/device).`);
             }
 
         }
@@ -261,6 +265,17 @@ class BlueprintResourceService extends EventEmitter<ResourceEventMap> {
         return this.resources.find(r => r.id === id);
     }
 
+    findResourcesByIds(ids: string[] | undefined): ResourceList {
+        if (!ids || ids.length === 0) {
+            return [];
+        }
+        const { exact, wildcards } = resourceIdMatcher(ids);
+        return this.resources.filter(r => {
+            if (!r.id) return false;
+            if (exact.has(r.id)) return true;
+            return wildcards.some(rx => rx.test(r.id!));
+        });
+    }
 
 }
 

@@ -10,7 +10,7 @@ interface RemoteAppProps {
 declare global {
     interface Window {
         [key: `${string}`]: {
-            initApplication: (container: ShadowRoot | HTMLElement) => void;
+            initApplication: (container: ShadowRoot | HTMLElement) => undefined | (() => void);
         };
     }
 }
@@ -20,6 +20,7 @@ const fetchPromises: Record<string, Promise<any>> = {};
 const RemoteApp: React.FC<RemoteAppProps> = ({ contentUuid, basePath }) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const [contentLoaded, setContentLoaded] = useState(false);
+    const cleanupRef = useRef<(() => void) | null>(null);
     useEffect(() => {
         const fetchAndRenderApp = async () => {
             if (!containerRef.current) return;
@@ -77,7 +78,8 @@ const RemoteApp: React.FC<RemoteAppProps> = ({ contentUuid, basePath }) => {
                             });
                         }
                         fetchPromises[remoteApp].then(() => {
-                            window[remoteApp].initApplication(shadowRoot);
+                            const cleanup = window[remoteApp]?.initApplication(shadowRoot);
+                            if (typeof cleanup === "function") cleanupRef.current = cleanup;
                         });
                     } else {
                         console.log("Adding script:", contentUuid);
@@ -143,6 +145,15 @@ const RemoteApp: React.FC<RemoteAppProps> = ({ contentUuid, basePath }) => {
         };
 
         fetchAndRenderApp();
+        return () => {
+            // 🔴 unmount when RemoteApp component unmounts
+            if (cleanupRef.current) {
+                const cleanup = cleanupRef.current;
+                cleanupRef.current = null;
+                setTimeout(() => cleanup(), 0);
+
+            }
+        };
     }, [contentUuid]); // Refetch when UUID changes
 
     return (

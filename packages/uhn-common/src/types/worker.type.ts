@@ -8,7 +8,10 @@ export type ResourceErrorCode =
   | "missing-id"
   | "unknown-edge"
   | "unknown-device"
-  | "invalid-pin";
+  | "invalid-pin"
+  | "missing-pin"
+  | "missing-address";
+  
 
 export type ResourceValidationError = {
   type: ResourceErrorCode;
@@ -23,6 +26,8 @@ export type RuntimeResourceBase<TType extends ResourceType> =
     name: string;
     errors?: ResourceErrorCode[];
   };
+
+export type ResourceList = RuntimeResourceBase<ResourceType>[];
 
 export type ListResourcesCommand = {
   id: string;

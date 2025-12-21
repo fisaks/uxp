@@ -1,5 +1,5 @@
 import type { ResourceType } from "@uhn/blueprint";
-import { makeAddressKey, Range, RuntimeResourceBase } from "@uhn/common";
+import { makeAddressKey, Range, resourceIdMatcher, ResourceList, ResourceStateValue, RuntimeResourceState } from "@uhn/common";
 import { AppLogger } from "@uxp/bff-common";
 import { EventEmitter } from "events";
 
@@ -7,17 +7,9 @@ import { blueprintResourceService } from "./blueprint-resource.service";
 import { physicalCatalogService } from "./physical-catalog.service";
 import { DeviceState, physicalDeviceStateService } from "./physical-device-state.service";
 
-type ResourceStateValue = boolean | number | string | undefined;
-type ResourceList = RuntimeResourceBase<ResourceType>[];
-
 export type BlueprintRuntimeStateEventMap = {
     stateReset: [];
     resourceStateChanged: [resourceId: string, value: ResourceStateValue, timestamp: number];
-};
-type RuntimeResourceState = {
-    resourceId: string;
-    value: ResourceStateValue;
-    timestamp: number;
 };
 
 class BlueprintRuntimeStateService extends EventEmitter<BlueprintRuntimeStateEventMap> {
@@ -131,7 +123,7 @@ class BlueprintRuntimeStateService extends EventEmitter<BlueprintRuntimeStateEve
             const bit = pin % 8;
 
             const byte = bytes[byteIndex];
-            if (typeof byte !== "number") continue;
+            if (byte === undefined) continue;
 
             const key = makeAddressKey({
                 edge: deviceState.edge, device: deviceState.device, type, pin
@@ -156,12 +148,12 @@ class BlueprintRuntimeStateService extends EventEmitter<BlueprintRuntimeStateEve
         timestamp: number
     ) {
         const prev = this.stateByResourceId.get(resourceId);
-        if (prev && prev.value === value && prev.timestamp >= timestamp) {
-            return;
-        }
+        if (prev && prev.timestamp >= timestamp) return;
 
         this.stateByResourceId.set(resourceId, { resourceId, value, timestamp });
-        this.emit("resourceStateChanged", resourceId, value, timestamp);
+        if (!prev || prev.value !== value) {
+            this.emit("resourceStateChanged", resourceId, value, timestamp);
+        }
 
         AppLogger.isDebugLevel() &&
             AppLogger.debug({
@@ -178,6 +170,23 @@ class BlueprintRuntimeStateService extends EventEmitter<BlueprintRuntimeStateEve
         return this.stateByResourceId.get(resourceId);
     }
 
+    getResourceStates(resourceIds: string[]) {
+        const states: RuntimeResourceState[] = [];
+        if (!resourceIds || resourceIds.length === 0) {
+            return states;
+        }
+        const { exact, wildcards } = resourceIdMatcher(resourceIds);
+        for (const id of exact) {
+            const s = this.stateByResourceId.get(id);
+            if (s) states.push(s);
+        }
+        if (wildcards.length) {
+            for (const [id, s] of this.stateByResourceId) {
+                if (!exact.has(id) && wildcards.some(rx => rx.test(id))) states.push(s);
+            }
+        }
+        return states;
+    }
     getResourceStateByUrn(urn: string) {
         const resourceId = this.resourceIdByAddress.get(urn);
         return resourceId ? this.stateByResourceId.get(resourceId) : undefined;

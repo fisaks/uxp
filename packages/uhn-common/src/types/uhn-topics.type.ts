@@ -17,7 +17,7 @@ export type TopicActionPayloadRequestMap = {
 
 }
 
-export type DocumentActionPayloadResponseMap = {
+export type TopicActionPayloadResponseMap = {
     "topic:message": TopicMessagePayload
     "topic:subscribe": TopicPatternPayload
     "topic:unsubscribe": TopicPatternPayload
@@ -27,9 +27,10 @@ export const TopicPatternSchema: MessagePayloadSchema<TopicPatternPayload> = {
 
     type: 'object',
     properties: {
-        topicPattern: { type: 'string' },
+        topicPattern: { type: 'string', minLength: 1, maxLength: 256 },
     },
-    required: ['topicPattern']
+    required: ['topicPattern'],
+    additionalProperties: false
 }
 
 export type CatalogPayload = {

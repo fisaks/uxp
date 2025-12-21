@@ -1,6 +1,6 @@
 import { WebSocketAction } from "@uxp/common";
 import { useEffect, useRef } from "react";
-import { BrowserWebSocketManager, ErrorHandler, ReconnectDetails, ReconnectListener, WebSocketResponseEventHandler, WebSocketResponseListenerObj } from "./BrowserWebSocketManager";
+import { BrowserWebSocketManager, ErrorHandler, OnConnectListener, ReconnectDetails, ReconnectListener, WebSocketResponseEventHandler, WebSocketResponseListenerObj } from "./BrowserWebSocketManager";
 import { WebSocketContext } from "./WebSocketContext";
 
 
@@ -14,6 +14,7 @@ interface WebSocketProviderProps<
     listeners: WebSocketResponseListenerObj<ActionPayloadResponseMap>
     onError: ErrorHandler<ActionPayloadRequestMap, ActionPayloadResponseMap>,
     reconnectListener?: ReconnectListener;
+    onConnect?: OnConnectListener;
     children: React.ReactNode;
 }
 
@@ -22,28 +23,26 @@ export const WebSocketProvider = <ActionPayloadRequestMap, ActionPayloadResponse
     listeners,
     onError,
     reconnectListener,
+    onConnect,
     children,
 }: WebSocketProviderProps<ActionPayloadRequestMap, ActionPayloadResponseMap>) => {
-    const eventHandlersAttached = useRef(false);
+
 
     useEffect(() => {
-        wsInstance.connect();
-        if (!eventHandlersAttached.current) {
-            eventHandlersAttached.current = true;
-            console.info("[WebSocketProvider] Attaching event handlers");
-            Object.entries(listeners).forEach(([action, handler]) => {
-                wsInstance.onMessage(action as WebSocketAction<ActionPayloadResponseMap>,
-                    handler as WebSocketResponseEventHandler<WebSocketAction<ActionPayloadResponseMap>, ActionPayloadResponseMap>);
-            })
-        }
 
+        console.info("[WebSocketProvider] Attaching event handlers");
+        Object.entries(listeners).forEach(([action, handler]) => {
+            wsInstance.onMessage(action as WebSocketAction<ActionPayloadResponseMap>,
+                handler as WebSocketResponseEventHandler<WebSocketAction<ActionPayloadResponseMap>, ActionPayloadResponseMap>);
+        });
+
+        wsInstance.connect();
         return () => {
             console.info("[WebSocketProvider] DeAttaching event handlers");
             Object.entries(listeners).forEach(([action, handler]) => {
                 wsInstance.offMessage(action as WebSocketAction<ActionPayloadResponseMap>,
                     handler as WebSocketResponseEventHandler<WebSocketAction<ActionPayloadResponseMap>, ActionPayloadResponseMap>);
             });
-            eventHandlersAttached.current = false;
 
             wsInstance.disconnect();
         };
@@ -66,6 +65,15 @@ export const WebSocketProvider = <ActionPayloadRequestMap, ActionPayloadResponse
         };
     }, [wsInstance, reconnectListener]);
 
+    useEffect(() => {
+        if (onConnect) {
+            wsInstance.onConnect(onConnect);
+        }
+        return () => {
+            if (onConnect)
+                wsInstance.offConnect(onConnect)
+        };
+    }, [wsInstance, onConnect]);
     return <WebSocketContext.Provider value={{ wsInstance }}>
         {children}
     </WebSocketContext.Provider>

@@ -11,6 +11,9 @@ import "./app/remoteAppBroadcaster";
 // Get the root element in the HTML
 const rootElement = document.getElementById("root");
 
+
+const ENABLE_STRICT_MODE = false;
+
 // Ensure the root element exists before rendering
 if (!rootElement) {
     throw new Error("Root element not found. Ensure you have an element with id 'root' in your HTML.");
@@ -22,29 +25,31 @@ const root = ReactDOM.createRoot(rootElement);
 const cache = createCache({ key: "uxp", prepend: true });
 
 // Render the App component
-root.render(
-    <React.StrictMode>
+const renderApp = (AppComponent: React.ComponentType) => {
+    const AppTree = (
         <CacheProvider value={cache}>
             <Provider store={store}>
-                <UxpApp />
+                <AppComponent />
             </Provider>
         </CacheProvider>
-    </React.StrictMode>
-);
+    );
+
+    const RootApp = ENABLE_STRICT_MODE ? (
+        <React.StrictMode>{AppTree}</React.StrictMode>
+    ) : (
+        AppTree
+    );
+
+    root.render(RootApp);
+}
+renderApp(UxpApp);
+
 
 declare const module: __WebpackModuleApi.Module;
 
 if (process.env.NODE_ENV === "development" && module.hot) {
     module.hot.accept("./UxpApp", () => {
         const NextUxpApp = require("./UxpApp").default;
-        root.render(
-            <React.StrictMode>
-                <CacheProvider value={cache}>
-                    <Provider store={store}>
-                        <NextUxpApp />
-                    </Provider>
-                </CacheProvider>
-            </React.StrictMode>
-        );
+          renderApp(NextUxpApp);
     });
 }

@@ -19,7 +19,12 @@ export type ReconnectDetails = {
     reconnectAttempts: number;
     maxReconnectAttempts: number;
 }
+export type ConnectDetails = {
+    kind: "initial" | "reconnect";
+    url: string;
+};
 export type ReconnectListener = (details: ReconnectDetails) => void
+export type OnConnectListener = (details: ConnectDetails) => void;
 export class WebSocketTimeoutError<ActionPayloadRequestMap, ActionPayloadResponseMap> extends Error {
     action: WebSocketActionUnion<ActionPayloadRequestMap, ActionPayloadResponseMap>;
     timeoutMs: number;
@@ -88,6 +93,7 @@ export class BrowserWebSocketManager<
     private errorHandlers: ErrorHandler<ActionPayloadRequestMap, ActionPayloadResponseMap>[] = [];
     private globalErrorHandler?: ErrorHandler<ActionPayloadRequestMap, ActionPayloadResponseMap>;
     private reconnectListeners: ReconnectListener[] = [];
+    private connectListeners: OnConnectListener[] = [];
 
     protected constructor(protected url: string) { }
 
@@ -106,15 +112,21 @@ export class BrowserWebSocketManager<
                 clearTimeout(this.reconnectTimeoutId);
                 this.reconnectTimeoutId = null;
             }
-            if (this.isReconnecting) {
+            const wasReconnecting = this.isReconnecting;
+            this.isConnected = true;
+            if (wasReconnecting) {
                 this.handleReconnect({
                     phase: "success",
                     reconnectAttempts: this.reconnectAttempts,
                     maxReconnectAttempts: this.maxReconnectAttempts
                 });
             }
+
+            this.handleConnect({
+                kind: wasReconnecting ? "reconnect" : "initial",
+                url: this.url
+            });
             this.reconnectAttempts = 0;
-            this.isConnected = true;
             this.isReconnecting = false;
             this.reconnectTimeout = INITIAL_RECONNECT_TIMEOUT;
 
@@ -153,6 +165,7 @@ export class BrowserWebSocketManager<
             }
             this.reconnect();
         };
+
     }
 
     private handleError(
@@ -183,6 +196,15 @@ export class BrowserWebSocketManager<
                 listener(details);
             } catch (error) {
                 console.error("[WebSocket] Error in reconnect listener:", error);
+            }
+        });
+    }
+    private handleConnect(details: ConnectDetails) {
+        this.connectListeners.forEach((listener) => {
+            try {
+                listener(details);
+            } catch (error) {
+                console.error("[WebSocket] Error in connect listener:", error);
             }
         });
     }
@@ -444,7 +466,14 @@ export class BrowserWebSocketManager<
     offReconnect(handler: ReconnectListener) {
         this.reconnectListeners = this.reconnectListeners.filter((h) => h !== handler);
     }
-
+    onConnect(handler: OnConnectListener) {
+        if (!this.connectListeners.includes(handler)) {
+            this.connectListeners.push(handler);
+        }
+    }
+    offConnect(handler: OnConnectListener) {
+        this.connectListeners = this.connectListeners.filter((h) => h !== handler);
+    }
     getConnectionStatus() {
         return this.isConnected;
     }
