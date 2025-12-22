@@ -55,7 +55,7 @@ export function registerRemoteWebSocketHandler({ fastify: app, dataSource }: { f
                 return sendErrorAndClose(clientSocket, request, `uxp/remote_connection`,
                     {
                         code: ErrorCodes.INTERNAL_SERVER_ERROR,
-                        message: `Failed to connect to remote WebSocket`,
+                        message: `Failed to connect to remote app ${app.name || "unknown"} WebSocket`,
                     }
                 );
             }
@@ -106,9 +106,10 @@ const sendErrorAndClose = (socket: WebSocket, request: FastifyRequest, action: s
 const connectToRemoteApp = async (request: FastifyRequest, app: AppEntity, maxRetries = MAX_CONNECT_ATTEMPTS): Promise<WebSocket | null> => {
     const wsurl = buildPath(app.baseUrl, app.config.contextPath, app.config.wsPath ?? "/ws-api");
     let attempt = 0;
+    const name = app.name || "unknown";
     while (attempt < maxRetries) {
 
-        AppLogger.info(request, { message: `Connecting to remote WebSocket: ${wsurl}` });
+        AppLogger.info(request, { message: `Connecting to remote app ${name} WebSocket: ${wsurl}` });
 
         const ws = new WebSocket(wsurl, {
             headers: {
@@ -120,20 +121,20 @@ const connectToRemoteApp = async (request: FastifyRequest, app: AppEntity, maxRe
         try {
             const connectedSocket = await new Promise<WebSocket>((resolve, reject) => {
                 const onError = (error: Error) => {
-                    AppLogger.error(request, { message: "Remote WebSocket connection error", error });
+                    AppLogger.error(request, { message: `Remote app ${name} WebSocket connection error`, error });
                     ws.off("open", onOpen);
                     ws.off("close", onClose);
                     ws.close();
                     reject(null);
                 }
                 const onClose = () => {
-                    AppLogger.warn(request, { message: `Remote WebSocket closed during connection attempt` });
+                    AppLogger.warn(request, { message: `Remote app ${name} WebSocket closed during connection attempt` });
                     ws.off("error", onError);
                     ws.off("open", onOpen);
                     reject(null);
                 }
                 const onOpen = () => {
-                    AppLogger.info(request, { message: `Connected to remote WebSocket: ${wsurl}` });
+                    AppLogger.info(request, { message: `Connected to remote app ${name} WebSocket: ${wsurl}` });
                     ws.off("error", onError);
                     ws.off("close", onClose);
                     resolve(ws);
@@ -146,17 +147,17 @@ const connectToRemoteApp = async (request: FastifyRequest, app: AppEntity, maxRe
             });
             return connectedSocket;
         } catch (error) {
-            AppLogger.error(request, { message: `WebSocket connection attempt ${attempt + 1} failed`, error });
+            AppLogger.error(request, { message: `WebSocket connection to remote app ${name} attempt ${attempt + 1} failed`, error });
         }
 
         attempt++;
         if (attempt < maxRetries) {
-            AppLogger.warn(request, { message: `Retrying WebSocket connection... (${attempt}/${maxRetries})` });
+            AppLogger.warn(request, { message: `Retrying WebSocket connection to remote app ${name} ... (${attempt}/${maxRetries})` });
             await new Promise((res) => setTimeout(res, RETRY_DELAY)); // Wait before retrying
         }
     }
 
-    AppLogger.error(request, { message: "Max WebSocket connection attempts reached" });
+    AppLogger.error(request, { message: `Max WebSocket connection attempts reached for remote app ${name}` });
     return null;
 };
 
@@ -203,7 +204,7 @@ const removeSocketFromActiveSessions = (request: FastifyRequest, clientSocket: W
     }
 }
 
-const setupPingPong = (socket: WebSocket, request: FastifyRequest, socketType: "client" | "remote") => {
+const setupPingPong = (socket: WebSocket, request: FastifyRequest, socketType: "client" | "remote", appName: string) => {
     const PONG_TIMEOUT = 10000; // Wait max 10s for pong response
     let pongReceived = true;
     let pongTimeout: NodeJS.Timeout | undefined = undefined;
@@ -216,18 +217,18 @@ const setupPingPong = (socket: WebSocket, request: FastifyRequest, socketType: "
     const ping = () => {
         if (socket.readyState === WebSocket.OPEN) {
             pongReceived = false;
-            AppLogger.debug(request, { message: `Sending ping to ${socketType} WebSocket` });
+            AppLogger.trace(request, { message: `Sending ping to ${socketType} WebSocket for ${appName}` });
             socket.ping();
             pongTimeout = setTimeout(() => {
                 if (!pongReceived) {
-                    AppLogger.warn(request, { message: `WebSocket ${socketType} unresponsive, closing connection` });
+                    AppLogger.warn(request, { message: `WebSocket ${socketType} unresponsive for ${appName}, closing connection` });
                     closeSocket(socket);
                 }
             }, PONG_TIMEOUT);
         }
     }
     socket.on("pong", () => {
-        AppLogger.debug(request, { message: `Received pong from ${socketType} WebSocket` });
+        AppLogger.trace(request, { message: `Received pong from ${socketType} WebSocket for ${appName}` });
         pongReceived = true;
         clearPong();
     });
@@ -243,7 +244,7 @@ const CLIENT = 0, REMOTE = 1;
 
 function setupWebSocketProxy(clientSocket: WebSocket, remoteSocket: WebSocket, request: FastifyRequest, app: AppEntity) {
     const PING_INTERVAL = 30000; // Ping every 30 seconds
-    const sockets = [setupPingPong(clientSocket, request, "client"), setupPingPong(remoteSocket, request, "remote")];
+    const sockets = [setupPingPong(clientSocket, request, "client", app.name!), setupPingPong(remoteSocket, request, "remote", app.name!)];
 
     const messageHandlers = {
         clientToRemote: createMessageForwarding(sockets[CLIENT].socket, sockets[REMOTE].socket),
@@ -258,33 +259,33 @@ function setupWebSocketProxy(clientSocket: WebSocket, remoteSocket: WebSocket, r
 
     const stopMessageForwarding = () => {
         const [client, remote] = sockets;
-        AppLogger.debug(request, { message: "Stopping message forwarding" });
+        AppLogger.debug(request, { message: `Stopping message forwarding for remote app ${app.name}` });
         client.socket.off("message", messageHandlers.clientToRemote);
         remote.socket.off("message", messageHandlers.remoteToClient);
     }
     const startMessageForwarding = () => {
-        AppLogger.debug(request, { message: "Starting message forwarding" });
+        AppLogger.debug(request, { message: `Starting message forwarding for remote app ${app.name}` });
         const [client, remote] = sockets;
         remote.socket.on("message", messageHandlers.remoteToClient);
         client.socket.on("message", messageHandlers.clientToRemote);
     }
     const onRemoteError = (error: Error) => {
-        AppLogger.error(request, { message: "Remote WebSocket error", error });
+        AppLogger.error(request, { message: `Remote WebSocket error for remote app ${app.name}`, error });
         if (isFatalWebSocketError(error)) {
             closeSockets();
         }
     }
     const onClientError = (error: Error) => {
-        AppLogger.error(request, { message: "Client WebSocket error", error });
+        AppLogger.error(request, { message: `Client WebSocket error for remote app ${app.name}`, error });
         if (isFatalWebSocketError(error)) {
             closeSockets();
         }
     }
 
     function closeSockets() {
-        AppLogger.debug(request, { message: "Closing WebSocket connections" });
+        AppLogger.debug(request, { message: `Closing WebSocket connections for remote app ${app.name}` });
         clearInterval(pingInterval);
-        removeSocketFromActiveSessions(request, sockets[CLIENT].socket);
+        sockets[CLIENT] && removeSocketFromActiveSessions(request, sockets[CLIENT].socket);
         sockets.forEach(socket => {
             socket.clearPong();
             socket.socket.removeAllListeners();
@@ -294,7 +295,7 @@ function setupWebSocketProxy(clientSocket: WebSocket, remoteSocket: WebSocket, r
         sockets.length = 0;
     }
     const remoteClose = async () => {
-        AppLogger.warn(request, { message: "Remote WebSocket closed, attempting reconnection" });
+        AppLogger.warn(request, { message: `Remote WebSocket closed for remote app ${app.name}, attempting reconnection` });
         const [client, remote] = sockets;
         remote.clearPong();
         stopMessageForwarding();
@@ -304,7 +305,7 @@ function setupWebSocketProxy(clientSocket: WebSocket, remoteSocket: WebSocket, r
             client.socket.send(
                 createErrorMessageResponse(request, "uxp/remote_connection", {
                     code: ErrorCodes.DISCONNECTED,
-                    message: "Remote WebSocket closed",
+                    message: `Remote WebSocket closed for remote app ${app.name}`,
                 }, undefined)
             );
 
@@ -319,7 +320,7 @@ function setupWebSocketProxy(clientSocket: WebSocket, remoteSocket: WebSocket, r
                     action: "uxp/remote_connection",
                 }));
             sockets[REMOTE].socket.removeAllListeners();
-            const newRemote = setupPingPong(newRemoteSocket, request, "remote");
+            const newRemote = setupPingPong(newRemoteSocket, request, "remote", app.name!);
             newRemote.socket.on("error", onRemoteError);
             sockets[REMOTE] = newRemote;
             messageHandlers.clientToRemote = createMessageForwarding(client.socket, newRemote.socket);

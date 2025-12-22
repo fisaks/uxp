@@ -46,7 +46,7 @@ type ErrorLogArgs =
     | [requestMeta: FastifyRequest | RequestMetaData | undefined, payload: ErrorLogMessage]
     | [payload: ErrorLogMessage]; // con
 
-export type LogLevel="fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent"; 
+export type LogLevel = "fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent";
 export class AppLogger {
     private static fastifyLogger: FastifyInstance["log"] | typeof console;
     private static level: LogLevel = "info";
@@ -103,7 +103,7 @@ export class AppLogger {
         };
     }
 
-    private static log(request: FastifyRequest | RequestMetaData | undefined, level: "info" | "warn" | "error" | "debug", message: ErrorLogMessage) {
+    private static log(request: FastifyRequest | RequestMetaData | undefined, level: "info" | "warn" | "error" | "debug" | "trace", message: ErrorLogMessage) {
         this.ensureInitialized();
 
         const metadata = !request ? {} : this.isRequestMetaData(request) ? request : this.extractMetadata(request) ?? {};
@@ -112,7 +112,7 @@ export class AppLogger {
         this.fastifyLogger[level](data, message.message, ...(message.args ?? []));
     }
     public static extractRequestMetaFromArgs(args: InfoLogArgs): [RequestMetaData | undefined, LogMessage | ErrorLogMessage] {
-        if (args.length === 2 ) {
+        if (args.length === 2) {
             return [args[0] as RequestMetaData | undefined, args[1]];
         } else if (args.length === 1) {
             const ctx = getRequestContext();
@@ -131,7 +131,7 @@ export class AppLogger {
         const [request, message] = this.extractRequestMetaFromArgs(args);
         this.log(request, "warn", message);
     }
-    
+
     public static error(...args: ErrorLogArgs) {
         const [request, message] = this.extractRequestMetaFromArgs(args);
         this.log(request, "error", message);
@@ -141,8 +141,15 @@ export class AppLogger {
         const [request, message] = this.extractRequestMetaFromArgs(args);
         this.log(request, "debug", message);
     }
+    public static trace(...args: InfoLogArgs) {
+        const [request, message] = this.extractRequestMetaFromArgs(args);
+        this.log(request, "trace", message);
+    }
     public static isDebugLevel(): boolean {
-        return this.level === "debug" || this.level === "trace";
+        return this.level === "debug" || this.isTraceLevel();
+    }   
+    public static isTraceLevel(): boolean {
+        return this.level === "trace";
     }
 
     /*    public static infoMessage(request: FastifyRequest | RequestMetaData | undefined, message: string, ...args: unknown[]) {

@@ -12,6 +12,7 @@
         "build": "pnpm tsc --build",
         "trace": "pnpm tsc --traceResolution",
         "dev": "pnpm ts-node-dev --project ./tsconfig.json --debounce 500 --poll --respawn src/uhn.master.ts",
+        "dev-debug": "pnpm ts-node-dev --project ./tsconfig.json --inspect=0.0.0.0:9229 --transpile-only --respawn src/uhn.master.ts",
         "clean": "pnpm rimraf --glob -v dist tsconfig.tsbuildinfo build_types",
         "lint": "pnpm eslint .",
         "lint:fix": "pnpm eslint . --fix",

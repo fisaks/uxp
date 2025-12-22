@@ -63,10 +63,17 @@ export const WebSocketConfig: React.FC<WebSocketConfigProps> = ({ children }) =>
     const onReconnect: ReconnectListener = useCallback((details: ReconnectDetails) => {
         console.log("WebSocket Reconnect", details);
         setReconnectDetails(details);
+        if (details.connected) {
+            ws.sendMessage({ action: "uhn:subscribe", payload: { patterns: ["resource/*", "state/*"] } });
+            connected.current = true;
+        } else {
+            connected.current = false;
+        }
 
     }, [])
-    const onConnect: OnConnectListener = useCallback((details) => {
-        console.log("WebSocket Connected", details);
+    const onConnect: OnConnectListener = useCallback(() => {
+        console.log("WebSocket Connected");
+
         ws.sendMessage({ action: "uhn:subscribe", payload: { patterns: ["resource/*", "state/*"] } });
         connected.current = true;
     }, []);
@@ -74,15 +81,6 @@ export const WebSocketConfig: React.FC<WebSocketConfigProps> = ({ children }) =>
         ws.clearReconnectDetails();
         ws.connect();
     }, [ws])
-
-    useEffect(() => {
-        console.log("WebSocketConfig mounted, subscribing to UHN patterns");
-        return () => {
-            ws.sendMessage({ action: "uhn:unsubscribe", payload: { patterns: ["resource/*", "state/*"] } });
-            console.log("WebSocketConfig unmounted, unsubscribed from UHN patterns");
-        }
-    }, []);
-
 
     return <>
         <ReconnectOverlay details={reconnectDetails} onRetryNow={retry} />

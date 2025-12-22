@@ -87,7 +87,7 @@ class BlueprintRuntimeStateService extends EventEmitter<BlueprintRuntimeStateEve
             deviceState.device
         );
         // Digital inputs
-        if (deviceState.digitalInputs) {
+        if (deviceState.digitalInputs !== undefined) {
             this.processPins(
                 deviceState,
                 "digitalInput",
@@ -97,7 +97,7 @@ class BlueprintRuntimeStateService extends EventEmitter<BlueprintRuntimeStateEve
         }
 
         // Digital outputs
-        if (deviceState.digitalOutputs) {
+        if (deviceState.digitalOutputs !== undefined) {
             this.processPins(
                 deviceState,
                 "digitalOutput",
@@ -151,15 +151,17 @@ class BlueprintRuntimeStateService extends EventEmitter<BlueprintRuntimeStateEve
         if (prev && prev.timestamp >= timestamp) return;
 
         this.stateByResourceId.set(resourceId, { resourceId, value, timestamp });
-        if (!prev || prev.value !== value) {
-            this.emit("resourceStateChanged", resourceId, value, timestamp);
-        }
-
         AppLogger.isDebugLevel() &&
             AppLogger.debug({
                 message: `[BlueprintRuntimeStateService] Resource '${resourceId}' state changed`,
-                object: { value, timestamp },
+                object: { prevValue:prev?.value, value, timestamp },
             });
+        if (!prev || prev.value !== value) {
+            this.emit("resourceStateChanged", resourceId, value, timestamp);
+
+        }
+
+
     }
 
     /* -------------------------------------------------- */

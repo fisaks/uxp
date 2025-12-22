@@ -156,7 +156,7 @@ const setupPingPong = (socketDetails: WebSocketDetails) => {
     }
     const stopPingPong = () => {
         if (!stopPing) {
-            AppLogger.info(requestMeta, { message: "Received ping from client, stopping automatic pings" });
+            AppLogger.info(requestMeta, { message: "Received ping from client, stopping automatic pings. UXP is providing pings." });
             stopPing = true;
             clearPing();
             clearPong()
@@ -173,7 +173,7 @@ const setupPingPong = (socketDetails: WebSocketDetails) => {
         if (socket.readyState !== socket.OPEN) return;
 
         pongReceived = false;
-        AppLogger.debug(requestMeta, { message: `Sending ping to client` });
+        AppLogger.trace(requestMeta, { message: `Sending ping to client` });
         socket.ping();
 
         // **Set a timeout to check if pong is received in time**
@@ -188,7 +188,7 @@ const setupPingPong = (socketDetails: WebSocketDetails) => {
     pingInterval = setInterval(sendPing, PING_INTERVAL);
 
     socket.on("pong", () => {
-        AppLogger.debug(requestMeta, { message: "Pong received from client" });
+        AppLogger.trace(requestMeta, { message: "Pong received from client" });
         pongReceived = true;
         clearPong()
     });

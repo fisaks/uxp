@@ -15,6 +15,7 @@
         "start:h2c-bff": "pnpm --filter=@h2c/bff dev ",
         "start:uhn-app": "pnpm --filter=@uhn/ui start ",
         "start:uhn-master": "pnpm --filter=@uhn/master dev ",
+        "debug:uhn-master": "pnpm --filter=@uhn/master dev-debug ",
         "start:demo-app": "pnpm --filter=@uxp/demo-ui start ",
         "start:demo-bff": "pnpm --filter=@uxp/demo-bff dev ",
         "lint": "eslint packages/**",

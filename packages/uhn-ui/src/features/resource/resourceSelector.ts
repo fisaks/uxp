@@ -12,7 +12,7 @@ export const selectResourcesWithState = createSelector(
     [selectAllResources, selectRuntimeState],
     (resources, runtimeState) =>
         resources.map(resource => ({
-            ...resource,
+            resource,
             state: runtimeState.byResourceId[resource.id],
         }))
 );

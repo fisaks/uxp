@@ -6,6 +6,7 @@ import { getBaseRoutePath } from "./config";
 import { UploadBlueprintPage } from "./features/blueprint/pages/UploadBlueprintPage";
 import { TopicTracePage } from "./features/topic-trace/pages/TopicTracePage";
 import { BlueprintListPage } from "./features/blueprint/pages/BlueprintListPage";
+import { ResourcePage } from "./features/resource/pages/ResourcePage";
 
 export const UHNBody = () => {
     const theme = useTheme();
@@ -38,6 +39,14 @@ export const UHNBody = () => {
                         active: location.pathname === "/blueprints/upload",
                     },
                 ]
+            },
+            {
+                label: "Resources",
+                link: "/resources",
+                component: Link,
+                componentProp: "to",
+                active: location.pathname === "/resources",
+
             }
 
         ];
@@ -51,6 +60,7 @@ export const UHNBody = () => {
                     <Route path="/topic-trace" element={<TopicTracePage />} />
                     <Route path="/blueprints" element={<BlueprintListPage />} />
                     <Route path="/blueprints/upload" element={<UploadBlueprintPage />} />
+                    <Route path="/resources" element={<ResourcePage />} />
                     <Route path="*" element={<TopicTracePage />} />
                 </Routes>
 

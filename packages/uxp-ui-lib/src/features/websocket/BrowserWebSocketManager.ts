@@ -18,6 +18,7 @@ export type ReconnectDetails = {
     delay?: number;
     reconnectAttempts: number;
     maxReconnectAttempts: number;
+    connected: boolean
 }
 export type ConnectDetails = {
     kind: "initial" | "reconnect";
@@ -118,7 +119,8 @@ export class BrowserWebSocketManager<
                 this.handleReconnect({
                     phase: "success",
                     reconnectAttempts: this.reconnectAttempts,
-                    maxReconnectAttempts: this.maxReconnectAttempts
+                    maxReconnectAttempts: this.maxReconnectAttempts,
+                    connected: true
                 });
             }
 
@@ -159,7 +161,8 @@ export class BrowserWebSocketManager<
                 this.handleReconnect({
                     phase: "failed",
                     reconnectAttempts: this.reconnectAttempts,
-                    maxReconnectAttempts: this.maxReconnectAttempts
+                    maxReconnectAttempts: this.maxReconnectAttempts,
+                    connected: false
                 });
 
             }
@@ -225,13 +228,15 @@ export class BrowserWebSocketManager<
                     this.handleReconnect({
                         phase: message.error?.code === ErrorCodes.DISCONNECTED ? "remote_recovering" : "remote_down",
                         reconnectAttempts: 1,
-                        maxReconnectAttempts: 1
+                        maxReconnectAttempts: 1,
+                        connected: false
                     });
                 } else {
                     this.handleReconnect({
                         phase: "remote_up",
                         reconnectAttempts: 1,
-                        maxReconnectAttempts: 1
+                        maxReconnectAttempts: 1,
+                        connected: true
                     });
                 }
             }
@@ -319,13 +324,15 @@ export class BrowserWebSocketManager<
             phase: "scheduled",
             delay,
             reconnectAttempts: this.reconnectAttempts,
-            maxReconnectAttempts: this.maxReconnectAttempts
+            maxReconnectAttempts: this.maxReconnectAttempts,
+            connected: false
         });
         this.reconnectTimeoutId = setTimeout(() => {
             this.handleReconnect({
                 phase: "trying",
                 reconnectAttempts: this.reconnectAttempts,
-                maxReconnectAttempts: this.maxReconnectAttempts
+                maxReconnectAttempts: this.maxReconnectAttempts,
+                connected: false
             });
             this.connect();
         }, delay);
