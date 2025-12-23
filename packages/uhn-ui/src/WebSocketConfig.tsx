@@ -73,9 +73,13 @@ export const WebSocketConfig: React.FC<WebSocketConfigProps> = ({ children }) =>
     }, [])
     const onConnect: OnConnectListener = useCallback(() => {
         console.log("WebSocket Connected");
-
+        // Delay subscription slightly to allow the underlying WebSocket connection/handshake
+        // to fully settle before sending subscribe messages, avoiding intermittent race conditions.
+        setTimeout(() => {
         ws.sendMessage({ action: "uhn:subscribe", payload: { patterns: ["resource/*", "state/*"] } });
-        connected.current = true;
+        connected.current = true;    
+        }, 500);
+        
     }, []);
     const retry = useCallback(() => {
         ws.clearReconnectDetails();

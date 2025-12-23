@@ -161,7 +161,6 @@ class BlueprintRuntimeStateService extends EventEmitter<BlueprintRuntimeStateEve
 
         }
 
-
     }
 
     /* -------------------------------------------------- */

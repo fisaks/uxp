@@ -5,9 +5,10 @@ import React from "react";
 type BodyContentProps = {
     children: React.ReactNode;
     isDesktop: boolean;
+    isMobile: boolean;
     haveLeftSideBar: boolean;
 };
-export const MainBodyContent: React.FC<BodyContentProps> = ({ children, isDesktop, haveLeftSideBar }) => {
+export const MainBodyContent: React.FC<BodyContentProps> = ({ children, isDesktop, haveLeftSideBar, isMobile }) => {
     const query = useQuery();
     const printView = query.get("printView") === "true";
     return (
@@ -15,9 +16,9 @@ export const MainBodyContent: React.FC<BodyContentProps> = ({ children, isDeskto
             id="uxp-main-body-content"
             sx={{
                 flexGrow: 1,
-                p: printView ? 0: 3,
+                p: printView ? 0 : 3,
                 ml: isDesktop && haveLeftSideBar ? "15rem" : 0,
-                pt: printView ? 0 : 8, // Space below the AppBar
+                pt: printView ? 0 : isMobile ? 8 : 9, // Space below the AppBar
             }}
         >
             {children}

@@ -23,7 +23,7 @@ export const BlueprintListPage: React.FC = () => {
     error
 
     return (
-        <Box sx={{ p: 3 }}>
+        <Box>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <Typography variant="h1">Blueprints</Typography>
                 <ReloadIconButton isLoading={isFetching} reload={refetch} />
@@ -32,7 +32,7 @@ export const BlueprintListPage: React.FC = () => {
                     <HistoryIcon />
                 </IconButton>
             </Box>
-            <Box p={2}>
+            <Box mt={2}>
                 <Paper elevation={3} sx={{
                     mt: 2,
                     p: 3,

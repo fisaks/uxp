@@ -8,6 +8,7 @@ export const selectResourceById = createSelector(selectResourceState, (resourceS
 export const selectAllResources = createSelector(selectResourceState, (resourceState) => resourceState.allIds.map(id => resourceState.byId[id]));
 export const selectResourcesIsLoaded = createSelector(selectResourceState, (resourceState) => resourceState.isLoaded);
 
+
 export const selectResourcesWithState = createSelector(
     [selectAllResources, selectRuntimeState],
     (resources, runtimeState) =>

@@ -26,7 +26,7 @@ export const TopicTracePage: React.FC = () => {
     }, [messages.length]);
 
     return (
-        <Box sx={{ p: 2, bgcolor: "background.default" }}>
+        <Box>
             <Typography variant="h5" gutterBottom>
                 MQTT/WebSocket Trace
             </Typography>

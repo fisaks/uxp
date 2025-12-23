@@ -16,6 +16,7 @@ export const MainPageLayout: React.FC<PageWrapperProps> = ({ children, pageType,
     const theme = useTheme();
 
     const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
+    const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
     const haveLeftSideBar = useMemo(() => !!(pageType === "leftNavigation" && leftSideBar?.menuItems?.length), [pageType, leftSideBar]);
 
@@ -23,7 +24,7 @@ export const MainPageLayout: React.FC<PageWrapperProps> = ({ children, pageType,
         <>
             {haveLeftSideBar && <LeftSideBar isDesktop={isDesktop} menuItems={leftSideBar!.menuItems} />}
 
-            <MainBodyContent isDesktop={isDesktop} haveLeftSideBar={haveLeftSideBar}>
+            <MainBodyContent isDesktop={isDesktop} haveLeftSideBar={haveLeftSideBar} isMobile={isMobile}>
                 {children}
             </MainBodyContent>
         </>

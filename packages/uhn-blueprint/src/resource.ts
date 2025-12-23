@@ -9,11 +9,15 @@ export type ResourceBase<TType extends ResourceType> = {
     pin?: number;
 };
 export type InputType = "toggle" | "push";
+export type BaseInputKind = "button" | "pir" | "lightSensor";
+export type BaseOutputKind = "relay" | "socket" | "light" | "indicator";
+export type InputKind = BaseInputKind | (string & {});
+export type OutputKind = BaseOutputKind | (string & {});
 // Digital Input Resource (generic)
 export type DigitalInputResourceBase<
-    TInputKind extends string = string,
+    TInputKind extends InputKind = InputKind,
     TEdge extends string = string,
-    TDevice extends string | number = string | number,
+    TDevice extends string | number = string ,
     TPin extends number = number
 > = ResourceBase<"digitalInput"> & {
     edge: TEdge;
@@ -25,9 +29,9 @@ export type DigitalInputResourceBase<
 
 // Digital Output Resource (generic)
 export type DigitalOutputResourceBase<
-    TOutputKind extends string = string,
+    TOutputKind extends OutputKind = OutputKind,
     TEdge extends string = string,
-    TDevice extends string | number = string | number,
+    TDevice extends string | number = string ,
     TPin extends number = number
 > = ResourceBase<"digitalOutput"> & {
     edge: TEdge;

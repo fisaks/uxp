@@ -47,7 +47,7 @@ export const UploadBlueprintPage = () => {
         dispatch(openActivationListDialog(undefined));
     }, [dispatch]);
 
-    
+
     useEffect(() => {
         if (successMessage) dispatch(uhnApi.util.invalidateTags(['Blueprints', 'BlueprintActivations']));
     }, [dispatch, successMessage]);
@@ -107,10 +107,9 @@ export const UploadBlueprintPage = () => {
         dispatch(setBlueprintTrackingId(tracking.id));
 
     };
-
     const isSubmitting = uploadStatus?.status === "uploading";
     return (
-        <Box sx={{ p: 3 }}>
+        <Box >
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <Typography variant="h1">Upload Blueprint</Typography>
 

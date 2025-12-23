@@ -1,7 +1,7 @@
 import "@fontsource/roboto";
 import { createTheme } from "@mui/material";
+import type { Theme } from "@mui/material/styles";
 import { deepmerge } from "@mui/utils";
-import type { Theme } from '@mui/material/styles';
 
 // Base theme with common settings
 const baseTheme = createTheme({
@@ -217,6 +217,17 @@ export const starWarsDarkSideTheme = createTheme(
             fontWeight: 600,
           },
         },
+      },
+      MuiIconButton: {
+        styleOverrides: {
+          root: ({ theme }: { theme: Theme }) => ({
+            color: theme.palette.text.primary,
+
+            "&.Mui-disabled": {
+              color: theme.palette.action.disabled,
+            },
+          }),
+        }
       },
 
     },
@@ -449,10 +460,17 @@ export const windsOfWinterTheme = createTheme(
         primary: "#e0e0e0",  // Pale snow
         secondary: "#90a4ae", // Misty gray
       },
+      action: {
+        disabled: "rgba(224,224,224,0.35)",          // readable but muted
+        disabledBackground: "rgba(144,164,174,0.12)", // subtle frosty plate
+        hover: "rgba(144,202,249,0.08)",               // icy hover
+        selected: "rgba(144,202,249,0.16)",
+      },
       error: { main: "#ef5350" },     // Red for blood
       warning: { main: "#ffa726" },   // Fire hazard
       info: { main: "#81d4fa" },      // Frosty blue
       success: { main: "#66bb6a" },   // Life in the snow
+
     },
     typography: {
       h1: { color: "#90caf9", fontWeight: 700 },
@@ -504,6 +522,17 @@ export const windsOfWinterTheme = createTheme(
             },
           },
         },
+      },
+      MuiIconButton: {
+        styleOverrides: {
+          root: ({ theme }: { theme: Theme }) => ({
+            color: theme.palette.text.primary,
+
+            "&.Mui-disabled": {
+              color: theme.palette.action.disabled,
+            },
+          }),
+        }
       },
       MuiPaper: {
         styleOverrides: {

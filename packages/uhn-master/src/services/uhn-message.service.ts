@@ -14,12 +14,7 @@ export class UhnMessageService {
         patterns.forEach(pattern =>
             this.wsManager.subscribeToUhnMessagePattern(socket, pattern)
         );
-        this.wsManager.sendMessage(socket, {
-            action: "uhn:subscribed",
-            success: true,
-            payload: { patterns },
-            id: messageId
-        });
+
         const shouldSendResources = patterns.some(pattern => pattern.startsWith('resource/'));
         const shouldSendStates = patterns.some(pattern => pattern.startsWith('state/'));
         if (shouldSendResources) {
@@ -28,7 +23,12 @@ export class UhnMessageService {
         if (shouldSendStates) {
             await this.sendStateMessage(socket, patterns);
         }
-
+        this.wsManager.sendMessage(socket, {
+            action: "uhn:subscribed",
+            success: true,
+            payload: { patterns },
+            id: messageId
+        });
     }
 
     async sendResourcesMessage(socket: WebSocket, patterns: UhnSubscriptionPattern[]) {
