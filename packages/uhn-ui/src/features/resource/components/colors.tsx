@@ -1,6 +1,8 @@
+import { alpha, Theme } from "@mui/material";
 import { BaseInputKind, BaseOutputKind } from "@uhn/blueprint";
+import { TileRuntimeResource, TileRuntimeResourceState } from "../resource-ui.type";
 
-export type ResourceVisualState = "active" | "inactive";
+
 type KindColors<K extends string> = {
     [keyof in K]: {
         icon: {
@@ -14,7 +16,7 @@ type KindColors<K extends string> = {
     }
 
 }
-export const outputKindColors: KindColors<BaseOutputKind> = {
+const outputKindColors: KindColors<BaseOutputKind> = {
     light: {
         icon: {
             active: {
@@ -85,7 +87,7 @@ export const outputKindColors: KindColors<BaseOutputKind> = {
 
 } as const;
 
-export const inputKindColors: KindColors<BaseInputKind> = {
+const inputKindColors: KindColors<BaseInputKind> = {
     button: {
         icon: {
             active: { light: "#2196F3", dark: "#64B5F6" },
@@ -118,3 +120,51 @@ export const inputKindColors: KindColors<BaseInputKind> = {
     },
 } as const;
 
+
+
+export function getResourceIconColor(
+    theme: Theme,
+    resource: TileRuntimeResource,
+    state?: TileRuntimeResourceState
+
+) {
+    if (resource.errors?.length) return theme.palette.error.main;
+
+    const mode = theme.palette.mode; // "light" | "dark"
+    const active = Boolean(state?.value);
+
+    if (resource.type === "digitalOutput" && resource.outputKind) {
+        const cfg = outputKindColors[resource.outputKind as keyof typeof outputKindColors];
+        return active ? cfg.icon.active[mode] : cfg.icon.inactive[mode];
+    }
+
+    if (resource.type === "digitalInput" && resource.inputKind) {
+        const cfg = inputKindColors[resource.inputKind as keyof typeof inputKindColors];
+        return active ? cfg.icon.active[mode] : cfg.icon.inactive[mode];
+    }
+
+    return theme.palette.text.disabled;
+}
+
+export function getResourceSurfaceColor(
+    theme: Theme,
+    resource: TileRuntimeResource
+) {
+    const mode = theme.palette.mode;
+
+    if (resource.type === "digitalOutput" && resource.outputKind) {
+        const base = outputKindColors[resource.outputKind as keyof typeof outputKindColors]?.surface?.[mode];
+        if (!base) return "transparent";
+
+        return alpha(base, mode === "dark" ? 0.1 : 0.045);
+    }
+
+    if (resource.type === "digitalInput" && resource.inputKind) {
+        const base = inputKindColors[resource.inputKind as keyof typeof inputKindColors]?.surface?.[mode];
+        if (!base) return "transparent";
+
+        return alpha(base, mode === "dark" ? 0.1 : 0.045);
+    }
+
+    return "transparent";
+}

@@ -2,62 +2,12 @@ import DescriptionIcon from "@mui/icons-material/Description";
 import ErrorIcon from "@mui/icons-material/Error";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { Box, Card, CardActionArea, IconButton, Popover, Tooltip, Typography, alpha } from "@mui/material";
-import { Theme, useTheme } from "@mui/material/styles";
+import { useTheme } from "@mui/material/styles";
 import { usePortalContainerRef } from "@uxp/ui-lib";
 import React, { useState } from "react";
 import { TileRuntimeResource, TileRuntimeResourceState } from "../resource-ui.type";
-import { inputKindColors, outputKindColors } from "./colors";
+import { getResourceIconColor, getResourceSurfaceColor } from "./colors";
 import { getResourceIcon } from "./icons";
-
-
-
-
-function getResourceIconColor(
-    theme: Theme,
-    resource: TileRuntimeResource,
-    state?: TileRuntimeResourceState
-
-) {
-    if (resource.errors?.length) return theme.palette.error.main;
-
-    const mode = theme.palette.mode; // "light" | "dark"
-    const active = Boolean(state?.value);
-
-    if (resource.type === "digitalOutput" && resource.outputKind) {
-        const cfg = outputKindColors[resource.outputKind as keyof typeof outputKindColors];
-        return active ? cfg.icon.active[mode] : cfg.icon.inactive[mode];
-    }
-
-    if (resource.type === "digitalInput" && resource.inputKind) {
-        const cfg = inputKindColors[resource.inputKind as keyof typeof inputKindColors];
-        return active ? cfg.icon.active[mode] : cfg.icon.inactive[mode];
-    }
-
-    return theme.palette.text.disabled;
-}
-
-function getResourceSurfaceColor(
-    theme: Theme,
-    resource: TileRuntimeResource
-) {
-    const mode = theme.palette.mode;
-
-    if (resource.type === "digitalOutput" && resource.outputKind) {
-        const base = outputKindColors[resource.outputKind as keyof typeof outputKindColors]?.surface?.[mode];
-        if (!base) return "transparent";
-
-        return alpha(base, mode === "dark" ? 0.1 : 0.045);
-    }
-
-    if (resource.type === "digitalInput" && resource.inputKind) {
-        const base = inputKindColors[resource.inputKind as keyof typeof inputKindColors]?.surface?.[mode];
-        if (!base) return "transparent";
-
-        return alpha(base, mode === "dark" ? 0.1 : 0.045);
-    }
-
-    return "transparent";
-}
 
 type ResourceTileProps = {
     resource: TileRuntimeResource;
@@ -89,6 +39,7 @@ export const ResourceTile: React.FC<ResourceTileProps> = ({ resource, state, onA
         setInfoAnchor(e.currentTarget as HTMLElement);
     };
     const handleDescIconClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+        e.preventDefault();
         e.stopPropagation();
         setDescAnchor(e.currentTarget as HTMLElement);
     };
