@@ -5,6 +5,7 @@ import { Box, Card, CardActionArea, IconButton, Popover, Tooltip, Typography, al
 import { useTheme } from "@mui/material/styles";
 import { usePortalContainerRef } from "@uxp/ui-lib";
 import React, { useState } from "react";
+import { useResourceAction } from "../hooks/useResourceAction";
 import { TileRuntimeResource, TileRuntimeResourceState } from "../resource-ui.type";
 import { getResourceIconColor, getResourceSurfaceColor } from "./colors";
 import { getResourceIcon } from "./icons";
@@ -12,25 +13,19 @@ import { getResourceIcon } from "./icons";
 type ResourceTileProps = {
     resource: TileRuntimeResource;
     state?: TileRuntimeResourceState;
-    onAction: (id: string) => void;
+
 };
 
-export const ResourceTile: React.FC<ResourceTileProps> = ({ resource, state, onAction }) => {
+export const ResourceTile: React.FC<ResourceTileProps> = ({ resource, state }) => {
     const theme = useTheme();
     const portalContainer = usePortalContainerRef();
     const [infoAnchor, setInfoAnchor] = useState<null | HTMLElement>(null);
     const [descAnchor, setDescAnchor] = useState<null | HTMLElement>(null);
-
+    const actions = useResourceAction(resource);
     // Main kind icon logic
     const MainIcon = getResourceIcon(resource, state);
 
     const iconColor = getResourceIconColor(theme, resource, state);
-
-    // Main action (only on card press, not icon press)
-    const handleTileClick = (e: React.MouseEvent) => {
-        // Only trigger if not clicking an icon (stopPropagation in icon handlers)
-        onAction(resource.id);
-    };
 
     // Info and Description popover logic
     const handleInfoIconClick = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -156,7 +151,7 @@ export const ResourceTile: React.FC<ResourceTileProps> = ({ resource, state, onA
                     }
 
                 }}
-                onClick={handleTileClick}
+                {...actions}
             >
                 <Box className="resource-main-icon-container"
                     sx={{

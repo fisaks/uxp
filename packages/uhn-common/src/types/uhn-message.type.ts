@@ -1,8 +1,8 @@
 
-import { RuntimeResourceBase } from "./worker.type";
 import { ResourceType } from "@uhn/blueprint";
-import { RuntimeResourceState } from "./runtime.type";
 import { MessagePayloadSchema } from "@uxp/common";
+import { RuntimeResourceState } from "./runtime.type";
+import { RuntimeResourceBase } from "./worker.type";
 
 export type UhnSubscriptionPattern =
     | `state/*`
@@ -14,10 +14,37 @@ export type UhnSubscriptionPattern =
 export type UhnSubscribePayload = {
     patterns: UhnSubscriptionPattern[];
 }
+export type UhnResourceCommandPayload = {
+    resourceId: string;
+    command: UhnResourceCommand;
+
+}
+export type UhnResourceCommand =
+    | ToggleCommand
+    | SetCommand
+    | PressCommand
+    | ReleaseCommand;
+
+export type ToggleCommand = {
+    type: "toggle";
+};
+
+export type SetCommand = {
+    type: "set";
+    value: boolean;
+};
+export type PressCommand = {
+    type: "press";
+};
+
+export type ReleaseCommand = {
+    type: "release";
+};
 
 export type UhnMessageActionPayloadRequestMap = {
     "uhn:subscribe": UhnSubscribePayload
     "uhn:unsubscribe": UhnSubscribePayload
+    "uhn:resource:command": UhnResourceCommandPayload
 }
 
 export type UhnResourcesResponse = {
@@ -36,7 +63,8 @@ export type UhnMessageActionPayloadResponseMap = {
     "uhn:unsubscribed": UhnSubscribePayload
     "uhn:resources": UhnResourcesResponse
     "uhn:state": UhnStateResponse
-    "uhn:fullState": UhnFullStateResponse
+    "uhn:fullState": UhnFullStateResponse,
+    "uhn:resource:command": UhnResourceCommandPayload
 }
 
 export const UhnSubscribePayloadSchema: MessagePayloadSchema<UhnSubscribePayload> = {
@@ -56,5 +84,58 @@ export const UhnSubscribePayloadSchema: MessagePayloadSchema<UhnSubscribePayload
 
     },
     required: ['patterns'],
+    additionalProperties: false
+}
+
+export const UhnResourceCommandPayloadSchema: MessagePayloadSchema<UhnResourceCommandPayload> = {
+
+    type: 'object',
+    properties: {
+        resourceId: {
+            type: 'string',
+            minLength: 1,
+            maxLength: 256
+        },
+        command: {
+            type: 'object',
+            required: ['type'],
+            oneOf: [
+                {
+                    type: 'object',
+                    properties: {
+                        type: { const: 'toggle' }
+                    },
+                    required: ['type'],
+                    additionalProperties: false
+                },
+                {
+                    type: 'object',
+                    properties: {
+                        type: { const: 'set' },
+                        value: { type: 'boolean' }
+                    },
+                    required: ['type', 'value'],
+                    additionalProperties: false
+                },
+                {
+                    type: 'object',
+                    properties: {
+                        type: { const: 'press' }
+                    },
+                    required: ['type'],
+                    additionalProperties: false
+                },
+                {
+                    type: 'object',
+                    properties: {
+                        type: { const: 'release' }
+                    },
+                    required: ['type'],
+                    additionalProperties: false
+                }
+            ]
+        }
+    },
+    required: ['resourceId', 'command'],
     additionalProperties: false
 }

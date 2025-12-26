@@ -1,4 +1,4 @@
-import { UHNAppRequestMessage, UhnSubscribePayloadSchema } from "@uhn/common";
+import { UHNAppRequestMessage, UhnResourceCommandPayloadSchema, UhnSubscribePayloadSchema } from "@uhn/common";
 import { AppLogger, WebSocketAction, WebSocketDetails } from "@uxp/bff-common";
 import { UhnMessageService } from "../services/uhn-message.service";
 
@@ -33,6 +33,19 @@ export class UhnMessageHandler {
             message: `Unsubscribing from uhn pattern: ${payload.patterns}`
         });
         await this.uhnMessageService.unsubscribeFromPatterns(wsDetails.socket, payload.patterns, id);
+
+    }
+        @WebSocketAction("uhn:resource:command", { authenticate: true, schema: UhnResourceCommandPayloadSchema })
+    public async resourceCommand(
+        wsDetails: WebSocketDetails,
+        message: UHNAppRequestMessage<"uhn:resource:command">
+    ) {
+
+        const { id, payload } = message;
+        AppLogger.info(wsDetails.requestMeta, {
+            message: `Executing resource command: ${payload.resourceId} with command type ${payload.command.type}`
+        });
+        //await this.uhnMessageService.executeResourceCommand(wsDetails.socket, payload.resourceId, payload.command, id);
 
     }
 
