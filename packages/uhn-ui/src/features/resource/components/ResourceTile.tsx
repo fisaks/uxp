@@ -13,7 +13,7 @@ import { TileRuntimeResource, TileRuntimeResourceState } from "../resource-ui.ty
 import { selectResourceCommandFeedbackById } from "../resourceCommandFeedbackSelector";
 import { getResourceIconColor, getResourceSurfaceColor } from "./colors";
 import { getResourceIcon } from "./icons";
-
+import "./ResourceTile.css";
 type ResourceTileProps = {
     resource: TileRuntimeResource;
     state?: TileRuntimeResourceState;
@@ -179,6 +179,11 @@ export const ResourceTile: React.FC<ResourceTileProps> = ({ resource, state }) =
                         {
                             color: iconColor,
                             fontSize: 24,
+                            ...(isPending && {
+                                "--pulse-from": iconColor,
+                                "--pulse-to": alpha(iconColor, 0.45),
+                                animation: "resource-pending-pulse 1.4s ease-in-out infinite",
+                            })
                         }
                     })}
                     {haveErrors && (

@@ -1,0 +1,11 @@
+@keyframes resource-pending-pulse {
+  0% {
+    color: var(--pulse-from);
+  }
+  50% {
+    color: var(--pulse-to);
+  }
+  100% {
+    color: var(--pulse-from);
+  }
+}
