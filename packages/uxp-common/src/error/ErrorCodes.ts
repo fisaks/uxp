@@ -27,6 +27,9 @@ export const ErrorCodes = {
     ACTIVE_BLUEPRINT_DELETE_FORBIDDEN: "ACTIVE_BLUEPRINT_DELETE_FORBIDDEN",
     BLUEPRINT_ACTIVATION_FAILED: "BLUEPRINT_ACTIVATION_FAILED",
     BLUEPRINT_DEACTIVATION_FAILED: "BLUEPRINT_DEACTIVATION_FAILED",
+    INVALID_RESOURCE_COMMAND: "INVALID_RESOURCE_COMMAND",
+    INVALID_RESOURCE_TYPE: "INVALID_RESOURCE_TYPE",
+    // Add more error codes as needed
 } as const;
 
 export const ErrorMessages: Record<ErrorCode, string> = {
@@ -57,6 +60,8 @@ export const ErrorMessages: Record<ErrorCode, string> = {
     ACTIVE_BLUEPRINT_DELETE_FORBIDDEN: "Cannot delete an active blueprint version.",
     BLUEPRINT_ACTIVATION_FAILED: "Failed to activate the blueprint due to an internal error.",
     BLUEPRINT_DEACTIVATION_FAILED: "Failed to deactivate the blueprint due to an internal error.",
+    INVALID_RESOURCE_COMMAND: "The command sent to the resource is invalid.",
+    INVALID_RESOURCE_TYPE: "The resource type does not support this command.",
     // Add more error mappings as needed
 };
 export type ErrorCode = keyof typeof ErrorCodes;

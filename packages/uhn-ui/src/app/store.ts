@@ -2,11 +2,14 @@ import { configureStore } from "@reduxjs/toolkit";
 import { remoteAppReducer, uploadTrackingReducer } from "@uxp/ui-lib";
 import { createLogger } from "redux-logger";
 
-import topicTraceReducer from "../features/topic-trace/topicTraceSlice";
 import blueprintReducer from "../features/blueprint/blueprintSlice";
 import loadingErrorReducer from "../features/loading-error/loadingErrorSlice";
+import { resourceCommandFeedbackListenerMiddleware } from "../features/resource/resourceCommandFeedbackListeners";
+import resourceCommandFeedback from "../features/resource/resourceCommandFeedbackSlice";
 import resourceReducer from "../features/resource/resourceSlice";
 import runtimeStateReducer from "../features/runtime-state/runtimeStateSlice";
+import topicTraceReducer from "../features/topic-trace/topicTraceSlice";
+
 import { useDispatch } from "react-redux";
 import { uhnApi } from './uhnApi';
 
@@ -25,12 +28,14 @@ export const createStore = () => {
             blueprint: blueprintReducer,
             [uhnApi.reducerPath]: uhnApi.reducer,
             resources: resourceReducer,
+            resourceCommandFeedback: resourceCommandFeedback,
             runtimeState: runtimeStateReducer,
 
         },
         devTools: process.env.NODE_ENV === "development",
         middleware: (getDefaultMiddleware) => getDefaultMiddleware()
-            .concat(logger).concat(uhnApi.middleware),
+            .concat(logger).concat(uhnApi.middleware)
+            .prepend(resourceCommandFeedbackListenerMiddleware.middleware),
     });
 };
 

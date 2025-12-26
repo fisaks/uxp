@@ -1,12 +1,16 @@
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import DescriptionIcon from "@mui/icons-material/Description";
 import ErrorIcon from "@mui/icons-material/Error";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
-import { Box, Card, CardActionArea, IconButton, Popover, Tooltip, Typography, alpha } from "@mui/material";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
+import { Box, Card, CardActionArea, CircularProgress, IconButton, Popover, Tooltip, Typography, alpha } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { usePortalContainerRef } from "@uxp/ui-lib";
 import React, { useState } from "react";
+import { useSelector } from "react-redux";
 import { useResourceAction } from "../hooks/useResourceAction";
 import { TileRuntimeResource, TileRuntimeResourceState } from "../resource-ui.type";
+import { selectResourceCommandFeedbackById } from "../resourceCommandFeedbackSelector";
 import { getResourceIconColor, getResourceSurfaceColor } from "./colors";
 import { getResourceIcon } from "./icons";
 
@@ -21,11 +25,15 @@ export const ResourceTile: React.FC<ResourceTileProps> = ({ resource, state }) =
     const portalContainer = usePortalContainerRef();
     const [infoAnchor, setInfoAnchor] = useState<null | HTMLElement>(null);
     const [descAnchor, setDescAnchor] = useState<null | HTMLElement>(null);
+    const commandFb = useSelector(selectResourceCommandFeedbackById(resource.id));
     const actions = useResourceAction(resource);
     // Main kind icon logic
     const MainIcon = getResourceIcon(resource, state);
 
     const iconColor = getResourceIconColor(theme, resource, state);
+    const isPending = commandFb?.status === "pending";
+    const isCmdError = commandFb?.status === "error";
+    const cmdReason = isCmdError ? commandFb.reason : undefined;
 
     // Info and Description popover logic
     const handleInfoIconClick = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -120,7 +128,7 @@ export const ResourceTile: React.FC<ResourceTileProps> = ({ resource, state }) =
             </Box>
             {/* Main content row: kind icon, name */}
             <CardActionArea
-                disabled={haveErrors}
+                disabled={haveErrors || isPending}
                 sx={{
                     // push content below overlay
                     pt: "40px",
@@ -222,6 +230,62 @@ export const ResourceTile: React.FC<ResourceTileProps> = ({ resource, state }) =
                     </Typography>
                 </Box>
             </CardActionArea>
+            {isPending && (
+                <CircularProgress
+                    size={16}
+                    thickness={5}
+                    sx={{
+                        position: "absolute",
+                        bottom: 11,
+                        right: 11,
+                        p: 0.25,
+                    }}
+                />
+            )}
+
+            {isCmdError && (
+                <Box
+                    sx={{
+                        position: "absolute",
+                        bottom: 0,
+                        right: 0,
+                        width: 34,
+                        height: 34,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        zIndex: 2,
+                        pointerEvents: "auto",   // icons clickable
+
+                    }}
+                >
+                    <Tooltip title={commandFb.error} {...tooltipProps}>
+                        {cmdReason === "timeout" ? (
+                            <AccessTimeIcon
+                                sx={{
+                                    position: "absolute",
+                                    bottom: 11,
+                                    right: 11,
+                                    fontSize: 16,
+                                    color: "warning.main",
+
+                                }}
+                            />
+                        ) : (
+                            <WarningAmberIcon
+                                sx={{
+                                    position: "absolute",
+                                    bottom: 11,
+                                    right: 11,
+                                    fontSize: 16,
+                                    color: "warning.main",
+
+                                }}
+                            />
+                        )}
+                    </Tooltip>
+                </Box>
+            )}
         </Card>
     );
 };

@@ -1,26 +1,51 @@
 // useResourceAction.ts
 import { UhnResourceCommand } from "@uhn/common";
+import { WebSocketTimeoutError } from "@uxp/ui-lib";
 import { useCallback, useRef } from "react";
+import { useAppDispatch } from "../../../app/store";
 import { useUHNWebSocket } from "../../../app/UHNAppBrowserWebSocketManager";
 import { TileRuntimeResource } from "../resource-ui.type";
+import { commandFailed, commandStarted } from "../resourceCommandFeedbackSlice";
 
 const TOUCH_PRESS_INTENT_DELAY_MS = 150;
 const MIN_PRESS_DURATION_MS = 300;
 
 
 export function useResourceAction(resource: TileRuntimeResource) {
-    const { sendMessage } = useUHNWebSocket();
+    const dispatch = useAppDispatch();
+    const { sendMessageAsync } = useUHNWebSocket();
 
     const hasActivePointerInteractionRef = useRef(false);
     const pressCommittedAtRef = useRef<number | null>(null);
     const pressIntentDelayTimerRef = useRef<number | null>(null);
 
-    const sendCommand = useCallback((command: UhnResourceCommand) => {
-        sendMessage("uhn:resource:command", {
-            resourceId: resource.id,
-            command,
-        });
-    }, [sendMessage, resource.id]);
+    const sendCommand = useCallback(async (command: UhnResourceCommand) => {
+        dispatch(commandStarted({ resourceId: resource.id }));
+        try {
+            await sendMessageAsync("uhn:resource:command", {
+                resourceId: resource.id,
+                command
+            }, 2000);
+        } catch (error) {
+            if (error instanceof WebSocketTimeoutError) {
+                dispatch(
+                    commandFailed({
+                        resourceId: resource.id,
+                        reason: "timeout",
+                        error: "No confirmation received",
+                    })
+                );
+            } else {
+                dispatch(
+                    commandFailed({
+                        resourceId: resource.id,
+                        reason: "send_failed",
+                        error: "Failed to send command",
+                    })
+                );
+            }
+        }
+    }, [dispatch, sendMessageAsync, resource.id]);
 
     /* ---------------- press helpers ---------------- */
 

@@ -16,7 +16,8 @@ export const createErrorResponse = (errors: ErrorDetail[], request: FastifyReque
     };
 };
 
-export const createErrorMessageResponse = (request: FastifyRequest | RequestMetaData, action: string, error: ErrorDetail, messageId: string | undefined, details?: object): string => {
+export const createErrorMessageResponse = (request: FastifyRequest | RequestMetaData,
+     action: string, error: ErrorDetail, messageId: string | undefined, details?: object): string => {
     AppLogger.error(request, {
         message: error.message,
 

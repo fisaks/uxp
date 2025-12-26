@@ -15,6 +15,7 @@ import { AppLogger, RequestMetaData } from "../utils/AppLogger";
 import { GenericServerWebSocketManager, WebSocketDetails } from "./ServerWebSocketManager";
 import { sendWebSocketMessage } from "./websocketUtils";
 import { runWithRequestContext } from "../decorator/request-context";
+import { AppErrorV2 } from "../error/AppError";
 
 
 const ajv = new Ajv();
@@ -297,13 +298,15 @@ const handleWebSocketMessage = async ({ actionMap, socketDetails, message, dataS
         });
     } catch (err: any) {
         AppLogger.error(requestMeta, { message: "Error in WebSocket message", error: err });
-
+        const isAppError = err instanceof AppErrorV2;
         sendWebSocketMessage({
             socket,
-            message: createErrorMessageResponse(requestMeta, action, {
-                code: ErrorCodes.INTERNAL_SERVER_ERROR,
-                message: "An unexpected error occurred",
-            }, messageId)
+            message: createErrorMessageResponse(requestMeta, action,
+                isAppError ? err :
+                    {
+                        code: ErrorCodes.INTERNAL_SERVER_ERROR,
+                        message: "An unexpected error occurred",
+                    }, messageId)
         });
     }
 
