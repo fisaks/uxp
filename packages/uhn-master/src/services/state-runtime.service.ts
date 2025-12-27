@@ -9,26 +9,64 @@ import { PhysicalDeviceState, statePhysicalService } from "./state-physical.serv
 import { stateSignalService } from "./state-signal.service";
 
 
+/**
+ * runtimeStateChanged:
+ *  - value === undefined means the runtime state is now unknown
+ *    (no physical state and no signal override).
+ *  - Consumers must treat undefined as "unknown", not false/off.
+ */
 export type StateRuntimeEventMap = {
     runtimeStateReset: [];
-    runtimeStateChanged: [resourceId: string, value: ResourceStateValue, timestamp: number];
+    runtimeStateChanged: [resourceId: string, value: ResourceStateValue | undefined, timestamp: number];
+    runtimeStatesChanged: [RuntimeResourceState[]];
+
 };
+
+/**
+ * Internal runtime state.
+ *
+ * - physical: last known physical value (P)
+ * - signal: current signal override (S), if any
+ * - computed: effective runtime value (C)
+ *
+ * physical and signal may be undefined individually,
+ * but computed is only stored when at least one is known.
+ */
 type RuntimeState = {
     physical?: ResourceStateValue
+    physicalTimestamp?: number;
     signal?: ResourceStateValue
+    signalTimestamp?: number;
     computed: ResourceStateValue
     timestamp: number
 }
+/**
+ * Runtime semantics:
+ *
+ * - Physical state (P) is authoritative but may be refreshed without change.
+ * - Signal state (S) temporarily overrides P while defined.
+ * - Computed state (C) = S if S is defined, otherwise P.
+ *
+ * Signal clearing rules:
+ * - S is cleared ONLY when P changes value.
+ * - Periodic physical state refreshes do NOT clear S.
+ *
+ * Timestamp rules:
+ * - Physical and signal updates are ordered independently.
+ * - Runtime timestamp represents last effective C change.
+ */
+
 class StateRuntimeService extends EventEmitter<StateRuntimeEventMap> {
     /** physical-address-key urn -> resourceId */
     private resourceIdByAddress = new Map<string, string>();
 
     /** resourceId -> current runtime state */
     private stateByResourceId = new Map<string, RuntimeState>();
+    private emitStateChanges: boolean;
 
     constructor() {
         super();
-
+        this.emitStateChanges = false;
         blueprintResourceService.on(
             "resourcesReloaded",
             (resources) => this.handleResourcesReloaded(resources)
@@ -57,6 +95,7 @@ class StateRuntimeService extends EventEmitter<StateRuntimeEventMap> {
 
     private handleResourcesReloaded(resources: ResourceList) {
         this.reset();
+        const addressLookup = new Map<string, string>();
         for (const r of resources) {
             // Only index valid, addressable resources
             if (!r.id) continue;
@@ -68,56 +107,106 @@ class StateRuntimeService extends EventEmitter<StateRuntimeEventMap> {
                 continue;
             }
 
-            this.resourceIdByAddress.set(key, r.id);
+            addressLookup.set(key, r.id);
         }
+        // swap in place once lookup is ready
+        this.resourceIdByAddress = addressLookup;
 
         for (const deviceState of statePhysicalService.getAllDeviceStates()) {
             this.handlePhysicalState(deviceState);
         }
+        for (const [resourceId, state] of stateSignalService.getAllSignalStates()) {
+            this.handleSignalState(resourceId, state.value, state.timestamp);
+        }
+        this.emit("runtimeStatesChanged", this.getAllStates());
+        this.emitStateChanges = true;
 
         AppLogger.info({
             message: `[StateRuntimeService] Runtime index rebuilt (${this.resourceIdByAddress.size} resources)`,
         });
     }
 
+    /**
+     * Clears all runtime state.
+     *
+     * Note:
+     *  - Signal state (S) is NOT cleared here.
+     */
     private reset() {
         this.resourceIdByAddress.clear();
         this.stateByResourceId.clear();
-        this.emit("runtimeStateReset");
-
+        if (this.emitStateChanges) this.emit("runtimeStateReset");
+        this.emitStateChanges = false;
         AppLogger.info({
             message: `[StateRuntimeService] Runtime state cleared`,
         });
     }
+
+    /**
+    * Handles changes in signal state (S).
+    *
+    * Notes:
+    *  - Signal overrides physical while defined.
+    *  - Clearing signal does NOT invent a physical value.
+    *  - If physical state is unknown and signal is cleared,
+    *    the runtime state becomes unknown and is removed.
+    *
+    */
 
     private handleSignalState(
         resourceId: string,
         value: ResourceStateValue | undefined,
         timestamp: number
     ) {
+        // return early if no lookup exists
+        if (this.resourceIdByAddress.size === 0) return;
+
         const prev = this.stateByResourceId.get(resourceId);
+        if (this.isStaleMessage(prev?.signalTimestamp, timestamp)) return;
 
-        if (prev && prev.timestamp >= timestamp) return;
-
+        // signal already cleared no need to do anything
+        if (value === undefined && prev?.signal === undefined) {
+            return;
+        }
         const signal = value;
         const physical = prev?.physical;
         const computed = signal !== undefined ? signal : physical;
-        if (computed === undefined) return
-        this.stateByResourceId.set(resourceId, {
-            physical: prev?.physical,
-            signal,
-            computed,
-            timestamp
-        });
 
+        if (computed === undefined) {
+            if (prev) {
+                this.stateByResourceId.delete(resourceId);
+                this.emitRuntimeStateChangedIfEnabled(resourceId, undefined, timestamp);
+            }
+            return;
+        }
+        const physicalTimestamp = prev?.physicalTimestamp;
+        const signalTimestamp = value !== undefined ? timestamp : undefined;
+        const computedTimestamp = computed !== prev?.computed ? timestamp : prev!.timestamp;
+        this.stateByResourceId.set(resourceId, {
+            physical,
+            physicalTimestamp,
+            signal,
+            signalTimestamp,
+            computed,
+            timestamp: computedTimestamp,
+        });
         AppLogger.isDebugLevel() &&
             AppLogger.debug({
                 message: `[StateRuntimeService] Resource '${resourceId}' signal state changed`,
-                object: { prevValue: prev?.computed, computed, timestamp },
+                object: {
+                    physical,
+                    physicalTimestamp,
+                    prevSignal: prev?.signal,
+                    signal,
+                    signalTimestamp,
+                    prevComputed: prev?.computed,
+                    computed,
+                    timestamp: computedTimestamp
+                },
             });
-        if (!prev || prev.computed !== computed) {
-            this.emit("runtimeStateChanged", resourceId, computed, timestamp);
 
+        if (!prev || prev.computed !== computed) {
+            this.emitRuntimeStateChangedIfEnabled(resourceId, computed, timestamp);
         }
 
     }
@@ -126,6 +215,7 @@ class StateRuntimeService extends EventEmitter<StateRuntimeEventMap> {
     /* -------------------------------------------------- */
 
     private handlePhysicalState(deviceState: PhysicalDeviceState) {
+        if (this.resourceIdByAddress.size === 0) return;
         const summary = physicalCatalogService.getEdgeDeviceSummary(
             deviceState.edge,
             deviceState.device
@@ -151,6 +241,13 @@ class StateRuntimeService extends EventEmitter<StateRuntimeEventMap> {
         }
     }
 
+    /**
+     * Maps physical device bits to resourceIds and forwards them
+     * to updatePhysicalState().
+     *
+     * This method performs NO logic beyond bit extraction.
+     * All semantics live in updatePhysicalState().
+     */
     private processPins(
         deviceState: PhysicalDeviceState,
         type: ResourceType,
@@ -194,34 +291,66 @@ class StateRuntimeService extends EventEmitter<StateRuntimeEventMap> {
 
     ) {
         const prev = this.stateByResourceId.get(resourceId);
-        if (prev && prev.timestamp >= timestamp) return;
-        const signal = prev?.signal;
+        if (this.isStaleMessage(prev?.physicalTimestamp, timestamp)) return;
+
+        const prevPhysical = prev?.physical;
+        const hadSignal = prev?.signal !== undefined;
+
         const physical = value;
-        const computed = physical;
-        // IMPORTANT:
-        // We must update runtime state BEFORE clearing signal.
-        // clearSignalState() emits signalStateChanged, which would otherwise
-        // re-enter StateRuntimeService with stale prev state.
-        // RuntimeStateService is the single authority for runtime emissions.
+
+        const physicalChanged =
+            prevPhysical !== undefined && prevPhysical !== physical;
+
+        const shouldClearSignal = hadSignal && physicalChanged;
+
+        const signal = shouldClearSignal ? undefined : prev?.signal;
+
+        const computed = signal !== undefined ? signal : physical;
+        const computedTimestamp = computed !== prev?.computed ? timestamp : prev!.timestamp;
         this.stateByResourceId.set(resourceId, {
             physical,
+            physicalTimestamp: timestamp,
             signal,
+            signalTimestamp: prev?.signalTimestamp,
             computed,
-            timestamp
+            timestamp: computedTimestamp,
         });
+
         AppLogger.isDebugLevel() &&
             AppLogger.debug({
-                message: `[StateRuntimeService] Resource '${resourceId}' physical state changed`,
-                object: { prevValue: prev?.computed, computed, timestamp },
+                message: `[StateRuntimeService] Resource '${resourceId}' physical state update`,
+                object: {
+                    prevPhysical,
+                    physical,
+                    physicalTimestamp: timestamp,
+                    physicalChanged,
+                    hadSignal,
+                    shouldClearSignal,
+                    signal,
+                    signalTimestamp: prev?.signalTimestamp,
+                    prevComputed: prev?.computed,
+                    computed,
+                    computedTimestamp,
+                },
             });
-        if (!prev || prev.computed !== computed) {
-            if (prev?.signal !== undefined) stateSignalService.clearSignalState(resourceId);
-            this.emit("runtimeStateChanged", resourceId, computed, timestamp);
 
+        if (shouldClearSignal) {
+            stateSignalService.clearSignalState(resourceId);
+        }
+        if (!prev || prev.computed !== computed) {
+            this.emitRuntimeStateChangedIfEnabled(resourceId, computed, timestamp);
         }
 
     }
 
+    private emitRuntimeStateChangedIfEnabled(resourceId: string, computed: ResourceStateValue | undefined, timestamp: number) {
+        if (this.emitStateChanges) {
+            this.emit("runtimeStateChanged", resourceId, computed, timestamp);
+        }
+    }
+    private isStaleMessage(prevSignalTimestamp: number | undefined, timestamp: number) {
+        return prevSignalTimestamp !== undefined && prevSignalTimestamp >= timestamp;
+    }
     /* -------------------------------------------------- */
     /* Public API                                         */
     /* -------------------------------------------------- */

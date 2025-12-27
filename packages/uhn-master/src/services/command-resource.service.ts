@@ -23,10 +23,10 @@ export class CommandsResourceService {
             const currentState = stateRuntimeService.getResourceState(resourceId);
             const currentValue = currentState?.value;
             const nextValue = (typeof currentValue === "boolean") ? !currentValue : true;
-            stateSignalService.setSignalState(resourceId, nextValue);
+            stateSignalService.setSignalState(resource, nextValue);
         } else if (resource.type === "digitalInput" && (command.type === "press" || command.type === "release")) {
             const signalValue = command.type === "press" ? true : false;
-            stateSignalService.setSignalState(resourceId, signalValue);
+            stateSignalService.setSignalState(resource, signalValue);
         }
     }
 

@@ -4,6 +4,7 @@ import mqttService from "./mqtt.service";
 
 export type SubscriptionEventMap = {
     deviceState: [topic: string, payload: unknown];
+    signalState: [topic: string, payload: unknown];
     catalog: [topic: string, payload: unknown];
     cmd: [topic: string, payload: unknown];
     deviceCmd: [topic: string, payload: unknown];
@@ -18,10 +19,13 @@ function tryParseJson(payload: unknown): unknown {
                 message: "[SubscriptionService] Failed to parse JSON payload",
                 object: { payload, err }
             });
-            return payload;
+
         }
     }
-    return payload;
+
+    return payload === null ||
+        (Buffer.isBuffer(payload) && payload.length === 0) ||
+        payload === "" ? null : payload;
 }
 class SubscriptionService extends EventEmitter<SubscriptionEventMap> {
     constructor() {
@@ -33,6 +37,11 @@ class SubscriptionService extends EventEmitter<SubscriptionEventMap> {
         mqttService.subscribe("uhn/+/device/+/state", (topic, payload) => {
             const parsed = tryParseJson(payload);
             this.emit("deviceState", topic, parsed);
+        });
+
+        mqttService.subscribe("uhn/+/signal/state/+", (topic, payload) => {
+            const parsed = tryParseJson(payload);
+            this.emit("signalState", topic, parsed);
         });
 
         mqttService.subscribe("uhn/+/catalog", (topic, payload) => {

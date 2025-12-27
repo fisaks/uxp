@@ -93,7 +93,7 @@ class StatePhysicalService extends EventEmitter<StatePhysicalEventMap> {
             analogOutputs,
             errors: payload.errors,
             raw: payload,
-            emittedAt: Date.now(),
+            emittedAt: payload.timestampMs,
         };
 
         // URN for device: uhn:<edge>:<device>

@@ -13,6 +13,11 @@ export class TopicTraceDispatcher {
                 payload: { topic, message: payload }
             });
         });
+        subscriptionService.on("signalState", (topic, payload) => {
+            UHNAppServerWebSocketManager.getInstance().broadcastTopicMessage({
+                payload: { topic, message: payload }
+            });
+        });
         subscriptionService.on("catalog", (topic, payload) => {
             UHNAppServerWebSocketManager.getInstance().broadcastTopicMessage({
                 payload: { topic, message: payload }

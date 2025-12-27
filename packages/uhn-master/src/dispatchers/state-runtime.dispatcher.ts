@@ -13,6 +13,11 @@ export class StateRuntimeDispatcher {
                 state: { resourceId, value: stateValue, timestamp }
             });
         });
+        stateRuntimeService.on("runtimeStatesChanged", (states) => {
+            UHNAppServerWebSocketManager.getInstance().broadcastRuntimeStatesMessage({
+                states: [...states]
+            });
+        });
         stateRuntimeService.on("runtimeStateReset", () => {
             AppLogger.info({ message: "[StateRuntimeDispatcher] State runtime state reset detected, broadcasting empty state message." });
             UHNAppServerWebSocketManager.getInstance().broadcastRuntimeStatesMessage({

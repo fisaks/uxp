@@ -2,6 +2,6 @@ export type ResourceStateValue = boolean | number;
 
 export type RuntimeResourceState = {
     resourceId: string;
-    value: ResourceStateValue;
+    value: ResourceStateValue | undefined;
     timestamp: number;
 };

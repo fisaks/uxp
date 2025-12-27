@@ -1,54 +1,104 @@
-import { ResourceStateValue } from "@uhn/common";
+import { ResourceStateValue, RuntimeResourceBase } from "@uhn/common";
+import { AppLogger } from "@uxp/bff-common";
 import { EventEmitter } from "events";
+import { blueprintResourceService } from "./blueprint-resource.service";
+import { isSignalStatePayload, SignalEdgeService } from "./signal-edge.service";
+import { subscriptionService } from "./subscription.service";
 
 export type StateSignalEventMap = {
     signalStateChanged: [resourceId: string, value: ResourceStateValue | undefined, timestamp: number];
 };
+export type SignalState = {
+    edge: string
+    value: ResourceStateValue;
+    timestamp: number;
+}
 
 class StateSignalService extends EventEmitter<StateSignalEventMap> {
-    private signalStateByResourceId = new Map<string, ResourceStateValue>();
-    /* -------------------------------------------------- */
-    /* Software injection                                 */
-    /* -------------------------------------------------- */
+    // Signal state is transient and not persisted.
+    // Signals represent temporary overrides and are lost on restart.
 
-    setSignalState(resourceId: string, value: ResourceStateValue) {
-        const prev = this.signalStateByResourceId.get(resourceId);
-        if (prev === value) return;
-
-        this.signalStateByResourceId.set(resourceId, value);
-        this.persist(resourceId, value);
-        this.emit("signalStateChanged", resourceId, value, Date.now());
+    private signalStateByResourceId = new Map<string, SignalState>();
+    private signalEdgeService: SignalEdgeService;
+    constructor() {
+        super();
+        this.signalEdgeService = new SignalEdgeService();
+        blueprintResourceService.on(
+            "resourcesCleared",
+            () => {
+                // Lifecycle reset: signals refer to resourceIds that are no longer valid.
+                // We do not emit per-resource signalStateChanged events here.
+                this.clearAll();
+            }
+        );
+        subscriptionService.on(
+            "signalState",
+            (topic, payload) => {
+                this.handleSignalState(topic, payload);
+            }
+        );
     }
 
-    clearSignalState(resourceId: string) {
-        if (!this.signalStateByResourceId.has(resourceId)) return;
+    private handleSignalState(topic: string, payload: unknown) {
+        //uhn/+/signal/state/+
+        const parts = topic.split("/");
+        if (parts.length < 5) {
+            AppLogger.warn(undefined, {
+                message: `[StateSignalService] Invalid signal state topic: ${topic}`,
+                object: { topic }
+            });
+            return;
+        }
+        const edge = parts[1];
+        const resourceId = parts[4];
+        if (isSignalStatePayload(payload)) {
+            const prev = this.signalStateByResourceId.get(resourceId);
+            if (prev?.value === payload.value) return;
+            if (prev && prev.timestamp >= payload.timestamp) return;
 
-        this.signalStateByResourceId.delete(resourceId);
-        this.persist(resourceId, undefined);
-        this.emit("signalStateChanged", resourceId, undefined, Date.now());
-    }
-
-    /* -------------------------------------------------- */
-    /* Persistence (simple placeholder)                   */
-    /* -------------------------------------------------- */
-
-    private persist(resourceId: string, value: ResourceStateValue | undefined) {
-        // TODO: write to DB / KV store
-    }
-
-    restore(initial: Record<string, ResourceStateValue>) {
-        for (const [id, value] of Object.entries(initial)) {
-            this.signalStateByResourceId.set(id, value);
+            this.signalStateByResourceId.set(resourceId,
+                { edge, value: payload.value, timestamp: payload.timestamp }
+            );
+            this.emit("signalStateChanged", resourceId, payload.value, payload.timestamp);
+        } else if (payload == null) {
+            if (!this.signalStateByResourceId.has(resourceId)) return;
+            this.signalStateByResourceId.delete(resourceId);
+            this.emit("signalStateChanged", resourceId, undefined, Date.now());
         }
     }
 
-    clearAll() {
-        this.signalStateByResourceId.clear();
-        // TODO: clear persistence
+    setSignalState(resource: Pick<RuntimeResourceBase<"digitalInput">, "edge" | "id">, value: ResourceStateValue) {
+
+        const prev = this.signalStateByResourceId.get(resource.id);
+        if (prev?.value === value) return;
+        const timestamp = Date.now();
+        this.signalEdgeService.sendStateSignalToEdge(resource, { value, timestamp });
     }
 
-    getSignalState(resourceId: string): ResourceStateValue | undefined {
+    clearSignalState(resourceId: string) {
+        const state = this.signalStateByResourceId.get(resourceId);
+        if (!state) return;
+
+        this.signalEdgeService.clearStateSignalOnEdge({ id: resourceId, edge: state.edge });
+    }
+
+    clearAll() {
+        const entries = Array.from(this.signalStateByResourceId.entries());
+        this.signalStateByResourceId.clear();
+        for (const [resourceId, state] of entries) {
+            this.signalEdgeService.clearStateSignalOnEdge({
+                id: resourceId,
+                edge: state.edge
+            });
+        }
+    }
+
+    getSignalState(resourceId: string): SignalState | undefined {
         return this.signalStateByResourceId.get(resourceId);
+    }
+
+    getAllSignalStates(): Array<[resourceId: string, state: SignalState]> {
+        return Array.from(this.signalStateByResourceId.entries());
     }
 }
 

@@ -54,6 +54,7 @@ export type Range = {
 
 export type DeviceStatePayload = {
     timestamp: string;
+    timestampMs: number;
     name: string;
     digitalOutputs?: string;
     digitalInputs?: string;

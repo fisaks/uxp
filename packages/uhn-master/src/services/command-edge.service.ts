@@ -13,7 +13,7 @@ class CommandEdgeService {
     }
     private sendDeviceCommand(edge: string, device: string, cmd: DeviceCommandPayload) {
         const topic = `uhn/${edge}/device/${device}/cmd`;
-        mqttService.publish(topic, cmd);
+        mqttService.publish(topic, cmd,{ retain: false, qos: 1 });
     }
 
     private mapOutputCommand(
