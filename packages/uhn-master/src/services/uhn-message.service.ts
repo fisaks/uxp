@@ -2,7 +2,8 @@ import { UhnSubscriptionPattern } from "@uhn/common";
 import { WebSocket } from "ws";
 import { UHNAppServerWebSocketManager } from "../ws/UHNAppServerWebSocketManager";
 import { blueprintResourceService } from "./blueprint-resource.service";
-import { blueprintRuntimeStateService } from "./blueprint-runtime-state.service";
+import { stateRuntimeService } from "./state-runtime.service";
+
 
 export class UhnMessageService {
     private wsManager = UHNAppServerWebSocketManager.getInstance();
@@ -68,8 +69,8 @@ export class UhnMessageService {
                 .filter(id => id.length > 0);
 
         const states = shouldSendAllStates
-            ? await blueprintRuntimeStateService.getAllStates()
-            : await blueprintRuntimeStateService.getResourceStates(stateIds!);
+            ? await stateRuntimeService.getAllStates()
+            : await stateRuntimeService.getResourceStates(stateIds!);
 
 
         this.wsManager.sendMessage(socket, {

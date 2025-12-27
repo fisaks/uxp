@@ -4,11 +4,11 @@ import { EventEmitter } from "events";
 import { subscriptionService } from "./subscription.service";
 
 
-export type StateEventMap = {
-    stateChanged: [urn: string, payload: DeviceState];
+export type StatePhysicalEventMap = {
+    physicalStateChanged: [urn: string, payload: PhysicalDeviceState];
 };
 
-export type DeviceState = {
+export type PhysicalDeviceState = {
     edge: string;
     device: string;
     timestamp: string;
@@ -42,14 +42,14 @@ function extractEdgeDeviceFromTopic(topic: string): { edge: string; device: stri
     };
 }
 
-class PhysicalDeviceStateService extends EventEmitter<StateEventMap> {
+class StatePhysicalService extends EventEmitter<StatePhysicalEventMap> {
     // Implementation of the service
-    private lastDeviceStates: Map<string, DeviceState> = new Map();
+    private lastDeviceStates: Map<string, PhysicalDeviceState> = new Map();
     private static initialized = false;
     constructor() {
         super();
-        if (PhysicalDeviceStateService.initialized) return;
-        PhysicalDeviceStateService.initialized = true;
+        if (StatePhysicalService.initialized) return;
+        StatePhysicalService.initialized = true;
         subscriptionService.on("deviceState", (topic, payload) => this.handleDeviceState(topic, payload));
     }
 
@@ -57,7 +57,7 @@ class PhysicalDeviceStateService extends EventEmitter<StateEventMap> {
     handleDeviceState(topic: string, payload: unknown) {
         if (!isDeviceStatePayload(payload)) {
             AppLogger.warn(undefined, {
-                message: `[PhysicalDeviceStateService] Invalid payload for topic ${topic}`,
+                message: `[StatePhysicalService] Invalid payload for topic ${topic}`,
                 object: { topic, payload }
             });
             return;
@@ -67,7 +67,7 @@ class PhysicalDeviceStateService extends EventEmitter<StateEventMap> {
         const { edge, device } = extractEdgeDeviceFromTopic(topic) ?? {};
         if (!edge || !device) {
             AppLogger.warn(undefined, {
-                message: `[PhysicalDeviceStateService] Unable to extract edge/device from topic ${topic}`,
+                message: `[StatePhysicalService] Unable to extract edge/device from topic ${topic}`,
                 object: { payload }
             });
             return;
@@ -82,7 +82,7 @@ class PhysicalDeviceStateService extends EventEmitter<StateEventMap> {
         if (payload.analogInputs) analogInputs = decodeBase64Field(payload.analogInputs);
         if (payload.analogOutputs) analogOutputs = decodeBase64Field(payload.analogOutputs);
 
-        const deviceState: DeviceState = {
+        const deviceState: PhysicalDeviceState = {
             edge,
             device,
             timestamp: payload.timestamp,
@@ -101,23 +101,23 @@ class PhysicalDeviceStateService extends EventEmitter<StateEventMap> {
         this.lastDeviceStates.set(urn, deviceState);
 
         // Emit for listeners (optionally only on change)
-        this.emit("stateChanged", urn, deviceState);
+        this.emit("physicalStateChanged", urn, deviceState);
 
         AppLogger.isDebugLevel() && AppLogger.debug({
-            message: `[PhysicalDeviceStateService] Updated device state`,
+            message: `[StatePhysicalService] Updated device state`,
             object: { urn, deviceState }
         });
     }
 
-    getDeviceState(urn: string): DeviceState | undefined {
+    getDeviceState(urn: string): PhysicalDeviceState | undefined {
         return this.lastDeviceStates.get(urn);
     }
 
-    getAllDeviceStates(): DeviceState[] {
+    getAllDeviceStates(): PhysicalDeviceState[] {
         return Array.from(this.lastDeviceStates.values());
     }
 }
 
 // Export singleton
 
-export const physicalDeviceStateService = new PhysicalDeviceStateService();
+export const statePhysicalService = new StatePhysicalService();

@@ -3,9 +3,9 @@ import { nanoid } from "nanoid";
 import mqttService from "./mqtt.service";
 
 
-class DeviceCommandService {
+class CommandEdgeService {
 
-    sendResourceCommandToDevice(resource: RuntimeResourceBase<"digitalOutput">,
+    sendCommandToEdge(resource: RuntimeResourceBase<"digitalOutput">,
         command: UhnResourceCommand) {
         const deviceCommand = this.mapOutputCommand(resource, command);
         this.sendDeviceCommand(resource.edge, resource.device!, deviceCommand);
@@ -13,9 +13,6 @@ class DeviceCommandService {
     }
     private sendDeviceCommand(edge: string, device: string, cmd: DeviceCommandPayload) {
         const topic = `uhn/${edge}/device/${device}/cmd`;
-        if (cmd.id === undefined) {
-            cmd.id = nanoid();
-        }
         mqttService.publish(topic, cmd);
     }
 
@@ -48,4 +45,4 @@ class DeviceCommandService {
         }
     }
 }
-export const deviceCommandService = new DeviceCommandService();
+export const commandEdgeService = new CommandEdgeService();

@@ -1,11 +1,12 @@
 import { UHNAppRequestMessage, UhnResourceCommandPayloadSchema } from "@uhn/common";
 import { AppLogger, WebSocketAction, WebSocketDetails } from "@uxp/bff-common";
-import { BlueprintResourceCommandService } from "../services/blueprint-resource-command.service";
+import { CommandsResourceService } from "../services/command-resource.service";
+
 
 export class UhnCommandHandler {
-    private commandService: BlueprintResourceCommandService;
+    private commandService: CommandsResourceService;
     constructor() {
-        this.commandService = new BlueprintResourceCommandService();
+        this.commandService = new CommandsResourceService();
     }
 
     @WebSocketAction("uhn:resource:command", { authenticate: true, schema: UhnResourceCommandPayloadSchema })

@@ -1,5 +1,5 @@
 
-import { ResourceBase, ResourceType } from "@uhn/blueprint";
+import { DigitalInputResourceBase, DigitalOutputResourceBase, ResourceBase, ResourceType } from "@uhn/blueprint";
 
 
 export type ResourceErrorCode =
@@ -11,7 +11,7 @@ export type ResourceErrorCode =
   | "invalid-pin"
   | "missing-pin"
   | "missing-address";
-  
+
 
 export type ResourceValidationError = {
   type: ResourceErrorCode;
@@ -26,6 +26,17 @@ export type RuntimeResourceBase<TType extends ResourceType> =
     name: string;
     errors?: ResourceErrorCode[];
   };
+export type RuntimeDigitalInputResourceBase =
+  DigitalInputResourceBase & {
+    id: string;
+    name: string;
+    errors?: ResourceErrorCode[];
+  };
+export type RuntimeDigitalOutputResourceBase = DigitalOutputResourceBase & {
+  id: string;
+  name: string;
+  errors?: ResourceErrorCode[];
+};
 
 export type ResourceList = RuntimeResourceBase<ResourceType>[];
 

@@ -29,6 +29,7 @@ export const ErrorCodes = {
     BLUEPRINT_DEACTIVATION_FAILED: "BLUEPRINT_DEACTIVATION_FAILED",
     INVALID_RESOURCE_COMMAND: "INVALID_RESOURCE_COMMAND",
     INVALID_RESOURCE_TYPE: "INVALID_RESOURCE_TYPE",
+    RESOURCE_NOT_ADDRESSABLE: "RESOURCE_NOT_ADDRESSABLE",
     // Add more error codes as needed
 } as const;
 
@@ -62,6 +63,7 @@ export const ErrorMessages: Record<ErrorCode, string> = {
     BLUEPRINT_DEACTIVATION_FAILED: "Failed to deactivate the blueprint due to an internal error.",
     INVALID_RESOURCE_COMMAND: "The command sent to the resource is invalid.",
     INVALID_RESOURCE_TYPE: "The resource type does not support this command.",
+    RESOURCE_NOT_ADDRESSABLE: "The resource is not addressable.",
     // Add more error mappings as needed
 };
 export type ErrorCode = keyof typeof ErrorCodes;

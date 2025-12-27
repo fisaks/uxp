@@ -1,4 +1,4 @@
-export type ResourceStateValue = boolean | number | string | undefined;
+export type ResourceStateValue = boolean | number;
 
 export type RuntimeResourceState = {
     resourceId: string;
