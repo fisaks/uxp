@@ -1,21 +1,22 @@
-import { ResourceType } from "@uhn/blueprint";
-import { makeAddressKey, ResourceErrorCode, resourceIdMatcher, ResourceList, ResourceValidationError, RuntimeResourceBase } from "@uhn/common";
+import { makeAddressKey, ResourceErrorCode, resourceIdMatcher, ResourceValidationError, RuntimeResource, RuntimeResourceList } from "@uhn/common";
 import { AppLogger } from "@uxp/bff-common";
 import { EventEmitter } from "events";
 import { BlueprintFileUtil } from "../util/blueprint-file.util";
-import { blueprintRuntimeService } from "./blueprint-runtime.service";
+
+import { blueprintRuntimeSupervisorService } from "./blueprint-runtime-supervisor.service";
 import { physicalCatalogService } from "./physical-catalog.service";
-import { workerService } from "./worker.service";
+import { ruleRuntimeProcessService } from "./rule-runtime-process.service";
+
 
 
 export type ResourceEventMap = {
-    resourcesReloaded: [resources: ResourceList, validationErrors: ResourceValidationError[]];
+    resourcesReloaded: [resources: RuntimeResourceList, validationErrors: ResourceValidationError[]];
     error: [error: unknown];
     resourcesCleared: [];
 };
 
 class BlueprintResourceService extends EventEmitter<ResourceEventMap> {
-    private resources: ResourceList = [];
+    private resources: RuntimeResourceList = [];
     private loading = false;
     private catalogChangedDuringLoad = false;
     private resourceLoaded = false;
@@ -24,21 +25,21 @@ class BlueprintResourceService extends EventEmitter<ResourceEventMap> {
     constructor() {
         super();
 
-        blueprintRuntimeService.on("workerReady", () => {
+        blueprintRuntimeSupervisorService.on("ruleRuntimeReady", () => {
             AppLogger.info({
-                message: `[BlueprintResourceService] Worker is ready, loading resources.`,
+                message: `[BlueprintResourceService] Rule runtime is ready, loading resources.`,
             });
             this.reloadResources().catch(err => {
                 AppLogger.error({
-                    message: `[BlueprintResourceService] Failed to load resources on worker ready:`,
+                    message: `[BlueprintResourceService] Failed to load resources on rule runtime ready:`,
                     error: err,
                 });
             });
         });
 
-        blueprintRuntimeService.on("workerStopped", () => {
+        blueprintRuntimeSupervisorService.on("ruleRuntimeStopped", () => {
             AppLogger.info({
-                message: `[BlueprintResourceService] Worker stopped, clearing resources.`,
+                message: `[BlueprintResourceService] Rule runtime stopped, clearing resources.`,
             });
             this.clearResources();
         });
@@ -67,22 +68,22 @@ class BlueprintResourceService extends EventEmitter<ResourceEventMap> {
         try {
             this.resourceLoaded = false;
             this.loading = true;
-            await this.reloadResourcesFromWorker();
+            await this.reloadResourcesFromRuleRuntime();
             if (this.catalogChangedDuringLoad) {
                 this.catalogChangedDuringLoad = false;
                 AppLogger.info({
                     message: `[BlueprintResourceService] Catalog changed during resource load, reloading resources again.`,
                 });
-                await this.reloadResourcesFromWorker();
+                await this.reloadResourcesFromRuleRuntime();
             }
         } finally {
             this.loading = false;
         }
     }
 
-    private async reloadResourcesFromWorker() {
+    private async reloadResourcesFromRuleRuntime() {
         try {
-            const resp = await workerService.runCommand({
+            const resp = await ruleRuntimeProcessService.runCommand({
                 cmd: "listResources",
             });
 
@@ -133,10 +134,10 @@ class BlueprintResourceService extends EventEmitter<ResourceEventMap> {
     }
 
     /** Validates the resource list and annotates resources with errors. */
-    private validateResources(resources: ResourceList) {
+    private validateResources(resources: RuntimeResourceList) {
         const errors: ResourceValidationError[] = [];
-        const idMap = new Map<string, RuntimeResourceBase<ResourceType>>();
-        const addressMap = new Map<string, RuntimeResourceBase<ResourceType>>();
+        const idMap = new Map<string, RuntimeResource>();
+        const addressMap = new Map<string, RuntimeResource>();
         for (const resource of resources) {
             resource.errors = []; // ensure it's always present
             const addErr = (code: ResourceErrorCode, details: string, conflictingId?: string
@@ -244,7 +245,7 @@ class BlueprintResourceService extends EventEmitter<ResourceEventMap> {
     getValidationErrors() {
         return [...this.validationErrors];
     }
-    getInvalidResources(): ResourceList {
+    getInvalidResources(): RuntimeResourceList {
         return this.resources.filter(r => r.errors && r.errors.length > 0);
     }
     clearResources() {
@@ -257,15 +258,15 @@ class BlueprintResourceService extends EventEmitter<ResourceEventMap> {
         this.emit("resourcesCleared");
     }
 
-    getAllResources(): ResourceList {
+    getAllResources(): RuntimeResourceList {
         return this.resources;
     }
 
-    findResourceById(id: string): RuntimeResourceBase<ResourceType> | undefined {
+    findResourceById(id: string): RuntimeResource | undefined {
         return this.resources.find(r => r.id === id);
     }
 
-    findResourcesByIds(ids: string[] | undefined): ResourceList {
+    findResourcesByIds(ids: string[] | undefined): RuntimeResourceList {
         if (!ids || ids.length === 0) {
             return [];
         }

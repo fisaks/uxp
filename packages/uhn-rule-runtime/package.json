@@ -1,17 +1,17 @@
 {
-    "name": "@uhn/worker",
-    "description": "Unified Home Network worker service",
+    "name": "@uhn/rule-runtime",
+    "description": "Unified Home Network Rule Runtime",
     "version": "1.0.0",
     "type": "commonjs",
-    "main": "dist/uhn.worker.js",
-    "types": "build_types/uhn.worker.d.ts",
+    "main": "dist/rule-runtime.js",
+    "types": "build_types/rule-runtime.d.ts",
     "keywords": [],
     "author": "",
     "license": "ISC",
     "scripts": {
         "build": "pnpm tsc --build",
         "trace": "pnpm tsc --traceResolution",
-        "dev": "pnpm ts-node-dev --project ./tsconfig.json --debounce 500 --poll --respawn src/uhn.worker.ts",
+        "dev": "pnpm ts-node-dev --project ./tsconfig.json --debounce 500 --poll --respawn src/rule-runtime.ts",
         "clean": "pnpm rimraf --glob -v dist tsconfig.tsbuildinfo build_types",
         "lint": "pnpm eslint .",
         "lint:fix": "pnpm eslint . --fix"

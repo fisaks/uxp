@@ -2,14 +2,16 @@ import { AppLogger, runBackgroundTask } from "@uxp/bff-common";
 import { EventEmitter } from "events";
 import { BlueprintRepository } from "../repositories/blueprint.repository";
 import { BlueprintFileUtil } from "../util/blueprint-file.util";
-import { workerService } from "./worker.service";
+import { ruleRuntimeProcessService } from "./rule-runtime-process.service";
+
 const { AppDataSource } = require("../db/typeorm.config");
 
-type RuntimeEventMap = {
-    workerReady: [];
-    workerStopped: [];
+type BlueprintRuntimeSupervisorEventMap = {
+    ruleRuntimeReady: [];
+    ruleRuntimeRestarting: [];
+    ruleRuntimeStopped: [];
 };
-class BlueprintRuntimeService extends EventEmitter<RuntimeEventMap> {
+class BlueprintRuntimeSupervisorService extends EventEmitter<BlueprintRuntimeSupervisorEventMap> {
     private shouldRestart = true;
     private running = false;
     private restartAttempts = 0;
@@ -22,22 +24,24 @@ class BlueprintRuntimeService extends EventEmitter<RuntimeEventMap> {
         return Math.min(delay, this.restartMaxDelayMs);
     }
     private attachRestartHandler() {
-        workerService.once("exit", async () => {
+        ruleRuntimeProcessService.once("exit", async () => {
             if (this.shouldRestart) {
                 const delay = this.getRestartDelayMs();
                 this.restartAttempts++;
+                this.emit("ruleRuntimeRestarting");
                 AppLogger.warn({
-                    message: `[BlueprintRuntimeService] Worker exited unexpectedly, restarting in ${delay} ms (attempt ${this.restartAttempts})`,
+                    message: `[BlueprintRuntimeSupervisorService] Rule runtime exited unexpectedly, restarting in ${delay} ms (attempt ${this.restartAttempts})`,
                 });
 
                 await new Promise(res => setTimeout(res, delay));
                 this.attachRestartHandler();
                 try {
-                    await workerService.startWorker(BlueprintFileUtil.ActiveBlueprintFolder);
+                    await ruleRuntimeProcessService.startRuleRuntime(BlueprintFileUtil.ActiveBlueprintFolder);
                     this.restartAttempts = 0;
+                    this.emit("ruleRuntimeReady");
                 } catch (error) {
                     AppLogger.error({
-                        message: `[BlueprintRuntimeService] Failed to restart worker:`,
+                        message: `[BlueprintRuntimeSupervisorService] Failed to restart rule runtime:`,
                         error,
                     });
                 }
@@ -51,23 +55,22 @@ class BlueprintRuntimeService extends EventEmitter<RuntimeEventMap> {
         this.running = true;
         this.shouldRestart = true;
         this.restartAttempts = 0;
-        await workerService.startWorker(BlueprintFileUtil.ActiveBlueprintFolder);
+        await ruleRuntimeProcessService.startRuleRuntime(BlueprintFileUtil.ActiveBlueprintFolder);
         this.attachRestartHandler();
-
-        this.emit("workerReady");
+        this.emit("ruleRuntimeReady");
     }
 
     async stop() {
         if (!this.running) return;
         this.shouldRestart = false;
         this.restartAttempts = 0;
-        await workerService.stopWorker();
+        await ruleRuntimeProcessService.stopRuleRuntime();
         this.running = false;
-        this.emit("workerStopped");
+        this.emit("ruleRuntimeStopped");
     }
 }
 
-export async function startBlueprintRuntimeServices() {
+export async function startBlueprintRuntimeSupervisorServices() {
 
     try {
         await runBackgroundTask(AppDataSource, async () => {
@@ -76,7 +79,7 @@ export async function startBlueprintRuntimeServices() {
                 AppLogger.info({
                     message: `Starting blueprint runtime service for active blueprint ${active.identifier} v${active.version}`,
                 });
-                await blueprintRuntimeService.start();
+                await blueprintRuntimeSupervisorService.start();
             }
         })
     } catch (error) {
@@ -87,4 +90,4 @@ export async function startBlueprintRuntimeServices() {
     }
 }
 
-export const blueprintRuntimeService = new BlueprintRuntimeService();
+export const blueprintRuntimeSupervisorService = new BlueprintRuntimeSupervisorService();

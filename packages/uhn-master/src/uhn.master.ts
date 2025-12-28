@@ -8,12 +8,12 @@ import { DateTime } from "luxon";
 import path from "path";
 import env from "./env";
 
-import { startBlueprintRuntimeServices } from "./services/blueprint-runtime.service";
-import mqttService from "./services/mqtt.service";
 import "./services/blueprint-resource.service";
+import { startBlueprintRuntimeSupervisorServices } from "./services/blueprint-runtime-supervisor.service";
+import mqttService from "./services/mqtt.service";
 
-import { UHNAppServerWebSocketManager } from "./ws/UHNAppServerWebSocketManager";
 import { setupWebDispatchers } from "./dispatchers";
+import { UHNAppServerWebSocketManager } from "./ws/UHNAppServerWebSocketManager";
 
 const { AppDataSource } = require("./db/typeorm.config");
 
@@ -25,7 +25,7 @@ AppDataSource.initialize()
             "Entities:",
             AppDataSource.entityMetadatas.map((meta: { name: string }) => meta.name)
         );
-        await startBlueprintRuntimeServices();
+        await startBlueprintRuntimeSupervisorServices();
     })
     .catch((err: Error) => console.error("Error during Data Source initialization", err));
 

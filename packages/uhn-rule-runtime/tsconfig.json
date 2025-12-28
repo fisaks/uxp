@@ -12,11 +12,19 @@
         "emitDecoratorMetadata": true,
         "strict": true
     },
-    "include": ["src/**/*"],
-    "exclude": ["node_modules", "dist"],
+    "include": [
+        "src/**/*"
+    ],
+    "exclude": [
+        "node_modules",
+        "dist"
+    ],
     "references": [
         {
             "path": "../uhn-blueprint"
         },
+        {
+            "path": "../uhn-common"
+        }
     ]
 }

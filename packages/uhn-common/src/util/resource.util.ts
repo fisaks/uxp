@@ -1,9 +1,6 @@
-import { ResourceType } from "@uhn/blueprint";
-import { ResourceList, RuntimeResourceBase } from "../types/worker.type";
-import { RuntimeResourceState } from "../types/runtime.type";
+import { RuntimeResource, RuntimeResourceList, RuntimeResourceState } from "../types/uhn-runtime.type";
 
-
-export function makeAddressKey(resource: Pick<RuntimeResourceBase<ResourceType>, "edge" | "device" | "type" | "pin">): string | undefined {
+export function makeAddressKey(resource: Pick<RuntimeResource, "edge" | "device" | "type" | "pin">): string | undefined {
     if (resource.edge && resource.device && resource.type && resource.pin !== undefined) {
         return `${resource.edge}:${resource.device}:${resource.type}:${resource.pin}`;
     }
@@ -41,8 +38,8 @@ export function resourceIdMatcher(ids: string[] | undefined): { exact: Set<strin
 
 export function getMatchingResourcesForPattern(
     pattern: string,
-    resources: ResourceList
-): ResourceList {
+    resources: RuntimeResourceList
+): RuntimeResourceList {
     if (pattern === "resource/*") {
         return resources;
     }

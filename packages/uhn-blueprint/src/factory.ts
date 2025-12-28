@@ -1,3 +1,5 @@
+// Factory Functions
+// factory.ts
 import { DigitalInputResourceBase, DigitalOutputResourceBase } from "./resource";
 
 export function digitalInput<

@@ -1,10 +1,10 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { ResourceType } from "@uhn/blueprint";
-import { RuntimeResourceBase, UhnResourcesResponse } from "@uhn/common";
+import { RuntimeResource, UhnResourcesResponse } from "@uhn/common";
 
 
 export type ResourcesState = {
-    byId: Record<string, RuntimeResourceBase<ResourceType>>;
+    byId: Record<string, RuntimeResource>;
     allIds: string[];
     isLoaded: boolean;
     receivedAt?: number;

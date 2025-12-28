@@ -1,4 +1,4 @@
-import { ResourceStateValue, RuntimeResourceBase } from "@uhn/common";
+import { ResourceStateValue, RuntimeResource } from "@uhn/common";
 import { AppLogger } from "@uxp/bff-common";
 import { EventEmitter } from "events";
 import { blueprintResourceService } from "./blueprint-resource.service";
@@ -70,7 +70,7 @@ class StateSignalService extends EventEmitter<StateSignalEventMap> {
         }
     }
 
-    setSignalState(resource: Pick<RuntimeResourceBase<"digitalInput">, "edge" | "id">, value: ResourceStateValue) {
+    setSignalState(resource: Pick<RuntimeResource, "edge" | "id">, value: ResourceStateValue) {
         const timestamp = Date.now();
 
         this.signalStateByResourceId.set(resource.id, {

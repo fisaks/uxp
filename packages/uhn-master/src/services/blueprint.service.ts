@@ -7,10 +7,11 @@ import { BlueprintEntity } from "../db/entities/BlueprintEntity";
 import { BlueprintMapper } from "../mappers/blueprint.mapper";
 import { BlueprintActivationRepository } from "../repositories/blueprint-activation.repository";
 import { BlueprintRepository } from "../repositories/blueprint.repository";
+import { BlueprintCompileUtil } from "../util/blueprint-compiler.util";
 import { BlueprintFileUtil } from "../util/blueprint-file.util";
 import { BlueprintMetaDataUtil } from "../util/blueprint-metadata.util";
-import { BlueprintCompileUtil } from "../util/blueprint-compiler.util";
-import { blueprintRuntimeService } from "./blueprint-runtime.service";
+import { blueprintRuntimeSupervisorService } from "./blueprint-runtime-supervisor.service";
+
 
 
 
@@ -72,7 +73,7 @@ export class BlueprintService {
             lastActivation.deactivatedBy = deActivatedBy;
             await BlueprintActivationRepository.save(lastActivation);
         }
-        await blueprintRuntimeService.stop();
+        await blueprintRuntimeSupervisorService.stop();
 
         AppLogger.info({
             message: `Deactivated blueprint ${identifier} v${version} globally by ${deActivatedBy}`
@@ -123,7 +124,7 @@ export class BlueprintService {
         await BlueprintRepository.save(toActivate);
 
         if (result.success) {
-            await blueprintRuntimeService.start();
+            await blueprintRuntimeSupervisorService.start();
         }
         AppLogger.info({
             message: `Activated blueprint ${identifier} v${version} globally by ${activatedBy}`

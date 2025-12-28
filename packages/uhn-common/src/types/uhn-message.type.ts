@@ -1,8 +1,7 @@
 
-import { ResourceType } from "@uhn/blueprint";
 import { MessagePayloadSchema } from "@uxp/common";
-import { RuntimeResourceState } from "./runtime.type";
-import { RuntimeResourceBase } from "./worker.type";
+import { RuntimeResource, RuntimeResourceState } from "./uhn-runtime.type";
+
 
 export type UhnSubscriptionPattern =
     | `state/*`
@@ -48,7 +47,7 @@ export type UhnMessageActionPayloadRequestMap = {
 }
 
 export type UhnResourcesResponse = {
-    resources: RuntimeResourceBase<ResourceType>[]
+    resources: RuntimeResource[]
 }
 
 export type UhnStateResponse = {

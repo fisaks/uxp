@@ -1,6 +1,7 @@
-import { InputType, ResourceType } from "@uhn/blueprint";
-import { RuntimeResourceBase, RuntimeResourceState } from "@uhn/common";
+import { BaseInputKind, BaseOutputKind, InputType } from "@uhn/blueprint";
+import { RuntimeResource, RuntimeResourceState } from "@uhn/common";
 
 // Helper types
-export type TileRuntimeResource = RuntimeResourceBase<ResourceType> & { outputKind?: string, inputKind?: string, inputType?: InputType };
+
+export type TileRuntimeResource = RuntimeResource & { outputKind?: BaseOutputKind, inputKind?: BaseInputKind, inputType?: InputType };
 export type TileRuntimeResourceState = Pick<RuntimeResourceState, "value" | "timestamp">;

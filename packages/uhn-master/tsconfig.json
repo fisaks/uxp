@@ -26,6 +26,9 @@
         },
         {
             "path": "../uxp-bff-common"
+        },
+        {
+            "path": "../uhn-rule-runtime"
         }
     ]
 }

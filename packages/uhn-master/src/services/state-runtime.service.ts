@@ -1,5 +1,5 @@
 import type { ResourceType } from "@uhn/blueprint";
-import { makeAddressKey, Range, resourceIdMatcher, ResourceList, ResourceStateValue, RuntimeResourceState } from "@uhn/common";
+import { makeAddressKey, Range, resourceIdMatcher, ResourceStateValue, RuntimeResourceList, RuntimeResourceState } from "@uhn/common";
 import { AppLogger } from "@uxp/bff-common";
 import { EventEmitter } from "events";
 
@@ -93,7 +93,7 @@ class StateRuntimeService extends EventEmitter<StateRuntimeEventMap> {
     /* Blueprint reload handling                          */
     /* -------------------------------------------------- */
 
-    private handleResourcesReloaded(resources: ResourceList) {
+    private handleResourcesReloaded(resources: RuntimeResourceList) {
         this.reset();
         const addressLookup = new Map<string, string>();
         for (const r of resources) {

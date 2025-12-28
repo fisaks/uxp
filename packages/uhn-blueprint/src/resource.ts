@@ -1,3 +1,5 @@
+// Resource Types and Bases
+// resource.ts
 export type ResourceType = "digitalInput" | "digitalOutput";
 export type ResourceBase<TType extends ResourceType> = {
     id?: string;

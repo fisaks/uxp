@@ -1,5 +1,6 @@
-//services/worker.service.ts
-import type { ErrorResponse, WorkerCommandMap, WorkerResponse } from "@uhn/common";
+//services/rule-runtime-process.service.ts
+
+import { RuleRuntimeCommandMap, RuleRuntimeErrorResponse, RuleRuntimeResponse } from "@uhn/common";
 import { AppErrorV2, AppLogger, fileExists, pathExists, readFile, removeFile, writeFile } from "@uxp/bff-common";
 import { ChildProcess, spawn, SpawnOptions } from "child_process";
 import { EventEmitter } from "events";
@@ -7,17 +8,16 @@ import { nanoid } from "nanoid";
 import path from "path";
 import env from "../env";
 
-type WorkerEventMap = {
-    message: [response: Omit<WorkerResponse, "id">];
+type RuleRuntimeProcessEventMap = {
+    message: [response: Omit<RuleRuntimeResponse, "id">];
     stderr: [chunk: string];
     exit: [code: number | null, signal: NodeJS.Signals | null];
 };
 
-const PID_FILE = `${env.UHN_WORKSPACE_PATH}/worker.pid`;
+const PID_FILE = `${env.UHN_WORKSPACE_PATH}/rule-runtime.pid`;
 
-// Utility: get package root of @uhn/worker
-function getWorkerPkgRoot() {
-    const pkgJsonPath = require.resolve("@uhn/worker/package.json");
+function getRuleRuntimePkgRoot() {
+    const pkgJsonPath = require.resolve("@uhn/rule-runtime/package.json");
     return path.dirname(pkgJsonPath);
 }
 
@@ -40,7 +40,17 @@ async function waitForKill(pid: number) {
     }
 }
 
-async function killOldWorker() {
+function isProcessAlive(pid?: number): boolean {
+    if (!pid) return false;
+    try {
+        process.kill(pid, 0);
+        return true;
+    } catch {
+        return false;
+    }
+}
+
+async function killOldRuleRuntime() {
     if (await pathExists(PID_FILE)) {
         const pid = parseInt(await readFile(PID_FILE, "utf8"));
         if (!isProcessAlive(pid)) {
@@ -64,21 +74,11 @@ async function killOldWorker() {
         }
         await waitForKill(pid);
         if (isProcessAlive(pid)) {
-            AppLogger.warn({ message: `[WorkerService] Process still alive after SIGKILL PID ${pid} ` });
+            AppLogger.warn({ message: `[RuleRuntimeProcessService] Process still alive after SIGKILL PID ${pid} ` });
         } else {
-            AppLogger.info({ message: `[WorkerService] Killed orphan worker PID ${pid}` });
+            AppLogger.info({ message: `[RuleRuntimeProcessService] Killed orphan rule runtime PID ${pid}` });
         }
         await removePidFile();
-    }
-}
-
-function isProcessAlive(pid?: number): boolean {
-    if (!pid) return false;
-    try {
-        process.kill(pid, 0);
-        return true;
-    } catch {
-        return false;
     }
 }
 
@@ -146,20 +146,20 @@ async function killChildProcess(
 }
 
 
-class WorkerService extends EventEmitter<WorkerEventMap> {
-    private worker: ChildProcess | null = null;
+class RuleRuntimeProcessService extends EventEmitter<RuleRuntimeProcessEventMap> {
+    private process: ChildProcess | null = null;
     private buffer = "";
     private pendingResponses = new Map<
         string,
-        (resp: Omit<WorkerResponse, "id">) => void
+        (resp: Omit<RuleRuntimeResponse, "id">) => void
     >();
     private readyPromise: Promise<void> | null = null;
     private readyResolve: (() => void) | null = null;
     private ready = false;
 
-    async startWorker(blueprintFolder: string, readyTimeoutMs = 20000) {
-        await this.stopWorker();
-        await killOldWorker();
+    async startRuleRuntime(blueprintFolder: string, readyTimeoutMs = 20000) {
+        await this.stopRuleRuntime();
+        await killOldRuleRuntime();
         this.buffer = "";
         this.ready = false;
         this.readyPromise = new Promise<void>((resolve, reject) => {
@@ -167,9 +167,9 @@ class WorkerService extends EventEmitter<WorkerEventMap> {
             const t = setTimeout(async () => {
                 if (!this.ready) {
                     this.readyResolve = null;
-                    await killChildProcess(this.worker, 5000, "worker process");
+                    await killChildProcess(this.process, 5000, "Rule runtime process");
 
-                    reject(`Worker process ready timeout PID: ${this.worker?.pid} is most likely stuck`);
+                    reject(`Rule runtime process ready timeout PID: ${this.process?.pid} is most likely stuck`);
                 }
             }, readyTimeoutMs);
             this.readyResolve = () => {
@@ -180,24 +180,24 @@ class WorkerService extends EventEmitter<WorkerEventMap> {
             };
         });
 
-        const { cmd, args, opts, mode } = await this.getWorkerLaunchConfig(blueprintFolder);
+        const { cmd, args, opts, mode } = await this.getRuleRuntimeLaunchConfig(blueprintFolder);
 
-        this.worker = spawn(cmd, args, opts);
-        await writePidFile(this.worker.pid!);
+        this.process = spawn(cmd, args, opts);
+        await writePidFile(this.process.pid!);
         this.setupListeners();
 
-        AppLogger.info({ message: `[WorkerService] Worker process started with PID ${this.worker.pid}` });
+        AppLogger.info({ message: `[RuleRuntimeProcessService] Rule runtime process started with PID ${this.process.pid}` });
         await this.readyPromise;
     }
 
-    private async getWorkerLaunchConfig(blueprintFolder: string): Promise<{
+    private async getRuleRuntimeLaunchConfig(blueprintFolder: string): Promise<{
         cmd: string;
         args: string[];
         opts: SpawnOptions;
         mode: "dev" | "prod";
     }> {
-        const pkgRoot = getWorkerPkgRoot();
-        const tsEntrypoint = path.join(pkgRoot, "src", "uhn.worker.ts");
+        const pkgRoot = getRuleRuntimePkgRoot();
+        const tsEntrypoint = path.join(pkgRoot, "src", "rule-runtime.ts");
         const isDev = await fileExists(tsEntrypoint);
 
         if (isDev) {
@@ -216,7 +216,7 @@ class WorkerService extends EventEmitter<WorkerEventMap> {
         } else {
             // eslint-disable-next-line @typescript-eslint/no-var-requires
             const pkg = require(path.join(pkgRoot, "package.json"));
-            const jsEntrypoint = path.join(pkgRoot, pkg.main ?? "dist/uhn.worker.js");
+            const jsEntrypoint = path.join(pkgRoot, pkg.main ?? "dist/rule-runtime.js");
             return {
                 cmd: "node",
                 args: [jsEntrypoint, blueprintFolder],
@@ -227,9 +227,9 @@ class WorkerService extends EventEmitter<WorkerEventMap> {
     }
 
     private setupListeners() {
-        if (!this.worker) return;
-        this.worker.stdout?.setEncoding("utf8");
-        this.worker.stdout?.on("data", (chunk: string) => {
+        if (!this.process) return;
+        this.process.stdout?.setEncoding("utf8");
+        this.process.stdout?.on("data", (chunk: string) => {
             this.buffer += chunk;
             let eol;
             while ((eol = this.buffer.indexOf("\n")) >= 0) {
@@ -237,14 +237,14 @@ class WorkerService extends EventEmitter<WorkerEventMap> {
                 this.buffer = this.buffer.slice(eol + 1);
                 const trimmed = line.trimStart();
                 if (!trimmed || !trimmed.startsWith("{")) {
-                    AppLogger.info({ message: `[WorkerService] ${line}` });
+                    AppLogger.info({ message: `[RuleRuntimeProcessService] ${line}` });
                     continue; // Ignore non-JSON
                 }
                 let resp: any;
                 try {
                     resp = JSON.parse(line);
                 } catch (err) {
-                    AppLogger.error({ message: `[WorkerService] Failed to parse JSON`, error: err });
+                    AppLogger.error({ message: `[RuleRuntimeProcessService] Failed to parse JSON`, error: err });
                     continue;
                 }
 
@@ -261,44 +261,44 @@ class WorkerService extends EventEmitter<WorkerEventMap> {
                         handler(resp);
                         this.pendingResponses.delete(id);
                     } else {
-                        AppLogger.warn({ message: `[WorkerService] No handler for response ID ${id}` });
+                        AppLogger.warn({ message: `[RuleRuntimeProcessService] No handler for response ID ${id}` });
                     }
                 } else {
                     this.emit("message", resp);
                 }
             }
         });
-        this.worker.stderr?.setEncoding("utf8");
-        this.worker.stderr?.on("data", (chunk: string) => {
-            AppLogger.error({ message: `[WorkerService][stderr] ${chunk}` });
+        this.process.stderr?.setEncoding("utf8");
+        this.process.stderr?.on("data", (chunk: string) => {
+            AppLogger.error({ message: `[RuleRuntimeProcessService][stderr] ${chunk}` });
             this.emit("stderr", chunk);
         });
-        this.worker.on("exit", async (code, signal) => {
-            AppLogger.info({ message: `[WorkerService] Worker process exited with code ${code} and signal ${signal}` });
+        this.process.on("exit", async (code, signal) => {
+            AppLogger.info({ message: `[RuleRuntimeProcessService] Rule runtime process exited with code ${code} and signal ${signal}` });
             for (const [, handler] of this.pendingResponses) {
-                handler({ error: "Worker process exited unexpectedly" });
+                handler({ error: "Rule runtime process exited unexpectedly" });
             }
             this.pendingResponses.clear();
             this.ready = false;
             this.readyPromise = null;
             this.readyResolve = null;
-            this.worker = null;
+            this.process = null;
             await removePidFile();
 
             this.emit("exit", code, signal);
         });
     }
 
-    async stopWorker() {
-        if (this.worker) {
-            await killChildProcess(this.worker, 5000, "worker process");
+    async stopRuleRuntime() {
+        if (this.process) {
+            await killChildProcess(this.process, 5000, "Rule runtime process");
             // cleanup is in the "exit" event handler
         }
     }
 
 
-    async runCommand<K extends keyof WorkerCommandMap>(cmd: WorkerCommandMap[K]["request"], timeoutMs = 10000)
-        : Promise<WorkerCommandMap[K]["response"]> {
+    async runCommand<K extends keyof RuleRuntimeCommandMap>(cmd: RuleRuntimeCommandMap[K]["request"], timeoutMs = 10000)
+        : Promise<RuleRuntimeCommandMap[K]["response"]> {
 
         if (!this.ready && this.readyPromise) {
             await this.readyPromise;
@@ -308,39 +308,39 @@ class WorkerService extends EventEmitter<WorkerEventMap> {
             throw new AppErrorV2({
                 statusCode: 503,
                 code: "INTERNAL_SERVER_ERROR",
-                message: "Worker process is not ready",
+                message: "Rule runtime process is not ready",
             });
         }
-        if (!this.worker || !this.worker.stdin?.writable) {
+        if (!this.process || !this.process.stdin?.writable) {
             throw new AppErrorV2({
                 statusCode: 500,
                 code: "INTERNAL_SERVER_ERROR",
-                message: "Worker process is not running",
+                message: "Rule runtime process is not running",
             });
         }
         const id = nanoid();
         const fullCmd = { ...cmd, id };
 
-        const promise = new Promise<WorkerCommandMap[K]["response"]>((resolve, reject) => {
+        const promise = new Promise<RuleRuntimeCommandMap[K]["response"]>((resolve, reject) => {
             const timer = timeoutMs > 0 ? setTimeout(() => {
-                AppLogger.warn({ message: `[WorkerService] Worker command ${cmd.cmd} timed out after ${timeoutMs}ms` });
+                AppLogger.warn({ message: `[RuleRuntimeProcessService] Rule runtime command ${cmd.cmd} timed out after ${timeoutMs}ms` });
                 this.pendingResponses.delete(id);
-                reject("Worker command timed out");
+                reject("Rule runtime command timed out");
             }, timeoutMs) : null;
-            this.pendingResponses.set(id, (resp: Omit<WorkerResponse, "id">) => {
+            this.pendingResponses.set(id, (resp: Omit<RuleRuntimeResponse, "id">) => {
                 if (timer) clearTimeout(timer);
                 if (resp && typeof resp === "object" && "error" in resp) {
-                    reject(resp as ErrorResponse);
+                    reject(resp as RuleRuntimeErrorResponse);
                     return;
                 } else {
-                    resolve(resp as WorkerCommandMap[K]["response"]);
+                    resolve(resp as RuleRuntimeCommandMap[K]["response"]);
                 }
             });
         });
 
-        this.worker.stdin.write(JSON.stringify(fullCmd) + "\n");
+        this.process.stdin.write(JSON.stringify(fullCmd) + "\n");
         return promise;
     }
 }
-export const workerService = new WorkerService();
-export type { WorkerService };
+export const ruleRuntimeProcessService = new RuleRuntimeProcessService();
+export type { RuleRuntimeProcessService };

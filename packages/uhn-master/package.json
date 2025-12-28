@@ -30,6 +30,7 @@
         "@uxp/bff-common": "workspace:*",
         "@uxp/common": "workspace:*",
         "@uhn/blueprint": "workspace:*",
+        "@uhn/rule-runtime": "workspace:*",
         "ajv": "^8.17.1",
         "axios": "^1.7.8",
         "bcrypt": "^5.1.1",

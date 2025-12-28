@@ -1,12 +1,12 @@
-import { ResourceBase, ResourceType } from "@uhn/blueprint";
-import { ListResourcesResponse, ReadyCommand, RuntimeResourceBase, WorkerCommand, WorkerResponse, } from "@uhn/common";
+import { RuleRuntimeCommand, RuleRuntimeListResourcesResponse, RuleRuntimeReadyMessage, RuleRuntimeResponse, RuntimeResource, RuntimeResourceList } from "@uhn/common";
+
 import fs from "fs-extra";
 import path from "path";
 
-// Usage: node uhn.worker.js <blueprint-folder>
+// Usage: node uhn.rule-runtime.js <blueprint-folder>
 const blueprintDir = process.argv[2];
 if (!blueprintDir) {
-    console.error("Usage: node uhn.worker.js <blueprint-folder>");
+    console.error("Usage: node rule-runtime.js <blueprint-folder>");
     process.exit(1);
 }
 const resourcesDir = path.join(path.resolve(blueprintDir), "dist", "resources");
@@ -16,13 +16,13 @@ function humanizeConstName(name: string): string {
         .replace(/([a-z])([A-Z])/g, "$1 $2")
         .replace(/^./, c => c.toUpperCase());
 }
-function isResourceObject(obj: unknown): obj is RuntimeResourceBase<ResourceType> {
+function isResourceObject(obj: unknown): obj is RuntimeResource {
     return (typeof obj === "object" && obj !== null &&
         "edge" in obj && "type" in obj &&
         typeof obj.edge === "string" && typeof obj.type === "string");
 }
-async function collectResources(): Promise<RuntimeResourceBase<ResourceType>[]> {
-    const allResources: RuntimeResourceBase<ResourceType>[] = [];
+async function collectResources(): Promise<RuntimeResourceList> {
+    const allResources: RuntimeResourceList = [];
     if (!(await fs.pathExists(resourcesDir))) {
         console.error(`ERROR: resources directory not found: ${resourcesDir}`);
         return [];
@@ -43,7 +43,7 @@ async function collectResources(): Promise<RuntimeResourceBase<ResourceType>[]> 
                 });
             } else {
                 console.warn(
-                    `[worker] Skipped non-resource export "${exportName}" in "${file}"`
+                    `[rule-runtime] Skipped non-resource export "${exportName}" in "${file}"`
                 );
             }
         }
@@ -53,7 +53,7 @@ async function collectResources(): Promise<RuntimeResourceBase<ResourceType>[]> 
 
 // Listen for line-delimited JSON commands on stdin
 process.stdin.setEncoding("utf8");
-const reply = (data: WorkerResponse) => {
+const reply = (data: RuleRuntimeResponse) => {
     process.stdout.write(JSON.stringify(data) + "\n");
 };
 
@@ -65,7 +65,7 @@ process.stdin.on("data", (chunk) => {
         const line = input.slice(0, eol);
         input = input.slice(eol + 1);
         if (!line.trim()) continue;
-        let cmd: WorkerCommand;
+        let cmd: RuleRuntimeCommand;
         try {
             cmd = JSON.parse(line);
             if (typeof cmd.id !== "string" || typeof cmd.cmd !== "string")
@@ -76,7 +76,7 @@ process.stdin.on("data", (chunk) => {
         }
         if (cmd.cmd === "listResources") {
             collectResources().then(resources => {
-                reply({ id: cmd.id, resources } satisfies ListResourcesResponse);
+                reply({ id: cmd.id, resources } satisfies RuleRuntimeListResourcesResponse);
             }).catch(err => {
                 reply({ id: cmd.id, error: err.message || String(err) });
             });
@@ -85,4 +85,4 @@ process.stdin.on("data", (chunk) => {
         }
     }
 });
-process.stdout.write(JSON.stringify({ cmd: "ready" } satisfies ReadyCommand) + "\n");
+process.stdout.write(JSON.stringify({ cmd: "ready" } satisfies RuleRuntimeReadyMessage) + "\n");
