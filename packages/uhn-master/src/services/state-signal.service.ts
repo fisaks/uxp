@@ -51,11 +51,14 @@ class StateSignalService extends EventEmitter<StateSignalEventMap> {
         }
         const edge = parts[1];
         const resourceId = parts[4];
+        AppLogger.isTraceLevel() &&
+            AppLogger.trace({
+                message: `[StateSignalService] Received signal state for resource ${resourceId} on edge ${edge}`,
+                object: { topic, payload }
+            });
         if (isSignalStatePayload(payload)) {
             const prev = this.signalStateByResourceId.get(resourceId);
-            if (prev?.value === payload.value) return;
             if (prev && prev.timestamp >= payload.timestamp) return;
-
             this.signalStateByResourceId.set(resourceId,
                 { edge, value: payload.value, timestamp: payload.timestamp }
             );
@@ -68,24 +71,34 @@ class StateSignalService extends EventEmitter<StateSignalEventMap> {
     }
 
     setSignalState(resource: Pick<RuntimeResourceBase<"digitalInput">, "edge" | "id">, value: ResourceStateValue) {
-
-        const prev = this.signalStateByResourceId.get(resource.id);
-        if (prev?.value === value) return;
         const timestamp = Date.now();
+
+        this.signalStateByResourceId.set(resource.id, {
+            edge: resource.edge,
+            value,
+            timestamp,
+        });
+
+        this.emit("signalStateChanged", resource.id, value, timestamp);
         this.signalEdgeService.sendStateSignalToEdge(resource, { value, timestamp });
     }
 
     clearSignalState(resourceId: string) {
         const state = this.signalStateByResourceId.get(resourceId);
         if (!state) return;
+        const ts = Date.now();
 
+        this.signalStateByResourceId.delete(resourceId);
+        this.emit("signalStateChanged", resourceId, undefined, ts);
         this.signalEdgeService.clearStateSignalOnEdge({ id: resourceId, edge: state.edge });
     }
 
     clearAll() {
         const entries = Array.from(this.signalStateByResourceId.entries());
+        const ts = Date.now();
         this.signalStateByResourceId.clear();
         for (const [resourceId, state] of entries) {
+            this.emit("signalStateChanged", resourceId, undefined, ts);
             this.signalEdgeService.clearStateSignalOnEdge({
                 id: resourceId,
                 edge: state.edge

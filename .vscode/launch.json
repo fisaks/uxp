@@ -23,6 +23,34 @@
             }
         },
         {
+            "name": "Start UHN master debug process",
+            "type": "node",
+            "request": "launch",
+            "runtimeExecutable": "pnpm",
+            "runtimeArgs": [
+                "ts-node-dev",
+                "--project",
+                "./tsconfig.json",
+                "--inspect",
+                "--transpile-only",
+                "--respawn"
+            ],
+            "args": [
+                "src/uhn.master.ts"
+            ],
+            "cwd": "${workspaceFolder}/packages/uhn-master",
+            "restart": true,
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "sourceMaps": true,
+            "outFiles": [],
+            "console": "integratedTerminal",
+            "env": {
+                "NODE_ENV": "development"
+            }
+        },
+        {
             "name": "Attach to UHN debug process",
             "type": "node",
             "request": "attach",

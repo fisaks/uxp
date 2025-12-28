@@ -89,14 +89,19 @@ export class MqttService {
 
     publish(topic: string, message: unknown, options?: PublishOption) {
         if (!this.client) throw new Error("MQTT not initialized!");
-        const payload = typeof message === "string" ? message : JSON.stringify(message);
-        this.client.publish(topic, payload, options);
+        this.client.publish(topic, this.toMqttPayload(message), options);
     }
 
     async publishAsync(topic: string, message: unknown, options?: PublishOption): Promise<Packet | undefined> {
         if (!this.client) throw new Error("MQTT not initialized!");
-        const payload = typeof message === "string" ? message : JSON.stringify(message);
-        return this.client.publishAsync(topic, payload, options);
+
+        return this.client.publishAsync(topic, this.toMqttPayload(message), options);
+    }
+    private toMqttPayload(message: unknown): string | Buffer {
+        if (message == null) {
+            return Buffer.alloc(0);
+        }
+        return typeof message === "string" ? message : JSON.stringify(message);
     }
 
     subscribe(pattern: string, handler: MqttHandler, options?: SubscribeOption) {
@@ -107,7 +112,7 @@ export class MqttService {
         }
         this.handlers.get(pattern)!.add(handler);
     }
-    
+
     async subscribeAsync(pattern: string, handler: MqttHandler, options?: SubscribeOption): Promise<ISubscriptionGrant[] | undefined> {
         if (!this.client) throw new Error("MQTT not initialized!");
         if (!this.handlers.has(pattern)) {
