@@ -13,6 +13,7 @@
         "trace": "pnpm tsc --traceResolution",
         "dev": "pnpm ts-node-dev --project ./tsconfig.json --debounce 500 --poll --respawn src/rule-runtime.ts",
         "clean": "pnpm rimraf --glob -v dist tsconfig.tsbuildinfo build_types",
+        "watch": "pnpm tsc --watch",
         "lint": "pnpm eslint .",
         "lint:fix": "pnpm eslint . --fix"
     },

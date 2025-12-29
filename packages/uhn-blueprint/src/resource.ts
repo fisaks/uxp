@@ -1,6 +1,6 @@
 // Resource Types and Bases
 // resource.ts
-export type ResourceType = "digitalInput" | "digitalOutput";
+export type ResourceType = "digitalInput" | "digitalOutput" | "timer";
 export type ResourceBase<TType extends ResourceType> = {
     id?: string;
     name?: string;
@@ -19,7 +19,7 @@ export type OutputKind = BaseOutputKind | (string & {});
 export type DigitalInputResourceBase<
     TInputKind extends InputKind = InputKind,
     TEdge extends string = string,
-    TDevice extends string | number = string ,
+    TDevice extends string | number = string,
     TPin extends number = number
 > = ResourceBase<"digitalInput"> & {
     edge: TEdge;
@@ -33,7 +33,7 @@ export type DigitalInputResourceBase<
 export type DigitalOutputResourceBase<
     TOutputKind extends OutputKind = OutputKind,
     TEdge extends string = string,
-    TDevice extends string | number = string ,
+    TDevice extends string | number = string,
     TPin extends number = number
 > = ResourceBase<"digitalOutput"> & {
     edge: TEdge;
@@ -42,4 +42,8 @@ export type DigitalOutputResourceBase<
     outputKind: TOutputKind; //defined by project like "relay" | "socket" | "light" | "indicator" etc
 };
 
+
+export type TimerResourceBase = ResourceBase<"timer"> & {
+    edge: "auto"
+};
 

@@ -18,8 +18,8 @@ function humanizeConstName(name: string): string {
 }
 function isResourceObject(obj: unknown): obj is RuntimeResource {
     return (typeof obj === "object" && obj !== null &&
-        "edge" in obj && "type" in obj &&
-        typeof obj.edge === "string" && typeof obj.type === "string");
+        "edge" in obj && "type" in obj && "id" in obj &&
+        typeof obj.edge === "string" && typeof obj.type === "string" && typeof obj.id === "string");
 }
 async function collectResources(): Promise<RuntimeResourceList> {
     const allResources: RuntimeResourceList = [];
@@ -27,27 +27,39 @@ async function collectResources(): Promise<RuntimeResourceList> {
         console.error(`ERROR: resources directory not found: ${resourcesDir}`);
         return [];
     }
-    const files = await fs.readdir(resourcesDir);
-    for (const file of files) {
-        const filePath = path.join(resourcesDir, file);
-        const stat = await fs.stat(filePath);
-        if (!stat.isFile() || !file.endsWith(".js")) continue;
+    async function walk(dir: string) {
+        const entries = await fs.readdir(dir);
 
-        const mod = require(filePath);
-        for (const [exportName, resource] of Object.entries(mod)) {
-            if (isResourceObject(resource)) {
-                allResources.push({
-                    ...resource,
-                    id: exportName,
-                    name: humanizeConstName(exportName),
-                });
-            } else {
-                console.warn(
-                    `[rule-runtime] Skipped non-resource export "${exportName}" in "${file}"`
-                );
+        for (const entry of entries) {
+            const fullPath = path.join(dir, entry);
+            const stat = await fs.stat(fullPath);
+
+            if (stat.isDirectory()) {
+                await walk(fullPath);
+                continue;
+            }
+
+            if (!stat.isFile() || !entry.endsWith(".js")) continue;
+
+            const mod = require(fullPath);
+
+            for (const [exportName, resource] of Object.entries(mod)) {
+                if (isResourceObject(resource)) {
+                    allResources.push({
+                        ...resource,
+                        name: humanizeConstName(resource.id),
+                    });
+                } else {
+                    console.warn(
+                        `[rule-runtime] Skipped non-resource export "${exportName}" in "${fullPath}"`
+                    );
+                }
             }
         }
     }
+
+    await walk(resourcesDir);
+
     return allResources;
 }
 
@@ -86,3 +98,4 @@ process.stdin.on("data", (chunk) => {
     }
 });
 process.stdout.write(JSON.stringify({ cmd: "ready" } satisfies RuleRuntimeReadyMessage) + "\n");
+

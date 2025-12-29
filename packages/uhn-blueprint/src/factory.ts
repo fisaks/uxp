@@ -1,6 +1,6 @@
 // Factory Functions
 // factory.ts
-import { DigitalInputResourceBase, DigitalOutputResourceBase } from "./resource";
+import { DigitalInputResourceBase, DigitalOutputResourceBase, TimerResourceBase } from "./resource";
 
 export function digitalInput<
     TInputKind extends string = string,
@@ -22,4 +22,12 @@ export function digitalOutput<
     props: Omit<DigitalOutputResourceBase<TOutputKind, TEdge, TDevice, TPin>, "type">
 ): DigitalOutputResourceBase<TOutputKind, TEdge, TDevice, TPin> {
     return { ...props, type: "digitalOutput" };
+}
+
+export function timer(props: Omit<TimerResourceBase, "type" | "device" | "edge" | "pin">): TimerResourceBase {
+    return {
+        ...props,
+        type: "timer",
+        edge: "auto",
+    };
 }

@@ -7,13 +7,29 @@
   "files": [
     "dist"
   ],
+  "bin": {
+    "uhn-blueprint": "dist/bin/uhn-blueprint.js"
+  },
   "sideEffects": false,
   "license": "MIT",
   "scripts": {
-    "build": "tsc -p tsconfig.json"
+    "build": "tsc -p tsconfig.json",
+    "clean": "pnpm rimraf --glob -v dist tsconfig.tsbuildinfo",
+    "watch": "pnpm tsc --watch",
+    "lint": "pnpm eslint .",
+    "lint:fix": "pnpm eslint . --fix"
   },
-  "dependencies": {},
+  "dependencies": {
+    "ts-morph": "^27.0.2",
+    "fs-extra": "^11.3.0",
+    "archiver": "^7.0.1"
+  },
   "peerDependencies": {
     "typescript": ">=5.0.0"
+  },
+  "devDependencies": {
+    "@types/fs-extra": "^11.0.4",
+    "@types/archiver": "^7.0.0",
+    "typescript": "^5.0.0"
   }
 }

@@ -1,4 +1,4 @@
-{
+ {
     "name": "@uxp/monorepo",
     "description": "Unified Experience Platform root monorepo",
     "private": true,
@@ -8,7 +8,7 @@
         "prepare": "husky install",
         "build": "pnpm -r build",
         "clean": "pnpm -r clean  && echo 'Run twice if devserver is on to fully remove everyting'",
-        "watch": "pnpm -r --parallel --filter=@uxp/common --filter=@uxp/bff-common --filter=@uxp/ui-lib --filter=@h2c/common  --filter=@demo/common --filter=@uhn/common watch ",
+        "watch": "pnpm -r --parallel --filter=@uxp/common --filter=@uxp/bff-common --filter=@uxp/ui-lib --filter=@h2c/common  --filter=@demo/common --filter=@uhn/common --filter=@uhn/blueprint --filter=@uhn/rule-runtime watch",
         "start:app": "pnpm --filter=@uxp/ui start ",
         "start:bff": "pnpm --filter=@uxp/bff dev ",
         "start:h2c-app": "pnpm --filter=@h2c/ui start ",
