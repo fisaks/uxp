@@ -1,5 +1,5 @@
 
-import { DigitalInputResourceBase, DigitalOutputResourceBase, ResourceBase, ResourceType } from "@uhn/blueprint";
+import { DigitalInputResourceBase, DigitalOutputResourceBase, ResourceBase, ResourceType, RuntimeRuleAction } from "@uhn/blueprint";
 
 
 export type ResourceStateValue = boolean | number;
@@ -51,28 +51,94 @@ export type RuntimeDigitalOutputResource = DigitalOutputResourceBase & {
 export type RuntimeResourceList = RuntimeResource[];
 
 export type RuleRuntimeListResourcesCommand = {
+  kind: "request";
   id: string;
   cmd: "listResources";
 };
-export type RuleRuntimeCommand = RuleRuntimeListResourcesCommand; // | MoreCommands
+export type RuleRuntimeStateUpdateCommand = {
+  kind: "event";
+  cmd: "stateUpdate";
+  payload: RuntimeResourceState;
+};
+export type RuleRuntimeStateFullUpdateCommand = {
+  kind: "event";
+  cmd: "stateFullUpdate";
+  payload: RuntimeResourceState[];
+};
+export type RuleRuntimeCommand = RuleRuntimeListResourcesCommand
+  | RuleRuntimeStateUpdateCommand
+  | RuleRuntimeStateFullUpdateCommand; // | MoreCommands
+
 
 export type RuleRuntimeListResourcesResponse = {
+  kind: "response"
   id: string;
   resources: RuntimeResource[];
 };
-
+export type RuleRuntimeActionMessage = {
+  kind: "event"
+  cmd: "actions"
+  action: RuntimeRuleAction[];
+};
+export type RuleRuntimeLogMessage = {
+  kind: "event"
+  cmd: "log"
+  level: "info" | "warn" | "error";
+  message: string
+};
 export type RuleRuntimeReadyMessage = {
+  kind: "event";
   cmd: "ready";
 };
 
-export type RuleRuntimeErrorResponse = { id: string | null; error: string };
+export type RuleRuntimeErrorResponse = { kind: "response"; id: string; error: string };
 
-export type RuleRuntimeResponse = RuleRuntimeListResourcesResponse | RuleRuntimeErrorResponse | RuleRuntimeReadyMessage;
+export type RuleRuntimeResponse = RuleRuntimeListResourcesResponse
+  | RuleRuntimeErrorResponse
+  | RuleRuntimeReadyMessage
+  | RuleRuntimeActionMessage
+  | RuleRuntimeLogMessage;
 
 export type RuleRuntimeCommandMap = {
   listResources: {
-    request: Omit<RuleRuntimeListResourcesCommand, "id">;
-    response: Omit<RuleRuntimeListResourcesResponse, "id">;
+    request: Omit<RuleRuntimeListResourcesCommand, "id" | "kind">;
+    response: Omit<RuleRuntimeListResourcesResponse, "id" | "kind">;
   };
-
+  stateUpdate: {
+    request: Omit<RuleRuntimeStateUpdateCommand, "kind">;
+    response: void;
+  };
+  stateFullUpdate: {
+    request: Omit<RuleRuntimeStateFullUpdateCommand, "kind">;
+    response: void;
+  };
 };
+
+export type CmdKey = keyof RuleRuntimeCommandMap;
+
+export type FireAndForgetCmdKey = {
+  [K in CmdKey]: RuleRuntimeCommandMap[K]["response"] extends void ? K : never
+}[CmdKey];
+
+export type AsyncCmdKey = Exclude<CmdKey, FireAndForgetCmdKey>;
+
+export function isRuleRuntimeResponseObject(obj: unknown): obj is Extract<RuleRuntimeResponse, { kind: "response", id: string }> {
+  return (
+    typeof obj === "object" &&
+    obj !== null &&
+    "kind" in obj &&
+    obj.kind === "response" &&
+    "id" in obj &&
+    typeof (obj as any).id === "string"
+
+  );
+}
+export function isRuleRuntimeEventObject(obj: unknown): obj is Extract<RuleRuntimeResponse, { kind: "event" }> {
+  return (
+    typeof obj === "object" &&
+    obj !== null &&
+    "kind" in obj &&
+    obj.kind === "event"
+ 
+  );
+}

@@ -1,7 +1,8 @@
 //services/rule-runtime-process.service.ts
 
-import { RuleRuntimeCommandMap, RuleRuntimeErrorResponse, RuleRuntimeResponse } from "@uhn/common";
+import { AsyncCmdKey, FireAndForgetCmdKey, isRuleRuntimeEventObject, isRuleRuntimeResponseObject, RuleRuntimeActionMessage, RuleRuntimeCommand, RuleRuntimeCommandMap, RuleRuntimeErrorResponse, RuleRuntimeLogMessage, RuleRuntimeResponse } from "@uhn/common";
 import { AppErrorV2, AppLogger, fileExists, pathExists, readFile, removeFile, writeFile } from "@uxp/bff-common";
+import { assertNever } from "@uxp/common";
 import { ChildProcess, spawn, SpawnOptions } from "child_process";
 import { EventEmitter } from "events";
 import { nanoid } from "nanoid";
@@ -9,8 +10,7 @@ import path from "path";
 import env from "../env";
 
 type RuleRuntimeProcessEventMap = {
-    message: [response: Omit<RuleRuntimeResponse, "id">];
-    stderr: [chunk: string];
+    onActionEvent: [response: RuleRuntimeActionMessage];
     exit: [code: number | null, signal: NodeJS.Signals | null];
 };
 
@@ -145,13 +145,12 @@ async function killChildProcess(
     }
 }
 
-
 class RuleRuntimeProcessService extends EventEmitter<RuleRuntimeProcessEventMap> {
     private process: ChildProcess | null = null;
     private buffer = "";
     private pendingResponses = new Map<
         string,
-        (resp: Omit<RuleRuntimeResponse, "id">) => void
+        (resp: Omit<RuleRuntimeResponse, "id" | "kind">) => void
     >();
     private readyPromise: Promise<void> | null = null;
     private readyResolve: (() => void) | null = null;
@@ -208,7 +207,8 @@ class RuleRuntimeProcessService extends EventEmitter<RuleRuntimeProcessEventMap>
                     "--project", path.join(pkgRoot, "tsconfig.json"),
                     "--respawn",
                     tsEntrypoint,
-                    blueprintFolder
+                    blueprintFolder,
+                    "master"
                 ],
                 opts: { cwd: pkgRoot },
                 mode: "dev"
@@ -219,7 +219,7 @@ class RuleRuntimeProcessService extends EventEmitter<RuleRuntimeProcessEventMap>
             const jsEntrypoint = path.join(pkgRoot, pkg.main ?? "dist/rule-runtime.js");
             return {
                 cmd: "node",
-                args: [jsEntrypoint, blueprintFolder],
+                args: [jsEntrypoint, blueprintFolder, "master"],
                 opts: {},
                 mode: "prod"
             };
@@ -248,30 +248,41 @@ class RuleRuntimeProcessService extends EventEmitter<RuleRuntimeProcessEventMap>
                     continue;
                 }
 
-                if (resp && resp.cmd === "ready" && !this.ready) {
+                if (isRuleRuntimeEventObject(resp)) {
+                    switch (resp.cmd) {
+                        case "ready":
+                            if (!this.ready) {
+                                this.readyResolve?.();
+                            }
+                            continue;
+                        case "log":
+                            this.handleLogEvent(resp);
+                            continue;
+                        case "actions":
+                            this.emit("onActionEvent", resp);
+                            continue;
+                        default:
+                            assertNever(resp);
+                    }
 
-                    this.readyResolve?.();
-                    continue;
                 }
-                if (resp && typeof resp === "object" && "id" in resp) {
-                    const id = resp.id;
-                    delete resp.id;
+                if (isRuleRuntimeResponseObject(resp)) {
+                    const { kind: _, id, ...rest } = resp
+
                     const handler = this.pendingResponses.get(id);
                     if (handler) {
-                        handler(resp);
+                        handler(rest);
                         this.pendingResponses.delete(id);
                     } else {
                         AppLogger.warn({ message: `[RuleRuntimeProcessService] No handler for response ID ${id}` });
                     }
-                } else {
-                    this.emit("message", resp);
                 }
             }
         });
         this.process.stderr?.setEncoding("utf8");
         this.process.stderr?.on("data", (chunk: string) => {
             AppLogger.error({ message: `[RuleRuntimeProcessService][stderr] ${chunk}` });
-            this.emit("stderr", chunk);
+
         });
         this.process.on("exit", async (code, signal) => {
             AppLogger.info({ message: `[RuleRuntimeProcessService] Rule runtime process exited with code ${code} and signal ${signal}` });
@@ -296,8 +307,52 @@ class RuleRuntimeProcessService extends EventEmitter<RuleRuntimeProcessEventMap>
         }
     }
 
+    sendEvent<K extends FireAndForgetCmdKey>(cmd: RuleRuntimeCommandMap[K]["request"]
+    ): RuleRuntimeCommandMap[K]["response"] {
+        if (!this.ready) {
+            throw new AppErrorV2({
+                statusCode: 503,
+                code: "INTERNAL_SERVER_ERROR",
+                message: "Rule runtime process is not ready",
+            });
+        }
 
-    async runCommand<K extends keyof RuleRuntimeCommandMap>(cmd: RuleRuntimeCommandMap[K]["request"], timeoutMs = 10000)
+        if (!this.process || !this.process.stdin?.writable) {
+            throw new AppErrorV2({
+                statusCode: 500,
+                code: "INTERNAL_SERVER_ERROR",
+                message: "Rule runtime process is not running",
+            });
+        }
+
+        this.process.stdin.write(JSON.stringify({
+            kind: "event",
+            ...cmd
+        } satisfies RuleRuntimeCommand) + "\n");
+        return;
+    }
+
+    private handleLogEvent(logMessage: RuleRuntimeLogMessage) {
+        const level = logMessage.level;
+        const message = logMessage.message
+        switch (level) {
+            case "warn":
+                AppLogger.warn({ message: `[RuleRuntime][log] ${message}` });
+                break;
+            case "error":
+                AppLogger.error({ message: `[RuleRuntime][log] ${message}` });
+                break;
+            case "info":
+                AppLogger.info({ message: `[RuleRuntime][log] ${message}` });
+                break;
+            default:
+                AppLogger.debug({ message: `[RuleRuntime][log] ${message}` });
+                break;
+        }
+
+    }
+
+    async runCommand<K extends AsyncCmdKey>(cmd: RuleRuntimeCommandMap[K]["request"], timeoutMs = 10000)
         : Promise<RuleRuntimeCommandMap[K]["response"]> {
 
         if (!this.ready && this.readyPromise) {
@@ -319,7 +374,7 @@ class RuleRuntimeProcessService extends EventEmitter<RuleRuntimeProcessEventMap>
             });
         }
         const id = nanoid();
-        const fullCmd = { ...cmd, id };
+        const fullCmd = { ...cmd, id, kind: "request" } satisfies RuleRuntimeCommand;
 
         const promise = new Promise<RuleRuntimeCommandMap[K]["response"]>((resolve, reject) => {
             const timer = timeoutMs > 0 ? setTimeout(() => {
@@ -327,7 +382,7 @@ class RuleRuntimeProcessService extends EventEmitter<RuleRuntimeProcessEventMap>
                 this.pendingResponses.delete(id);
                 reject("Rule runtime command timed out");
             }, timeoutMs) : null;
-            this.pendingResponses.set(id, (resp: Omit<RuleRuntimeResponse, "id">) => {
+            this.pendingResponses.set(id, (resp: Omit<RuleRuntimeResponse, "id" | "kind">) => {
                 if (timer) clearTimeout(timer);
                 if (resp && typeof resp === "object" && "error" in resp) {
                     reject(resp as RuleRuntimeErrorResponse);
@@ -340,6 +395,10 @@ class RuleRuntimeProcessService extends EventEmitter<RuleRuntimeProcessEventMap>
 
         this.process.stdin.write(JSON.stringify(fullCmd) + "\n");
         return promise;
+    }
+
+    canSendCommands(): boolean {
+        return this.ready && this.process !== null && this.process.stdin?.writable === true;
     }
 }
 export const ruleRuntimeProcessService = new RuleRuntimeProcessService();

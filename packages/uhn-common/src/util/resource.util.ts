@@ -67,3 +67,22 @@ export function getMatchingStateForPattern(
     const resourceId = pattern.slice("state/".length);
     return states.filter(s => s.resourceId === resourceId);
 }
+
+export function humanizeResourceId(resourceId: string): string {
+    return resourceId
+        .replace(/([a-z])([A-Z])/g, "$1 $2")
+        .replace(/^./, c => c.toUpperCase());
+}
+
+export function isRuntimeResourceObject(obj: unknown): obj is RuntimeResource {
+    return (
+        typeof obj === "object" &&
+        obj !== null &&
+        "edge" in obj &&
+        "type" in obj &&
+        "id" in obj &&
+        typeof (obj as any).edge === "string" &&
+        typeof (obj as any).type === "string" &&
+        typeof (obj as any).id === "string"
+    );
+}

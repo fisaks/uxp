@@ -97,6 +97,24 @@ export type RuleAction =
         data?: unknown;
     };
 
+export type RuntimeRuleAction =
+    | {
+        type: "setOutput";
+        resourceId: string;
+        value: DigitalStateValue
+    }
+    | {
+        type: "emitSignal"; // optional: e.g. transient overrides
+        resourceId: string;
+        value: DigitalStateValue | undefined;
+    }
+    | {
+        type: "log";
+        level: "info" | "warn" | "error";
+        message: string;
+        data?: unknown;
+    };
+
 // --------- Context ---------
 
 export type RuleContext = {
