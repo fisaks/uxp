@@ -63,6 +63,19 @@
             ],
             "sourceMaps": true,
             "outFiles": []
+        },
+        {
+            "name": "Attach to UHN rule runtime process",
+            "type": "node",
+            "request": "attach",
+            "port": 9250,
+            "address": "localhost",
+            "restart": true,
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "sourceMaps": true,
+            "outFiles": []
         }
     ]
 }

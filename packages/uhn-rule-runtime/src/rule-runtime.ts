@@ -2,7 +2,9 @@ import path from "path";
 import { createCommandRouter } from "./commands/command-router";
 import { createStdinReader } from "./io/stdin-reader";
 import { stdoutWriter } from "./io/stdout-writer";
+import { RuleEngine } from "./services/rule-engine";
 import { RuntimeResourceService } from "./services/runtime-resource.service";
+import { RuntimeRulesService } from "./services/runtime-rules.service";
 import { RuntimeStateService } from "./services/runtime-state.service";
 import { RuleRuntimeDependencies, RuntimeMode, RuntimeModes } from "./types/rule-runtime.type";
 
@@ -17,14 +19,21 @@ if (!runMode || RuntimeModes.indexOf(runMode) === -1) {
     process.exit(1);
 }
 const resourcesDir = path.join(path.resolve(blueprintDir), "dist", "resources");
+const rulesDir = path.join(path.resolve(blueprintDir), "dist", "rules");
 
 async function main() {
+    const [resourceService, rulesService] = await Promise.all([
+        RuntimeResourceService.create(resourcesDir),
+        RuntimeRulesService.create(rulesDir),
+    ]);
+    const stateService = new RuntimeStateService();
     const router = createCommandRouter({
         runMode: runMode,
-        resourceService: await RuntimeResourceService.create(resourcesDir),
-        stateService: new RuntimeStateService(),
+        resourceService,
+        rulesService,
+        stateService
     } as RuleRuntimeDependencies);
-
+    const _ruleEngine = new RuleEngine(stateService, rulesService);
 
     createStdinReader((cmd) => {
         router.handle(cmd);

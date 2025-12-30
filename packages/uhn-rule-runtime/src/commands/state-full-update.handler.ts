@@ -15,11 +15,10 @@ export async function handleStateFullUpdate({ stateService }: RuleRuntimeDepende
     }
 
     stateService.replaceAll(newState);
-    stdoutWriter.send({
-        cmd: "log",
-        kind: "event",
+    stdoutWriter.log({
         level: "info",
-        message: `[StateFullUpdateHandler] Replaced all state with new state containing ${newState.size} resources`
+        component: "handleStateFullUpdate",
+        message: `Replaced all state with new state containing ${newState.size} resources`
     });
 }
 

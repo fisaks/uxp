@@ -17,6 +17,7 @@ export type ResourceEventMap = {
 
 class BlueprintResourceService extends EventEmitter<ResourceEventMap> {
     private resources: RuntimeResourceList = [];
+    private resourceById: Map<string, RuntimeResource> = new Map();
     private loading = false;
     private catalogChangedDuringLoad = false;
     private resourceLoaded = false;
@@ -91,6 +92,9 @@ class BlueprintResourceService extends EventEmitter<ResourceEventMap> {
             const validatedResources = this.validateResources(resources);
             this.resources = validatedResources.resources;
             this.validationErrors = validatedResources.validationErrors;
+            this.resources.forEach(resource => {
+                this.resourceById.set(resource.id, resource);
+            });
 
             AppLogger.isDebugLevel() && AppLogger.debug({
                 message: `[BlueprintResourceService] Loaded resources`,
@@ -253,6 +257,7 @@ class BlueprintResourceService extends EventEmitter<ResourceEventMap> {
             message: `[BlueprintResourceService] Clearing resources`,
         });
         this.resources = [];
+        this.resourceById.clear();
         this.validationErrors = [];
         this.resourceLoaded = false;
         this.emit("resourcesCleared");
@@ -262,8 +267,8 @@ class BlueprintResourceService extends EventEmitter<ResourceEventMap> {
         return this.resources;
     }
 
-    findResourceById(id: string): RuntimeResource | undefined {
-        return this.resources.find(r => r.id === id);
+    getResourceById(id: string): RuntimeResource | undefined {
+        return this.resourceById.get(id);
     }
 
     findResourcesByIds(ids: string[] | undefined): RuntimeResourceList {

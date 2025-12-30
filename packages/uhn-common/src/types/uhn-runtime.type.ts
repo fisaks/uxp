@@ -78,12 +78,13 @@ export type RuleRuntimeListResourcesResponse = {
 export type RuleRuntimeActionMessage = {
   kind: "event"
   cmd: "actions"
-  action: RuntimeRuleAction[];
+  actions: RuntimeRuleAction[];
 };
 export type RuleRuntimeLogMessage = {
   kind: "event"
   cmd: "log"
   level: "info" | "warn" | "error";
+  component: string;
   message: string
 };
 export type RuleRuntimeReadyMessage = {

@@ -89,12 +89,6 @@ export type RuleAction =
         type: "emitSignal"; // optional: e.g. transient overrides
         resource: DigitalInputResourceBase;
         value: DigitalStateValue | undefined;
-    }
-    | {
-        type: "log";
-        level: "info" | "warn" | "error";
-        message: string;
-        data?: unknown;
     };
 
 export type RuntimeRuleAction =
@@ -107,12 +101,6 @@ export type RuntimeRuleAction =
         type: "emitSignal"; // optional: e.g. transient overrides
         resourceId: string;
         value: DigitalStateValue | undefined;
-    }
-    | {
-        type: "log";
-        level: "info" | "warn" | "error";
-        message: string;
-        data?: unknown;
     };
 
 // --------- Context ---------
@@ -149,7 +137,20 @@ export type BlueprintRule = BlueprintRuleMeta & {
     type: "rule";
     run(ctx: RuleContext): RuleAction[];
 };
-
+export const isBlueprintRule = (obj: unknown): obj is BlueprintRule => {
+    return (
+        typeof obj === "object" &&
+        obj !== null &&
+        "type" in obj &&
+        obj.type === "rule" &&
+        "id" in obj &&
+        typeof obj.id === "string"
+        && "triggers" in obj &&
+        Array.isArray(obj.triggers)
+        && "run" in obj &&
+        typeof obj.run === "function"
+    );
+}
 export type RuleBuilder = {
     placement(p: RulePlacement): RuleBuilder;
 

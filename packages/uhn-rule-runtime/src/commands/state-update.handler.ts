@@ -5,11 +5,10 @@ import { RuleRuntimeDependencies } from "../types/rule-runtime.type";
 export async function handleStateUpdate({ stateService }: RuleRuntimeDependencies, cmd: RuleRuntimeStateUpdateCommand) {
     const { resourceId, timestamp, value } = cmd.payload;
     stateService.update(resourceId, value, timestamp);
-    stdoutWriter.send({
-        cmd: "log",
-        kind: "event",
+    stdoutWriter.log({
+        component: "handleStateUpdate",
         level: "info",
-        message: `[StateUpdateHandler] Updated state for resource ${resourceId} to value ${JSON.stringify(value)} at timestamp ${timestamp}`
+        message: `Updated state for resource ${resourceId} to value ${JSON.stringify(value)} at timestamp ${timestamp}`
     });
 
 }

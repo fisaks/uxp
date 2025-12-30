@@ -15,11 +15,10 @@ export function handleError(cmd: RuleRuntimeCommand, err: unknown) {
     }
 
     // event → log only
-    stdoutWriter.send({
-        kind: "event",
-        cmd: "log",
+    stdoutWriter.log({
         level: "error",
-        message: `[rule-runtime] ${cmd.cmd} failed: ${message}`,
+        component: "handleError",
+        message: `${cmd.cmd} failed: ${message}`,
     });
 }
 

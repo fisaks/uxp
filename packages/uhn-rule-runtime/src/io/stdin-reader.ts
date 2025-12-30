@@ -1,4 +1,4 @@
-import { RuleRuntimeCommand, RuleRuntimeLogMessage } from "@uhn/common";
+import { RuleRuntimeCommand } from "@uhn/common";
 import { stdoutWriter } from "./stdout-writer";
 
 function isCommandObject(obj: unknown): obj is RuleRuntimeCommand {
@@ -33,12 +33,11 @@ export function createStdinReader(
 
                 onCommand(cmd);
             } catch {
-                stdoutWriter.send({
-                    kind: "event",
-                    cmd: "log",
+                stdoutWriter.log({
                     level: "error",
-                    message: "[StdinReader] Received invalid JSON command",
-                } satisfies RuleRuntimeLogMessage);
+                    component: "createStdinReader",
+                    message: "Received invalid JSON command",
+                });
 
             }
         }

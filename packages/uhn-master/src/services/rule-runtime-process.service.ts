@@ -179,7 +179,7 @@ class RuleRuntimeProcessService extends EventEmitter<RuleRuntimeProcessEventMap>
             };
         });
 
-        const { cmd, args, opts, mode } = await this.getRuleRuntimeLaunchConfig(blueprintFolder);
+        const { cmd, args, opts } = await this.getRuleRuntimeLaunchConfig(blueprintFolder);
 
         this.process = spawn(cmd, args, opts);
         await writePidFile(this.process.pid!);
@@ -193,13 +193,31 @@ class RuleRuntimeProcessService extends EventEmitter<RuleRuntimeProcessEventMap>
         cmd: string;
         args: string[];
         opts: SpawnOptions;
-        mode: "dev" | "prod";
+        mode: "dev" | "prod" | "debug";
     }> {
         const pkgRoot = getRuleRuntimePkgRoot();
         const tsEntrypoint = path.join(pkgRoot, "src", "rule-runtime.ts");
+        const debug = path.join(blueprintFolder, "debug");
         const isDev = await fileExists(tsEntrypoint);
+        const isDebug = await pathExists(debug);
+        if (isDebug) {
+            return {
+                cmd: "pnpm",
+                args: [
+                    "ts-node-dev",
+                    "--project", path.join(pkgRoot, "tsconfig.json"),
+                    "--inspect=0.0.0.0:9250",
+                    "--transpile-only",
+                    tsEntrypoint,
+                    blueprintFolder,
+                    "master"
+                ],
+                opts: { cwd: pkgRoot },
+                mode: "debug"
+            };
 
-        if (isDev) {
+        }
+        else if (isDev) {
             return {
                 cmd: "pnpm",
                 args: [
@@ -332,21 +350,19 @@ class RuleRuntimeProcessService extends EventEmitter<RuleRuntimeProcessEventMap>
         return;
     }
 
-    private handleLogEvent(logMessage: RuleRuntimeLogMessage) {
-        const level = logMessage.level;
-        const message = logMessage.message
+    private handleLogEvent({ level, message, component }: RuleRuntimeLogMessage) {
         switch (level) {
             case "warn":
-                AppLogger.warn({ message: `[RuleRuntime][log] ${message}` });
+                AppLogger.warn({ message: `[rule-runtime] [${component}] ${message}` });
                 break;
             case "error":
-                AppLogger.error({ message: `[RuleRuntime][log] ${message}` });
+                AppLogger.error({ message: `[rule-runtime] [${component}] ${message}` });
                 break;
             case "info":
-                AppLogger.info({ message: `[RuleRuntime][log] ${message}` });
+                AppLogger.info({ message: `[rule-runtime] [${component}] ${message}` });
                 break;
             default:
-                AppLogger.debug({ message: `[RuleRuntime][log] ${message}` });
+                AppLogger.debug({ message: `[rule-runtime] [${component}] ${message}` });
                 break;
         }
 
