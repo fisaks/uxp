@@ -94,7 +94,11 @@ export const draculaTheme = createTheme(
       error: { main: "#ff5555" },
       warning: { main: "#e1d81e" },
       info: { main: "#8be9fd" },
-      success: { main: "#50fa7b" },
+      success: {
+        main: "#5fd38d",
+        light: "#8ee6b3",
+        dark: "#3a9c66",
+      },
     },
     typography: {
       body1: {
@@ -171,7 +175,11 @@ export const starWarsDarkSideTheme = createTheme(
       error: { main: "#ff3c3c" },
       warning: { main: "#f57c00" },
       info: { main: "#0288d1" },
-      success: { main: "#2e7d32" },
+      success: {
+        main: "#4f8f5a",
+        light: "#7bb58a",
+        dark: "#356b42",
+      },
     },
     typography: {
       h1: { color: "#ff3c3c" },
@@ -251,7 +259,11 @@ export const sunsetTheme = createTheme(
       error: { main: "#d84315" },
       warning: { main: "#f9a825" },
       info: { main: "#4fc3f7" },
-      success: { main: "#81c784" },
+      success: {
+        main: "#8fbf6a",
+        light: "#b2d88e",
+        dark: "#6a9446",
+      },
     },
     typography: {
       h1: { color: "#6a1b9a" },
@@ -319,7 +331,11 @@ export const rebelAllianceTheme = createTheme(
       error: { main: "#d32f2f" },
       warning: { main: "#fbc02d" },
       info: { main: "#0288d1" },
-      success: { main: "#388e3c" },
+      success: {
+        main: "#5fae64",
+        light: "#8ed28f",
+        dark: "#3e7f47",
+      },
     },
     typography: {
       h1: { color: "#f57c00" },
@@ -387,7 +403,11 @@ export const tatooineTheme = createTheme(
       error: { main: "#bf360c" },
       warning: { main: "#f57f17" },
       info: { main: "#4e342e" },
-      success: { main: "#6d9e6d" },
+      success: {
+        main: "#7fa06a",
+        light: "#a6bf8a",
+        dark: "#5d7a4c",
+      },
     },
     typography: {
       h1: { color: "#a0522d" },
@@ -469,7 +489,11 @@ export const windsOfWinterTheme = createTheme(
       error: { main: "#ef5350" },     // Red for blood
       warning: { main: "#ffa726" },   // Fire hazard
       info: { main: "#81d4fa" },      // Frosty blue
-      success: { main: "#66bb6a" },   // Life in the snow
+      success: {
+        main: "#7fa8a3", // Frosted green
+        light: "#a3c6c2", // Icy highlight
+        dark: "#577c78",  // Cold pine shadow
+      },   // Life in the snow
 
     },
     typography: {

@@ -156,14 +156,14 @@ export function getResourceSurfaceColor(
         const base = outputKindColors[resource.outputKind as keyof typeof outputKindColors]?.surface?.[mode];
         if (!base) return "transparent";
 
-        return alpha(base, mode === "dark" ? 0.1 : 0.045);
+        return alpha(base, mode === "dark" ? 0.06 : 0.045);
     }
 
     if (resource.type === "digitalInput" && resource.inputKind) {
         const base = inputKindColors[resource.inputKind as keyof typeof inputKindColors]?.surface?.[mode];
         if (!base) return "transparent";
 
-        return alpha(base, mode === "dark" ? 0.1 : 0.045);
+        return alpha(base, mode === "dark" ? 0.06 : 0.045);
     }
 
     return "transparent";

@@ -18,7 +18,8 @@ import {
     Collapse,
     List,
     ListItem,
-    Typography
+    Typography,
+    useTheme
 } from "@mui/material";
 import { Blueprint, BlueprintStatus, BlueprintVersion } from "@uhn/common";
 import { toUxpTimeFormat } from "@uxp/common";
@@ -141,6 +142,7 @@ const BlueprintVersionRow: React.FC<{ blueprintVersion: BlueprintVersion }> = ({
     blueprintVersion,
 }) => {
     const dispatch = useAppDispatch();
+    const theme = useTheme();
     const portalContainer = usePortalContainerRef();
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
     const [showMeta, setShowMeta] = useState(false);
@@ -225,12 +227,16 @@ const BlueprintVersionRow: React.FC<{ blueprintVersion: BlueprintVersion }> = ({
                 sx={{
                     pl: 2,
                     pr: 2,
-                    bgcolor: blueprintVersion.active ? "success.light" : undefined,
-                    borderLeft: blueprintVersion.active ? "4px solid" : undefined,
-                    borderColor: blueprintVersion.active ? "success.main" : undefined,
+                    ...(blueprintVersion.active && {
+                        bgcolor: `rgba(127, 168, 163, 0.10)`, 
+                        borderLeft: "4px solid",
+                        borderColor: "success.main",
+                        color: "success.light",
+                    }),
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "flex-start",
+
                 }}
                 secondaryAction={
                     <MultiLevelMenu
@@ -285,8 +291,17 @@ const BlueprintVersionRow: React.FC<{ blueprintVersion: BlueprintVersion }> = ({
                             size="small"
                             endIcon={showMeta ? <ExpandLessIcon /> : <ExpandMoreIcon />}
                             onClick={() => setShowMeta(v => !v)}
-                            sx={{ textTransform: "none", minHeight: 0, pl: 0 }}
-                            color="primary"
+                            sx={{
+                                textTransform: "none", minHeight: 0, pl: 0,
+                                color: theme.palette.text.secondary,
+                                backgroundColor: "transparent",
+
+                                "&:hover": {
+                                    backgroundColor: "transparent",
+                                    color: theme.palette.text.primary,
+                                },
+                            }}
+
                         >
                             {showMeta ? "Hide details" : "Show details"}
                         </Button>
