@@ -2,7 +2,10 @@ import path from "path";
 import { createCommandRouter } from "./commands/command-router";
 import { runtimeOutput } from "./io/runtime-output";
 import { createRuntimeReader } from "./io/runtime-reader";
+import { InputGestureEmitter } from "./rule/input-gesture.emitter";
+import { ResourceEventEmitter } from "./rule/resource-event.emitter";
 import { RuleEngine } from "./rule/rule-engine";
+import { TriggerEventBus } from "./rule/trigger-event-bus";
 import { RuntimeResourceService } from "./services/runtime-resource.service";
 import { RuntimeRulesService } from "./services/runtime-rules.service";
 import { RuntimeStateService } from "./services/runtime-state.service";
@@ -27,13 +30,17 @@ async function main() {
         RuntimeRulesService.create(rulesDir),
     ]);
     const stateService = new RuntimeStateService();
+    const triggerEventBus = new TriggerEventBus();
     const router = createCommandRouter({
         runMode: runMode,
         resourceService,
         rulesService,
         stateService
     } as RuleRuntimeDependencies);
-    const _ruleEngine = new RuleEngine(stateService, rulesService);
+    // Instances register listeners in constructors; keep references to prevent accidental GC/lint removal.
+    const ruleEngine = new RuleEngine(triggerEventBus, rulesService, stateService);
+    const resourceEventEmitter = new ResourceEventEmitter(stateService, triggerEventBus, resourceService);
+    const inputGestureEmitter = new InputGestureEmitter(stateService, rulesService, triggerEventBus, resourceService);
 
     createRuntimeReader((cmd) => {
         router.handle(cmd);

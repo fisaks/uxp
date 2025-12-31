@@ -166,8 +166,8 @@ export type RuleBuilder = {
     onDeactivated(resource: DigitalInputResourceBase): RuleBuilder;
     onChanged(resource: DigitalInputResourceBase | DigitalOutputResourceBase): RuleBuilder;
 
-    onTap(resource: DigitalInputResourceBase): RuleBuilder;
-    onLongPress(resource: DigitalInputResourceBase, thresholdMs: number): RuleBuilder;
+    onTap(resource: DigitalInputResourceBase<"button">): RuleBuilder;
+    onLongPress(resource: DigitalInputResourceBase<"button">, thresholdMs: number): RuleBuilder;
 
     onTimerActivated(timer: TimerResourceBase): RuleBuilder;
     onTimerDeactivated(timer: TimerResourceBase): RuleBuilder;

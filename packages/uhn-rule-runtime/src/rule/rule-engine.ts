@@ -3,97 +3,102 @@ import type {
     BlueprintRule,
     RuleAction,
     RuleCause,
+    RuleTrigger,
     RuntimeReader,
-    RuntimeRuleAction,
-    TriggerEvent,
-    RuleTrigger
+    RuntimeRuleAction
 } from "@uhn/blueprint";
 import { ResourceError, ResourceStateNotAvailableError } from "@uhn/common";
 import { assertNever } from "@uxp/common";
 import { runtimeOutput } from "../io/runtime-output";
 import type { RuntimeRulesService } from "../services/runtime-rules.service";
 import type { RuntimeStateService } from "../services/runtime-state.service";
-import { RuntimeStateChange } from "../types/rule-runtime.type";
 import { createResourceErrorData } from "./rule-engine-error";
 import { ruleLogger } from "./rule-engine-logging";
 import { createRuleRuntime } from "./rule-engine-runtime";
-import { RuleExecutionControl } from "./rule-engine.type";
-import { getEventsFromStateChange } from "./rule-state-events";
+import { RuleExecutionControl, RuleTriggerEvent } from "./rule-engine.type";
+import { isLongPressTrigger, isResourceTrigger, isTapTrigger } from "./rule-engine.utils";
+import { TriggerEventBus } from "./trigger-event-bus";
 
 
 export class RuleEngine {
     private readonly ruleExecutionControl = new Map<string, RuleExecutionControl>();
     private readonly ruleRuntime: RuntimeReader;
     constructor(
-        private readonly stateService: RuntimeStateService,
-        private readonly rulesService: RuntimeRulesService
+        triggerEventBus: TriggerEventBus,
+        private readonly rulesService: RuntimeRulesService,
+        private readonly stateService: RuntimeStateService
     ) {
         this.ruleRuntime = createRuleRuntime({ stateService: this.stateService });
         // Subscribe to state changes
-        this.stateService.on("stateChanged", (change) => {
-            setImmediate(() => {
-                this.handleResourceStateChange(change);
-            });
-        });
-
-        this.stateService.on("stateReset", () => {
-            setImmediate(() => {
-                this.ruleExecutionControl.clear();
-            });
+        triggerEventBus.on((event) => {
+            this.handleTriggerEvent(event);
         });
     }
 
-    private handleResourceStateChange(change: RuntimeStateChange) {
-        const { resourceId, prev, next } = change;
+    private handleTriggerEvent(triggerEvent: RuleTriggerEvent) {
+        const resourceId = triggerEvent.resource.id;
+        if (!resourceId) return;
 
-        const stateChangeEvents = getEventsFromStateChange(prev, next);
-        if (!stateChangeEvents.length) return;
+        const rules = this.rulesService.getRulesForResource(resourceId);
+        if (!rules.length) return;
 
-        const resourceRules = this.rulesService.getRulesForResource(resourceId);
-        if (!resourceRules.length) return;
-
-        const stateChangeTime = next.timestamp;
-
-        for (const ruleCandidate of resourceRules) {
+        for (const ruleCandidate of rules) {
             for (const triggerCandidate of ruleCandidate.triggers) {
-                if (!this.triggerFires(resourceId, triggerCandidate, stateChangeEvents)) continue;
+                if (!this.triggerMatches(triggerCandidate, triggerEvent)) continue;
 
                 const triggerCause: RuleCause = {
-                    resource: triggerCandidate.resource,
-                    event: triggerCandidate.event,
-                    timestamp: stateChangeTime,
+                    resource: triggerEvent.resource,
+                    event: triggerEvent.event,
+                    timestamp: triggerEvent.timestamp,
+                    thresholdMs: triggerEvent.thresholdMs,
                 };
 
-                const actions = this.tryRunRule(ruleCandidate, triggerCause, stateChangeTime);
-                if (actions.length) {
-                    runtimeOutput.send({ kind: "event", cmd: "actions", actions });
+                const actions = this.tryRunRule(
+                    ruleCandidate,
+                    triggerCause,
+                    triggerEvent.timestamp
+                );
 
+                if (actions.length) {
+                    runtimeOutput.send({
+                        kind: "event",
+                        cmd: "actions",
+                        actions,
+                    });
                 }
             }
         }
     }
 
-    private triggerFires(
-        resourceId: string,
+    private triggerMatches(
         trigger: RuleTrigger,
-        events: TriggerEvent[]
-    ): trigger is Extract<RuleTrigger, { kind: "resource" }> {
-        if (trigger.kind !== "resource") return false;
-        if (trigger.resource.id !== resourceId) return false;
-        return events.includes(trigger.event);
+        event: RuleTriggerEvent
+    ): boolean {
+        if (trigger.resource.id !== event.resource.id) return false;
+        if (isResourceTrigger(trigger)) {
+            return trigger.event === event.event;
+        }
+        if (isLongPressTrigger(trigger) && event.event === "longPress") {
+            return trigger.thresholdMs === event.thresholdMs;
+        }
+        if (isTapTrigger(trigger) && event.event === "tap") {
+            return true;
+        }
+
+        return false;
     }
 
     private tryRunRule(
         ruleCandidate: BlueprintRule,
         runCause: RuleCause,
-        stateChangeTime: number
+        eventTime: number
     ): RuntimeRuleAction[] {
         const ruleControl = this.ruleExecutionControl.get(ruleCandidate.id) ?? {};
         const logger = ruleLogger(ruleCandidate.id);
         // Cooldown: block repeated executions.
         // After the rule runs, do not allow it to run again for X milliseconds.
         if (ruleCandidate.cooldownMs && ruleControl.lastRunAt) {
-            if (stateChangeTime - ruleControl.lastRunAt < ruleCandidate.cooldownMs) {
+            if (eventTime - ruleControl.lastRunAt < ruleCandidate.cooldownMs) {
                 logger.info(`Skipped rule "${ruleCandidate.id}" due to cooldown.`);
                 return [];
             }
@@ -107,11 +112,11 @@ export class RuleEngine {
         // suppressed events do not extend the window.
         // Suppression is based on trigger arrival, not on whether the rule actually ran.
         if (ruleCandidate.suppressMs) {
-            if (ruleControl.suppressUntil && stateChangeTime < ruleControl.suppressUntil) {
+            if (ruleControl.suppressUntil && eventTime < ruleControl.suppressUntil) {
                 logger.info(`Skipped rule "${ruleCandidate.id}" due to suppression.`);
                 return [];
             }
-            ruleControl.suppressUntil = stateChangeTime + ruleCandidate.suppressMs;
+            ruleControl.suppressUntil = eventTime + ruleCandidate.suppressMs;
         }
 
         let actions: RuleAction[] = [];
@@ -153,7 +158,7 @@ export class RuleEngine {
             return [];
         }
 
-        ruleControl.lastRunAt = stateChangeTime;
+        ruleControl.lastRunAt = eventTime;
         this.ruleExecutionControl.set(ruleCandidate.id, ruleControl);
 
         return actions.map(this.toRuntimeAction).filter((a): a is RuntimeRuleAction => a !== undefined);
