@@ -80,12 +80,23 @@ export type RuleRuntimeActionMessage = {
   cmd: "actions"
   actions: RuntimeRuleAction[];
 };
+export type RuleRuntimeResourceMissingMessage = {
+  kind: "event"
+  cmd: "resourceMissing"
+
+  ruleId: string;
+  resourceId: string;
+  resourceType: ResourceType;
+  reason: "stateUnavailable";
+
+};
 export type RuleRuntimeLogMessage = {
   kind: "event"
   cmd: "log"
   level: "info" | "warn" | "error";
   component: string;
   message: string
+  data?: unknown
 };
 export type RuleRuntimeReadyMessage = {
   kind: "event";
@@ -94,10 +105,12 @@ export type RuleRuntimeReadyMessage = {
 
 export type RuleRuntimeErrorResponse = { kind: "response"; id: string; error: string };
 
+
 export type RuleRuntimeResponse = RuleRuntimeListResourcesResponse
   | RuleRuntimeErrorResponse
   | RuleRuntimeReadyMessage
   | RuleRuntimeActionMessage
+  | RuleRuntimeResourceMissingMessage
   | RuleRuntimeLogMessage;
 
 export type RuleRuntimeCommandMap = {
@@ -140,6 +153,6 @@ export function isRuleRuntimeEventObject(obj: unknown): obj is Extract<RuleRunti
     obj !== null &&
     "kind" in obj &&
     obj.kind === "event"
- 
+
   );
 }

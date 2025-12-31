@@ -8,6 +8,6 @@ export type DeepPartial<T> = {
 // Utility function to ensure all code paths are handled
 // usable in switch statements with 'never' type in default case
 // ensures exhaustive checks at compile time
-export function assertNever(unexpectedValue: never): never {
-  throw new Error(`Unexpected object: ${unexpectedValue}`);
+export function assertNever(unexpectedValue: never, message?: string): never {
+  throw new Error(message ?? `Unexpected object: ${unexpectedValue}`);
 }

@@ -1,6 +1,6 @@
 import { ResourceState } from "@uhn/blueprint";
 import { RuleRuntimeStateFullUpdateCommand } from "@uhn/common";
-import { stdoutWriter } from "../io/stdout-writer";
+import { runtimeOutput } from "../io/runtime-output";
 import { RuleRuntimeDependencies } from "../types/rule-runtime.type";
 
 export async function handleStateFullUpdate({ stateService }: RuleRuntimeDependencies, cmd: RuleRuntimeStateFullUpdateCommand) {
@@ -15,7 +15,7 @@ export async function handleStateFullUpdate({ stateService }: RuleRuntimeDepende
     }
 
     stateService.replaceAll(newState);
-    stdoutWriter.log({
+    runtimeOutput.log({
         level: "info",
         component: "handleStateFullUpdate",
         message: `Replaced all state with new state containing ${newState.size} resources`

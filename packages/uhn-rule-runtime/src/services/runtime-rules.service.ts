@@ -2,7 +2,7 @@
 import { BlueprintRule, isBlueprintRule } from "@uhn/blueprint";
 import fs from "fs-extra";
 import path from "path";
-import { stdoutWriter } from "../io/stdout-writer";
+import { runtimeOutput } from "../io/runtime-output";
 
 
 type TriggerIndex = {
@@ -60,7 +60,7 @@ function indexRules(rules: BlueprintRule[]): TriggerIndex {
 
             const resourceId = t.resource?.id;
             if (!resourceId) {
-                stdoutWriter.log({
+                runtimeOutput.log({
                     level: "warn",
                     component: "RuntimeRulesService",
                     message: `[rule-runtime] Rule "${rule.id}" has a trigger with missing resource id (skipping)`,
@@ -103,17 +103,17 @@ function validateRules(rules: BlueprintRule[]): BlueprintRule[] {
 
     for (const r of rules) {
         if (!r.id) {
-            stdoutWriter.log({ level: "warn", component: "RuntimeRulesService", message: `[rule-runtime] Skipping rule with missing id` });
+            runtimeOutput.log({ level: "warn", component: "RuntimeRulesService", message: `[rule-runtime] Skipping rule with missing id` });
             continue;
         }
 
         if (seen.has(r.id)) {
-            stdoutWriter.log({ level: "error", component: "RuntimeRulesService", message: `[rule-runtime] Duplicate rule id "${r.id}" (skipping subsequent occurrence)` });
+            runtimeOutput.log({ level: "error", component: "RuntimeRulesService", message: `[rule-runtime] Duplicate rule id "${r.id}" (skipping subsequent occurrence)` });
             continue;
         }
 
         if (!r.triggers?.length) {
-            stdoutWriter.log({ level: "warn", component: "RuntimeRulesService", message: `[rule-runtime] Rule "${r.id}" has no triggers (it will never run)` });
+            runtimeOutput.log({ level: "warn", component: "RuntimeRulesService", message: `[rule-runtime] Rule "${r.id}" has no triggers (it will never run)` });
         }
 
         seen.add(r.id);
@@ -135,7 +135,7 @@ export class RuntimeRulesService {
         const loaded = await collectRules(rulesDir);
         const rules = validateRules(loaded);
         const index = indexRules(rules);
-        stdoutWriter.log({ level: "info", component: "RuntimeRulesService", message: `Loaded ${rules.length} rules.` });
+        runtimeOutput.log({ level: "info", component: "RuntimeRulesService", message: `Loaded ${rules.length} rules.` });
         return new RuntimeRulesService(rules, index);
     }
 

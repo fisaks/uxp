@@ -279,6 +279,10 @@ class RuleRuntimeProcessService extends EventEmitter<RuleRuntimeProcessEventMap>
                         case "actions":
                             this.emit("onActionEvent", resp);
                             continue;
+                        case "resourceMissing":
+                            AppLogger.warn(
+                                { message: `[RuleRuntimeProcessService] Resource missing for rule ${resp.ruleId}: ${resp.resourceType} ${resp.resourceId} (${resp.reason})` });
+                            continue;
                         default:
                             assertNever(resp);
                     }
@@ -350,19 +354,19 @@ class RuleRuntimeProcessService extends EventEmitter<RuleRuntimeProcessEventMap>
         return;
     }
 
-    private handleLogEvent({ level, message, component }: RuleRuntimeLogMessage) {
+    private handleLogEvent({ level, message, component, data }: RuleRuntimeLogMessage) {
         switch (level) {
             case "warn":
-                AppLogger.warn({ message: `[rule-runtime] [${component}] ${message}` });
+                AppLogger.warn({ message: `[rule-runtime] [${component}] ${message}`, object: { data } });
                 break;
             case "error":
-                AppLogger.error({ message: `[rule-runtime] [${component}] ${message}` });
+                AppLogger.error({ message: `[rule-runtime] [${component}] ${message}`, object: { data } });
                 break;
             case "info":
-                AppLogger.info({ message: `[rule-runtime] [${component}] ${message}` });
+                AppLogger.info({ message: `[rule-runtime] [${component}] ${message}`, object: { data } });
                 break;
             default:
-                AppLogger.debug({ message: `[rule-runtime] [${component}] ${message}` });
+                AppLogger.debug({ message: `[rule-runtime] [${component}] ${message}`, object: { data } });
                 break;
         }
 

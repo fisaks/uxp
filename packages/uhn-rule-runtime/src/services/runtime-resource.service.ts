@@ -2,7 +2,7 @@
 import { humanizeResourceId, isRuntimeResourceObject, RuntimeResource, RuntimeResourceList } from "@uhn/common";
 import fs from "fs-extra";
 import path from "path";
-import { stdoutWriter } from "../io/stdout-writer";
+import { runtimeOutput } from "../io/runtime-output";
 
 async function collectResources(resourcesDir: string): Promise<RuntimeResourceList> {
     const allResources: RuntimeResourceList = [];
@@ -66,7 +66,7 @@ export class RuntimeResourceService {
         for (const r of resources) {
             resourceById.set(r.id, r);
         }
-        stdoutWriter.log({ level: "info", component: "RuntimeResourceService", message: `Loaded ${resources.length} resources.` });
+        runtimeOutput.log({ level: "info", component: "RuntimeResourceService", message: `Loaded ${resources.length} resources.` });
         return new RuntimeResourceService(resources, resourceById);
     }
 

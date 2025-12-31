@@ -1,8 +1,8 @@
 import path from "path";
 import { createCommandRouter } from "./commands/command-router";
-import { createStdinReader } from "./io/stdin-reader";
-import { stdoutWriter } from "./io/stdout-writer";
-import { RuleEngine } from "./services/rule-engine";
+import { runtimeOutput } from "./io/runtime-output";
+import { createRuntimeReader } from "./io/runtime-reader";
+import { RuleEngine } from "./rule/rule-engine";
 import { RuntimeResourceService } from "./services/runtime-resource.service";
 import { RuntimeRulesService } from "./services/runtime-rules.service";
 import { RuntimeStateService } from "./services/runtime-state.service";
@@ -35,11 +35,11 @@ async function main() {
     } as RuleRuntimeDependencies);
     const _ruleEngine = new RuleEngine(stateService, rulesService);
 
-    createStdinReader((cmd) => {
+    createRuntimeReader((cmd) => {
         router.handle(cmd);
     });
 
-    stdoutWriter.send({ kind: "event", cmd: "ready" });
+    runtimeOutput.send({ kind: "event", cmd: "ready" });
 }
 
 main();

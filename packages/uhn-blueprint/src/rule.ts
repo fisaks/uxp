@@ -10,6 +10,16 @@ import type {
 // --------- Runtime state value ---------
 export type StateValue = boolean | number;
 export type DigitalStateValue = Extract<StateValue, boolean>;
+export type TimerStateValue = Extract<StateValue, boolean>;
+export type AnalogStateValue = Extract<StateValue, number>;
+export type StateValueByResourceType<T extends ResourceType> =
+    T extends "digitalInput" | "digitalOutput"
+    ? DigitalStateValue
+    : T extends "analogInput" | "analogOutput"
+    ? AnalogStateValue
+    : T extends "timer"
+    ? TimerStateValue
+    : never;
 export type ResourceState = {
     value: StateValue | undefined; // undefined = unknown
     timestamp: number; // epoch ms
@@ -18,7 +28,7 @@ export type ResourceState = {
 
 
 export type RuntimeReader = {
-    getState(resource: ResourceBase<ResourceType>): ResourceState | undefined;
+    getState<T extends ResourceType>(resource: ResourceBase<T>): StateValueByResourceType<T>;
 };
 
 // --------- Events ---------
@@ -106,7 +116,6 @@ export type RuntimeRuleAction =
 // --------- Context ---------
 
 export type RuleContext = {
-    now: number;
     cause: RuleCause;
     runtime: RuntimeReader;
     timers: RuleTimers;

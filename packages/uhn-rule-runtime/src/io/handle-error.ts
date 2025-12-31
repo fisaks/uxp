@@ -1,13 +1,11 @@
 import { RuleRuntimeCommand } from "@uhn/common";
-import { stdoutWriter } from "./stdout-writer";
-
+import { runtimeOutput } from "./runtime-output";
 export function handleError(cmd: RuleRuntimeCommand, err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
 
     // request → respond with id
     if ("id" in cmd) {
-        stdoutWriter.send({
-            kind: "response",
+        runtimeOutput.error({
             id: cmd.id,
             error: message,
         });
@@ -15,7 +13,7 @@ export function handleError(cmd: RuleRuntimeCommand, err: unknown) {
     }
 
     // event → log only
-    stdoutWriter.log({
+    runtimeOutput.log({
         level: "error",
         component: "handleError",
         message: `${cmd.cmd} failed: ${message}`,

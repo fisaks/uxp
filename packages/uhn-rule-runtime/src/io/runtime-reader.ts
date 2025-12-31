@@ -1,5 +1,5 @@
 import { RuleRuntimeCommand } from "@uhn/common";
-import { stdoutWriter } from "./stdout-writer";
+import { runtimeOutput } from "./runtime-output";
 
 function isCommandObject(obj: unknown): obj is RuleRuntimeCommand {
     return (typeof obj === "object" && obj !== null &&
@@ -8,7 +8,7 @@ function isCommandObject(obj: unknown): obj is RuleRuntimeCommand {
         typeof obj.cmd === "string");
 }
 
-export function createStdinReader(
+export function createRuntimeReader(
     onCommand: (cmd: RuleRuntimeCommand) => void
 ) {
     process.stdin.setEncoding("utf8");
@@ -33,9 +33,9 @@ export function createStdinReader(
 
                 onCommand(cmd);
             } catch {
-                stdoutWriter.log({
+                runtimeOutput.log({
                     level: "error",
-                    component: "createStdinReader",
+                    component: "createRuntimeReader",
                     message: "Received invalid JSON command",
                 });
 
