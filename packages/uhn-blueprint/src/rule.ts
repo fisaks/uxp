@@ -137,7 +137,7 @@ export type BlueprintRuleMeta = {
     triggers: TriggerSpec[];
 
     // optional scheduling guards (per rule)
-    debounceMs?: number;
+    suppressMs?: number;
     cooldownMs?: number;
     priority?: number;
 };
@@ -174,7 +174,17 @@ export type RuleBuilder = {
     onTimerDeactivated(timer: TimerResourceBase): RuleBuilder;
 
     priority(n: number): RuleBuilder;
-    debounce(ms: number): RuleBuilder;
+    /**
+    * Suppress: ignore noisy triggers.
+    * After a triggering event, ignore further triggers for X milliseconds.
+    * The rule only runs in response to an event; no execution is scheduled
+    * after the suppress period ends.
+    */
+    suppress(ms: number): RuleBuilder;
+    /**
+    * Cooldown: block repeated executions.
+    * After the rule runs, do not allow it to run again for X milliseconds.
+    */
     cooldown(ms: number): RuleBuilder;
 
     run(fn: (ctx: RuleContext) => RuleAction[]): BlueprintRule;
@@ -264,8 +274,8 @@ export function rule(
             return this;
         },
 
-        debounce(ms) {
-            meta.debounceMs = ms;
+        suppress(ms) {
+            meta.suppressMs = ms;
             return this;
         },
 

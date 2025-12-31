@@ -90,7 +90,8 @@ export class RuleEngine {
     ): RuntimeRuleAction[] {
         const ruleControl = this.ruleExecutionControl.get(ruleCandidate.id) ?? {};
         const logger = ruleLogger(ruleCandidate.id);
-        // Cooldown  Block repeated executions. After the rule runs, don’t let it run again for X time.
+        // Cooldown: block repeated executions.
+        // After the rule runs, do not allow it to run again for X milliseconds.
         if (ruleCandidate.cooldownMs && ruleControl.lastRunAt) {
             if (stateChangeTime - ruleControl.lastRunAt < ruleCandidate.cooldownMs) {
                 logger.info(`Skipped rule "${ruleCandidate.id}" due to cooldown.`);
@@ -98,13 +99,19 @@ export class RuleEngine {
             }
         }
 
-        // Debounce Wait until things stop changing, then run once. wait for stable state
-        if (ruleCandidate.debounceMs) {
-            if (ruleControl.debounceUntil && stateChangeTime < ruleControl.debounceUntil) {
-                logger.info(`Skipped rule "${ruleCandidate.id}" due to debounce.`);
+        // Suppress: ignore noisy triggers.
+        // After a triggering event, ignore further triggers for X milliseconds.
+        // The rule only runs in response to an event; no execution is scheduled
+        // after the suppress period ends.
+        // Suppression window is fixed from the first triggering event;
+        // suppressed events do not extend the window.
+        // Suppression is based on trigger arrival, not on whether the rule actually ran.
+        if (ruleCandidate.suppressMs) {
+            if (ruleControl.suppressUntil && stateChangeTime < ruleControl.suppressUntil) {
+                logger.info(`Skipped rule "${ruleCandidate.id}" due to suppression.`);
                 return [];
             }
-            ruleControl.debounceUntil = stateChangeTime + ruleCandidate.debounceMs;
+            ruleControl.suppressUntil = stateChangeTime + ruleCandidate.suppressMs;
         }
 
         let actions: RuleAction[] = [];
