@@ -6,7 +6,7 @@ import type {
     RuntimeReader,
     RuntimeRuleAction,
     TriggerEvent,
-    TriggerSpec
+    RuleTrigger
 } from "@uhn/blueprint";
 import { ResourceError, ResourceStateNotAvailableError } from "@uhn/common";
 import { assertNever } from "@uxp/common";
@@ -75,10 +75,10 @@ export class RuleEngine {
 
     private triggerFires(
         resourceId: string,
-        trigger: TriggerSpec,
+        trigger: RuleTrigger,
         events: TriggerEvent[]
-    ): trigger is Extract<TriggerSpec, { type: "resource" }> {
-        if (trigger.type !== "resource") return false;
+    ): trigger is Extract<RuleTrigger, { kind: "resource" }> {
+        if (trigger.kind !== "resource") return false;
         if (trigger.resource.id !== resourceId) return false;
         return events.includes(trigger.event);
     }

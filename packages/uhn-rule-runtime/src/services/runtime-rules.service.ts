@@ -53,7 +53,7 @@ function indexRules(rules: BlueprintRule[]): TriggerIndex {
 
     for (const rule of rules) {
         for (const t of rule.triggers) {
-            if (t.type === "timer") {
+            if (t.kind === "timer") {
                 timers.add(rule);
                 continue;
             }

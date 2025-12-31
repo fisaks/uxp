@@ -26,7 +26,6 @@ export type ResourceState = {
 };
 
 
-
 export type RuntimeReader = {
     getState<T extends ResourceType>(resource: ResourceBase<T>): StateValueByResourceType<T>;
 };
@@ -40,23 +39,23 @@ export type TriggerEvent =
     | "longPress"
     | "timerActivated"
     | "timerDeactivated";
-export type TriggerSpec =
+export type RuleTrigger =
     | {
-        type: "resource";
+        kind: "resource";
         resource: ResourceBase<ResourceType>;
         event: "activated" | "deactivated" | "changed";
     }
     | {
-        type: "tap";
+        kind: "tap";
         resource: DigitalInputResourceBase;
     }
     | {
-        type: "longPress";
+        kind: "longPress";
         resource: DigitalInputResourceBase;
         thresholdMs: number;
     }
     | {
-        type: "timer";
+        kind: "timer";
         resource: TimerResourceBase;
         event: "activated" | "deactivated";
     };
@@ -123,7 +122,7 @@ export type RuleContext = {
 };
 
 
-export type RulePlacement =
+export type RuleExecutionTarget =
     | "auto"   // default: try edge first, escalate if needed
     | "master"; // author forces master-only execution
 
@@ -133,8 +132,8 @@ export type BlueprintRuleMeta = {
     name?: string;
     description?: string;
 
-    placement?: RulePlacement; // default "auto"
-    triggers: TriggerSpec[];
+    executionTarget?: RuleExecutionTarget; // default "auto"
+    triggers: RuleTrigger[];
 
     // optional scheduling guards (per rule)
     suppressMs?: number;
@@ -161,7 +160,7 @@ export const isBlueprintRule = (obj: unknown): obj is BlueprintRule => {
     );
 }
 export type RuleBuilder = {
-    placement(p: RulePlacement): RuleBuilder;
+    executionTarget(p: RuleExecutionTarget): RuleBuilder;
 
     onActivated(resource: DigitalInputResourceBase): RuleBuilder;
     onDeactivated(resource: DigitalInputResourceBase): RuleBuilder;
@@ -196,20 +195,20 @@ export function rule(
         id: props?.id!,
         name: props?.name,
         description: props?.description,
-        placement: "auto",
+        executionTarget: "auto",
         triggers: [],
 
     };
 
     const builder: RuleBuilder = {
-        placement(p) {
-            meta.placement = p;
+        executionTarget(p) {
+            meta.executionTarget = p;
             return this;
         },
 
         onActivated(resource) {
             meta.triggers.push({
-                type: "resource",
+                kind: "resource",
                 resource: resource,
                 event: "activated",
             });
@@ -218,7 +217,7 @@ export function rule(
 
         onDeactivated(resource) {
             meta.triggers.push({
-                type: "resource",
+                kind: "resource",
                 resource: resource,
                 event: "deactivated",
             });
@@ -227,7 +226,7 @@ export function rule(
 
         onChanged(resource) {
             meta.triggers.push({
-                type: "resource",
+                kind: "resource",
                 resource: resource,
                 event: "changed",
             });
@@ -236,7 +235,7 @@ export function rule(
 
         onTap(resource) {
             meta.triggers.push({
-                type: "tap",
+                kind: "tap",
                 resource: resource,
             });
             return this;
@@ -244,7 +243,7 @@ export function rule(
 
         onLongPress(resource, thresholdMs) {
             meta.triggers.push({
-                type: "longPress",
+                kind: "longPress",
                 resource: resource,
                 thresholdMs,
             });
@@ -253,7 +252,7 @@ export function rule(
 
         onTimerActivated(timer) {
             meta.triggers.push({
-                type: "timer",
+                kind: "timer",
                 resource: timer,
                 event: "activated",
             });
@@ -262,7 +261,7 @@ export function rule(
 
         onTimerDeactivated(timer) {
             meta.triggers.push({
-                type: "timer",
+                kind: "timer",
                 resource: timer,
                 event: "deactivated",
             });
