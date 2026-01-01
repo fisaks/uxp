@@ -100,6 +100,24 @@ export type RuleAction =
         value: DigitalStateValue | undefined;
     };
 
+/**
+ * Typed helper for constructing arrays of {@link RuleAction}.
+ *
+ * This is an identity function at runtime, but at compile time it:
+ * - Ensures that all elements in the array are valid {@link RuleAction}s.
+ * - Preserves the tuple type of the input array (including literal types),
+ *   which can be useful for further type-level operations.
+ *
+ * Usage:
+ *   const actions = ruleActions([
+ *       { type: "setOutput", resource: someOutput, value: true },
+ *       { type: "emitSignal", resource: someInput, value: undefined },
+ *   ]);
+ */
+export function ruleActions<T extends RuleAction[]>(actions: T): T {
+    return actions;
+}
+
 export type RuntimeRuleAction =
     | {
         type: "setOutput";
