@@ -75,7 +75,10 @@ async function generateTsconfigJson(blueprintFolder: string): Promise<string> {
             esModuleInterop: true,
             strict: true,
             declaration: false,
-            skipLibCheck: true
+            skipLibCheck: true,
+            // TODO add ui feature to enable debug with source maps
+            sourceMap: true,
+            inlineSources: true
         },
         include: ["src/**/*"]
     }, { spaces: 2 });

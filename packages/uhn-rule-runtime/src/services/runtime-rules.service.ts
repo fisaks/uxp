@@ -5,10 +5,6 @@ import path from "path";
 import { runtimeOutput } from "../io/runtime-output";
 
 
-type TriggerIndex = {
-    byResourceId: Map<string, BlueprintRule[]>;
-    timers: BlueprintRule[];
-};
 
 async function collectRules(rulesDir: string): Promise<BlueprintRule[]> {
     const rules: BlueprintRule[] = [];
@@ -47,16 +43,13 @@ async function collectRules(rulesDir: string): Promise<BlueprintRule[]> {
     return rules;
 }
 
-function indexRules(rules: BlueprintRule[]): TriggerIndex {
+function indexRules(rules: BlueprintRule[]): Map<string, BlueprintRule[]> {
     const byResourceId = new Map<string, Set<BlueprintRule>>();
-    const timers = new Set<BlueprintRule>();
+    // const timers = new Set<BlueprintRule>();
 
     for (const rule of rules) {
         for (const t of rule.triggers) {
-            if (t.kind === "timer") {
-                timers.add(rule);
-                continue;
-            }
+
 
             const resourceId = t.resource?.id;
             if (!resourceId) {
@@ -86,14 +79,8 @@ function indexRules(rules: BlueprintRule[]): TriggerIndex {
         byResourceIdFinal.set(resourceId, list);
     }
 
-    const timersFinal = Array.from(timers).sort(
-        (a, b) => (b.priority ?? 0) - (a.priority ?? 0)
-    );
+    return byResourceIdFinal;
 
-    return {
-        byResourceId: byResourceIdFinal,
-        timers: timersFinal,
-    };
 }
 
 
@@ -124,19 +111,19 @@ function validateRules(rules: BlueprintRule[]): BlueprintRule[] {
 }
 export class RuntimeRulesService {
     private readonly rules: BlueprintRule[];
-    private readonly index: TriggerIndex;
+    private readonly byResourceId: Map<string, BlueprintRule[]>;
 
-    private constructor(rules: BlueprintRule[], index: TriggerIndex) {
+    private constructor(rules: BlueprintRule[], byResourceId: Map<string, BlueprintRule[]>) {
         this.rules = rules;
-        this.index = index;
+        this.byResourceId = byResourceId;
     }
 
     static async create(rulesDir: string): Promise<RuntimeRulesService> {
         const loaded = await collectRules(rulesDir);
         const rules = validateRules(loaded);
-        const index = indexRules(rules);
+        const byResourceId = indexRules(rules);
         runtimeOutput.log({ level: "info", component: "RuntimeRulesService", message: `Loaded ${rules.length} rules.` });
-        return new RuntimeRulesService(rules, index);
+        return new RuntimeRulesService(rules, byResourceId);
     }
 
     list(): BlueprintRule[] {
@@ -144,10 +131,7 @@ export class RuntimeRulesService {
     }
 
     getRulesForResource(resourceId: string): BlueprintRule[] {
-        return this.index.byResourceId.get(resourceId) ?? [];
+        return this.byResourceId.get(resourceId) ?? [];
     }
 
-    listTimerRules(): BlueprintRule[] {
-        return this.index.timers;
-    }
 }

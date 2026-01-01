@@ -3,6 +3,7 @@ import type {
     BlueprintRule,
     RuleAction,
     RuleCause,
+    RuleTimers,
     RuleTrigger,
     RuntimeReader,
     RuntimeRuleAction
@@ -12,23 +13,28 @@ import { assertNever } from "@uxp/common";
 import { runtimeOutput } from "../io/runtime-output";
 import type { RuntimeRulesService } from "../services/runtime-rules.service";
 import type { RuntimeStateService } from "../services/runtime-state.service";
+import { RuntimeTimerService } from "../services/runtime-timer.service";
 import { createResourceErrorData } from "./rule-engine-error";
 import { ruleLogger } from "./rule-engine-logging";
 import { createRuleRuntime } from "./rule-engine-runtime";
+import { createRuleTimer } from "./rule-engine-timer";
 import { RuleExecutionControl, RuleTriggerEvent } from "./rule-engine.type";
-import { isLongPressTrigger, isResourceTrigger, isTapTrigger } from "./rule-engine.utils";
+import { isLongPressTrigger, isResourceTrigger, isTapTrigger, isTimerTrigger } from "./rule-engine.utils";
 import { TriggerEventBus } from "./trigger-event-bus";
 
 
 export class RuleEngine {
     private readonly ruleExecutionControl = new Map<string, RuleExecutionControl>();
     private readonly ruleRuntime: RuntimeReader;
+    private readonly ruleTimer: RuleTimers;
     constructor(
         triggerEventBus: TriggerEventBus,
         private readonly rulesService: RuntimeRulesService,
-        private readonly stateService: RuntimeStateService
+        private readonly stateService: RuntimeStateService,
+        private readonly timerService: RuntimeTimerService
     ) {
         this.ruleRuntime = createRuleRuntime({ stateService: this.stateService });
+        this.ruleTimer = createRuleTimer({ timerService: this.timerService });
         // Subscribe to state changes
         triggerEventBus.on((event) => {
             this.handleTriggerEvent(event);
@@ -84,6 +90,9 @@ export class RuleEngine {
         if (isTapTrigger(trigger) && event.event === "tap") {
             return true;
         }
+        if (isTimerTrigger(trigger)) {
+            return trigger.event === event.event;
+        }
 
         return false;
     }
@@ -125,16 +134,16 @@ export class RuleEngine {
             actions = ruleCandidate.run({
                 cause: runCause,
                 runtime: this.ruleRuntime,
-                timers: {
-                    start() {
-                        throw new Error("Timers not implemented yet");
+                timers: this.ruleTimer,
+                mute: {
+                    resource: (resource, durationMs, identifier) => {
+
                     },
-                    clear() {
-                        throw new Error("Timers not implemented yet");
+                    rule: (rule, durationMs, identifier) => {
+
                     },
-                    isRunning() {
-                        return false;
-                    },
+                    clearMute: (mute, identifier) => {
+                    }
                 },
                 logger,
             });

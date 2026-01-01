@@ -207,6 +207,7 @@ class RuleRuntimeProcessService extends EventEmitter<RuleRuntimeProcessEventMap>
                     "ts-node-dev",
                     "--project", path.join(pkgRoot, "tsconfig.json"),
                     "--inspect=0.0.0.0:9250",
+                    "--enable-source-maps", // TODO add ui feature to enable debug with source maps
                     "--transpile-only",
                     tsEntrypoint,
                     blueprintFolder,

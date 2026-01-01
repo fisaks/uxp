@@ -1,9 +1,11 @@
 // services/resource-event-emitter.ts
+import { TriggerEvent } from "@uhn/blueprint";
+import { assertNever } from "@uxp/common";
 import { runtimeOutput } from "../io/runtime-output";
 import { RuntimeResourceService } from "../services/runtime-resource.service";
 import type { RuntimeStateService } from "../services/runtime-state.service";
 import type { RuntimeStateChange } from "../types/rule-runtime.type";
-import { getEventsFromStateChange } from "./rule-engine.utils";
+import { getEventsFromStateChange, getTimerEventsFromStateChange } from "./rule-engine.utils";
 import type { TriggerEventBus } from "./trigger-event-bus";
 
 
@@ -27,8 +29,19 @@ export class ResourceEventEmitter {
             runtimeOutput.log({ level: "warn", component: "ResourceEventEmitter", message: `Resource with ID "${resourceId}" not found` });
             return;
         }
+        const events: TriggerEvent[] = [];
+        switch (resource.type) {
+            case "digitalInput":
+            case "digitalOutput":
+                events.push(...getEventsFromStateChange(prev, next));
+                break;
+            case "timer":
+                events.push(...getTimerEventsFromStateChange(prev, next));
+                break;
+            default:
+                assertNever(resource.type);
+        }
 
-        const events = getEventsFromStateChange(prev, next);
         if (!events.length) return;
 
         for (const event of events) {

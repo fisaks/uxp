@@ -20,13 +20,28 @@ export function getEventsFromStateChange(
 
     return events;
 }
+export function getTimerEventsFromStateChange(
+    prev: ResourceState | undefined,
+    next: ResourceState
+): TriggerEvent[] {
+    const events: TriggerEvent[] = [];
+
+    if ((!prev || !prev.value) && next.value === true) {
+        events.push("activated");
+    }
+    if (prev?.value === true && next.value === false) {
+        events.push("deactivated");
+    }
+    return events;
+}
 
 export function isPushButton(
     resource: ResourceBase<ResourceType>
 ): resource is DigitalInputResourceBase<"button"> {
     return (
         resource.type === "digitalInput" &&
-        (resource as DigitalInputResourceBase).inputType === "push"
+        (resource as DigitalInputResourceBase).inputType === "push" &&
+        (resource as DigitalInputResourceBase).inputKind === "button"
     );
 }
 

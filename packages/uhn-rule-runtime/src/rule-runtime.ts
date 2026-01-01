@@ -10,6 +10,7 @@ import { RuntimeResourceService } from "./services/runtime-resource.service";
 import { RuntimeRulesService } from "./services/runtime-rules.service";
 import { RuntimeStateService } from "./services/runtime-state.service";
 import { RuleRuntimeDependencies, RuntimeMode, RuntimeModes } from "./types/rule-runtime.type";
+import { RuntimeTimerService } from "./services/runtime-timer.service";
 
 const blueprintDir = process.argv[2];
 const runMode = process.argv[3] as RuntimeMode
@@ -31,6 +32,7 @@ async function main() {
     ]);
     const stateService = new RuntimeStateService();
     const triggerEventBus = new TriggerEventBus();
+    const timerService = new RuntimeTimerService(stateService);
     const router = createCommandRouter({
         runMode: runMode,
         resourceService,
@@ -38,7 +40,7 @@ async function main() {
         stateService
     } as RuleRuntimeDependencies);
     // Instances register listeners in constructors; keep references to prevent accidental GC/lint removal.
-    const ruleEngine = new RuleEngine(triggerEventBus, rulesService, stateService);
+    const ruleEngine = new RuleEngine(triggerEventBus, rulesService, stateService, timerService);
     const resourceEventEmitter = new ResourceEventEmitter(stateService, triggerEventBus, resourceService);
     const inputGestureEmitter = new InputGestureEmitter(stateService, rulesService, triggerEventBus, resourceService);
 

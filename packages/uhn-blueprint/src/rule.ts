@@ -74,9 +74,9 @@ export type RuleTimers = {
         timer: TimerResourceBase,
         durationMs: number,
         mode?: "restart" | "startOnce"
-    ): void;
+    ): "started" | "alreadyRunning" | "restarted";
 
-    clear(timer: TimerResourceBase): void;
+    clear(timer: TimerResourceBase): "cleared" | "notRunning";
 
     isRunning(timer: TimerResourceBase): boolean;
 };
@@ -119,8 +119,19 @@ export type RuleContext = {
     runtime: RuntimeReader;
     timers: RuleTimers;
     logger: RuleLogger;
+    mute: MuteController;
 };
-
+/**
+ * Controller to mute rule or resource triggers for a duration.
+ * You can give an optional identifier to distinguish different mute reasons.
+ * Using the same identifier in clearMute will only clear that specific mute.
+ * If no identifier is given, all mutes for that resource/rule are cleared.
+ */
+export type MuteController = {
+    resource(resource: ResourceBase<ResourceType>, durationMs: number, identifier?: string): void;
+    rule(rule: BlueprintRule, durationMs: number, identifier?: string): void;
+    clearMute(mute: ResourceBase<ResourceType> | BlueprintRule, identifier?: string): void;
+}
 
 export type RuleExecutionTarget =
     | "auto"   // default: try edge first, escalate if needed
