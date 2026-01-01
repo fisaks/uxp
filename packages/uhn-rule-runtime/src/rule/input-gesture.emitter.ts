@@ -1,7 +1,6 @@
 // services/input-gesture-emitter.ts
 import type {
-    DigitalInputResourceBase,
-    RuleTrigger
+    DigitalInputResourceBase
 } from "@uhn/blueprint";
 import { runtimeOutput } from "../io/runtime-output";
 import { RuntimeResourceService } from "../services/runtime-resource.service";
@@ -12,6 +11,8 @@ import { PushPressState } from "./rule-engine.type";
 import { isLongPressTrigger, isPushButton } from "./rule-engine.utils";
 import type { TriggerEventBus } from "./trigger-event-bus";
 
+// Max duration for a tap gesture anything longer is considered a long press
+const MAX_TAP_DURATION_MS = 1000;
 export class InputGestureEmitter {
     private readonly pressState = new Map<string, PushPressState>();
 
@@ -90,7 +91,11 @@ export class InputGestureEmitter {
         const state = this.pressState.get(resourceId);
         if (!state) return;
 
-        const shouldEmitTap = state.firedThresholds.size === 0;
+        const pressDuration = timestamp - state.pressedAt;
+
+        const shouldEmitTap =
+            pressDuration < MAX_TAP_DURATION_MS &&
+            state.firedThresholds.size === 0;
 
         this.clearState(resourceId);
 
