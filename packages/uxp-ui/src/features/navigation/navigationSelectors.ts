@@ -35,13 +35,13 @@ export const selectAllRoutes = () =>
     createSelector(selectNavigationState, (navigationState) =>
         navigationState.routes.map((route) => ({
             routePattern: route.routePattern,
-            pageUuid: route.page?.uuid,
+            pageIdentifier: route.page?.identifier,
             config: route.config,
         }))
     );
 
-export const selectPageByUuid = (uuid: string) =>
-    createSelector(selectNavigationState, (navigationState) => navigationState.pageLookup[uuid]);
+export const selectPageByIdentifier = (identifier: string) =>
+    createSelector(selectNavigationState, (navigationState) => navigationState.pageLookup[identifier]);
 
 export const selectSystemApps = () =>
     createSelector(selectNavigationState, (navigationState) => navigationState.system);

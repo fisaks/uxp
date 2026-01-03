@@ -1,4 +1,4 @@
-import { LocalizedStringValue, RouteConfigData, UserRole } from "@uxp/common";
+import { RouteConfigData, UserRole } from "@uxp/common";
 import slugify from "slugify";
 import { BeforeInsert, BeforeUpdate, Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { PageEntity } from "./PageEntity";
@@ -25,14 +25,8 @@ export class RouteEntity {
     @Column()
     routePattern!: string; // Default route pattern (non-localized)
 
-    @Column("json", { nullable: true })
-    localizedRoutePattern!: LocalizedStringValue;
-
     @Column({ nullable: true })
     link!: string; // Default link (non-localized)
-
-    @Column("json", { nullable: true })
-    localizedLink!: LocalizedStringValue; // Optional localized links
 
     @ManyToOne(() => PageEntity, { nullable: true })
     @JoinColumn({ name: "pageId" })
