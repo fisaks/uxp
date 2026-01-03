@@ -26,8 +26,8 @@ const navigationSlice = createSlice({
             state.tags = action.payload.tags ?? {};
             state.system = action.payload.system ?? [];
             action.payload.routes.forEach((route) => {
-                if (route.page?.uuid) {
-                    state.pageLookup[route.page.uuid] = route.page;
+                if (route.page?.identifier) {
+                    state.pageLookup[route.page.identifier] = route.page;
                 }
             });
         });

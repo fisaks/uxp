@@ -6,16 +6,16 @@ import { generateFullLink } from "@uxp/common";
 
 import { MainPageLayout } from "../../components/layout/MainPageLayout";
 import DynamicComponentLoader from "../dynamic-components/DynamicComponentLoader";
-import { selectLinksByTag, selectPageByUuid } from "../navigation/navigationSelectors";
+import { selectLinksByTag, selectPageByIdentifier } from "../navigation/navigationSelectors";
 import RemoteApp from "./RemoteApp";
 
 type RoutePageProps = {
-    pageUuid: string;
+    pageIdentifier: string;
     basePath?: string;
 };
 
-const RoutePage: React.FC<RoutePageProps> = ({ pageUuid, basePath }) => {
-    const page = useSelector(selectPageByUuid(pageUuid));
+const RoutePage: React.FC<RoutePageProps> = ({ pageIdentifier, basePath }) => {
+    const page = useSelector(selectPageByIdentifier(pageIdentifier));
 
     const location = useLocation();
 

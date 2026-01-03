@@ -52,28 +52,21 @@ export class NavigationService {
             .map((route) => {
                 return {
                     routePattern: route.routePattern,
-                    localizedRoutePattern: route.localizedRoutePattern ?? undefined,
                     link: route.link,
-                    localizedLink: route.localizedLink ?? undefined,
-                    page: route.page
-                        ? {
-                            uuid: route.page.uuid,
-                            identifier: route.page.identifier,
-                            name: route.page.name,
-                            localizedName: route.page.localizedName ?? undefined,
-                            metadata: route.page.metadata ?? undefined,
-                            config: route.page.config ?? { pageType: "fullWidth" },
-                            localizedMetadata: route.page.localizedMetadata ?? undefined,
-                            contents: route.page.contents
-                                .filter((f) => this.shouldInclude(f.roles, route.accessType))
-                                .map((content) => {
-                                    return {
-                                        uuid: content.uuid,
-                                        internalComponent: content.internalComponent ?? undefined,
-                                        //roles: content.roles
-                                    };
-                                }),
-                        }
+                    page: route.page ? {
+                        identifier: route.page.identifier,
+                        name: route.page.name,
+                        config: route.page.config ?? { pageType: "fullWidth" },
+                        contents: route.page.contents
+                            .filter((f) => this.shouldInclude(f.roles, route.accessType))
+                            .map((content) => {
+                                return {
+                                    uuid: content.uuid,
+                                    internalComponent: content.internalComponent ?? undefined,
+                                    //roles: content.roles
+                                };
+                            }),
+                    }
                         : undefined,
                     identifier: route.identifier,
                     //groupName: route.groupName ?? undefined,
@@ -149,7 +142,7 @@ export class NavigationService {
 
             return a.appName.localeCompare(b.appName, undefined, { sensitivity: "base" });
         });
-        
+
         return systemApps;
     }
 
