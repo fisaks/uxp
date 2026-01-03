@@ -1,44 +1,161 @@
 import AccountCircle from "@mui/icons-material/AccountCircle";
 import MenuIcon from "@mui/icons-material/Menu";
-import { AppBar, Box, ClickAwayListener, Collapse, IconButton, Menu, MenuItem, Toolbar, Typography, useMediaQuery } from "@mui/material";
-import React, { useState } from "react";
+import { AppBar, Box, Button, ClickAwayListener, Collapse, Divider, IconButton, Menu, MenuItem, Toolbar, Typography, useMediaQuery } from "@mui/material";
+import React, { useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { useAppDispatch } from "../../../hooks";
+import { selectGlobalConfig } from "../../global-config/globalConfigSelectors";
 import { selectLinksForHeaderMenu, selectLinksForProfileIcon } from "../../navigation/navigationSelectors";
+import { useUxpTheme } from "../../theme/useUxpTheme";
 import { selectIsLoggedInUser } from "../../user/userSelectors";
 import { logout } from "../../user/userThunks";
-import { useUxpTheme } from "../../theme/useUxpTheme";
-import { selectGlobalConfig } from "../../global-config/globalConfigSelectors";
+import { AppHealthSnapshot, HealthLevel } from "../health.types";
+import { SystemCenterTab } from "../systemCenter.types";
+import { HeaderMenuDesktopLinks } from "./HeaderMenuDesktopLinks";
+import { HealthIndicatorButton } from "./HealthIndicatorButton";
+import { HealthMenu } from "./HealthMenu";
+import { SystemCenterButton } from "./SystemCenterButton";
+import { SystemCenterDrawer } from "./SystemCenterDrawer";
 
+
+function computeHealthLevel(snapshots: AppHealthSnapshot[]): HealthLevel {
+    const anyReporting = snapshots.some((s) => s.items !== undefined);
+    if (!anyReporting) return "unknown";
+
+    const allItems = snapshots.flatMap((s) => s.items ?? []);
+    if (allItems.some((i) => i.level === "error")) return "error";
+    if (allItems.some((i) => i.level === "warning")) return "warning";
+    return "ok";
+}
+function countNonOkItems(snapshots: AppHealthSnapshot[]): number {
+    return snapshots.reduce((acc, s) => acc + (s.items?.length ?? 0), 0);
+}
 const HeaderMenu: React.FC = () => {
     const dispatch = useAppDispatch();
     const theme = useUxpTheme();
     const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
 
     const [headerMenuOpen, setHeaderMenuOpen] = useState(false);
-    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    const [profileAnchorEl, setProfileAnchorEl] = useState<null | HTMLElement>(null);
+
+    const [healthAnchorEl, setHealthAnchorEl] = useState<null | HTMLElement>(null);
+
+    const [systemCenterOpen, setSystemCenterOpen] = useState(false);
+    const [systemCenterTab, setSystemCenterTab] = useState(0);
 
     const toggleHeaderMenu = () => setHeaderMenuOpen(!headerMenuOpen);
     const closeHeaderMenu = () => setHeaderMenuOpen(false);
+
     const headerMenuLinks = useSelector(selectLinksForHeaderMenu());
     const profileIconLinks = useSelector(selectLinksForProfileIcon());
     const globalConfig = useSelector(selectGlobalConfig);
-
     const isLoggedInUser = useSelector(selectIsLoggedInUser());
 
-    const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
-        setAnchorEl(event.currentTarget);
+
+    const openProfileMenu = (event: React.MouseEvent<HTMLElement>) => {
+        setProfileAnchorEl(event.currentTarget);
     };
 
-    const handleMenuClose = () => {
-        setAnchorEl(null);
+    const closeProfileMenu = () => {
+        setProfileAnchorEl(null);
     };
 
     const doLogout = () => {
-        handleMenuClose();
+        closeProfileMenu();
         dispatch(logout({}));
     };
+
+    // -----------------------------
+    // MOCK DATA (replace later)
+    // -----------------------------
+    const appHealthSnapshots: AppHealthSnapshot[] = useMemo(
+        () => [
+            {
+                appId: "uhn",
+                appName: "UHN",
+                items: [
+                    {
+                        id: "edge-sauna-down",
+                        appId: "uhn",
+                        level: "error",
+                        title: "Edge unreachable",
+                        message: "Sauna node has not responded for 45s.",
+                        action: { label: "Open System Center", to: "/system-center?app=uhn" },
+                    },
+                    {
+                        id: "blueprint-warn",
+                        appId: "uhn",
+                        level: "warning",
+                        title: "Blueprint warning",
+                        message: "A resource is missing an id; runtime skipped one trigger.",
+                        action: { label: "Open Rules", to: "/uhn/rules" },
+                    },
+                ],
+            },
+            {
+                appId: "demo",
+                appName: "Demo App",
+                items: [], // reporting + empty => OK
+            },
+            {
+                appId: "future",
+                appName: "Future App",
+                items: undefined, // not reporting => unknown
+            },
+        ],
+        []
+    );
+
+    const healthLevel = useMemo(() => computeHealthLevel(appHealthSnapshots), [appHealthSnapshots]);
+    const healthCount = useMemo(() => countNonOkItems(appHealthSnapshots), [appHealthSnapshots]);
+
+    const openHealthMenu = (event: React.MouseEvent<HTMLElement>) => setHealthAnchorEl(event.currentTarget);
+    const closeHealthMenu = () => setHealthAnchorEl(null);
+
+    const systemTabs: SystemCenterTab[] = useMemo(
+        () => [
+            {
+                appId: "uhn",
+                appName: "UHN",
+                content: (
+                    <Box sx={{ p: 2 }}>
+                        <Typography variant="subtitle1">UHN System</Typography>
+                        <Typography variant="body2" sx={{ mt: 1 }}>
+                            Static placeholder content.
+                        </Typography>
+
+                        <Box sx={{ display: "flex", gap: 1, mt: 2, flexWrap: "wrap" }}>
+                            <Button variant="contained">Enable debug mode</Button>
+                            <Button variant="outlined">Restart runtime</Button>
+                            <Button variant="outlined">Recompile blueprint</Button>
+                        </Box>
+
+                        <Divider sx={{ my: 2 }} />
+
+                        <Typography variant="subtitle2">Nodes</Typography>
+                        <Typography variant="body2" sx={{ mt: 1 }}>
+                            🟢 Core service running<br />
+                            🔴 Edge: Sauna unreachable
+                        </Typography>
+                    </Box>
+                ),
+            },
+            {
+                appId: "demo",
+                appName: "Demo App",
+                content: (
+                    <Box sx={{ p: 2 }}>
+                        <Typography variant="subtitle1">Demo System</Typography>
+                        <Typography variant="body2" sx={{ mt: 1 }}>
+                            Placeholder system panel for demo app.
+                        </Typography>
+                    </Box>
+                ),
+            },
+        ],
+        []
+    );
 
     return (
         <>
@@ -50,36 +167,35 @@ const HeaderMenu: React.FC = () => {
                         </IconButton>
                     )}
 
-                    <Typography variant="h6" noWrap sx={{ flexGrow: 1 }}>
+                    <Typography variant="h6" noWrap title={globalConfig?.siteName}
+                        sx={{
+                            minWidth: 0,          // REQUIRED for ellipsis in flex
+                            maxWidth: "100%",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                            flexShrink: 0,
+                        }}
+                    >
                         {globalConfig?.siteName ?? "Unified Experience Platform"}
                     </Typography>
 
-                    {isDesktop &&
-                        headerMenuLinks.map((link) => (
-                            <Typography
-                                key={link.link}
-                                component={Link}
-                                to={link.link}
-                                sx={{
-                                    mx: 2,
-                                    textDecoration: "none",
-                                    color: "inherit",
-                                    "&:hover": { textDecoration: "underline" },
-                                }}
-                            >
-                                {link.label}
-                            </Typography>
-                        ))}
+                    <Box sx={{ flexGrow: 1, }}></Box>
+                    {isDesktop && <HeaderMenuDesktopLinks headerMenuLinks={headerMenuLinks} />}
 
                     {isLoggedInUser && (
-                        <IconButton color="inherit" onClick={handleMenuOpen} sx={{ ml: 2 }}>
-                            <AccountCircle />
-                        </IconButton>
+                        <>
+                            <HealthIndicatorButton level={"error"} count={healthCount} onClick={openHealthMenu} />
+                            <SystemCenterButton onClick={() => setSystemCenterOpen(true)} />
+                            <IconButton color="inherit" onClick={openProfileMenu} sx={{ ml: 2 }}>
+                                <AccountCircle />
+                            </IconButton>
+                        </>
                     )}
                     <Menu
-                        anchorEl={anchorEl}
-                        open={Boolean(anchorEl)}
-                        onClose={handleMenuClose}
+                        anchorEl={profileAnchorEl}
+                        open={Boolean(profileAnchorEl)}
+                        onClose={closeProfileMenu}
                         slotProps={{
                             paper: {
                                 elevation: 3,
@@ -88,13 +204,11 @@ const HeaderMenu: React.FC = () => {
                                     "& .MuiMenuItem-root": { fontSize: "1rem" },
                                 },
                             },
-                        }}
-                        MenuListProps={{
-                            "aria-labelledby": "user-menu-button",
+                            list: { "aria-labelledby": "profile-menu-button" },
                         }}
                     >
                         {profileIconLinks.map(({ link, label }) => (
-                            <MenuItem key={link} component={Link} to={link} onClick={handleMenuClose}>
+                            <MenuItem key={link} component={Link} to={link} onClick={closeProfileMenu}>
                                 {label}
                             </MenuItem>
                         ))}
@@ -103,6 +217,12 @@ const HeaderMenu: React.FC = () => {
                             Logout
                         </MenuItem>
                     </Menu>
+                    <HealthMenu
+                        anchorEl={healthAnchorEl}
+                        onClose={closeHealthMenu}
+                        level={healthLevel}
+                        snapshots={appHealthSnapshots}
+                    />
                 </Toolbar>
             </AppBar>
 
@@ -143,7 +263,15 @@ const HeaderMenu: React.FC = () => {
                         </Box>
                     </Collapse>
                 </ClickAwayListener>
-            )}
+            )
+            }
+            <SystemCenterDrawer
+                open={systemCenterOpen}
+                onClose={() => setSystemCenterOpen(false)}
+                tabs={systemTabs}
+                selectedTab={systemCenterTab}
+                onTabChange={setSystemCenterTab}
+            />
         </>
     );
 };

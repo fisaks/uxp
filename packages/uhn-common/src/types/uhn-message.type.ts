@@ -1,6 +1,7 @@
 
 import { MessagePayloadSchema } from "@uxp/common";
 import { RuntimeResource, RuntimeResourceState } from "./uhn-runtime.type";
+import { HealthItem } from "./uhn-health.type";
 
 
 export type UhnSubscriptionPattern =
@@ -8,6 +9,7 @@ export type UhnSubscriptionPattern =
     | `state/${string}`   // e.g., state/device-123, state/resource-abc
     | `resource/*`
     | `resource/${string}`
+    | `health/*`
 
 
 export type UhnSubscribePayload = {
@@ -40,9 +42,11 @@ export type ReleaseCommand = {
     type: "release";
 };
 
-export type UhnMessageActionPayloadRequestMap = {
+export type UhnSubscribePayloadRequestMap = {
     "uhn:subscribe": UhnSubscribePayload
     "uhn:unsubscribe": UhnSubscribePayload
+}
+export type UhnResourcePayloadRequestMap = {
     "uhn:resource:command": UhnResourceCommandPayload
 }
 
@@ -57,15 +61,19 @@ export type UhnFullStateResponse = {
     states: RuntimeResourceState[]
 }
 
-export type UhnMessageActionPayloadResponseMap = {
+export type UhnSubscribePayloadResponseMap = {
     "uhn:subscribed": UhnSubscribePayload
     "uhn:unsubscribed": UhnSubscribePayload
+}
+export type UhnResourcePayloadResponseMap = {
     "uhn:resources": UhnResourcesResponse
     "uhn:state": UhnStateResponse
     "uhn:fullState": UhnFullStateResponse,
     "uhn:resource:command": UhnResourceCommandPayload
 }
-
+export type UhnHealthPayloadResponseMap = {
+    "uhn:health:snapshot": HealthItem
+}
 export const UhnSubscribePayloadSchema: MessagePayloadSchema<UhnSubscribePayload> = {
 
     type: 'object',

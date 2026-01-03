@@ -35,9 +35,9 @@ export class RemoteController {
             });
         }
         const config = { ...(pageApps.app.config ?? {}), ...(pageApps.config ?? {}) };
-        const { contextPath, indexPage } = config;
+        const { contextPath, mainEntry } = config;
         const { baseUrl, identifier: appIdentifier } = pageApps.app;
-        const targetUrl = buildUrlWithParams({ hostname: baseUrl, contextPath, resourceParts: [indexPage] });
+        const targetUrl = buildUrlWithParams({ hostname: baseUrl, contextPath, resourceParts: [mainEntry] });
         AppLogger.info(req, { message: `Remote target url is ${targetUrl}` });
 
         try {

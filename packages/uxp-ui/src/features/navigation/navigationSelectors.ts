@@ -1,6 +1,7 @@
 import { createSelector } from "@reduxjs/toolkit";
 
 import { RootState } from "../../app/store";
+import { NavigationRoute } from "@uxp/common";
 
 export type RouteLink = {
     label: string;
@@ -17,8 +18,8 @@ const selectRoutesByTagName = (tagName: string) =>
             .filter((route) => tagOrder.includes(route.identifier))
             .sort((a, b) => tagOrder.indexOf(a.identifier) - tagOrder.indexOf(b.identifier));
     });
- // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const mapRoutesToLinks = (routes: any[]) =>
+
+const mapRoutesToLinks = (routes: NavigationRoute[]) =>
     routes.map((route) => ({
         link: route.link,
         label: route.page?.name,
@@ -41,3 +42,12 @@ export const selectAllRoutes = () =>
 
 export const selectPageByUuid = (uuid: string) =>
     createSelector(selectNavigationState, (navigationState) => navigationState.pageLookup[uuid]);
+
+export const selectSystemApps = () =>
+    createSelector(selectNavigationState, (navigationState) => navigationState.system);
+
+export const selectSystemPanelApps = () =>
+    createSelector(selectSystemApps(), (systemApps) => systemApps.filter((app) => app.capabilities.systemPanel));
+
+export const selectHealthIndicatorApps = () =>
+    createSelector(selectSystemApps(), (systemApps) => systemApps.filter((app) => app.capabilities.health));

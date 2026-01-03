@@ -2,7 +2,6 @@ export * from "./error/error.types";
 export * from "./global/global.types";
 export * from "./error/ErrorCodes";
 export * from "./error/errorUtil";
-export * from "./menu/menu.types";
 export * from "./navigation/navigation.types";
 export * from "./schema/schemaValidate";
 export * from "./schema/user.schema";
