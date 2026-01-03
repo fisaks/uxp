@@ -20,7 +20,7 @@ export class CreateMigration1763853520616 implements MigrationInterface {
                 name: "UHN",
                 baseUrl: env.REMOTE_HOST_UHN || "http://localhost:3002",
                 isActive: true,
-                config: { contextPath: "/uhn", indexPage: "index.html" },
+                config: { contextPath: "/uhn", mainEntry: "index.html" },
             })
         );
         const uhnPage = await pageRepository.save(new PageEntity({ name: "Unified Home Network", identifier: "unified-home-network" }));

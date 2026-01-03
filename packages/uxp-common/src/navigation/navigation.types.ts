@@ -3,6 +3,7 @@ import { PageConfigData, PageMetaData, RouteConfigData } from "../uxp/pagesRoute
 export type NavigationResponse = {
     routes: NavigationRoute[];
     tags: NavigationTags;
+    system: SystemAppMeta[];
 };
 export type NavigationRoute = {
     routePattern: string;
@@ -27,3 +28,12 @@ export type NavigationRoute = {
 };
 
 export type NavigationTags = Record<string, string[]>;
+
+export type SystemAppMeta = {
+    appId: string;
+    appName: string;
+    capabilities: {
+        health: boolean;
+        systemPanel: boolean;
+    };
+};

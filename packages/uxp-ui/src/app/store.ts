@@ -3,7 +3,6 @@ import { createLogger } from "redux-logger";
 import adminUserManagementSlice from "../features/control-panel/adminUserManagementSlice";
 import errorSlice from "../features/error/errorSlice";
 import globalConfigSlice from "../features/global-config/globalConfigSlice";
-import headerMenuSlice from "../features/header/headerMenuSlice";
 import loadingSlice from "../features/loading/loadingSlice";
 import navigationSlice from "../features/navigation/navigationSlice";
 import mySettingSlice from "../features/settings/mySettingSlice";
@@ -20,7 +19,6 @@ const store = configureStore({
         mySettings: mySettingSlice,
         loading: loadingSlice,
         error: errorSlice,
-        headerMenu: headerMenuSlice,
         navigation: navigationSlice,
         globalConfig: globalConfigSlice,
 

@@ -28,7 +28,7 @@ export class CreateMigration1736033971030 implements MigrationInterface {
                 name: "H2C",
                 baseUrl: env.REMOTE_HOST_H2C,
                 isActive: true,
-                config: { contextPath: "/h2c", indexPage: "index.html" },
+                config: { contextPath: "/h2c", mainEntry: "index.html" },
             })
         );
 
@@ -37,7 +37,7 @@ export class CreateMigration1736033971030 implements MigrationInterface {
                 name: "uxp-demo",
                 baseUrl: env.REMOTE_HOST_DEMO,
                 isActive: true,
-                config: { contextPath: "/demo", indexPage: "index.html" },
+                config: { contextPath: "/demo", mainEntry: "index.html" },
             })
         );
 
@@ -69,11 +69,11 @@ export class CreateMigration1736033971030 implements MigrationInterface {
 
         await pageAppsRepository.save([
             new PageAppsEntity({ page: home2CarePage, app: h2c, order: 1, roles: ["user"] }),
-            new PageAppsEntity({ page: uxpDemoPage, app: demo, order: 1, roles: ["user"], config: { "indexPage": "view.html" } }),
+            new PageAppsEntity({ page: uxpDemoPage, app: demo, order: 1, roles: ["user"], config: { "mainEntry": "view.html" } }),
             new PageAppsEntity({ page: selfNavDemoPage, app: demo, order: 1, roles: ["user"] }),
 
-            new PageAppsEntity({ page: multiAppPage, app: demo, order: 1, roles: ["user"], config: { "indexPage": "view.html" } }),
-            new PageAppsEntity({ page: multiAppPage, app: demo, order: 2, roles: ["user"], config: { "indexPage": "view.html" } }),
+            new PageAppsEntity({ page: multiAppPage, app: demo, order: 1, roles: ["user"], config: { "mainEntry": "view.html" } }),
+            new PageAppsEntity({ page: multiAppPage, app: demo, order: 2, roles: ["user"], config: { "mainEntry": "view.html" } }),
 
             new PageAppsEntity({ page: loginPage, order: 1, roles: undefined, internalComponent: "LoginPage" }),
             new PageAppsEntity({ page: registerPage, order: 1, roles: undefined, internalComponent: "RegisterPage" }),

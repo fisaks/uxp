@@ -35,6 +35,7 @@ export class UHNAppServerWebSocketManager extends ServerWebSocketManager<UHNAppA
     public unsubscribeFromUhnMessagePattern(socket: WebSocket, pattern: UhnSubscriptionPattern) {
         this.leaveTopic(socket, `uhn:${pattern}`);
     }
+    
 
     public broadcastTopicMessage({ payload }: BroadcastTopicMessage) {
         const header: UHNAppResponseMessage<"topic:message"> = {

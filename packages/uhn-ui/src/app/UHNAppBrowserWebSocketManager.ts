@@ -3,7 +3,7 @@ import { UHNAppActionPayloadRequestMap, UHNAppActionPayloadResponseMap } from "@
 import { WebSocketAction } from "@uxp/common";
 import { BrowserWebSocketManager, ErrorHandler, SubscriptionOptions, useWebSocket, useWebSocketSubscription, WebSocketResponseListenerObj } from "@uxp/ui-lib";
 import { getWSPath } from "../config";
-    
+
 export type UHNAppWebSocketResponseListener = WebSocketResponseListenerObj<UHNAppActionPayloadResponseMap>
 export type UHNAppErrorHandler = ErrorHandler<UHNAppActionPayloadRequestMap, UHNAppActionPayloadResponseMap>
 
