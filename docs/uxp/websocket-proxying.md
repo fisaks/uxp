@@ -267,3 +267,10 @@ To enable WS proxying for a remote app:
 - **Resilience is layered:** UXP handles upstream reconnect; browser handles portal reconnect.
 - **Security is layered:** UXP can gate guest access; remote app enforces per-action auth/roles.
 - **Keepalive is centralized:** UXP pings both sockets; remote app backs off if UXP is pinging.
+
+---
+
+## Codes
+- [UXP WebSocket Handler](https://github.com/fisaks/uxp/blob/22b291d2bfac4a3580fcf8feca614e0258a46e37/packages/uxp-bff/src/websocket/registerRemoteWebSocketHandler.ts)
+- [Remote App WebSocket Handler](https://github.com/fisaks/uxp/blob/22b291d2bfac4a3580fcf8feca614e0258a46e37/packages/uxp-bff-common/src/websocket/registerLocalWebSocketHandlers.ts)
+- [Browser WebSocket Handler](https://github.com/fisaks/uxp/blob/22b291d2bfac4a3580fcf8feca614e0258a46e37/packages/uxp-ui-lib/src/features/websocket/BrowserWebSocketManager.ts)

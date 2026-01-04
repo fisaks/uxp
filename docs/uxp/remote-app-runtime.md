@@ -26,10 +26,7 @@ This host element lives in the normal (light) DOM and acts as the **ShadowRoot h
 All remote app UI is rendered via a ShadowRoot attached to this element.
 
 Source:
-`packages/uxp-ui/src/features/remote-app/RemoteApp.tsx`
-https://github.com/fisaks/uxp/blob/main/packages/uxp-ui/src/features/remote-app/RemoteApp.tsx
-
----
+(https://github.com/fisaks/uxp/blob/main/packages/uxp-ui/src/features/remote-app/RemoteApp.tsx)
 
 ### ShadowRoot creation
 
@@ -39,8 +36,6 @@ When the remote app is loaded:
 - the ShadowRoot is fully cleared before injecting new content
 
 The remote app never renders directly into the light DOM.
-
----
 
 ### What is rendered as Shadow DOM content
 
@@ -79,8 +74,6 @@ Behavior:
 Although scripts appear under the ShadowRoot in the DOM, **JavaScript execution
 always happens in the global document context** (`window`).
 Shadow DOM scopes DOM structure and styles, not JavaScript execution.
-
----
 
 ### Remote app main bundle (`data-uxp-remote-app`)
 
@@ -168,14 +161,10 @@ Without setting `__webpack_public_path__`, Webpack will attempt to load
 chunks from an incorrect location (such as / or the build-time
 publicPath), causing lazy-loaded modules to fail at runtime.
 
----
-
 ### Examples: how `window[appIdentifier]` is created
 
 The remote app is responsible for exposing itself on `window`.
 UXP only discovers and calls it.
-
----
 
 #### Webpack configuration (remote app)
 
@@ -198,11 +187,9 @@ window["uhn"] = exports;
 
 The exported object must include `initApplication`.
 
----
-
 #### Injecting the identifier into HTML
 
-The same identifier is injected into the generated HTML as a script attribute:
+The same appIdentifier is injected into the generated HTML as a script attribute for the bundle script:
 
 ```js
 new htmlWebpackInjectAttributesPlugin({
@@ -210,7 +197,7 @@ new htmlWebpackInjectAttributesPlugin({
 })
 ```
 
-Resulting HTML output:
+Resulting HTML output for the bundle:
 
 ```html
 <script
@@ -218,8 +205,6 @@ Resulting HTML output:
   data-uxp-remote-app="uhn"
 ></script>
 ```
-
----
 
 #### Runtime resolution in UXP UI
 
@@ -237,8 +222,6 @@ window[remoteApp].initApplication(container);
 
 UXP does not create or modify `window[remoteApp]`.
 
----
-
 #### Required identifier consistency
 
 The same identifier must be used consistently in all places:
@@ -251,8 +234,6 @@ The same identifier must be used consistently in all places:
 | Global object | `window["uhn"]` |
 
 If any of these differ, the remote app cannot be initialized.
-
----
 
 #### Minimal remote app export example
 
@@ -273,9 +254,7 @@ window["uhn"].initApplication
 
 ### Example: `initApplication` implementation
 
-A minimal real-world example can be found here:
-
-https://github.com/fisaks/uxp/blob/22b291d2bfac4a3580fcf8feca614e0258a46e37/packages/demo-ui/src/index.tsx#L4
+A minimal real-world example can be found here: https://github.com/fisaks/uxp/blob/22b291d2bfac4a3580fcf8feca614e0258a46e37/packages/demo-ui/src/index.tsx
 
 This example demonstrates a typical `initApplication` implementation used by
 remote apps rendered inside UXP.
@@ -291,11 +270,10 @@ At runtime, UXP calls:
 
 `window[appIdentifier].initApplication(container)`
 
-
 The implementation details (React, state management, styling, etc.)
 are fully owned by the remote app.
 
-## Cleanup
+### Cleanup
 
 The cleanup function is responsible for fully unmounting the application.
 If cleanup is omitted or incomplete, the remote app will continue to exist
@@ -306,7 +284,6 @@ When the `RemoteApp` React component unmounts:
 - the cleanup function returned by `initApplication` is called
 - the ShadowRoot remains attached to the host div
 - all Shadow DOM content is cleared on the next mount
-
 
 #### Unmount / cleanup responsibilities (remote app)
 
@@ -331,6 +308,8 @@ Failing to unmount will cause:
 UXP does not manage framework-level lifecycles.
 Each remote app is responsible for cleaning up everything it mounted
 inside `initApplication`.
+
+---
 
 ## Running a remote app outside UXP
 

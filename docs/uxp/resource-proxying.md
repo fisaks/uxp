@@ -29,8 +29,6 @@ GET /content/index/:contentUuid
 Before returning the HTML to the browser, UXP rewrites resource references
 so that **all relative assets load through the proxy**.
 
----
-
 ### What is rewritten
 
 In the fetched HTML entry, UXP processes:
@@ -52,9 +50,7 @@ In the fetched HTML entry, UXP processes:
 
 This ensures assets are fetched through UXP instead of directly from the app.
 
----
-
-## `data-uxp-remove` (HTML entry only)
+### `data-uxp-remove` (HTML entry only)
 
 UXP removes elements marked with:
 
@@ -110,8 +106,6 @@ This endpoint supports:
 - Multipart file uploads
 - arbitrary HTTP methods
 
----
-
 ### Resource Proxy Request Flow (Remote Apps)
 
 Request flow:
@@ -123,7 +117,8 @@ Browser
 UXP RemoteController
   ↓
 baseUrl + contextPath + resourcePath
-
+  ↓
+RemoteApp  
 ```
 
 All HTTP requests from remote apps are sent through:
@@ -134,8 +129,6 @@ All HTTP requests from remote apps are sent through:
 
 Remote apps must **never call backend services directly**.
 All URLs are built relative to the proxied base URL provided by UXP.
-
----
 
 #### Backend request handling
 
@@ -155,7 +148,6 @@ baseUrl + contextPath + resourcePath (+ query string)
 
 This behavior is implemented in `RemoteController.executeContentResource`.
 
----
 
 #### Building API URLs in remote apps
 
