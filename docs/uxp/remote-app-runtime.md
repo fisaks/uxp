@@ -31,7 +31,7 @@ https://github.com/fisaks/uxp/blob/main/packages/uxp-ui/src/features/remote-app/
 
 ---
 
-#### ShadowRoot creation
+### ShadowRoot creation
 
 When the remote app is loaded:
 
@@ -42,7 +42,7 @@ The remote app never renders directly into the light DOM.
 
 ---
 
-#### What is rendered as Shadow DOM content
+### What is rendered as Shadow DOM content
 
 From the fetched HTML entry (`/content/index/:contentUuid`), UXP:
 
@@ -65,7 +65,7 @@ is mounted inside UXP.
 Remote apps must treat this value as the routing base path and configure
 their internal routing accordingly (e.g. React Router basename).
 
-#### Script handling
+### Script handling
 
 `<script>` elements from the remote app HTML are **recreated**, not cloned.
 
@@ -82,7 +82,7 @@ Shadow DOM scopes DOM structure and styles, not JavaScript execution.
 
 ---
 
-#### Remote app main bundle (`data-uxp-remote-app`)
+### Remote app main bundle (`data-uxp-remote-app`)
 
 Scripts with:
 
