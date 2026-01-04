@@ -1,5 +1,13 @@
 import React from "react";
 
+/**
+ * Map of dynamically loadable UXP internal components.
+ *
+ * Keys in this map are referenced by `PageAppsEntity.internalComponent`
+ * and are used to render local UXP content on a page.
+ *
+ * If a key is not present here, the component cannot be rendered.
+ */
 const componentMap = {
     LoginPage: React.lazy(() => import(/* webpackChunkName: "login-page" */ "../user/pages/LoginPage")),
     RegisterPage: React.lazy(() => import(/* webpackChunkName: "register-page" */ "../user/pages/RegisterPage")),

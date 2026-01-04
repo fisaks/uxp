@@ -82,7 +82,7 @@ export type AppConfigData = {
      * If not defined, the app will be sorted alphabetically after the apps with defined sort order.
     */
     systemSortOrder?: number;
-    
+
     /**
      * Additional options passed to the remote app via the root mount element.
      *
@@ -98,14 +98,32 @@ export type AppConfigData = {
     appOption?: Record<string, string | boolean | number | object>;
 };
 
+/**
+ * Partial override of `AppConfigData` applied at content-placement level.
+ */
 export type PageAppsConfigData = Partial<AppConfigData> & {};
-
-export type RouteConfigData = {
-    redirect?: string;
-};
 
 export type PageType = "fullWidth" | "leftNavigation";
 export type PageConfigData = {
+    /**
+    * Page layout type.
+    *
+    * - fullWidth: content spans the full page
+    * - leftNavigation: UXP left navigation is shown
+    */
     pageType: PageType;
+
+    /**
+    * Route group used to populate the left navigation.
+    * Only relevant when pageType is "leftNavigation".
+    */
     routeLinkGroup?: string;
+};
+
+export type RouteConfigData = {
+    /**
+    * Client-side redirect target.
+    * When set, this route renders a <Navigate /> instead of a page.
+    */
+    redirect?: string;
 };

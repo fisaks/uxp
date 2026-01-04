@@ -5,8 +5,9 @@ import React from "react";
 import ReactDOM from "react-dom/client"; // React 18's new API
 import { Provider } from "react-redux";
 import { createStore } from "./app/store";
-import { initializeConfig } from "./config";
+import { getAppOption, initializeConfig } from "./config";
 import UHNApp from "./UHNApp";
+import UHNHealth from "./UHNHealth";
 const styleInsert = require("../../tools/src/insert-function.cjs");
 
 // Extend the Window interface to include __UXP_PORTAL__
@@ -17,6 +18,10 @@ declare const module: __WebpackModuleApi.Module;
 
 const ENABLE_STRICT_MODE = false;
 
+const APPLICATIONS = {
+    'UHNApp': UHNApp,
+    'UHNHealth': UHNHealth
+}
 
 export const initApplication = (documentRoot: ShadowRoot | Document) => {
     const container = documentRoot instanceof Document ? documentRoot.head : documentRoot;
@@ -45,6 +50,9 @@ export const initApplication = (documentRoot: ShadowRoot | Document) => {
 
     // Create a React root
     // Store root globally to avoid duplicate createRoot calls
+    // The React root is cached on the DOM element to avoid calling
+    // createRoot() multiple times on the same node and to allow
+    // reliable unmounting when the app is disposed.
     const globalRootKey = "__UXP_APP_ROOT__";
     if (!(globalRootKey in rootElement)) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -52,9 +60,12 @@ export const initApplication = (documentRoot: ShadowRoot | Document) => {
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const root = (rootElement as any)[globalRootKey];
+    const appOption = getAppOption<{ main?: keyof typeof APPLICATIONS }>()
+    const main: keyof typeof APPLICATIONS = appOption?.main ?? 'UHNApp';
     //const root = ReactDOM.createRoot(rootElement);
     //let hotRoot=root;
 
+    const App = APPLICATIONS[main];
     // Render the App component
     const renderApp = (AppComponent: React.ComponentType) => {
         const AppTree = (
@@ -75,12 +86,12 @@ export const initApplication = (documentRoot: ShadowRoot | Document) => {
 
         root.render(RootApp);
     }
-    renderApp(UHNApp);
+    renderApp(App);
 
     if (process.env.NODE_ENV === "development" && module.hot) {
-        module.hot.accept("./UHNApp", () => {
-            const NextUHNApp = require("./UHNApp").default;
-            renderApp(NextUHNApp);
+        module.hot.accept(`./${main}`, () => {
+            const NextApp = require(`./${main}`).default;
+            renderApp(NextApp);
         });
     }
     return () => {

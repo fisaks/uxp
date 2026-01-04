@@ -2,10 +2,10 @@
 
 import bcrypt from "bcrypt";
 import { Command } from "commander";
-import { UserRole } from "packages/uxp-common/src";
 import { DataSource, Repository } from "typeorm";
 import { BCRYPT_SALT_ROUNDS } from "./config/constant";
 import { User } from "./db/entities/User";
+import { UserRole } from "@uxp/common";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 let AppDataSource: DataSource;

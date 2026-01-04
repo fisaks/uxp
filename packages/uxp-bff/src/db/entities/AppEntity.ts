@@ -2,7 +2,17 @@ import { AppConfigData } from "@uxp/common";
 import { BeforeInsert, BeforeUpdate, Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 import slugify from "slugify";
 
-// App Entity
+/**
+ * Represents a remote application integrated into UXP.
+ *
+ * An AppEntity defines:
+ * - where the remote app is hosted (`baseUrl`)
+ * - whether it is active
+ * - runtime configuration used by the reverse proxy
+ *
+ * Apps are not rendered directly.
+ * They are embedded into pages via PageAppsEntity entries.
+ */
 @Entity("apps")
 export class AppEntity {
     constructor(init?: Partial<AppEntity>) {
@@ -11,7 +21,7 @@ export class AppEntity {
     @PrimaryGeneratedColumn()
     id!: number;
 
-     /** Display name of the app (e.g. "H2C") */
+    /** Display name of the app (e.g. "H2C") */
     @Column({ unique: true })
     name!: string;
 

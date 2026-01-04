@@ -1,6 +1,6 @@
-import { UserSettingsData } from "packages/uxp-common/src";
 import { Column, Entity, JoinColumn, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import { User } from "./User";
+import { UserSettingsData } from "@uxp/common";
 
 @Entity()
 export class UserSettings {
