@@ -172,7 +172,7 @@ All other attributes are left untouched unless explicitly listed above.
 
 ```html
 <div id="root"
-  data-base-route-path="/uhn">
+  data-base-route-path="/unified-home-network/">
 </div>
 ```
 

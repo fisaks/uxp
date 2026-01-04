@@ -62,7 +62,6 @@ This causes:
 
 This is the **preferred styling approach** for UXP remote apps.
 
----
 
 ### 2. CSS Modules, imported CSS, and legacy styles
 
@@ -75,9 +74,7 @@ They:
 
 Without intervention, these styles would not apply inside Shadow DOM at all.
 
----
-
-### 3. Style mirroring via `styleInsert`
+#### Style mirroring via `styleInsert`
 
 To support non-Emotion styles, UXP uses a style mirroring helper.
 
@@ -104,9 +101,8 @@ This enables:
 
 to work correctly inside Shadow DOM without cross-app leakage.
 
----
 
-## Why styles remain in `document.head`
+### Why styles remain in `document.head`
 
 Styles are intentionally **not removed** from `document.head`.
 
@@ -121,9 +117,7 @@ Rule of thumb:
 > **`document.head` is the source of truth.  
 > ShadowRoots receive mirrored copies.**
 
----
-
-## Why this complexity exists
+#### Why this complexity exists
 
 Browsers were not designed for:
 - multiple independently built applications
