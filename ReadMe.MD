@@ -44,6 +44,22 @@ While the current focus is on addressing my family’s needs, such as simplifyin
 
 This project is in its early stages and is still far from implementing all of the envisioned features. Contributions, ideas, and feedback are welcome as the project evolves!
 
+## Internal Architecture Documentation
+
+UXP includes a set of **internal architectural documents** that describe
+how the platform works at a conceptual and runtime level.
+
+These documents capture design intent, trade-offs, and non-obvious behavior
+such as Shadow DOM integration, resource proxying, WebSocket handling,
+styling isolation, and remote app lifecycles.
+
+This is **not API documentation**.
+Field-level behavior is documented in code via JSDoc.
+
+👉 **Read the internal documentation index:**  
+(https://github.com/fisaks/uxp/blob/main/docs/uxp/index.md)
+
+
 ## Project Structure
 
 The project is organized as a **TypeScript** monorepo with the following packages:
