@@ -12,7 +12,7 @@
                 "--transpile-only"
             ],
             "args": [
-                "${workspaceFolder}/packages/uxp-bff/src/index.ts"
+                "${workspaceFolder}/packages/uxp-bff/src/uxp.bff.ts"
             ], // Replace with your main TypeScript file
             "cwd": "${workspaceFolder}/packages/uxp-bff",
             "restart": true,
@@ -76,6 +76,34 @@
             ],
             "sourceMaps": true,
             "outFiles": []
+        },
+        {
+            "name": "Start UXP debug process",
+            "type": "node",
+            "request": "launch",
+            "runtimeExecutable": "pnpm",
+            "runtimeArgs": [
+                "ts-node-dev",
+                "--project",
+                "./tsconfig.json",
+                "--inspect",
+                "--transpile-only",
+                "--respawn"
+            ],
+            "args": [
+                "src/uxp.bff.ts"
+            ],
+            "cwd": "${workspaceFolder}/packages/uxp-bff",
+            "restart": true,
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "sourceMaps": true,
+            "outFiles": [],
+            "console": "integratedTerminal",
+            "env": {
+                "NODE_ENV": "development"
+            }
         }
     ]
 }
