@@ -50,6 +50,10 @@ fastify.register(jwtPlugin);
 fastify.register(fastifyWebsocket);
 declare module "fastify" {
 
+    /**
+     * Extend FastifyRequest to include uxpRaw flag
+     * set when the request contains raw data (e.g., multipart/form-data)
+     */
     interface FastifyRequest {
         uxpRaw?: boolean;
 

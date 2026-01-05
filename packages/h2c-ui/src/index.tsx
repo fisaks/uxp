@@ -15,7 +15,7 @@ declare const module: __WebpackModuleApi.Module;
 
 //let hotRoot:ReactDOM.Root|undefined;
 
-const ENABLE_STRICT_MODE = false;
+const ENABLE_STRICT_MODE = true;
 
 
 export const initApplication = (documentRoot: ShadowRoot | Document) => {
@@ -61,19 +61,13 @@ export const initApplication = (documentRoot: ShadowRoot | Document) => {
             <Provider store={store}>
                 <CacheProvider value={shadowCache}>
                     <ShadowRootProvider documentRoot={documentRoot}>
-                        <AppComponent />
+                        {ENABLE_STRICT_MODE ? <React.StrictMode><AppComponent /></React.StrictMode> : <AppComponent />}
                     </ShadowRootProvider>
                 </CacheProvider>
             </Provider>
         );
 
-        const RootApp = ENABLE_STRICT_MODE ? (
-            <React.StrictMode>{AppTree}</React.StrictMode>
-        ) : (
-            AppTree
-        );
-
-        root.render(RootApp);
+        root.render(AppTree);
     }
     renderApp(H2CApp);
 

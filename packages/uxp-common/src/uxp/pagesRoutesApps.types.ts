@@ -127,3 +127,26 @@ export type RouteConfigData = {
     */
     redirect?: string;
 };
+
+/**
+ * Configuration needed to fetch a remote app's resources.
+ * like entry html or assets.
+ */
+export type RemoteAppConfiguration = Readonly<{
+    /**
+     * App identifier of the remote app.
+     */
+    appIdentifier: string;
+    /**
+     * Remote app host (protocol + hostname + port).
+     */
+    baseUrl: string;
+    /**
+     * Merged app configuration with possible content-level overrides.
+     */
+    config: AppConfigData;
+    /**
+     * Optional content ID for the specific page content placement.
+     */
+    contentId?: string;
+}>;

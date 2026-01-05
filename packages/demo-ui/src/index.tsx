@@ -10,8 +10,8 @@ import DemoView from "./DemoView";
 const styleInsert = require("../../tools/src/insert-function.cjs");
 
 const APPLICATIONS = {
-    'DemoView': <DemoView />,
-    'DemoApp': <DemoApp />
+    'DemoView': DemoView ,
+    'DemoApp': DemoApp 
 }
 // Extend the Window interface to include __UXP_PORTAL__
 declare const module: __WebpackModuleApi.Module;
@@ -69,27 +69,22 @@ export const initApplication = (documentRoot: ShadowRoot | Document) => {
 
     const App = APPLICATIONS[main];
     // Render the App component
-    root.render(
-        <React.StrictMode>
-            <Provider store={store}>
-                <CacheProvider value={shadowCache}>
-                    {App}
-                </CacheProvider>
-            </Provider>
-        </React.StrictMode>
-    );
+    const renderApp = (AppComponent: React.ComponentType) => {
+        root.render(
+            <React.StrictMode>
+                <Provider store={store}>
+                    <CacheProvider value={shadowCache}>
+                        <AppComponent />
+                    </CacheProvider>
+                </Provider>
+            </React.StrictMode>
+        );
+    };
+    renderApp(App);
     if (process.env.NODE_ENV === "development" && module.hot) {
         module.hot.accept(`./${main}`, () => {
             const NextDemoApp = require(`./${main}`,).default;
-            root.render(
-                <React.StrictMode>
-                    <Provider store={store}>
-                        <CacheProvider value={shadowCache}>
-                            <NextDemoApp />
-                        </CacheProvider>
-                    </Provider>
-                </React.StrictMode>
-            );
+            renderApp(NextDemoApp);
         });
     }
     return () => {
