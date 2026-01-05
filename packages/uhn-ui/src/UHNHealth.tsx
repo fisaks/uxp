@@ -1,6 +1,6 @@
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useEffect, useMemo } from "react";
 import { HealthWebSocketConfig } from "./HealthWebSocketConfig";
-import { UHNHealthErrorHandler, UHNHealthWebSocketResponseListener } from "./app/UHNHealthBrowserWebSocketManager";
+import { UHNHealthErrorHandler, UHNHealthWebSocketResponseListener, useUHNHealthWebSocket } from "./app/UHNHealthBrowserWebSocketManager";
 
 const UHNHealth: React.FC = () => {
 
@@ -27,5 +27,13 @@ const UHNHealth: React.FC = () => {
 
     );
 };
+
+const Health=() => {
+    const {sendMessageAsync} = useUHNHealthWebSocket();
+    useEffect(() => {
+        // Example: Request a health snapshot on mount
+        sendMessageAsync("uhn:subscribe", { patterns: ["health/*"] });
+    }, []);
+}
 
 export default UHNHealth;

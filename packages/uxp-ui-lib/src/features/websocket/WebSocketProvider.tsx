@@ -44,7 +44,6 @@ export const WebSocketProvider = <ActionPayloadRequestMap, ActionPayloadResponse
                     handler as WebSocketResponseEventHandler<WebSocketAction<ActionPayloadResponseMap>, ActionPayloadResponseMap>);
             });
 
-            wsInstance.disconnect();
         };
     }, [wsInstance, listeners]);
 

@@ -95,6 +95,7 @@ export class BrowserWebSocketManager<
     private globalErrorHandler?: ErrorHandler<ActionPayloadRequestMap, ActionPayloadResponseMap>;
     private reconnectListeners: ReconnectListener[] = [];
     private connectListeners: OnConnectListener[] = [];
+    private disconnectTimer?: ReturnType<typeof setTimeout>;
 
     protected constructor(protected url: string) { }
 
@@ -422,7 +423,23 @@ export class BrowserWebSocketManager<
         } else {
             this.eventHandlers.delete(action);
         }
+        if (this.eventHandlers.size === 0) {
+            this.scheduleDisconnect();
+        }
+    }
+    private scheduleDisconnect() {
+        if (this.disconnectTimer) return;
+        console.info("[WebSocketManager] Scheduling disconnect due to no active handlers.");
+        this.disconnectTimer = setTimeout(() => {
+            this.disconnectTimer = undefined;
 
+            // Re-check after delay
+            if (this.eventHandlers.size === 0) {
+                this.disconnect();
+            } else {
+                console.info("[WebSocketManager] Active handlers detected, aborting disconnect.");
+            }
+        }, 100);
     }
 
     offAllMessages() {
@@ -449,6 +466,7 @@ export class BrowserWebSocketManager<
             });
         });
         this.pendingRequests.clear();
+        console.info("[WebSocket] Disconnected.");
 
     }
 

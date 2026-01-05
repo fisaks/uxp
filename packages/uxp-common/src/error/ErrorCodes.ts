@@ -30,6 +30,7 @@ export const ErrorCodes = {
     INVALID_RESOURCE_COMMAND: "INVALID_RESOURCE_COMMAND",
     INVALID_RESOURCE_TYPE: "INVALID_RESOURCE_TYPE",
     RESOURCE_NOT_ADDRESSABLE: "RESOURCE_NOT_ADDRESSABLE",
+    APP_ENTRY_NOT_CONFIGURED: "APP_ENTRY_NOT_CONFIGURED",
     // Add more error codes as needed
 } as const;
 
@@ -64,6 +65,7 @@ export const ErrorMessages: Record<ErrorCode, string> = {
     INVALID_RESOURCE_COMMAND: "The command sent to the resource is invalid.",
     INVALID_RESOURCE_TYPE: "The resource type does not support this command.",
     RESOURCE_NOT_ADDRESSABLE: "The resource is not addressable.",
+    APP_ENTRY_NOT_CONFIGURED: "The application entry point is not configured.",
     // Add more error mappings as needed
 };
 export type ErrorCode = keyof typeof ErrorCodes;

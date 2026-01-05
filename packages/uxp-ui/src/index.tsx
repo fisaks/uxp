@@ -12,7 +12,7 @@ import "./app/remoteAppBroadcaster";
 const rootElement = document.getElementById("root");
 
 
-const ENABLE_STRICT_MODE = false;
+const ENABLE_STRICT_MODE = true;
 
 // Ensure the root element exists before rendering
 if (!rootElement) {
@@ -29,18 +29,12 @@ const renderApp = (AppComponent: React.ComponentType) => {
     const AppTree = (
         <CacheProvider value={cache}>
             <Provider store={store}>
-                <AppComponent />
+                {ENABLE_STRICT_MODE ? <React.StrictMode><AppComponent /></React.StrictMode> : <AppComponent />}
             </Provider>
         </CacheProvider>
     );
 
-    const RootApp = ENABLE_STRICT_MODE ? (
-        <React.StrictMode>{AppTree}</React.StrictMode>
-    ) : (
-        AppTree
-    );
-
-    root.render(RootApp);
+    root.render(AppTree);
 }
 renderApp(UxpApp);
 

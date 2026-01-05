@@ -82,7 +82,6 @@ const RemoteApp: React.FC<RemoteAppProps> = ({ contentUuid, basePath }) => {
                             if (typeof cleanup === "function") cleanupRef.current = cleanup;
                         });
                     } else {
-                        console.log("Adding script:", contentUuid);
                         target.appendChild(newScript);
                     }
                 };
@@ -108,35 +107,6 @@ const RemoteApp: React.FC<RemoteAppProps> = ({ contentUuid, basePath }) => {
                     }
                 });
 
-                // Move all styles with data-uxp-app into the shadow DOM
-                /*                const copyStylesToShadowDom = () => {
-                                    document.querySelectorAll(`style[data-uxp-app="${currentApp}"], link[data-uxp-app="${currentApp}"]`).forEach((styleNode) => {
-                                        let styleId = styleNode.getAttribute('data-uxp-style-id');
-                                        if (!styleId) {
-                                            styleId = crypto.randomUUID();
-                                            styleNode.setAttribute('data-uxp-style-id', styleId);
-                                        }
-                
-                                        if (shadowRoot.querySelectorAll(`style[data-uxp-style-id="${styleId}"], link[data-uxp-style-id="${styleId}"]`).length === 0) {
-                                            console.log('Copying style to shadow:', uuid);
-                                            shadowRoot.appendChild(styleNode.cloneNode(true)); // Clone and append to shadow DOM
-                                        }
-                
-                                    });
-                                };
-                
-                                // Initial move
-                                copyStylesToShadowDom();
-                
-                                // Observe the head for dynamically added styles
-                                const observer = new MutationObserver(() => {
-                                    copyStylesToShadowDom();
-                                });
-                
-                                observer.observe(document.head, {
-                                    childList: true,
-                                    subtree: true,
-                                });*/
             } catch (error) {
                 console.error(`Error fetching or rendering remote app:`, error);
             } finally {

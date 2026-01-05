@@ -16,7 +16,7 @@ declare const module: __WebpackModuleApi.Module;
 
 //let hotRoot:ReactDOM.Root|undefined;
 
-const ENABLE_STRICT_MODE = false;
+const ENABLE_STRICT_MODE = true;
 
 const APPLICATIONS = {
     'UHNApp': UHNApp,
@@ -65,28 +65,21 @@ export const initApplication = (documentRoot: ShadowRoot | Document) => {
     //const root = ReactDOM.createRoot(rootElement);
     //let hotRoot=root;
 
-    const App = APPLICATIONS[main];
     // Render the App component
     const renderApp = (AppComponent: React.ComponentType) => {
         const AppTree = (
             <Provider store={store}>
                 <CacheProvider value={shadowCache}>
                     <ShadowRootProvider documentRoot={documentRoot}>
-                        <AppComponent />
+                        {ENABLE_STRICT_MODE  ? <React.StrictMode><AppComponent /></React.StrictMode> : <AppComponent />}
                     </ShadowRootProvider>
                 </CacheProvider>
             </Provider>
         );
 
-        const RootApp = ENABLE_STRICT_MODE ? (
-            <React.StrictMode>{AppTree}</React.StrictMode>
-        ) : (
-            AppTree
-        );
-
-        root.render(RootApp);
+        root.render(AppTree);
     }
-    renderApp(App);
+    renderApp(APPLICATIONS[main]);
 
     if (process.env.NODE_ENV === "development" && module.hot) {
         module.hot.accept(`./${main}`, () => {

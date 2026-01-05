@@ -21,21 +21,6 @@ export const HealthWebSocketConfig: React.FC<HealthWebSocketConfig> = ({ childre
     const connected = useRef(false);
 
     const ws = useMemo(() => UHNHealthWebSocketManager.getInstance(), [])
-    /*  const uhnListeners: UHNHealthWebSocketResponseListener = useMemo(() => ({
-          "health:snapshot": (message) => { },
-          "health:subscribed  ": () => { },
-          "health:unsubscribed": () => { }
-  
-  
-      } as UHNHealthWebSocketResponseListener), []);
-  */
-    /* const globalErrorHandler: UHNHealthErrorHandler = useCallback((({ action, error, errorDetails }) => {
-         console.error(`Error in WebSocket action ${action}`, error, errorDetails);
-         //if (action === "uxp/remote_action" || action === "uxp/remote_connection") {
-         //  setShowErrorOverlay(true);
-         // }
-     }) as UHNHealthErrorHandler, [])
- */
     const onReconnect: ReconnectListener = useCallback((details: ReconnectDetails) => {
         console.log("Health WebSocket Reconnect", details);
 
