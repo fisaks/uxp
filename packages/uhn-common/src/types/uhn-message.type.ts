@@ -81,7 +81,7 @@ export const UhnSubscribePayloadSchema: MessagePayloadSchema<UhnSubscribePayload
         patterns: {
             type: 'array', items: {
                 type: 'string',
-                pattern: '^(state|resource)/.*$',
+                pattern: '^/((state|resource)/.*|health/\\*)$',
                 minLength: 1,
                 maxLength: 256
             },

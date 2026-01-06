@@ -20,7 +20,7 @@ const ENABLE_STRICT_MODE = true;
 
 const APPLICATIONS = {
     'UHNApp': UHNApp,
-    'UHNHealth': UHNHealth
+    'HealthView': UHNHealth
 }
 
 export const initApplication = (documentRoot: ShadowRoot | Document) => {

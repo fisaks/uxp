@@ -6,8 +6,8 @@ const UHNHealth: React.FC = () => {
 
     const healthListeners: UHNHealthWebSocketResponseListener = useMemo(() => ({
         "uhn:health:snapshot": (message) => { console.log("Health Snapshot", message); },
-        "uhn:health:subscribed": () => { console.log("Health Subscribed"); },
-        "uhn:health:unsubscribed": () => { console.log("Health Unsubscribed"); },
+        "uhn:subscribed": () => { console.log("Health Subscribed"); },
+        "uhn:unsubscribed": () => { console.log("Health Unsubscribed"); },
         "uxp/remote_action": (message) => { console.log("Remote Action", message); },
         "uxp/remote_connection": (message) => { console.log("Remote Connection", message); }
 
@@ -22,18 +22,19 @@ const UHNHealth: React.FC = () => {
 
     return (
         <HealthWebSocketConfig uhnListeners={healthListeners} errorHandler={errorHandler}>
-            <div>UHN Health View</div>
+            <Health />
         </HealthWebSocketConfig>
 
     );
 };
 
-const Health=() => {
-    const {sendMessageAsync} = useUHNHealthWebSocket();
+const Health = () => {
+    const { sendMessageAsync } = useUHNHealthWebSocket();
     useEffect(() => {
         // Example: Request a health snapshot on mount
-        sendMessageAsync("uhn:subscribe", { patterns: ["health/*"] });
+        //sendMessageAsync("uhn:subscribe", { patterns: ["health/*"] });
     }, []);
+    return null;
 }
 
 export default UHNHealth;

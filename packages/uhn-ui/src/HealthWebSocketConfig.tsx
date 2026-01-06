@@ -39,7 +39,7 @@ export const HealthWebSocketConfig: React.FC<HealthWebSocketConfig> = ({ childre
         setTimeout(() => {
             ws.sendMessage({ action: "uhn:subscribe", payload: { patterns: ["health/*"] } });
             connected.current = true;
-        }, 500);
+        }, 100);
 
     }, []);
 
