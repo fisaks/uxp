@@ -76,10 +76,10 @@ export const WebSocketConfig: React.FC<WebSocketConfigProps> = ({ children }) =>
         // Delay subscription slightly to allow the underlying WebSocket connection/handshake
         // to fully settle before sending subscribe messages, avoiding intermittent race conditions.
         setTimeout(() => {
-        ws.sendMessage({ action: "uhn:subscribe", payload: { patterns: ["resource/*", "state/*"] } });
-        connected.current = true;    
+            ws.sendMessage({ action: "uhn:subscribe", payload: { patterns: ["resource/*", "state/*"] } });
+            connected.current = true;
         }, 500);
-        
+
     }, []);
     const retry = useCallback(() => {
         ws.clearReconnectDetails();

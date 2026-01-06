@@ -7,7 +7,7 @@ import { generateFullLink } from "@uxp/common";
 import { MainPageLayout } from "../../components/layout/MainPageLayout";
 import DynamicComponentLoader from "../dynamic-components/DynamicComponentLoader";
 import { selectLinksByTag, selectPageByIdentifier } from "../navigation/navigationSelectors";
-import RemoteApp from "./RemoteApp";
+import { PageRemoteApp } from "../remote-app/PageRemoteApp";
 
 type RoutePageProps = {
     pageIdentifier: string;
@@ -39,7 +39,7 @@ const RoutePage: React.FC<RoutePageProps> = ({ pageIdentifier, basePath }) => {
                 if (m.internalComponent) {
                     return <DynamicComponentLoader key={m.uuid} componentName={m.internalComponent} basePath={basePath} />;
                 } else {
-                    return <RemoteApp key={m.uuid} contentUuid={m.uuid} basePath={basePath} />;
+                    return <PageRemoteApp key={m.uuid} contentUuid={m.uuid} basePath={basePath} />;
                 }
             })}
         </MainPageLayout>

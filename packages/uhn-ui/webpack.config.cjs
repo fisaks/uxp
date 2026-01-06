@@ -37,6 +37,11 @@ module.exports = merge(baseConfig, {
             filename: "index.html", // Name of the output file
             publicPath: "/uhn/",
         }),
+        new HtmlWebpackPlugin({
+            template: "./health.html", // Use your template file
+            filename: "health.html", // Name of the output file
+            publicPath: "/uhn/",
+        }),
         new htmlWebpackInjectAttributesPlugin({
             "data-uxp-remote-app": process.env.META_TAG,
         })

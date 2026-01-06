@@ -27,9 +27,41 @@ async function getRemoteAppConfigurationForContent(contentUuid: string) {
     } satisfies RemoteAppConfiguration;
 }
 
+async function getRemoteAppConfiguration(identifier: string) {
+    const app = await RemoteAppRepository.getAppByIdentifier(identifier);
+    if (!app) {
+        AppLogger.warn({ message: "Remote app not found %s", args: [identifier] });
+        throw new AppErrorV2(
+            { statusCode: 404, code: "RESOURCE_NOT_FOUND", message: "Remote app not found" });
+    }
+
+    const { baseUrl, identifier: appIdentifier } = app;
+
+    return {
+        appIdentifier,
+        baseUrl,
+        config: app.config,
+    } satisfies RemoteAppConfiguration;
+}
+
 function getTargetUrlForMainEntry(config: RemoteAppConfiguration) {
     const { baseUrl, config: { contextPath, mainEntry } } = config
     return buildUrlWithParams({ hostname: baseUrl, contextPath, resourceParts: [mainEntry] });
+}
+function getTargetUrlForHealthEntry(config: RemoteAppConfiguration) {
+    const { baseUrl, config: { contextPath, healthEntry } } = config
+    if (!healthEntry) {
+        return undefined;
+    }
+    return buildUrlWithParams({ hostname: baseUrl, contextPath, resourceParts: [healthEntry] });
+}
+
+function getTargetUrlForSystemEntry(config: RemoteAppConfiguration) {
+    const { baseUrl, config: { contextPath, systemEntry } } = config
+    if (!systemEntry) {
+        return undefined;
+    }
+    return buildUrlWithParams({ hostname: baseUrl, contextPath, resourceParts: [systemEntry] });
 }
 
 async function fetchRemoteAppEntryHtml(
@@ -131,7 +163,9 @@ async function fetchRemoteAppResource({
 export const RemoteAppService = {
     getRemoteAppConfigurationForContent,
     getTargetUrlForMainEntry,
+    getTargetUrlForHealthEntry,
+    getTargetUrlForSystemEntry,
     fetchRemoteAppEntryHtml,
-    fetchRemoteAppResource
-
+    fetchRemoteAppResource,
+    getRemoteAppConfiguration
 };

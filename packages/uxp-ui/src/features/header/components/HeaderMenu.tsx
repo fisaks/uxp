@@ -17,6 +17,7 @@ import { HealthIndicatorButton } from "./HealthIndicatorButton";
 import { HealthMenu } from "./HealthMenu";
 import { SystemCenterButton } from "./SystemCenterButton";
 import { SystemCenterDrawer } from "./SystemCenterDrawer";
+import { HealthBootstraps } from "./HealthBootstraps";
 
 
 function computeHealthLevel(snapshots: AppHealthSnapshot[]): HealthLevel {
@@ -186,6 +187,7 @@ const HeaderMenu: React.FC = () => {
                     {isLoggedInUser && (
                         <>
                             <HealthIndicatorButton level={"error"} count={healthCount} onClick={openHealthMenu} />
+                            <HealthBootstraps />
                             <SystemCenterButton onClick={() => setSystemCenterOpen(true)} />
                             <IconButton color="inherit" onClick={openProfileMenu} sx={{ ml: 2 }}>
                                 <AccountCircle />
