@@ -2,7 +2,7 @@ import { AppLogger } from "@uxp/bff-common";
 import { EventEmitter } from "events";
 import mqttService from "./mqtt.service";
 
-export type SubscriptionEventMap = {
+type SubscriptionEventMap = {
     deviceState: [topic: string, payload: unknown];
     signalState: [topic: string, payload: unknown];
     catalog: [topic: string, payload: unknown];

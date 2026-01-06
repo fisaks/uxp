@@ -7,8 +7,9 @@ import { ruleRuntimeProcessService } from "./rule-runtime-process.service";
 const { AppDataSource } = require("../db/typeorm.config");
 
 type BlueprintRuntimeSupervisorEventMap = {
+    ruleRuntimeStarting: [];
     ruleRuntimeReady: [];
-    ruleRuntimeRestarting: [];
+    ruleRuntimeRestarting: [restartAttempts: number];
     ruleRuntimeStopped: [];
 };
 class BlueprintRuntimeSupervisorService extends EventEmitter<BlueprintRuntimeSupervisorEventMap> {
@@ -28,7 +29,7 @@ class BlueprintRuntimeSupervisorService extends EventEmitter<BlueprintRuntimeSup
             if (this.shouldRestart) {
                 const delay = this.getRestartDelayMs();
                 this.restartAttempts++;
-                this.emit("ruleRuntimeRestarting");
+                this.emit("ruleRuntimeRestarting", this.restartAttempts);
                 AppLogger.warn({
                     message: `[BlueprintRuntimeSupervisorService] Rule runtime exited unexpectedly, restarting in ${delay} ms (attempt ${this.restartAttempts})`,
                 });
@@ -55,6 +56,7 @@ class BlueprintRuntimeSupervisorService extends EventEmitter<BlueprintRuntimeSup
         this.running = true;
         this.shouldRestart = true;
         this.restartAttempts = 0;
+        this.emit("ruleRuntimeStarting");
         await ruleRuntimeProcessService.startRuleRuntime(BlueprintFileUtil.ActiveBlueprintFolder);
         this.attachRestartHandler();
         this.emit("ruleRuntimeReady");
@@ -67,26 +69,6 @@ class BlueprintRuntimeSupervisorService extends EventEmitter<BlueprintRuntimeSup
         await ruleRuntimeProcessService.stopRuleRuntime();
         this.running = false;
         this.emit("ruleRuntimeStopped");
-    }
-}
-
-export async function startBlueprintRuntimeSupervisorServices() {
-
-    try {
-        await runBackgroundTask(AppDataSource, async () => {
-            const active = await BlueprintRepository.findActive();
-            if (active && active.active && active.status === "installed" && await BlueprintFileUtil.activeBlueprintExists()) {
-                AppLogger.info({
-                    message: `Starting blueprint runtime service for active blueprint ${active.identifier} v${active.version}`,
-                });
-                await blueprintRuntimeSupervisorService.start();
-            }
-        })
-    } catch (error) {
-        AppLogger.error({
-            message: `Failed to start blueprint runtime service:`,
-            error,
-        });
     }
 }
 

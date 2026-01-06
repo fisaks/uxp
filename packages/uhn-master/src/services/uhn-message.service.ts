@@ -3,6 +3,7 @@ import { WebSocket } from "ws";
 import { UHNAppServerWebSocketManager } from "../ws/UHNAppServerWebSocketManager";
 import { blueprintResourceService } from "./blueprint-resource.service";
 import { stateRuntimeService } from "./state-runtime.service";
+import { uhnHealthService } from "./uhn-health.service";
 
 
 export class UhnMessageService {
@@ -18,11 +19,15 @@ export class UhnMessageService {
 
         const shouldSendResources = patterns.some(pattern => pattern.startsWith('resource/'));
         const shouldSendStates = patterns.some(pattern => pattern.startsWith('state/'));
+        const shouldSendHealth = patterns.some(pattern => pattern === 'health/*');
         if (shouldSendResources) {
             await this.sendResourcesMessage(socket, patterns);
         }
         if (shouldSendStates) {
             await this.sendStateMessage(socket, patterns);
+        }
+        if (shouldSendHealth) {
+            await this.sendHealthMessage(socket);
         }
         this.wsManager.sendMessage(socket, {
             action: "uhn:subscribed",
@@ -81,6 +86,15 @@ export class UhnMessageService {
             }
         });
 
+    }
+
+    async sendHealthMessage(socket: WebSocket) {
+        const healthSnapshot = await uhnHealthService.getHealthSnapshot();
+        this.wsManager.sendMessage(socket, {
+            action: "uhn:health:snapshot",
+            success: true,
+            payload: healthSnapshot
+        });
     }
     async unsubscribeFromPatterns(socket: WebSocket, patterns: UhnSubscriptionPattern[], messageId?: string) {
         patterns.forEach(pattern =>

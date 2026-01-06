@@ -7,12 +7,7 @@ import Fastify from "fastify";
 import { DateTime } from "luxon";
 import path from "path";
 import env from "./env";
-
-import "./services/blueprint-resource.service";
-import { startBlueprintRuntimeSupervisorServices } from "./services/blueprint-runtime-supervisor.service";
-import mqttService from "./services/mqtt.service";
-
-import { setupWebDispatchers } from "./dispatchers";
+import { startUhnRuntime } from "./uhn.runtime";
 import { UHNAppServerWebSocketManager } from "./ws/UHNAppServerWebSocketManager";
 
 const { AppDataSource } = require("./db/typeorm.config");
@@ -25,7 +20,7 @@ AppDataSource.initialize()
             "Entities:",
             AppDataSource.entityMetadatas.map((meta: { name: string }) => meta.name)
         );
-        await startBlueprintRuntimeSupervisorServices();
+        await startUhnRuntime();
     })
     .catch((err: Error) => console.error("Error during Data Source initialization", err));
 
@@ -68,8 +63,6 @@ if (!IsProd) {
 HandlerRegistry.discoverHandlers([path.join(__dirname, "./controllers"), path.join(__dirname, "./handlers")]);
 const restHandlers = HandlerRegistry.getRestHandlers();
 const wsHandlers = HandlerRegistry.getWsHandlers();
-// "Touch" mqttService so it gets loaded on startup
-mqttService.isConnected()
 console.log("restHandlers", restHandlers);
 console.log("wsHandlers", wsHandlers);
 
@@ -87,7 +80,6 @@ registerRoutes({
     dataSource: AppDataSource,
     controllers: Array.from(restHandlers),
 });
-setupWebDispatchers();
 const port = 3031;
 
 fastify.listen({ port: port, host: "0.0.0.0" }, (err, address) => {
