@@ -1,10 +1,11 @@
-import { UserPubllic } from "@uxp/common";
+// RemoteAppListener.tsx
+import { UserPublic } from "@uxp/common";
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { setUser } from "./remoteAppSlice";
 
 export const UXP_USER_CHANGE_EVENT = "uxpUserChange";
-export type UxpUserChangeEvent = CustomEvent<{ detail: UserPubllic }>;
+export type UxpUserChangeEvent = CustomEvent<{ detail: UserPublic }>;
 
 export const RemoteAppListener = () => {
     const dispatch = useDispatch();

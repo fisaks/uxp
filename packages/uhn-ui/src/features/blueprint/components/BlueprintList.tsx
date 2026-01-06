@@ -12,6 +12,7 @@ import {
     Accordion,
     AccordionDetails,
     AccordionSummary,
+    alpha,
     Box,
     Button,
     Chip,
@@ -39,9 +40,9 @@ type BlueprintListProps = {
 
 const statusColor = (status: BlueprintStatus) => {
     switch (status) {
-        case "failed": return "error";
-        case "installed": return "success";
-        case "uploaded": return "warning";
+        case "extracted": return "error";
+        case "compiled": return "success";
+        case "idle": return "warning";
         default: return "default";
     }
 };
@@ -228,10 +229,16 @@ const BlueprintVersionRow: React.FC<{ blueprintVersion: BlueprintVersion }> = ({
                     pl: 2,
                     pr: 2,
                     ...(blueprintVersion.active && {
-                        bgcolor: `rgba(127, 168, 163, 0.10)`, 
+                        bgcolor: (theme) =>
+                            alpha(
+                                theme.palette[
+                                    blueprintVersion.status === "compiled" ? "success" : "error"
+                                ].main,
+                                0.1
+                            ),
                         borderLeft: "4px solid",
-                        borderColor: "success.main",
-                        color: "success.light",
+                        borderColor: blueprintVersion.status === "compiled" ? "success.main" : "error.main",
+                        color: blueprintVersion.status === "compiled" ? "success.light" : "error.light",
                     }),
                     display: "flex",
                     flexDirection: "column",

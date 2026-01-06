@@ -1,5 +1,5 @@
 import { AppLogger, Route, UseQueryRunner } from "@uxp/bff-common";
-import { UserPubllic, UserSearchRequest, UserSearchResponse, UserSearchSchema } from "@uxp/common";
+import { UserPublic, UserSearchRequest, UserSearchResponse, UserSearchSchema } from "@uxp/common";
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { Brackets, QueryRunner } from "typeorm";
 import { User } from "../../db/entities/User";
@@ -46,7 +46,7 @@ export class UserSearchController {
             });
         }
         if (search) {
-            const fieldsToSearch: (keyof UserPubllic)[] = ["firstName", "lastName", "username", "email"];
+            const fieldsToSearch: (keyof UserPublic)[] = ["firstName", "lastName", "username", "email"];
             const searchWords = Array.isArray(search) ? search : [search];
 
             searchWords.forEach((word, index) => {

@@ -1,6 +1,6 @@
 // userService.ts
 import { Token } from "@uxp/bff-common";
-import { UserAdminView, UserPubllic, UserRole } from "@uxp/common";
+import { UserAdminView, UserPublic, UserRole } from "@uxp/common";
 import { FastifyRequest } from "fastify";
 import { QueryRunner } from "typeorm";
 import { User } from "../db/entities/User";
@@ -28,7 +28,7 @@ export class UserService {
 
     static toUserPublic = (user: User) => {
         const { uuid, username, firstName, lastName, createdAt, email, roles, lastLogin } = user;
-        const userPublic: UserPubllic = {
+        const userPublic: UserPublic = {
             uuid,
             username,
             firstName,
