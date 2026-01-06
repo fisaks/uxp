@@ -1,7 +1,7 @@
 export type HealthSeverity = "ok" | "warn" | "error";
-
+export type HealthId = "uhn:blueprint" | "uhn:runtime" | "uhn:resources" ;
 export type HealthItem = {
-    id: string;
+    id: HealthId;
     severity: HealthSeverity;
 
     /**
@@ -27,4 +27,10 @@ export type HealthItem = {
      * If omitted, treated as "current".
      */
     timestamp?: number;
+};
+
+export type HealthSnapshot = {
+    appId: "uhn";
+    items: HealthItem[];
+    updatedAt: string;
 };
