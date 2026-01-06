@@ -1,10 +1,10 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { UserPubllic } from "@uxp/common";
+import { UserPublic } from "@uxp/common";
 import { login, logout, whoami } from "./userThunks";
 //import { ApiErrorResponse, LoginResponse, UserPubllic } from "@uxp/common";
 
 type UserState = {
-    user?: UserPubllic;
+    user?: UserPublic;
 };
 
 const initialState: UserState = {

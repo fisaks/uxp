@@ -37,7 +37,7 @@ class BlueprintService extends EventEmitter<BlueprintEventMap> {
             name: metadata.name,
             version: version,
             zipPath: blueprintZip,
-            status: 'uploaded',
+            status: 'idle',
             metadata: metadata,
             active: false,
             uploadedBy: user.username,
@@ -69,6 +69,7 @@ class BlueprintService extends EventEmitter<BlueprintEventMap> {
         await BlueprintFileUtil.removeActiveBlueprint();
 
         toDeactivate.active = false;
+        toDeactivate.status = 'idle';
         const deactivatedAt = DateTime.now();
         toDeactivate.lastDeactivatedAt = deactivatedAt;
         toDeactivate.lastDeactivatedBy = deActivatedBy;
@@ -114,7 +115,7 @@ class BlueprintService extends EventEmitter<BlueprintEventMap> {
         // Activate new version
 
         toActivate.active = true;
-        toActivate.status = compile.success ? 'installed' : 'failed';
+        toActivate.status = compile.success ? 'compiled' : 'extracted';
         toActivate.compileLog = compile.compileLog;
         toActivate.installLog = compile.installLog;
         toActivate.errorSummary = compile.errorSummary;
@@ -127,6 +128,7 @@ class BlueprintService extends EventEmitter<BlueprintEventMap> {
         const activation = new BlueprintActivationEntity({
             blueprint: toActivate,
             activatedAt: activatedAt,
+            status: toActivate.status,
             activatedBy
         });
         await BlueprintActivationRepository.save(activation);
@@ -161,7 +163,7 @@ class BlueprintService extends EventEmitter<BlueprintEventMap> {
         if (
             active &&
             active.active &&
-            active.status === "installed" &&
+            active.status === "compiled" &&
             await BlueprintFileUtil.activeBlueprintExists()
         ) {
             this.emit("blueprintInstalled", active.identifier, active.version);

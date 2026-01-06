@@ -1,3 +1,4 @@
+import { BlueprintStatus } from '@uhn/common';
 import { DateTime } from 'luxon';
 import { Column, Entity, Index, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { BlueprintEntity } from "./BlueprintEntity";
@@ -36,6 +37,13 @@ export class BlueprintActivationEntity {
         nullable: true
     })
     deactivatedAt?: DateTime | null;
+
+    @Column({
+        type: 'enum',
+        enum: ['idle', 'extracted', 'compiled'],
+        nullable: false,
+    })
+    status!: BlueprintStatus;
 
     @Column({ type: 'varchar', length: 64, nullable: true })
     activatedBy?: string;

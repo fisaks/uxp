@@ -34,6 +34,7 @@ Start with the overview, then jump to the area relevant to your task.
 - [Resource proxying](./resource-proxying.md)
 - [Websocket proxying](./websocket-proxying.md)
 - [Styling model](./styling-model.md)
+- [Browser Communication](./browser_communication.md)
 
 ---
 

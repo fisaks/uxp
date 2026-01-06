@@ -1,3 +1,4 @@
+// remoteAppBroadcaster.ts
 import { UXP_USER_CHANGE_EVENT } from "@uxp/ui-lib";
 import store from "./store"; // Your Redux store
 

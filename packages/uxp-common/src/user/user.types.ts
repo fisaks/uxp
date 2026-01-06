@@ -14,7 +14,7 @@ export type RegisterResponse = {
 
 export type LoginPayload = Pick<RegisterPayload, "username" | "password">;
 export type LoginResponse = {
-    user: UserPubllic;
+    user: UserPublic;
 };
 
 export type WhoAmIResponse = LoginResponse;
@@ -43,7 +43,7 @@ export type UpdateUserRolesPayload = {
 };
 export type UserRole = "admin" | "user";
 
-export type UserPubllic = {
+export type UserPublic = {
     uuid: string;
     username: string;
     firstName: string;
@@ -54,7 +54,7 @@ export type UserPubllic = {
     lastLogin?: string | null;
 };
 
-export type UserAdminView = UserPubllic & {
+export type UserAdminView = UserPublic & {
     failedLoginAttempts: number;
     isDisabled: boolean;
     tokenVersion: number;

@@ -1,8 +1,8 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { UserPubllic } from "@uxp/common";
+import { UserPublic } from "@uxp/common";
 
 export type RemoteAppState = {
-    user?: UserPubllic;
+    user?: UserPublic;
 };
 const initialState: RemoteAppState = {
     user: window.uxp?.getUser ? window.uxp.getUser() : undefined,

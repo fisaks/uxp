@@ -39,8 +39,8 @@ export class BlueprintEntity {
 
     @Column({
         type: 'enum',
-        enum: ['uploaded', 'installed', 'failed'],
-        default: 'uploaded',
+        enum: ['idle', 'extracted', 'compiled'],
+        default: 'idle',
     })
     status!: BlueprintStatus;
 
@@ -96,7 +96,7 @@ export class BlueprintEntity {
 
     @Column({ type: 'varchar', length: 1024, nullable: true })
     errorSummary?: string | null;
-    
+
     @Column({ type: 'boolean', default: false })
     active!: boolean;
 }
