@@ -1,5 +1,5 @@
 import { createSelector } from "@reduxjs/toolkit";
-import { RootState } from "../../app/store";
+import { RootState } from "../../app/uxp.store";
 
 export const selectMySettingState = (state: RootState) => state.mySettings;
 

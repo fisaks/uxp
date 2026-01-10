@@ -1,11 +1,15 @@
-import React, { useCallback, useEffect, useMemo } from "react";
+
+import { getUxpWindow } from "@uxp/ui-lib";
+import React, { useCallback, useMemo } from "react";
 import { HealthWebSocketConfig } from "./HealthWebSocketConfig";
-import { UHNHealthErrorHandler, UHNHealthWebSocketResponseListener, useUHNHealthWebSocket } from "./app/UHNHealthBrowserWebSocketManager";
+import { UHNHealthErrorHandler, UHNHealthWebSocketResponseListener } from "./app/UHNHealthBrowserWebSocketManager";
 
 const UHNHealth: React.FC = () => {
 
     const healthListeners: UHNHealthWebSocketResponseListener = useMemo(() => ({
-        "uhn:health:snapshot": (message) => { console.log("Health Snapshot", message); },
+        "uhn:health:snapshot": (message) => {
+            message.payload && getUxpWindow()?.signal.health(message.payload);
+        },
         "uhn:subscribed": () => { console.log("Health Subscribed"); },
         "uhn:unsubscribed": () => { console.log("Health Unsubscribed"); },
         "uxp/remote_action": (message) => { console.log("Remote Action", message); },
@@ -21,20 +25,9 @@ const UHNHealth: React.FC = () => {
     }) as UHNHealthErrorHandler, [])
 
     return (
-        <HealthWebSocketConfig uhnListeners={healthListeners} errorHandler={errorHandler}>
-            <Health />
-        </HealthWebSocketConfig>
+        <HealthWebSocketConfig uhnListeners={healthListeners} errorHandler={errorHandler} />
 
     );
 };
-
-const Health = () => {
-    const { sendMessageAsync } = useUHNHealthWebSocket();
-    useEffect(() => {
-        // Example: Request a health snapshot on mount
-        //sendMessageAsync("uhn:subscribe", { patterns: ["health/*"] });
-    }, []);
-    return null;
-}
 
 export default UHNHealth;

@@ -6,6 +6,7 @@ import HeaderMenu from "./features/header/components/HeaderMenu";
 import UxpRoutes from "./features/routes/UxpRoutes";
 import { ThemeWrapper } from "./features/theme/ThemeWrapper";
 import { useInitializeApp } from "./hooks";
+import { UxpRemoteNavigation } from "./features/navigation/UxpRemoteNavigation";
 
 const UxpAppLayout: React.FC = () => {
     const query = useQuery()
@@ -27,6 +28,7 @@ const UxpApp: React.FC = () => {
     ) : (
         <ThemeWrapper>
             <BrowserRouter>
+                <UxpRemoteNavigation />
                 <UxpAppLayout />
             </BrowserRouter>
         </ThemeWrapper>

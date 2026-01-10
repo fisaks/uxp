@@ -25,9 +25,25 @@
                     createdAt: "2024-12-09T22:22:58.555+02:00",
                 };
             },
+            updateTheme: (theme) => {
+                /* no-op in standalone */
+            },
+            signal: {
+                health: () => {
+                    /* no-op in standalone */
+                }
+            },
+            navigation: {
+                updateRemoteSubRoute: () => {
+                    /* no-op in standalone */
+                },
+                requestBaseNavigation: () => {
+                    /* no-op in standalone */
+                }
+            }
         };
     </script>
-  
+
 </head>
 
 <body>

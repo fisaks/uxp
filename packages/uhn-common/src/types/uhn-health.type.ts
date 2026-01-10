@@ -1,36 +1,9 @@
-export type HealthSeverity = "ok" | "warn" | "error";
-export type HealthId = "uhn:blueprint" | "uhn:runtime" | "uhn:resources" ;
-export type HealthItem = {
-    id: HealthId;
-    severity: HealthSeverity;
+import { HealthItem, HealthSnapshot } from "@uxp/common";
 
-    /**
-     * Short human-readable summary.
-     * Shown in the Health Indicator popup.
-     */
-    message: string;
+export type UhnHealthId =
+    | "uhn:blueprint"
+    | "uhn:runtime"
+    | "uhn:resources";
 
-    /**
-     * Optional action hint.
-     * Used to navigate the user to the relevant place.
-     */
-    action?: {
-        label: string;
-        target: {
-            type: "route" | "systemPanel";
-            value: string;
-        };
-    };
-
-    /**
-     * Optional timestamp (epoch ms).
-     * If omitted, treated as "current".
-     */
-    timestamp?: number;
-};
-
-export type HealthSnapshot = {
-    appId: "uhn";
-    items: HealthItem[];
-    updatedAt: string;
-};
+export type UhnHealthItem = HealthItem<UhnHealthId>;
+export type UhnHealthSnapshot = HealthSnapshot<"uhn", UhnHealthId>;

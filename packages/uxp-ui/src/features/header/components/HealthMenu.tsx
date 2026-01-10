@@ -1,16 +1,22 @@
 import { Box, Button, Divider, Menu, Typography } from "@mui/material";
+import { SystemAppMeta } from "@uxp/common";
 import React from "react";
-import { Link } from "react-router-dom";
-import type { AppHealthSnapshot, HealthLevel } from "../health.types";
+import { useSelector } from "react-redux";
+import { selectHealthIndicatorApps } from "../../navigation/navigationSelectors";
+import { selectGlobalHealthLevel, selectHealthSnapshots } from "../healthSelectors";
+import { useUxpNavigate } from "../../navigation/useUxpNavigate";
 
 export type HealthMenuProps = {
     anchorEl: HTMLElement | null;
     onClose: () => void;
-    level: HealthLevel;
-    snapshots: AppHealthSnapshot[];
 };
 
-export const HealthMenu: React.FC<HealthMenuProps> = ({ anchorEl, onClose, level, snapshots }) => {
+export const HealthMenu: React.FC<HealthMenuProps> = ({ anchorEl, onClose }) => {
+    const healthLevel = useSelector(selectGlobalHealthLevel);
+    const healthSnapshots = useSelector(selectHealthSnapshots);
+    const healthApps: SystemAppMeta[] = useSelector(selectHealthIndicatorApps)
+    const uxpNavigate = useUxpNavigate();
+
     return (
         <Menu
             anchorEl={anchorEl}
@@ -26,23 +32,24 @@ export const HealthMenu: React.FC<HealthMenuProps> = ({ anchorEl, onClose, level
             <Box sx={{ px: 2, py: 1 }}>
                 <Typography variant="subtitle1">Health</Typography>
                 <Typography variant="body2" color="text.secondary">
-                    {level === "ok" && "All systems reporting OK."}
-                    {level === "warning" && "Some warnings need attention."}
-                    {level === "error" && "Errors detected."}
-                    {level === "unknown" && "Some apps are not reporting."}
+                    {healthLevel === "ok" && "All systems reporting OK."}
+                    {healthLevel === "warn" && "Some warnings need attention."}
+                    {healthLevel === "error" && "Errors detected."}
+                    {healthLevel === "unknown" && "Some apps are not reporting."}
                 </Typography>
             </Box>
 
             <Divider />
 
-            {snapshots.map((app) => {
+            {healthSnapshots.map((app) => {
                 const items = app.items;
                 const reporting = items !== undefined;
+                const appName = healthApps.find(a => a.appId === app.appId)?.appName ?? app.appId;
 
                 if (!reporting) {
                     return (
                         <Box key={app.appId} sx={{ px: 2, py: 1 }}>
-                            <Typography variant="subtitle2">{app.appName}</Typography>
+                            <Typography variant="subtitle2">{appName}</Typography>
                             <Typography variant="body2" color="text.secondary">
                                 Status unknown (not reporting)
                             </Typography>
@@ -53,7 +60,7 @@ export const HealthMenu: React.FC<HealthMenuProps> = ({ anchorEl, onClose, level
                 if (items.length === 0) {
                     return (
                         <Box key={app.appId} sx={{ px: 2, py: 1 }}>
-                            <Typography variant="subtitle2">{app.appName}</Typography>
+                            <Typography variant="subtitle2">{appName}</Typography>
                             <Typography variant="body2" color="text.secondary">
                                 OK
                             </Typography>
@@ -64,7 +71,7 @@ export const HealthMenu: React.FC<HealthMenuProps> = ({ anchorEl, onClose, level
                 return (
                     <Box key={app.appId}>
                         <Box sx={{ px: 2, pt: 1 }}>
-                            <Typography variant="subtitle2">{app.appName}</Typography>
+                            <Typography variant="subtitle2">{appName}</Typography>
                         </Box>
 
                         {items.map((n) => (
@@ -76,27 +83,25 @@ export const HealthMenu: React.FC<HealthMenuProps> = ({ anchorEl, onClose, level
                                             height: 10,
                                             borderRadius: "50%",
                                             bgcolor:
-                                                n.level === "error"
+                                                n.severity === "error"
                                                     ? "error.main"
-                                                    : n.level === "warning"
+                                                    : n.severity === "warn"
                                                         ? "warning.main"
                                                         : "text.disabled",
                                         }}
                                     />
-                                    <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                                        {n.title}
-                                    </Typography>
-                                </Box>
-
-                                {n.message && (
                                     <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
                                         {n.message}
                                     </Typography>
-                                )}
+                                </Box>
 
                                 {n.action && (
                                     <Box sx={{ mt: 1 }}>
-                                        <Button size="small" component={Link} to={n.action.to} onClick={onClose}>
+                                        <Button size="small"
+                                            onClick={() => {
+                                                uxpNavigate(n.action!.target);
+                                                onClose();
+                                            }}>
                                             {n.action.label}
                                         </Button>
                                     </Box>

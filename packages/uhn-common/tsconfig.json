@@ -15,6 +15,8 @@
     "references": [
         {
             "path": "../uxp-common",
+        },
+        {
             "path": "../uhn-blueprint"
         }
     ]

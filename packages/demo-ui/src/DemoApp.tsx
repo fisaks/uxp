@@ -1,4 +1,4 @@
-import { RemoteAppListener, UxpTheme } from "@uxp/ui-lib";
+import { RemoteAppListener, RemoteNavigationListener, UxpTheme } from "@uxp/ui-lib";
 import React, { useMemo } from "react";
 import { BrowserRouter } from "react-router-dom";
 import { DemoBody } from "./DemoBody";
@@ -14,6 +14,7 @@ const DemoApp: React.FC = () => {
             <UxpTheme>
                 <RemoteAppListener />
                 <BrowserRouter basename={basePath}>
+                    <RemoteNavigationListener locationRoot={basePath} />
                     <DemoBody />
                 </BrowserRouter>
             </UxpTheme>

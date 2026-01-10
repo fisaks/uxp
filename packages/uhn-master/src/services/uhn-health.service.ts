@@ -1,4 +1,4 @@
-import { HealthId, HealthItem, HealthSnapshot } from "@uhn/common";
+import { UhnHealthId, UhnHealthItem, UhnHealthSnapshot } from "@uhn/common";
 import EventEmitter from "events";
 import { blueprintResourceService } from "./blueprint-resource.service";
 import { blueprintRuntimeSupervisorService } from "./blueprint-runtime-supervisor.service";
@@ -6,14 +6,14 @@ import { blueprintService } from "./blueprint.service";
 
 
 type UhnHealthEventMap = {
-    healthChanged: [snapshot: HealthSnapshot];
+    healthChanged: [snapshot: UhnHealthSnapshot];
 };
 class UhnHealthService extends EventEmitter<UhnHealthEventMap> {
     private readonly appId = "uhn" as const;
-    private items = new Map<string, HealthItem>();
+    private items = new Map<string, UhnHealthItem>();
     // Suppression hides derived health items when a root cause
     // (e.g. inactive blueprint) makes them non-actionable.
-    private suppress = new Map<HealthId, boolean>();
+    private suppress = new Map<UhnHealthId, boolean>();
     private emitScheduled = false;
     constructor() {
         super();
@@ -36,7 +36,7 @@ class UhnHealthService extends EventEmitter<UhnHealthEventMap> {
                 id: "uhn:blueprint",
                 message: "Blueprint compile failed",
                 severity: "error",
-                action: { label: "Go To Blueprints", target: { type: "route", value: "uhn" } },
+                action: { label: "Go To Blueprints", target: { type: "route", identifier: "unified-home-network", subPath: "/blueprints/upload" } },
             });
         });
         blueprintService.on("blueprintDeactivating", () => {
@@ -45,7 +45,7 @@ class UhnHealthService extends EventEmitter<UhnHealthEventMap> {
                 id: "uhn:blueprint",
                 message: "Deactivating blueprint",
                 severity: "warn",
-                action: { label: "Go To Blueprints", target: { type: "route", value: "uhn" } },
+                action: { label: "Go To Blueprints", target: { type: "route", identifier: "unified-home-network", subPath: "/blueprints" } },
             });
         });
         blueprintService.on("noActiveBlueprint", () => {
@@ -54,7 +54,7 @@ class UhnHealthService extends EventEmitter<UhnHealthEventMap> {
                 id: "uhn:blueprint",
                 message: "No active blueprint",
                 severity: "error",
-                action: { label: "Go To Blueprints", target: { type: "route", value: "uhn" } },
+                action: { label: "Go To Blueprints", target: { type: "route", identifier: "unified-home-network", subPath: "/blueprints/upload" } },
             });
         });
 
@@ -65,6 +65,7 @@ class UhnHealthService extends EventEmitter<UhnHealthEventMap> {
                 id: "uhn:runtime",
                 message: "Runtime starting",
                 severity: "warn",
+                action: { label: "Open System Panel", target: { type: "hash", identifier: "system-panel", subPath: "uhn" } },
             });
         });
 
@@ -79,7 +80,7 @@ class UhnHealthService extends EventEmitter<UhnHealthEventMap> {
                 id: "uhn:runtime",
                 message: `Runtime restarting attempt ${attempts}`,
                 severity: attempts >= 3 ? "error" : "warn",
-                action: { label: "Open System Panel", target: { type: "systemPanel", value: "uhn" } },
+                action: { label: "Open System Panel", target: { type: "hash", identifier: "system-panel", subPath: "uhn" } },
             });
         });
 
@@ -89,6 +90,7 @@ class UhnHealthService extends EventEmitter<UhnHealthEventMap> {
                 id: "uhn:runtime",
                 message: "Runtime stopped",
                 severity: "error",
+                action: { label: "Open System Panel", target: { type: "hash", identifier: "system-panel", subPath: "uhn" } },
             });
         });
 
@@ -101,6 +103,7 @@ class UhnHealthService extends EventEmitter<UhnHealthEventMap> {
                     id: "uhn:resources",
                     message: `Resource validation errors (${validationErrors.length})`,
                     severity: "warn",
+                    action: { label: "Go To Resources", target: { type: "route", identifier: "unified-home-network", subPath: "/resources" } },
                 });
             }
         });
@@ -110,6 +113,7 @@ class UhnHealthService extends EventEmitter<UhnHealthEventMap> {
                 id: "uhn:resources",
                 message: "No resources loaded",
                 severity: "warn",
+                action: { label: "Go To Blueprints", target: { type: "route", identifier: "unified-home-network", subPath: "/blueprints/upload" } },
             });
         });
 
@@ -118,12 +122,13 @@ class UhnHealthService extends EventEmitter<UhnHealthEventMap> {
                 id: "uhn:resources",
                 message: "Could not load resources",
                 severity: "error",
-                action: { label: "Go To Blueprints", target: { type: "route", value: "uhn" } },
+                action: { label: "Go To Blueprints", target: { type: "route", identifier: "unified-home-network", subPath: "/blueprints/upload" } }
+                ,
             });
         });
     }
 
-    getHealthSnapshot(): HealthSnapshot {
+    getHealthSnapshot(): UhnHealthSnapshot {
         return {
             appId: this.appId,
             items: Array.from(this.items.values()).filter(item => !this.isSuppressed(item.id)),
@@ -131,18 +136,18 @@ class UhnHealthService extends EventEmitter<UhnHealthEventMap> {
         };
     }
 
-    private setSuppress(ids: HealthId[]) {
+    private setSuppress(ids: UhnHealthId[]) {
         ids.forEach(id => this.suppress.set(id, true));
         this.scheduleEmit();
     }
-    private isSuppressed(id: HealthId): boolean {
+    private isSuppressed(id: UhnHealthId): boolean {
         return this.suppress.get(id) === true;
     }
-    private clearSuppress(ids: HealthId[]) {
+    private clearSuppress(ids: UhnHealthId[]) {
         ids.forEach(id => this.suppress.delete(id));
         this.scheduleEmit();
     }
-    private upsert(item: HealthItem) {
+    private upsert(item: UhnHealthItem) {
         this.items.set(item.id, item);
         // Maybe optimize later to only emit if changed
         this.scheduleEmit();
