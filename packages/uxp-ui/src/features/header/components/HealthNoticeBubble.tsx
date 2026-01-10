@@ -32,7 +32,7 @@ export const HealthNoticeBubble: React.FC = () => {
                 horizontal: "right",
             }}
             sx={{
-                mt: 2.4, // push below app bar if needed
+                mt: 2.4,
             }}
         >
             {notice && (

@@ -41,7 +41,9 @@ export const useUxpNavigate = () => {
                         isPathInRootPath(currentPath, route.link ?? route.routePattern)) {
 
                         const rootPath = normalizeRoutePath(route.link ?? route.routePattern); // "/unified-home-network"
-                        getUxpWindow()?.navigation.updateRemoteSubRoute(rootPath, subPath);
+                        if (currentPath !== buildPath(rootPath, subPath)) { // "/unified-home-network/health"
+                            getUxpWindow()?.navigation.updateRemoteSubRoute(rootPath, subPath);
+                        }
                         return;
                     }
                     if (subPath) {
