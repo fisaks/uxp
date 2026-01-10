@@ -8,8 +8,6 @@ import { HealthLevel } from "../health.types";
 import { selectGlobalHealthLevel, selectHealthItemCount } from "../healthSelectors";
 import { useSelector } from "react-redux";
 
-
-
 function HealthIcon({ level }: { level: HealthLevel }) {
 
     switch (level) {
@@ -27,7 +25,6 @@ function HealthIcon({ level }: { level: HealthLevel }) {
 
 
 export type HealthIndicatorButtonProps = {
-
     onClick: (event: React.MouseEvent<HTMLElement>) => void;
 };
 

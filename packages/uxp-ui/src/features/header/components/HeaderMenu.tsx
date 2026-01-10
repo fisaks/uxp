@@ -12,11 +12,8 @@ import { selectIsLoggedInUser } from "../../user/userSelectors";
 import { logout } from "../../user/userThunks";
 
 import { SystemCenterTab } from "../systemCenter.types";
+import { HeaderHealth } from "./HeaderHealth";
 import { HeaderMenuDesktopLinks } from "./HeaderMenuDesktopLinks";
-import { HealthBootstraps } from "./HealthBootstraps";
-import { HealthIndicatorButton } from "./HealthIndicatorButton";
-import { HealthMenu } from "./HealthMenu";
-import { HealthNoticeBubble } from "./HealthNoticeBubble";
 import { SystemCenterButton } from "./SystemCenterButton";
 import { SystemCenterDrawer } from "./SystemCenterDrawer";
 
@@ -28,8 +25,6 @@ const HeaderMenu: React.FC = () => {
 
     const [headerMenuOpen, setHeaderMenuOpen] = useState(false);
     const [profileAnchorEl, setProfileAnchorEl] = useState<null | HTMLElement>(null);
-
-    const [healthAnchorEl, setHealthAnchorEl] = useState<null | HTMLElement>(null);
 
     const [systemCenterOpen, setSystemCenterOpen] = useState(false);
     const [systemCenterTab, setSystemCenterTab] = useState(0);
@@ -55,9 +50,6 @@ const HeaderMenu: React.FC = () => {
         closeProfileMenu();
         dispatch(logout({}));
     };
-
-    const openHealthMenu = (event: React.MouseEvent<HTMLElement>) => setHealthAnchorEl(event.currentTarget);
-    const closeHealthMenu = () => setHealthAnchorEl(null);
 
     const systemTabs: SystemCenterTab[] = useMemo(
         () => [
@@ -131,14 +123,7 @@ const HeaderMenu: React.FC = () => {
 
                     {isLoggedInUser && (
                         <>
-                            <HealthIndicatorButton onClick={openHealthMenu} />
-                            <HealthNoticeBubble />
-                            <HealthBootstraps />
-                            <HealthMenu
-                                anchorEl={healthAnchorEl}
-                                onClose={closeHealthMenu}
-
-                            />
+                            <HeaderHealth />
                             <SystemCenterButton onClick={() => setSystemCenterOpen(true)} />
                             <IconButton color="inherit" onClick={openProfileMenu} sx={{ ml: 2 }}>
                                 <AccountCircle />
