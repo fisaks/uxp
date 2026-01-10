@@ -6,7 +6,7 @@ import { generateFullLink } from "@uxp/common";
 
 import { MainPageLayout } from "../../components/layout/MainPageLayout";
 import DynamicComponentLoader from "../dynamic-components/DynamicComponentLoader";
-import { selectLinksByTag, selectPageByIdentifier } from "../navigation/navigationSelectors";
+import { selectLinksByTagLookup, selectPageByIdentifierLookup } from "../navigation/navigationSelectors";
 import { PageRemoteApp } from "../remote-app/PageRemoteApp";
 
 type RoutePageProps = {
@@ -15,11 +15,11 @@ type RoutePageProps = {
 };
 
 const RoutePage: React.FC<RoutePageProps> = ({ pageIdentifier, basePath }) => {
-    const page = useSelector(selectPageByIdentifier(pageIdentifier));
-
+    const pages = useSelector(selectPageByIdentifierLookup);
+    const page = pages[pageIdentifier];
     const location = useLocation();
-
-    const links = useSelector(selectLinksByTag(page?.config.pageType === "leftNavigation" ? (page.config.routeLinkGroup ?? "") : ""));
+    const linksByTag = useSelector(selectLinksByTagLookup);
+    const links = linksByTag.get(page?.config.pageType === "leftNavigation" ? (page.config.routeLinkGroup ?? "") : "") || [];
     const sidebarMenuItems = useMemo(() => {
         return links.map(({ label, link }) => {
             const fullLink = generateFullLink(basePath, link);

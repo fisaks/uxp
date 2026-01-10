@@ -1,6 +1,6 @@
 import { GlobalConfigPayload, LatestGlobalConfigResponse, PatchGlobalConfigResponse } from "@uxp/common";
 import axiosInstance from "../../app/axiosInstance";
-import { RootState } from "../../app/store";
+import { RootState } from "../../app/uxp.store";
 import { createLoadingAwareThunk } from "../loading/loadingThunk";
 
 export const fetchLatestGlobalSettings = createLoadingAwareThunk("globalSettings/fetchLatest", async () => {

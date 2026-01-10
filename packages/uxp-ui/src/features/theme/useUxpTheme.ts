@@ -1,4 +1,5 @@
-import { UXP_THEME_CHANGE_EVENT, defaultTheme, draculaTheme, rebelAllianceTheme, starWarsDarkSideTheme, sunsetTheme, tatooineTheme, windsOfWinterTheme } from "@uxp/ui-lib";
+import { defaultTheme, draculaTheme, getUxpWindow, rebelAllianceTheme, starWarsDarkSideTheme, sunsetTheme, tatooineTheme, windsOfWinterTheme } from "@uxp/ui-lib";
+
 import React, { useEffect } from "react";
 import { useSelector } from "react-redux";
 import { selectMySetting } from "../settings/mySettingSelector";
@@ -21,21 +22,7 @@ export const useUxpTheme = () => {
         [mySettings?.theme]
     );
     useEffect(() => {
-        if (window.uxp && !window.uxp?.theme) {
-            window.uxp.theme = theme;
-            window.uxp.defaultTheme = DEFAULT_TEHME;
-            window.uxp.updateTheme = (theme) => {
-                window.uxp!.theme = theme;
-
-                // Dispatch a custom event to notify remote apps
-                window.dispatchEvent(
-                    new CustomEvent(UXP_THEME_CHANGE_EVENT, {
-                        detail: window.uxp!.theme,
-                    })
-                );
-            };
-        }
-        window.uxp?.updateTheme && window.uxp.updateTheme(theme);
+        getUxpWindow()?.updateTheme?.(theme);
     }, [theme]);
 
     return theme;

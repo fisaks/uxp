@@ -1,4 +1,4 @@
-import { RemoteAppListener, UxpTheme } from "@uxp/ui-lib";
+import { RemoteAppListener, RemoteNavigationListener, UxpTheme } from "@uxp/ui-lib";
 import React, { useMemo } from "react";
 import { BrowserRouter } from "react-router-dom";
 import { getBaseRoutePath } from "./config";
@@ -14,6 +14,7 @@ const H2CApp: React.FC = () => {
                 <RemoteAppListener />
 
                 <BrowserRouter basename={basePath}>
+                    <RemoteNavigationListener locationRoot={basePath} />
                     <H2CBody />
                 </BrowserRouter>
             </WebSocketConfig>

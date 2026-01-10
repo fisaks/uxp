@@ -69,3 +69,63 @@ export const generateFullLink = (basePath: string | undefined, link: string) => 
     if (!basePath || link.startsWith("/")) return link;
     return basePath.endsWith("/") ? `${basePath}${link}` : `${basePath}/${link}`;
 };
+
+/**
+ * Normalize a route path for comparison by:
+ * - removing trailing '/*'
+ * - removing trailing '/'
+ */
+export function normalizeRoutePath(path: string): string {
+    let normalized = path.trim();
+
+    if (normalized.endsWith("/*")) {
+        normalized = normalized.slice(0, -2);
+    }
+
+    // Remove trailing slashes (but not the root "/")
+    while (normalized.length > 1 && normalized.endsWith("/")) {
+        normalized = normalized.slice(0, -1);
+    }
+
+    return normalized;
+}
+
+/**
+ * Compare two route paths ignoring trailing '/' and '/*'
+ */
+export function isSameRoutePath(a: string, b: string): boolean {
+    return normalizeRoutePath(a) === normalizeRoutePath(b);
+}
+/**
+ * Returns true if `path` is within `rootPath`
+ * Root path may end with '/*'
+ */
+export function isPathInRootPath(
+    path: string,
+    rootPath: string
+): boolean {
+    const root = normalizeRoutePath(rootPath);
+    const current = normalizeRoutePath(path);
+
+    // Root "/" matches everything
+    if (root === "/") {
+        return true;
+    }
+
+    return (
+        current === root ||
+        current.startsWith(root + "/")
+    );
+}
+
+/**
+ * Returns true if the route pattern is a React Router wildcard route
+ * (i.e. ends with '/*').
+ */
+export function isWildcardRoutePattern(pattern: string): boolean {
+    if (!pattern) return false;
+
+    const trimmed = pattern.trim();
+
+    return trimmed === "/*" || trimmed.endsWith("/*");
+}

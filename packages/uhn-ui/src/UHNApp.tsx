@@ -1,4 +1,4 @@
-import { RemoteAppListener, UxpTheme } from "@uxp/ui-lib";
+import { RemoteAppListener, RemoteNavigationListener, UxpTheme } from "@uxp/ui-lib";
 import React, { useMemo } from "react";
 import { BrowserRouter } from "react-router-dom";
 import { getBaseRoutePath } from "./config";
@@ -12,7 +12,8 @@ const UHNApp: React.FC = () => {
         <UxpTheme>
             <WebSocketConfig>
                 <RemoteAppListener />
-                <BrowserRouter basename={basePath}>
+                <BrowserRouter basename={basePath} >
+                    <RemoteNavigationListener locationRoot={basePath} />
                     <UHNBody />
                 </BrowserRouter>
             </WebSocketConfig>

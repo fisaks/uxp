@@ -26,12 +26,29 @@
                     createdAt: "2024-12-09T22:22:58.555+02:00",
                 };
             },
+            updateTheme: (theme) => {
+                /* no-op in standalone */
+            },
+            signal: {
+                health: () => {
+                    /* no-op in standalone */
+                }
+            },
+            navigation: {
+                updateRemoteSubRoute: () => {
+                    /* no-op in standalone */
+                },
+                requestBaseNavigation: () => {
+                    /* no-op in standalone */
+                }
+            }
         };
     </script>
 </head>
 
 <body>
-    <div id="root" data-app-option='{"main": "DemoView"}'
-        data-base-url="/demo/" data-base-url-api="/demo/api" data-base-url-static="/demo/static"></div>
-    </body>
+    <div id="root" data-app-option='{"main": "DemoView"}' data-base-url="/demo/" data-base-url-api="/demo/api"
+        data-base-url-static="/demo/static"></div>
+</body>
+
 </html>

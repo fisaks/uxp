@@ -1,20 +1,10 @@
-export type HealthLevel = "unknown" | "ok" | "warning" | "error";
+import { HealthSeverity } from "@uxp/common";
 
-export type HealthItem = {
-    id: string;
-    appId: string;
-    level: "unknown" | "warning" | "error"; // items are non-ok (or unknown)
-    title: string;
-    message?: string;
-    action?: {
-        label: string;
-        to: string; // React Router link for now
-    };
-};
+export type HealthLevel = HealthSeverity | "unknown";
 
-export type AppHealthSnapshot = {
+export type HealthNotice = {
     appId: string;
-    appName: string;
-    // undefined => not reporting => unknown
-    items?: HealthItem[];
+    severity: HealthSeverity;
+    message: string;
+    timestamp: number;
 };

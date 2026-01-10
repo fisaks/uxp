@@ -31,7 +31,6 @@ import { useAppDispatch } from "../../../app/store";
 import { getBaseUrl } from "../../../config";
 import { useActivateBlueprintMutation, useDeactivateBlueprintMutation, useDeleteBlueprintMutation, useFetchBlueprintsQuery } from "../blueprint.api";
 import { openActivationListDialog, openBlueprintVersionLogDialog } from "../blueprintSlice";
-import { error } from "console";
 
 
 type BlueprintListProps = {

@@ -3,6 +3,15 @@
 This document describes what happens in the browser when a remote app
 is loaded and executed by UXP.
 
+This runtime is shared by all remote app mount types, including:
+
+- page-bound remote apps
+- system panel remote apps
+- faceless remote apps used for side effects (e.g. health reporting)
+
+The runtime does not distinguish *why* a remote app is mounted — it only
+defines *how* a remote HTML entry is executed inside UXP.
+
 ---
 
 ## Shadow DOM
@@ -13,6 +22,10 @@ Remote apps are rendered inside a `ShadowRoot` attached to a container element.
 - Scripts execute in the global document context
 
 This allows UI isolation while preserving normal JavaScript behavior.
+
+Remote apps may render visible UI or nothing at all; even faceless remote apps
+are mounted using the same Shadow DOM mechanism to ensure consistent lifecycle
+and cleanup behavior.
 
 ### RemoteApp Shadow DOM injection (browser)
 
@@ -25,8 +38,7 @@ Remote apps are rendered inside a host `<div>` created by the UXP UI:
 This host element lives in the normal (light) DOM and acts as the **ShadowRoot host**.
 All remote app UI is rendered via a ShadowRoot attached to this element.
 
-Source:
-(https://github.com/fisaks/uxp/blob/main/packages/uxp-ui/src/features/remote-app/RemoteApp.tsx)
+[Source](https://github.com/fisaks/uxp/blob/main/packages/uxp-ui/src/features/remote-app)
 
 ### ShadowRoot creation
 
@@ -74,6 +86,11 @@ Behavior:
 Although scripts appear under the ShadowRoot in the DOM, **JavaScript execution
 always happens in the global document context** (`window`).
 Shadow DOM scopes DOM structure and styles, not JavaScript execution.
+
+The main bundle reuse behavior applies across all mount types (page, system,
+faceless), ensuring that a remote app’s code is loaded only once per
+`appIdentifier` regardless of how many times it is mounted.
+
 
 ### Remote app main bundle (`data-uxp-remote-app`)
 

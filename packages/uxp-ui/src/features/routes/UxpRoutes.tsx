@@ -9,12 +9,13 @@ const getBasePath = (routePattern: string) => {
     return match ? match[1] : undefined;
 };
 const UxpRoutes: React.FC = () => {
-    const routes = useSelector(selectAllRoutes());
+    const routes = useSelector(selectAllRoutes);
 
     return (
         <Routes>
             {routes.map((route) => (
                 <Route
+                id={route.routeIdentifier}
                     key={route.routePattern}
                     path={route.routePattern}
                     element={

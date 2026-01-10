@@ -10,28 +10,17 @@ import { selectLinksForHeaderMenu, selectLinksForProfileIcon } from "../../navig
 import { useUxpTheme } from "../../theme/useUxpTheme";
 import { selectIsLoggedInUser } from "../../user/userSelectors";
 import { logout } from "../../user/userThunks";
-import { AppHealthSnapshot, HealthLevel } from "../health.types";
+
 import { SystemCenterTab } from "../systemCenter.types";
 import { HeaderMenuDesktopLinks } from "./HeaderMenuDesktopLinks";
+import { HealthBootstraps } from "./HealthBootstraps";
 import { HealthIndicatorButton } from "./HealthIndicatorButton";
 import { HealthMenu } from "./HealthMenu";
+import { HealthNoticeBubble } from "./HealthNoticeBubble";
 import { SystemCenterButton } from "./SystemCenterButton";
 import { SystemCenterDrawer } from "./SystemCenterDrawer";
-import { HealthBootstraps } from "./HealthBootstraps";
 
 
-function computeHealthLevel(snapshots: AppHealthSnapshot[]): HealthLevel {
-    const anyReporting = snapshots.some((s) => s.items !== undefined);
-    if (!anyReporting) return "unknown";
-
-    const allItems = snapshots.flatMap((s) => s.items ?? []);
-    if (allItems.some((i) => i.level === "error")) return "error";
-    if (allItems.some((i) => i.level === "warning")) return "warning";
-    return "ok";
-}
-function countNonOkItems(snapshots: AppHealthSnapshot[]): number {
-    return snapshots.reduce((acc, s) => acc + (s.items?.length ?? 0), 0);
-}
 const HeaderMenu: React.FC = () => {
     const dispatch = useAppDispatch();
     const theme = useUxpTheme();
@@ -48,8 +37,8 @@ const HeaderMenu: React.FC = () => {
     const toggleHeaderMenu = () => setHeaderMenuOpen(!headerMenuOpen);
     const closeHeaderMenu = () => setHeaderMenuOpen(false);
 
-    const headerMenuLinks = useSelector(selectLinksForHeaderMenu());
-    const profileIconLinks = useSelector(selectLinksForProfileIcon());
+    const headerMenuLinks = useSelector(selectLinksForHeaderMenu);
+    const profileIconLinks = useSelector(selectLinksForProfileIcon);
     const globalConfig = useSelector(selectGlobalConfig);
     const isLoggedInUser = useSelector(selectIsLoggedInUser());
 
@@ -66,50 +55,6 @@ const HeaderMenu: React.FC = () => {
         closeProfileMenu();
         dispatch(logout({}));
     };
-
-    // -----------------------------
-    // MOCK DATA (replace later)
-    // -----------------------------
-    const appHealthSnapshots: AppHealthSnapshot[] = useMemo(
-        () => [
-            {
-                appId: "uhn",
-                appName: "UHN",
-                items: [
-                    {
-                        id: "edge-sauna-down",
-                        appId: "uhn",
-                        level: "error",
-                        title: "Edge unreachable",
-                        message: "Sauna node has not responded for 45s.",
-                        action: { label: "Open System Center", to: "/system-center?app=uhn" },
-                    },
-                    {
-                        id: "blueprint-warn",
-                        appId: "uhn",
-                        level: "warning",
-                        title: "Blueprint warning",
-                        message: "A resource is missing an id; runtime skipped one trigger.",
-                        action: { label: "Open Rules", to: "/uhn/rules" },
-                    },
-                ],
-            },
-            {
-                appId: "demo",
-                appName: "Demo App",
-                items: [], // reporting + empty => OK
-            },
-            {
-                appId: "future",
-                appName: "Future App",
-                items: undefined, // not reporting => unknown
-            },
-        ],
-        []
-    );
-
-    const healthLevel = useMemo(() => computeHealthLevel(appHealthSnapshots), [appHealthSnapshots]);
-    const healthCount = useMemo(() => countNonOkItems(appHealthSnapshots), [appHealthSnapshots]);
 
     const openHealthMenu = (event: React.MouseEvent<HTMLElement>) => setHealthAnchorEl(event.currentTarget);
     const closeHealthMenu = () => setHealthAnchorEl(null);
@@ -186,8 +131,14 @@ const HeaderMenu: React.FC = () => {
 
                     {isLoggedInUser && (
                         <>
-                            <HealthIndicatorButton level={"error"} count={healthCount} onClick={openHealthMenu} />
+                            <HealthIndicatorButton onClick={openHealthMenu} />
+                            <HealthNoticeBubble />
                             <HealthBootstraps />
+                            <HealthMenu
+                                anchorEl={healthAnchorEl}
+                                onClose={closeHealthMenu}
+
+                            />
                             <SystemCenterButton onClick={() => setSystemCenterOpen(true)} />
                             <IconButton color="inherit" onClick={openProfileMenu} sx={{ ml: 2 }}>
                                 <AccountCircle />
@@ -219,12 +170,7 @@ const HeaderMenu: React.FC = () => {
                             Logout
                         </MenuItem>
                     </Menu>
-                    <HealthMenu
-                        anchorEl={healthAnchorEl}
-                        onClose={closeHealthMenu}
-                        level={healthLevel}
-                        snapshots={appHealthSnapshots}
-                    />
+
                 </Toolbar>
             </AppBar>
 

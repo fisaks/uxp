@@ -1,7 +1,7 @@
 import { createSelector } from "@reduxjs/toolkit";
 
-import { RootState } from "../../app/store";
 import { NavigationRoute } from "@uxp/common";
+import { RootState } from "../../app/uxp.store";
 
 export type RouteLink = {
     label: string;
@@ -10,14 +10,63 @@ export type RouteLink = {
 
 export const selectNavigationState = (state: RootState) => state.navigation;
 
-const selectRoutesByTagName = (tagName: string) =>
-    createSelector(selectNavigationState, (navigationState) => {
-        const tagOrder = navigationState.tags[tagName] ?? [];
+export const selectNavigationTags = createSelector(
+    selectNavigationState,
+    navigationState => navigationState.tags ?? {}
+);
 
-        return navigationState.routes
-            .filter((route) => tagOrder.includes(route.identifier))
-            .sort((a, b) => tagOrder.indexOf(a.identifier) - tagOrder.indexOf(b.identifier));
-    });
+export const selectNavigationRoutes = createSelector(
+    selectNavigationState,
+    navigationState => navigationState.routes ?? []
+);
+
+const selectNavigationPageLookup = createSelector(
+    selectNavigationState,
+    navigationState => navigationState.pageLookup ?? {}
+);
+
+const selectNavigationSystemApps = createSelector(
+    selectNavigationState,
+    navigationState => navigationState.system ?? []
+);
+
+export const selectRoutesByIdentifierMap = createSelector(
+    selectNavigationRoutes,
+    (routes) => {
+        const map = new Map<string, NavigationRoute>();
+        for (const route of routes) {
+            map.set(route.identifier, route);
+        }
+
+        return map;
+    }
+);
+
+export const selectRoutesByTagMap = createSelector(
+    [
+        selectRoutesByIdentifierMap,
+        selectNavigationTags,
+    ],
+    (routeById, tags) => {
+
+        const result = new Map<string, NavigationRoute[]>();
+
+        for (const [tagName, identifiers] of Object.entries(tags)) {
+            const orderedRoutes: NavigationRoute[] = [];
+
+            for (const id of identifiers) {
+                const route = routeById.get(id);
+                if (route) {
+                    orderedRoutes.push(route);
+                }
+            }
+
+            result.set(tagName, orderedRoutes);
+        }
+
+        return result;
+    }
+);
 
 const mapRoutesToLinks = (routes: NavigationRoute[]) =>
     routes.map((route) => ({
@@ -25,29 +74,46 @@ const mapRoutesToLinks = (routes: NavigationRoute[]) =>
         label: route.page?.name,
     })) as RouteLink[];
 
-export const selectLinksForHeaderMenu = () => createSelector(selectRoutesByTagName("header-menu"), mapRoutesToLinks);
+export const selectLinksForHeaderMenu = createSelector(
+    selectRoutesByTagMap, (routesByTag) => {
+        const routes = routesByTag.get("header-menu") || [];
+        return mapRoutesToLinks(routes);
+    }
+);
 
-export const selectLinksForProfileIcon = () => createSelector(selectRoutesByTagName("profile-icon"), mapRoutesToLinks);
+export const selectLinksForProfileIcon = createSelector(
+    selectRoutesByTagMap, (routesByTag) => {
+        const routes = routesByTag.get("profile-icon") || [];
+        return mapRoutesToLinks(routes);
+    }
+);
 
-export const selectLinksByTag = (tagName: string) => createSelector(selectRoutesByTagName(tagName), mapRoutesToLinks);
-
-export const selectAllRoutes = () =>
-    createSelector(selectNavigationState, (navigationState) =>
-        navigationState.routes.map((route) => ({
-            routePattern: route.routePattern,
-            pageIdentifier: route.page?.identifier,
-            config: route.config,
-        }))
+const mapRoute = (route: NavigationRoute) => ({
+    routePattern: route.routePattern,
+    pageIdentifier: route.page?.identifier,
+    routeIdentifier: route.identifier,
+    config: route.config,
+});
+export const selectAllRoutes =
+    createSelector(selectNavigationRoutes, (routes) =>
+        routes.map(mapRoute)
     );
 
-export const selectPageByIdentifier = (identifier: string) =>
-    createSelector(selectNavigationState, (navigationState) => navigationState.pageLookup[identifier]);
+export const selectLinksByTagLookup = createSelector(
+    selectRoutesByTagMap,
+    (routesByTag) => {
+        const lookup = new Map<string, RouteLink[]>();
+        for (const [tag, routes] of routesByTag.entries()) {
+            lookup.set(tag, mapRoutesToLinks(routes));
+        }
+        return lookup;
+    }
+);
+export const selectPageByIdentifierLookup = selectNavigationPageLookup;
 
-export const selectSystemApps = () =>
-    createSelector(selectNavigationState, (navigationState) => navigationState.system);
+export const selectSystemAppsLookup = selectNavigationSystemApps;
 
-export const selectSystemPanelApps = () =>
-    createSelector(selectSystemApps(), (systemApps) => systemApps.filter((app) => app.capabilities.systemPanel));
 
-export const selectHealthIndicatorApps = () =>
-    createSelector(selectSystemApps(), (systemApps) => systemApps.filter((app) => app.capabilities.health));
+export const selectSystemPanelApps = createSelector(selectNavigationSystemApps, (systemApps) => systemApps.filter((app) => app.capabilities.systemPanel));
+
+export const selectHealthIndicatorApps = createSelector(selectNavigationSystemApps, (systemApps) => systemApps.filter((app) => app.capabilities.health));

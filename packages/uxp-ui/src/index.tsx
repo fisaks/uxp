@@ -3,9 +3,9 @@ import { CacheProvider } from "@emotion/react";
 import React from "react";
 import ReactDOM from "react-dom/client"; // React 18's new API
 import { Provider } from "react-redux";
-import store from "./app/store";
+import store from "./app/uxp.store";
 import UxpApp from "./UxpApp";
-import "./app/remoteAppBroadcaster";
+import "./app/uxpBrowserContract";
 //import './index.css'; // Optional: import a global CSS file
 
 // Get the root element in the HTML

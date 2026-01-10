@@ -3,15 +3,15 @@ import { UserPublic } from "@uxp/common";
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { setUser } from "./remoteAppSlice";
+import { getUxpWindow } from "./uxp-window";
 
 export const UXP_USER_CHANGE_EVENT = "uxpUserChange";
-export type UxpUserChangeEvent = CustomEvent<{ detail: UserPublic }>;
-
+export type UxpUserChangeEvent = CustomEvent<UserPublic>;
 export const RemoteAppListener = () => {
     const dispatch = useDispatch();
 
     useEffect(() => {
-        const initialUser = window.uxp?.getUser ? window.uxp?.getUser() : undefined;
+        const initialUser = getUxpWindow()?.getUser();
         if (initialUser) {
             dispatch(setUser(initialUser));
         }

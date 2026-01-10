@@ -3,11 +3,19 @@ declare global {
         __UXP_PORTAL__?: boolean;
         uxp?: {
             theme?: unknown;
-            defaultTheme?: string;
-            updateTheme?: (mode: unknown) => void;
-            getUser?: () => UserPubllic | undefined;
+            defaultTheme: string;
+            updateTheme: (mode: unknown) => void;
+            getUser: () => unknown | undefined;
+            // Remote → UXP
+            signal: {
+                health: (snapshot: unknown) => void;
+            };
+            navigation: {
+                updateRemoteSubRoute: (rootpath: string, subRoute: string) => void;
+                requestBaseNavigation: (routeIdentifier: string, subRoute?: string) => void;
+            }
         };
     }
 }
 
-export {};
+export { };

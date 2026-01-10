@@ -1,10 +1,10 @@
 import React, { Suspense, useState } from 'react';
 import ImageDisplay from './components/ImageDisplay';
-import { Button } from '@mui/material';
+import { Box, Button } from '@mui/material';
 import { useAppDispatch } from '../../hooks';
 import { useSelector } from 'react-redux';
 import { selectTemplateValue } from './templateSelector';
-import { selectCurrentUser } from '@uxp/ui-lib';
+import { getUxpWindow, selectCurrentUser } from '@uxp/ui-lib';
 import { fetchTemplate } from './templateThunk';
 import LazyTextComponent from './components/LazyTextComponent';
 
@@ -41,6 +41,12 @@ const MiscPage: React.FC = () => {
                     <LazyTextComponent />
                 </Suspense>
             )}
+            <Box sx={{ mt: "20px" }}>
+                <Button onClick={() => getUxpWindow()?.navigation.requestBaseNavigation("unified-home-network", "/blueprints/upload")}>
+                    Go to Uhn blueprint upload
+                </Button>
+            </Box>
+
         </div>
     );
 };

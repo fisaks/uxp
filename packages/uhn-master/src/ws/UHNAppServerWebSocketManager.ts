@@ -1,4 +1,4 @@
-import { getMatchingResourcesForPattern, getMatchingStateForPattern, HealthSnapshot, TopicMessagePayload, UHNAppActionPayloadRequestMap, UHNAppActionPayloadResponseMap, UHNAppResponseMessage, UhnFullStateResponse, UhnResourcesResponse, UhnStateResponse, UhnSubscriptionPattern } from "@uhn/common";
+import { getMatchingResourcesForPattern, getMatchingStateForPattern, TopicMessagePayload, UHNAppActionPayloadRequestMap, UHNAppActionPayloadResponseMap, UHNAppResponseMessage, UhnFullStateResponse, UhnHealthSnapshot, UhnResourcesResponse, UhnStateResponse, UhnSubscriptionPattern } from "@uhn/common";
 import { ServerWebSocketManager, topicMatches } from "@uxp/bff-common";
 
 import { WebSocket } from "ws";
@@ -119,7 +119,7 @@ export class UHNAppServerWebSocketManager extends ServerWebSocketManager<UHNAppA
             })
     }
 
-    public broadcastHealthMessage(payload: HealthSnapshot) {
+    public broadcastHealthMessage(payload: UhnHealthSnapshot) {
         this.broadcastToTopic("uhn:health/*", {
             action: "uhn:health:snapshot",
             success: true,

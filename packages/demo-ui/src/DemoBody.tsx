@@ -86,7 +86,7 @@ export const DemoBody = () => {
                     <Route path="/ws/binary/response-msg" element={<BinaryResponsePage />} />
                     <Route path="/ws/binary/request-msg" element={<BinaryRequestPage />} />
                     <Route path="/rich-text-editor" element={<RichEditPage />} />
-                    <Route path="*" element={<Navigate to={"/"} />} />
+                    <Route path="*" element={<Navigate to={"/misc-demo"} replace={true} />} />
                 </Routes>
             </AppBodyContent>
         </>
