@@ -12,7 +12,7 @@ declare global {
             };
             navigation: {
                 updateRemoteSubRoute: (rootpath: string, subRoute: string) => void;
-                requestBaseNavigation: (routeIdentifier: string, subRoute?: string) => void;
+                requestBaseNavigation: (type: "route" | "hash", identifier: string, subRoute?: string) => void;
             }
         };
     }

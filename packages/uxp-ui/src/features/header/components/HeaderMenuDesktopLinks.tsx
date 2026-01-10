@@ -1,4 +1,5 @@
 import { Tab, Tabs } from "@mui/material";
+import { isPathInRootPath, isWildcardRoutePattern } from "@uxp/common";
 import { useMemo } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { RouteLink } from "../../navigation/navigationSelectors";
@@ -9,10 +10,22 @@ type HeaderMenuDesktopLinksProps = {
 export const HeaderMenuDesktopLinks: React.FC<HeaderMenuDesktopLinksProps> = ({ headerMenuLinks }) => {
     const location = useLocation();
 
+    /*
+     * Determines which header menu item should be marked as active.
+     *
+     * A menu item is considered active if:
+     * - the current pathname exactly matches its link, OR
+     * - the route uses a wildcard pattern (e.g. `/houses/*`) and the
+     *   current pathname is within that route root.
+     *
+     * Returns the index of the active menu item, or `false` if no item
+     * should be selected (as expected by MUI Tabs).
+    */
     const activeTabIndex = useMemo(() => {
         const index = headerMenuLinks.findIndex((link) =>
             location.pathname === link.link ||
-            location.pathname.startsWith(link.link + "/")
+            (isWildcardRoutePattern(link.routePattern) &&
+                isPathInRootPath(location.pathname, link.routePattern))
         );
 
         return index === -1 ? false : index;
@@ -20,7 +33,7 @@ export const HeaderMenuDesktopLinks: React.FC<HeaderMenuDesktopLinksProps> = ({ 
     return (
 
         <Tabs
-            value={activeTabIndex} // no selected tab logic
+            value={activeTabIndex}
             variant="scrollable"
             scrollButtons="auto"
             allowScrollButtonsMobile

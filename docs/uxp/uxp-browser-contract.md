@@ -181,20 +181,24 @@ The remote app listens for this signal and updates its own router.
 
 ### Remote → UXP Navigation API
 
-Used when a remote app want to move away from it's root context to another 
+Used when a remote app wants to move away from its root context to another 
 route/page of UXP using the routeIdentifier as root.
 
 ```ts
 window.uxp.navigation.requestBaseNavigation(
-  routeIdentifier: string,
+  type: "route" | "hash",
+  identifier: string,
   subRoute?: string
 )
 ```
 
 Semantics:
 
-- `routeIdentifier` identifies a UXP route (not a URL)
-- `subRoute` is the remote app's internal path
+- `type` Defines **what kind of navigation intent** the remote app is expressing.
+  - `route` Navigate to another **UXP root route/page**.
+  - `hash`  Update the browser hash to express **UI state intent**  (e.g. open System Center).
+- `identifier` identifies a **UXP route identifier** (not a URL) or a  **UXP-recognized hash** (e.g. system-panel)
+- `subRoute` is the remote app's internal path or the hash subpath (e.g. to select a tab in system panel)
 - UXP resolves the identifier to routing metadata
 - UXP decides how navigation is executed
 

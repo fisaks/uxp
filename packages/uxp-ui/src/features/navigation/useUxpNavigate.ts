@@ -5,6 +5,7 @@ import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { selectRoutesByIdentifierMap } from "./navigationSelectors";
 
+export const UXP_HASH_CHANGED = "uxpHashChanged";
 export type UxpNavTarget =
     | { type: "route"; identifier: string; subPath?: string }
     | { type: "hash"; identifier: string; subPath?: string };
@@ -64,7 +65,18 @@ export const useUxpNavigate = () => {
                 }
 
                 case "hash": {
-                    window.location.hash = `#${target.identifier}${target.subPath ? `/${target.subPath}` : ""}`;
+                    const hash = `#${target.identifier}${target.subPath ? `/${target.subPath}` : ""}`;
+                    window.history.replaceState(
+                        null,
+                        "",
+                        `${window.location.pathname}${window.location.search}${hash}`
+                    );
+                    // history.replaceState does not fire the hashchange event, so we need to dispatch a custom event
+                    // hashchange is only fired when the user changes the hash manually or via link navigation pushing a new entry
+                    window.dispatchEvent(
+                        new CustomEvent(UXP_HASH_CHANGED, { detail: { hash } })
+                    );
+
                     return;
                 }
 
