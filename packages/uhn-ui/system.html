@@ -5,7 +5,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <title>Unified Home Network Health App</title>
+    <title>Unified Home Network</title>
     <script src="/uhn/static/libs/development/react.development.js" data-uxp-remove="true"></script>
     <script src="/uhn/static/libs/development/react-dom.development.js" data-uxp-remove="true"></script>
     <script src="/uhn/static/libs/development/emotion-react.development.js" data-uxp-remove="true"></script>
@@ -41,14 +41,13 @@
                     /* no-op in standalone */
                 }
             }
-        }
+        };
     </script>
 
 </head>
 
 <body>
-    <div id="root" data-app-option='{"main": "HealthView"}' data-base-route-path="/uhn" data-base-url="/uhn"
-        data-ws-path="/uhn/ws-api"></div>
+    <div id="root"  data-app-option='{"main": "SystemView"}' data-base-route-path="/uhn" data-base-url="/uhn" data-ws-path="/uhn/ws-api"></div>
 </body>
 
 </html>

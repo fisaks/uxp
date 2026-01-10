@@ -11,11 +11,9 @@ import { useUxpTheme } from "../../theme/useUxpTheme";
 import { selectIsLoggedInUser } from "../../user/userSelectors";
 import { logout } from "../../user/userThunks";
 
-import { SystemCenterTab } from "../systemCenter.types";
 import { HeaderHealth } from "./HeaderHealth";
 import { HeaderMenuDesktopLinks } from "./HeaderMenuDesktopLinks";
-import { SystemCenterButton } from "./SystemCenterButton";
-import { SystemCenterDrawer } from "./SystemCenterDrawer";
+import { HeaderSystemCenter } from "./HeaderSystemCenter";
 
 
 const HeaderMenu: React.FC = () => {
@@ -25,9 +23,6 @@ const HeaderMenu: React.FC = () => {
 
     const [headerMenuOpen, setHeaderMenuOpen] = useState(false);
     const [profileAnchorEl, setProfileAnchorEl] = useState<null | HTMLElement>(null);
-
-    const [systemCenterOpen, setSystemCenterOpen] = useState(false);
-    const [systemCenterTab, setSystemCenterTab] = useState(0);
 
     const toggleHeaderMenu = () => setHeaderMenuOpen(!headerMenuOpen);
     const closeHeaderMenu = () => setHeaderMenuOpen(false);
@@ -50,50 +45,6 @@ const HeaderMenu: React.FC = () => {
         closeProfileMenu();
         dispatch(logout({}));
     };
-
-    const systemTabs: SystemCenterTab[] = useMemo(
-        () => [
-            {
-                appId: "uhn",
-                appName: "UHN",
-                content: (
-                    <Box sx={{ p: 2 }}>
-                        <Typography variant="subtitle1">UHN System</Typography>
-                        <Typography variant="body2" sx={{ mt: 1 }}>
-                            Static placeholder content.
-                        </Typography>
-
-                        <Box sx={{ display: "flex", gap: 1, mt: 2, flexWrap: "wrap" }}>
-                            <Button variant="contained">Enable debug mode</Button>
-                            <Button variant="outlined">Restart runtime</Button>
-                            <Button variant="outlined">Recompile blueprint</Button>
-                        </Box>
-
-                        <Divider sx={{ my: 2 }} />
-
-                        <Typography variant="subtitle2">Nodes</Typography>
-                        <Typography variant="body2" sx={{ mt: 1 }}>
-                            🟢 Core service running<br />
-                            🔴 Edge: Sauna unreachable
-                        </Typography>
-                    </Box>
-                ),
-            },
-            {
-                appId: "demo",
-                appName: "Demo App",
-                content: (
-                    <Box sx={{ p: 2 }}>
-                        <Typography variant="subtitle1">Demo System</Typography>
-                        <Typography variant="body2" sx={{ mt: 1 }}>
-                            Placeholder system panel for demo app.
-                        </Typography>
-                    </Box>
-                ),
-            },
-        ],
-        []
-    );
 
     return (
         <>
@@ -124,7 +75,7 @@ const HeaderMenu: React.FC = () => {
                     {isLoggedInUser && (
                         <>
                             <HeaderHealth />
-                            <SystemCenterButton onClick={() => setSystemCenterOpen(true)} />
+                            <HeaderSystemCenter />
                             <IconButton color="inherit" onClick={openProfileMenu} sx={{ ml: 2 }}>
                                 <AccountCircle />
                             </IconButton>
@@ -198,13 +149,6 @@ const HeaderMenu: React.FC = () => {
                 </ClickAwayListener>
             )
             }
-            <SystemCenterDrawer
-                open={systemCenterOpen}
-                onClose={() => setSystemCenterOpen(false)}
-                tabs={systemTabs}
-                selectedTab={systemCenterTab}
-                onTabChange={setSystemCenterTab}
-            />
         </>
     );
 };

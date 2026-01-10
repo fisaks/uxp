@@ -42,8 +42,13 @@ const MiscPage: React.FC = () => {
                 </Suspense>
             )}
             <Box sx={{ mt: "20px" }}>
-                <Button onClick={() => getUxpWindow()?.navigation.requestBaseNavigation("unified-home-network", "/blueprints/upload")}>
+                <Button onClick={() => getUxpWindow()?.navigation.requestBaseNavigation("route", "unified-home-network", "/blueprints/upload")}>
                     Go to Uhn blueprint upload
+                </Button>
+            </Box>
+            <Box sx={{ mt: "20px" }}>
+                <Button onClick={() => getUxpWindow()?.navigation.requestBaseNavigation("hash", "system-panel")}>
+                    Open System panel
                 </Button>
             </Box>
 

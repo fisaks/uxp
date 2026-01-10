@@ -8,6 +8,7 @@ import { createStore } from "./app/store";
 import { getAppOption, initializeConfig } from "./config";
 import UHNApp from "./UHNApp";
 import UHNHealth from "./UHNHealth";
+import UHNSystem from "./UHNSystem";
 const styleInsert = require("../../tools/src/insert-function.cjs");
 
 // Extend the Window interface to include __UXP_PORTAL__
@@ -20,7 +21,8 @@ const ENABLE_STRICT_MODE = true;
 
 const APPLICATIONS = {
     'UHNApp': UHNApp,
-    'HealthView': UHNHealth
+    'HealthView': UHNHealth,
+    'SystemView': UHNSystem
 }
 
 export const initApplication = (documentRoot: ShadowRoot | Document) => {
@@ -71,7 +73,7 @@ export const initApplication = (documentRoot: ShadowRoot | Document) => {
             <Provider store={store}>
                 <CacheProvider value={shadowCache}>
                     <ShadowRootProvider documentRoot={documentRoot}>
-                        {ENABLE_STRICT_MODE  ? <React.StrictMode><AppComponent /></React.StrictMode> : <AppComponent />}
+                        {ENABLE_STRICT_MODE ? <React.StrictMode><AppComponent /></React.StrictMode> : <AppComponent />}
                     </ShadowRootProvider>
                 </CacheProvider>
             </Provider>
@@ -96,6 +98,7 @@ export const initApplication = (documentRoot: ShadowRoot | Document) => {
         }
     };
 };
+console.log("[REMOTE-APP] bundle loaded UHN", performance.now());
 if (!window.__UXP_PORTAL__) {
     initApplication(document);
 }

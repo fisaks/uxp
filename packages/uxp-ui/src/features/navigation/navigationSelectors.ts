@@ -6,6 +6,7 @@ import { RootState } from "../../app/uxp.store";
 export type RouteLink = {
     label: string;
     link: string;
+    routePattern: string;
 };
 
 export const selectNavigationState = (state: RootState) => state.navigation;
@@ -72,6 +73,7 @@ const mapRoutesToLinks = (routes: NavigationRoute[]) =>
     routes.map((route) => ({
         link: route.link,
         label: route.page?.name,
+        routePattern: route.routePattern
     })) as RouteLink[];
 
 export const selectLinksForHeaderMenu = createSelector(
