@@ -23,9 +23,8 @@ import "./services/state-physical.service";
 import "./services/state-runtime.service";
 import "./services/state-signal.service";
 import "./services/subscription.service";
+import { systemConfigService } from "./services/system-config.service";
 import "./services/uhn-health.service";
-
-
 
 export async function startUhnRuntime() {
     setupWebDispatchers();
@@ -36,6 +35,7 @@ async function runStartupBackgroundTasks() {
 
     try {
         await runBackgroundTask(AppDataSource, async () => {
+            await systemConfigService.ensureExists();
             await blueprintService.initializeRuntimeFromState();
         })
     } catch (error) {

@@ -39,7 +39,7 @@ export class BlueprintEntity {
 
     @Column({
         type: 'enum',
-        enum: ['idle', 'extracted', 'compiled'],
+        enum: ['idle', 'extracted', 'extraction_failed', 'compiled', 'compile_failed'],
         default: 'idle',
     })
     status!: BlueprintStatus;

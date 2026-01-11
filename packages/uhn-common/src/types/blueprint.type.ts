@@ -3,7 +3,9 @@ import { UhnFileType } from "./file.type";
 export type BlueprintStatus =
     | 'idle'
     | 'extracted'
+    | 'extraction_failed'
     | 'compiled'
+    | 'compile_failed';
 
 
 export type BlueprintMetadata = {
