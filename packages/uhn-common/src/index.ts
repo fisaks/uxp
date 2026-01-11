@@ -6,6 +6,7 @@ export * from "./types/file.type";
 export * from "./types/uhn-health.type";
 export * from "./types/uhn-runtime.type";
 export * from "./types/uhn-message.type";
+export * from "./types/uhn-system.type";
 export * from "./util/data.util";
 export * from "./util/resource.util";
 export * from "./errors/rule-runtime.error";

@@ -12,6 +12,7 @@ import { BlueprintCompileUtil } from "../util/blueprint-compiler.util";
 import { BlueprintFileUtil } from "../util/blueprint-file.util";
 import { BlueprintMetaDataUtil } from "../util/blueprint-metadata.util";
 import { blueprintRuntimeSupervisorService } from "./blueprint-runtime-supervisor.service";
+import { systemConfigService } from "./system-config.service";
 
 type BlueprintEventMap = {
     blueprintActivating: [identifier: string, version: number, by: string];
@@ -99,54 +100,85 @@ class BlueprintService extends EventEmitter<BlueprintEventMap> {
             throw new AppErrorV2({ statusCode: 404, code: "RESOURCE_NOT_FOUND", message: `Blueprint ${identifier} v${version} not found` });
         }
 
-        // Find globally active blueprint
         const currentlyActive = await BlueprintRepository.findActive();
 
-        // If another blueprint is active, deactivate it
-        if (currentlyActive && currentlyActive.id !== toActivate.id) {
-            await this.deactivateBlueprint(currentlyActive.identifier, currentlyActive.version, activatedBy);
+        let error: unknown = undefined
+        try {
+            const folder = await BlueprintFileUtil.prepareBlueprintWorkdir();
+            await BlueprintFileUtil.extractBlueprintToDir(toActivate.zipPath, folder);
+        } catch (err) {
+            error = err
         }
-        await BlueprintFileUtil.activateBlueprint(toActivate.zipPath);
-
+        toActivate.status = error ? "extraction_failed" : "extracted";
+        toActivate.compileLog = null;
+        toActivate.installLog = null;
+        toActivate.errorSummary = null;
+        await BlueprintRepository.save(toActivate);
+        if (error) {
+            throw error;
+        }
+        const debugMode = systemConfigService.getConfig().runtimeMode === 'debug';
         const compile = await BlueprintCompileUtil.compileBlueprint({
-            blueprintFolder: BlueprintFileUtil.ActiveBlueprintFolder,
+            blueprintFolder: BlueprintFileUtil.WorkBlueprintFolder,
             identifier: toActivate.identifier,
+            debugMode,
         });
-        // Activate new version
-
-        toActivate.active = true;
-        toActivate.status = compile.success ? 'compiled' : 'extracted';
+        toActivate.status = compile.success ? "compiled" : "compile_failed";
         toActivate.compileLog = compile.compileLog;
         toActivate.installLog = compile.installLog;
         toActivate.errorSummary = compile.errorSummary;
-
+        await BlueprintRepository.save(toActivate);
+        if (!compile.success) {
+            this.emit("blueprintCompileFailed", identifier, version, compile.errorSummary);
+            if (!currentlyActive)
+                this.emit("noActiveBlueprint");
+            return toActivate;
+        }
         const activatedAt = DateTime.now();
+
+        await blueprintRuntimeSupervisorService.stop();
+        await BlueprintFileUtil.swapActiveBlueprint();
+
+        if (currentlyActive && currentlyActive.id !== toActivate.id) {
+            currentlyActive.active = false;
+            currentlyActive.status = "idle";
+            currentlyActive.lastDeactivatedAt = activatedAt;
+            currentlyActive.lastDeactivatedBy = activatedBy;
+            await BlueprintRepository.save(currentlyActive);
+
+            const lastActivation =
+                await BlueprintActivationRepository.findLastActiveForBlueprint(
+                    currentlyActive.id
+                );
+
+            if (lastActivation) {
+                lastActivation.deactivatedAt = activatedAt;
+                lastActivation.deactivatedBy = activatedBy;
+                await BlueprintActivationRepository.save(lastActivation);
+            }
+        }
+
+        toActivate.active = true;
+        toActivate.status = "compiled";
         toActivate.lastActivatedAt = activatedAt;
         toActivate.lastActivatedBy = activatedBy;
         toActivate.lastDeactivatedAt = undefined;
         toActivate.lastDeactivatedBy = undefined;
-        const activation = new BlueprintActivationEntity({
-            blueprint: toActivate,
-            activatedAt: activatedAt,
-            status: toActivate.status,
-            activatedBy
-        });
-        await BlueprintActivationRepository.save(activation);
 
         await BlueprintRepository.save(toActivate);
 
+        const activation = new BlueprintActivationEntity({
+            blueprint: toActivate,
+            activatedAt,
+            activatedBy,
+        });
+        await BlueprintActivationRepository.save(activation);
 
-        if (compile.success) {
-            this.emit("blueprintInstalled", identifier, version);
-            await blueprintRuntimeSupervisorService.start();
-        } else {
-            this.emit(
-                "blueprintCompileFailed",
-                identifier,
-                version,
-                compile.errorSummary
-            );
-        }
+        // Start runtime
+        await blueprintRuntimeSupervisorService.start();
+
+        this.emit("blueprintInstalled", identifier, version);
+
         AppLogger.info({
             message: `Activated blueprint ${identifier} v${version} globally by ${activatedBy}`
         });

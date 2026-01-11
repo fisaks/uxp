@@ -31,11 +31,12 @@ class UhnHealthService extends EventEmitter<UhnHealthEventMap> {
             this.remove("uhn:blueprint");
         });
         blueprintService.on("blueprintCompileFailed", (_id, _v, _err) => {
-            this.setSuppress(["uhn:runtime", "uhn:resources"]);
+            //this.setSuppress(["uhn:runtime", "uhn:resources"]);
+            this.clearSuppress(["uhn:runtime", "uhn:resources"])
             this.upsert({
                 id: "uhn:blueprint",
                 message: "Blueprint compile failed",
-                severity: "error",
+                severity: "warn",
                 action: { label: "Go To Blueprints", target: { type: "route", identifier: "unified-home-network", subPath: "/blueprints/upload" } },
             });
         });

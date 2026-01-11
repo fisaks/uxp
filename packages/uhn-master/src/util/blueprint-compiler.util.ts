@@ -2,10 +2,12 @@ import { execSync } from "child_process";
 import fs from "fs-extra";
 import path from "path";
 
+
 // --- Types ---
 type BlueprintCompileOptions = {
     blueprintFolder: string; // e.g. /workspaces/uhn/blueprint
     identifier: string;
+    debugMode: boolean;
 };
 
 export type BlueprintCompileResult = {
@@ -64,7 +66,7 @@ async function generatePackageJson(
     return packageJsonPath;
 }
 
-async function generateTsconfigJson(blueprintFolder: string): Promise<string> {
+async function generateTsconfigJson(blueprintFolder: string, debugOn: boolean): Promise<string> {
     const tsconfigJsonPath = path.join(blueprintFolder, "tsconfig.json");
     await fs.writeJson(tsconfigJsonPath, {
         compilerOptions: {
@@ -76,9 +78,11 @@ async function generateTsconfigJson(blueprintFolder: string): Promise<string> {
             strict: true,
             declaration: false,
             skipLibCheck: true,
-            // TODO add ui feature to enable debug with source maps
-            sourceMap: true,
-            inlineSources: true
+
+            ...(debugOn ? {
+                sourceMap: true,
+                inlineSources: true
+            } : {}),
         },
         include: ["src/**/*"]
     }, { spaces: 2 });
@@ -117,7 +121,7 @@ function compileTypescript(blueprintFolder: string): string | Error {
     }
 }
 async function compileBlueprint(options: BlueprintCompileOptions): Promise<BlueprintCompileResult> {
-    const { blueprintFolder, identifier } = options;
+    const { blueprintFolder, identifier, debugMode } = options;
 
     // 1. Find installed @uhn/blueprint
     let blueprintPkgRoot: string;
@@ -140,7 +144,7 @@ async function compileBlueprint(options: BlueprintCompileOptions): Promise<Bluep
 
     // 3. Generate package.json & tsconfig.json
     const packageJsonPath = await generatePackageJson(blueprintFolder, identifier, allDeps);
-    const tsconfigJsonPath = await generateTsconfigJson(blueprintFolder);
+    const tsconfigJsonPath = await generateTsconfigJson(blueprintFolder, debugMode);
 
     // 4. Install dependencies
     const installResult = installDependencies(blueprintFolder);

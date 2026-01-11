@@ -7,7 +7,8 @@ import env from "../env";
 import unzipper from 'unzipper';
 
 const PreFlightFolder = path.join(env.UHN_FILE_UPLOAD_PATH, ".pre-flight");
-const ActiveBlueprintFolder = path.join(env.UHN_WORKSPACE_PATH, "blueprint");
+const ActiveBlueprintFolder = path.join(env.UHN_WORKSPACE_PATH, "blueprint", "active");
+const WorkBlueprintFolder = path.join(env.UHN_WORKSPACE_PATH, "blueprint", "work");
 
 
 
@@ -47,23 +48,22 @@ async function moveAndOrganizeUploadedBlueprint(
     return { blueprintFolder, blueprintZip };
 }
 
-async function extractBlueprintZipToActive(
+async function extractBlueprintToDir(
     zipPath: string,
-    activeBlueprintFolder: string) {
+    folder: string) {
 
     try {
-        await removeFile(activeBlueprintFolder);
-        // Extract new active
-        await extractZip(zipPath, activeBlueprintFolder);
+
+        await extractZip(zipPath, folder);
     } catch (err) {
         AppLogger.error({
-            message: `Failed to extract blueprint zip to active folder:`,
+            message: `Failed to extract blueprint zip to folder: ${folder}`,
             error: err,
         });
         throw new AppErrorV2({
             statusCode: 500,
             code: "BLUEPRINT_ACTIVATION_FAILED",
-            message: `Failed to extract blueprint zip to active folder`,
+            message: `Failed to extract blueprint zip to folder`,
         });
     }
 }
@@ -80,6 +80,13 @@ async function deleteBlueprintZip(zipPath: string) {
     }
 }
 
+async function prepareBlueprintWorkdir(): Promise<string> {
+    const dir = path.join(WorkBlueprintFolder, "src");
+    await removeDir(dir).catch(() => { });
+    await ensureDir(dir);
+    return dir;
+}
+
 async function removeActiveBlueprint() {
 
     try {
@@ -93,24 +100,6 @@ async function removeActiveBlueprint() {
             statusCode: 500,
             code: "BLUEPRINT_DEACTIVATION_FAILED",
             message: `Failed to remove active blueprint folder`,
-        });
-    }
-}
-async function activateBlueprint(toActivateZipPath: string) {
-
-    await removeActiveBlueprint();
-    try {
-        const srcDir = path.join(ActiveBlueprintFolder, "src")
-        await extractZip(toActivateZipPath, srcDir);
-    } catch (err) {
-        AppLogger.error({
-            message: `Failed to extract blueprint zip during activation:`,
-            error: err,
-        });
-        throw new AppErrorV2({
-            statusCode: 500,
-            code: "BLUEPRINT_ACTIVATION_FAILED",
-            message: `Failed to extract blueprint zip during activation`,
         });
     }
 }
@@ -137,16 +126,35 @@ async function writePrettyJson(filename: string, data: unknown) {
     await fs.writeFile(filePath, json, "utf8");
 }
 
+async function swapActiveBlueprint() {
+    const backup = `${ActiveBlueprintFolder}.old`;
+
+    // cleanup old backup if exists
+    await removeDir(backup).catch(() => { });
+
+    // move active → backup
+    if (await pathExists(ActiveBlueprintFolder)) {
+        await fs.rename(ActiveBlueprintFolder, backup);
+    }
+
+    // move work → active
+    await fs.rename(WorkBlueprintFolder, ActiveBlueprintFolder);
+
+}
+
+
 export const BlueprintFileUtil = {
     ActiveBlueprintFolder,
+    WorkBlueprintFolder,
     handleAndValidateUpload,
     moveAndOrganizeUploadedBlueprint,
-    extractBlueprintZipToActive,
+    extractBlueprintToDir,
     deleteBlueprintZip,
     removeActiveBlueprint,
-    activateBlueprint,
     getBlueprintStream,
     extractFileFromZip,
     activeBlueprintExists,
-    writePrettyJson
+    writePrettyJson,
+    prepareBlueprintWorkdir,
+    swapActiveBlueprint,
 };
