@@ -32,7 +32,7 @@ const UHNSystem: React.FC = () => {
 
     } as UHNSystemWebSocketResponseListener), []);
 
-    const errorHandler: UHNSystemErrorHandler = useCallback(({ action, error, errorDetails }) => {
+    const errorHandler: UHNSystemErrorHandler = useCallback((({ action, error, errorDetails }) => {
         console.error(`Error in WebSocket action ${action}`, error, errorDetails);
         //if (action === "uxp/remote_action" || action === "uxp/remote_connection") {
         //  setShowErrorOverlay(true);
