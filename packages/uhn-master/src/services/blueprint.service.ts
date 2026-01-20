@@ -185,12 +185,15 @@ class BlueprintService extends EventEmitter<BlueprintEventMap> {
 
         return toActivate;
     }
+    async getActiveBlueprint(): Promise<BlueprintEntity | undefined> {
+        return await BlueprintRepository.findActive() ?? undefined;
+    }
 
     /**
      * For startup to initialize runtime from active blueprint in DB
      */
     async initializeRuntimeFromState() {
-        const active = await BlueprintRepository.findActive();
+        const active = await this.getActiveBlueprint();
 
         if (
             active &&

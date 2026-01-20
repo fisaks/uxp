@@ -11,7 +11,9 @@ function getRepo() {
 }
 
 async function save(entity: SystemConfigEntity): Promise<SystemConfigEntity> {
-    return getRepo().save({ ...entity, id: CONFIG_ID });
+    entity.id = CONFIG_ID;
+    await getRepo().save(entity);
+    return findSystemConfig() as Promise<SystemConfigEntity>;
 }
 async function findSystemConfig(): Promise<SystemConfigEntity | null> {
     return await getRepo().findOneBy({ id: CONFIG_ID });

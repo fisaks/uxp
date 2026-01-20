@@ -35,7 +35,7 @@ export class SystemConfigEntity {
     logLevel!: UhnLogLevel;
 
     @UpdateDateColumn({
-        type: "datetime",
+        type: "timestamp",
         transformer: {
             to: (value: DateTime) => (value ? value.toJSDate() : value),
             from: (value: Date) => DateTime.fromJSDate(value),
@@ -44,7 +44,7 @@ export class SystemConfigEntity {
     updatedAt!: DateTime;
 
     @CreateDateColumn({
-        type: "datetime",
+        type: "timestamp",
         transformer: {
             to: (value: DateTime) => (value ? value.toJSDate() : value),
             from: (value: Date) => DateTime.fromJSDate(value),

@@ -1,11 +1,23 @@
 import { UhnLogLevel, UhnRuntimeMode } from "@uhn/common";
 import { AppErrorV2, AppLogger } from "@uxp/bff-common";
+import EventEmitter from "events";
 import { SystemConfigEntity } from "../db/entities/SystemConfigEntity";
 import { SystemConfigRepository } from "../repositories/system-config.repository";
 
-export class SystemConfigService {
+type SystemConfigEventMap = {
+    configChanged: [update: SystemConfigUpdate];
+};
+type SystemConfigUpdate = {
+    runtimeMode: UhnRuntimeMode;
+    logLevel: UhnLogLevel;
+};
+
+export class SystemConfigService extends EventEmitter<SystemConfigEventMap> {
     private config?: SystemConfigEntity | null;
 
+    constructor() {
+        super();
+    }
     async ensureExists(): Promise<void> {
         this.config = await SystemConfigRepository.findSystemConfig()
 
@@ -23,6 +35,8 @@ export class SystemConfigService {
                 },
             });
         }
+        AppLogger.setLogLevel(this.config.logLevel);
+        this.emit("configChanged", { runtimeMode: this.config.runtimeMode, logLevel: this.config.logLevel });
     }
 
     getConfig(): SystemConfigEntity {
@@ -50,6 +64,7 @@ export class SystemConfigService {
             message: "Runtime mode updated",
             object: { runtimeMode },
         });
+        this.emit("configChanged", { runtimeMode, logLevel: config.logLevel });
 
         return this.getConfig();
     }
@@ -70,6 +85,8 @@ export class SystemConfigService {
             message: "Log level updated",
             object: { logLevel },
         });
+        AppLogger.setLogLevel(logLevel);
+        this.emit("configChanged", { runtimeMode: config.runtimeMode, logLevel });
 
         return this.getConfig();
     }

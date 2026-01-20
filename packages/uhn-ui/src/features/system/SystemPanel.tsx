@@ -4,65 +4,121 @@ import {
     Chip,
     CircularProgress,
     Divider,
-    Link,
     Stack,
     Switch,
-    Typography,
+    Typography
 } from "@mui/material";
-import { getUxpWindow } from "@uxp/ui-lib";
-import React, { useState } from "react";
+import { UhnSystemSnapshot, UhnSystemStatus } from "@uhn/common";
+import React, { useEffect, useRef, useState } from "react";
+import { useUHNSystemWebSocket } from "../../app/UHNSystemBrowserWebSocketManager";
+import { ExecutionStatusPopover } from "./components/ExecutionStatusPopover";
 import { QuickLinks } from "./components/QuickLinks";
 
-export const SystemPanel: React.FC = () => {
-    // --- mocked system state ---
-    const [runtimeState, setRuntimeState] = useState<"running" | "stopped">("running");
-    const [profile, setProfile] = useState<"normal" | "debug">("normal");
+const LOG_LEVELS: Array<{
+    value: NonNullable<UhnSystemSnapshot["runtime"]["logLevel"]>;
+    label: string;
+}> = [
+        { value: "error", label: "Error" },
+        { value: "warn", label: "Warn" },
+        { value: "info", label: "Info" },
+        { value: "debug", label: "Debug" },
+        { value: "trace", label: "Trace" },
+    ];
 
-    const [operation, setOperation] = useState<{
-        label: string;
-        status: "idle" | "running" | "success" | "error";
-        message?: string;
-    } | null>(null);
+type SystemPanelProps = {
+    uhnStatus?: UhnSystemStatus;
+    uhnSnapshot?: UhnSystemSnapshot;
+};
+export const SystemPanel: React.FC<SystemPanelProps> = ({ uhnStatus, uhnSnapshot }) => {
+    const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
+    const [popoverOpen, setPopoverOpen] = useState(false);
+    const prevStateRef = useRef<UhnSystemStatus["state"] | undefined>(undefined);
 
-    const busy = operation?.status === "running";
+    const { sendMessage } = useUHNSystemWebSocket();
 
-    // --- mocked actions ---
-    const runOperation = (label: string, fn: () => void) => {
-        setOperation({ label, status: "running" });
-        setTimeout(() => {
-            fn();
-            setOperation({ label, status: "success", message: "Completed successfully" });
-        }, 2000);
+    const busy = uhnStatus?.state === "running";
+
+    useEffect(() => {
+        const prevState = prevStateRef.current;
+        const nextState = uhnStatus?.state;
+
+        prevStateRef.current = nextState;
+
+        if (!uhnStatus || nextState === "idle") {
+            setPopoverOpen(false);
+            return;
+        }
+
+        // 🔹 OPEN only when entering "running"
+        if (nextState === "running" && prevState !== "running") {
+            setPopoverOpen(true);
+            return;
+        }
+
+        // 🔹 AUTO-CLOSE shortly after successful completion
+        if (nextState === "completed" && prevState !== "completed") {
+            const t = setTimeout(() => {
+                setPopoverOpen(false);
+            }, 3000);
+            return () => clearTimeout(t);
+        }
+
+        // 🔹 ALWAYS show on failure (even if user closed it)
+        if (nextState === "failed" && prevState !== "failed") {
+            if (anchorEl) {
+                setPopoverOpen(true);
+            }
+        }
+        return;
+    }, [uhnStatus, anchorEl]);
+
+
+    const onToggleDebug = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setAnchorEl(e.currentTarget);
+        setPopoverOpen(true);
+        sendMessage("uhn:system:command", { command: "setRunMode", payload: { runtimeMode: uhnSnapshot?.runtime.runMode === "debug" ? "normal" : "debug" } });
     };
 
-    const toggleDebug = () => {
-        runOperation(
-            profile === "debug" ? "Switching to normal mode" : "Switching to debug mode",
-            () => setProfile(profile === "debug" ? "normal" : "debug")
-        );
-    };
+    const setLogLevel = (
+        level: NonNullable<UhnSystemSnapshot["runtime"]["logLevel"]>,
+        e: React.MouseEvent<HTMLButtonElement>
+    ) => {
+        setAnchorEl(e.currentTarget.parentElement ?? e.currentTarget);
+        setPopoverOpen(true);
 
-    const restartRuntime = () => {
-        runOperation("Restarting runtime", () => {
-            setRuntimeState("running");
+        sendMessage("uhn:system:command", {
+            command: "setLogLevel",
+            payload: { logLevel: level },
         });
     };
 
-    const stopRuntime = () => {
-        runOperation("Stopping runtime", () => {
-            setRuntimeState("stopped");
-        });
+    const restartRuntime = (e: React.MouseEvent<HTMLButtonElement>) => {
+        setAnchorEl(e.currentTarget.parentElement ?? e.currentTarget);
+        setPopoverOpen(true);
+        sendMessage("uhn:system:command", { command: "restartRuntime", payload: {} });
     };
 
-    const startRuntime = () => {
-        runOperation("Starting runtime", () => {
-            setRuntimeState("running");
-        });
+    const stopRuntime = (e: React.MouseEvent<HTMLButtonElement>) => {
+        setAnchorEl(e.currentTarget.parentElement ?? e.currentTarget);
+        setPopoverOpen(true);
+        sendMessage("uhn:system:command", { command: "stopRuntime", payload: {} });
     };
 
-    const recompileBlueprint = () => {
-        runOperation("Recompiling active blueprint", () => { });
+    const startRuntime = (e: React.MouseEvent<HTMLButtonElement>) => {
+        setAnchorEl(e.currentTarget.parentElement ?? e.currentTarget);
+        setPopoverOpen(true);
+        sendMessage("uhn:system:command", { command: "startRuntime", payload: {} });
     };
+
+    const recompileBlueprint = (e: React.MouseEvent<HTMLButtonElement>) => {
+        setAnchorEl(e.currentTarget.parentElement ?? e.currentTarget);
+        setPopoverOpen(true);
+        sendMessage("uhn:system:command", { command: "recompileBlueprint", payload: {} });
+    };
+    const setRunModeRunning = uhnStatus?.state === "running" && uhnStatus.command === "setRunMode";
+    const setLogLevelRunning =
+        uhnStatus?.state === "running" &&
+        uhnStatus.command === "setLogLevel";
 
     return (
         <Box sx={{ p: 2, minWidth: 320 }}>
@@ -73,17 +129,26 @@ export const SystemPanel: React.FC = () => {
                 <Typography variant="subtitle2">Debug</Typography>
                 <Stack direction="row" alignItems="center" spacing={1} sx={{ mt: 1 }}>
                     <Switch
-                        checked={profile === "debug"}
-                        onChange={toggleDebug}
+                        checked={uhnSnapshot?.runtime.runMode === "debug"}
+                        onChange={onToggleDebug}
                         disabled={busy}
                     />
-                    <Typography variant="body2">
-                        Debug mode {profile === "debug" ? "ON" : "OFF"}
-                    </Typography>
+                    {setRunModeRunning && (
+                        <CircularProgress size={16} />
+                    )}
+                    {!setRunModeRunning && (
+                        <Typography variant="body2">
+                            Debug mode {uhnSnapshot?.runtime.runMode === "debug" ? "ON" : "OFF"}
+                        </Typography>
+                    )}
                 </Stack>
+
                 <Typography variant="caption" color="text.secondary">
-                    Restart runtime with source maps and debug port
+                    {setRunModeRunning && "Updating runtime mode..."}
+                    {!setRunModeRunning && uhnSnapshot?.runtime.runMode === "normal" && "Will restart runtime with source maps and debug port"}
+                    {!setRunModeRunning && uhnSnapshot?.runtime.runMode === "debug" && "Debug port 9250 opened, runtime running with source maps"}
                 </Typography>
+
             </Box>
 
             <Divider sx={{ my: 2 }} />
@@ -95,18 +160,18 @@ export const SystemPanel: React.FC = () => {
                 <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 1 }}>
                     <Chip
                         size="small"
-                        label={runtimeState === "running" ? "Running" : "Stopped"}
-                        color={runtimeState === "running" ? "success" : "default"}
+                        label={uhnSnapshot?.runtime.running ? "Running" : "Stopped"}
+                        color={uhnSnapshot?.runtime.running ? "success" : "default"}
                     />
                     <Chip
                         size="small"
                         variant="outlined"
-                        label={profile === "debug" ? "Debug" : "Normal"}
+                        label={uhnSnapshot?.runtime.runMode === "debug" ? "Debug" : "Normal"}
                     />
                 </Stack>
 
                 <Stack direction="row" spacing={1} sx={{ mt: 2, flexWrap: "wrap" }}>
-                    {runtimeState === "running" && (
+                    {uhnSnapshot?.runtime.running && (
                         <>
                             <Button
                                 variant="contained"
@@ -125,7 +190,7 @@ export const SystemPanel: React.FC = () => {
                         </>
                     )}
 
-                    {runtimeState === "stopped" && (
+                    {!uhnSnapshot?.runtime.running && (
                         <Button
                             variant="contained"
                             onClick={startRuntime}
@@ -138,6 +203,39 @@ export const SystemPanel: React.FC = () => {
             </Box>
 
             <Divider sx={{ my: 2 }} />
+            {/* ---------------- Logging ---------------- */}
+            <Box>
+                <Typography variant="subtitle2">Logging</Typography>
+
+                <Stack direction="row" spacing={1} sx={{ mt: 1, flexWrap: "wrap" }}>
+                    {LOG_LEVELS.map(level => {
+                        const active = uhnSnapshot?.runtime.logLevel === level.value;
+
+                        return (
+                            <Button
+                                key={level.value}
+                                size="small"
+                                variant={active ? "contained" : "outlined"}
+                                onClick={e => setLogLevel(level.value, e)}
+                                disabled={busy || active}
+                            >
+                                {level.label}
+                            </Button>
+                        );
+                    })}
+
+                    {setLogLevelRunning && (
+                        <CircularProgress size={16} />
+                    )}
+                </Stack>
+
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
+                    Current log level:{" "}
+                    <strong>{uhnSnapshot?.runtime.logLevel}</strong>
+                </Typography>
+            </Box>
+
+            <Divider sx={{ my: 2 }} />
 
             {/* ---------------- Advanced ---------------- */}
             <Box>
@@ -146,34 +244,21 @@ export const SystemPanel: React.FC = () => {
                     sx={{ mt: 1 }}
                     variant="outlined"
                     onClick={recompileBlueprint}
-                    disabled={busy || runtimeState !== "running"}
+                    disabled={busy || !uhnSnapshot?.runtime.running}
                 >
                     Recompile active blueprint
                 </Button>
             </Box>
 
             {/* ---------------- Operation feedback ---------------- */}
-            {operation && (
-                <>
-                    <Divider sx={{ my: 2 }} />
-                    <Box>
-                        <Typography variant="subtitle2">Last action</Typography>
-                        <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 1 }}>
-                            {operation.status === "running" && (
-                                <CircularProgress size={16} />
-                            )}
-                            <Typography variant="body2">
-                                {operation.label}
-                            </Typography>
-                        </Stack>
-                        {operation.message && (
-                            <Typography variant="caption" color="text.secondary">
-                                {operation.message}
-                            </Typography>
-                        )}
-                    </Box>
-                </>
+            {uhnStatus && anchorEl && popoverOpen && uhnStatus.state !== "idle" && (
+                <ExecutionStatusPopover
+                    anchorEl={anchorEl}
+                    status={uhnStatus}
+                    onClose={() => setPopoverOpen(false)}
+                />
             )}
+
 
             <Divider sx={{ my: 2 }} />
 
