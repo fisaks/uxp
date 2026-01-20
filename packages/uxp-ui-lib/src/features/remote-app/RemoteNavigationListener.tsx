@@ -1,4 +1,4 @@
-import { isSameRoutePath, UserPublic } from "@uxp/common";
+import { isSameRoutePath } from "@uxp/common";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
