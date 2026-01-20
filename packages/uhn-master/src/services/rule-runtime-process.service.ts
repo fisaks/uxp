@@ -8,6 +8,7 @@ import { EventEmitter } from "events";
 import { nanoid } from "nanoid";
 import path from "path";
 import env from "../env";
+import { systemConfigService } from "./system-config.service";
 
 type RuleRuntimeProcessEventMap = {
     onActionEvent: [response: RuleRuntimeActionMessage];
@@ -196,10 +197,11 @@ class RuleRuntimeProcessService extends EventEmitter<RuleRuntimeProcessEventMap>
         mode: "dev" | "prod" | "debug";
     }> {
         const pkgRoot = getRuleRuntimePkgRoot();
+
         const tsEntrypoint = path.join(pkgRoot, "src", "rule-runtime.ts");
-        const debug = path.join(blueprintFolder, "debug");
-        const isDev = await fileExists(tsEntrypoint);
-        const isDebug = await pathExists(debug);
+        const { runtimeMode } = systemConfigService.getConfig();
+        const isDev = await fileExists(tsEntrypoint)
+        const isDebug = runtimeMode === "debug"
         if (isDebug) {
             return {
                 cmd: "pnpm",
@@ -309,25 +311,29 @@ class RuleRuntimeProcessService extends EventEmitter<RuleRuntimeProcessEventMap>
         });
         this.process.on("exit", async (code, signal) => {
             AppLogger.info({ message: `[RuleRuntimeProcessService] Rule runtime process exited with code ${code} and signal ${signal}` });
-            for (const [, handler] of this.pendingResponses) {
-                handler({ error: "Rule runtime process exited unexpectedly" });
-            }
-            this.pendingResponses.clear();
-            this.ready = false;
-            this.readyPromise = null;
-            this.readyResolve = null;
-            this.process = null;
-            await removePidFile();
-
+            await this.onExit(false);
             this.emit("exit", code, signal);
         });
     }
 
     async stopRuleRuntime() {
         if (this.process) {
+            this.process.removeAllListeners("exit");
             await killChildProcess(this.process, 5000, "Rule runtime process");
-            // cleanup is in the "exit" event handler
+            await this.onExit(true);
         }
+    }
+
+    private async onExit(isStop: boolean) {
+        for (const [, handler] of this.pendingResponses) {
+            handler({ error: isStop ? "Rule runtime process stopped" : "Rule runtime process exited unexpectedly" });
+        }
+        this.pendingResponses.clear();
+        this.ready = false;
+        this.readyPromise = null;
+        this.readyResolve = null;
+        this.process = null;
+        await removePidFile();
     }
 
     sendEvent<K extends FireAndForgetCmdKey>(cmd: RuleRuntimeCommandMap[K]["request"]

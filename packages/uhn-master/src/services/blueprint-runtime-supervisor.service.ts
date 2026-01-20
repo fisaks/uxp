@@ -13,7 +13,7 @@ type BlueprintRuntimeSupervisorEventMap = {
     ruleRuntimeStopped: [];
 };
 class BlueprintRuntimeSupervisorService extends EventEmitter<BlueprintRuntimeSupervisorEventMap> {
-    private shouldRestart = true;
+    private runId = 0;
     private running = false;
     private restartAttempts = 0;
     private readonly restartBaseDelayMs = 500;
@@ -24,9 +24,9 @@ class BlueprintRuntimeSupervisorService extends EventEmitter<BlueprintRuntimeSup
         const delay = this.restartBaseDelayMs * Math.pow(2, this.restartAttempts);
         return Math.min(delay, this.restartMaxDelayMs);
     }
-    private attachRestartHandler() {
+    private attachRestartHandler(forRunId: number) {
         ruleRuntimeProcessService.once("exit", async () => {
-            if (this.shouldRestart) {
+            if (this.runId === forRunId) {
                 const delay = this.getRestartDelayMs();
                 this.restartAttempts++;
                 this.emit("ruleRuntimeRestarting", this.restartAttempts);
@@ -35,7 +35,8 @@ class BlueprintRuntimeSupervisorService extends EventEmitter<BlueprintRuntimeSup
                 });
 
                 await new Promise(res => setTimeout(res, delay));
-                this.attachRestartHandler();
+                if (this.runId !== forRunId) return; // check if stopped during wait
+                this.attachRestartHandler(forRunId);
                 try {
                     await ruleRuntimeProcessService.startRuleRuntime(BlueprintFileUtil.ActiveBlueprintFolder);
                     this.restartAttempts = 0;
@@ -54,21 +55,25 @@ class BlueprintRuntimeSupervisorService extends EventEmitter<BlueprintRuntimeSup
     async start() {
         if (this.running) return;
         this.running = true;
-        this.shouldRestart = true;
+        this.runId++;
         this.restartAttempts = 0;
         this.emit("ruleRuntimeStarting");
         await ruleRuntimeProcessService.startRuleRuntime(BlueprintFileUtil.ActiveBlueprintFolder);
-        this.attachRestartHandler();
+        this.attachRestartHandler(this.runId);
         this.emit("ruleRuntimeReady");
     }
 
     async stop() {
         if (!this.running) return;
-        this.shouldRestart = false;
+        this.runId++;
         this.restartAttempts = 0;
         await ruleRuntimeProcessService.stopRuleRuntime();
         this.running = false;
         this.emit("ruleRuntimeStopped");
+    }
+
+    isRunning() {
+        return this.running;
     }
 }
 

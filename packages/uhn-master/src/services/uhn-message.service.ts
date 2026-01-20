@@ -1,9 +1,11 @@
 import { UhnSubscriptionPattern } from "@uhn/common";
 import { WebSocket } from "ws";
+import { systemStatusBroadcaster } from "../system/system-status.broadcaster";
 import { UHNAppServerWebSocketManager } from "../ws/UHNAppServerWebSocketManager";
 import { blueprintResourceService } from "./blueprint-resource.service";
 import { stateRuntimeService } from "./state-runtime.service";
 import { uhnHealthService } from "./uhn-health.service";
+import { uhnSystemSnapshotService } from "./uhn-system-snapshot.service";
 
 
 export class UhnMessageService {
@@ -16,10 +18,17 @@ export class UhnMessageService {
         patterns.forEach(pattern =>
             this.wsManager.subscribeToUhnMessagePattern(socket, pattern)
         );
+        this.wsManager.sendMessage(socket, {
+            action: "uhn:subscribed",
+            success: true,
+            payload: { patterns },
+            id: messageId
+        });
 
         const shouldSendResources = patterns.some(pattern => pattern.startsWith('resource/'));
         const shouldSendStates = patterns.some(pattern => pattern.startsWith('state/'));
         const shouldSendHealth = patterns.some(pattern => pattern === 'health/*');
+        const shouldSendSystem = patterns.some(pattern => pattern === 'system/*');
         if (shouldSendResources) {
             await this.sendResourcesMessage(socket, patterns);
         }
@@ -29,12 +38,11 @@ export class UhnMessageService {
         if (shouldSendHealth) {
             await this.sendHealthMessage(socket);
         }
-        this.wsManager.sendMessage(socket, {
-            action: "uhn:subscribed",
-            success: true,
-            payload: { patterns },
-            id: messageId
-        });
+        if (shouldSendSystem) {
+            this.sendSystemSnapshotMessage(socket);
+            this.sendSystemStatusMessage(socket);
+        }
+
     }
 
     async sendResourcesMessage(socket: WebSocket, patterns: UhnSubscriptionPattern[]) {
@@ -96,6 +104,26 @@ export class UhnMessageService {
             payload: healthSnapshot
         });
     }
+
+    sendSystemStatusMessage(socket: WebSocket) {
+        const systemStatus = systemStatusBroadcaster.getSnapshot();
+        this.wsManager.sendMessage(socket, {
+            action: "uhn:system:status",
+            success: true,
+            payload: systemStatus
+        });
+    }
+
+
+    sendSystemSnapshotMessage(socket: WebSocket) {
+        const systemSnapshot = uhnSystemSnapshotService.getSnapshot();
+        this.wsManager.sendMessage(socket, {
+            action: "uhn:system:snapshot",
+            success: true,
+            payload: systemSnapshot
+        });
+    }
+
     async unsubscribeFromPatterns(socket: WebSocket, patterns: UhnSubscriptionPattern[], messageId?: string) {
         patterns.forEach(pattern =>
             this.wsManager.unsubscribeFromUhnMessagePattern(socket, pattern)
