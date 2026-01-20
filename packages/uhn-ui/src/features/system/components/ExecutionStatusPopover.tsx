@@ -12,7 +12,7 @@ import { usePortalContainerRef } from "@uxp/ui-lib";
 import { ExecutionStepRow } from "./ExecutionStepRow";
 
 type ExecutionStatusPopoverProps = {
-    anchorEl: HTMLElement | null;
+    anchorEl: Element | null;
     status: UhnSystemStatus;
     onClose: () => void;
 };
