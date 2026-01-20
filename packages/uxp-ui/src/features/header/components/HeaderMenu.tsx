@@ -1,7 +1,7 @@
 import AccountCircle from "@mui/icons-material/AccountCircle";
 import MenuIcon from "@mui/icons-material/Menu";
-import { AppBar, Box, Button, ClickAwayListener, Collapse, Divider, IconButton, Menu, MenuItem, Toolbar, Typography, useMediaQuery } from "@mui/material";
-import React, { useMemo, useState } from "react";
+import { AppBar, Box, ClickAwayListener, Collapse, IconButton, Menu, MenuItem, Toolbar, Typography, useMediaQuery } from "@mui/material";
+import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { useAppDispatch } from "../../../hooks";

@@ -1,13 +1,7 @@
 import { OnConnectListener, ReconnectDetails, ReconnectListener, WebSocketProvider } from "@uxp/ui-lib";
-
-
-
 import { useCallback, useEffect, useMemo, useRef } from "react";
-
-import { UHNHealthActionPayloadRequestMap, UHNHealthActionPayloadResponseMap, UHNSystemActionPayloadRequestMap, UHNSystemActionPayloadResponseMap } from "@uhn/common";
-
+import { UHNSystemActionPayloadRequestMap, UHNSystemActionPayloadResponseMap } from "@uhn/common";
 import { UHNSystemErrorHandler, UHNSystemWebSocketManager, UHNSystemWebSocketResponseListener } from "./app/UHNSystemBrowserWebSocketManager";
-
 
 
 type SystemWebSocketConfig = {
