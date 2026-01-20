@@ -8,25 +8,28 @@ import { SystemWebSocketConfig } from "./SystemWebSocketConfig";
 
 const UHNSystem: React.FC = () => {
 
-    const [uhnStatus, setUhnStatus] = useState<{
-        seq: number;
-        status: UhnSystemStatus | undefined
-    } | undefined>(undefined);
+    const [uhnStatus, setUhnStatus] = useState<UhnSystemStatus | undefined>(undefined);
     const [uhnSnapshot, setUhnSnapshot] = useState<UhnSystemSnapshot | undefined>(undefined);
+    const [subscribed, setSubscribed] = useState<boolean>(false);
+    const [connectionError, setConnectionError] = useState<boolean>(false);
     const systemListeners: UHNSystemWebSocketResponseListener = useMemo(() => ({
         "uhn:system:status": (message) => {
             console.log("System Status", message);
-            setUhnStatus({
-                seq: Date.now(),
-                status: message.payload
-            });
+            setUhnStatus(message.payload);
         },
         "uhn:system:snapshot": (message) => {
             console.log("System Snapshot", message);
             setUhnSnapshot(message.payload);
         },
-        "uhn:system:subscribed": () => { console.log("System Subscribed"); },
-        "uhn:system:unsubscribed": () => { console.log("System Unsubscribed"); },
+        "uhn:subscribed": () => {
+            console.log("System Subscribed");
+            setConnectionError(false);
+            setSubscribed(true);
+        },
+        "uhn:unsubscribed": () => {
+            console.log("System Unsubscribed");
+            setSubscribed(false);
+        },
         "uxp/remote_action": (message) => { console.log("Remote Action", message); },
         "uxp/remote_connection": (message) => { console.log("Remote Connection", message); }
 
@@ -34,14 +37,14 @@ const UHNSystem: React.FC = () => {
 
     const errorHandler: UHNSystemErrorHandler = useCallback((({ action, error, errorDetails }) => {
         console.error(`Error in WebSocket action ${action}`, error, errorDetails);
-        //if (action === "uxp/remote_action" || action === "uxp/remote_connection") {
-        //  setShowErrorOverlay(true);
-        // }
+        if (action === "uxp/remote_action" || action === "uxp/remote_connection") {
+            setConnectionError(true);
+        }
     }) as UHNSystemErrorHandler, [])
     return (
         <UxpTheme>
             <SystemWebSocketConfig uhnListeners={systemListeners} errorHandler={errorHandler}>
-                <SystemPanel uhnStatus={uhnStatus?.status} uhnSnapshot={uhnSnapshot} />
+                <SystemPanel uhnStatus={uhnStatus} uhnSnapshot={uhnSnapshot} subscribed={subscribed} connectionError={connectionError} />
             </SystemWebSocketConfig>
         </UxpTheme>
     );
