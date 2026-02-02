@@ -9,6 +9,30 @@ import {
 
 type Issue = { file: string; line: number; message: string };
 
+/**
+ * Blueprint factory usage validator.
+ *
+ * This file statically analyzes a blueprint’s TypeScript source using ts-morph
+ * and enforces strict placement rules for factory calls:
+ *
+ * - Rule factories (e.g. rule(...)) are only allowed in src/rules
+ * - Resource factories are only allowed in src/resources
+ * - src/factory may only export reusable factory helpers.
+ *
+ * The validator works by:
+ *  - Loading the project via tsconfig
+ *  - Scanning all source files under the blueprint src root
+ *  - Collecting imported rule and resource factory identifiers (including aliases)
+ *  - Walking all call expressions and resolving their root factory call
+ *  - Reporting precise file/line errors for invalid usage
+ *
+ * This prevents accidental cross-layer coupling, keeps blueprint structure
+ * predictable, and ensures that rules, resources, and factories remain
+ * clearly separated at build time rather than failing at runtime.
+ *
+ * On any violation, validation fails with a consolidated, human-readable error
+ * message listing all offending locations.
+ */
 export async function validateBlueprintFactories(opts: {
     srcRoot: string;          
     tsconfigPath: string;     

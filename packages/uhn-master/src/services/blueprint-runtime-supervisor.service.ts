@@ -1,6 +1,5 @@
 import { AppLogger, runBackgroundTask } from "@uxp/bff-common";
 import { EventEmitter } from "events";
-import { BlueprintRepository } from "../repositories/blueprint.repository";
 import { BlueprintFileUtil } from "../util/blueprint-file.util";
 import { ruleRuntimeProcessService } from "./rule-runtime-process.service";
 

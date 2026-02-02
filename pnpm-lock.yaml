@@ -803,7 +803,7 @@ importers:
         specifier: ^11.0.4
         version: 11.0.4
       typescript:
-        specifier: '>=5.0.0'
+        specifier: ^5.0.0
         version: 5.8.3
 
   packages/uhn-common:
@@ -969,6 +969,9 @@ importers:
       '@uhn/common':
         specifier: workspace:*
         version: link:../uhn-common
+      '@uxp/common':
+        specifier: workspace:*
+        version: link:../uxp-common
       fs-extra:
         specifier: ^11.3.0
         version: 11.3.0

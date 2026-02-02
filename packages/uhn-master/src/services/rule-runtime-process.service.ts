@@ -7,8 +7,25 @@ import { ChildProcess, spawn, SpawnOptions } from "child_process";
 import { EventEmitter } from "events";
 import { nanoid } from "nanoid";
 import path from "path";
-import env from "../env";
+import os from "os";
+import env, { getEnvVar } from "../env";
 import { systemConfigService } from "./system-config.service";
+
+type SandboxLimits = {
+    memoryBytes: number;
+    maxPids: number;
+};
+
+type SandboxConfig = {
+    command: string;
+    args: string[];
+    cwd?: string;
+    env?: string[];
+    limits: SandboxLimits;
+    runAsUser: string;
+    network: "none" | "lo" | "debug-attach" | "full";
+    debugListen?: string;
+};
 
 type RuleRuntimeProcessEventMap = {
     onActionEvent: [response: RuleRuntimeActionMessage];
@@ -180,43 +197,117 @@ class RuleRuntimeProcessService extends EventEmitter<RuleRuntimeProcessEventMap>
             };
         });
 
-        const { cmd, args, opts } = await this.getRuleRuntimeLaunchConfig(blueprintFolder);
+        const { cmd, args, opts, ...rest } = await this.getRuleRuntimeLaunchConfig(blueprintFolder);
 
         this.process = spawn(cmd, args, opts);
         await writePidFile(this.process.pid!);
+        if ("sandboxPayload" in rest) {
+            this.process.stdin!.write(
+                JSON.stringify(rest.sandboxPayload) + "\n"
+            );
+        }
         this.setupListeners();
 
         AppLogger.info({ message: `[RuleRuntimeProcessService] Rule runtime process started with PID ${this.process.pid}` });
         await this.readyPromise;
     }
 
-    private async getRuleRuntimeLaunchConfig(blueprintFolder: string): Promise<{
+    private async getRuleRuntimeLaunchConfig(blueprintFolder: string) {
+        const sandboxCmd = path.join(env.UHN_SANDBOX_PATH ?? "/usr/lib/uhn", "uhn-sandbox-launch");
+        const useSandbox = !!sandboxCmd && await fileExists(sandboxCmd);
+
+        const raw = await this.getRawRuleRuntimeLaunchConfig(blueprintFolder, useSandbox);
+
+        if (!useSandbox) {
+            return raw;
+        }
+
+        return this.wrapWithSandbox(sandboxCmd, raw);
+    }
+
+    private wrapWithSandbox(sandboxCmd: string, raw: {
+        cmd: string;
+        args: string[];
+        opts: SpawnOptions;
+        mode: "dev" | "prod" | "debug"
+
+    }) {
+
+        const nodePath = getEnvVar("UHN_NODE_PATH", "/opt/node/bin");
+        return {
+            cmd: sandboxCmd,
+            args: ["run", "--config", "-"],
+            opts: {
+                ...raw.opts,
+                stdio: ["pipe", "pipe", "pipe"],
+                env: {
+                    ...(raw.opts.env ?? {}),// UHN_RUNTIME_PATH
+                    "UHN_WORKSPACE_PATH": env.UHN_WORKSPACE_PATH ?? "/uhn-workspace",
+                    "UHN_SANDBOX_PATH": env.UHN_SANDBOX_PATH ?? "/usr/lib/uhn",
+                    "UHN_NODE_PATH": nodePath,
+                }
+
+            } satisfies SpawnOptions,
+            mode: raw.mode,
+            sandboxPayload: {
+                command: raw.cmd,
+                args: raw.args,
+                cwd: "/uhn-runtime/packages/uhn-rule-runtime",
+                env: [
+                    `PATH=/uhn-node/bin:/usr/bin:/bin`,
+                    'HOME=/tmp',
+                    `TZ=${env.TZ ?? "UTC"}`
+                ],
+                limits: {
+                    memoryBytes: 512 * 1024 * 1024, // 512 MB
+                    maxPids: 254
+                },
+                runAsUser: os.userInfo().username,
+                network: raw.mode === "debug" ? "debug-attach" : "lo",
+                debugListen: raw.mode === "debug" ? "0.0.0.0:9250" : undefined
+            } satisfies SandboxConfig,
+        };
+    }
+
+    private async getRawRuleRuntimeLaunchConfig(blueprintFolder: string, useSandbox: boolean): Promise<{
         cmd: string;
         args: string[];
         opts: SpawnOptions;
         mode: "dev" | "prod" | "debug";
-    }> {
-        const pkgRoot = getRuleRuntimePkgRoot();
 
-        const tsEntrypoint = path.join(pkgRoot, "src", "rule-runtime.ts");
+    }> {
+        const hostUhnRuntimePath = getRuleRuntimePkgRoot();
+        const hostUhnRoot = path.resolve(hostUhnRuntimePath, "../..");
+        const uhnRuntimePath = useSandbox ? "/uhn-runtime/packages/uhn-rule-runtime" : hostUhnRuntimePath;
+
+        const blueprintFolderInUse = useSandbox ? "/uhn-workspace/blueprint/active" : blueprintFolder;
+        const tsEntrypoint = path.join(hostUhnRuntimePath, "src", "rule-runtime.ts");
         const { runtimeMode } = systemConfigService.getConfig();
         const isDev = await fileExists(tsEntrypoint)
         const isDebug = runtimeMode === "debug"
+
         if (isDebug) {
             return {
                 cmd: "pnpm",
                 args: [
                     "ts-node-dev",
-                    "--project", path.join(pkgRoot, "tsconfig.json"),
-                    "--inspect=0.0.0.0:9250",
-                    "--enable-source-maps", // TODO add ui feature to enable debug with source maps
-                    "--transpile-only",
-                    tsEntrypoint,
-                    blueprintFolder,
+                    "--project",
+                    `${uhnRuntimePath}/tsconfig.json`,
+                    "--inspect=127.0.0.1:9250",
+                    //"--enable-source-maps", // TODO add ui feature to enable debug with source maps
+                    //"--transpile-only",
+                    `${uhnRuntimePath}/src/rule-runtime.ts`,
+                    blueprintFolderInUse,
                     "master"
                 ],
-                opts: { cwd: pkgRoot },
-                mode: "debug"
+                opts: {
+                    cwd: hostUhnRuntimePath,
+                    env: {
+                        "UHN_RUNTIME_PATH": hostUhnRoot,
+                    }
+                },
+                mode: "debug",
+
             };
 
         }
@@ -225,24 +316,33 @@ class RuleRuntimeProcessService extends EventEmitter<RuleRuntimeProcessEventMap>
                 cmd: "pnpm",
                 args: [
                     "ts-node-dev",
-                    "--project", path.join(pkgRoot, "tsconfig.json"),
+                    "--project", `${uhnRuntimePath}/tsconfig.json`,
                     "--respawn",
-                    tsEntrypoint,
-                    blueprintFolder,
+                    `${uhnRuntimePath}/src/rule-runtime.ts`,
+                    blueprintFolderInUse,
                     "master"
                 ],
-                opts: { cwd: pkgRoot },
+                opts: {
+                    cwd: hostUhnRuntimePath, env: {
+                        "UHN_RUNTIME_PATH": hostUhnRoot,
+                    }
+                },
                 mode: "dev"
+
             };
         } else {
             // eslint-disable-next-line @typescript-eslint/no-var-requires
-            const pkg = require(path.join(pkgRoot, "package.json"));
-            const jsEntrypoint = path.join(pkgRoot, pkg.main ?? "dist/rule-runtime.js");
+            const pkg = require(path.join(hostUhnRuntimePath, "package.json"));
             return {
                 cmd: "node",
-                args: [jsEntrypoint, blueprintFolder, "master"],
-                opts: {},
-                mode: "prod"
+                args: [`${uhnRuntimePath}/${pkg.main ?? "dist/rule-runtime.js"}`, blueprintFolderInUse, "master"],
+                opts: {
+                    cwd: hostUhnRuntimePath, env: {
+                        "UHN_RUNTIME_PATH": hostUhnRoot,
+                    }
+                },
+                mode: "prod",
+
             };
         }
     }

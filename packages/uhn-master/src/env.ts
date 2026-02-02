@@ -11,11 +11,13 @@ export const requiredKeys = [
     "JWT_SECRET",
     "UHN_FILE_UPLOAD_PATH",
     "UHN_MQTT_BROKER_URL",
-    "UHN_WORKSPACE_PATH",
+    "UHN_WORKSPACE_PATH"
 ] as const;
 export const optionalKeys = [
     "LOG_LEVEL",
     "TZ",
+    "UHN_SANDBOX_PATH",
+    "UHN_NODE_PATH",
 ] as const;
 export type RequiredKeys = (typeof requiredKeys)[number];
 export type OptionalKeys = (typeof optionalKeys)[number];
@@ -44,6 +46,19 @@ function validateEnv(vars: EnvVariables): EnvVariables {
     return vars;
 }
 
+export function getEnvVar(
+    envVar: RequiredKeys | OptionalKeys,
+    fallback?: string
+): string {
+    const value = process.env[envVar];
+    if (value) {
+        return value;
+    }
+    if (fallback) {
+        return fallback;
+    }
+    throw new Error(`Missing required environment variable : ${envVar}`);
+}
 // Validate and export environment variables
 
 export default validateEnv(process.env as EnvVariables);

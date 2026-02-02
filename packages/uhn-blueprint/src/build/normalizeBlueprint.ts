@@ -13,6 +13,32 @@ type NormalizeError = {
 
 type NormalizeMode = "resource" | "rule";
 
+/**
+ * Blueprint normalization pass.
+ *
+ * This file statically rewrites a blueprint’s TypeScript source to enforce
+ * consistent, machine-friendly rule and resource definitions.
+ *
+ * The normalizer operates in either "resource" or "rule" mode and:
+ *
+ * - Copies the source blueprint into a target directory for safe mutation
+ * - Detects top-level rule/resource factory calls
+ * - Auto-exports top-level entities if they are not already exported
+ * - Ensures every rule/resource has a stable string `id`
+ *   - Injects a default id based on the export name when possible
+ *   - Validates id format and reports precise errors
+ * - Detects duplicate ids across the blueprint
+ *
+ * In resource mode, direct object-literal resources are also supported.
+ * In rule mode, normalization always targets the root rule(...) call.
+ *
+ * The result is a normalized blueprint where all rules and resources are
+ * explicitly exported, uniquely identified, and safe to load deterministically
+ * at runtime.
+ *
+ * Any unrecoverable issue (invalid shape, missing id, duplicates) causes
+ * normalization to fail with a detailed, user-facing error report.
+ */
 export async function normalizeBlueprint(opts: {
     sourceDir: string;
     targetDir: string;

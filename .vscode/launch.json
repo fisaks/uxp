@@ -51,7 +51,7 @@
             }
         },
         {
-            "name": "Attach to UHN debug process",
+            "name": "Attach to UHN master debug process",
             "type": "node",
             "request": "attach",
             "port": 9229,
@@ -75,7 +75,13 @@
                 "<node_internals>/**"
             ],
             "sourceMaps": true,
-            "outFiles": []
+            "outFiles": [],
+            "localRoot": "${workspaceFolder}",
+            "remoteRoot": "/uhn-runtime",
+            "sourceMapPathOverrides": {
+                "/uhn-workspace/*": "${workspaceFolder}/workspaces/uhn/*",
+                "/uhn-runtime/*": "${workspaceFolder}/*"
+            }
         },
         {
             "name": "Start UXP debug process",

@@ -11,7 +11,7 @@ import { systemConfigService } from "./system-config.service";
 
 export type SetRunModeContext = {
     requestedAt: number;
-    runtimeMode: UhnRuntimeMode;
+    requestedRuntimeMode: UhnRuntimeMode;
     currentRuntimeMode?: UhnRuntimeMode;
     requiresRestart?: boolean;
 };
@@ -142,7 +142,7 @@ export class SystemCommandsService {
     }
     private async commandSetRunMode(runtimeMode: UhnRuntimeMode) {
         await this.executor.executeCommand<SetRunModeContext>("setRunMode",
-            { runtimeMode, requestedAt: Date.now() },
+            { requestedRuntimeMode:runtimeMode, requestedAt: Date.now() },
             "Updating runtime mode", async (context, commandExecution) => {
                 const runner = new SystemCommandRunner();
 
@@ -161,7 +161,7 @@ export class SystemCommandsService {
                     await runner.runStep(context, commandExecution, {
                         key: "recompileBlueprint",
                         label: "Recompiling blueprint",
-                        run: ctx => this.recompileBlueprint(ctx.currentRuntimeMode === "debug"),
+                        run: ctx => this.recompileBlueprint(ctx.requestedRuntimeMode === "debug"),
                     });
 
                     await runner.runStep(context, commandExecution, {
@@ -188,12 +188,12 @@ export class SystemCommandsService {
     private async loadCurrentMode(ctx: SetRunModeContext) {
         const cfg = systemConfigService.getConfig();
         ctx.currentRuntimeMode = cfg.runtimeMode;
-        ctx.requiresRestart = ctx.currentRuntimeMode !== ctx.runtimeMode;
+        ctx.requiresRestart = ctx.currentRuntimeMode !== ctx.requestedRuntimeMode;
     }
 
     private async persistMode(ctx: SetRunModeContext) {
         if (ctx.requiresRestart) {
-            await systemConfigService.setRuntimeMode(ctx.runtimeMode);
+            await systemConfigService.setRuntimeMode(ctx.requestedRuntimeMode);
         }
     }
 
