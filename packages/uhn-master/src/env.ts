@@ -11,7 +11,8 @@ export const requiredKeys = [
     "JWT_SECRET",
     "UHN_FILE_UPLOAD_PATH",
     "UHN_MQTT_BROKER_URL",
-    "UHN_WORKSPACE_PATH"
+    "UHN_WORKSPACE_PATH",
+    "UHN_MASTER_INTERNAL_URL"
 ] as const;
 export const optionalKeys = [
     "LOG_LEVEL",

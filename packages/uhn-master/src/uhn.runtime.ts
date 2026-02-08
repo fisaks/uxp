@@ -24,6 +24,8 @@ import "./services/state-physical.service";
 import "./services/state-runtime.service";
 import "./services/state-signal.service";
 import "./services/subscription.service";
+import "./services/master-key.service";
+import "./services/edge-identity.service";
 import { systemConfigService } from "./services/system-config.service";
 import "./services/uhn-health.service";
 

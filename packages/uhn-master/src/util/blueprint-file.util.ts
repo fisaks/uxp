@@ -5,6 +5,8 @@ import fs, { ensureDir } from "fs-extra";
 import path from "path";
 import env from "../env";
 import unzipper from 'unzipper';
+import archiver from "archiver";
+import { createHash } from "crypto";
 
 const PreFlightFolder = path.join(env.UHN_FILE_UPLOAD_PATH, ".pre-flight");
 const ActiveBlueprintFolder = path.join(env.UHN_WORKSPACE_PATH, "blueprint", "active");
@@ -142,6 +144,71 @@ async function swapActiveBlueprint() {
 
 }
 
+async function removeSignedBlueprintFiles() {
+    const { zipPath, hashPath, sigPath } = getSignedBlueprintPaths();
+
+    await Promise.all([
+        removeFile(zipPath).catch(() => { }),
+        removeFile(hashPath).catch(() => { }),
+        removeFile(sigPath).catch(() => { }),
+    ]);
+}
+
+async function createSignedBlueprintZip(opts: {
+
+    signer: (data: NodeJS.ArrayBufferView) => Buffer;
+}) {
+    const { signer } = opts;
+
+    const { zipPath, hashPath, sigPath } = getSignedBlueprintPaths();
+
+    // --- Create ZIP ---
+    await new Promise<void>((resolve, reject) => {
+        const output = fs.createWriteStream(zipPath);
+        const archive = archiver("zip", {
+            zlib: { level: 9 },
+        });
+
+        output.on("close", resolve);
+        output.on("error", reject);
+        archive.on("error", reject);
+
+        archive.pipe(output);
+
+        archive.file(path.join(ActiveBlueprintFolder, "package.json"), {
+            name: "package.json",
+        });
+        archive.file(path.join(ActiveBlueprintFolder, "pnpm-lock.yaml"), {
+            name: "pnpm-lock.yaml",
+        });
+
+        archive.directory(path.join(ActiveBlueprintFolder, "dist"), "dist");
+        //archive.directory(path.join(ActiveBlueprintFolder, "node_modules"), "node_modules");
+        archive.finalize();
+    });
+
+    // --- Hash ZIP ---
+    const zipBuffer = await fs.readFile(zipPath);
+    const hash = createHash("sha256").update(zipBuffer).digest();
+
+    await fs.writeFile(hashPath, hash.toString("hex"));
+
+    // --- Sign hash ---
+    const signature = signer(hash);
+    await fs.writeFile(sigPath, signature.toString("base64"));
+
+    return {
+        zipPath,
+        hash: hash.toString("hex"),
+        signature,
+    };
+}
+function getSignedBlueprintPaths() {
+    const zipPath = path.join(env.UHN_WORKSPACE_PATH, "blueprint", "blueprint.zip");
+    const hashPath = zipPath + ".sha256";
+    const sigPath = zipPath + ".sig";
+    return { zipPath, hashPath, sigPath };
+}
 
 export const BlueprintFileUtil = {
     ActiveBlueprintFolder,
@@ -157,4 +224,7 @@ export const BlueprintFileUtil = {
     writePrettyJson,
     prepareBlueprintWorkdir,
     swapActiveBlueprint,
+    createSignedBlueprintZip,
+    removeSignedBlueprintFiles,
+    getSignedBlueprintPaths
 };

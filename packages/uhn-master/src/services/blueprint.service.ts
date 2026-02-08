@@ -1,5 +1,5 @@
 import { BlueprintUploadResponse } from "@uhn/common";
-import { AppErrorV2, AppLogger, Token } from "@uxp/bff-common";
+import { AppErrorV2, AppLogger, createReadStream, fileExists, readFile, Token } from "@uxp/bff-common";
 import { EventEmitter } from "events";
 import { FastifyRequest } from "fastify";
 import { DateTime } from "luxon";
@@ -13,6 +13,9 @@ import { BlueprintFileUtil } from "../util/blueprint-file.util";
 import { BlueprintMetaDataUtil } from "../util/blueprint-metadata.util";
 import { blueprintRuntimeSupervisorService } from "./blueprint-runtime-supervisor.service";
 import { systemConfigService } from "./system-config.service";
+import { masterKeyService } from "./master-key.service";
+import mqttService from "./mqtt.service";
+import env from "../env";
 
 type BlueprintEventMap = {
     blueprintActivating: [identifier: string, version: number, by: string];
@@ -85,6 +88,8 @@ class BlueprintService extends EventEmitter<BlueprintEventMap> {
         }
         await blueprintRuntimeSupervisorService.stop();
         this.emit("noActiveBlueprint");
+
+        await this.publishActiveBlueprint();
         AppLogger.info({
             message: `Deactivated blueprint ${identifier} v${version} globally by ${deActivatedBy}`
         });
@@ -179,12 +184,36 @@ class BlueprintService extends EventEmitter<BlueprintEventMap> {
 
         this.emit("blueprintInstalled", identifier, version);
 
+        await this.publishActiveBlueprint();
+
         AppLogger.info({
             message: `Activated blueprint ${identifier} v${version} globally by ${activatedBy}`
         });
 
         return toActivate;
     }
+
+    async publishActiveBlueprint() {
+        const currentlyActive = await BlueprintRepository.findActive();
+        if (!currentlyActive) {
+            mqttService.publish("uhn/master/blueprint/activated", null, { qos: 1, retain: true });
+            await BlueprintFileUtil.removeSignedBlueprintFiles();
+            return;
+        }
+        const { identifier, version } = currentlyActive
+        const signedBlueprint = await BlueprintFileUtil.createSignedBlueprintZip({
+            signer: (data) => masterKeyService.sign(data),
+        });
+        mqttService.publish("uhn/master/blueprint/activated", {
+            identifier,
+            version,
+            "downloadUrl": `${env.UHN_MASTER_INTERNAL_URL}/api/internal/download/blueprint`,
+            "sha256": signedBlueprint.hash,
+            ts: Date.now(),
+
+        }, { qos: 1, retain: true });
+    }
+
     async getActiveBlueprint(): Promise<BlueprintEntity | undefined> {
         return await BlueprintRepository.findActive() ?? undefined;
     }
@@ -311,6 +340,40 @@ class BlueprintService extends EventEmitter<BlueprintEventMap> {
             name: `${identifier}-v${version}.zip`,
             stream: await BlueprintFileUtil.getBlueprintStream(blueprint.zipPath)
         }
+    }
+
+    async getActiveSignedBlueprint(): Promise<{
+        stream: NodeJS.ReadableStream;
+        signature: string;
+        hash: string;
+    } | null> {
+
+        const paths = BlueprintFileUtil.getSignedBlueprintPaths();
+     
+        const { zipPath, sigPath, hashPath } = paths;
+
+        const exists = await Promise.all([
+            fileExists(zipPath),
+            fileExists(sigPath),
+            fileExists(hashPath),
+        ]);
+        if(!exists.every(e => e)) {
+            return null;
+        }
+        // Read signature + hash (small, safe to load fully)
+        const [signature, hash] = await Promise.all([
+            readFile(sigPath, "utf8"),
+            readFile(hashPath, "utf8"),
+        ]);
+
+        // Create stream for zip
+        const stream = createReadStream(zipPath);
+
+        return {
+            stream,
+            signature: signature.trim(),
+            hash: hash.trim(),
+        };
     }
 
 }

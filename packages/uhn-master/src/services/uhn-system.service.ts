@@ -8,6 +8,7 @@ import { BlueprintCompileUtil } from "../util/blueprint-compiler.util";
 import { BlueprintFileUtil } from "../util/blueprint-file.util";
 import { blueprintRuntimeSupervisorService } from "./blueprint-runtime-supervisor.service";
 import { systemConfigService } from "./system-config.service";
+import { blueprintService } from "./blueprint.service";
 
 export type SetRunModeContext = {
     requestedAt: number;
@@ -223,6 +224,7 @@ export class SystemCommandsService {
     }
     private async activateRecompile() {
         await BlueprintFileUtil.swapActiveBlueprint();
+        await blueprintService.publishActiveBlueprint();
     }
 
 

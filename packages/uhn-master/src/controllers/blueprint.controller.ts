@@ -4,7 +4,28 @@ import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { ActivateBlueprintSchema, BlueprintVersionLogSchema, DeleteBlueprintVersionSchema, DownloadBlueprintSchema, ListActivationsForVersionSchema, ListActivationsSchema } from "@uhn/common";
 import { BlueprintMapper } from "../mappers/blueprint.mapper";
 import { blueprintService } from "../services/blueprint.service";
+import { edgeIdentityService } from "../services/edge-identity.service";
+import { verify } from "../util/ed25519";
 
+function validateInternalDownloadRequest(req: FastifyRequest): boolean {
+    const edgeId = req.headers["x-uhn-edge-id"];
+    const signature = req.headers["x-uhn-edge-signature"];
+    if (!edgeId || !signature) {
+        AppLogger.error(req, { message: "Missing required headers for internal blueprint download", object: { edgeId, signature } });
+        return false;
+    }
+    const publicKey = edgeIdentityService.getPublicKey(Array.isArray(edgeId) ? edgeId[0] : edgeId)
+    if (!publicKey) {
+        AppLogger.warn(req, { message: `Unknown edge ${edgeId} attempted to download active blueprint` });
+        return false;
+    }
+    const verified = verify(Buffer.from("GET /api/internal/download/blueprint"), Buffer.from(Array.isArray(signature) ? signature[0] : signature, "base64"), publicKey)
+
+    if (!verified) {
+        AppLogger.error(req, { message: `Failed to verify signature for edge ${edgeId} when downloading active blueprint` });
+    }
+    return verified;
+}
 export class BlueprintController {
     private fastify: FastifyInstance;
     constructor(fastify: FastifyInstance) {
@@ -116,4 +137,22 @@ export class BlueprintController {
 
     }
 
+
+    @Route("get", "/internal/download/blueprint", { authenticate: false, validate: validateInternalDownloadRequest })
+    @UseQueryRunner({ transactional: false })
+    async downloadActiveBlueprint(req: FastifyRequest, reply: FastifyReply) {
+        const blueprint = await blueprintService.getActiveSignedBlueprint();
+        if (!blueprint) {
+            return reply.status(404).send({ error: "No active blueprint found" });
+        }
+
+        reply.header("Content-Type", "application/zip");
+        reply.header("Content-Disposition", `attachment; filename="blueprint.zip"`);
+        reply.header("X-UHN-Blueprint-Signature", blueprint.signature);
+        reply.header("X-UHN-Blueprint-SHA256", blueprint.hash);
+        blueprint.stream.on('error', err => {
+            reply.status(500).send({ error: "Failed to read blueprint file" });
+        });
+        return reply.send(blueprint.stream);
+    }
 }
