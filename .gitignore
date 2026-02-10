@@ -24,3 +24,4 @@ packages/uxp-bff/src/db/private-migrations/
 mosquitto/data/
 mosquitto/log/
 uhn-rule-engine-architecture.md
+/public/static/libs
