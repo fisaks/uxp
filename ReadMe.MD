@@ -95,6 +95,11 @@ The project is organized as a **TypeScript** monorepo with the following package
 
 ## Development environment
 
+UXP currently provides some shared libraries as browser globals to reduce
+remote app bundle size. these libraries need to b e downloaded one time 
+
+`download-scripts.sh`
+
 To start the development environment, run:
 
 > Starts the development server in a tmux session with multiple windows for different services
