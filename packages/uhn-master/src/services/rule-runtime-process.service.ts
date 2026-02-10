@@ -301,7 +301,9 @@ class RuleRuntimeProcessService extends EventEmitter<RuleRuntimeProcessEventMap>
                 opts: {
                     cwd: hostUhnRuntimePath,
                     env: {
+                        ...(!useSandbox ? process.env : {}),
                         "UHN_RUNTIME_PATH": hostUhnRoot,
+
                     }
                 },
                 mode: "debug",
@@ -322,6 +324,7 @@ class RuleRuntimeProcessService extends EventEmitter<RuleRuntimeProcessEventMap>
                 ],
                 opts: {
                     cwd: hostUhnRuntimePath, env: {
+                        ...(!useSandbox ? process.env : {}),
                         "UHN_RUNTIME_PATH": hostUhnRoot,
                     }
                 },
@@ -336,6 +339,7 @@ class RuleRuntimeProcessService extends EventEmitter<RuleRuntimeProcessEventMap>
                 args: [`${uhnRuntimePath}/${pkg.main ?? "dist/rule-runtime.js"}`, blueprintFolderInUse, "master"],
                 opts: {
                     cwd: hostUhnRuntimePath, env: {
+                        ...(!useSandbox ? process.env : {}),
                         "UHN_RUNTIME_PATH": hostUhnRoot,
                     }
                 },
