@@ -23,7 +23,7 @@ export class TagEntity {
      * Used as the key when exposing tagged routes to the client.
      * Automatically normalized to a URL-safe, lowercase format.
      */
-    @Column({ unique: true, nullable: false })
+    @Column({ type: "varchar", unique: true, nullable: false })
     name!: string;
 
     @OneToMany(() => RouteTagsEntity, (routeTag) => routeTag.tag)

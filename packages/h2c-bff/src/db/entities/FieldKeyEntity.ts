@@ -9,13 +9,13 @@ export class FieldKeyEntity {
     @PrimaryGeneratedColumn()
     id!: number;
 
-    @Column({ nullable: false })
+    @Column({ type: "varchar", nullable: false })
     type!: FieldKeyType;
    
-    @Column({ nullable: false })
+    @Column({ type: "varchar", nullable: false })
     key!: string;
 
-    @Column({ nullable: false })
+    @Column({ type: "varchar", nullable: false })
     normalizedKey!: string; 
 
     @CreateDateColumn({

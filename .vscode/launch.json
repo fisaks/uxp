@@ -4,19 +4,18 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "Debug with ts-node-dev",
-            "runtimeExecutable": "npx",
+            "name": "UXP BFF (debug)",
+            "runtimeExecutable": "tsx",
             "runtimeArgs": [
-                "ts-node-dev",
-                "--inspect",
-                "--transpile-only"
+                "watch",
+                "--inspect"
             ],
             "args": [
                 "${workspaceFolder}/packages/uxp-bff/src/uxp.bff.ts"
             ], // Replace with your main TypeScript file
             "cwd": "${workspaceFolder}/packages/uxp-bff",
             "restart": true,
-            "sourceMaps": false,
+            "sourceMaps": true,
             "console": "integratedTerminal",
             "env": {
                 "NODE_ENV": "development"
@@ -26,14 +25,10 @@
             "name": "Start UHN master debug process",
             "type": "node",
             "request": "launch",
-            "runtimeExecutable": "pnpm",
+            "runtimeExecutable": "tsx",
             "runtimeArgs": [
-                "ts-node-dev",
-                "--project",
-                "./tsconfig.json",
-                "--inspect",
-                "--transpile-only",
-                "--respawn"
+                "watch",
+                "--inspect"
             ],
             "args": [
                 "src/uhn.master.ts"
@@ -77,39 +72,12 @@
             "sourceMaps": true,
             "outFiles": [],
             "localRoot": "${workspaceFolder}",
-            "remoteRoot": "/uhn-runtime",
+            "remoteRoot": "/",
             "sourceMapPathOverrides": {
-                "/uhn-workspace/*": "${workspaceFolder}/workspaces/uhn/*",
+                "file:///uhn-workspace/blueprint/active/dist/*": "/workspaces/uhn/blueprint/active/dist/*",
+                "file:///uhn-runtime/node_modules/*": "/node_modules/*",
                 "/uhn-runtime/*": "${workspaceFolder}/*"
             }
         },
-        {
-            "name": "Start UXP debug process",
-            "type": "node",
-            "request": "launch",
-            "runtimeExecutable": "pnpm",
-            "runtimeArgs": [
-                "ts-node-dev",
-                "--project",
-                "./tsconfig.json",
-                "--inspect",
-                "--transpile-only",
-                "--respawn"
-            ],
-            "args": [
-                "src/uxp.bff.ts"
-            ],
-            "cwd": "${workspaceFolder}/packages/uxp-bff",
-            "restart": true,
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
-            "sourceMaps": true,
-            "outFiles": [],
-            "console": "integratedTerminal",
-            "env": {
-                "NODE_ENV": "development"
-            }
-        }
     ]
 }

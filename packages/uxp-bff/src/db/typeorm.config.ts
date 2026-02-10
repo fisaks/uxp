@@ -1,5 +1,7 @@
 const { DataSource } = require("typeorm");
 require("../config/env");
+const isCompiled = __filename.includes("dist");
+
 const AppDataSource = new DataSource({
     type: "mysql",
     host: process.env.DATABASE_HOST,
@@ -9,11 +11,11 @@ const AppDataSource = new DataSource({
     database: process.env.MYSQL_UXP_DATABASE,
     synchronize: false, // Use migrations for schema changes
     logging: true,
-    entities: [process.env.TS_NODE_DEV ? "src/db/entities/**/*.ts" : "dist/db/entities/**/*.js"],
+    entities: [isCompiled ? "dist/db/entities/**/*.js" : "src/db/entities/**/*.ts"],
     //entities: [Page],
     migrations: [
-        process.env.TS_NODE_DEV ? "src/db/migrations/**/*.ts" : "dist/db/migrations/**/*.js",
-        process.env.TS_NODE_DEV ? "src/db/private-migrations/**/*.ts" : "dist/db/private-migrations/**/*.js",
+        isCompiled ? "dist/db/migrations/**/*.js" : "src/db/migrations/**/*.ts",
+        isCompiled ? "dist/db/private-migrations/**/*.js" : "src/db/private-migrations/**/*.ts",
     ],
     cli: {
         migrationsDir: "dist/migration",

@@ -44,7 +44,7 @@ export class RouteEntity {
       *
       * This ensures identifiers are safe to use as keys, URLs, and references.
       */
-    @Column({ unique: true, nullable: false })
+    @Column({ type: "varchar", unique: true, nullable: false })
     identifier!: string;
 
     /**
@@ -62,7 +62,7 @@ export class RouteEntity {
      * - `/app/*` → base route path `/app/`
      * - `/login` → no base route path
      */
-    @Column()
+    @Column({ type: "varchar" })
     routePattern!: string;
 
     /**
@@ -78,7 +78,7 @@ export class RouteEntity {
      * - routePattern: `/app/*`
      * - link: `/app/`
      */
-    @Column({ nullable: true })
+    @Column({ type: "varchar", nullable: true })
     link!: string;
 
     /**

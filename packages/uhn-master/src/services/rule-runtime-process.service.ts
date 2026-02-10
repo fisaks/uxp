@@ -290,12 +290,10 @@ class RuleRuntimeProcessService extends EventEmitter<RuleRuntimeProcessEventMap>
             return {
                 cmd: "pnpm",
                 args: [
-                    "ts-node-dev",
-                    "--project",
+                    "tsx",
+                    "--tsconfig",
                     `${uhnRuntimePath}/tsconfig.json`,
                     "--inspect=127.0.0.1:9250",
-                    //"--enable-source-maps", // TODO add ui feature to enable debug with source maps
-                    //"--transpile-only",
                     `${uhnRuntimePath}/src/rule-runtime.ts`,
                     blueprintFolderInUse,
                     "master"
@@ -315,9 +313,9 @@ class RuleRuntimeProcessService extends EventEmitter<RuleRuntimeProcessEventMap>
             return {
                 cmd: "pnpm",
                 args: [
-                    "ts-node-dev",
-                    "--project", `${uhnRuntimePath}/tsconfig.json`,
-                    "--respawn",
+                    "tsx",
+                    "--tsconfig",
+                    `${uhnRuntimePath}/tsconfig.json`,
                     `${uhnRuntimePath}/src/rule-runtime.ts`,
                     blueprintFolderInUse,
                     "master"

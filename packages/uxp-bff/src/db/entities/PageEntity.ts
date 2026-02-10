@@ -33,7 +33,7 @@ export class PageEntity {
     identifier!: string;
 
     /** Display name of the page */
-    @Column()
+    @Column("varchar")
     name!: string;
 
     /**

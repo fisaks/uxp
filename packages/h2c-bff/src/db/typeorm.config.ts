@@ -1,5 +1,6 @@
 const { DataSource } = require("typeorm");
 require("../env");
+const isCompiled = __filename.includes("dist");
 const AppDataSource = new DataSource({
     type: "mysql",
     host: process.env.DATABASE_HOST,
@@ -9,8 +10,8 @@ const AppDataSource = new DataSource({
     database: process.env.MYSQL_H2C_DATABASE,
     synchronize: false, // Use migrations for schema changes
     logging: true,
-    entities: [process.env.TS_NODE_DEV ? "src/db/entities/**/*.ts" : "dist/db/entities/**/*.js"],
-    migrations: [process.env.TS_NODE_DEV ? "src/db/migrations/**/*.ts" : "dist/db/migrations/**/*.js"],
+    entities: [isCompiled ? "dist/db/entities/**/*.js" : "src/db/entities/**/*.ts"],
+    migrations: [isCompiled ? "dist/db/migrations/**/*.js" : "src/db/migrations/**/*.ts"],
     cli: {
         migrationsDir: "dist/migration",
     },

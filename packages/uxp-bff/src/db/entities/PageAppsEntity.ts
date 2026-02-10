@@ -71,7 +71,7 @@ export class PageAppsEntity {
      * The value must match a key in the dynamic component map:
      * `packages/uxp-ui/src/features/dynamic-components/componentMap.ts`
      */
-    @Column({ nullable: true })
+    @Column({ type: "varchar", nullable: true })
     internalComponent!: string;
 
     /**

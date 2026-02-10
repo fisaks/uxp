@@ -10,7 +10,6 @@
     "license": "ISC",
     "scripts": {
         "build": "pnpm tsc --build",
-        "dev": "pnpm ts-node-dev --respawn src/index.ts",
         "clean": "pnpm rimraf --glob -v dist tsconfig.tsbuildinfo",
         "watch": "pnpm tsc --watch",
         "lint": "pnpm eslint .",

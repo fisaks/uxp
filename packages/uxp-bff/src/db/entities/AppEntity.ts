@@ -22,14 +22,14 @@ export class AppEntity {
     id!: number;
 
     /** Display name of the app (e.g. "H2C") */
-    @Column({ unique: true })
+    @Column({ type: "varchar", unique: true })
     name!: string;
 
     /**
      * Stable app identifier derived from the name.
      * Used internally for routing and references.
      */
-    @Column({ unique: true })
+    @Column({ type: "varchar", unique: true })
     identifier!: string;
 
     /**
@@ -41,7 +41,7 @@ export class AppEntity {
      * The final target URL is built as:
      *   baseUrl + contextPath + resource path (e.g. index.html)
      */
-    @Column()
+    @Column({ type: "varchar" })
     baseUrl!: string; // Base URL for reverse proxy
 
     /**
@@ -52,7 +52,7 @@ export class AppEntity {
     config!: AppConfigData; // JSON column for rewrite rules, settings, etc.
 
     /** Whether the app is enabled */
-    @Column()
+    @Column({ type: "boolean"})
     isActive!: boolean; // Indicates if the app is active
 
     @BeforeInsert()
