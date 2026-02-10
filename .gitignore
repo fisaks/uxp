@@ -1,5 +1,6 @@
 # Idea
 .idea
+.vscode
 # package directories
 node_modules
 package-lock.json
