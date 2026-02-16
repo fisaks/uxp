@@ -3,6 +3,7 @@ import { execSync } from "child_process";
 import fs from "fs-extra";
 import path from "path";
 import { normalizeBlueprint } from "./normalizeBlueprint";
+import { resolveExecutionTargets } from "./resolveExecutionTargets";
 import { validateBlueprintFactories } from "./validateBlueprintFactories";
 import { validateBlueprintMetadata } from "./validateBlueprintMetadata";
 
@@ -83,6 +84,14 @@ export async function buildBlueprint(projectRoot: string): Promise<string> {
         targetDir: rulesTmp,
         tsconfigPath: tsconfigPath,
         mode: "rule",
+    });
+
+    // 3.5) Resolve and inject execution targets
+    await resolveExecutionTargets({
+        resourcesTmpDir: resourcesTmp,
+        rulesTmpDir: rulesTmp,
+        tsconfigPath,
+        factoryTmpPath: factoryTmp,
     });
 
     // 4) Copy blueprint.json

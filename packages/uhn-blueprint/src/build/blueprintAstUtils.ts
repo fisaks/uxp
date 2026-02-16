@@ -34,6 +34,10 @@ export function getRootCallExpression(node: Node): CallExpression | undefined {
     return undefined;
 }
 
+export function isLocalImport(specifier: string): boolean {
+    return specifier.startsWith(".");
+}
+
 export function isPathWithinParent(childPath: string, parentPath: string): boolean {
     const rel = path.relative(parentPath, childPath);
     return !!rel && !rel.startsWith("..") && !path.isAbsolute(rel);
@@ -47,6 +51,31 @@ const IDENTIFIER_REGEX = /^[A-Za-z_][A-Za-z0-9_]*$/;
 
 export function isValidIdentifier(id: string): boolean {
     return IDENTIFIER_REGEX.test(id);
+}
+
+/**
+ * Extract a string literal value for a named property from an object literal
+ * or from the first argument of a call expression.
+ */
+export function extractPropertyStringValue(node: Node, propertyName: string): string | undefined {
+    if (Node.isObjectLiteralExpression(node)) {
+        const prop = node.getProperty(propertyName);
+        if (prop && Node.isPropertyAssignment(prop)) {
+            const init = prop.getInitializer();
+            if (init && Node.isStringLiteral(init)) {
+                return init.getLiteralValue();
+            }
+        }
+    }
+
+    if (Node.isCallExpression(node)) {
+        const arg = node.getArguments()[0];
+        if (arg && Node.isObjectLiteralExpression(arg)) {
+            return extractPropertyStringValue(arg, propertyName);
+        }
+    }
+
+    return undefined;
 }
 
 export function extractIdValue(node: Node): string | undefined {
@@ -118,7 +147,7 @@ export function collectNamedImportsFromPaths(
             continue;
         }
 
-        if (spec.startsWith(".")) {
+        if (isLocalImport(spec)) {
             const resolved = path.resolve(path.dirname(sf.getFilePath()), spec);
             if (allowedRoots.some(root =>
                 resolved === root || isPathWithinParent(resolved, root)

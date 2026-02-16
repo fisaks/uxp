@@ -152,8 +152,9 @@ export type MuteController = {
 }
 
 export type RuleExecutionTarget =
-    | "auto"   // default: try edge first, escalate if needed
-    | "master"; // author forces master-only execution
+    | "edge"   // rule runs on a single edge server
+    | "master" // rule runs on master (multi-edge or author override)
+    | "auto";  // runtime decides (timer-only or no-resource rules)
 
 
 export type BlueprintRuleMeta = {
@@ -161,7 +162,7 @@ export type BlueprintRuleMeta = {
     name?: string;
     description?: string;
 
-    executionTarget?: RuleExecutionTarget; // default "auto"
+    executionTarget?: RuleExecutionTarget; // injected by build
     triggers: RuleTrigger[];
 
     // optional scheduling guards (per rule)
@@ -224,9 +225,7 @@ export function rule(
         id: props?.id!,
         name: props?.name,
         description: props?.description,
-        executionTarget: "auto",
         triggers: [],
-
     };
 
     const builder: RuleBuilder = {
