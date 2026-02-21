@@ -28,7 +28,7 @@ const rulesDir = path.join(path.resolve(blueprintDir), "dist", "rules");
 async function main() {
     const [resourceService, rulesService] = await Promise.all([
         RuntimeResourceService.create(resourcesDir),
-        RuntimeRulesService.create(rulesDir),
+        RuntimeRulesService.create(rulesDir, runMode),
     ]);
     const stateService = new RuntimeStateService();
     const triggerEventBus = new TriggerEventBus();

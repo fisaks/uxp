@@ -3,6 +3,7 @@ import { BlueprintRule, isBlueprintRule } from "@uhn/blueprint";
 import fs from "fs-extra";
 import path from "path";
 import { runtimeOutput } from "../io/runtime-output";
+import { RuntimeMode } from "../types/rule-runtime.type";
 
 
 
@@ -84,6 +85,15 @@ function indexRules(rules: BlueprintRule[]): Map<string, BlueprintRule[]> {
 }
 
 
+function filterRulesByMode(rules: BlueprintRule[], mode: RuntimeMode): BlueprintRule[] {
+    return rules.filter(rule => {
+        const target = rule.executionTarget;
+        if (mode === "edge") return target === "edge" || target === "auto";
+        if (mode === "master") return target === "master" || target === "auto" || !target;
+        return true;
+    });
+}
+
 function validateRules(rules: BlueprintRule[]): BlueprintRule[] {
     const seen = new Set<string>();
     const out: BlueprintRule[] = [];
@@ -118,11 +128,15 @@ export class RuntimeRulesService {
         this.byResourceId = byResourceId;
     }
 
-    static async create(rulesDir: string): Promise<RuntimeRulesService> {
+    static async create(rulesDir: string, mode: RuntimeMode): Promise<RuntimeRulesService> {
         const loaded = await collectRules(rulesDir);
-        const rules = validateRules(loaded);
+        const validated = validateRules(loaded);
+        const rules = filterRulesByMode(validated, mode);
+        runtimeOutput.log({
+            level: "info", component: "RuntimeRulesService",
+            message: `Loaded ${rules.length} of ${validated.length} rules for mode "${mode}".`,
+        });
         const byResourceId = indexRules(rules);
-        runtimeOutput.log({ level: "info", component: "RuntimeRulesService", message: `Loaded ${rules.length} rules.` });
         return new RuntimeRulesService(rules, byResourceId);
     }
 
