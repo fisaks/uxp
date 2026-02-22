@@ -13,9 +13,10 @@ import { RuleRuntimeDependencies, RuntimeMode, RuntimeModes } from "./types/rule
 import { RuntimeTimerService } from "./services/runtime-timer.service";
 
 const blueprintDir = process.argv[2];
-const runMode = process.argv[3] as RuntimeMode
+const runMode = process.argv[3] as RuntimeMode;
+const edgeName = process.argv[4]; // edge identity (e.g. "edge1"), only present in edge mode
 if (!blueprintDir) {
-    console.error("Usage: node rule-runtime.js <blueprint-folder>");
+    console.error("Usage: node rule-runtime.js <blueprint-folder> <mode> [edgeName]");
     process.exit(1);
 }
 if (!runMode || RuntimeModes.indexOf(runMode) === -1) {
@@ -28,7 +29,7 @@ const rulesDir = path.join(path.resolve(blueprintDir), "dist", "rules");
 async function main() {
     const [resourceService, rulesService] = await Promise.all([
         RuntimeResourceService.create(resourcesDir),
-        RuntimeRulesService.create(rulesDir, runMode),
+        RuntimeRulesService.create(rulesDir, runMode, edgeName),
     ]);
     const stateService = new RuntimeStateService();
     const triggerEventBus = new TriggerEventBus();

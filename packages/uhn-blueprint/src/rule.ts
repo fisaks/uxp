@@ -152,9 +152,9 @@ export type MuteController = {
 }
 
 export type RuleExecutionTarget =
-    | "edge"   // rule runs on a single edge server
     | "master" // rule runs on master (multi-edge or author override)
-    | "auto";  // runtime decides (timer-only or no-resource rules)
+    | "auto"   // runtime decides (timer-only or no-resource rules)
+    | (string & {}); // edge name (e.g. "edge1") — rule runs on that specific edge
 
 
 export type BlueprintRuleMeta = {

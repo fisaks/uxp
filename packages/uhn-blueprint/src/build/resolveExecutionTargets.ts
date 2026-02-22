@@ -115,18 +115,18 @@ export async function resolveExecutionTargets(opts: {
                     ? arg.getLiteralValue()
                     : undefined;
 
-                // Manual override — respect it, but warn if edge + multi-edge
-                if (existingTarget === "edge" && (fileEdges.size > 1 || forceToMaster)) {
+                // Manual override — respect it, but warn if targeting a specific edge while using multiple edges
+                if (existingTarget && existingTarget !== "master" && existingTarget !== "auto" && (fileEdges.size > 1 || forceToMaster)) {
                     const edgeList = [...fileEdges].join(", ");
                     console.warn(
-                        `⚠️  ${relPath}: ${v.getName()} is marked as edge but potentially uses resources from multiple edges (${edgeList})`
+                        `⚠️  ${relPath}: ${v.getName()} targets edge "${existingTarget}" but potentially uses resources from multiple edges (${edgeList})`
                     );
                 }
                 continue;
             }
 
             // Determine target
-            let target: "edge" | "master" | "auto";
+            let target: string;
             if (forceToMaster || fileEdges.size > 1) {
                 target = "master";
                 if (fileEdges.size > 1) {
@@ -136,7 +136,7 @@ export async function resolveExecutionTargets(opts: {
                     );
                 }
             } else if (fileEdges.size === 1) {
-                target = "edge";
+                target = [...fileEdges][0]; // inject actual edge name (e.g. "edge1")
             } else {
                 // No physical edge resources (timer-only or no resources)
                 target = "auto";

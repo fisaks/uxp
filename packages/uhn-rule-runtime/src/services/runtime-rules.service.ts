@@ -85,10 +85,15 @@ function indexRules(rules: BlueprintRule[]): Map<string, BlueprintRule[]> {
 }
 
 
-function filterRulesByMode(rules: BlueprintRule[], mode: RuntimeMode): BlueprintRule[] {
+function filterRulesByMode(rules: BlueprintRule[], mode: RuntimeMode, edgeName?: string): BlueprintRule[] {
     return rules.filter(rule => {
         const target = rule.executionTarget;
-        if (mode === "edge") return target === "edge" || target === "auto";
+        if (mode === "edge") {
+            if (target === "auto") return true;
+            if (target === "master" || !target) return false;
+            // target is an edge name — include only if it matches this edge
+            return target === edgeName;
+        }
         if (mode === "master") return target === "master" || target === "auto" || !target;
         return true;
     });
@@ -128,13 +133,14 @@ export class RuntimeRulesService {
         this.byResourceId = byResourceId;
     }
 
-    static async create(rulesDir: string, mode: RuntimeMode): Promise<RuntimeRulesService> {
+    static async create(rulesDir: string, mode: RuntimeMode, edgeName?: string): Promise<RuntimeRulesService> {
         const loaded = await collectRules(rulesDir);
         const validated = validateRules(loaded);
-        const rules = filterRulesByMode(validated, mode);
+        const rules = filterRulesByMode(validated, mode, edgeName);
+        const modeLabel = edgeName ? `${mode} (${edgeName})` : mode;
         runtimeOutput.log({
             level: "info", component: "RuntimeRulesService",
-            message: `Loaded ${rules.length} of ${validated.length} rules for mode "${mode}".`,
+            message: `Loaded ${rules.length} of ${validated.length} rules for mode "${modeLabel}".`,
         });
         const byResourceId = indexRules(rules);
         return new RuntimeRulesService(rules, byResourceId);
