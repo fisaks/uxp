@@ -1,6 +1,6 @@
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import HistoryIcon from "@mui/icons-material/History";
-import { Alert, Button, IconButton, Paper, Typography, useTheme } from "@mui/material";
+import { Alert, Button, Checkbox, FormControlLabel, IconButton, Paper, Typography, useTheme } from "@mui/material";
 import Box from "@mui/material/Box/Box";
 import { BlueprintUploadResponse } from "@uhn/common";
 import { ErrorCodeMessageMap, FormattedMessageType, ReloadIconButton, UploadProgress, UploadStatus, useUploadTracker } from "@uxp/ui-lib";
@@ -14,7 +14,7 @@ import { selectBlueprintTrackingId } from "../blueprintSelector";
 import { openActivationListDialog, setBlueprintTrackingId } from "../blueprintSlice";
 
 import { uhnApi } from "../../../app/uhnApi";
-import { useFetchBlueprintsQuery } from "../blueprint.api";
+import { useActivateBlueprintMutation, useFetchBlueprintsQuery } from "../blueprint.api";
 import BlueprintActivationListDialog from "../components/BlueprintActivationListDialog";
 import BlueprintList from "../components/BlueprintList";
 import { BlueprintVersionLogDialog } from "../components/BlueprintVersionLogDialog";
@@ -38,8 +38,10 @@ export const UploadBlueprintPage = () => {
     const blueprintsError = useSelector(selectActionError("blueprint/fetchBlueprints"));
     const [error, setError] = useState<string | undefined>(undefined);
     const [successMessage, setSuccessMessage] = useState<FormattedMessageType | undefined>(undefined);
+    const [activateAfterUpload, setActivateAfterUpload] = useState(true);
+    const [activateBlueprint] = useActivateBlueprintMutation();
     // Keep trackingId in Redux for cross-page tracking, but useRef here to avoid
-    // resubscribing the uploadTracker listener on every Redux change.   
+    // resubscribing the uploadTracker listener on every Redux change.
     const trackingId = useRef<string | undefined>(useSelector(selectBlueprintTrackingId));
     const { refetch: loadBlueprints } = useFetchBlueprintsQuery();
 
@@ -55,24 +57,57 @@ export const UploadBlueprintPage = () => {
         const unsub = uploadTracker.subscribeToUploadStatus<BlueprintUploadResponse>((id, status) => {
             if (id !== trackingId.current) return;
             setUploadStatus(status);
-            if (status.status === "done") {
-                setSuccessMessage({
-                    template:
-                        "Blueprint uploaded successfully. Identifier: {identifier}, version {version}.",
-                    values: { identifier: status.result?.identifier, version: status.result?.version }
-                });
-
-            }
-            if (status.status === "uploading") {
-                setError(undefined);
-                setSuccessMessage(undefined);
-            }
-
         })
         return () => {
             unsub();
         };
-    }, [uploadTracker, dispatch])
+    }, [uploadTracker])
+
+    // React to uploadStatus changes — handle success messages and optional activation.
+    const activatedForRef = useRef<string | undefined>(undefined);
+    useEffect(() => {
+        if (!uploadStatus) return;
+        if (uploadStatus.status === "uploading") {
+            setError(undefined);
+            setSuccessMessage(undefined);
+            return;
+        }
+        if (uploadStatus.status !== "done" || !uploadStatus.result) return;
+
+        const { identifier, version } = uploadStatus.result;
+
+        if (!activateAfterUpload) {
+            setSuccessMessage({
+                template: "Blueprint uploaded successfully. Identifier: {identifier}, version {version}.",
+                values: { identifier, version }
+            });
+            return;
+        }
+
+        const key = `${identifier}@${version}`;
+        if (activatedForRef.current === key) return;
+        activatedForRef.current = key;
+
+        setSuccessMessage({
+            template: "Blueprint uploaded. Activating {identifier} v{version}…",
+            values: { identifier, version }
+        });
+        activateBlueprint({ identifier, version })
+            .unwrap()
+            .then(() => {
+                setSuccessMessage({
+                    template: "Blueprint uploaded and activated. Identifier: {identifier}, version {version}.",
+                    values: { identifier, version }
+                });
+            })
+            .catch(() => {
+                setError("Blueprint uploaded but activation failed.");
+                setSuccessMessage({
+                    template: "Blueprint uploaded. Identifier: {identifier}, version {version}.",
+                    values: { identifier, version }
+                });
+            });
+    }, [uploadStatus, activateAfterUpload, activateBlueprint])
 
 
     const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -162,6 +197,17 @@ export const UploadBlueprintPage = () => {
                             Selected file: <strong>{file.name}</strong>
                         </Typography>
                     )}
+
+                    <FormControlLabel
+                        control={
+                            <Checkbox
+                                checked={activateAfterUpload}
+                                onChange={(e) => setActivateAfterUpload(e.target.checked)}
+                                disabled={isSubmitting}
+                            />
+                        }
+                        label="Activate after upload"
+                    />
 
                     <Box sx={{ mt: 2 }}>
                         <Button
