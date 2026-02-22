@@ -24,10 +24,8 @@ export function digitalOutput<
     return { ...props, type: "digitalOutput" };
 }
 
-export function timer(props: Omit<TimerResourceBase, "type" | "device" | "edge" | "pin">): TimerResourceBase {
-    return {
-        ...props,
-        type: "timer",
-        edge: "auto",
-    };
+export function timer<TEdge extends string = string>(
+    props: Omit<TimerResourceBase<TEdge>, "type" | "device" | "pin">
+): TimerResourceBase<TEdge> {
+    return { ...props, type: "timer" };
 }

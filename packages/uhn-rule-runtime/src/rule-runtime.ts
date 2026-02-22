@@ -5,11 +5,12 @@ import { createRuntimeReader } from "./io/runtime-reader";
 import { InputGestureEmitter } from "./rule/input-gesture.emitter";
 import { ResourceEventEmitter } from "./rule/resource-event.emitter";
 import { RuleEngine } from "./rule/rule-engine";
+import { TimerStateEmitter } from "./rule/timer-state.emitter";
 import { TriggerEventBus } from "./rule/trigger-event-bus";
 import { RuntimeResourceService } from "./services/runtime-resource.service";
 import { RuntimeRulesService } from "./services/runtime-rules.service";
 import { RuntimeStateService } from "./services/runtime-state.service";
-import { RuleRuntimeDependencies, RuntimeMode, RuntimeModes } from "./types/rule-runtime.type";
+import { RuntimeMode, RuntimeModes } from "./types/rule-runtime.type";
 import { RuntimeTimerService } from "./services/runtime-timer.service";
 
 const blueprintDir = process.argv[2];
@@ -34,16 +35,19 @@ async function main() {
     const stateService = new RuntimeStateService();
     const triggerEventBus = new TriggerEventBus();
     const timerService = new RuntimeTimerService(stateService);
+
     const router = createCommandRouter({
         runMode: runMode,
         resourceService,
         rulesService,
-        stateService
-    } as RuleRuntimeDependencies);
+        stateService,
+        timerService,
+    });
     // Instances register listeners in constructors; keep references to prevent accidental GC/lint removal.
-    const ruleEngine = new RuleEngine(triggerEventBus, rulesService, stateService, timerService);
+    const ruleEngine = new RuleEngine(triggerEventBus, rulesService, stateService, timerService, runMode);
     const resourceEventEmitter = new ResourceEventEmitter(stateService, triggerEventBus, resourceService);
     const inputGestureEmitter = new InputGestureEmitter(stateService, rulesService, triggerEventBus, resourceService);
+    const timerStateEmitter = new TimerStateEmitter(timerService);
 
     createRuntimeReader((cmd) => {
         router.handle(cmd);

@@ -73,7 +73,7 @@ export async function resolveExecutionTargets(opts: {
                 for (const named of imp.getNamedImports()) {
                     const importName = named.getName();
                     const edge = resourceEdgeMap.get(importName);
-                    if (edge && edge !== "auto") {
+                    if (edge) {
                         fileEdges.add(edge);
                     }
                 }
@@ -116,7 +116,7 @@ export async function resolveExecutionTargets(opts: {
                     : undefined;
 
                 // Manual override — respect it, but warn if targeting a specific edge while using multiple edges
-                if (existingTarget && existingTarget !== "master" && existingTarget !== "auto" && (fileEdges.size > 1 || forceToMaster)) {
+                if (existingTarget && existingTarget !== "master" && (fileEdges.size > 1 || forceToMaster)) {
                     const edgeList = [...fileEdges].join(", ");
                     console.warn(
                         `⚠️  ${relPath}: ${v.getName()} targets edge "${existingTarget}" but potentially uses resources from multiple edges (${edgeList})`
@@ -138,8 +138,9 @@ export async function resolveExecutionTargets(opts: {
             } else if (fileEdges.size === 1) {
                 target = [...fileEdges][0]; // inject actual edge name (e.g. "edge1")
             } else {
-                // No physical edge resources (timer-only or no resources)
-                target = "auto";
+                // No resources with edges — rule has no trigger resources
+                // This shouldn't happen with valid rules, but default to master
+                target = "master";
             }
 
             // Record insertion position right after the root rule() call
@@ -254,8 +255,11 @@ function buildResourceEdgeMap(
                     `has \`edge\` but it's not a string literal. Use a direct string value like \`edge: "edge1"\`.`
                 );
             } else {
-                // No edge property, no spreads → logical resource (timer, etc.)
-                map.set(v.getName(), "auto");
+                // No edge property, no spreads → build error
+                errors.push(
+                    `${sf.getFilePath()}:${v.getStartLineNumber()} — resource "${v.getName()}" ` +
+                    `has no \`edge\` property. All resources (including timers) must specify an explicit edge.`
+                );
             }
         }
     }

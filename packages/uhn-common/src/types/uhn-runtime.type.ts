@@ -65,9 +65,21 @@ export type RuleRuntimeStateFullUpdateCommand = {
   cmd: "stateFullUpdate";
   payload: RuntimeResourceState[];
 };
+export type RuleRuntimeTimerCommand = {
+  kind: "event";
+  cmd: "timerCommand";
+  payload: {
+    resourceId: string;
+    action: "start" | "clear";
+    durationMs?: number;
+    mode?: "restart" | "startOnce";
+  };
+};
+
 export type RuleRuntimeCommand = RuleRuntimeListResourcesCommand
   | RuleRuntimeStateUpdateCommand
-  | RuleRuntimeStateFullUpdateCommand; // | MoreCommands
+  | RuleRuntimeStateFullUpdateCommand
+  | RuleRuntimeTimerCommand;
 
 
 export type RuleRuntimeListResourcesResponse = {
@@ -106,12 +118,19 @@ export type RuleRuntimeReadyMessage = {
 export type RuleRuntimeErrorResponse = { kind: "response"; id: string; error: string };
 
 
+export type RuleRuntimeTimerStateChangedMessage = {
+  kind: "event";
+  cmd: "timerStateChanged";
+  payload: { id: string; active: boolean; startedAt: number; stopAt: number };
+};
+
 export type RuleRuntimeResponse = RuleRuntimeListResourcesResponse
   | RuleRuntimeErrorResponse
   | RuleRuntimeReadyMessage
   | RuleRuntimeActionMessage
   | RuleRuntimeResourceMissingMessage
-  | RuleRuntimeLogMessage;
+  | RuleRuntimeLogMessage
+  | RuleRuntimeTimerStateChangedMessage;
 
 export type RuleRuntimeCommandMap = {
   listResources: {

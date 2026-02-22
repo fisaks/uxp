@@ -5,6 +5,7 @@ import { RuleRuntimeDependencies } from "../types/rule-runtime.type";
 import { handleListResources } from "./resource-list.handler";
 import { handleStateFullUpdate } from "./state-full-update.handler";
 import { handleStateUpdate } from "./state-update.handler";
+import { handleTimerCommand } from "./timer-command.handler";
 
 export function createCommandRouter(deps: RuleRuntimeDependencies) {
     return {
@@ -19,6 +20,9 @@ export function createCommandRouter(deps: RuleRuntimeDependencies) {
                         break;
                     case "stateFullUpdate":
                         await handleStateFullUpdate(deps, cmd);
+                        break;
+                    case "timerCommand":
+                        handleTimerCommand(deps, cmd);
                         break;
                     default:
                         handleUnknownCommand(cmd);

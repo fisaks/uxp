@@ -89,12 +89,11 @@ function filterRulesByMode(rules: BlueprintRule[], mode: RuntimeMode, edgeName?:
     return rules.filter(rule => {
         const target = rule.executionTarget;
         if (mode === "edge") {
-            if (target === "auto") return true;
             if (target === "master" || !target) return false;
             // target is an edge name — include only if it matches this edge
             return target === edgeName;
         }
-        if (mode === "master") return target === "master" || target === "auto" || !target;
+        if (mode === "master") return target === "master" || !target;
         return true;
     });
 }

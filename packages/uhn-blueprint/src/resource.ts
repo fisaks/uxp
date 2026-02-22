@@ -43,7 +43,7 @@ export type DigitalOutputResourceBase<
 };
 
 
-export type TimerResourceBase = ResourceBase<"timer"> & {
-    edge: "auto"
+export type TimerResourceBase<TEdge extends string = string> = ResourceBase<"timer"> & {
+    edge: TEdge;
 };
 

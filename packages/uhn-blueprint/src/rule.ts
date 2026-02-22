@@ -118,6 +118,15 @@ export function ruleActions<T extends RuleAction[]>(actions: T): T {
     return actions;
 }
 
+/**
+ * Serializable action emitted over IPC from the rule runtime to the host (Go edge / master).
+ *
+ * Differs from {@link RuleAction} in two ways:
+ * - References resources by `resourceId` string instead of full resource objects,
+ *   so it can cross the IPC/JSON boundary.
+ * - Includes timer actions (`timerStart`, `timerClear`) that are generated
+ *   internally by the rule engine (master mode), not authored by rule writers.
+ */
 export type RuntimeRuleAction =
     | {
         type: "setOutput";
@@ -128,6 +137,16 @@ export type RuntimeRuleAction =
         type: "emitSignal"; // optional: e.g. transient overrides
         resourceId: string;
         value: DigitalStateValue | undefined;
+    }
+    | {
+        type: "timerStart";
+        resourceId: string;
+        durationMs: number;
+        mode?: "restart" | "startOnce";
+    }
+    | {
+        type: "timerClear";
+        resourceId: string;
     };
 
 // --------- Context ---------
@@ -153,7 +172,6 @@ export type MuteController = {
 
 export type RuleExecutionTarget =
     | "master" // rule runs on master (multi-edge or author override)
-    | "auto"   // runtime decides (timer-only or no-resource rules)
     | (string & {}); // edge name (e.g. "edge1") — rule runs on that specific edge
 
 

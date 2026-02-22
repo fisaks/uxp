@@ -388,6 +388,10 @@ class RuleRuntimeProcessService extends EventEmitter<RuleRuntimeProcessEventMap>
                             AppLogger.warn(
                                 { message: `[RuleRuntimeProcessService] Resource missing for rule ${resp.ruleId}: ${resp.resourceType} ${resp.resourceId} (${resp.reason})` });
                             continue;
+                        case "timerStateChanged":
+                            // Master mode doesn't run timers locally — if this fires, something is wrong
+                            AppLogger.warn({ message: `[RuleRuntimeProcessService] Unexpected timerStateChanged from master runtime: ${resp.payload?.id} active=${resp.payload?.active}` });
+                            continue;
                         default:
                             assertNever(resp);
                     }

@@ -7,6 +7,7 @@ import { blueprintResourceService } from "./blueprint-resource.service";
 import { physicalCatalogService } from "./physical-catalog.service";
 import { PhysicalDeviceState, statePhysicalService } from "./state-physical.service";
 import { stateSignalService } from "./state-signal.service";
+import { stateTimerService } from "./state-timer.service";
 
 
 /**
@@ -60,6 +61,9 @@ class StateRuntimeService extends EventEmitter<StateRuntimeEventMap> {
     /** physical-address-key urn -> resourceId */
     private resourceIdByAddress = new Map<string, string>();
 
+    /** Timer resources indexed by resourceId (no address key) */
+    private timerResourceIds = new Set<string>();
+
     /** resourceId -> current runtime state */
     private stateByResourceId = new Map<string, RuntimeState>();
     private emitStateChanges: boolean;
@@ -87,6 +91,12 @@ class StateRuntimeService extends EventEmitter<StateRuntimeEventMap> {
                 this.handleSignalState(resourceId, value, timestamp);
             }
         );
+        stateTimerService.on(
+            "timerStateChanged",
+            (resourceId, value, timestamp) => {
+                this.handleTimerState(resourceId, value, timestamp);
+            }
+        );
     }
 
     /* -------------------------------------------------- */
@@ -100,6 +110,12 @@ class StateRuntimeService extends EventEmitter<StateRuntimeEventMap> {
             // Only index valid, addressable resources
             if (!r.id) continue;
             if (r.errors?.length) continue;
+
+            // Timer resources have no device/pin — index by resourceId directly
+            if (r.type === "timer") {
+                this.timerResourceIds.add(r.id);
+                continue;
+            }
 
             const key = makeAddressKey(r);
             if (!key) {
@@ -118,11 +134,14 @@ class StateRuntimeService extends EventEmitter<StateRuntimeEventMap> {
         for (const [resourceId, state] of stateSignalService.getAllSignalStates()) {
             this.handleSignalState(resourceId, state.value, state.timestamp);
         }
+        for (const [resourceId, state] of stateTimerService.getAllTimerStates()) {
+            this.handleTimerState(resourceId, state.active, state.timestamp);
+        }
         this.emit("runtimeStatesChanged", this.getAllStates());
         this.emitStateChanges = true;
 
         AppLogger.info({
-            message: `[StateRuntimeService] Runtime index rebuilt (${this.resourceIdByAddress.size} resources)`,
+            message: `[StateRuntimeService] Runtime index rebuilt (${this.resourceIdByAddress.size} addressable + ${this.timerResourceIds.size} timer resources)`,
         });
     }
 
@@ -134,6 +153,7 @@ class StateRuntimeService extends EventEmitter<StateRuntimeEventMap> {
      */
     private reset() {
         this.resourceIdByAddress.clear();
+        this.timerResourceIds.clear();
         this.stateByResourceId.clear();
         if (this.emitStateChanges) this.emit("runtimeStateReset");
         this.emitStateChanges = false;
@@ -210,6 +230,38 @@ class StateRuntimeService extends EventEmitter<StateRuntimeEventMap> {
         }
 
     }
+    /* -------------------------------------------------- */
+    /* Timer state updates                                */
+    /* -------------------------------------------------- */
+
+    /**
+     * Handles timer state from edge (single-tier, authoritative).
+     * Timers bypass the physical/signal tier model — the edge is the
+     * sole authority on timer state.
+     */
+    private handleTimerState(
+        resourceId: string,
+        value: ResourceStateValue,
+        timestamp: number
+    ) {
+        if (this.timerResourceIds.size === 0 && this.resourceIdByAddress.size === 0) return;
+        if (!this.timerResourceIds.has(resourceId)) return;
+
+        const prev = this.stateByResourceId.get(resourceId);
+        if (prev && prev.timestamp >= timestamp) return;
+
+        this.stateByResourceId.set(resourceId, {
+            physical: value,
+            physicalTimestamp: timestamp,
+            computed: value,
+            timestamp,
+        });
+
+        if (!prev || prev.computed !== value) {
+            this.emitRuntimeStateChangedIfEnabled(resourceId, value, timestamp);
+        }
+    }
+
     /* -------------------------------------------------- */
     /* Physical device updates                            */
     /* -------------------------------------------------- */

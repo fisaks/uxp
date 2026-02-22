@@ -3,7 +3,6 @@ import type {
     BlueprintRule,
     RuleAction,
     RuleCause,
-    RuleTimers,
     RuleTrigger,
     RuntimeReader,
     RuntimeRuleAction
@@ -14,6 +13,7 @@ import { runtimeOutput } from "../io/runtime-output";
 import type { RuntimeRulesService } from "../services/runtime-rules.service";
 import type { RuntimeStateService } from "../services/runtime-state.service";
 import { RuntimeTimerService } from "../services/runtime-timer.service";
+import { RuntimeMode } from "../types/rule-runtime.type";
 import { createResourceErrorData } from "./rule-engine-error";
 import { ruleLogger } from "./rule-engine-logging";
 import { createRuleRuntime } from "./rule-engine-runtime";
@@ -26,15 +26,16 @@ import { TriggerEventBus } from "./trigger-event-bus";
 export class RuleEngine {
     private readonly ruleExecutionControl = new Map<string, RuleExecutionControl>();
     private readonly ruleRuntime: RuntimeReader;
-    private readonly ruleTimer: RuleTimers;
+    private readonly mode: RuntimeMode;
     constructor(
         triggerEventBus: TriggerEventBus,
         private readonly rulesService: RuntimeRulesService,
         private readonly stateService: RuntimeStateService,
-        private readonly timerService: RuntimeTimerService
+        private readonly timerService: RuntimeTimerService,
+        mode: RuntimeMode
     ) {
+        this.mode = mode;
         this.ruleRuntime = createRuleRuntime({ stateService: this.stateService });
-        this.ruleTimer = createRuleTimer({ timerService: this.timerService });
         // Subscribe to state changes
         triggerEventBus.on((event) => {
             this.handleTriggerEvent(event);
@@ -128,13 +129,19 @@ export class RuleEngine {
             ruleControl.suppressUntil = eventTime + ruleCandidate.suppressMs;
         }
 
+        const ruleTimer = createRuleTimer({
+            timerService: this.timerService,
+            stateService: this.stateService,
+            mode: this.mode,
+        });
+
         let actions: RuleAction[] = [];
 
         try {
             actions = ruleCandidate.run({
                 cause: runCause,
                 runtime: this.ruleRuntime,
-                timers: this.ruleTimer,
+                timers: ruleTimer,
                 mute: {
                     resource: (resource, durationMs, identifier) => {
 
@@ -170,7 +177,9 @@ export class RuleEngine {
         ruleControl.lastRunAt = eventTime;
         this.ruleExecutionControl.set(ruleCandidate.id, ruleControl);
 
-        return actions.map(this.toRuntimeAction).filter((a): a is RuntimeRuleAction => a !== undefined);
+        const runtimeActions = actions.map(this.toRuntimeAction).filter((a): a is RuntimeRuleAction => a !== undefined);
+        const timerActions = ruleTimer.drainPendingActions();
+        return [...runtimeActions, ...timerActions];
     }
 
     private toRuntimeAction(action: RuleAction): RuntimeRuleAction | undefined {

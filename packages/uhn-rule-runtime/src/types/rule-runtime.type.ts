@@ -2,6 +2,7 @@ import { ResourceState } from "@uhn/blueprint";
 import { RuntimeResourceService } from "../services/runtime-resource.service";
 import { RuntimeRulesService } from "../services/runtime-rules.service";
 import { RuntimeStateService } from "../services/runtime-state.service";
+import { RuntimeTimerService } from "../services/runtime-timer.service";
 
 export const RuntimeModes = ["master", "edge"] as const;
 export type RuntimeMode = typeof RuntimeModes[number];
@@ -11,6 +12,7 @@ export type RuleRuntimeDependencies = {
     resourceService: RuntimeResourceService;
     stateService: RuntimeStateService;
     rulesService: RuntimeRulesService;
+    timerService: RuntimeTimerService;
 };
 
 export type RuntimeStateChange = {
