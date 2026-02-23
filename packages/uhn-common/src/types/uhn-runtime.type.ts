@@ -4,10 +4,19 @@ import { DigitalInputResourceBase, DigitalOutputResourceBase, ResourceBase, Reso
 
 export type ResourceStateValue = boolean | number;
 
+export type TimerStateDetails = {
+  type: "timer";
+  startedAt: number;
+  stopAt: number;
+};
+
+export type ResourceStateDetails = TimerStateDetails;
+
 export type RuntimeResourceState = {
   resourceId: string;
   value: ResourceStateValue | undefined;
   timestamp: number;
+  details?: ResourceStateDetails;
 };
 
 export type ResourceErrorCode =

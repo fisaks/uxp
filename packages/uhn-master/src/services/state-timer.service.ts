@@ -34,7 +34,7 @@ function isTimerStatePayload(payload: unknown): payload is TimerMQTTPayload {
 }
 
 export type StateTimerEventMap = {
-    timerStateChanged: [resourceId: string, value: ResourceStateValue, timestamp: number];
+    timerStateChanged: [resourceId: string, value: ResourceStateValue, timestamp: number, startedAt: number, stopAt: number];
 };
 
 class StateTimerService extends EventEmitter<StateTimerEventMap> {
@@ -76,7 +76,7 @@ class StateTimerService extends EventEmitter<StateTimerEventMap> {
             });
 
             // Emit as boolean value for the runtime state service
-            this.emit("timerStateChanged", resourceId, payload.active, payload.timestamp);
+            this.emit("timerStateChanged", resourceId, payload.active, payload.timestamp, payload.startedAt, payload.stopAt);
         }
     }
 

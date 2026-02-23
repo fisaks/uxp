@@ -4,6 +4,7 @@ import { blueprintResourceService } from "./blueprint-resource.service";
 import { commandEdgeService } from "./command-edge.service";
 import { stateRuntimeService } from "./state-runtime.service";
 import { stateSignalService } from "./state-signal.service";
+import { timerEdgeService } from "./timer-edge.service";
 
 export class CommandsResourceService {
 
@@ -15,8 +16,11 @@ export class CommandsResourceService {
         }
         this.validateResourceAddressability(resource);
         this.validateCommandForResource(resource, command);
-
-        if (resource.type === "digitalOutput") {
+        
+        
+        if (resource.type === "timer") {
+            timerEdgeService.sendTimerCommandToEdge({ id: resource.id, edge: resource.edge }, { action: "clear" });
+        } else if (resource.type === "digitalOutput") {
             commandEdgeService.sendCommandToEdge(resource as RuntimeDigitalOutputResource, command);
         } else if (resource.type === "digitalInput" && command.type === "toggle") {
             const currentState = stateRuntimeService.getResourceState(resourceId);
@@ -30,12 +34,26 @@ export class CommandsResourceService {
     }
 
     private validateResourceAddressability(resource: RuntimeResource) {
+        if (resource.type === "timer") {
+            if (!resource.edge) {
+                throw new AppErrorV2({ statusCode: 400, code: "RESOURCE_NOT_ADDRESSABLE", message: `Timer resource ${resource.id} has no edge` });
+            }
+            return;
+        }
+
         if (!resource.edge || !resource.device || resource.pin == null) {
             throw new AppErrorV2({ statusCode: 400, code: "RESOURCE_NOT_ADDRESSABLE", message: `Resource ${resource.id} is not addressable` });
         }
     }
 
     private validateCommandForResource(resource: RuntimeResource, command: UhnResourceCommand) {
+        if (resource.type === "timer") {
+            if (command.type !== "clearTimer") {
+                throw new AppErrorV2({ statusCode: 400, code: "INVALID_RESOURCE_COMMAND", message: `Invalid command type ${command.type} for timer resource` });
+            }
+            return;
+        }
+
         if (resource.type === "digitalOutput") {
             if (command.type !== "toggle" && command.type !== "set") {
                 throw new AppErrorV2({ statusCode: 400, code: "INVALID_RESOURCE_COMMAND", message: `Invalid command type ${command.type} for digitalOutput resource` });

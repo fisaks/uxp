@@ -4,14 +4,14 @@ import { WebSocketTimeoutError } from "@uxp/ui-lib";
 import { useCallback, useRef } from "react";
 import { useAppDispatch } from "../../../app/store";
 import { useUHNWebSocket } from "../../../app/UHNAppBrowserWebSocketManager";
-import { TileRuntimeResource } from "../resource-ui.type";
+import { TileRuntimeResource, TileRuntimeResourceState } from "../resource-ui.type";
 import { commandFailed, commandStarted } from "../resourceCommandFeedbackSlice";
 
 const TOUCH_PRESS_INTENT_DELAY_MS = 150;
 const MIN_PRESS_DURATION_MS = 300;
 
 
-export function useResourceAction(resource: TileRuntimeResource) {
+export function useResourceAction(resource: TileRuntimeResource, state?: TileRuntimeResourceState) {
     const dispatch = useAppDispatch();
     const { sendMessageAsync } = useUHNWebSocket();
 
@@ -139,6 +139,11 @@ export function useResourceAction(resource: TileRuntimeResource) {
     }, [scheduleRelease]);
 
     const onClick = useCallback(() => {
+        // Timer: clear when active
+        if (resource.type === "timer" && state?.value) {
+            sendCommand({ type: "clearTimer" });
+            return;
+        }
         // Intentional: toggles only via click
         if (resource.type === "digitalOutput") {
             sendCommand({ type: "toggle" });
@@ -147,7 +152,7 @@ export function useResourceAction(resource: TileRuntimeResource) {
         if (resource.type === "digitalInput" && resource.inputType === "toggle") {
             sendCommand({ type: "toggle" });
         }
-    }, [resource, sendCommand]);
+    }, [resource, state?.value, sendCommand]);
 
     return {
         onPointerDown,

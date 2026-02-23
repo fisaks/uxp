@@ -1,6 +1,8 @@
 // icons.tsx
 import DarkModeIcon from "@mui/icons-material/DarkMode";
 import DeviceHubIcon from "@mui/icons-material/DeviceHub";
+import FluorescentIcon from '@mui/icons-material/Fluorescent';
+import FluorescentOutlinedIcon from '@mui/icons-material/FluorescentOutlined';
 import LightbulbIcon from "@mui/icons-material/Lightbulb";
 import PowerIcon from "@mui/icons-material/Power";
 import RadioButtonCheckedIcon from "@mui/icons-material/RadioButtonChecked";
@@ -8,22 +10,21 @@ import SensorsIcon from "@mui/icons-material/Sensors";
 import ToggleOffIcon from "@mui/icons-material/ToggleOff";
 import ToggleOnIcon from "@mui/icons-material/ToggleOn";
 import WbSunnyIcon from "@mui/icons-material/WbSunny";
-import FluorescentOutlinedIcon from '@mui/icons-material/FluorescentOutlined';
-import FluorescentIcon from '@mui/icons-material/Fluorescent';
 
+
+import TimerIcon from "@mui/icons-material/Timer";
+import TimerOffIcon from "@mui/icons-material/TimerOff";
 
 import LightbulbOutlinedIcon from "@mui/icons-material/LightbulbOutlined";
-import LightbulbTwoToneIcon from "@mui/icons-material/LightbulbTwoTone";
 
 import PowerOutlinedIcon from "@mui/icons-material/PowerOutlined";
 
-import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
 
 
 import SensorsOutlinedIcon from "@mui/icons-material/SensorsOutlined";
+import { BaseInputKind, BaseOutputKind, InputType } from "@uhn/blueprint";
 import { TileRuntimeResource, TileRuntimeResourceState } from "../resource-ui.type";
 import { ReedRelayClosedIcon, ReedRelayOpenIcon } from "./relay-icon";
-import { BaseInputKind, BaseOutputKind, InputType } from "@uhn/blueprint";
 
 
 
@@ -120,6 +121,13 @@ export function getResourceIcon(
     if (!entry) return fallbackIcon;
 
     return active ? entry.active : entry.inactive;
+  }
+
+  // -------------------------
+  // Timers
+  // -------------------------
+  if (resource.type === "timer") {
+    return active ? <TimerIcon /> : <TimerOffIcon />;
   }
 
   // -------------------------

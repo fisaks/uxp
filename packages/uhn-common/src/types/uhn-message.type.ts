@@ -21,11 +21,16 @@ export type UhnResourceCommandPayload = {
     command: UhnResourceCommand;
 
 }
+export type ClearTimerCommand = {
+    type: "clearTimer";
+};
+
 export type UhnResourceCommand =
     | ToggleCommand
     | SetCommand
     | PressCommand
-    | ReleaseCommand;
+    | ReleaseCommand
+    | ClearTimerCommand;
 
 export type ToggleCommand = {
     type: "toggle";
@@ -137,6 +142,14 @@ export const UhnResourceCommandPayloadSchema: MessagePayloadSchema<UhnResourceCo
                     type: 'object',
                     properties: {
                         type: { const: 'release' }
+                    },
+                    required: ['type'],
+                    additionalProperties: false
+                },
+                {
+                    type: 'object',
+                    properties: {
+                        type: { const: 'clearTimer' }
                     },
                     required: ['type'],
                     additionalProperties: false

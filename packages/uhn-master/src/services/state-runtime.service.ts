@@ -1,5 +1,5 @@
 import type { ResourceType } from "@uhn/blueprint";
-import { makeAddressKey, Range, resourceIdMatcher, ResourceStateValue, RuntimeResourceList, RuntimeResourceState } from "@uhn/common";
+import { makeAddressKey, Range, resourceIdMatcher, ResourceStateDetails, ResourceStateValue, RuntimeResourceList, RuntimeResourceState } from "@uhn/common";
 import { AppLogger } from "@uxp/bff-common";
 import { EventEmitter } from "events";
 
@@ -18,7 +18,7 @@ import { stateTimerService } from "./state-timer.service";
  */
 export type StateRuntimeEventMap = {
     runtimeStateReset: [];
-    runtimeStateChanged: [resourceId: string, value: ResourceStateValue | undefined, timestamp: number];
+    runtimeStateChanged: [resourceId: string, value: ResourceStateValue | undefined, timestamp: number, details?: ResourceStateDetails];
     runtimeStatesChanged: [RuntimeResourceState[]];
 
 };
@@ -40,6 +40,7 @@ type RuntimeState = {
     signalTimestamp?: number;
     computed: ResourceStateValue
     timestamp: number
+    details?: ResourceStateDetails
 }
 /**
  * Runtime semantics:
@@ -55,6 +56,12 @@ type RuntimeState = {
  * Timestamp rules:
  * - Physical and signal updates are ordered independently.
  * - Runtime timestamp represents last effective C change.
+ *
+ * Details:
+ * - Optional type-specific metadata (ResourceStateDetails discriminated union).
+ * - Carried alongside value for UI display purposes (e.g. timer countdown).
+ * - Not forwarded to the rule runtime — rules operate on value only.
+ * - Set by the source handler (e.g. handleTimerState sets TimerStateDetails).
  */
 
 class StateRuntimeService extends EventEmitter<StateRuntimeEventMap> {
@@ -66,6 +73,13 @@ class StateRuntimeService extends EventEmitter<StateRuntimeEventMap> {
 
     /** resourceId -> current runtime state */
     private stateByResourceId = new Map<string, RuntimeState>();
+    /**
+     * Guards event emission during the initial state hydration phase.
+     * Set to false on construction and during reset, enabled after
+     * handleResourcesReloaded finishes replaying all cached states.
+     * Prevents partial/duplicate state events reaching consumers
+     * before the full state snapshot is broadcast.
+     */
     private emitStateChanges: boolean;
 
     constructor() {
@@ -93,8 +107,8 @@ class StateRuntimeService extends EventEmitter<StateRuntimeEventMap> {
         );
         stateTimerService.on(
             "timerStateChanged",
-            (resourceId, value, timestamp) => {
-                this.handleTimerState(resourceId, value, timestamp);
+            (resourceId, value, timestamp, startedAt, stopAt) => {
+                this.handleTimerState(resourceId, value, timestamp, startedAt, stopAt);
             }
         );
     }
@@ -135,7 +149,7 @@ class StateRuntimeService extends EventEmitter<StateRuntimeEventMap> {
             this.handleSignalState(resourceId, state.value, state.timestamp);
         }
         for (const [resourceId, state] of stateTimerService.getAllTimerStates()) {
-            this.handleTimerState(resourceId, state.active, state.timestamp);
+            this.handleTimerState(resourceId, state.active, state.timestamp, state.startedAt, state.stopAt);
         }
         this.emit("runtimeStatesChanged", this.getAllStates());
         this.emitStateChanges = true;
@@ -242,7 +256,9 @@ class StateRuntimeService extends EventEmitter<StateRuntimeEventMap> {
     private handleTimerState(
         resourceId: string,
         value: ResourceStateValue,
-        timestamp: number
+        timestamp: number,
+        startedAt: number,
+        stopAt: number
     ) {
         if (this.timerResourceIds.size === 0 && this.resourceIdByAddress.size === 0) return;
         if (!this.timerResourceIds.has(resourceId)) return;
@@ -250,15 +266,18 @@ class StateRuntimeService extends EventEmitter<StateRuntimeEventMap> {
         const prev = this.stateByResourceId.get(resourceId);
         if (prev && prev.timestamp >= timestamp) return;
 
+        const details: ResourceStateDetails | undefined = value ? { type: "timer", startedAt, stopAt } : undefined;
+
         this.stateByResourceId.set(resourceId, {
             physical: value,
             physicalTimestamp: timestamp,
             computed: value,
             timestamp,
+            details,
         });
 
-        if (!prev || prev.computed !== value) {
-            this.emitRuntimeStateChangedIfEnabled(resourceId, value, timestamp);
+        if (!prev || prev.computed !== value || prev.details?.stopAt !== details?.stopAt) {
+            this.emitRuntimeStateChangedIfEnabled(resourceId, value, timestamp, details);
         }
     }
 
@@ -395,9 +414,9 @@ class StateRuntimeService extends EventEmitter<StateRuntimeEventMap> {
 
     }
 
-    private emitRuntimeStateChangedIfEnabled(resourceId: string, computed: ResourceStateValue | undefined, timestamp: number) {
+    private emitRuntimeStateChangedIfEnabled(resourceId: string, computed: ResourceStateValue | undefined, timestamp: number, details?: ResourceStateDetails) {
         if (this.emitStateChanges) {
-            this.emit("runtimeStateChanged", resourceId, computed, timestamp);
+            this.emit("runtimeStateChanged", resourceId, computed, timestamp, details);
         }
     }
     private isStaleMessage(prevSignalTimestamp: number | undefined, timestamp: number) {
@@ -412,7 +431,8 @@ class StateRuntimeService extends EventEmitter<StateRuntimeEventMap> {
         return state ? {
             resourceId,
             value: state.computed,
-            timestamp: state.timestamp
+            timestamp: state.timestamp,
+            ...(state.details && { details: state.details }),
         } : undefined;
     }
 
@@ -427,7 +447,8 @@ class StateRuntimeService extends EventEmitter<StateRuntimeEventMap> {
             if (s) states.push({
                 resourceId: id,
                 value: s.computed,
-                timestamp: s.timestamp
+                timestamp: s.timestamp,
+                ...(s.details && { details: s.details }),
             });
         }
         if (wildcards.length) {
@@ -435,7 +456,8 @@ class StateRuntimeService extends EventEmitter<StateRuntimeEventMap> {
                 if (!exact.has(id) && wildcards.some(rx => rx.test(id))) states.push({
                     resourceId: id,
                     value: s.computed,
-                    timestamp: s.timestamp
+                    timestamp: s.timestamp,
+                    ...(s.details && { details: s.details }),
                 });
             }
         }
@@ -448,7 +470,8 @@ class StateRuntimeService extends EventEmitter<StateRuntimeEventMap> {
         return state ? {
             resourceId,
             value: state.computed,
-            timestamp: state.timestamp
+            timestamp: state.timestamp,
+            ...(state.details && { details: state.details }),
         } : undefined;
     }
 
@@ -456,7 +479,8 @@ class StateRuntimeService extends EventEmitter<StateRuntimeEventMap> {
         return Array.from(this.stateByResourceId.entries()).map(([resourceId, state]) => ({
             resourceId,
             value: state.computed,
-            timestamp: state.timestamp
+            timestamp: state.timestamp,
+            ...(state.details && { details: state.details }),
         }));
     }
 }

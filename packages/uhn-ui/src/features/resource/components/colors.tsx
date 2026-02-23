@@ -87,6 +87,17 @@ const outputKindColors: KindColors<BaseOutputKind> = {
 
 } as const;
 
+const timerColors = {
+    icon: {
+        active: { light: "#00897B", dark: "#4DB6AC" },
+        inactive: { light: "#9E9E9E", dark: "#9E9E9E" },
+    },
+    surface: {
+        light: "#00897B",
+        dark: "#4DB6AC",
+    },
+} as const;
+
 const inputKindColors: KindColors<BaseInputKind> = {
     button: {
         icon: {
@@ -133,6 +144,10 @@ export function getResourceIconColor(
     const mode = theme.palette.mode; // "light" | "dark"
     const active = Boolean(state?.value);
 
+    if (resource.type === "timer") {
+        return active ? timerColors.icon.active[mode] : timerColors.icon.inactive[mode];
+    }
+
     if (resource.type === "digitalOutput" && resource.outputKind) {
         const cfg = outputKindColors[resource.outputKind as keyof typeof outputKindColors];
         return active ? cfg.icon.active[mode] : cfg.icon.inactive[mode];
@@ -151,6 +166,10 @@ export function getResourceSurfaceColor(
     resource: TileRuntimeResource
 ) {
     const mode = theme.palette.mode;
+
+    if (resource.type === "timer") {
+        return alpha(timerColors.surface[mode], mode === "dark" ? 0.06 : 0.045);
+    }
 
     if (resource.type === "digitalOutput" && resource.outputKind) {
         const base = outputKindColors[resource.outputKind as keyof typeof outputKindColors]?.surface?.[mode];

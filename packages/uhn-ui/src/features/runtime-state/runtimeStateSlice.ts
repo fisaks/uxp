@@ -1,9 +1,10 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RuntimeResourceState, UhnFullStateResponse, UhnStateResponse } from "@uhn/common";
 
+type RuntimeStateEntry = Pick<RuntimeResourceState, "value" | "timestamp" | "details">;
 
 type RuntimeStateSlice = {
-    byResourceId: Record<string, Pick<RuntimeResourceState, "value" | "timestamp">>;
+    byResourceId: Record<string, RuntimeStateEntry>;
     isLoaded: boolean;
     receivedAt?: number;
 };
@@ -21,15 +22,15 @@ const runtimeStateSlice = createSlice({
         fullStateReceived(state, action: PayloadAction<{ response: UhnFullStateResponse; receivedAt: number }>) {
             state.byResourceId = {};
             for (const u of action.payload.response.states) {
-                state.byResourceId[u.resourceId] = { value: u.value, timestamp: u.timestamp };
+                state.byResourceId[u.resourceId] = { value: u.value, timestamp: u.timestamp, details: u.details };
             }
             state.isLoaded = true;
             state.receivedAt = action.payload.receivedAt;
         },
         stateReceived(state, action: PayloadAction<{ response: UhnStateResponse }>) {
-            const { resourceId, timestamp, value } = action.payload.response.state;
+            const { resourceId, timestamp, value, details } = action.payload.response.state;
             if (!state.byResourceId[resourceId] || timestamp > state.byResourceId[resourceId].timestamp) {
-                state.byResourceId[resourceId] = { value, timestamp };
+                state.byResourceId[resourceId] = { value, timestamp, details };
             }
 
         },

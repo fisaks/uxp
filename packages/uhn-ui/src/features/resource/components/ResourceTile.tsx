@@ -8,6 +8,7 @@ import { useTheme } from "@mui/material/styles";
 import { usePortalContainerRef } from "@uxp/ui-lib";
 import React, { useState } from "react";
 import { useSelector } from "react-redux";
+import { formatCountdown, useCountdown } from "../hooks/useCountdown";
 import { useResourceAction } from "../hooks/useResourceAction";
 import { TileRuntimeResource, TileRuntimeResourceState } from "../resource-ui.type";
 import { selectResourceCommandFeedbackById } from "../resourceCommandFeedbackSelector";
@@ -26,7 +27,10 @@ export const ResourceTile: React.FC<ResourceTileProps> = ({ resource, state }) =
     const [infoAnchor, setInfoAnchor] = useState<null | HTMLElement>(null);
     const [descAnchor, setDescAnchor] = useState<null | HTMLElement>(null);
     const commandFb = useSelector(selectResourceCommandFeedbackById(resource.id));
-    const actions = useResourceAction(resource);
+    const actions = useResourceAction(resource, state);
+    const isTimer = resource.type === "timer";
+    const timerActive = isTimer && Boolean(state?.value);
+    const remainingSeconds = useCountdown(state?.details, timerActive);
     // Main kind icon logic
     const MainIcon = getResourceIcon(resource, state);
 
@@ -102,6 +106,33 @@ export const ResourceTile: React.FC<ResourceTileProps> = ({ resource, state }) =
                         </Box>
                     </Popover>
                 </Box>
+
+                {/* Timer countdown (right of center icon) */}
+                {timerActive && remainingSeconds > 0 && (
+                    <Box sx={{
+                        position: "absolute",
+                        top: 0,
+                        left: "50%",
+                        right: 0,
+                        height: "100%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        pointerEvents: "none",
+                    }}>
+                        <Typography
+                            variant="caption"
+                            sx={{
+                                fontFamily: "monospace",
+                                fontSize: "0.7rem",
+                                fontWeight: 600,
+                                color: iconColor,
+                            }}
+                        >
+                            {formatCountdown(remainingSeconds)}
+                        </Typography>
+                    </Box>
+                )}
 
                 {/* Description icon (upper right) */}
                 {resource.description && (

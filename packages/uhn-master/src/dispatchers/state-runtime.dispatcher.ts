@@ -55,10 +55,10 @@ export function initStateRuntimeDispatcher(): void {
     initialized = true;
     const ws = UHNAppServerWebSocketManager.getInstance();
 
-    stateRuntimeService.on("runtimeStateChanged", (resourceId, stateValue, timestamp) => {
+    stateRuntimeService.on("runtimeStateChanged", (resourceId, stateValue, timestamp, details) => {
         sendStateUpdateToRuleRuntime(resourceId, stateValue, timestamp);
         ws.broadcastRuntimeStateMessage({
-            state: { resourceId, value: stateValue, timestamp }
+            state: { resourceId, value: stateValue, timestamp, ...(details && { details }) }
         });
     });
     stateRuntimeService.on("runtimeStatesChanged", (states) => {
