@@ -1,6 +1,48 @@
 
 import { DigitalInputResourceBase, DigitalOutputResourceBase, ResourceBase, ResourceType, RuntimeRuleAction } from "@uhn/blueprint";
 
+// --- Runtime rule serialization (for IPC + overview) ---
+
+export type RuntimeRuleTriggerInfo =
+  | { kind: "resource"; resourceId: string; event: "activated" | "deactivated" | "changed" }
+  | { kind: "tap"; resourceId: string }
+  | { kind: "longPress"; resourceId: string; thresholdMs: number }
+  | { kind: "timer"; resourceId: string; event: "activated" | "deactivated" };
+
+export type RuntimeRuleInfo = {
+  id: string;
+  name?: string;
+  description?: string;
+  executionTarget?: string;
+  triggers: RuntimeRuleTriggerInfo[];
+  priority?: number;
+  suppressMs?: number;
+  cooldownMs?: number;
+};
+
+export type RuleRuntimeRulesLoadedMessage = {
+  kind: "event";
+  cmd: "rulesLoaded";
+  rules: RuntimeRuleInfo[];
+  allRules?: RuntimeRuleInfo[];
+};
+
+// --- Runtime overview types ---
+
+export type RuntimeStatus = "unconfigured" | "starting" | "running" | "stopped" | "restarting" | "failed";
+
+export type RuntimeInfo = {
+  runtimeId: string;
+  status: RuntimeStatus;
+  expectedRuleCount: number;
+  loadedRuleCount: number | null;
+  rules: RuntimeRuleInfo[];
+};
+
+export type RuntimeOverviewPayload = {
+  runtimes: RuntimeInfo[];
+  updatedAt: number;
+};
 
 export type ResourceStateValue = boolean | number;
 
@@ -59,11 +101,6 @@ export type RuntimeDigitalOutputResource = DigitalOutputResourceBase & {
 
 export type RuntimeResourceList = RuntimeResource[];
 
-export type RuleRuntimeListResourcesCommand = {
-  kind: "request";
-  id: string;
-  cmd: "listResources";
-};
 export type RuleRuntimeStateUpdateCommand = {
   kind: "event";
   cmd: "stateUpdate";
@@ -85,15 +122,14 @@ export type RuleRuntimeTimerCommand = {
   };
 };
 
-export type RuleRuntimeCommand = RuleRuntimeListResourcesCommand
-  | RuleRuntimeStateUpdateCommand
+export type RuleRuntimeCommand = RuleRuntimeStateUpdateCommand
   | RuleRuntimeStateFullUpdateCommand
   | RuleRuntimeTimerCommand;
 
 
-export type RuleRuntimeListResourcesResponse = {
-  kind: "response"
-  id: string;
+export type RuleRuntimeResourcesLoadedMessage = {
+  kind: "event";
+  cmd: "resourcesLoaded";
   resources: RuntimeResource[];
 };
 export type RuleRuntimeActionMessage = {
@@ -108,8 +144,8 @@ export type RuleRuntimeResourceMissingMessage = {
   ruleId: string;
   resourceId: string;
   resourceType: ResourceType;
-  reason: "stateUnavailable";
 
+  reason: "stateUnavailable";
 };
 export type RuleRuntimeLogMessage = {
   kind: "event"
@@ -124,28 +160,21 @@ export type RuleRuntimeReadyMessage = {
   cmd: "ready";
 };
 
-export type RuleRuntimeErrorResponse = { kind: "response"; id: string; error: string };
-
-
 export type RuleRuntimeTimerStateChangedMessage = {
   kind: "event";
   cmd: "timerStateChanged";
   payload: { id: string; active: boolean; startedAt: number; stopAt: number };
 };
 
-export type RuleRuntimeResponse = RuleRuntimeListResourcesResponse
-  | RuleRuntimeErrorResponse
-  | RuleRuntimeReadyMessage
+export type RuleRuntimeResponse = RuleRuntimeReadyMessage
   | RuleRuntimeActionMessage
   | RuleRuntimeResourceMissingMessage
   | RuleRuntimeLogMessage
-  | RuleRuntimeTimerStateChangedMessage;
+  | RuleRuntimeTimerStateChangedMessage
+  | RuleRuntimeRulesLoadedMessage
+  | RuleRuntimeResourcesLoadedMessage;
 
 export type RuleRuntimeCommandMap = {
-  listResources: {
-    request: Omit<RuleRuntimeListResourcesCommand, "id" | "kind">;
-    response: Omit<RuleRuntimeListResourcesResponse, "id" | "kind">;
-  };
   stateUpdate: {
     request: Omit<RuleRuntimeStateUpdateCommand, "kind">;
     response: void;
@@ -156,25 +185,8 @@ export type RuleRuntimeCommandMap = {
   };
 };
 
-export type CmdKey = keyof RuleRuntimeCommandMap;
+export type FireAndForgetCmdKey = keyof RuleRuntimeCommandMap;
 
-export type FireAndForgetCmdKey = {
-  [K in CmdKey]: RuleRuntimeCommandMap[K]["response"] extends void ? K : never
-}[CmdKey];
-
-export type AsyncCmdKey = Exclude<CmdKey, FireAndForgetCmdKey>;
-
-export function isRuleRuntimeResponseObject(obj: unknown): obj is Extract<RuleRuntimeResponse, { kind: "response", id: string }> {
-  return (
-    typeof obj === "object" &&
-    obj !== null &&
-    "kind" in obj &&
-    obj.kind === "response" &&
-    "id" in obj &&
-    typeof (obj as any).id === "string"
-
-  );
-}
 export function isRuleRuntimeEventObject(obj: unknown): obj is Extract<RuleRuntimeResponse, { kind: "event" }> {
   return (
     typeof obj === "object" &&

@@ -1,11 +1,10 @@
 //services/rule-runtime-process.service.ts
 
-import { AsyncCmdKey, FireAndForgetCmdKey, isRuleRuntimeEventObject, isRuleRuntimeResponseObject, RuleRuntimeActionMessage, RuleRuntimeCommand, RuleRuntimeCommandMap, RuleRuntimeErrorResponse, RuleRuntimeLogMessage, RuleRuntimeResponse } from "@uhn/common";
+import { FireAndForgetCmdKey, isRuleRuntimeEventObject, RuleRuntimeActionMessage, RuleRuntimeCommand, RuleRuntimeCommandMap, RuleRuntimeLogMessage, RuleRuntimeResourcesLoadedMessage, RuleRuntimeRulesLoadedMessage } from "@uhn/common";
 import { AppErrorV2, AppLogger, fileExists, pathExists, readFile, removeFile, writeFile } from "@uxp/bff-common";
 import { assertNever } from "@uxp/common";
 import { ChildProcess, spawn, SpawnOptions } from "child_process";
 import { EventEmitter } from "events";
-import { nanoid } from "nanoid";
 import path from "path";
 import os from "os";
 import env, { getEnvVar } from "../env";
@@ -29,6 +28,8 @@ type SandboxConfig = {
 
 type RuleRuntimeProcessEventMap = {
     onActionEvent: [response: RuleRuntimeActionMessage];
+    onRulesLoaded: [response: RuleRuntimeRulesLoadedMessage];
+    onResourcesLoaded: [response: RuleRuntimeResourcesLoadedMessage];
     exit: [code: number | null, signal: NodeJS.Signals | null];
 };
 
@@ -166,10 +167,6 @@ async function killChildProcess(
 class RuleRuntimeProcessService extends EventEmitter<RuleRuntimeProcessEventMap> {
     private process: ChildProcess | null = null;
     private buffer = "";
-    private pendingResponses = new Map<
-        string,
-        (resp: Omit<RuleRuntimeResponse, "id" | "kind">) => void
-    >();
     private readyPromise: Promise<void> | null = null;
     private readyResolve: (() => void) | null = null;
     private ready = false;
@@ -388,24 +385,18 @@ class RuleRuntimeProcessService extends EventEmitter<RuleRuntimeProcessEventMap>
                             AppLogger.warn(
                                 { message: `[RuleRuntimeProcessService] Resource missing for rule ${resp.ruleId}: ${resp.resourceType} ${resp.resourceId} (${resp.reason})` });
                             continue;
+                        case "rulesLoaded":
+                            this.emit("onRulesLoaded", resp);
+                            continue;
+                        case "resourcesLoaded":
+                            this.emit("onResourcesLoaded", resp);
+                            continue;
                         case "timerStateChanged":
                             // Master mode doesn't run timers locally — if this fires, something is wrong
                             AppLogger.warn({ message: `[RuleRuntimeProcessService] Unexpected timerStateChanged from master runtime: ${resp.payload?.id} active=${resp.payload?.active}` });
                             continue;
                         default:
                             assertNever(resp);
-                    }
-
-                }
-                if (isRuleRuntimeResponseObject(resp)) {
-                    const { kind: _, id, ...rest } = resp
-
-                    const handler = this.pendingResponses.get(id);
-                    if (handler) {
-                        handler(rest);
-                        this.pendingResponses.delete(id);
-                    } else {
-                        AppLogger.warn({ message: `[RuleRuntimeProcessService] No handler for response ID ${id}` });
                     }
                 }
             }
@@ -431,10 +422,6 @@ class RuleRuntimeProcessService extends EventEmitter<RuleRuntimeProcessEventMap>
     }
 
     private async onExit(isStop: boolean) {
-        for (const [, handler] of this.pendingResponses) {
-            handler({ error: isStop ? "Rule runtime process stopped" : "Rule runtime process exited unexpectedly" });
-        }
-        this.pendingResponses.clear();
         this.ready = false;
         this.readyPromise = null;
         this.readyResolve = null;
@@ -483,51 +470,6 @@ class RuleRuntimeProcessService extends EventEmitter<RuleRuntimeProcessEventMap>
                 break;
         }
 
-    }
-
-    async runCommand<K extends AsyncCmdKey>(cmd: RuleRuntimeCommandMap[K]["request"], timeoutMs = 10000)
-        : Promise<RuleRuntimeCommandMap[K]["response"]> {
-
-        if (!this.ready && this.readyPromise) {
-            await this.readyPromise;
-        }
-
-        if (!this.ready) {
-            throw new AppErrorV2({
-                statusCode: 503,
-                code: "INTERNAL_SERVER_ERROR",
-                message: "Rule runtime process is not ready",
-            });
-        }
-        if (!this.process || !this.process.stdin?.writable) {
-            throw new AppErrorV2({
-                statusCode: 500,
-                code: "INTERNAL_SERVER_ERROR",
-                message: "Rule runtime process is not running",
-            });
-        }
-        const id = nanoid();
-        const fullCmd = { ...cmd, id, kind: "request" } satisfies RuleRuntimeCommand;
-
-        const promise = new Promise<RuleRuntimeCommandMap[K]["response"]>((resolve, reject) => {
-            const timer = timeoutMs > 0 ? setTimeout(() => {
-                AppLogger.warn({ message: `[RuleRuntimeProcessService] Rule runtime command ${cmd.cmd} timed out after ${timeoutMs}ms` });
-                this.pendingResponses.delete(id);
-                reject("Rule runtime command timed out");
-            }, timeoutMs) : null;
-            this.pendingResponses.set(id, (resp: Omit<RuleRuntimeResponse, "id" | "kind">) => {
-                if (timer) clearTimeout(timer);
-                if (resp && typeof resp === "object" && "error" in resp) {
-                    reject(resp as RuleRuntimeErrorResponse);
-                    return;
-                } else {
-                    resolve(resp as RuleRuntimeCommandMap[K]["response"]);
-                }
-            });
-        });
-
-        this.process.stdin.write(JSON.stringify(fullCmd) + "\n");
-        return promise;
     }
 
     canSendCommands(): boolean {

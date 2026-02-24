@@ -1,7 +1,7 @@
 
 import { MessagePayloadSchema } from "@uxp/common";
 import { UhnHealthSnapshot } from "./uhn-health.type";
-import { RuntimeResource, RuntimeResourceState } from "./uhn-runtime.type";
+import { RuntimeOverviewPayload, RuntimeResource, RuntimeResourceState } from "./uhn-runtime.type";
 
 
 export type UhnSubscriptionPattern =
@@ -10,7 +10,8 @@ export type UhnSubscriptionPattern =
     | `resource/*`
     | `resource/${string}`
     | `health/*`
-    | 'system/*';
+    | 'system/*'
+    | 'runtime/*';
 
 
 export type UhnSubscribePayload = {
@@ -80,6 +81,9 @@ export type UhnResourcePayloadResponseMap = {
 export type UhnHealthPayloadResponseMap = {
     "uhn:health:snapshot": UhnHealthSnapshot
 }
+export type UhnRuntimePayloadResponseMap = {
+    "uhn:runtime:overview": RuntimeOverviewPayload
+}
 export const UhnSubscribePayloadSchema: MessagePayloadSchema<UhnSubscribePayload> = {
 
     type: 'object',
@@ -87,7 +91,7 @@ export const UhnSubscribePayloadSchema: MessagePayloadSchema<UhnSubscribePayload
         patterns: {
             type: 'array', items: {
                 type: 'string',
-                pattern: '^((state|resource)/.*|health/\\*|system/\\*)$',
+                pattern: '^((state|resource)/.*|health/\\*|system/\\*|runtime/\\*)$',
                 minLength: 1,
                 maxLength: 256
             },

@@ -53,6 +53,17 @@ async function main() {
         router.handle(cmd);
     });
 
+    runtimeOutput.send({
+        kind: "event",
+        cmd: "rulesLoaded",
+        rules: rulesService.serializeRules(),
+        ...(runMode === "master" ? { allRules: rulesService.serializeAllRules() } : {}),
+    });
+    runtimeOutput.send({
+        kind: "event",
+        cmd: "resourcesLoaded",
+        resources: resourceService.list(),
+    });
     runtimeOutput.send({ kind: "event", cmd: "ready" });
 }
 

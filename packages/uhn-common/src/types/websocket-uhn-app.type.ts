@@ -1,5 +1,5 @@
 import { UxpActionPayloadResponseMap, WebSocketAction, WebSocketMessage, WebSocketResponse } from "@uxp/common";
-import { UhnHealthPayloadResponseMap, UhnResourcePayloadRequestMap, UhnResourcePayloadResponseMap, UhnSubscribePayloadRequestMap, UhnSubscribePayloadResponseMap } from "./uhn-message.type";
+import { UhnHealthPayloadResponseMap, UhnResourcePayloadRequestMap, UhnResourcePayloadResponseMap, UhnRuntimePayloadResponseMap, UhnSubscribePayloadRequestMap, UhnSubscribePayloadResponseMap } from "./uhn-message.type";
 import { TopicActionPayloadRequestMap, TopicActionPayloadResponseMap } from "./uhn-topics.type";
 import { UhnSystemPayloadRequestMap, UhnSystemPayloadResponseMap } from "./uhn-system.type";
 
@@ -17,6 +17,7 @@ export type UHNAppActionPayloadResponseMap = TopicActionPayloadResponseMap &
     UhnResourcePayloadResponseMap &
     UhnHealthPayloadResponseMap &
     UhnSystemPayloadResponseMap &
+    UhnRuntimePayloadResponseMap &
     UxpActionPayloadResponseMap;
 
 export type UHNHealthActionPayloadResponseMap = UhnSubscribePayloadResponseMap &

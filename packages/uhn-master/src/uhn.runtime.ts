@@ -12,6 +12,7 @@ const { AppDataSource } = require("./db/typeorm.config");
  *  RUNTIME BOOTSTRAP (singleton side effects)
  *  Importing these registers listeners, background loops, and subscriptions.
  * ========================================================================== */
+import { initRuntimeOverviewDispatcher } from "./dispatchers/runtime-overview.dispatcher";
 import { initUhnSystemDispatcher } from "./dispatchers/uhn-system.dispatcher";
 import "./services/blueprint-resource.service";
 import "./services/blueprint-runtime-supervisor.service";
@@ -26,6 +27,7 @@ import "./services/state-signal.service";
 import "./services/subscription.service";
 import "./services/master-key.service";
 import "./services/edge-identity.service";
+import "./services/runtime-overview.service";
 import { systemConfigService } from "./services/system-config.service";
 import "./services/uhn-health.service";
 
@@ -59,5 +61,6 @@ const setupWebDispatchers = () => {
     initRuleActionDispatcher();
     initUhnHealthDispatcher();
     initUhnSystemDispatcher();
+    initRuntimeOverviewDispatcher();
 };
 

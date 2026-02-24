@@ -1,5 +1,6 @@
 // services/runtime-rules.service.ts
-import { BlueprintRule, isBlueprintRule } from "@uhn/blueprint";
+import { BlueprintRule, isBlueprintRule, RuleTrigger } from "@uhn/blueprint";
+import { RuntimeRuleInfo, RuntimeRuleTriggerInfo } from "@uhn/common";
 import fs from "fs-extra";
 import path from "path";
 import { runtimeOutput } from "../io/runtime-output";
@@ -123,12 +124,41 @@ function validateRules(rules: BlueprintRule[]): BlueprintRule[] {
 
     return out;
 }
+function serializeTrigger(t: RuleTrigger): RuntimeRuleTriggerInfo {
+    const resourceId = t.resource?.id ?? "unknown";
+    switch (t.kind) {
+        case "resource":
+            return { kind: "resource", resourceId, event: t.event };
+        case "tap":
+            return { kind: "tap", resourceId };
+        case "longPress":
+            return { kind: "longPress", resourceId, thresholdMs: t.thresholdMs };
+        case "timer":
+            return { kind: "timer", resourceId, event: t.event };
+    }
+}
+
+function serializeRule(rule: BlueprintRule): RuntimeRuleInfo {
+    return {
+        id: rule.id,
+        ...(rule.name != null && { name: rule.name }),
+        ...(rule.description != null && { description: rule.description }),
+        ...(rule.executionTarget != null && { executionTarget: rule.executionTarget }),
+        triggers: rule.triggers.map(serializeTrigger),
+        ...(rule.priority != null && { priority: rule.priority }),
+        ...(rule.suppressMs != null && { suppressMs: rule.suppressMs }),
+        ...(rule.cooldownMs != null && { cooldownMs: rule.cooldownMs }),
+    };
+}
+
 export class RuntimeRulesService {
     private readonly rules: BlueprintRule[];
+    private readonly allValidatedRules: BlueprintRule[];
     private readonly byResourceId: Map<string, BlueprintRule[]>;
 
-    private constructor(rules: BlueprintRule[], byResourceId: Map<string, BlueprintRule[]>) {
+    private constructor(rules: BlueprintRule[], allValidatedRules: BlueprintRule[], byResourceId: Map<string, BlueprintRule[]>) {
         this.rules = rules;
+        this.allValidatedRules = allValidatedRules;
         this.byResourceId = byResourceId;
     }
 
@@ -142,7 +172,7 @@ export class RuntimeRulesService {
             message: `Loaded ${rules.length} of ${validated.length} rules for mode "${modeLabel}".`,
         });
         const byResourceId = indexRules(rules);
-        return new RuntimeRulesService(rules, byResourceId);
+        return new RuntimeRulesService(rules, validated, byResourceId);
     }
 
     list(): BlueprintRule[] {
@@ -153,4 +183,11 @@ export class RuntimeRulesService {
         return this.byResourceId.get(resourceId) ?? [];
     }
 
+    serializeRules(): RuntimeRuleInfo[] {
+        return this.rules.map(serializeRule);
+    }
+
+    serializeAllRules(): RuntimeRuleInfo[] {
+        return this.allValidatedRules.map(serializeRule);
+    }
 }

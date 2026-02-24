@@ -2,7 +2,6 @@ import { RuleRuntimeCommand } from "@uhn/common";
 
 import { handleError, handleUnknownCommand } from "../io/handle-error";
 import { RuleRuntimeDependencies } from "../types/rule-runtime.type";
-import { handleListResources } from "./resource-list.handler";
 import { handleStateFullUpdate } from "./state-full-update.handler";
 import { handleStateUpdate } from "./state-update.handler";
 import { handleTimerCommand } from "./timer-command.handler";
@@ -12,9 +11,6 @@ export function createCommandRouter(deps: RuleRuntimeDependencies) {
         async handle(cmd: RuleRuntimeCommand) {
             try {
                 switch (cmd.cmd) {
-                    case "listResources":
-                        await handleListResources(deps, cmd);
-                        break;
                     case "stateUpdate":
                         await handleStateUpdate(deps, cmd);
                         break;

@@ -18,24 +18,19 @@ export type ResourceEventMap = {
 class BlueprintResourceService extends EventEmitter<ResourceEventMap> {
     private resources: RuntimeResourceList = [];
     private resourceById: Map<string, RuntimeResource> = new Map();
-    private loading = false;
-    private catalogChangedDuringLoad = false;
+    private rawResources: RuntimeResourceList = [];
     private resourceLoaded = false;
     private validationErrors: ResourceValidationError[] = [];
 
     constructor() {
         super();
 
-        blueprintRuntimeSupervisorService.on("ruleRuntimeReady", () => {
+        ruleRuntimeProcessService.on("onResourcesLoaded", (msg) => {
             AppLogger.info({
-                message: `[BlueprintResourceService] Rule runtime is ready, loading resources.`,
+                message: `[BlueprintResourceService] Resources loaded from runtime, processing ${msg.resources.length} resources.`,
             });
-            this.reloadResources().catch(err => {
-                AppLogger.error({
-                    message: `[BlueprintResourceService] Failed to load resources on rule runtime ready:`,
-                    error: err,
-                });
-            });
+            this.rawResources = msg.resources ?? [];
+            this.processResources(this.rawResources);
         });
 
         blueprintRuntimeSupervisorService.on("ruleRuntimeStopped", () => {
@@ -48,82 +43,39 @@ class BlueprintResourceService extends EventEmitter<ResourceEventMap> {
 
     }
     private handleCatalogChange() {
-        if (!this.loading && this.resourceLoaded) {
+        if (this.resourceLoaded) {
             AppLogger.info({
-                message: `[BlueprintResourceService] Catalog changed, reloading resources.`,
+                message: `[BlueprintResourceService] Catalog changed, re-validating resources.`,
             });
-            this.reloadResources().catch(err => {
-                AppLogger.error({
-                    message: `[BlueprintResourceService] Failed to reload resources on catalog change:`,
-                    error: err,
-                });
-            })
-        }
-        if (this.loading) {
-            this.catalogChangedDuringLoad = true;
+            this.processResources(this.rawResources);
         }
     }
 
-    async reloadResources() {
-        if (this.loading) return;
-        try {
-            this.resourceLoaded = false;
-            this.loading = true;
-            await this.reloadResourcesFromRuleRuntime();
-            if (this.catalogChangedDuringLoad) {
-                this.catalogChangedDuringLoad = false;
-                AppLogger.info({
-                    message: `[BlueprintResourceService] Catalog changed during resource load, reloading resources again.`,
-                });
-                await this.reloadResourcesFromRuleRuntime();
-            }
-        } finally {
-            this.loading = false;
+    private processResources(resources: RuntimeResourceList) {
+        const validatedResources = this.validateResources(resources);
+        this.resources = validatedResources.resources;
+        this.validationErrors = validatedResources.validationErrors;
+        this.resourceById.clear();
+        this.resources.forEach(resource => {
+            this.resourceById.set(resource.id, resource);
+        });
+
+        AppLogger.isDebugLevel() && AppLogger.debug({
+            message: `[BlueprintResourceService] Loaded resources`,
+            object: { resources: this.resources }
+        });
+        this.resourceLoaded = true;
+        this.emit("resourcesReloaded", this.resources, this.validationErrors);
+        this.writeResourcesToFile();
+        AppLogger.info({
+            message: `[BlueprintResourceService] Loaded ${this.resources.length} resources from active blueprint.`,
+        });
+        if (this.validationErrors.length) {
+            AppLogger.warn(undefined, {
+                message: `[BlueprintResourceService] Found ${this.validationErrors.length} resource validation error(s)`,
+                object: { validationErrors: this.validationErrors }
+            });
         }
-    }
-
-    private async reloadResourcesFromRuleRuntime() {
-        try {
-            const resp = await ruleRuntimeProcessService.runCommand({
-                cmd: "listResources",
-            });
-
-            const resources = resp.resources ?? [];
-            const validatedResources = this.validateResources(resources);
-            this.resources = validatedResources.resources;
-            this.validationErrors = validatedResources.validationErrors;
-            this.resources.forEach(resource => {
-                this.resourceById.set(resource.id, resource);
-            });
-
-            AppLogger.isDebugLevel() && AppLogger.debug({
-                message: `[BlueprintResourceService] Loaded resources`,
-                object: { resources: this.resources }
-
-            });
-            this.resourceLoaded = true;
-            this.emit("resourcesReloaded", this.resources, this.validationErrors);
-            await this.writeResourcesToFile();
-            AppLogger.info({
-                message: `[BlueprintResourceService] Loaded ${this.resources.length} resources from active blueprint.`,
-            });
-            if (this.validationErrors.length) {
-                AppLogger.warn(undefined, {
-                    message: `[BlueprintResourceService] Found ${this.validationErrors.length} resource validation error(s)`,
-                    object: { validationErrors: this.validationErrors }
-                });
-            }
-
-        } catch (err) {
-            this.resources = [];
-            this.emit("error", err);
-            AppLogger.error({
-                message: `[BlueprintResourceService] Failed to load resources from active blueprint:`,
-                error: err,
-            });
-
-        }
-
     }
     private async writeResourcesToFile() {
         try {

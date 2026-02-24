@@ -3,6 +3,7 @@ import { WebSocket } from "ws";
 import { systemStatusBroadcaster } from "../system/system-status.broadcaster";
 import { UHNAppServerWebSocketManager } from "../ws/UHNAppServerWebSocketManager";
 import { blueprintResourceService } from "./blueprint-resource.service";
+import { runtimeOverviewService } from "./runtime-overview.service";
 import { stateRuntimeService } from "./state-runtime.service";
 import { uhnHealthService } from "./uhn-health.service";
 import { uhnSystemSnapshotService } from "./uhn-system-snapshot.service";
@@ -29,6 +30,8 @@ export class UhnMessageService {
         const shouldSendStates = patterns.some(pattern => pattern.startsWith('state/'));
         const shouldSendHealth = patterns.some(pattern => pattern === 'health/*');
         const shouldSendSystem = patterns.some(pattern => pattern === 'system/*');
+        const shouldSendRuntime = patterns.some(p => p === 'runtime/*');
+
         if (shouldSendResources) {
             await this.sendResourcesMessage(socket, patterns);
         }
@@ -41,6 +44,9 @@ export class UhnMessageService {
         if (shouldSendSystem) {
             this.sendSystemSnapshotMessage(socket);
             this.sendSystemStatusMessage(socket);
+        }
+        if (shouldSendRuntime) {
+            this.sendRuntimeOverviewMessage(socket);
         }
 
     }
@@ -121,6 +127,15 @@ export class UhnMessageService {
             action: "uhn:system:snapshot",
             success: true,
             payload: systemSnapshot
+        });
+    }
+
+    sendRuntimeOverviewMessage(socket: WebSocket) {
+        const overview = runtimeOverviewService.getOverview();
+        this.wsManager.sendMessage(socket, {
+            action: "uhn:runtime:overview",
+            success: true,
+            payload: overview
         });
     }
 

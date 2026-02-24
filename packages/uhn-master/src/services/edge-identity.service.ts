@@ -1,4 +1,5 @@
 import { KeyObject } from "crypto";
+import { EventEmitter } from "events";
 
 import { importPublicKeyBase64 } from "../util/ed25519";
 import { subscriptionService } from "./subscription.service";
@@ -32,11 +33,16 @@ function extractEdgeFromTopic(topic: string): string | null {
 }
 
 
-class EdgeIdentityService {
+type EdgeIdentityEventMap = {
+    edgeStatusChanged: [edgeId: string, status: EdgeStatus];
+};
+
+class EdgeIdentityService extends EventEmitter<EdgeIdentityEventMap> {
     private readonly edgeIdentity = new Map<string, KeyObject>();
     private readonly edgeStatus = new Map<string, EdgeStatus>();
 
     constructor() {
+        super();
         subscriptionService.on("edgeIdentity", (topic, payload) => this.handleEdgeIdentity(topic, payload));
         subscriptionService.on("edgeStatus", async (topic, payload) => this.handleEdgeStatus(topic, payload));
 
@@ -97,7 +103,9 @@ class EdgeIdentityService {
             return;
         }
         if (typeof payload === "string") {
-            this.edgeStatus.set(edgeId, payload === "online" ? "online" : "offline");
+            const status: EdgeStatus = payload === "online" ? "online" : "offline";
+            this.edgeStatus.set(edgeId, status);
+            this.emit("edgeStatusChanged", edgeId, status);
         }
     }
 
