@@ -7,6 +7,7 @@ import { ResourceEventEmitter } from "./rule/resource-event.emitter";
 import { RuleEngine } from "./rule/rule-engine";
 import { TimerStateEmitter } from "./rule/timer-state.emitter";
 import { TriggerEventBus } from "./rule/trigger-event-bus";
+import { RuntimeMuteService } from "./services/runtime-mute.service";
 import { RuntimeResourceService } from "./services/runtime-resource.service";
 import { RuntimeRulesService } from "./services/runtime-rules.service";
 import { RuntimeStateService } from "./services/runtime-state.service";
@@ -35,6 +36,10 @@ async function main() {
     const stateService = new RuntimeStateService();
     const triggerEventBus = new TriggerEventBus();
     const timerService = new RuntimeTimerService(stateService);
+    const muteService = new RuntimeMuteService();
+
+    // Instances register listeners in constructors; keep references to prevent accidental GC/lint removal.
+    const ruleEngine = new RuleEngine(triggerEventBus, rulesService, stateService, timerService, muteService, runMode);
 
     const router = createCommandRouter({
         runMode: runMode,
@@ -42,9 +47,8 @@ async function main() {
         rulesService,
         stateService,
         timerService,
+        muteService,
     });
-    // Instances register listeners in constructors; keep references to prevent accidental GC/lint removal.
-    const ruleEngine = new RuleEngine(triggerEventBus, rulesService, stateService, timerService, runMode);
     const resourceEventEmitter = new ResourceEventEmitter(stateService, triggerEventBus, resourceService);
     const inputGestureEmitter = new InputGestureEmitter(stateService, rulesService, triggerEventBus, resourceService);
     const timerStateEmitter = new TimerStateEmitter(timerService);

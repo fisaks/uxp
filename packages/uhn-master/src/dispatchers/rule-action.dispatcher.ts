@@ -13,6 +13,7 @@ import { AppLogger } from "@uxp/bff-common";
 import { assertNever } from "@uxp/common";
 import { blueprintResourceService } from "../services/blueprint-resource.service";
 import { commandEdgeService } from "../services/command-edge.service";
+import { muteEdgeService } from "../services/mute-edge.service";
 import { ruleRuntimeProcessService } from "../services/rule-runtime-process.service";
 import { stateSignalService } from "../services/state-signal.service";
 import { timerEdgeService } from "../services/timer-edge.service";
@@ -38,6 +39,12 @@ function handleActionEvent(actions: RuntimeRuleAction[]) {
                 break;
             case "timerClear":
                 handleTimerClearAction(act);
+                break;
+            case "mute":
+                handleMuteAction(act);
+                break;
+            case "clearMute":
+                handleClearMuteAction(act);
                 break;
             default:
                 assertNever(act);
@@ -94,6 +101,25 @@ function handleTimerClearAction(action: Extract<RuntimeRuleAction, { type: "time
     }
     AppLogger.warn({
         message: `TimerClear action received for non-timer resource: ${action.resourceId}`
+    });
+}
+
+function handleMuteAction(action: Extract<RuntimeRuleAction, { type: "mute" }>) {
+    muteEdgeService.broadcastMuteCommand({
+        targetType: action.targetType,
+        targetId: action.targetId,
+        action: "mute",
+        expiresAt: action.expiresAt,
+        identifier: action.identifier,
+    });
+}
+
+function handleClearMuteAction(action: Extract<RuntimeRuleAction, { type: "clearMute" }>) {
+    muteEdgeService.broadcastMuteCommand({
+        targetType: action.targetType,
+        targetId: action.targetId,
+        action: "clearMute",
+        identifier: action.identifier,
     });
 }
 

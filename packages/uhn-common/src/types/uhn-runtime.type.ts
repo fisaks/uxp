@@ -123,9 +123,22 @@ export type RuleRuntimeTimerCommand = {
   };
 };
 
+export type RuleRuntimeMuteCommand = {
+  kind: "event";
+  cmd: "muteCommand";
+  payload: {
+    targetType: "rule" | "resource";
+    targetId: string;
+    action: "mute" | "clearMute";
+    expiresAt?: number;
+    identifier?: string;
+  };
+};
+
 export type RuleRuntimeCommand = RuleRuntimeStateUpdateCommand
   | RuleRuntimeStateFullUpdateCommand
-  | RuleRuntimeTimerCommand;
+  | RuleRuntimeTimerCommand
+  | RuleRuntimeMuteCommand;
 
 
 export type RuleRuntimeResourcesLoadedMessage = {
@@ -182,6 +195,10 @@ export type RuleRuntimeCommandMap = {
   };
   stateFullUpdate: {
     request: Omit<RuleRuntimeStateFullUpdateCommand, "kind">;
+    response: void;
+  };
+  muteCommand: {
+    request: Omit<RuleRuntimeMuteCommand, "kind">;
     response: void;
   };
 };

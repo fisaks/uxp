@@ -147,6 +147,19 @@ export type RuntimeRuleAction =
     | {
         type: "timerClear";
         resourceId: string;
+    }
+    | {
+        type: "mute";
+        targetType: "rule" | "resource";
+        targetId: string;
+        expiresAt: number;
+        identifier?: string;
+    }
+    | {
+        type: "clearMute";
+        targetType: "rule" | "resource";
+        targetId: string;
+        identifier?: string;
     };
 
 // --------- Context ---------
@@ -163,6 +176,8 @@ export type RuleContext = {
  * You can give an optional identifier to distinguish different mute reasons.
  * Using the same identifier in clearMute will only clear that specific mute.
  * If no identifier is given, all mutes for that resource/rule are cleared.
+ *
+ * Note: mutes are held in memory and do not survive process restarts.
  */
 export type MuteController = {
     resource(resource: ResourceBase<ResourceType>, durationMs: number, identifier?: string): void;

@@ -1,6 +1,7 @@
 //uhn.runtime.ts
 import { AppLogger, runBackgroundTask } from "@uxp/bff-common";
 import { initBlueprintResourceDispatcher } from "./dispatchers/blueprint-resource.dispatcher";
+import { initMuteEventDispatcher } from "./dispatchers/mute-event.dispatcher";
 import { initRuleActionDispatcher } from "./dispatchers/rule-action.dispatcher";
 import { initStateRuntimeDispatcher } from "./dispatchers/state-runtime.dispatcher";
 import { initTopicTraceDispatcher } from "./dispatchers/topic-trace.dispatcher";
@@ -59,6 +60,7 @@ const setupWebDispatchers = () => {
     initBlueprintResourceDispatcher();
     initStateRuntimeDispatcher();
     initRuleActionDispatcher();
+    initMuteEventDispatcher();
     initUhnHealthDispatcher();
     initUhnSystemDispatcher();
     initRuntimeOverviewDispatcher();

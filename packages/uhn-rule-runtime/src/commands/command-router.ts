@@ -2,6 +2,7 @@ import { RuleRuntimeCommand } from "@uhn/common";
 
 import { handleError, handleUnknownCommand } from "../io/handle-error";
 import { RuleRuntimeDependencies } from "../types/rule-runtime.type";
+import { handleMuteCommand } from "./mute-command.handler";
 import { handleStateFullUpdate } from "./state-full-update.handler";
 import { handleStateUpdate } from "./state-update.handler";
 import { handleTimerCommand } from "./timer-command.handler";
@@ -19,6 +20,9 @@ export function createCommandRouter(deps: RuleRuntimeDependencies) {
                         break;
                     case "timerCommand":
                         handleTimerCommand(deps, cmd);
+                        break;
+                    case "muteCommand":
+                        handleMuteCommand(deps, cmd);
                         break;
                     default:
                         handleUnknownCommand(cmd);

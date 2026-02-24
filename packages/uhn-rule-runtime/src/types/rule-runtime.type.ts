@@ -1,4 +1,5 @@
 import { ResourceState } from "@uhn/blueprint";
+import type { RuntimeMuteService } from "../services/runtime-mute.service";
 import { RuntimeResourceService } from "../services/runtime-resource.service";
 import { RuntimeRulesService } from "../services/runtime-rules.service";
 import { RuntimeStateService } from "../services/runtime-state.service";
@@ -13,6 +14,7 @@ export type RuleRuntimeDependencies = {
     stateService: RuntimeStateService;
     rulesService: RuntimeRulesService;
     timerService: RuntimeTimerService;
+    muteService: RuntimeMuteService;
 };
 
 export type RuntimeStateChange = {

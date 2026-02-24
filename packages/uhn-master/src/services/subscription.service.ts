@@ -6,6 +6,7 @@ type SubscriptionEventMap = {
     deviceState: [topic: string, payload: unknown];
     signalState: [topic: string, payload: unknown];
     timerState: [topic: string, payload: unknown];
+    muteEvent: [topic: string, payload: unknown];
     catalog: [topic: string, payload: unknown];
     cmd: [topic: string, payload: unknown];
     deviceCmd: [topic: string, payload: unknown];
@@ -69,6 +70,11 @@ class SubscriptionService extends EventEmitter<SubscriptionEventMap> {
         mqttService.subscribe("uhn/+/timer/state/+", (topic, payload) => {
             const parsed = tryParseJson(payload);
             this.emit("timerState", topic, parsed);
+        });
+
+        mqttService.subscribe("uhn/+/mute/event", (topic, payload) => {
+            const parsed = tryParseJson(payload);
+            this.emit("muteEvent", topic, parsed);
         });
 
         mqttService.subscribe("uhn/+/catalog", (topic, payload) => {

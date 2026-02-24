@@ -16,6 +16,8 @@ import { RuntimeTimerService } from "../services/runtime-timer.service";
 import { RuntimeMode } from "../types/rule-runtime.type";
 import { createResourceErrorData } from "./rule-engine-error";
 import { ruleLogger } from "./rule-engine-logging";
+import { RuntimeMuteService } from "../services/runtime-mute.service";
+import { createRuleMute } from "./rule-engine-mute";
 import { createRuleRuntime } from "./rule-engine-runtime";
 import { createRuleTimer } from "./rule-engine-timer";
 import { RuleExecutionControl, RuleTriggerEvent } from "./rule-engine.type";
@@ -32,6 +34,7 @@ export class RuleEngine {
         private readonly rulesService: RuntimeRulesService,
         private readonly stateService: RuntimeStateService,
         private readonly timerService: RuntimeTimerService,
+        private readonly muteService: RuntimeMuteService,
         mode: RuntimeMode
     ) {
         this.mode = mode;
@@ -45,6 +48,15 @@ export class RuleEngine {
     private handleTriggerEvent(triggerEvent: RuleTriggerEvent) {
         const resourceId = triggerEvent.resource.id;
         if (!resourceId) return;
+
+        if (this.muteService.isResourceMuted(resourceId)) {
+            runtimeOutput.log({
+                level: "info",
+                component: "RuleEngine",
+                message: `Skipping all rules for resource "${resourceId}" — resource is muted`,
+            });
+            return;
+        }
 
         const rules = this.rulesService.getRulesForResource(resourceId);
         if (!rules.length) return;
@@ -114,6 +126,12 @@ export class RuleEngine {
             }
         }
 
+        // Mute: skip rule if it has been muted (e.g. manual override)
+        if (this.muteService.isRuleMuted(ruleCandidate.id)) {
+            logger.info(`Skipped rule "${ruleCandidate.id}" — rule is muted`);
+            return [];
+        }
+
         // Suppress: ignore noisy triggers.
         // After a triggering event, ignore further triggers for X milliseconds.
         // The rule only runs in response to an event; no execution is scheduled
@@ -135,6 +153,8 @@ export class RuleEngine {
             mode: this.mode,
         });
 
+        const ruleMute = createRuleMute({ muteService: this.muteService });
+
         let actions: RuleAction[] = [];
 
         try {
@@ -142,16 +162,7 @@ export class RuleEngine {
                 cause: runCause,
                 runtime: this.ruleRuntime,
                 timers: ruleTimer,
-                mute: {
-                    resource: (resource, durationMs, identifier) => {
-
-                    },
-                    rule: (rule, durationMs, identifier) => {
-
-                    },
-                    clearMute: (mute, identifier) => {
-                    }
-                },
+                mute: ruleMute,
                 logger,
             });
         } catch (error) {
@@ -179,7 +190,8 @@ export class RuleEngine {
 
         const runtimeActions = actions.map(this.toRuntimeAction).filter((a): a is RuntimeRuleAction => a !== undefined);
         const timerActions = ruleTimer.drainPendingActions();
-        return [...runtimeActions, ...timerActions];
+        const muteActions = ruleMute.drainPendingActions();
+        return [...runtimeActions, ...timerActions, ...muteActions];
     }
 
     private toRuntimeAction(action: RuleAction): RuntimeRuleAction | undefined {
