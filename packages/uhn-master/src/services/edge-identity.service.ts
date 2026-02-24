@@ -2,6 +2,7 @@ import { KeyObject } from "crypto";
 import { EventEmitter } from "events";
 
 import { importPublicKeyBase64 } from "../util/ed25519";
+import { parseMqttTopic } from "../util/mqtt-topic.util";
 import { subscriptionService } from "./subscription.service";
 import { AppLogger } from "@uxp/bff-common";
 
@@ -25,13 +26,6 @@ function isEdgeIdentityPayload(obj: unknown): obj is EdgePublicKeyPayload {
         "edgeId" in obj && "publicKey" in obj && "algorithm" in obj && "ts" in obj
     );
 }
-
-function extractEdgeFromTopic(topic: string): string | null {
-    const parts = topic.split("/");
-    if (parts.length < 3) return null;
-    return parts[1];
-}
-
 
 type EdgeIdentityEventMap = {
     edgeStatusChanged: [edgeId: string, status: EdgeStatus];
@@ -74,7 +68,7 @@ class EdgeIdentityService extends EventEmitter<EdgeIdentityEventMap> {
             });
             return;
         }
-        const edgeId = extractEdgeFromTopic(topic);
+        const edgeId = parseMqttTopic(topic)?.edge ?? null;
         if (!edgeId) {
             AppLogger.warn(undefined, {
                 message: `[EdgeIdentityService] Received edge identity message with invalid topic: ${topic}`,
@@ -94,7 +88,7 @@ class EdgeIdentityService extends EventEmitter<EdgeIdentityEventMap> {
 
     }
     private handleEdgeStatus(topic: string, payload: unknown) {
-        const edgeId = extractEdgeFromTopic(topic);
+        const edgeId = parseMqttTopic(topic)?.edge ?? null;
         if (!edgeId) {
             AppLogger.warn(undefined, {
                 message: `[EdgeIdentityService] Received edge status message with invalid topic: ${topic}`,

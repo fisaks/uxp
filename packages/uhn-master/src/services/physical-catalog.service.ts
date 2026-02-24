@@ -1,8 +1,9 @@
 import { CatalogPayload, DeviceSummary, Range } from "@uhn/common";
 import { AppLogger } from "@uxp/bff-common";
-import EventEmitter from "events";
-import { subscriptionService } from "./subscription.service";
 import { fnv1a } from "@uxp/common";
+import EventEmitter from "events";
+import { parseMqttTopic } from "../util/mqtt-topic.util";
+import { subscriptionService } from "./subscription.service";
 
 type CatalogEventMap = {
     catalogChanged: [edge: string, payload: EdgeCatalog];
@@ -20,12 +21,6 @@ function isCatalogPayload(obj: unknown): obj is CatalogPayload {
         typeof obj === "object" && obj !== null && obj !== undefined &&
         "devices" in obj && Array.isArray((obj as CatalogPayload).devices)
     );
-}
-// Parse edge name: uhn/<edge>/catalog
-function extractEdgeFromTopic(topic: string): string | null {
-    const parts = topic.split("/");
-    if (parts.length < 3) return null;
-    return parts[1];
 }
 function rangeKey(r?: Range): string {
     return r ? `${r.start}:${r.count}` : "-";
@@ -60,7 +55,7 @@ class PhysicalCatalogService extends EventEmitter<CatalogEventMap> {
             return;
         }
 
-        const edge = extractEdgeFromTopic(topic);
+        const edge = parseMqttTopic(topic)?.edge ?? null;
         if (!edge) {
             AppLogger.warn(undefined, {
                 message: `[PhysicalCatalogService] Unable to extract edge from topic ${topic}`,

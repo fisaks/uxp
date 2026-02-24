@@ -29,7 +29,8 @@ export type RuleRuntimeRulesLoadedMessage = {
 
 // --- Runtime overview types ---
 
-export type RuntimeStatus = "unconfigured" | "starting" | "running" | "stopped" | "restarting" | "failed";
+export const RUNTIME_STATUSES = ["unconfigured", "starting", "running", "stopped", "restarting", "failed"] as const;
+export type RuntimeStatus = (typeof RUNTIME_STATUSES)[number];
 
 export type RuntimeInfo = {
   runtimeId: string;

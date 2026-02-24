@@ -1,6 +1,7 @@
 import { ResourceStateValue, RuntimeResource } from "@uhn/common";
 import { AppLogger } from "@uxp/bff-common";
 import { EventEmitter } from "events";
+import { parseMqttTopic } from "../util/mqtt-topic.util";
 import { blueprintResourceService } from "./blueprint-resource.service";
 import { isSignalStatePayload, SignalEdgeService } from "./signal-edge.service";
 import { subscriptionService } from "./subscription.service";
@@ -41,16 +42,16 @@ class StateSignalService extends EventEmitter<StateSignalEventMap> {
 
     private handleSignalState(topic: string, payload: unknown) {
         //uhn/+/signal/state/+
-        const parts = topic.split("/");
-        if (parts.length < 5) {
+        const parsed = parseMqttTopic(topic, 5);
+        if (!parsed) {
             AppLogger.warn(undefined, {
                 message: `[StateSignalService] Invalid signal state topic: ${topic}`,
                 object: { topic }
             });
             return;
         }
-        const edge = parts[1];
-        const resourceId = parts[4];
+        const { edge, segments } = parsed;
+        const resourceId = segments[4];
         AppLogger.isTraceLevel() &&
             AppLogger.trace({
                 message: `[StateSignalService] Received signal state for resource ${resourceId} on edge ${edge}`,

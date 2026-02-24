@@ -1,6 +1,7 @@
 import { ResourceStateValue } from "@uhn/common";
 import { AppLogger } from "@uxp/bff-common";
 import { EventEmitter } from "events";
+import { parseMqttTopic } from "../util/mqtt-topic.util";
 import { blueprintResourceService } from "./blueprint-resource.service";
 import { subscriptionService } from "./subscription.service";
 
@@ -52,16 +53,16 @@ class StateTimerService extends EventEmitter<StateTimerEventMap> {
 
     private handleTimerState(topic: string, payload: unknown) {
         // uhn/+/timer/state/+
-        const parts = topic.split("/");
-        if (parts.length < 5) {
+        const parsed = parseMqttTopic(topic, 5);
+        if (!parsed) {
             AppLogger.warn(undefined, {
                 message: `[StateTimerService] Invalid timer state topic: ${topic}`,
                 object: { topic }
             });
             return;
         }
-        const edge = parts[1];
-        const resourceId = parts[4];
+        const { edge, segments } = parsed;
+        const resourceId = segments[4];
 
         if (isTimerStatePayload(payload)) {
             const prev = this.timerStateByResourceId.get(resourceId);

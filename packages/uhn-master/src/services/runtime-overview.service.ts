@@ -1,15 +1,10 @@
-import { RuntimeInfo, RuntimeOverviewPayload, RuntimeRuleInfo, RuntimeStatus } from "@uhn/common";
+import { RUNTIME_STATUSES, RuntimeInfo, RuntimeOverviewPayload, RuntimeRuleInfo, RuntimeStatus } from "@uhn/common";
 import { EventEmitter } from "events";
+import { parseMqttTopic } from "../util/mqtt-topic.util";
 import { blueprintRuntimeSupervisorService } from "./blueprint-runtime-supervisor.service";
 import { blueprintService } from "./blueprint.service";
 import { ruleRuntimeProcessService } from "./rule-runtime-process.service";
 import { subscriptionService } from "./subscription.service";
-
-function extractEdgeFromTopic(topic: string): string | null {
-    const parts = topic.split("/");
-    if (parts.length < 3) return null;
-    return parts[1];
-}
 
 type RuntimeOverviewEventMap = {
     overviewChanged: [payload: RuntimeOverviewPayload];
@@ -77,8 +72,9 @@ class RuntimeOverviewService extends EventEmitter<RuntimeOverviewEventMap> {
 
         // Edge runtime rule count from MQTT (published as a plain number string)
         subscriptionService.on("edgeRuntimeRules", (topic, payload) => {
-            const edgeId = extractEdgeFromTopic(topic);
-            if (!edgeId) return;
+            const parsed = parseMqttTopic(topic);
+            if (!parsed) return;
+            const edgeId = parsed.edge;
 
             if (payload === null || payload === undefined) {
                 // Cleared (edge stopped)
@@ -94,8 +90,9 @@ class RuntimeOverviewService extends EventEmitter<RuntimeOverviewEventMap> {
 
         // Edge runtime status from MQTT
         subscriptionService.on("edgeRuntimeStatus", (topic, payload) => {
-            const edgeId = extractEdgeFromTopic(topic);
-            if (!edgeId) return;
+            const parsed = parseMqttTopic(topic);
+            if (!parsed) return;
+            const edgeId = parsed.edge;
 
             if (typeof payload === "string" && isValidRuntimeStatus(payload)) {
                 this.edgeRuntimeStatus.set(edgeId, payload);
@@ -167,10 +164,8 @@ class RuntimeOverviewService extends EventEmitter<RuntimeOverviewEventMap> {
     }
 }
 
-const VALID_RUNTIME_STATUSES: Set<string> = new Set(["unconfigured", "starting", "running", "stopped", "restarting", "failed"]);
-
 function isValidRuntimeStatus(value: string): value is RuntimeStatus {
-    return VALID_RUNTIME_STATUSES.has(value);
+    return (RUNTIME_STATUSES as readonly string[]).includes(value);
 }
 
 export const runtimeOverviewService = new RuntimeOverviewService();

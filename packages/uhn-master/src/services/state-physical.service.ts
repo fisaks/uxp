@@ -1,6 +1,7 @@
 import { DeviceStatePayload } from "@uhn/common";
 import { AppLogger } from "@uxp/bff-common";
 import { EventEmitter } from "events";
+import { parseMqttTopic } from "../util/mqtt-topic.util";
 import { subscriptionService } from "./subscription.service";
 
 
@@ -33,15 +34,6 @@ function decodeBase64Field(val?: string): Buffer | undefined {
     return val ? Buffer.from(val, "base64") : undefined;
 }
 
-function extractEdgeDeviceFromTopic(topic: string): { edge: string; device: string } | null {
-    const parts = topic.split("/");
-    if (parts.length < 5) return null;
-    return {
-        edge: parts[1],
-        device: parts[3],
-    };
-}
-
 class StatePhysicalService extends EventEmitter<StatePhysicalEventMap> {
     // Implementation of the service
     private lastDeviceStates: Map<string, PhysicalDeviceState> = new Map();
@@ -64,14 +56,16 @@ class StatePhysicalService extends EventEmitter<StatePhysicalEventMap> {
         }
 
         // Extract edge/device from topic
-        const { edge, device } = extractEdgeDeviceFromTopic(topic) ?? {};
-        if (!edge || !device) {
+        const parsed = parseMqttTopic(topic, 5);
+        if (!parsed) {
             AppLogger.warn(undefined, {
                 message: `[StatePhysicalService] Unable to extract edge/device from topic ${topic}`,
                 object: { payload }
             });
             return;
         }
+        const { edge, segments } = parsed;
+        const device = segments[3];
 
         let digitalInputs: Buffer | undefined = undefined;
         let digitalOutputs: Buffer | undefined = undefined;
