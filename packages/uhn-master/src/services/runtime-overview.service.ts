@@ -105,6 +105,10 @@ class RuntimeOverviewService extends EventEmitter<RuntimeOverviewEventMap> {
         return this.buildOverview();
     }
 
+    getEdgeRuntimeStatus(edgeId: string): RuntimeStatus | undefined {
+        return this.edgeRuntimeStatus.get(edgeId);
+    }
+
     private buildOverview(): RuntimeOverviewPayload {
         const rulesByTarget = this.groupRulesByTarget();
         const runtimes: RuntimeInfo[] = [];

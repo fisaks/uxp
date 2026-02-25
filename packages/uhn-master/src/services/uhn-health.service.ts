@@ -1,8 +1,12 @@
 import { UhnHealthId, UhnHealthItem, UhnHealthSnapshot } from "@uhn/common";
 import EventEmitter from "events";
+import { parseMqttTopic } from "../util/mqtt-topic.util";
 import { blueprintResourceService } from "./blueprint-resource.service";
 import { blueprintRuntimeSupervisorService } from "./blueprint-runtime-supervisor.service";
 import { blueprintService } from "./blueprint.service";
+import { edgeBlueprintSyncService } from "./edge-blueprint-sync.service";
+import { edgeIdentityService } from "./edge-identity.service";
+import { subscriptionService } from "./subscription.service";
 
 
 type UhnHealthEventMap = {
@@ -127,6 +131,93 @@ class UhnHealthService extends EventEmitter<UhnHealthEventMap> {
                 ,
             });
         });
+
+        // ── Edge status (edgeIdentityService) ─────────────
+        edgeIdentityService.on("edgeStatusChanged", (edgeId, status) => {
+            const statusId: UhnHealthId = `uhn:edge:${edgeId}:status`;
+            const runtimeId: UhnHealthId = `uhn:edge:${edgeId}:runtime`;
+            const blueprintId: UhnHealthId = `uhn:edge:${edgeId}:blueprint`;
+
+            if (status === "offline") {
+                this.upsert({
+                    id: statusId,
+                    message: `Edge '${edgeId}' is offline`,
+                    severity: "error",
+                    action: { label: "Open System Panel", target: { type: "hash", identifier: "system-panel", subPath: "uhn" } },
+                });
+                this.setSuppress([runtimeId, blueprintId]);
+            } else {
+                this.remove(statusId);
+                this.clearSuppress([runtimeId, blueprintId]);
+            }
+        });
+
+        // ── Edge runtime (subscriptionService) ────────────
+        subscriptionService.on("edgeRuntimeStatus", (topic, payload) => {
+            const edgeId = parseMqttTopic(topic)?.edge ?? null;
+            if (!edgeId) return;
+
+            const runtimeId: UhnHealthId = `uhn:edge:${edgeId}:runtime`;
+            const action: UhnHealthItem["action"] = { label: "Open System Panel", target: { type: "hash", identifier: "system-panel", subPath: "uhn" } };
+
+            switch (payload) {
+                case "running":
+                case "unconfigured":
+                    this.remove(runtimeId);
+                    break;
+                case "stopped":
+                case "failed":
+                    this.upsert({ id: runtimeId, message: `Edge '${edgeId}' runtime ${payload}`, severity: "error", action });
+                    break;
+                case "restarting":
+                case "starting":
+                    this.upsert({ id: runtimeId, message: `Edge '${edgeId}' runtime ${payload}`, severity: "warn", action });
+                    break;
+            }
+        });
+
+        // ── Edge blueprint sync ───────────────────────────
+        edgeBlueprintSyncService.on("edgeBlueprintMismatch", (edgeId, edge, master) => {
+            this.upsert({
+                id: `uhn:edge:${edgeId}:blueprint`,
+                message: `Edge '${edgeId}' running different blueprint (v${edge.version} vs master v${master.version})`,
+                severity: "warn",
+                action: { label: "Open System Panel", target: { type: "hash", identifier: "system-panel", subPath: "uhn" } },
+            });
+        });
+
+        edgeBlueprintSyncService.on("edgeBlueprintSynced", (edgeId) => {
+            this.remove(`uhn:edge:${edgeId}:blueprint`);
+        });
+
+        edgeBlueprintSyncService.on("edgeBlueprintMissing", (edgeId) => {
+            this.upsert({
+                id: `uhn:edge:${edgeId}:blueprint`,
+                message: `Edge '${edgeId}' has no active blueprint`,
+                severity: "warn",
+                action: { label: "Open System Panel", target: { type: "hash", identifier: "system-panel", subPath: "uhn" } },
+            });
+        });
+
+        edgeBlueprintSyncService.on("edgeBlueprintPendingClear", (edgeId) => {
+            this.upsert({
+                id: `uhn:edge:${edgeId}:blueprint`,
+                message: `Edge '${edgeId}' still has blueprint, pending deactivation`,
+                severity: "warn",
+                action: { label: "Open System Panel", target: { type: "hash", identifier: "system-panel", subPath: "uhn" } },
+            });
+        });
+
+        // Suppress all edge blueprint items during master blueprint transitions
+        blueprintService.on("blueprintActivating", () => {
+            this.setSuppressByPrefix("uhn:edge:", ":blueprint");
+        });
+        blueprintService.on("blueprintInstalled", () => {
+            this.clearSuppressByPrefix("uhn:edge:", ":blueprint");
+        });
+        blueprintService.on("blueprintCompileFailed", () => {
+            this.setSuppressByPrefix("uhn:edge:", ":blueprint");
+        });
     }
 
     getHealthSnapshot(): UhnHealthSnapshot {
@@ -157,6 +248,32 @@ class UhnHealthService extends EventEmitter<UhnHealthEventMap> {
         if (this.items.delete(id)) {
             this.scheduleEmit();
         }
+    }
+    private removeByPrefix(prefix: string, suffix: string) {
+        let changed = false;
+        for (const key of this.items.keys()) {
+            if (key.startsWith(prefix) && key.endsWith(suffix)) {
+                this.items.delete(key);
+                changed = true;
+            }
+        }
+        if (changed) this.scheduleEmit();
+    }
+    private setSuppressByPrefix(prefix: string, suffix: string) {
+        for (const key of this.items.keys()) {
+            if (key.startsWith(prefix) && key.endsWith(suffix)) {
+                this.suppress.set(key as UhnHealthId, true);
+            }
+        }
+        this.scheduleEmit();
+    }
+    private clearSuppressByPrefix(prefix: string, suffix: string) {
+        for (const key of this.suppress.keys()) {
+            if (key.startsWith(prefix) && key.endsWith(suffix)) {
+                this.suppress.delete(key);
+            }
+        }
+        this.scheduleEmit();
     }
     private scheduleEmit() {
         if (this.emitScheduled) return;

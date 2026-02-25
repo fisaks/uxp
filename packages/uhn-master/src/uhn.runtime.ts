@@ -27,6 +27,7 @@ import "./services/state-runtime.service";
 import "./services/state-signal.service";
 import "./services/subscription.service";
 import "./services/master-key.service";
+import "./services/edge-blueprint-sync.service";
 import "./services/edge-identity.service";
 import "./services/runtime-overview.service";
 import { systemConfigService } from "./services/system-config.service";

@@ -19,7 +19,7 @@ import env from "../env";
 
 type BlueprintEventMap = {
     blueprintActivating: [identifier: string, version: number, by: string];
-    blueprintInstalled: [identifier: string, version: number];
+    blueprintInstalled: [identifier: string, version: number, sha256: string];
     blueprintCompileFailed: [identifier: string, version: number, errorSummary?: string];
     blueprintDeactivating: [identifier: string, version: number, by: string];
     noActiveBlueprint: [];
@@ -182,9 +182,9 @@ class BlueprintService extends EventEmitter<BlueprintEventMap> {
         // Start runtime
         await blueprintRuntimeSupervisorService.start();
 
-        this.emit("blueprintInstalled", identifier, version);
+        const sha256 = await this.publishActiveBlueprint();
 
-        await this.publishActiveBlueprint();
+        this.emit("blueprintInstalled", identifier, version, sha256!);
 
         AppLogger.info({
             message: `Activated blueprint ${identifier} v${version} globally by ${activatedBy}`
@@ -193,12 +193,12 @@ class BlueprintService extends EventEmitter<BlueprintEventMap> {
         return toActivate;
     }
 
-    async publishActiveBlueprint() {
+    async publishActiveBlueprint(): Promise<string | null> {
         const currentlyActive = await BlueprintRepository.findActive();
         if (!currentlyActive) {
             mqttService.publish("uhn/master/blueprint/activated", null, { qos: 1, retain: true });
             await BlueprintFileUtil.removeSignedBlueprintFiles();
-            return;
+            return null;
         }
         const { identifier, version } = currentlyActive
         const signedBlueprint = await BlueprintFileUtil.createSignedBlueprintZip({
@@ -212,6 +212,7 @@ class BlueprintService extends EventEmitter<BlueprintEventMap> {
             ts: Date.now(),
 
         }, { qos: 1, retain: true });
+        return signedBlueprint.hash;
     }
 
     async getActiveBlueprint(): Promise<BlueprintEntity | undefined> {
@@ -230,7 +231,14 @@ class BlueprintService extends EventEmitter<BlueprintEventMap> {
             active.status === "compiled" &&
             await BlueprintFileUtil.activeBlueprintExists()
         ) {
-            this.emit("blueprintInstalled", active.identifier, active.version);
+            const { hashPath } = BlueprintFileUtil.getSignedBlueprintPaths();
+            let sha256 = "";
+            try {
+                sha256 = (await readFile(hashPath, "utf8")).trim();
+            } catch {
+                // Hash file may not exist yet — will be created on next publish
+            }
+            this.emit("blueprintInstalled", active.identifier, active.version, sha256);
             AppLogger.info({
                 message: `Starting blueprint runtime for ${active.identifier} v${active.version}`,
             });
