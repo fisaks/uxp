@@ -39,6 +39,10 @@ export class SystemConfigService extends EventEmitter<SystemConfigEventMap> {
         this.emit("configChanged", { runtimeMode: this.config.runtimeMode, logLevel: this.config.logLevel });
     }
 
+    isInitialized(): boolean {
+        return this.config != null;
+    }
+
     getConfig(): SystemConfigEntity {
 
         if (!this.config) {

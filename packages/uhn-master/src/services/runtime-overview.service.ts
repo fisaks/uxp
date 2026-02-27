@@ -3,6 +3,7 @@ import { EventEmitter } from "events";
 import { parseMqttTopic } from "../util/mqtt-topic.util";
 import { blueprintRuntimeSupervisorService } from "./blueprint-runtime-supervisor.service";
 import { blueprintService } from "./blueprint.service";
+import { edgeIdentityService } from "./edge-identity.service";
 import { ruleRuntimeProcessService } from "./rule-runtime-process.service";
 import { subscriptionService } from "./subscription.service";
 
@@ -10,6 +11,13 @@ type RuntimeOverviewEventMap = {
     overviewChanged: [payload: RuntimeOverviewPayload];
 };
 
+/**
+ * Tracks the runtime status and loaded rule counts for master and all edges.
+ * Merges data from three sources: master supervisor lifecycle events, master IPC
+ * (rulesLoaded), and edge MQTT topics (runtime/status, runtime/rules).
+ * Emits a unified RuntimeOverviewPayload consumed by the UI runtime overview
+ * panel and by UhnSystemSnapshotService to build per-runtime config entries.
+ */
 class RuntimeOverviewService extends EventEmitter<RuntimeOverviewEventMap> {
     // All rules from blueprint (grouped by executionTarget)
     private allRules: RuntimeRuleInfo[] = [];
@@ -49,8 +57,6 @@ class RuntimeOverviewService extends EventEmitter<RuntimeOverviewEventMap> {
             this.masterRuntimeStatus = "stopped";
             this.masterLoadedRuleCount = null;
             this.allRules = [];
-            this.edgeLoadedRuleCount.clear();
-            this.edgeRuntimeStatus.clear();
             this.emitOverview();
         });
 
@@ -65,8 +71,6 @@ class RuntimeOverviewService extends EventEmitter<RuntimeOverviewEventMap> {
             this.masterRuntimeStatus = "unconfigured";
             this.masterLoadedRuleCount = null;
             this.allRules = [];
-            this.edgeLoadedRuleCount.clear();
-            this.edgeRuntimeStatus.clear();
             this.emitOverview();
         });
 
@@ -98,6 +102,15 @@ class RuntimeOverviewService extends EventEmitter<RuntimeOverviewEventMap> {
                 this.edgeRuntimeStatus.set(edgeId, payload);
             }
             this.emitOverview();
+        });
+
+        // Edge went offline — runtime can't be running
+        edgeIdentityService.on("edgeStatusChanged", (edgeId, status) => {
+            if (status === "offline") {
+                this.edgeRuntimeStatus.set(edgeId, "stopped");
+                this.edgeLoadedRuleCount.delete(edgeId);
+                this.emitOverview();
+            }
         });
     }
 

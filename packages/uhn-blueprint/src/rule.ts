@@ -82,6 +82,8 @@ export type RuleTimers = {
 };
 
 export type RuleLogger = {
+    trace(msg: string, data?: unknown): void;
+    debug(msg: string, data?: unknown): void;
     info(msg: string, data?: unknown): void;
     warn(msg: string, data?: unknown): void;
     error(msg: string, data?: unknown): void;

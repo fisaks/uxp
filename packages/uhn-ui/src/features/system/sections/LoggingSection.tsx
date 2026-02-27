@@ -1,5 +1,5 @@
 import { Box, Button, Typography } from "@mui/material";
-import { UhnSystemSnapshot } from "@uhn/common";
+import { UhnLogLevel } from "@uhn/common";
 import React from "react";
 
 const LOG_LEVELS = [
@@ -10,12 +10,10 @@ const LOG_LEVELS = [
     { value: "trace", label: "Trace" },
 ] as const;
 
-type LogLevel = NonNullable<UhnSystemSnapshot["runtime"]["logLevel"]>;
-
 type LoggingSectionProps = {
-    logLevel?: LogLevel;
+    logLevel?: UhnLogLevel;
     busy: boolean;
-    onSetLevel: (level: LogLevel, e: React.MouseEvent) => void;
+    onSetLevel: (level: UhnLogLevel, e: React.MouseEvent) => void;
 };
 
 export const LoggingSection: React.FC<LoggingSectionProps> = ({

@@ -182,9 +182,7 @@ class BlueprintService extends EventEmitter<BlueprintEventMap> {
         // Start runtime
         await blueprintRuntimeSupervisorService.start();
 
-        const sha256 = await this.publishActiveBlueprint();
-
-        this.emit("blueprintInstalled", identifier, version, sha256!);
+        await this.publishActiveBlueprint();
 
         AppLogger.info({
             message: `Activated blueprint ${identifier} v${version} globally by ${activatedBy}`
@@ -212,6 +210,8 @@ class BlueprintService extends EventEmitter<BlueprintEventMap> {
             ts: Date.now(),
 
         }, { qos: 1, retain: true });
+
+        this.emit("blueprintInstalled", identifier, version, signedBlueprint.hash);
         return signedBlueprint.hash;
     }
 

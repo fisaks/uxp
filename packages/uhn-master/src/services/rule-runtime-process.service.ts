@@ -456,20 +456,22 @@ class RuleRuntimeProcessService extends EventEmitter<RuleRuntimeProcessEventMap>
 
     private handleLogEvent({ level, message, component, data }: RuleRuntimeLogMessage) {
         switch (level) {
-            case "warn":
-                AppLogger.warn({ message: `[rule-runtime] [${component}] ${message}`, object: { data } });
-                break;
             case "error":
                 AppLogger.error({ message: `[rule-runtime] [${component}] ${message}`, object: { data } });
                 break;
-            case "info":
-                AppLogger.info({ message: `[rule-runtime] [${component}] ${message}`, object: { data } });
+            case "warn":
+                AppLogger.warn({ message: `[rule-runtime] [${component}] ${message}`, object: { data } });
                 break;
-            default:
+            case "debug":
                 AppLogger.debug({ message: `[rule-runtime] [${component}] ${message}`, object: { data } });
                 break;
+            case "trace":
+                AppLogger.trace({ message: `[rule-runtime] [${component}] ${message}`, object: { data } });
+                break;
+            default:
+                AppLogger.info({ message: `[rule-runtime] [${component}] ${message}`, object: { data } });
+                break;
         }
-
     }
 
     canSendCommands(): boolean {

@@ -1,4 +1,3 @@
-// system-commands.service.ts
 import { UhnLogLevel, UhnRuntimeMode, UhnSystemCommand } from "@uhn/common";
 import { assertNever } from "@uxp/common";
 import { BlueprintRepository } from "../repositories/blueprint.repository";
@@ -7,8 +6,10 @@ import { SystemCommandRunner } from "../system/system-command.runner";
 import { BlueprintCompileUtil } from "../util/blueprint-compiler.util";
 import { BlueprintFileUtil } from "../util/blueprint-file.util";
 import { blueprintRuntimeSupervisorService } from "./blueprint-runtime-supervisor.service";
-import { systemConfigService } from "./system-config.service";
 import { blueprintService } from "./blueprint.service";
+import { edgeIdentityService } from "./edge-identity.service";
+import { EdgeSystemCommand, systemCommandEdgeService } from "./system-command-edge.service";
+import { systemConfigService } from "./system-config.service";
 
 export type SetRunModeContext = {
     requestedAt: number;
@@ -17,6 +18,12 @@ export type SetRunModeContext = {
     requiresRestart?: boolean;
 };
 
+/**
+ * Executes system commands (setRunMode, setLogLevel, start/stop/restart runtime,
+ * recompileBlueprint) initiated from the UI. Routes each command based on its
+ * target: master-only commands run locally via step-based executor with status
+ * feedback, edge commands are forwarded as MQTT messages, and "all" does both.
+ */
 export class SystemCommandsService {
 
     private executor: SystemCommandExecutor;
@@ -26,7 +33,81 @@ export class SystemCommandsService {
     }
 
     runCommand(msg: UhnSystemCommand) {
+        const target = this.getTarget(msg);
+        const includesMaster = target === "all" || target === "master";
+        const edgeTargets = this.resolveEdgeTargets(target);
 
+        if (includesMaster) {
+            // Forward to edges first (fire-and-forget MQTT), then run master steps
+            if (edgeTargets.length > 0) {
+                this.forwardToEdges(msg, edgeTargets);
+            }
+            this.executeOnMaster(msg);
+        } else if (edgeTargets.length > 0) {
+            // Edge-only: use executor to provide status feedback
+            this.executeOnEdgesOnly(msg, edgeTargets);
+        }
+    }
+
+    private getTarget(msg: UhnSystemCommand): string {
+        if (msg.command === "recompileBlueprint") return "master";
+        return msg.target ?? "all";
+    }
+
+    private resolveEdgeTargets(target: string): string[] {
+        if (target === "master") return [];
+        if (target === "all") {
+            return edgeIdentityService.getAllEdges()
+                .filter(e => e.status === "online")
+                .map(e => e.edgeId);
+        }
+        return [target];
+    }
+
+    private forwardToEdges(msg: UhnSystemCommand, edgeTargets: string[]) {
+        const edgeCmd = this.toEdgeCommand(msg);
+        if (!edgeCmd) return;
+        for (const edgeId of edgeTargets) {
+            systemCommandEdgeService.publishToEdge(edgeId, edgeCmd);
+        }
+    }
+
+    private toEdgeCommand(msg: UhnSystemCommand): EdgeSystemCommand | null {
+        switch (msg.command) {
+            case "setLogLevel":
+                return { action: "setLogLevel", payload: { logLevel: msg.payload.logLevel } };
+            case "setRunMode":
+                return { action: "setRunMode", payload: { runtimeMode: msg.payload.runtimeMode } };
+            case "stopRuntime":
+            case "startRuntime":
+            case "restartRuntime":
+                return { action: msg.command };
+            case "recompileBlueprint":
+                return null;
+            default:
+                assertNever(msg);
+        }
+    }
+
+    private executeOnEdgesOnly(msg: UhnSystemCommand, edgeTargets: string[]) {
+        if (msg.command === "recompileBlueprint") return;
+        const command = msg.command;
+        const label = edgeTargets.length === 1
+            ? `Sending ${command} to ${edgeTargets[0]}`
+            : `Sending ${command} to ${edgeTargets.length} edges`;
+
+        void this.executor.executeCommand<void>(command, undefined, label,
+            async (_context, commandExecution) => {
+                const runner = new SystemCommandRunner();
+                await runner.runStep(_context, commandExecution, {
+                    key: "forwardToEdges",
+                    label,
+                    run: () => { this.forwardToEdges(msg, edgeTargets); },
+                });
+            });
+    }
+
+    private executeOnMaster(msg: UhnSystemCommand) {
         switch (msg.command) {
             case "setRunMode":
                 this.commandSetRunMode(msg.payload.runtimeMode);
@@ -49,7 +130,6 @@ export class SystemCommandsService {
             default:
                 assertNever(msg);
         }
-
     }
     private async commandRecompileBlueprint() {
         await this.executor.executeCommand<void>("recompileBlueprint",

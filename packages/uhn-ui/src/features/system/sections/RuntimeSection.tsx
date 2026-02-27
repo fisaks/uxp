@@ -1,53 +1,77 @@
 import { Box, Button, Chip, Stack, Typography } from "@mui/material";
-import { UhnSystemSnapshot } from "@uhn/common";
+import { UhnRuntimeConfig } from "@uhn/common";
 import React from "react";
 
 type RuntimeSectionProps = {
-    runtime?: UhnSystemSnapshot["runtime"];
+    runtimeConfig?: UhnRuntimeConfig;
     busy: boolean;
     onStart: (e: React.MouseEvent) => void;
     onStop: (e: React.MouseEvent) => void;
     onRestart: (e: React.MouseEvent) => void;
 };
 
+const statusColor = (status?: string): "success" | "warning" | "error" | "default" => {
+    switch (status) {
+        case "running": return "success";
+        case "starting":
+        case "restarting": return "warning";
+        case "stopped":
+        case "failed": return "error";
+        default: return "default";
+    }
+};
+
+const statusLabel = (status?: string): string => {
+    if (!status || status === "unknown") return "Unknown";
+    return status.charAt(0).toUpperCase() + status.slice(1);
+};
+
 export const RuntimeSection: React.FC<RuntimeSectionProps> = ({
-    runtime,
+    runtimeConfig,
     busy,
     onStart,
     onStop,
     onRestart,
-}) => (
-    <Box>
-        <Typography variant="subtitle2">Runtime</Typography>
+}) => {
+    const status = runtimeConfig?.runtimeStatus;
+    const isRunning = status === "running";
+    const isUnconfigured = status === "unconfigured";
 
-        <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
-            <Chip
-                size="small"
-                label={runtime?.running ? "Running" : "Stopped"}
-                color={runtime?.running ? "success" : "default"}
-            />
-            <Chip
-                size="small"
-                variant="outlined"
-                label={runtime?.runMode === "debug" ? "Debug" : "Normal"}
-            />
-        </Stack>
+    return (
+        <Box>
+            <Typography variant="subtitle2">Runtime</Typography>
 
-        <Stack direction="row" spacing={1} sx={{ mt: 2, flexWrap: "wrap" }}>
-            {runtime?.running ? (
-                <>
-                    <Button variant="contained" onClick={onRestart} disabled={busy}>
-                        Restart runtime
-                    </Button>
-                    <Button variant="outlined" onClick={onStop} disabled={busy}>
-                        Stop runtime
-                    </Button>
-                </>
-            ) : (
-                <Button variant="contained" onClick={onStart} disabled={busy}>
-                    Start runtime
-                </Button>
+            <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
+                <Chip
+                    size="small"
+                    label={statusLabel(status)}
+                    color={statusColor(status)}
+                />
+                <Chip
+                    size="small"
+                    variant="outlined"
+                    label={runtimeConfig?.runMode === "debug" ? "Debug" : "Normal"}
+                />
+            </Stack>
+
+            {!isUnconfigured && (
+                <Stack direction="row" spacing={1} sx={{ mt: 2, flexWrap: "wrap" }}>
+                    {isRunning ? (
+                        <>
+                            <Button variant="contained" onClick={onRestart} disabled={busy}>
+                                Restart runtime
+                            </Button>
+                            <Button variant="outlined" onClick={onStop} disabled={busy}>
+                                Stop runtime
+                            </Button>
+                        </>
+                    ) : (
+                        <Button variant="contained" onClick={onStart} disabled={busy}>
+                            Start runtime
+                        </Button>
+                    )}
+                </Stack>
             )}
-        </Stack>
-    </Box>
-);
+        </Box>
+    );
+};

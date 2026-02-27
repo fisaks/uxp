@@ -68,7 +68,7 @@ class UhnHealthService extends EventEmitter<UhnHealthEventMap> {
             this.setSuppress(["uhn:resources"]);
             this.upsert({
                 id: "uhn:runtime",
-                message: "Runtime starting",
+                message: "Master runtime starting",
                 severity: "warn",
                 action: { label: "Open System Panel", target: { type: "hash", identifier: "system-panel", subPath: "uhn" } },
             });
@@ -83,7 +83,7 @@ class UhnHealthService extends EventEmitter<UhnHealthEventMap> {
             this.setSuppress(["uhn:resources"]);
             this.upsert({
                 id: "uhn:runtime",
-                message: `Runtime restarting attempt ${attempts}`,
+                message: `Master runtime restarting attempt ${attempts}`,
                 severity: attempts >= 3 ? "error" : "warn",
                 action: { label: "Open System Panel", target: { type: "hash", identifier: "system-panel", subPath: "uhn" } },
             });
@@ -93,7 +93,7 @@ class UhnHealthService extends EventEmitter<UhnHealthEventMap> {
             this.setSuppress(["uhn:resources"]);
             this.upsert({
                 id: "uhn:runtime",
-                message: "Runtime stopped",
+                message: "Master runtime stopped",
                 severity: "error",
                 action: { label: "Open System Panel", target: { type: "hash", identifier: "system-panel", subPath: "uhn" } },
             });

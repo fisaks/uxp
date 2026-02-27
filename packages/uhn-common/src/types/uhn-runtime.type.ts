@@ -164,7 +164,7 @@ export type RuleRuntimeResourceMissingMessage = {
 export type RuleRuntimeLogMessage = {
   kind: "event"
   cmd: "log"
-  level: "info" | "warn" | "error";
+  level: "trace" | "debug" | "info" | "warn" | "error";
   component: string;
   message: string
   data?: unknown

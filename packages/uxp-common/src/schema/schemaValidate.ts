@@ -1,4 +1,4 @@
-import Ajv, { JSONSchemaType, ValidateFunction } from "ajv";
+import Ajv, { JSONSchemaType } from "ajv";
 export type AjvKeyword =
     | "type"
     | "minLength"

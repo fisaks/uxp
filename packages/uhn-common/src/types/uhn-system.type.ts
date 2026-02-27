@@ -1,10 +1,12 @@
 import { MessagePayloadSchema } from "@uxp/common";
+import { RuntimeStatus } from "./uhn-runtime.type";
 
 export type UhnRuntimeMode = "normal" | "debug";
 export type UhnLogLevel = "error" | "warn" | "info" | "debug" | "trace";
 
 export type UhnSystemOperationStatus = "queued" | "running" | "completed" | "failed";
 
+export type UhnSystemCommandTarget = "all" | "master" | (string & {});
 
 /**
  * Client → Server
@@ -12,18 +14,25 @@ export type UhnSystemOperationStatus = "queued" | "running" | "completed" | "fai
 export type UhnSystemCommand =
     | {
         command: "setRunMode";
+        target?: UhnSystemCommandTarget;
         payload: {
             runtimeMode: UhnRuntimeMode; // "normal" | "debug"
         };
     } |
     {
         command: "setLogLevel";
+        target?: UhnSystemCommandTarget;
         payload: {
             logLevel: UhnLogLevel; // "error" | "warn" | "info" | "debug" | "trace"
         };
     } |
     {
-        command: "stopRuntime" | "restartRuntime" | "startRuntime" | "recompileBlueprint";
+        command: "stopRuntime" | "restartRuntime" | "startRuntime";
+        target?: UhnSystemCommandTarget;
+        payload: {};
+    }|
+    {
+        command: "recompileBlueprint";
         payload: {};
     }
 
@@ -49,12 +58,15 @@ export type UhnSystemStatus =
         message?: string;
     }
 
+export type UhnRuntimeConfig = {
+    logLevel: UhnLogLevel;
+    runMode: UhnRuntimeMode;
+    runtimeStatus: RuntimeStatus;
+    nodeOnline: boolean;
+};
+
 export type UhnSystemSnapshot = {
-    runtime: {
-        running: boolean;
-        runMode: UhnRuntimeMode;
-        logLevel: UhnLogLevel;
-    };
+    runtimes: Record<string, UhnRuntimeConfig>;
 
     blueprint: {
         active: boolean;
@@ -73,16 +85,19 @@ export type UhnSystemPayloadResponseMap = {
     "uhn:system:snapshot": UhnSystemSnapshot;
 }
 
-
 /**
  * AJV schema
  */
 export const UhnSystemCommandSchema: MessagePayloadSchema<UhnSystemCommand> = {
+    type: "object",
+    required: [],
+
     oneOf: [
         {
             type: "object",
             properties: {
                 command: { type: "string", const: "setRunMode" },
+                target: { type: "string" },
                 payload: {
                     type: "object",
                     properties: {
@@ -102,6 +117,7 @@ export const UhnSystemCommandSchema: MessagePayloadSchema<UhnSystemCommand> = {
             type: "object",
             properties: {
                 command: { type: "string", const: "setLogLevel" },
+                target: { type: "string" },
                 payload: {
                     type: "object",
                     properties: {
@@ -120,7 +136,8 @@ export const UhnSystemCommandSchema: MessagePayloadSchema<UhnSystemCommand> = {
         {
             type: "object",
             properties: {
-                command: { type: "string", enum: ["stopRuntime", "restartRuntime", "startRuntime", "recompileBlueprint"] },
+                command: { type: "string", enum: ["stopRuntime", "restartRuntime", "startRuntime"] },
+                target: { type: "string" },
                 payload: {
                     type: "object",
                     additionalProperties: false,
@@ -129,5 +146,17 @@ export const UhnSystemCommandSchema: MessagePayloadSchema<UhnSystemCommand> = {
             required: ["command", "payload"],
             additionalProperties: false,
         },
+        {
+            type: "object",
+            properties: {
+                command: { type: "string", const:  "recompileBlueprint" },
+                payload: {
+                    type: "object",
+                    additionalProperties: false,
+                },
+            },
+            required: ["command", "payload"],
+            additionalProperties: false,
+        }
     ],
 };

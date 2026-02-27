@@ -15,6 +15,7 @@ type SubscriptionEventMap = {
     edgeRuntimeRules: [topic: string, payload: unknown];
     edgeRuntimeStatus: [topic: string, payload: string | null];
     edgeBlueprintActivated: [topic: string, payload: unknown];
+    edgeSystemConfig: [topic: string, payload: unknown];
 };
 
 function tryParseJson(payload: unknown): unknown {
@@ -125,6 +126,12 @@ class SubscriptionService extends EventEmitter<SubscriptionEventMap> {
             if (topic === "uhn/master/blueprint/activated") return;
             const parsed = tryParseJson(payload);
             this.emit("edgeBlueprintActivated", topic, parsed);
+        });
+
+        mqttService.subscribe("uhn/+/system/config", (topic, payload) => {
+            if (topic === "uhn/master/system/config") return;
+            const parsed = tryParseJson(payload);
+            this.emit("edgeSystemConfig", topic, parsed);
         });
 
         AppLogger.info(undefined, { message: "[SubscriptionService] MQTT subscriptions initialized and events emitting" });

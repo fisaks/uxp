@@ -32,6 +32,7 @@ import "./services/edge-identity.service";
 import "./services/runtime-overview.service";
 import { systemConfigService } from "./services/system-config.service";
 import "./services/uhn-health.service";
+import "./services/system-command-edge.service";
 
 export async function startUhnRuntime() {
     await runStartupBackgroundTasks();

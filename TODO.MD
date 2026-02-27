@@ -31,3 +31,13 @@
  * [x] Add ... in the menu to create version
  * [x] Add export in the menu open new html window where you have action print or export as pdf using html2pdf in the browser
  * [ ] Add compare versions to ...
+
+## UHN
+ * [ ] add meta for edges with no runtime so rules not get targeted to edge but master blueprint build must know this
+ * [ ] master needs to be able to own timers as well
+ * [ ] possibility to escalate rules from edge to master
+ * [ ] disable runtime from ui on edge rules get promoted to master
+ * [ ] configurable runtime debug port 
+ * [ ] runtime start time or uptime visible
+
+

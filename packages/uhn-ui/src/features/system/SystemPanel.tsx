@@ -1,6 +1,6 @@
 import { Box, Divider } from "@mui/material";
 import { UhnSystemCommand, UhnSystemSnapshot, UhnSystemStatus } from "@uhn/common";
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import { useUHNSystemWebSocket } from "../../app/UHNSystemBrowserWebSocketManager";
 import { ExecutionStatusPopover } from "./components/ExecutionStatusPopover";
 import { useExecutionPopover } from "./hooks/useExecutionPopover";
@@ -10,6 +10,7 @@ import { HeaderSection } from "./sections/HeaderSection";
 import { LoggingSection } from "./sections/LoggingSection";
 import { QuickLinksSection } from "./sections/QuickLinksSection";
 import { RuntimeSection } from "./sections/RuntimeSection";
+import { ScopeSection } from "./sections/ScopeSection";
 
 type SystemPanelProps = {
     uhnStatus?: UhnSystemStatus;
@@ -29,14 +30,23 @@ export const SystemPanel: React.FC<SystemPanelProps> = ({
     const infoAnchorRef = useRef<HTMLButtonElement>(null);
     const busy = uhnStatus?.state === "running";
 
+    const [scope, setScope] = useState<string>("all");
+
+    const scopeKey = scope === "all" ? "master" : scope;
+    const runtimeConfig = uhnSnapshot?.runtimes?.[scopeKey];
+    const isEdgeScope = scope !== "all" && scope !== "master";
+    const edgeOffline = isEdgeScope && runtimeConfig?.nodeOnline === false;
+
+    const target = scope === "all" ? undefined : scope;
+
     const sendSystemCommand = (
         e: React.SyntheticEvent,
         command: UhnSystemCommand
-
     ) => {
         popover.openAtAnchor(e.currentTarget);
         sendMessage("uhn:system:command", command);
     };
+
     const statusToShow = popover.currentStatus ?? popover.lastStatus;
     return (
         <Box sx={{ p: 2, minWidth: 320 }}>
@@ -52,9 +62,17 @@ export const SystemPanel: React.FC<SystemPanelProps> = ({
                 }}
             />
 
+            <ScopeSection
+                scope={scope}
+                runtimes={uhnSnapshot?.runtimes}
+                onScopeChange={setScope}
+            />
+
+            <Divider sx={{ my: 1 }} />
+
             <DebugSection
-                runMode={uhnSnapshot?.runtime.runMode}
-                busy={busy}
+                runMode={runtimeConfig?.runMode}
+                busy={busy || edgeOffline}
                 setRunModeRunning={
                     uhnStatus?.state === "running" &&
                     uhnStatus.command === "setRunMode"
@@ -62,9 +80,10 @@ export const SystemPanel: React.FC<SystemPanelProps> = ({
                 onToggle={e =>
                     sendSystemCommand(e, {
                         command: "setRunMode",
+                        target,
                         payload: {
                             runtimeMode:
-                                uhnSnapshot?.runtime.runMode === "debug"
+                                runtimeConfig?.runMode === "debug"
                                     ? "normal"
                                     : "debug"
                         }
@@ -75,31 +94,35 @@ export const SystemPanel: React.FC<SystemPanelProps> = ({
             <Divider sx={{ my: 2 }} />
 
             <RuntimeSection
-                runtime={uhnSnapshot?.runtime}
-                busy={busy}
-                onStart={e => sendSystemCommand(e, { command: "startRuntime", payload: {} })}
-                onStop={e => sendSystemCommand(e, { command: "stopRuntime", payload: {} })}
-                onRestart={e => sendSystemCommand(e, { command: "restartRuntime", payload: {} })}
+                runtimeConfig={runtimeConfig}
+                busy={busy || edgeOffline}
+                onStart={e => sendSystemCommand(e, { command: "startRuntime", target, payload: {} })}
+                onStop={e => sendSystemCommand(e, { command: "stopRuntime", target, payload: {} })}
+                onRestart={e => sendSystemCommand(e, { command: "restartRuntime", target, payload: {} })}
             />
 
             <Divider sx={{ my: 2 }} />
 
             <LoggingSection
-                logLevel={uhnSnapshot?.runtime.logLevel}
-                busy={busy}
+                logLevel={runtimeConfig?.logLevel}
+                busy={busy || edgeOffline}
                 onSetLevel={(level, e) =>
-                    sendSystemCommand(e, { command: "setLogLevel", payload: { logLevel: level } })
+                    sendSystemCommand(e, { command: "setLogLevel", target, payload: { logLevel: level } })
                 }
             />
 
-            <Divider sx={{ my: 2 }} />
+            {!isEdgeScope && (
+                <>
+                    <Divider sx={{ my: 2 }} />
 
-            <AdvancedSection
-                disabled={busy || !uhnSnapshot?.runtime.running}
-                onRecompile={e =>
-                    sendSystemCommand(e, { command: "recompileBlueprint", payload: {} })
-                }
-            />
+                    <AdvancedSection
+                        disabled={busy || uhnSnapshot?.runtimes?.["master"]?.runtimeStatus !== "running"}
+                        onRecompile={e =>
+                            sendSystemCommand(e, { command: "recompileBlueprint", payload: {} })
+                        }
+                    />
+                </>
+            )}
 
             {statusToShow && popover.anchorEl && popover.open && (
                 <ExecutionStatusPopover
