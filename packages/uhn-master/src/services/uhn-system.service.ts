@@ -10,6 +10,7 @@ import { blueprintService } from "./blueprint.service";
 import { edgeIdentityService } from "./edge-identity.service";
 import { EdgeSystemCommand, systemCommandEdgeService } from "./system-command-edge.service";
 import { systemConfigService } from "./system-config.service";
+import { uhnSystemSnapshotService } from "./uhn-system-snapshot.service";
 
 export type SetRunModeContext = {
     requestedAt: number;
@@ -93,6 +94,12 @@ export class SystemCommandsService {
 
     private executeOnEdgesOnly(msg: UhnSystemCommand, edgeTargets: string[]) {
         if (msg.command === "recompileBlueprint") return;
+
+        if (msg.command === "setRunMode") {
+            this.commandSetRunModeOnEdge(msg, edgeTargets);
+            return;
+        }
+
         const command = msg.command;
         const label = edgeTargets.length === 1
             ? `Sending ${command} to ${edgeTargets[0]}`
@@ -107,6 +114,78 @@ export class SystemCommandsService {
                     run: () => { this.forwardToEdges(msg, edgeTargets); },
                 });
             });
+    }
+
+    private async commandSetRunModeOnEdge(
+        msg: UhnSystemCommand & { command: "setRunMode" },
+        edgeTargets: string[]
+    ) {
+        const runtimeMode = msg.payload.runtimeMode;
+        const isDebug = runtimeMode === "debug";
+
+        const needsSourceMaps = isDebug;
+        const masterInNormal = systemConfigService.getConfig().runtimeMode === "normal";
+        // Exclude the edges we're about to switch — their snapshot still shows old mode
+        const needsCleanup = !isDebug && masterInNormal
+            && !this.anyEdgeStillInDebug(edgeTargets);
+
+        const label = edgeTargets.length === 1
+            ? `Setting ${runtimeMode} mode on ${edgeTargets[0]}`
+            : `Setting ${runtimeMode} mode on ${edgeTargets.length} edges`;
+
+        await this.executor.executeCommand<void>("setRunMode", undefined, label,
+            async (context, commandExecution) => {
+                const runner = new SystemCommandRunner();
+
+                const hasSourceMaps = await BlueprintFileUtil.isActiveDebugCompiled();
+                // Recompile when entering debug without source maps, or when the
+                // last debugger disconnects and source maps can be stripped.
+                const shouldRecompile = (needsSourceMaps && !hasSourceMaps)
+                    || (needsCleanup && hasSourceMaps);
+
+                if (shouldRecompile) {
+                    await runner.runStep(context, commandExecution, {
+                        key: "recompileBlueprint",
+                        label: needsSourceMaps
+                            ? "Recompiling blueprint with source maps"
+                            : "Recompiling blueprint without source maps",
+                        run: _ => this.recompileBlueprint(needsSourceMaps),
+                    });
+
+                    await runner.runStep(context, commandExecution, {
+                        key: "stopRuntime",
+                        label: "Stopping runtime",
+                        run: _ => this.stopRuntime(),
+                    });
+
+                    await runner.runStep(context, commandExecution, {
+                        key: "activateRecompile",
+                        label: "Activating recompiled blueprint",
+                        run: _ => this.activateRecompile(),
+                    });
+
+                    await runner.runStep(context, commandExecution, {
+                        key: "startRuntime",
+                        label: "Starting runtime",
+                        run: _ => this.startRuntime(),
+                    });
+                }
+
+                await runner.runStep(context, commandExecution, {
+                    key: "forwardToEdges",
+                    label: `Forwarding setRunMode to edge(s)`,
+                    run: () => { this.forwardToEdges(msg, edgeTargets); },
+                });
+            });
+    }
+
+    private anyEdgeStillInDebug(excludeEdgeIds: string[]): boolean {
+        const snapshot = uhnSystemSnapshotService.getSnapshot();
+        if (!snapshot) return false;
+        const exclude = new Set(excludeEdgeIds);
+        return Object.entries(snapshot.runtimes).some(([id, cfg]) =>
+            id !== "master" && !exclude.has(id) && cfg.runMode === "debug"
+        );
     }
 
     private executeOnMaster(msg: UhnSystemCommand) {

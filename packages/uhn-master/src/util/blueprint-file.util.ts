@@ -210,6 +210,15 @@ function getSignedBlueprintPaths() {
     return { zipPath, hashPath, sigPath };
 }
 
+async function isActiveDebugCompiled(): Promise<boolean> {
+    try {
+        const tsconfig = await fs.readJson(path.join(ActiveBlueprintFolder, "tsconfig.json"));
+        return tsconfig?.compilerOptions?.sourceMap === true;
+    } catch {
+        return false;
+    }
+}
+
 export const BlueprintFileUtil = {
     ActiveBlueprintFolder,
     WorkBlueprintFolder,
@@ -226,5 +235,6 @@ export const BlueprintFileUtil = {
     swapActiveBlueprint,
     createSignedBlueprintZip,
     removeSignedBlueprintFiles,
-    getSignedBlueprintPaths
+    getSignedBlueprintPaths,
+    isActiveDebugCompiled
 };
