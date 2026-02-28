@@ -32,6 +32,13 @@ export type UhnSystemCommand =
         payload: {};
     }|
     {
+        command: "setDebugPort";
+        target: UhnSystemCommandTarget;
+        payload: {
+            debugPort: number;
+        };
+    }|
+    {
         command: "recompileBlueprint";
         payload: {};
     }
@@ -61,6 +68,7 @@ export type UhnSystemStatus =
 export type UhnRuntimeConfig = {
     logLevel: UhnLogLevel;
     runMode: UhnRuntimeMode;
+    debugPort?: number;
     runtimeStatus: RuntimeStatus;
     nodeOnline: boolean;
 };
@@ -144,6 +152,27 @@ export const UhnSystemCommandSchema: MessagePayloadSchema<UhnSystemCommand> = {
                 },
             },
             required: ["command", "payload"],
+            additionalProperties: false,
+        },
+        {
+            type: "object",
+            properties: {
+                command: { type: "string", const: "setDebugPort" },
+                target: { type: "string" },
+                payload: {
+                    type: "object",
+                    properties: {
+                        debugPort: {
+                            type: "integer",
+                            minimum: 1024,
+                            maximum: 65535,
+                        },
+                    },
+                    required: ["debugPort"],
+                    additionalProperties: false,
+                },
+            },
+            required: ["command", "payload","target"],
             additionalProperties: false,
         },
         {

@@ -82,6 +82,8 @@ export class SystemCommandsService {
             case "startRuntime":
             case "restartRuntime":
                 return { action: msg.command };
+            case "setDebugPort":
+                return { action: "setDebugPort", payload: { debugPort: msg.payload.debugPort } };
             case "recompileBlueprint":
                 return null;
             default:
@@ -114,6 +116,9 @@ export class SystemCommandsService {
                 break;
             case "setLogLevel":
                 this.commandSetLogLevel(msg.payload.logLevel);
+                break;
+            case "setDebugPort":
+                this.commandSetDebugPort(msg.payload.debugPort);
                 break;
             case "stopRuntime":
                 this.commandStopRuntime();
@@ -217,6 +222,21 @@ export class SystemCommandsService {
                     label: "Changing log level",
                     run: async ctx => {
                         await systemConfigService.setLogLevel(ctx);
+                    },
+                });
+            });
+    }
+    private async commandSetDebugPort(debugPort: number) {
+        await this.executor.executeCommand<number>("setDebugPort",
+            debugPort,
+            "Updating debug port", async (context, commandExecution) => {
+                const runner = new SystemCommandRunner();
+
+                await runner.runStep(context, commandExecution, {
+                    key: "setDebugPort",
+                    label: "Changing debug port",
+                    run: async ctx => {
+                        await systemConfigService.setDebugPort(ctx);
                     },
                 });
             });

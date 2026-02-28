@@ -261,7 +261,7 @@ class RuleRuntimeProcessService extends EventEmitter<RuleRuntimeProcessEventMap>
                 },
                 runAsUser: os.userInfo().username,
                 network: raw.mode === "debug" ? "debug-attach" : "lo",
-                debugListen: raw.mode === "debug" ? "0.0.0.0:9250" : undefined
+                debugListen: raw.mode === "debug" ? `0.0.0.0:${systemConfigService.getConfig().debugPort}` : undefined
             } satisfies SandboxConfig,
         };
     }
@@ -279,7 +279,7 @@ class RuleRuntimeProcessService extends EventEmitter<RuleRuntimeProcessEventMap>
 
         const blueprintFolderInUse = useSandbox ? "/uhn-workspace/blueprint/active" : blueprintFolder;
         const tsEntrypoint = path.join(hostUhnRuntimePath, "src", "rule-runtime.ts");
-        const { runtimeMode } = systemConfigService.getConfig();
+        const { runtimeMode, debugPort } = systemConfigService.getConfig();
         const isDev = await fileExists(tsEntrypoint)
         const isDebug = runtimeMode === "debug"
 
@@ -290,7 +290,7 @@ class RuleRuntimeProcessService extends EventEmitter<RuleRuntimeProcessEventMap>
                     "tsx",
                     "--tsconfig",
                     `${uhnRuntimePath}/tsconfig.json`,
-                    "--inspect=127.0.0.1:9250",
+                    `--inspect=127.0.0.1:${debugPort}`,
                     `${uhnRuntimePath}/src/rule-runtime.ts`,
                     blueprintFolderInUse,
                     "master"

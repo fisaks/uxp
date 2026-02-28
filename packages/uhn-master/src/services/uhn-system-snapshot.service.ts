@@ -23,7 +23,7 @@ type SystemSnapshotEventMap = {
  */
 class UhnSystemSnapshotService extends EventEmitter<SystemSnapshotEventMap> {
     private snapshot!: UhnSystemSnapshot;
-    private readonly edgeConfigs = new Map<string, { logLevel: string; runMode: string }>();
+    private readonly edgeConfigs = new Map<string, { logLevel: string; runMode: string; debugPort?: number }>();
 
     private emitScheduled = false;
 
@@ -52,7 +52,7 @@ class UhnSystemSnapshotService extends EventEmitter<SystemSnapshotEventMap> {
             const edgeId = parseMqttTopic(topic)?.edge;
             if (!edgeId) return;
             if (isEdgeMqttConfig(payload)) {
-                this.edgeConfigs.set(edgeId, { logLevel: payload.logLevel, runMode: payload.runMode });
+                this.edgeConfigs.set(edgeId, { logLevel: payload.logLevel, runMode: payload.runMode, debugPort: payload.debugPort });
                 this.requestRebuild();
             }
         });
@@ -119,6 +119,7 @@ class UhnSystemSnapshotService extends EventEmitter<SystemSnapshotEventMap> {
             runtimes["master"] = {
                 logLevel: cfg.logLevel,
                 runMode: cfg.runtimeMode,
+                debugPort: cfg.debugPort,
                 runtimeStatus: masterOverview?.status ?? "stopped",
                 nodeOnline: true,
             };
@@ -130,6 +131,7 @@ class UhnSystemSnapshotService extends EventEmitter<SystemSnapshotEventMap> {
                 runtimes[runtime.runtimeId] = {
                     logLevel: (mqttCfg?.logLevel ?? "info") as UhnLogLevel,
                     runMode: (mqttCfg?.runMode ?? "normal") as UhnRuntimeMode,
+                    debugPort: mqttCfg?.debugPort,
                     runtimeStatus: runtime.status,
                     nodeOnline: edgeIdentityService.getEdgeStatus(runtime.runtimeId) === "online",
                 };
@@ -141,6 +143,7 @@ class UhnSystemSnapshotService extends EventEmitter<SystemSnapshotEventMap> {
                     runtimes[edgeId] = {
                         logLevel: mqttCfg.logLevel as UhnLogLevel,
                         runMode: mqttCfg.runMode as UhnRuntimeMode,
+                        debugPort: mqttCfg.debugPort,
                         runtimeStatus: runtimeOverviewService.getEdgeRuntimeStatus(edgeId) ?? "stopped",
                         nodeOnline: edgeIdentityService.getEdgeStatus(edgeId) === "online",
                     };
@@ -173,7 +176,7 @@ class UhnSystemSnapshotService extends EventEmitter<SystemSnapshotEventMap> {
     }
 }
 
-function isEdgeMqttConfig(obj: unknown): obj is { logLevel: string; runMode: string } {
+function isEdgeMqttConfig(obj: unknown): obj is { logLevel: string; runMode: string; debugPort?: number } {
     return (
         typeof obj === "object" &&
         obj !== null &&

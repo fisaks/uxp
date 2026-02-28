@@ -72,6 +72,8 @@ export const SystemPanel: React.FC<SystemPanelProps> = ({
 
             <DebugSection
                 runMode={runtimeConfig?.runMode}
+                debugPort={runtimeConfig?.debugPort}
+                showPortInput={scope !== "all"}
                 busy={busy || edgeOffline}
                 setRunModeRunning={
                     uhnStatus?.state === "running" &&
@@ -87,6 +89,13 @@ export const SystemPanel: React.FC<SystemPanelProps> = ({
                                     ? "normal"
                                     : "debug"
                         }
+                    })
+                }
+                onPortChange={(port, e) =>
+                    sendSystemCommand(e, {
+                        command: "setDebugPort",
+                        target: target!,
+                        payload: { debugPort: port }
                     })
                 }
             />

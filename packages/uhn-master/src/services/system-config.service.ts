@@ -10,6 +10,7 @@ type SystemConfigEventMap = {
 type SystemConfigUpdate = {
     runtimeMode: UhnRuntimeMode;
     logLevel: UhnLogLevel;
+    debugPort: number;
 };
 
 export class SystemConfigService extends EventEmitter<SystemConfigEventMap> {
@@ -36,7 +37,7 @@ export class SystemConfigService extends EventEmitter<SystemConfigEventMap> {
             });
         }
         AppLogger.setLogLevel(this.config.logLevel);
-        this.emit("configChanged", { runtimeMode: this.config.runtimeMode, logLevel: this.config.logLevel });
+        this.emit("configChanged", { runtimeMode: this.config.runtimeMode, logLevel: this.config.logLevel, debugPort: this.config.debugPort });
     }
 
     isInitialized(): boolean {
@@ -68,7 +69,28 @@ export class SystemConfigService extends EventEmitter<SystemConfigEventMap> {
             message: "Runtime mode updated",
             object: { runtimeMode },
         });
-        this.emit("configChanged", { runtimeMode, logLevel: config.logLevel });
+        this.emit("configChanged", { runtimeMode, logLevel: config.logLevel, debugPort: config.debugPort });
+
+        return this.getConfig();
+    }
+
+    async setDebugPort(
+        debugPort: number
+    ): Promise<SystemConfigEntity> {
+        const config = this.getConfig();
+
+        if (config.debugPort === debugPort) {
+            return config; // no-op
+        }
+
+        config.debugPort = debugPort;
+        this.config = await SystemConfigRepository.save(config);
+
+        AppLogger.info({
+            message: "Debug port updated",
+            object: { debugPort },
+        });
+        this.emit("configChanged", { runtimeMode: config.runtimeMode, logLevel: config.logLevel, debugPort });
 
         return this.getConfig();
     }
@@ -90,7 +112,7 @@ export class SystemConfigService extends EventEmitter<SystemConfigEventMap> {
             object: { logLevel },
         });
         AppLogger.setLogLevel(logLevel);
-        this.emit("configChanged", { runtimeMode: config.runtimeMode, logLevel });
+        this.emit("configChanged", { runtimeMode: config.runtimeMode, logLevel, debugPort: config.debugPort });
 
         return this.getConfig();
     }

@@ -12,7 +12,7 @@ import {
 @Entity({ name: "system_config" })
 export class SystemConfigEntity {
 
-    constructor(init?: Partial<Pick<SystemConfigEntity,  "runtimeMode" | "logLevel">>) {
+    constructor(init?: Partial<Pick<SystemConfigEntity,  "runtimeMode" | "logLevel" | "debugPort">>) {
         Object.assign(this, init);
     }
     /**
@@ -33,6 +33,9 @@ export class SystemConfigEntity {
         default: "info",
     })
     logLevel!: UhnLogLevel;
+
+    @Column({ type: "int", default: 9250 })
+    debugPort!: number;
 
     @UpdateDateColumn({
         type: "timestamp",
