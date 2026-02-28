@@ -43,7 +43,7 @@ export class SystemCommandsService {
             if (edgeTargets.length > 0) {
                 this.forwardToEdges(msg, edgeTargets);
             }
-            this.executeOnMaster(msg);
+            this.executeOnMaster(msg, target);
         } else if (edgeTargets.length > 0) {
             // Edge-only: use executor to provide status feedback
             this.executeOnEdgesOnly(msg, edgeTargets);
@@ -121,35 +121,25 @@ export class SystemCommandsService {
         edgeTargets: string[]
     ) {
         const runtimeMode = msg.payload.runtimeMode;
-        const isDebug = runtimeMode === "debug";
+        const target = edgeTargets[0]; // edge-only always resolves to a single edge ID
 
-        const needsSourceMaps = isDebug;
-        const masterInNormal = systemConfigService.getConfig().runtimeMode === "normal";
-        // Exclude the edges we're about to switch — their snapshot still shows old mode
-        const needsCleanup = !isDebug && masterInNormal
-            && !this.anyEdgeStillInDebug(edgeTargets);
-
-        const label = edgeTargets.length === 1
-            ? `Setting ${runtimeMode} mode on ${edgeTargets[0]}`
-            : `Setting ${runtimeMode} mode on ${edgeTargets.length} edges`;
+        const label = `Setting ${runtimeMode} mode on ${target}`;
 
         await this.executor.executeCommand<void>("setRunMode", undefined, label,
             async (context, commandExecution) => {
                 const runner = new SystemCommandRunner();
 
+                const wantSourceMaps = this.willNeedSourceMaps(target, runtimeMode);
                 const hasSourceMaps = await BlueprintFileUtil.isActiveDebugCompiled();
-                // Recompile when entering debug without source maps, or when the
-                // last debugger disconnects and source maps can be stripped.
-                const shouldRecompile = (needsSourceMaps && !hasSourceMaps)
-                    || (needsCleanup && hasSourceMaps);
+                const needsRecompile = wantSourceMaps !== hasSourceMaps;
 
-                if (shouldRecompile) {
+                if (needsRecompile) {
                     await runner.runStep(context, commandExecution, {
                         key: "recompileBlueprint",
-                        label: needsSourceMaps
+                        label: wantSourceMaps
                             ? "Recompiling blueprint with source maps"
                             : "Recompiling blueprint without source maps",
-                        run: _ => this.recompileBlueprint(needsSourceMaps),
+                        run: _ => this.recompileBlueprint(wantSourceMaps),
                     });
 
                     await runner.runStep(context, commandExecution, {
@@ -179,6 +169,24 @@ export class SystemCommandsService {
             });
     }
 
+    /**
+     * Determines whether source maps will be needed after this setRunMode command
+     * completes. Compares with isActiveDebugCompiled() to decide if recompilation
+     * is necessary — only recompile on transitions between "someone needs source maps"
+     * and "no one does".
+     */
+    private willNeedSourceMaps(target: string, requestedMode: UhnRuntimeMode): boolean {
+        if (requestedMode === "debug") return true;
+
+        // requestedMode is "normal"
+        if (target === "all") return false;
+        if (target === "master") return this.anyEdgeStillInDebug([]);
+
+        // Edge target — check master + other edges
+        const masterInDebug = systemConfigService.getConfig().runtimeMode === "debug";
+        return masterInDebug || this.anyEdgeStillInDebug([target]);
+    }
+
     private anyEdgeStillInDebug(excludeEdgeIds: string[]): boolean {
         const snapshot = uhnSystemSnapshotService.getSnapshot();
         if (!snapshot) return false;
@@ -188,10 +196,10 @@ export class SystemCommandsService {
         );
     }
 
-    private executeOnMaster(msg: UhnSystemCommand) {
+    private executeOnMaster(msg: UhnSystemCommand, target: string) {
         switch (msg.command) {
             case "setRunMode":
-                this.commandSetRunMode(msg.payload.runtimeMode);
+                this.commandSetRunMode(msg.payload.runtimeMode, target);
                 break;
             case "setLogLevel":
                 this.commandSetLogLevel(msg.payload.logLevel);
@@ -320,7 +328,7 @@ export class SystemCommandsService {
                 });
             });
     }
-    private async commandSetRunMode(runtimeMode: UhnRuntimeMode) {
+    private async commandSetRunMode(runtimeMode: UhnRuntimeMode, target: string) {
         await this.executor.executeCommand<SetRunModeContext>("setRunMode",
             { requestedRuntimeMode:runtimeMode, requestedAt: Date.now() },
             "Updating runtime mode", async (context, commandExecution) => {
@@ -338,22 +346,31 @@ export class SystemCommandsService {
                         run: ctx => this.persistMode(ctx),
                     });
 
-                    await runner.runStep(context, commandExecution, {
-                        key: "recompileBlueprint",
-                        label: "Recompiling blueprint",
-                        run: ctx => this.recompileBlueprint(ctx.requestedRuntimeMode === "debug" || this.anyEdgeStillInDebug([])),
-                    });
+                    const wantSourceMaps = this.willNeedSourceMaps(target, runtimeMode);
+                    const hasSourceMaps = await BlueprintFileUtil.isActiveDebugCompiled();
+                    const needsRecompile = wantSourceMaps !== hasSourceMaps;
+
+                    if (needsRecompile) {
+                        await runner.runStep(context, commandExecution, {
+                            key: "recompileBlueprint",
+                            label: "Recompiling blueprint",
+                            run: _ => this.recompileBlueprint(wantSourceMaps),
+                        });
+                    }
 
                     await runner.runStep(context, commandExecution, {
                         key: "stopRuntime",
                         label: "Stopping runtime",
                         run: _ => this.stopRuntime(),
                     });
-                    await runner.runStep(context, commandExecution, {
-                        key: "activateRecompile",
-                        label: "Activating recompiled blueprint",
-                        run: _ => this.activateRecompile(),
-                    });
+
+                    if (needsRecompile) {
+                        await runner.runStep(context, commandExecution, {
+                            key: "activateRecompile",
+                            label: "Activating recompiled blueprint",
+                            run: _ => this.activateRecompile(),
+                        });
+                    }
 
                     await runner.runStep(context, commandExecution, {
                         key: "startRuntime",
