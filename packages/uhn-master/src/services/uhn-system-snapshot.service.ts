@@ -1,4 +1,4 @@
-import { UhnLogLevel, UhnRuntimeConfig, UhnRuntimeMode, UhnSystemSnapshot } from "@uhn/common";
+import { UhnRuntimeConfig, UhnSystemSnapshot } from "@uhn/common";
 import { runBackgroundTask } from "@uxp/bff-common";
 import EventEmitter from "events";
 import { parseMqttTopic } from "../util/mqtt-topic.util";
@@ -9,6 +9,9 @@ import { runtimeOverviewService } from "./runtime-overview.service";
 import { subscriptionService } from "./subscription.service";
 import { systemConfigService } from "./system-config.service";
 const { AppDataSource } = require("../db/typeorm.config");
+
+
+type EdgeMqttConfig = Pick<UhnRuntimeConfig, "logLevel" | "runMode" | "debugPort" | "debugHost">;
 
 type SystemSnapshotEventMap = {
     snapshotChanged: [snapshot: UhnSystemSnapshot];
@@ -23,7 +26,7 @@ type SystemSnapshotEventMap = {
  */
 class UhnSystemSnapshotService extends EventEmitter<SystemSnapshotEventMap> {
     private snapshot!: UhnSystemSnapshot;
-    private readonly edgeConfigs = new Map<string, { logLevel: string; runMode: string; debugPort?: number }>();
+    private readonly edgeConfigs = new Map<string, EdgeMqttConfig>();
 
     private emitScheduled = false;
 
@@ -52,7 +55,7 @@ class UhnSystemSnapshotService extends EventEmitter<SystemSnapshotEventMap> {
             const edgeId = parseMqttTopic(topic)?.edge;
             if (!edgeId) return;
             if (isEdgeMqttConfig(payload)) {
-                this.edgeConfigs.set(edgeId, { logLevel: payload.logLevel, runMode: payload.runMode, debugPort: payload.debugPort });
+                this.edgeConfigs.set(edgeId, payload);
                 this.requestRebuild();
             }
         });
@@ -120,6 +123,7 @@ class UhnSystemSnapshotService extends EventEmitter<SystemSnapshotEventMap> {
                 logLevel: cfg.logLevel,
                 runMode: cfg.runtimeMode,
                 debugPort: cfg.debugPort,
+                debugHost: process.env.UHN_PUBLIC_HOST || undefined,
                 runtimeStatus: masterOverview?.status ?? "stopped",
                 nodeOnline: true,
             };
@@ -129,9 +133,10 @@ class UhnSystemSnapshotService extends EventEmitter<SystemSnapshotEventMap> {
                 if (runtime.runtimeId === "master") continue;
                 const mqttCfg = this.edgeConfigs.get(runtime.runtimeId);
                 runtimes[runtime.runtimeId] = {
-                    logLevel: (mqttCfg?.logLevel ?? "info") as UhnLogLevel,
-                    runMode: (mqttCfg?.runMode ?? "normal") as UhnRuntimeMode,
+                    logLevel: mqttCfg?.logLevel ?? "info",
+                    runMode: mqttCfg?.runMode ?? "normal",
                     debugPort: mqttCfg?.debugPort,
+                    debugHost: mqttCfg?.debugHost,
                     runtimeStatus: runtime.status,
                     nodeOnline: edgeIdentityService.getEdgeStatus(runtime.runtimeId) === "online",
                 };
@@ -141,9 +146,10 @@ class UhnSystemSnapshotService extends EventEmitter<SystemSnapshotEventMap> {
             for (const [edgeId, mqttCfg] of this.edgeConfigs) {
                 if (!runtimes[edgeId]) {
                     runtimes[edgeId] = {
-                        logLevel: mqttCfg.logLevel as UhnLogLevel,
-                        runMode: mqttCfg.runMode as UhnRuntimeMode,
+                        logLevel: mqttCfg.logLevel,
+                        runMode: mqttCfg.runMode,
                         debugPort: mqttCfg.debugPort,
+                        debugHost: mqttCfg.debugHost,
                         runtimeStatus: runtimeOverviewService.getEdgeRuntimeStatus(edgeId) ?? "stopped",
                         nodeOnline: edgeIdentityService.getEdgeStatus(edgeId) === "online",
                     };
@@ -176,7 +182,7 @@ class UhnSystemSnapshotService extends EventEmitter<SystemSnapshotEventMap> {
     }
 }
 
-function isEdgeMqttConfig(obj: unknown): obj is { logLevel: string; runMode: string; debugPort?: number } {
+function isEdgeMqttConfig(obj: unknown): obj is EdgeMqttConfig {
     return (
         typeof obj === "object" &&
         obj !== null &&

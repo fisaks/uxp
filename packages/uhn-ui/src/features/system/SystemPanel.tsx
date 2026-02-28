@@ -73,6 +73,7 @@ export const SystemPanel: React.FC<SystemPanelProps> = ({
             <DebugSection
                 runMode={runtimeConfig?.runMode}
                 debugPort={runtimeConfig?.debugPort}
+                debugHost={runtimeConfig?.debugHost}
                 showPortInput={scope !== "all"}
                 busy={busy || edgeOffline}
                 setRunModeRunning={

@@ -69,6 +69,7 @@ export type UhnRuntimeConfig = {
     logLevel: UhnLogLevel;
     runMode: UhnRuntimeMode;
     debugPort?: number;
+    debugHost?: string;
     runtimeStatus: RuntimeStatus;
     nodeOnline: boolean;
 };

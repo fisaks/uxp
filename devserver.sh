@@ -3,6 +3,7 @@
 # Name of the tmux session
 SESSION_NAME="uxp-dev"
 
+
 start_dev_env() {
     # Check if the session already exists
     if tmux has-session -t $SESSION_NAME 2>/dev/null; then
@@ -12,9 +13,9 @@ start_dev_env() {
     fi
     
     
-    docker compose -f docker-compose.yaml -f docker-compose.dev.yaml up -d db-server mqtt 
-
-
+    docker compose -f docker-compose.yaml -f docker-compose.dev.yaml up -d db-server mqtt
+    
+    
     echo "⏳ Waiting for Mosquitto to be ready on localhost:2883..."
     for i in {1..10}; do
         if nc -z localhost 2883; then
@@ -24,7 +25,7 @@ start_dev_env() {
         echo "  ...retrying ($i)"
         sleep 1
     done
-
+    
     # Start a new tmux session (detached)
     tmux new-session -d -s $SESSION_NAME
     
@@ -88,9 +89,10 @@ start_dev_env() {
     tmux resize-pane -y 45%
     tmux send-keys -t $SESSION_NAME:2.0 "docker logs -f uxp-mqtt" C-m
     tmux send-keys -t $SESSION_NAME:2.1 "mosquitto_sub -h localhost -p 2883 -t "uhn/#" -v" C-m
+    tmux send-keys -t $SESSION_NAME:2.2 "export UHN_PUBLIC_HOST=$(hostname -I | awk '{print $1}')" C-m
     tmux send-keys -t $SESSION_NAME:2.2 "pnpm run start:uhn-master" C-m
     tmux send-keys -t $SESSION_NAME:2.3 "pnpm run start:uhn-app" C-m
-
+    
     
     # Select the first tab
     tmux select-window -t $SESSION_NAME:0
@@ -109,7 +111,7 @@ stop_dev_env() {
     tmux kill-session -t $SESSION_NAME 2>/dev/null || echo "No tmux session found with name $SESSION_NAME"
     docker compose -f docker-compose.yaml -f docker-compose.dev.yaml down
     timeout=30         # Maximum wait time in seconds
-    elapsed=0 
+    elapsed=0
     while is_db_running; do
         if [ "$elapsed" -ge "$timeout" ]; then
             echo -e "\nTimeout reached after $timeout seconds. Exiting."

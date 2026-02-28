@@ -5,6 +5,7 @@ import React, { useEffect, useState } from "react";
 type DebugSectionProps = {
     runMode?: "debug" | "normal";
     debugPort?: number;
+    debugHost?: string;
     showPortInput: boolean;
     busy: boolean;
     setRunModeRunning: boolean;
@@ -15,6 +16,7 @@ type DebugSectionProps = {
 export const DebugSection: React.FC<DebugSectionProps> = ({
     runMode,
     debugPort,
+    debugHost,
     showPortInput,
     busy,
     setRunModeRunning,
@@ -103,8 +105,10 @@ export const DebugSection: React.FC<DebugSectionProps> = ({
                 {setRunModeRunning && "Updating runtime mode..."}
                 {!setRunModeRunning && !isDebugOn &&
                     "Will restart runtime with source maps and debug port"}
-                {!setRunModeRunning && isDebugOn &&
-                    `Debug port ${debugPort ?? "?"} opened, runtime running with source maps`}
+                {!setRunModeRunning && isDebugOn && showPortInput &&
+                    `Debug ${debugHost ? `${debugHost}:${debugPort ?? "?"}` : `:${debugPort ?? "?"}`} opened, runtime running with source maps`}
+                {!setRunModeRunning && isDebugOn && !showPortInput &&
+                    "Runtime running with source maps and debug port"}
             </Typography>
         </Box>
     );
