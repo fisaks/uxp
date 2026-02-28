@@ -224,7 +224,7 @@ export class SystemCommandsService {
                 await runner.runStep(context, commandExecution, {
                     key: "recompileBlueprint",
                     label: "Recompiling blueprint",
-                    run: _ => this.recompileBlueprint(cfg.runtimeMode === "debug"),
+                    run: _ => this.recompileBlueprint(cfg.runtimeMode === "debug" || this.anyEdgeStillInDebug([])),
                 });
 
                 await runner.runStep(context, commandExecution, {
@@ -341,7 +341,7 @@ export class SystemCommandsService {
                     await runner.runStep(context, commandExecution, {
                         key: "recompileBlueprint",
                         label: "Recompiling blueprint",
-                        run: ctx => this.recompileBlueprint(ctx.requestedRuntimeMode === "debug"),
+                        run: ctx => this.recompileBlueprint(ctx.requestedRuntimeMode === "debug" || this.anyEdgeStillInDebug([])),
                     });
 
                     await runner.runStep(context, commandExecution, {
