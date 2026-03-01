@@ -128,7 +128,9 @@ function serializeTrigger(t: RuleTrigger): RuntimeRuleTriggerInfo {
     const resourceId = t.resource?.id ?? "unknown";
     switch (t.kind) {
         case "resource":
-            return { kind: "resource", resourceId, event: t.event };
+            return { kind: "resource", resourceId, event: t.event, ...(t.hysteresis !== undefined && { hysteresis: t.hysteresis }) };
+        case "threshold":
+            return { kind: "threshold", resourceId, direction: t.direction, threshold: t.threshold, ...(t.hysteresis !== undefined && { hysteresis: t.hysteresis }) };
         case "tap":
             return { kind: "tap", resourceId };
         case "longPress":

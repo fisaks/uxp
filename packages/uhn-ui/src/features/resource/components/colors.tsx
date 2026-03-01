@@ -1,5 +1,5 @@
 import { alpha, Theme } from "@mui/material";
-import { BaseInputKind, BaseOutputKind } from "@uhn/blueprint";
+import { BaseAnalogInputKind, BaseAnalogOutputKind, BaseInputKind, BaseOutputKind } from "@uhn/blueprint";
 import { TileRuntimeResource, TileRuntimeResourceState } from "../resource-ui.type";
 
 
@@ -131,7 +131,71 @@ const inputKindColors: KindColors<BaseInputKind> = {
     },
 } as const;
 
+const analogInputKindColors: KindColors<BaseAnalogInputKind> = {
+    temperature: {
+        icon: {
+            active: { light: "#E65100", dark: "#FF9E40" },
+            inactive: { light: "#9E9E9E", dark: "#9E9E9E" },
+        },
+        surface: {
+            light: "#E65100",
+            dark: "#FF9E40",
+        },
+    },
+    humidity: {
+        icon: {
+            active: { light: "#1E88E5", dark: "#42A5F5" },
+            inactive: { light: "#9E9E9E", dark: "#9E9E9E" },
+        },
+        surface: {
+            light: "#1565C0",
+            dark: "#42A5F5",
+        },
+    },
+    power: {
+        icon: {
+            active: { light: "#F57C00", dark: "#FFB74D" },
+            inactive: { light: "#9E9E9E", dark: "#9E9E9E" },
+        },
+        surface: {
+            light: "#EF6C00",
+            dark: "#FFB74D",
+        },
+    },
+} as const;
 
+const analogOutputKindColors: KindColors<BaseAnalogOutputKind> = {
+    dimmer: {
+        icon: {
+            active: { light: "#FFA000", dark: "#FFCA28" },
+            inactive: { light: "#9E9E9E", dark: "#9E9E9E" },
+        },
+        surface: {
+            light: "#FF8F00",
+            dark: "#FFCA28",
+        },
+    },
+    valve: {
+        icon: {
+            active: { light: "#00838F", dark: "#26C6DA" },
+            inactive: { light: "#9E9E9E", dark: "#9E9E9E" },
+        },
+        surface: {
+            light: "#006064",
+            dark: "#26C6DA",
+        },
+    },
+    pwm: {
+        icon: {
+            active: { light: "#6A1B9A", dark: "#AB47BC" },
+            inactive: { light: "#9E9E9E", dark: "#9E9E9E" },
+        },
+        surface: {
+            light: "#4A148C",
+            dark: "#AB47BC",
+        },
+    },
+} as const;
 
 export function getResourceIconColor(
     theme: Theme,
@@ -158,6 +222,18 @@ export function getResourceIconColor(
         return active ? cfg.icon.active[mode] : cfg.icon.inactive[mode];
     }
 
+    if (resource.type === "analogInput" && resource.analogInputKind) {
+        const cfg = analogInputKindColors[resource.analogInputKind as keyof typeof analogInputKindColors];
+        return cfg ? cfg.icon.active[mode] : theme.palette.text.primary;
+    }
+
+    if (resource.type === "analogOutput" && resource.analogOutputKind) {
+        const cfg = analogOutputKindColors[resource.analogOutputKind as keyof typeof analogOutputKindColors];
+        if (!cfg) return theme.palette.text.primary;
+        const analogActive = typeof state?.value === "number" && state.value > (resource.min ?? 0);
+        return analogActive ? cfg.icon.active[mode] : cfg.icon.inactive[mode];
+    }
+
     return theme.palette.text.disabled;
 }
 
@@ -182,6 +258,18 @@ export function getResourceSurfaceColor(
         const base = inputKindColors[resource.inputKind as keyof typeof inputKindColors]?.surface?.[mode];
         if (!base) return "transparent";
 
+        return alpha(base, mode === "dark" ? 0.06 : 0.045);
+    }
+
+    if (resource.type === "analogInput" && resource.analogInputKind) {
+        const base = analogInputKindColors[resource.analogInputKind as keyof typeof analogInputKindColors]?.surface?.[mode];
+        if (!base) return "transparent";
+        return alpha(base, mode === "dark" ? 0.06 : 0.045);
+    }
+
+    if (resource.type === "analogOutput" && resource.analogOutputKind) {
+        const base = analogOutputKindColors[resource.analogOutputKind as keyof typeof analogOutputKindColors]?.surface?.[mode];
+        if (!base) return "transparent";
         return alpha(base, mode === "dark" ? 0.06 : 0.045);
     }
 

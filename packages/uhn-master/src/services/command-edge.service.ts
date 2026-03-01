@@ -1,15 +1,26 @@
-import { DeviceCommandPayload, RuntimeDigitalOutputResource, UhnResourceCommand } from "@uhn/common";
+import { DeviceCommandPayload, RuntimeAnalogOutputResource, RuntimeDigitalOutputResource, UhnResourceCommand } from "@uhn/common";
 import { nanoid } from "nanoid";
 import mqttService from "./mqtt.service";
 
 
 class CommandEdgeService {
 
-    sendCommandToEdge(resource: RuntimeDigitalOutputResource,
+    sendDigitalCommandToEdge(resource: RuntimeDigitalOutputResource,
         command: UhnResourceCommand) {
         const deviceCommand = this.mapOutputCommand(resource, command);
         this.sendDeviceCommand(resource.edge, resource.device!, deviceCommand);
 
+    }
+
+    sendAnalogCommandToEdge(resource: RuntimeAnalogOutputResource, value: number) {
+        const cmd: DeviceCommandPayload = {
+            id: nanoid(),
+            action: "setanalogoutput",
+            device: resource.device,
+            address: resource.pin!,
+            value,
+        };
+        this.sendDeviceCommand(resource.edge, resource.device!, cmd);
     }
     private sendDeviceCommand(edge: string, device: string, cmd: DeviceCommandPayload) {
         const topic = `uhn/${edge}/device/${device}/cmd`;

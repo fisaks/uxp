@@ -26,12 +26,18 @@ export type ClearTimerCommand = {
     type: "clearTimer";
 };
 
+export type SetAnalogCommand = {
+    type: "setAnalog";
+    value: number;
+};
+
 export type UhnResourceCommand =
     | ToggleCommand
     | SetCommand
     | PressCommand
     | ReleaseCommand
-    | ClearTimerCommand;
+    | ClearTimerCommand
+    | SetAnalogCommand;
 
 export type ToggleCommand = {
     type: "toggle";
@@ -156,6 +162,15 @@ export const UhnResourceCommandPayloadSchema: MessagePayloadSchema<UhnResourceCo
                         type: { const: 'clearTimer' }
                     },
                     required: ['type'],
+                    additionalProperties: false
+                },
+                {
+                    type: 'object',
+                    properties: {
+                        type: { const: 'setAnalog' },
+                        value: { type: 'number' }
+                    },
+                    required: ['type', 'value'],
                     additionalProperties: false
                 }
             ]

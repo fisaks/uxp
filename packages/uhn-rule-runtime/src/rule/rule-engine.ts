@@ -21,12 +21,30 @@ import { createRuleMute } from "./rule-engine-mute";
 import { createRuleRuntime } from "./rule-engine-runtime";
 import { createRuleTimer } from "./rule-engine-timer";
 import { RuleExecutionControl, RuleTriggerEvent } from "./rule-engine.type";
-import { isLongPressTrigger, isResourceTrigger, isTapTrigger, isTimerTrigger } from "./rule-engine.utils";
+import { isLongPressTrigger, isResourceTrigger, isTapTrigger, isThresholdTrigger, isTimerTrigger } from "./rule-engine.utils";
 import { TriggerEventBus } from "./trigger-event-bus";
 
+/**
+ * Hysteresis state for a single trigger instance.
+ *
+ * - "threshold" (onAbove/onBelow): `waitingFor` describes which direction
+ *   the value must move next. When `waitingFor === trigger.direction`, the
+ *   trigger is ready to fire on a threshold crossing. After firing, it flips
+ *   to the opposite direction and waits for the value to pass the hysteresis
+ *   re-arm point before flipping back. This prevents rapid re-firing when
+ *   a value oscillates around the threshold.
+ *
+ * - "changed" (onChanged with hysteresis): `lastFiredValue` tracks the
+ *   value at which the trigger last fired. Only fires again when the
+ *   value has moved at least `hysteresis` units from that point.
+ */
+type HysteresisEntry =
+    | { kind: "threshold"; waitingFor: "above" | "below" }
+    | { kind: "changed"; lastFiredValue: number };
 
 export class RuleEngine {
     private readonly ruleExecutionControl = new Map<string, RuleExecutionControl>();
+    private readonly hysteresisState = new Map<string, HysteresisEntry>();
     private readonly ruleRuntime: RuntimeReader;
     private readonly mode: RuntimeMode;
     constructor(
@@ -62,8 +80,9 @@ export class RuleEngine {
         if (!rules.length) return;
 
         for (const ruleCandidate of rules) {
-            for (const triggerCandidate of ruleCandidate.triggers) {
-                if (!this.triggerMatches(triggerCandidate, triggerEvent)) continue;
+            for (let triggerIdx = 0; triggerIdx < ruleCandidate.triggers.length; triggerIdx++) {
+                const triggerCandidate = ruleCandidate.triggers[triggerIdx];
+                if (!this.triggerMatches(triggerCandidate, triggerEvent, ruleCandidate.id, triggerIdx)) continue;
 
                 const triggerCause: RuleCause = {
                     resource: triggerEvent.resource,
@@ -91,11 +110,24 @@ export class RuleEngine {
 
     private triggerMatches(
         trigger: RuleTrigger,
-        event: RuleTriggerEvent
+        event: RuleTriggerEvent,
+        ruleId: string,
+        triggerIdx: number
     ): boolean {
         if (trigger.resource.id !== event.resource.id) return false;
+
+        if (isThresholdTrigger(trigger)) {
+            return this.matchThresholdTrigger(trigger, event, ruleId, triggerIdx);
+        }
+
         if (isResourceTrigger(trigger)) {
-            return trigger.event === event.event;
+            if (trigger.event !== event.event) return false;
+            // Handle onChanged with hysteresis for analog resources
+            const isAnalog = trigger.resource.type === "analogInput" || trigger.resource.type === "analogOutput";
+            if (trigger.event === "changed" && trigger.hysteresis !== undefined && isAnalog && typeof event.value === "number") {
+                return this.matchChangedWithHysteresis(trigger.hysteresis, event.value, ruleId, triggerIdx);
+            }
+            return true;
         }
         if (isLongPressTrigger(trigger) && event.event === "longPress") {
             return trigger.thresholdMs === event.thresholdMs;
@@ -105,6 +137,92 @@ export class RuleEngine {
         }
         if (isTimerTrigger(trigger)) {
             return trigger.event === event.event;
+        }
+
+        return false;
+    }
+
+    /**
+     * Threshold trigger state machine:
+     *
+     *   waitingFor === trigger.direction       waitingFor !== trigger.direction
+     *   ┌──────────────┐  fires on crossing   ┌──────────────┐
+     *   │ waitingFor:  │ ──────────────────→   │ waitingFor:  │
+     *   │  "above"     │                       │  "below"     │
+     *   └──────────────┘  ←────────────────    └──────────────┘
+     *                      value passes re-arm point
+     *
+     * onAbove(threshold=25, hysteresis=2):
+     *   waitingFor:"above" → fires when value crosses up past 25 → waitingFor:"below"
+     *   waitingFor:"below" → flips back when value drops below 23 (25-2)
+     *
+     * onBelow(threshold=10, hysteresis=2):
+     *   waitingFor:"below" → fires when value crosses down past 10 → waitingFor:"above"
+     *   waitingFor:"above" → flips back when value rises above 12 (10+2)
+     *
+     * Without hysteresis (hysteresis=0), the re-arm point equals the
+     * threshold, so the trigger re-arms as soon as the value moves
+     * away from the threshold in the opposite direction.
+     */
+    private matchThresholdTrigger(
+        trigger: Extract<RuleTrigger, { kind: "threshold" }>,
+        event: RuleTriggerEvent,
+        ruleId: string,
+        triggerIdx: number
+    ): boolean {
+        if (event.event !== "changed") return false;
+        if (typeof event.prevValue !== "number" || typeof event.value !== "number") return false;
+
+        const key = `${ruleId}:${triggerIdx}`;
+        const entry = this.hysteresisState.get(key) as (HysteresisEntry & { kind: "threshold" }) | undefined;
+        const waitingFor = entry?.waitingFor ?? trigger.direction;
+
+        const prev = event.prevValue;
+        const next = event.value;
+        const hysteresis = trigger.hysteresis ?? 0;
+
+        if (waitingFor === trigger.direction) {
+            const crossed = trigger.direction === "above"
+                ? prev < trigger.threshold && next >= trigger.threshold
+                : prev > trigger.threshold && next <= trigger.threshold;
+
+            if (crossed) {
+                const oppositeWaitingFor = trigger.direction === "above" ? "below" : "above";
+                this.hysteresisState.set(key, { kind: "threshold", waitingFor: oppositeWaitingFor });
+                return true;
+            }
+        } else {
+            // Check re-arm: value moved past hysteresis band in opposite direction
+            const passedRetriggerPoint = trigger.direction === "above"
+                ? next < trigger.threshold - hysteresis
+                : next > trigger.threshold + hysteresis;
+
+            if (passedRetriggerPoint) {
+                this.hysteresisState.set(key, { kind: "threshold", waitingFor: trigger.direction });
+            }
+        }
+
+        return false;
+    }
+
+    private matchChangedWithHysteresis(
+        hysteresis: number,
+        value: number,
+        ruleId: string,
+        triggerIdx: number
+    ): boolean {
+        const key = `${ruleId}:${triggerIdx}`;
+        const entry = this.hysteresisState.get(key) as (HysteresisEntry & { kind: "changed" }) | undefined;
+
+        if (!entry) {
+            // First change always fires
+            this.hysteresisState.set(key, { kind: "changed", lastFiredValue: value });
+            return true;
+        }
+
+        if (Math.abs(value - entry.lastFiredValue) >= hysteresis) {
+            this.hysteresisState.set(key, { kind: "changed", lastFiredValue: value });
+            return true;
         }
 
         return false;
@@ -201,18 +319,12 @@ export class RuleEngine {
         }
 
         switch (action.type) {
-            case "setOutput":
-                return {
-                    type: "setOutput",
-                    resourceId: action.resource.id,
-                    value: action.value,
-                };
+            case "setDigitalOutput":
+                return { type: "setDigitalOutput", resourceId: action.resource.id, value: action.value };
+            case "setAnalogOutput":
+                return { type: "setAnalogOutput", resourceId: action.resource.id, value: action.value };
             case "emitSignal":
-                return {
-                    type: "emitSignal",
-                    resourceId: action.resource.id,
-                    value: action.value,
-                };
+                return { type: "emitSignal", resourceId: action.resource.id, value: action.value };
             default:
                 assertNever(action, "Unsupported RuleAction type in RuleEngine.toRuntimeAction");
         }

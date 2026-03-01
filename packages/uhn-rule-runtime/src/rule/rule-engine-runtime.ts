@@ -3,7 +3,7 @@ import { ResourceBase, ResourceType, RuntimeReader, StateValueByResourceType } f
 import { assertNever } from "@uxp/common";
 import { ResourceMissingIdError, ResourceStateNotAvailableError, ResourceStateTypeMismatchError } from "@uhn/common";
 import { RuntimeStateService } from "../services/runtime-state.service";
-import { isDigitalValue, isTimerValue } from "../utils/runtime-state.util";
+import { isAnalogValue, isDigitalValue, isTimerValue } from "../utils/runtime-state.util";
 
 
 export function createRuleRuntime({ stateService }: { stateService: RuntimeStateService }): RuntimeReader {
@@ -20,6 +20,12 @@ export function createRuleRuntime({ stateService }: { stateService: RuntimeState
                 case "digitalInput":
                 case "digitalOutput":
                     if (!isDigitalValue(s.value)) {
+                        throw new ResourceStateTypeMismatchError(r.id, r.type, s.value);
+                    }
+                    return s.value as StateValueByResourceType<T>;
+                case "analogInput":
+                case "analogOutput":
+                    if (!isAnalogValue(s.value)) {
                         throw new ResourceStateTypeMismatchError(r.id, r.type, s.value);
                     }
                     return s.value as StateValueByResourceType<T>;

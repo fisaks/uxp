@@ -1,10 +1,11 @@
 
-import { DigitalInputResourceBase, DigitalOutputResourceBase, ResourceBase, ResourceType, RuntimeRuleAction } from "@uhn/blueprint";
+import { AnalogInputResourceBase, AnalogOutputResourceBase, DigitalInputResourceBase, DigitalOutputResourceBase, ResourceBase, ResourceType, RuntimeRuleAction } from "@uhn/blueprint";
 
 // --- Runtime rule serialization (for IPC + overview) ---
 
 export type RuntimeRuleTriggerInfo =
-  | { kind: "resource"; resourceId: string; event: "activated" | "deactivated" | "changed" }
+  | { kind: "resource"; resourceId: string; event: "activated" | "deactivated" | "changed"; hysteresis?: number }
+  | { kind: "threshold"; resourceId: string; direction: "above" | "below"; threshold: number; hysteresis?: number }
   | { kind: "tap"; resourceId: string }
   | { kind: "longPress"; resourceId: string; thresholdMs: number }
   | { kind: "timer"; resourceId: string; event: "activated" | "deactivated" };
@@ -95,6 +96,18 @@ export type RuntimeDigitalInputResource =
   };
 
 export type RuntimeDigitalOutputResource = DigitalOutputResourceBase & {
+  id: string;
+  name: string;
+  errors?: ResourceErrorCode[];
+};
+
+export type RuntimeAnalogInputResource = AnalogInputResourceBase & {
+  id: string;
+  name: string;
+  errors?: ResourceErrorCode[];
+};
+
+export type RuntimeAnalogOutputResource = AnalogOutputResourceBase & {
   id: string;
   name: string;
   errors?: ResourceErrorCode[];

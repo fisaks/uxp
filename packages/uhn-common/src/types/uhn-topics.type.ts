@@ -67,7 +67,7 @@ export type DeviceStatePayload = {
 export type DeviceCommandPayload = {
     id?: string;
     device?: string; // overridden by topic
-    action: "setdigitaloutput";
+    action: "setdigitaloutput" | "setanalogoutput";
     address: number | string;
     value: 0 | 1 | 2 | number; // 0=off,1=on,2=toggle or analog
     pulseMs?: number;

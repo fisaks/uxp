@@ -1,5 +1,7 @@
 // packages/uhn-blueprint/src/rule.ts
 import type {
+    AnalogInputResourceBase,
+    AnalogOutputResourceBase,
     DigitalInputResourceBase,
     DigitalOutputResourceBase,
     ResourceBase,
@@ -38,12 +40,26 @@ export type TriggerEvent =
     | "tap"
     | "longPress"
     | "timerActivated"
-    | "timerDeactivated";
+    | "timerDeactivated"
+    | "thresholdAbove"
+    | "thresholdBelow";
+
+export type AnalogTriggerOptions = { hysteresis?: number };
+
 export type RuleTrigger =
     | {
         kind: "resource";
         resource: ResourceBase<ResourceType>;
         event: "activated" | "deactivated" | "changed";
+        /** Only meaningful for analog resources with event "changed". Ignored for digital. */
+        hysteresis?: number;
+    }
+    | {
+        kind: "threshold";
+        resource: AnalogInputResourceBase | AnalogOutputResourceBase;
+        direction: "above" | "below";
+        threshold: number;
+        hysteresis?: number;
     }
     | {
         kind: "tap";
@@ -92,9 +108,14 @@ export type RuleLogger = {
 // --------- Actions (runtime emits to host) ---------
 export type RuleAction =
     | {
-        type: "setOutput";
+        type: "setDigitalOutput";
         resource: DigitalOutputResourceBase;
         value: DigitalStateValue
+    }
+    | {
+        type: "setAnalogOutput";
+        resource: AnalogOutputResourceBase;
+        value: AnalogStateValue
     }
     | {
         type: "emitSignal"; // optional: e.g. transient overrides
@@ -112,7 +133,7 @@ export type RuleAction =
  *
  * Usage:
  *   const actions = ruleActions([
- *       { type: "setOutput", resource: someOutput, value: true },
+ *       { type: "setDigitalOutput", resource: someOutput, value: true },
  *       { type: "emitSignal", resource: someInput, value: undefined },
  *   ]);
  */
@@ -131,9 +152,14 @@ export function ruleActions<T extends RuleAction[]>(actions: T): T {
  */
 export type RuntimeRuleAction =
     | {
-        type: "setOutput";
+        type: "setDigitalOutput";
         resourceId: string;
         value: DigitalStateValue
+    }
+    | {
+        type: "setAnalogOutput";
+        resourceId: string;
+        value: AnalogStateValue
     }
     | {
         type: "emitSignal"; // optional: e.g. transient overrides
@@ -229,7 +255,10 @@ export type RuleBuilder = {
 
     onActivated(resource: DigitalInputResourceBase): RuleBuilder;
     onDeactivated(resource: DigitalInputResourceBase): RuleBuilder;
-    onChanged(resource: DigitalInputResourceBase | DigitalOutputResourceBase): RuleBuilder;
+    onChanged(resource: DigitalInputResourceBase | DigitalOutputResourceBase | AnalogInputResourceBase | AnalogOutputResourceBase, opts?: AnalogTriggerOptions): RuleBuilder;
+
+    onAbove(resource: AnalogInputResourceBase | AnalogOutputResourceBase, threshold: number, opts?: AnalogTriggerOptions): RuleBuilder;
+    onBelow(resource: AnalogInputResourceBase | AnalogOutputResourceBase, threshold: number, opts?: AnalogTriggerOptions): RuleBuilder;
 
     onTap(resource: DigitalInputResourceBase<"button">): RuleBuilder;
     onLongPress(resource: DigitalInputResourceBase<"button">, thresholdMs: number): RuleBuilder;
@@ -287,11 +316,34 @@ export function rule(
             return this;
         },
 
-        onChanged(resource) {
+        onChanged(resource, opts) {
             meta.triggers.push({
                 kind: "resource",
                 resource: resource,
                 event: "changed",
+                ...(opts?.hysteresis !== undefined && { hysteresis: opts.hysteresis }),
+            });
+            return this;
+        },
+
+        onAbove(resource, threshold, opts) {
+            meta.triggers.push({
+                kind: "threshold",
+                resource: resource,
+                direction: "above",
+                threshold,
+                ...(opts?.hysteresis !== undefined && { hysteresis: opts.hysteresis }),
+            });
+            return this;
+        },
+
+        onBelow(resource, threshold, opts) {
+            meta.triggers.push({
+                kind: "threshold",
+                resource: resource,
+                direction: "below",
+                threshold,
+                ...(opts?.hysteresis !== undefined && { hysteresis: opts.hysteresis }),
             });
             return this;
         },

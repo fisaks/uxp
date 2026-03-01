@@ -310,6 +310,26 @@ class StateRuntimeService extends EventEmitter<StateRuntimeEventMap> {
                 summary?.digitalOutputs
             );
         }
+
+        // Analog inputs
+        if (deviceState.analogInputs !== undefined) {
+            this.processRegisters(
+                deviceState,
+                "analogInput",
+                deviceState.analogInputs,
+                summary?.analogInputs
+            );
+        }
+
+        // Analog outputs
+        if (deviceState.analogOutputs !== undefined) {
+            this.processRegisters(
+                deviceState,
+                "analogOutput",
+                deviceState.analogOutputs,
+                summary?.analogOutputs
+            );
+        }
     }
 
     /**
@@ -321,7 +341,7 @@ class StateRuntimeService extends EventEmitter<StateRuntimeEventMap> {
      */
     private processPins(
         deviceState: PhysicalDeviceState,
-        type: ResourceType,
+        type: Extract<ResourceType, "digitalInput" | "digitalOutput">,
         bytes: Buffer,
         range: Range | undefined
 
@@ -350,6 +370,38 @@ class StateRuntimeService extends EventEmitter<StateRuntimeEventMap> {
         }
     }
 
+
+    /**
+     * Maps physical device registers (16-bit big-endian) to resourceIds
+     * and forwards them to updatePhysicalState().
+     */
+    private processRegisters(
+        deviceState: PhysicalDeviceState,
+        type: Extract<ResourceType, "analogInput" | "analogOutput">,
+        bytes: Buffer,
+        range: Range | undefined
+    ) {
+        const start = range ? range.start : 0;
+        const maxRegFromPayload = Math.floor(bytes.length / 2);
+        const end = range ? Math.min(range.start + range.count, start + maxRegFromPayload) : start + maxRegFromPayload;
+
+        for (let reg = start; reg < end; reg++) {
+            const byteOffset = (reg - start) * 2;
+
+            if (byteOffset + 1 >= bytes.length) break;
+
+            const value = (bytes[byteOffset] << 8) | bytes[byteOffset + 1]; // big-endian uint16
+
+            const key = makeAddressKey({
+                edge: deviceState.edge, device: deviceState.device, type, pin: reg
+            });
+            if (!key) continue;
+            const resourceId = this.resourceIdByAddress.get(key);
+            if (!resourceId) continue;
+
+            this.updatePhysicalState(resourceId, value, deviceState.emittedAt);
+        }
+    }
 
     /* -------------------------------------------------- */
     /* State handling                                     */

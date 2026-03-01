@@ -180,6 +180,14 @@ class BlueprintResourceService extends EventEmitter<ResourceEventMap> {
                             const { start, count } = catalogDevice.digitalOutputs;
                             validPin =
                                 resource.pin >= start && resource.pin < start + count;
+                        } else if (resource.type === "analogInput" && catalogDevice.analogInputs) {
+                            const { start, count } = catalogDevice.analogInputs;
+                            validPin =
+                                resource.pin >= start && resource.pin < start + count;
+                        } else if (resource.type === "analogOutput" && catalogDevice.analogOutputs) {
+                            const { start, count } = catalogDevice.analogOutputs;
+                            validPin =
+                                resource.pin >= start && resource.pin < start + count;
                         }
 
                         if (!validPin) {
@@ -188,7 +196,7 @@ class BlueprintResourceService extends EventEmitter<ResourceEventMap> {
                                 `Resource has invalid pin '${resource.pin}' for device '${resource.device}' on edge '${resource.edge}'.`
                             );
                         }
-                    } else if ((resource.type === "digitalInput" || resource.type === "digitalOutput") && typeof resource.pin !== "number") {
+                    } else if ((resource.type === "digitalInput" || resource.type === "digitalOutput" || resource.type === "analogInput" || resource.type === "analogOutput") && typeof resource.pin !== "number") {
                         addErr("missing-pin", `Resource '${resource.id ?? resource.name ?? "[unnamed]"}' is missing 'pin'.`);
                     }
                 }

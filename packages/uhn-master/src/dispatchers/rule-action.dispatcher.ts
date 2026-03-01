@@ -2,13 +2,13 @@
  * Dispatches RuntimeRuleActions emitted by the master's rule runtime to
  * the appropriate edge services.
  *
- * - setOutput  → sends a write command to the owning edge via MQTT
+ * - setDigitalOutput → sends a write command to the owning edge via MQTT
  * - emitSignal → publishes a transient signal override to the owning edge
  * - timerStart / timerClear → forwards timer commands to the owning edge,
  *   which runs the actual timer and publishes state back via MQTT
  */
 import { RuntimeRuleAction } from "@uhn/blueprint";
-import { RuntimeDigitalOutputResource } from "@uhn/common";
+import { RuntimeAnalogOutputResource, RuntimeDigitalOutputResource } from "@uhn/common";
 import { AppLogger } from "@uxp/bff-common";
 import { assertNever } from "@uxp/common";
 import { blueprintResourceService } from "../services/blueprint-resource.service";
@@ -28,8 +28,11 @@ function handleActionEvent(actions: RuntimeRuleAction[]) {
     });
     actions.forEach(act => {
         switch (act.type) {
-            case "setOutput":
-                handleSetOutputAction(act);
+            case "setDigitalOutput":
+                handleSetDigitalOutputAction(act);
+                break;
+            case "setAnalogOutput":
+                handleSetAnalogOutputAction(act);
                 break;
             case "emitSignal":
                 handleEmitSignalAction(act);
@@ -53,17 +56,35 @@ function handleActionEvent(actions: RuntimeRuleAction[]) {
 
 }
 
-function handleSetOutputAction(action: Extract<RuntimeRuleAction, { type: "setOutput" }>) {
+function handleSetDigitalOutputAction(action: Extract<RuntimeRuleAction, { type: "setDigitalOutput" }>) {
     const resource = blueprintResourceService.getResourceById(action.resourceId)
     if (resource?.type === "digitalOutput") {
-        commandEdgeService.sendCommandToEdge(resource as RuntimeDigitalOutputResource, {
+        commandEdgeService.sendDigitalCommandToEdge(resource as RuntimeDigitalOutputResource, {
             type: "set",
             value: action.value ?? false,
         });
         return;
     }
     AppLogger.warn({
-        message: `SetOutput action received for non-output resource: ${action.resourceId}`
+        message: `SetDigitalOutput action received for non-digitalOutput resource: ${action.resourceId}`
+    });
+}
+function handleSetAnalogOutputAction(action: Extract<RuntimeRuleAction, { type: "setAnalogOutput" }>) {
+    const resource = blueprintResourceService.getResourceById(action.resourceId);
+    if (resource?.type === "analogOutput") {
+        const analogResource = resource as RuntimeAnalogOutputResource;
+        let value = action.value;
+        if (analogResource.min != null && value < analogResource.min) {
+            value = analogResource.min;
+        }
+        if (analogResource.max != null && value > analogResource.max) {
+            value = analogResource.max;
+        }
+        commandEdgeService.sendAnalogCommandToEdge(analogResource, value);
+        return;
+    }
+    AppLogger.warn({
+        message: `SetAnalogOutput action received for non-analogOutput resource: ${action.resourceId}`
     });
 }
 function handleEmitSignalAction(action: Extract<RuntimeRuleAction, { type: "emitSignal" }>) {

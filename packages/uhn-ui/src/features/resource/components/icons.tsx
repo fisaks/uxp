@@ -1,14 +1,20 @@
 // icons.tsx
+import BoltIcon from "@mui/icons-material/Bolt";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
 import DeviceHubIcon from "@mui/icons-material/DeviceHub";
 import FluorescentIcon from '@mui/icons-material/Fluorescent';
 import FluorescentOutlinedIcon from '@mui/icons-material/FluorescentOutlined';
 import LightbulbIcon from "@mui/icons-material/Lightbulb";
+import OpacityIcon from "@mui/icons-material/Opacity";
 import PowerIcon from "@mui/icons-material/Power";
 import RadioButtonCheckedIcon from "@mui/icons-material/RadioButtonChecked";
 import SensorsIcon from "@mui/icons-material/Sensors";
+import SpeedIcon from "@mui/icons-material/Speed";
+import ThermostatIcon from "@mui/icons-material/Thermostat";
 import ToggleOffIcon from "@mui/icons-material/ToggleOff";
 import ToggleOnIcon from "@mui/icons-material/ToggleOn";
+import TuneIcon from "@mui/icons-material/Tune";
+import WaterDropIcon from "@mui/icons-material/WaterDrop";
 import WbSunnyIcon from "@mui/icons-material/WbSunny";
 
 
@@ -22,7 +28,7 @@ import PowerOutlinedIcon from "@mui/icons-material/PowerOutlined";
 
 
 import SensorsOutlinedIcon from "@mui/icons-material/SensorsOutlined";
-import { BaseInputKind, BaseOutputKind, InputType } from "@uhn/blueprint";
+import { BaseAnalogInputKind, BaseAnalogOutputKind, BaseInputKind, BaseOutputKind, InputType } from "@uhn/blueprint";
 import { TileRuntimeResource, TileRuntimeResourceState } from "../resource-ui.type";
 import { ReedRelayClosedIcon, ReedRelayOpenIcon } from "./relay-icon";
 
@@ -100,6 +106,22 @@ const inputKindIcons: InputKindIcons = {
   },
 } as const;
 
+/* ------------------------------------------------------------------ */
+/* Analog icons                                                       */
+/* ------------------------------------------------------------------ */
+
+const analogInputKindIcons: Record<BaseAnalogInputKind, JSX.Element> = {
+  temperature: <ThermostatIcon />,
+  humidity: <WaterDropIcon />,
+  power: <BoltIcon />,
+};
+
+const analogOutputKindIcons: Record<BaseAnalogOutputKind, JSX.Element> = {
+  dimmer: <TuneIcon />,
+  valve: <OpacityIcon />,
+  pwm: <SpeedIcon />,
+};
+
 const fallbackIcon = <DeviceHubIcon />;
 
 export function getResourceIcon(
@@ -128,6 +150,24 @@ export function getResourceIcon(
   // -------------------------
   if (resource.type === "timer") {
     return active ? <TimerIcon /> : <TimerOffIcon />;
+  }
+
+  // -------------------------
+  // Analog Inputs
+  // -------------------------
+  if (resource.type === "analogInput") {
+    const kind = resource.analogInputKind;
+    if (!kind) return fallbackIcon;
+    return analogInputKindIcons[kind as keyof typeof analogInputKindIcons] ?? fallbackIcon;
+  }
+
+  // -------------------------
+  // Analog Outputs
+  // -------------------------
+  if (resource.type === "analogOutput") {
+    const kind = resource.analogOutputKind;
+    if (!kind) return fallbackIcon;
+    return analogOutputKindIcons[kind as keyof typeof analogOutputKindIcons] ?? fallbackIcon;
   }
 
   // -------------------------

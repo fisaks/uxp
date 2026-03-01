@@ -1,4 +1,5 @@
 import type { ResourceBase, ResourceType, TriggerEvent } from "@uhn/blueprint";
+import type { ResourceStateValue } from "@uhn/common";
 
 export type RuleExecutionControl = {
     lastRunAt?: number;
@@ -10,6 +11,8 @@ export type RuleTriggerEvent = {
     event: TriggerEvent;
     timestamp: number;
     thresholdMs?: number;
+    prevValue?: ResourceStateValue;
+    value?: ResourceStateValue;
 };
 
 export type PushPressState = {

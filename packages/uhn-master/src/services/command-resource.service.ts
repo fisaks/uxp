@@ -1,4 +1,4 @@
-import { RuntimeDigitalInputResource, RuntimeDigitalOutputResource, RuntimeResource, UhnResourceCommand } from "@uhn/common";
+import { RuntimeAnalogOutputResource, RuntimeDigitalInputResource, RuntimeDigitalOutputResource, RuntimeResource, UhnResourceCommand } from "@uhn/common";
 import { AppErrorV2 } from "@uxp/bff-common";
 import { blueprintResourceService } from "./blueprint-resource.service";
 import { commandEdgeService } from "./command-edge.service";
@@ -21,7 +21,13 @@ export class CommandsResourceService {
         if (resource.type === "timer") {
             timerEdgeService.sendTimerCommandToEdge({ id: resource.id, edge: resource.edge }, { action: "clear" });
         } else if (resource.type === "digitalOutput") {
-            commandEdgeService.sendCommandToEdge(resource as RuntimeDigitalOutputResource, command);
+            commandEdgeService.sendDigitalCommandToEdge(resource as RuntimeDigitalOutputResource, command);
+        } else if (resource.type === "analogOutput" && command.type === "setAnalog") {
+            const analogResource = resource as RuntimeAnalogOutputResource;
+            let value = command.value;
+            if (analogResource.min != null && value < analogResource.min) value = analogResource.min;
+            if (analogResource.max != null && value > analogResource.max) value = analogResource.max;
+            commandEdgeService.sendAnalogCommandToEdge(analogResource, value);
         } else if (resource.type === "digitalInput" && command.type === "toggle") {
             const currentState = stateRuntimeService.getResourceState(resourceId);
             const currentValue = currentState?.value;
@@ -57,6 +63,13 @@ export class CommandsResourceService {
         if (resource.type === "digitalOutput") {
             if (command.type !== "toggle" && command.type !== "set") {
                 throw new AppErrorV2({ statusCode: 400, code: "INVALID_RESOURCE_COMMAND", message: `Invalid command type ${command.type} for digitalOutput resource` });
+            }
+            return;
+        }
+
+        if (resource.type === "analogOutput") {
+            if (command.type !== "setAnalog") {
+                throw new AppErrorV2({ statusCode: 400, code: "INVALID_RESOURCE_COMMAND", message: `Invalid command type ${command.type} for analogOutput resource` });
             }
             return;
         }

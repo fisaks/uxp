@@ -20,6 +20,20 @@ export function getEventsFromStateChange(
 
     return events;
 }
+
+export function getAnalogEventsFromStateChange(
+    prev: ResourceState | undefined,
+    next: ResourceState
+): TriggerEvent[] {
+    const events: TriggerEvent[] = [];
+
+    if (prev?.value !== next.value) {
+        events.push("changed");
+    }
+
+    return events;
+}
+
 export function getTimerEventsFromStateChange(
     prev: ResourceState | undefined,
     next: ResourceState
@@ -47,6 +61,10 @@ export function isPushButton(
 
 export function isResourceTrigger(trigger: RuleTrigger): trigger is Extract<RuleTrigger, { kind: "resource" }> {
     return trigger.kind === "resource";
+}
+
+export function isThresholdTrigger(trigger: RuleTrigger): trigger is Extract<RuleTrigger, { kind: "threshold" }> {
+    return trigger.kind === "threshold";
 }
 
 export function isLongPressTrigger(trigger: RuleTrigger): trigger is Extract<RuleTrigger, { kind: "longPress" }> {

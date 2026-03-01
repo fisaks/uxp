@@ -5,7 +5,7 @@ import { runtimeOutput } from "../io/runtime-output";
 import { RuntimeResourceService } from "../services/runtime-resource.service";
 import type { RuntimeStateService } from "../services/runtime-state.service";
 import type { RuntimeStateChange } from "../types/rule-runtime.type";
-import { getEventsFromStateChange, getTimerEventsFromStateChange } from "./rule-engine.utils";
+import { getAnalogEventsFromStateChange, getEventsFromStateChange, getTimerEventsFromStateChange } from "./rule-engine.utils";
 import type { TriggerEventBus } from "./trigger-event-bus";
 
 
@@ -35,6 +35,10 @@ export class ResourceEventEmitter {
             case "digitalOutput":
                 events.push(...getEventsFromStateChange(prev, next));
                 break;
+            case "analogInput":
+            case "analogOutput":
+                events.push(...getAnalogEventsFromStateChange(prev, next));
+                break;
             case "timer":
                 events.push(...getTimerEventsFromStateChange(prev, next));
                 break;
@@ -49,6 +53,8 @@ export class ResourceEventEmitter {
                 resource,
                 event,
                 timestamp: next.timestamp,
+                prevValue: prev?.value,
+                value: next.value,
             });
         }
     }

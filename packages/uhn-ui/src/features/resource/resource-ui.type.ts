@@ -1,7 +1,17 @@
-import { BaseInputKind, BaseOutputKind, InputType } from "@uhn/blueprint";
+import { BaseAnalogInputKind, BaseAnalogOutputKind, BaseInputKind, BaseOutputKind, InputType } from "@uhn/blueprint";
 import { RuntimeResource, RuntimeResourceState } from "@uhn/common";
 
 // Helper types
 
-export type TileRuntimeResource = RuntimeResource & { outputKind?: BaseOutputKind, inputKind?: BaseInputKind, inputType?: InputType };
+export type TileRuntimeResource = RuntimeResource & {
+    outputKind?: BaseOutputKind;
+    inputKind?: BaseInputKind;
+    inputType?: InputType;
+    analogInputKind?: BaseAnalogInputKind;
+    analogOutputKind?: BaseAnalogOutputKind;
+    min?: number;
+    max?: number;
+    step?: number;
+    unit?: string;
+};
 export type TileRuntimeResourceState = Pick<RuntimeResourceState, "value" | "timestamp" | "details">;

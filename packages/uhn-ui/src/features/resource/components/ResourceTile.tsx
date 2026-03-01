@@ -29,6 +29,7 @@ export const ResourceTile: React.FC<ResourceTileProps> = ({ resource, state }) =
     const commandFb = useSelector(selectResourceCommandFeedbackById(resource.id));
     const actions = useResourceAction(resource, state);
     const isTimer = resource.type === "timer";
+    const isAnalog = resource.type === "analogInput" || resource.type === "analogOutput";
     const timerActive = isTimer && Boolean(state?.value);
     const remainingSeconds = useCountdown(state?.details, timerActive);
     // Main kind icon logic
@@ -100,12 +101,42 @@ export const ResourceTile: React.FC<ResourceTileProps> = ({ resource, state }) =
                             <Typography variant="body2">Device: {resource.device}</Typography>
                             <Typography variant="body2">Pin: {resource.pin}</Typography>
                             <Typography variant="body2">Type: {resource.type}</Typography>
-                            <Typography variant="body2">Kind: {resource.inputKind ?? resource.outputKind ?? "N/A"}</Typography>
+                            <Typography variant="body2">Kind: {resource.inputKind ?? resource.outputKind ?? resource.analogInputKind ?? resource.analogOutputKind ?? "N/A"}</Typography>
                             {resource.inputType && <Typography variant="body2">Input Type: {resource.inputType}</Typography>}
+                            {isAnalog && resource.min !== undefined && <Typography variant="body2">Min: {resource.min}</Typography>}
+                            {isAnalog && resource.max !== undefined && <Typography variant="body2">Max: {resource.max}</Typography>}
+                            {isAnalog && resource.unit && <Typography variant="body2">Unit: {resource.unit}</Typography>}
 
                         </Box>
                     </Popover>
                 </Box>
+
+                {/* Analog value display (right of center icon) */}
+                {isAnalog && state?.value !== undefined && (
+                    <Box sx={{
+                        position: "absolute",
+                        top: 0,
+                        left: "50%",
+                        right: 0,
+                        height: "100%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        pointerEvents: "none",
+                    }}>
+                        <Typography
+                            variant="caption"
+                            sx={{
+                                fontFamily: "monospace",
+                                fontSize: "0.7rem",
+                                fontWeight: 600,
+                                color: iconColor,
+                            }}
+                        >
+                            {state.value}{resource.unit ? ` ${resource.unit}` : ""}
+                        </Typography>
+                    </Box>
+                )}
 
                 {/* Timer countdown (right of center icon) */}
                 {timerActive && remainingSeconds > 0 && (
