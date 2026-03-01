@@ -21,7 +21,7 @@ export function getEventsFromStateChange(
     return events;
 }
 
-export function getAnalogEventsFromStateChange(
+export function getAnalogInputEventsFromStateChange(
     prev: ResourceState | undefined,
     next: ResourceState
 ): TriggerEvent[] {
@@ -29,6 +29,29 @@ export function getAnalogEventsFromStateChange(
 
     if (prev?.value !== next.value) {
         events.push("changed");
+    }
+
+    return events;
+}
+
+export function getAnalogOutputEventsFromStateChange(
+    prev: ResourceState | undefined,
+    next: ResourceState
+): TriggerEvent[] {
+    const events: TriggerEvent[] = [];
+
+    if (prev?.value !== next.value) {
+        events.push("changed");
+    }
+
+    const wasActive = typeof prev?.value === "number" && prev.value > 0;
+    const isActive = typeof next.value === "number" && next.value > 0;
+
+    if (!wasActive && isActive) {
+        events.push("activated");
+    }
+    if (wasActive && !isActive) {
+        events.push("deactivated");
     }
 
     return events;

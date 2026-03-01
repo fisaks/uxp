@@ -5,7 +5,7 @@ import { runtimeOutput } from "../io/runtime-output";
 import { RuntimeResourceService } from "../services/runtime-resource.service";
 import type { RuntimeStateService } from "../services/runtime-state.service";
 import type { RuntimeStateChange } from "../types/rule-runtime.type";
-import { getAnalogEventsFromStateChange, getEventsFromStateChange, getTimerEventsFromStateChange } from "./rule-engine.utils";
+import { getAnalogInputEventsFromStateChange, getAnalogOutputEventsFromStateChange, getEventsFromStateChange, getTimerEventsFromStateChange } from "./rule-engine.utils";
 import type { TriggerEventBus } from "./trigger-event-bus";
 
 
@@ -36,8 +36,10 @@ export class ResourceEventEmitter {
                 events.push(...getEventsFromStateChange(prev, next));
                 break;
             case "analogInput":
+                events.push(...getAnalogInputEventsFromStateChange(prev, next));
+                break;
             case "analogOutput":
-                events.push(...getAnalogEventsFromStateChange(prev, next));
+                events.push(...getAnalogOutputEventsFromStateChange(prev, next));
                 break;
             case "timer":
                 events.push(...getTimerEventsFromStateChange(prev, next));

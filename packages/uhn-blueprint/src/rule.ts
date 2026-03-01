@@ -253,8 +253,8 @@ export const isBlueprintRule = (obj: unknown): obj is BlueprintRule => {
 export type RuleBuilder = {
     executionTarget(p: RuleExecutionTarget): RuleBuilder;
 
-    onActivated(resource: DigitalInputResourceBase): RuleBuilder;
-    onDeactivated(resource: DigitalInputResourceBase): RuleBuilder;
+    onActivated(resource: DigitalInputResourceBase | DigitalOutputResourceBase | AnalogOutputResourceBase): RuleBuilder;
+    onDeactivated(resource: DigitalInputResourceBase | DigitalOutputResourceBase | AnalogOutputResourceBase): RuleBuilder;
     onChanged(resource: DigitalInputResourceBase | DigitalOutputResourceBase | AnalogInputResourceBase | AnalogOutputResourceBase, opts?: AnalogTriggerOptions): RuleBuilder;
 
     onAbove(resource: AnalogInputResourceBase | AnalogOutputResourceBase, threshold: number, opts?: AnalogTriggerOptions): RuleBuilder;
