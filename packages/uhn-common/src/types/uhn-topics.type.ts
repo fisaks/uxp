@@ -47,9 +47,24 @@ export type DeviceSummary = {
     analogOutputs?: Range;
     analogInputs?: Range;
 }
+export type RegisterType = "uint16" | "int16" | "int32" | "float32" | "uint32";
+
 export type Range = {
     start: number;
     count: number;
+    type?: RegisterType;
+}
+
+/** Returns the number of 16-bit registers consumed per value for a given register type. */
+export function registerWidth(type?: RegisterType): number {
+    switch (type) {
+        case "float32":
+        case "uint32":
+        case "int32":
+            return 2;
+        default:
+            return 1;
+    }
 }
 
 export type DeviceStatePayload = {

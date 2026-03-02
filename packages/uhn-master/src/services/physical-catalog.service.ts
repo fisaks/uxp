@@ -23,7 +23,7 @@ function isCatalogPayload(obj: unknown): obj is CatalogPayload {
     );
 }
 function rangeKey(r?: Range): string {
-    return r ? `${r.start}:${r.count}` : "-";
+    return r ? `${r.start}:${r.count}:${r.type ?? "uint16"}` : "-";
 }
 function fingerprintCatalog(payload: CatalogPayload): string {
     const devices = [...payload.devices].sort((a, b) =>

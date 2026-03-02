@@ -1,5 +1,5 @@
 import type { ResourceType } from "@uhn/blueprint";
-import { makeAddressKey, Range, resourceIdMatcher, ResourceStateDetails, ResourceStateValue, RuntimeResourceList, RuntimeResourceState } from "@uhn/common";
+import { makeAddressKey, Range, registerWidth, resourceIdMatcher, ResourceStateDetails, ResourceStateValue, RuntimeResourceList, RuntimeResourceState } from "@uhn/common";
 import { AppLogger } from "@uxp/bff-common";
 import { EventEmitter } from "events";
 
@@ -372,8 +372,8 @@ class StateRuntimeService extends EventEmitter<StateRuntimeEventMap> {
 
 
     /**
-     * Maps physical device registers (16-bit big-endian) to resourceIds
-     * and forwards them to updatePhysicalState().
+     * Maps physical device registers to resourceIds, decoding values
+     * according to the range's type (uint16, int16, float32, uint32, int32).
      */
     private processRegisters(
         deviceState: PhysicalDeviceState,
@@ -382,15 +382,37 @@ class StateRuntimeService extends EventEmitter<StateRuntimeEventMap> {
         range: Range | undefined
     ) {
         const start = range ? range.start : 0;
-        const maxRegFromPayload = Math.floor(bytes.length / 2);
-        const end = range ? Math.min(range.start + range.count, start + maxRegFromPayload) : start + maxRegFromPayload;
+        const width = range ? registerWidth(range.type) : 1;
+        const count = range ? range.count : Math.floor(bytes.length / 2);
+        const regType = range?.type;
 
-        for (let reg = start; reg < end; reg++) {
-            const byteOffset = (reg - start) * 2;
+        for (let i = 0; i < count; i += width) {
+            const byteOffset = i * 2;
 
-            if (byteOffset + 1 >= bytes.length) break;
+            if (byteOffset + width * 2 - 1 >= bytes.length) break;
 
-            const value = (bytes[byteOffset] << 8) | bytes[byteOffset + 1]; // big-endian uint16
+            const reg = start + i;
+            let value: number;
+
+            switch (regType) {
+                case "int16": {
+                    const raw = (bytes[byteOffset] << 8) | bytes[byteOffset + 1];
+                    value = raw > 0x7FFF ? raw - 0x10000 : raw;
+                    break;
+                }
+                case "float32":
+                    value = parseFloat(bytes.readFloatBE(byteOffset).toPrecision(7));
+                    break;
+                case "uint32":
+                    value = bytes.readUInt32BE(byteOffset);
+                    break;
+                case "int32":
+                    value = bytes.readInt32BE(byteOffset);
+                    break;
+                default: // undefined, "uint16"
+                    value = (bytes[byteOffset] << 8) | bytes[byteOffset + 1];
+                    break;
+            }
 
             const key = makeAddressKey({
                 edge: deviceState.edge, device: deviceState.device, type, pin: reg
