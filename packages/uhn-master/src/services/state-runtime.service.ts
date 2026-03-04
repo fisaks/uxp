@@ -5,6 +5,7 @@ import { EventEmitter } from "events";
 
 import { blueprintResourceService } from "./blueprint-resource.service";
 import { physicalCatalogService } from "./physical-catalog.service";
+import { ruleRuntimeProcessService } from "./rule-runtime-process.service";
 import { PhysicalDeviceState, statePhysicalService } from "./state-physical.service";
 import { stateSignalService } from "./state-signal.service";
 import { stateTimerService } from "./state-timer.service";
@@ -71,6 +72,9 @@ class StateRuntimeService extends EventEmitter<StateRuntimeEventMap> {
     /** Timer resources indexed by resourceId (no address key) */
     private timerResourceIds = new Set<string>();
 
+    /** Complex resources indexed by resourceId (computed state comes from sandbox) */
+    private complexResourceIds = new Set<string>();
+
     /** resourceId -> current runtime state */
     private stateByResourceId = new Map<string, RuntimeState>();
     /**
@@ -111,6 +115,12 @@ class StateRuntimeService extends EventEmitter<StateRuntimeEventMap> {
                 this.handleTimerState(resourceId, value, timestamp, startedAt, stopAt);
             }
         );
+        ruleRuntimeProcessService.on(
+            "onComputedStateChanged",
+            (msg) => {
+                this.handleComputedState(msg.payload.resourceId, msg.payload.value, msg.payload.timestamp);
+            }
+        );
     }
 
     /* -------------------------------------------------- */
@@ -128,6 +138,12 @@ class StateRuntimeService extends EventEmitter<StateRuntimeEventMap> {
             // Timer resources have no device/pin — index by resourceId directly
             if (r.type === "timer") {
                 this.timerResourceIds.add(r.id);
+                continue;
+            }
+
+            // Complex resources have no device/pin — computed state comes from sandbox IPC
+            if (r.type === "complex") {
+                this.complexResourceIds.add(r.id);
                 continue;
             }
 
@@ -155,7 +171,7 @@ class StateRuntimeService extends EventEmitter<StateRuntimeEventMap> {
         this.emitStateChanges = true;
 
         AppLogger.info({
-            message: `[StateRuntimeService] Runtime index rebuilt (${this.resourceIdByAddress.size} addressable + ${this.timerResourceIds.size} timer resources)`,
+            message: `[StateRuntimeService] Runtime index rebuilt (${this.resourceIdByAddress.size} addressable + ${this.timerResourceIds.size} timer + ${this.complexResourceIds.size} complex resources)`,
         });
     }
 
@@ -168,6 +184,7 @@ class StateRuntimeService extends EventEmitter<StateRuntimeEventMap> {
     private reset() {
         this.resourceIdByAddress.clear();
         this.timerResourceIds.clear();
+        this.complexResourceIds.clear();
         this.stateByResourceId.clear();
         if (this.emitStateChanges) this.emit("runtimeStateReset");
         this.emitStateChanges = false;
@@ -278,6 +295,35 @@ class StateRuntimeService extends EventEmitter<StateRuntimeEventMap> {
 
         if (!prev || prev.computed !== value || prev.details?.stopAt !== details?.stopAt) {
             this.emitRuntimeStateChangedIfEnabled(resourceId, value, timestamp, details);
+        }
+    }
+
+    /* -------------------------------------------------- */
+    /* Computed state (complex resources from sandbox)     */
+    /* -------------------------------------------------- */
+
+    /**
+     * Handles computed state from the sandbox runtime (via IPC).
+     * Complex resources bypass the physical/signal tier model —
+     * the sandbox compute function is the sole authority.
+     */
+    handleComputedState(
+        resourceId: string,
+        value: ResourceStateValue,
+        timestamp: number
+    ) {
+        if (!this.complexResourceIds.has(resourceId)) return;
+
+        const prev = this.stateByResourceId.get(resourceId);
+        if (prev && prev.timestamp >= timestamp) return;
+
+        this.stateByResourceId.set(resourceId, {
+            computed: value,
+            timestamp,
+        });
+
+        if (!prev || prev.computed !== value) {
+            this.emitRuntimeStateChangedIfEnabled(resourceId, value, timestamp);
         }
     }
 

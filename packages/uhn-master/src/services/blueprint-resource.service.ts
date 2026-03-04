@@ -145,9 +145,9 @@ class BlueprintResourceService extends EventEmitter<ResourceEventMap> {
 
             // 4. Address & catalog validation
             // Timer resources only need edge — no device/pin required.
-            if (resource.type === "timer") {
+            if (resource.type === "timer" || resource.type === "complex") {
                 if (!resource.edge) {
-                    addErr("missing-address", `Timer resource '${resource.id ?? resource.name ?? "[unnamed]"}' is missing 'edge'.`);
+                    addErr("missing-address", `${resource.type === "timer" ? "Timer" : "Complex"} resource '${resource.id ?? resource.name ?? "[unnamed]"}' is missing 'edge'.`);
                 }
             } else if (resource.edge && resource.device) {
                 const edgeCatalog = physicalCatalogService.getEdgeCatalog(resource.edge);

@@ -44,6 +44,10 @@ export class ResourceEventEmitter {
             case "timer":
                 events.push(...getTimerEventsFromStateChange(prev, next));
                 break;
+            case "complex":
+                // Computed complex resources do receive state changes, but
+                // rules cannot attach to complex resources at this point.
+                break;
             default:
                 assertNever(resource.type);
         }

@@ -162,6 +162,16 @@ const analogInputKindColors: KindColors<BaseAnalogInputKind> = {
             dark: "#FFB74D",
         },
     },
+    current: {
+        icon: {
+            active: { light: "#7B1FA2", dark: "#CE93D8" },
+            inactive: { light: "#9E9E9E", dark: "#9E9E9E" },
+        },
+        surface: {
+            light: "#6A1B9A",
+            dark: "#CE93D8",
+        },
+    },
 } as const;
 
 const analogOutputKindColors: KindColors<BaseAnalogOutputKind> = {
@@ -194,6 +204,17 @@ const analogOutputKindColors: KindColors<BaseAnalogOutputKind> = {
             light: "#4A148C",
             dark: "#AB47BC",
         },
+    },
+} as const;
+
+const complexColors = {
+    icon: {
+        active: { light: "#5C6BC0", dark: "#7986CB" },
+        inactive: { light: "#9E9E9E", dark: "#9E9E9E" },
+    },
+    surface: {
+        light: "#3F51B5",
+        dark: "#7986CB",
     },
 } as const;
 
@@ -234,6 +255,10 @@ export function getResourceIconColor(
         return analogActive ? cfg.icon.active[mode] : cfg.icon.inactive[mode];
     }
 
+    if (resource.type === "complex") {
+        return complexColors.icon.active[mode];
+    }
+
     return theme.palette.text.disabled;
 }
 
@@ -271,6 +296,10 @@ export function getResourceSurfaceColor(
         const base = analogOutputKindColors[resource.analogOutputKind as keyof typeof analogOutputKindColors]?.surface?.[mode];
         if (!base) return "transparent";
         return alpha(base, mode === "dark" ? 0.06 : 0.045);
+    }
+
+    if (resource.type === "complex") {
+        return alpha(complexColors.surface[mode], mode === "dark" ? 0.06 : 0.045);
     }
 
     return "transparent";

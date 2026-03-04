@@ -18,6 +18,7 @@ import WaterDropIcon from "@mui/icons-material/WaterDrop";
 import WbSunnyIcon from "@mui/icons-material/WbSunny";
 
 
+import DashboardIcon from "@mui/icons-material/Dashboard";
 import TimerIcon from "@mui/icons-material/Timer";
 import TimerOffIcon from "@mui/icons-material/TimerOff";
 
@@ -114,6 +115,7 @@ const analogInputKindIcons: Record<BaseAnalogInputKind, JSX.Element> = {
   temperature: <ThermostatIcon />,
   humidity: <WaterDropIcon />,
   power: <BoltIcon />,
+  current: <BoltIcon />,
 };
 
 const analogOutputKindIcons: Record<BaseAnalogOutputKind, JSX.Element> = {
@@ -168,6 +170,13 @@ export function getResourceIcon(
     const kind = resource.analogOutputKind;
     if (!kind) return fallbackIcon;
     return analogOutputKindIcons[kind as keyof typeof analogOutputKindIcons] ?? fallbackIcon;
+  }
+
+  // -------------------------
+  // Complex
+  // -------------------------
+  if (resource.type === "complex") {
+    return <DashboardIcon />;
   }
 
   // -------------------------

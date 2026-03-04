@@ -1,6 +1,6 @@
 //services/rule-runtime-process.service.ts
 
-import { FireAndForgetCmdKey, isRuleRuntimeEventObject, RuleRuntimeActionMessage, RuleRuntimeCommand, RuleRuntimeCommandMap, RuleRuntimeLogMessage, RuleRuntimeResourcesLoadedMessage, RuleRuntimeRulesLoadedMessage } from "@uhn/common";
+import { FireAndForgetCmdKey, isRuleRuntimeEventObject, RuleRuntimeActionMessage, RuleRuntimeCommand, RuleRuntimeCommandMap, RuleRuntimeComputedStateChangedMessage, RuleRuntimeLogMessage, RuleRuntimeResourcesLoadedMessage, RuleRuntimeRulesLoadedMessage } from "@uhn/common";
 import { AppErrorV2, AppLogger, fileExists, pathExists, readFile, removeFile, writeFile } from "@uxp/bff-common";
 import { assertNever } from "@uxp/common";
 import { ChildProcess, spawn, SpawnOptions } from "child_process";
@@ -28,6 +28,7 @@ type SandboxConfig = {
 
 type RuleRuntimeProcessEventMap = {
     onActionEvent: [response: RuleRuntimeActionMessage];
+    onComputedStateChanged: [response: RuleRuntimeComputedStateChangedMessage];
     onRulesLoaded: [response: RuleRuntimeRulesLoadedMessage];
     onResourcesLoaded: [response: RuleRuntimeResourcesLoadedMessage];
     exit: [code: number | null, signal: NodeJS.Signals | null];
@@ -394,6 +395,9 @@ class RuleRuntimeProcessService extends EventEmitter<RuleRuntimeProcessEventMap>
                         case "timerStateChanged":
                             // Master mode doesn't run timers locally — if this fires, something is wrong
                             AppLogger.warn({ message: `[RuleRuntimeProcessService] Unexpected timerStateChanged from master runtime: ${resp.payload?.id} active=${resp.payload?.active}` });
+                            continue;
+                        case "computedStateChanged":
+                            this.emit("onComputedStateChanged", resp);
                             continue;
                         default:
                             assertNever(resp);

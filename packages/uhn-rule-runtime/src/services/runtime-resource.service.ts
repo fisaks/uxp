@@ -1,15 +1,51 @@
 // services/runtime-resource.service.ts
-import { humanizeResourceId, isRuntimeResourceObject, RuntimeResource, RuntimeResourceList } from "@uhn/common";
+import { ComplexComputeFn, ComplexResourceBase, ComplexSubResourceRef, ComplexTileSummaryConfig, ResourceBase, ResourceType } from "@uhn/blueprint";
+import { humanizeResourceId, isRuntimeResourceObject, RuntimeComplexResource, RuntimeComplexSubResourceRef, RuntimeComplexTileSummaryConfig, RuntimeResource, RuntimeResourceList } from "@uhn/common";
 import fs from "fs-extra";
 import path from "path";
 import { runtimeOutput } from "../io/runtime-output";
 
-async function collectResources(resourcesDir: string): Promise<RuntimeResourceList> {
+/** Extracted compute config — kept in-process (not serialized for IPC) */
+export type ComplexComputeEntry = {
+    complexResourceId: string;
+    fn: ComplexComputeFn;
+    resources: ResourceBase<ResourceType>[];
+};
+
+
+/** Serialize blueprint ComplexSubResourceRef (resource objects) → runtime (string IDs) */
+function serializeSubResources(refs: ComplexSubResourceRef[]): RuntimeComplexSubResourceRef[] {
+    return refs.map(ref => ({
+        resourceId: ref.resource.id!,
+        label: ref.label,
+        group: ref.group,
+    }));
+}
+
+/** Serialize blueprint ComplexTileSummaryConfig (resource objects) → runtime (string IDs). fn stays in sandbox. */
+function serializeTileSummary(cfg: ComplexTileSummaryConfig): RuntimeComplexTileSummaryConfig {
+    switch (cfg.mode) {
+        case "primary":
+            return { mode: "primary", resourceId: cfg.resource.id! };
+        case "carousel":
+            return { mode: "carousel", resourceIds: cfg.resources.map(r => r.id!), intervalMs: cfg.intervalMs };
+        case "computed":
+            return { mode: "computed", unit: cfg.unit };
+    }
+}
+
+type CollectResult = {
+    resources: RuntimeResourceList;
+    complexComputeEntries: ComplexComputeEntry[];
+};
+
+async function collectResources(resourcesDir: string): Promise<CollectResult> {
     const allResources: RuntimeResourceList = [];
-    
+    const complexComputeEntries: ComplexComputeEntry[] = [];
+
     if (!(await fs.pathExists(resourcesDir))) {
         console.error(`ERROR: resources directory not found: ${resourcesDir}`);
-        return [];
+        return { resources: [], complexComputeEntries: [] };
     }
 
     async function walk(dir: string) {
@@ -30,10 +66,30 @@ async function collectResources(resourcesDir: string): Promise<RuntimeResourceLi
 
             for (const [exportName, resource] of Object.entries(mod)) {
                 if (isRuntimeResourceObject(resource)) {
-                    allResources.push({
+                    let runtimeResource: RuntimeResource = {
                         ...resource,
                         name: humanizeResourceId(resource.id),
-                    });
+                    };
+                    // Serialize complex resource fields: resource objects → string IDs
+                    if (resource.type === "complex") {
+                        const complex = resource as unknown as ComplexResourceBase;
+                        if (complex.subResources?.length) {
+                            if (complex.tileSummary?.mode === "computed" && typeof complex.tileSummary.fn === "function") {
+                                complexComputeEntries.push({
+                                    complexResourceId: resource.id,
+                                    fn: complex.tileSummary.fn,
+                                    resources: complex.tileSummary.resources ?? [],
+                                });
+                            }
+                            const complexRuntime: RuntimeComplexResource = {
+                                ...runtimeResource,
+                                subResources: serializeSubResources(complex.subResources),
+                                ...(complex.tileSummary && { tileSummary: serializeTileSummary(complex.tileSummary) }),
+                            };
+                            runtimeResource = complexRuntime;
+                        }
+                    }
+                    allResources.push(runtimeResource);
                 } else {
                     console.warn(
                         `[rule-runtime] Skipped non-resource export "${exportName}" in "${fullPath}"`
@@ -44,30 +100,36 @@ async function collectResources(resourcesDir: string): Promise<RuntimeResourceLi
     }
 
     await walk(resourcesDir);
-    return allResources;
+    return { resources: allResources, complexComputeEntries };
 }
 
 export class RuntimeResourceService {
+    readonly complexComputeEntries: ComplexComputeEntry[];
     private readonly resources: RuntimeResourceList;
     private readonly resourceById: Map<string, RuntimeResource>;
 
     private constructor(
         resources: RuntimeResourceList,
-        resourceById: Map<string, RuntimeResource>
+        resourceById: Map<string, RuntimeResource>,
+        complexComputeEntries: ComplexComputeEntry[]
     ) {
         this.resources = resources;
         this.resourceById = resourceById;
+        this.complexComputeEntries = complexComputeEntries;
     }
 
     static async create(resourcesDir: string): Promise<RuntimeResourceService> {
-        const resources = await collectResources(resourcesDir);
+        const { resources, complexComputeEntries } = await collectResources(resourcesDir);
 
         const resourceById = new Map<string, RuntimeResource>();
         for (const r of resources) {
             resourceById.set(r.id, r);
         }
         runtimeOutput.log({ level: "info", component: "RuntimeResourceService", message: `Loaded ${resources.length} resources.` });
-        return new RuntimeResourceService(resources, resourceById);
+        if (complexComputeEntries.length) {
+            runtimeOutput.log({ level: "info", component: "RuntimeResourceService", message: `Found ${complexComputeEntries.length} complex compute entry/entries.` });
+        }
+        return new RuntimeResourceService(resources, resourceById, complexComputeEntries);
     }
 
     list(): RuntimeResourceList {

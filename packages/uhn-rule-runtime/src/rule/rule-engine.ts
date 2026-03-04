@@ -4,7 +4,7 @@ import type {
     RuleAction,
     RuleCause,
     RuleTrigger,
-    RuntimeReader,
+    StateReader,
     RuntimeRuleAction
 } from "@uhn/blueprint";
 import { ResourceError, ResourceStateNotAvailableError } from "@uhn/common";
@@ -18,7 +18,7 @@ import { createResourceErrorData } from "./rule-engine-error";
 import { ruleLogger } from "./rule-engine-logging";
 import { RuntimeMuteService } from "../services/runtime-mute.service";
 import { createRuleMute } from "./rule-engine-mute";
-import { createRuleRuntime } from "./rule-engine-runtime";
+import { createRuleStateReader } from "./rule-state-reader";
 import { createRuleTimer } from "./rule-engine-timer";
 import { RuleExecutionControl, RuleTriggerEvent } from "./rule-engine.type";
 import { isLongPressTrigger, isResourceTrigger, isTapTrigger, isThresholdTrigger, isTimerTrigger } from "./rule-engine.utils";
@@ -45,7 +45,7 @@ type HysteresisEntry =
 export class RuleEngine {
     private readonly ruleExecutionControl = new Map<string, RuleExecutionControl>();
     private readonly hysteresisState = new Map<string, HysteresisEntry>();
-    private readonly ruleRuntime: RuntimeReader;
+    private readonly stateReader: StateReader;
     private readonly mode: RuntimeMode;
     constructor(
         triggerEventBus: TriggerEventBus,
@@ -56,7 +56,7 @@ export class RuleEngine {
         mode: RuntimeMode
     ) {
         this.mode = mode;
-        this.ruleRuntime = createRuleRuntime({ stateService: this.stateService });
+        this.stateReader = createRuleStateReader({ stateService: this.stateService });
         // Subscribe to state changes
         triggerEventBus.on((event) => {
             this.handleTriggerEvent(event);
@@ -278,7 +278,7 @@ export class RuleEngine {
         try {
             actions = ruleCandidate.run({
                 cause: runCause,
-                runtime: this.ruleRuntime,
+                runtime: this.stateReader,
                 timers: ruleTimer,
                 mute: ruleMute,
                 logger,

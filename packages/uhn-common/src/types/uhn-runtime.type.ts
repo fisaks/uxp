@@ -81,12 +81,30 @@ export type ResourceValidationError = {
   details?: string;
 };
 
+/** Runtime version of ComplexSubResourceRef — resource objects resolved to string IDs */
+export type RuntimeComplexSubResourceRef = {
+    resourceId: string;
+    label?: string;
+    group?: string;
+};
+
+/** Runtime version of ComplexTileSummaryConfig — resource objects resolved to string IDs, fn stays in sandbox */
+export type RuntimeComplexTileSummaryConfig =
+    | { mode: "primary"; resourceId: string }
+    | { mode: "carousel"; resourceIds: string[]; intervalMs?: number }
+    | { mode: "computed"; unit?: string };
+
 export type RuntimeResource =
   Omit<ResourceBase<ResourceType>, 'id' | 'name'> & {
     id: string;
     name: string;
     errors?: ResourceErrorCode[];
   };
+
+export type RuntimeComplexResource = RuntimeResource & {
+  subResources: RuntimeComplexSubResourceRef[];
+  tileSummary?: RuntimeComplexTileSummaryConfig;
+};
 
 export type RuntimeDigitalInputResource =
   DigitalInputResourceBase & {
@@ -193,11 +211,18 @@ export type RuleRuntimeTimerStateChangedMessage = {
   payload: { id: string; active: boolean; startedAt: number; stopAt: number };
 };
 
+export type RuleRuntimeComputedStateChangedMessage = {
+  kind: "event";
+  cmd: "computedStateChanged";
+  payload: { resourceId: string; value: ResourceStateValue; timestamp: number };
+};
+
 export type RuleRuntimeResponse = RuleRuntimeReadyMessage
   | RuleRuntimeActionMessage
   | RuleRuntimeResourceMissingMessage
   | RuleRuntimeLogMessage
   | RuleRuntimeTimerStateChangedMessage
+  | RuleRuntimeComputedStateChangedMessage
   | RuleRuntimeRulesLoadedMessage
   | RuleRuntimeResourcesLoadedMessage;
 

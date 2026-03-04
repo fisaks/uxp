@@ -28,7 +28,7 @@ export type ResourceState = {
 };
 
 
-export type RuntimeReader = {
+export type StateReader = {
     getState<T extends ResourceType>(resource: ResourceBase<T>): StateValueByResourceType<T>;
 };
 
@@ -194,7 +194,7 @@ export type RuntimeRuleAction =
 
 export type RuleContext = {
     cause: RuleCause;
-    runtime: RuntimeReader;
+    runtime: StateReader;
     timers: RuleTimers;
     logger: RuleLogger;
     mute: MuteController;

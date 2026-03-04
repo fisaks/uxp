@@ -7,6 +7,7 @@ import { ResourceEventEmitter } from "./rule/resource-event.emitter";
 import { RuleEngine } from "./rule/rule-engine";
 import { TimerStateEmitter } from "./rule/timer-state.emitter";
 import { TriggerEventBus } from "./rule/trigger-event-bus";
+import { ComplexComputeService } from "./services/complex-compute.service";
 import { RuntimeMuteService } from "./services/runtime-mute.service";
 import { RuntimeResourceService } from "./services/runtime-resource.service";
 import { RuntimeRulesService } from "./services/runtime-rules.service";
@@ -52,6 +53,9 @@ async function main() {
     const resourceEventEmitter = new ResourceEventEmitter(stateService, triggerEventBus, resourceService);
     const inputGestureEmitter = new InputGestureEmitter(stateService, rulesService, triggerEventBus, resourceService);
     const timerStateEmitter = new TimerStateEmitter(timerService);
+    const complexComputeService = resourceService.complexComputeEntries.length
+        ? new ComplexComputeService(resourceService.complexComputeEntries, stateService)
+        : undefined;
 
     createRuntimeReader((cmd) => {
         router.handle(cmd);

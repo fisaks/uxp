@@ -2,18 +2,19 @@ import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import DescriptionIcon from "@mui/icons-material/Description";
 import ErrorIcon from "@mui/icons-material/Error";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import { Box, Card, CardActionArea, CircularProgress, IconButton, Popover, Tooltip, Typography, alpha } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { usePortalContainerRef } from "@uxp/ui-lib";
-import React, { useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import { useSelector } from "react-redux";
-import { formatCountdown, useCountdown } from "../hooks/useCountdown";
 import { useResourceAction } from "../hooks/useResourceAction";
 import { TileRuntimeResource, TileRuntimeResourceState } from "../resource-ui.type";
 import { selectResourceCommandFeedbackById } from "../resourceCommandFeedbackSelector";
 import { getResourceIconColor, getResourceSurfaceColor } from "./colors";
 import { getResourceIcon } from "./icons";
+import { getTileExtensions } from "./tile-extensions";
 import "./ResourceTile.css";
 type ResourceTileProps = {
     resource: TileRuntimeResource;
@@ -26,16 +27,25 @@ export const ResourceTile: React.FC<ResourceTileProps> = ({ resource, state }) =
     const portalContainer = usePortalContainerRef();
     const [infoAnchor, setInfoAnchor] = useState<null | HTMLElement>(null);
     const [descAnchor, setDescAnchor] = useState<null | HTMLElement>(null);
+    const [interactionPanelAnchor, setInteractionPanelAnchor] = useState<null | HTMLElement>(null);
+    const tileActionAreaRef = useRef<HTMLButtonElement>(null);
     const commandFb = useSelector(selectResourceCommandFeedbackById(resource.id));
-    const actions = useResourceAction(resource, state);
-    const isTimer = resource.type === "timer";
-    const isAnalog = resource.type === "analogInput" || resource.type === "analogOutput";
-    const timerActive = isTimer && Boolean(state?.value);
-    const remainingSeconds = useCountdown(state?.details, timerActive);
+
+    const tileExtensions = getTileExtensions(resource.type);
+    const hasInteractionPanel = Boolean(tileExtensions?.renderInteractionPanel);
+
+    const openInteractionPanel = useCallback(() => {
+        setInteractionPanelAnchor(tileActionAreaRef.current);
+    }, []);
+
+    const actions = useResourceAction(resource, state, {
+        onLongPress: hasInteractionPanel ? openInteractionPanel : undefined,
+    });
+
     // Main kind icon logic
     const MainIcon = getResourceIcon(resource, state);
-
     const iconColor = getResourceIconColor(theme, resource, state);
+    const isAnalog = resource.type === "analogInput" || resource.type === "analogOutput";
     const isPending = commandFb?.status === "pending";
     const isCmdError = commandFb?.status === "error";
     const cmdReason = isCmdError ? commandFb.reason : undefined;
@@ -57,6 +67,8 @@ export const ResourceTile: React.FC<ResourceTileProps> = ({ resource, state }) =
     const haveErrors = resource.errors && resource.errors.length > 0;
     // Delay for tooltip on PC (600ms), no delay on mobile
     const tooltipProps = { enterDelay: 600, enterTouchDelay: 0, slotProps: { popper: { container: portalContainer.current } } };
+
+    const renderCtx = { resource, state, theme, iconColor, onOpenInteractionPanel: hasInteractionPanel ? openInteractionPanel : undefined };
 
     return (
         <Card
@@ -111,59 +123,8 @@ export const ResourceTile: React.FC<ResourceTileProps> = ({ resource, state }) =
                     </Popover>
                 </Box>
 
-                {/* Analog value display (right of center icon) */}
-                {isAnalog && state?.value !== undefined && (
-                    <Box sx={{
-                        position: "absolute",
-                        top: 0,
-                        left: "50%",
-                        right: 0,
-                        height: "100%",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        pointerEvents: "none",
-                    }}>
-                        <Typography
-                            variant="caption"
-                            sx={{
-                                fontFamily: "monospace",
-                                fontSize: "0.7rem",
-                                fontWeight: 600,
-                                color: iconColor,
-                            }}
-                        >
-                            {state.value}{resource.unit ? ` ${resource.unit}` : ""}
-                        </Typography>
-                    </Box>
-                )}
-
-                {/* Timer countdown (right of center icon) */}
-                {timerActive && remainingSeconds > 0 && (
-                    <Box sx={{
-                        position: "absolute",
-                        top: 0,
-                        left: "50%",
-                        right: 0,
-                        height: "100%",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        pointerEvents: "none",
-                    }}>
-                        <Typography
-                            variant="caption"
-                            sx={{
-                                fontFamily: "monospace",
-                                fontSize: "0.7rem",
-                                fontWeight: 600,
-                                color: iconColor,
-                            }}
-                        >
-                            {formatCountdown(remainingSeconds)}
-                        </Typography>
-                    </Box>
-                )}
+                {/* Type-specific overlay content (analog value, timer countdown, etc.) */}
+                {tileExtensions?.renderValue?.(renderCtx)}
 
                 {/* Description icon (upper right) */}
                 {resource.description && (
@@ -190,6 +151,7 @@ export const ResourceTile: React.FC<ResourceTileProps> = ({ resource, state }) =
             </Box>
             {/* Main content row: kind icon, name */}
             <CardActionArea
+                ref={tileActionAreaRef}
                 disabled={haveErrors || isPending}
                 sx={{
                     // push content below overlay
@@ -224,6 +186,11 @@ export const ResourceTile: React.FC<ResourceTileProps> = ({ resource, state }) =
                 {...actions}
             >
                 <Box className="resource-main-icon-container"
+                    onClick={hasInteractionPanel ? (e: React.MouseEvent) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        openInteractionPanel();
+                    } : undefined}
                     sx={{
                         position: "absolute", top: 6, left: "50%",
                         transform: "translateX(-50%)",
@@ -231,10 +198,9 @@ export const ResourceTile: React.FC<ResourceTileProps> = ({ resource, state }) =
                         transition: theme.transitions.create(["transform"], {
                             duration: theme.transitions.duration.short,
                         }),
-                        pointerEvents: "none"
-
+                        pointerEvents: hasInteractionPanel ? "auto" : "none",
+                        cursor: hasInteractionPanel ? "pointer" : undefined,
                     }}>
-
 
                     {React.cloneElement(MainIcon, {
                         sx:
@@ -248,6 +214,18 @@ export const ResourceTile: React.FC<ResourceTileProps> = ({ resource, state }) =
                             })
                         }
                     })}
+                    {hasInteractionPanel && (
+                        <MoreHorizIcon
+                            sx={{
+                                position: "absolute",
+                                bottom: -4,
+                                right: -8,
+                                fontSize: 12,
+                                color: iconColor,
+                                opacity: 0.4,
+                            }}
+                        />
+                    )}
                     {haveErrors && (
                         <Tooltip title={
                             <Box>
@@ -353,6 +331,14 @@ export const ResourceTile: React.FC<ResourceTileProps> = ({ resource, state }) =
                     </Tooltip>
                 </Box>
             )}
+
+            {/* Type-specific expanded popover (analog slider, complex detail, etc.) */}
+            {tileExtensions?.renderInteractionPanel?.({
+                ...renderCtx,
+                anchorEl: interactionPanelAnchor,
+                onClose: () => setInteractionPanelAnchor(null),
+            })}
         </Card>
     );
 };
+    

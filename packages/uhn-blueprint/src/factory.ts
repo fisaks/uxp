@@ -1,6 +1,6 @@
 // Factory Functions
 // factory.ts
-import { AnalogInputResourceBase, AnalogOutputResourceBase, DigitalInputResourceBase, DigitalOutputResourceBase, TimerResourceBase } from "./resource";
+import { AnalogInputResourceBase, AnalogOutputResourceBase, ComplexResourceBase, DigitalInputResourceBase, DigitalOutputResourceBase, TimerResourceBase } from "./resource";
 
 export function digitalInput<
     TInputKind extends string = string,
@@ -50,4 +50,10 @@ export function timer<TEdge extends string = string>(
     props: Omit<TimerResourceBase<TEdge>, "type" | "device" | "pin">
 ): TimerResourceBase<TEdge> {
     return { ...props, type: "timer" };
+}
+
+export function complex<TEdge extends string = string>(
+    props: Omit<ComplexResourceBase<TEdge>, "type" | "device" | "pin">
+): ComplexResourceBase<TEdge> {
+    return { ...props, type: "complex" };
 }

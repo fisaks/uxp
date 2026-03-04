@@ -1,53 +1,30 @@
 // useResourceAction.ts
-import { UhnResourceCommand } from "@uhn/common";
-import { WebSocketTimeoutError } from "@uxp/ui-lib";
 import { useCallback, useRef } from "react";
-import { useAppDispatch } from "../../../app/store";
-import { useUHNWebSocket } from "../../../app/UHNAppBrowserWebSocketManager";
 import { TileRuntimeResource, TileRuntimeResourceState } from "../resource-ui.type";
-import { commandFailed, commandStarted } from "../resourceCommandFeedbackSlice";
+import { useSendResourceCommand } from "./useSendResourceCommand";
 
 const TOUCH_PRESS_INTENT_DELAY_MS = 150;
 const MIN_PRESS_DURATION_MS = 300;
+const LONG_PRESS_THRESHOLD_MS = 500;
 
+type UseResourceActionOptions = {
+    onLongPress?: () => void;
+};
 
-export function useResourceAction(resource: TileRuntimeResource, state?: TileRuntimeResourceState) {
-    const dispatch = useAppDispatch();
-    const { sendMessageAsync } = useUHNWebSocket();
+export function useResourceAction(
+    resource: TileRuntimeResource,
+    state?: TileRuntimeResourceState,
+    options?: UseResourceActionOptions
+) {
+    const sendCommand = useSendResourceCommand(resource.id, state?.value);
 
     const hasActivePointerInteractionRef = useRef(false);
     const pressCommittedAtRef = useRef<number | null>(null);
     const pressIntentDelayTimerRef = useRef<number | null>(null);
+    const longPressTimerRef = useRef<number | null>(null);
+    const longPressTriggeredRef = useRef(false);
 
-    const sendCommand = useCallback(async (command: UhnResourceCommand) => {
-        dispatch(commandStarted({ resourceId: resource.id }));
-        try {
-            await sendMessageAsync("uhn:resource:command", {
-                resourceId: resource.id,
-                command
-            }, 2000);
-        } catch (error) {
-            if (error instanceof WebSocketTimeoutError) {
-                dispatch(
-                    commandFailed({
-                        resourceId: resource.id,
-                        reason: "timeout",
-                        error: "No confirmation received",
-                    })
-                );
-            } else {
-                dispatch(
-                    commandFailed({
-                        resourceId: resource.id,
-                        reason: "send_failed",
-                        error: "Failed to send command",
-                    })
-                );
-            }
-        }
-    }, [dispatch, sendMessageAsync, resource.id]);
-
-    /* ---------------- press helpers ---------------- */
+    /* ---------------- press helpers (digital input push) ---------------- */
 
     const commitPress = useCallback(() => {
         if (pressCommittedAtRef.current !== null) return;
@@ -87,6 +64,24 @@ export function useResourceAction(resource: TileRuntimeResource, state?: TileRun
         }, TOUCH_PRESS_INTENT_DELAY_MS);
     }, [commitPress]);
 
+    /* ---------------- long-press helpers (analog output) ---------------- */
+
+    const clearLongPressTimer = () => {
+        if (longPressTimerRef.current !== null) {
+            clearTimeout(longPressTimerRef.current);
+            longPressTimerRef.current = null;
+        }
+    };
+
+    const startLongPressTimer = useCallback(() => {
+        clearLongPressTimer();
+        longPressTimerRef.current = window.setTimeout(() => {
+            longPressTimerRef.current = null;
+            longPressTriggeredRef.current = true;
+            options?.onLongPress?.();
+        }, LONG_PRESS_THRESHOLD_MS);
+    }, [options]);
+
     /* ---------------- pointer handlers ---------------- */
 
     const onPointerDown = useCallback(
@@ -105,8 +100,21 @@ export function useResourceAction(resource: TileRuntimeResource, state?: TileRun
                     commitPress();
                 }
             }
+
+            if (resource.type === "analogOutput" && options?.onLongPress) {
+                if (e.pointerType === "touch") {
+                    // On touch, delay long-press start to disambiguate scroll
+                    clearPressIntentDelay();
+                    pressIntentDelayTimerRef.current = window.setTimeout(() => {
+                        pressIntentDelayTimerRef.current = null;
+                        startLongPressTimer();
+                    }, TOUCH_PRESS_INTENT_DELAY_MS);
+                } else {
+                    startLongPressTimer();
+                }
+            }
         },
-        [resource, commitPress, createPressIntentDelay]
+        [resource, commitPress, createPressIntentDelay, startLongPressTimer, options]
     );
 
     const onPointerUp = useCallback(
@@ -116,6 +124,7 @@ export function useResourceAction(resource: TileRuntimeResource, state?: TileRun
             hasActivePointerInteractionRef.current = false;
             e.currentTarget.releasePointerCapture(e.pointerId);
             clearPressIntentDelay();
+            clearLongPressTimer();
 
             if (resource.type === "digitalInput" && resource.inputType === "push") {
                 // Tap: commit press late if needed
@@ -131,6 +140,7 @@ export function useResourceAction(resource: TileRuntimeResource, state?: TileRun
     const onPointerCancel = useCallback(() => {
         hasActivePointerInteractionRef.current = false;
         clearPressIntentDelay();
+        clearLongPressTimer();
 
         // If press was already committed, we must release
         if (pressCommittedAtRef.current !== null) {
@@ -139,6 +149,12 @@ export function useResourceAction(resource: TileRuntimeResource, state?: TileRun
     }, [scheduleRelease]);
 
     const onClick = useCallback(() => {
+        // If long-press was triggered, suppress this click
+        if (longPressTriggeredRef.current) {
+            longPressTriggeredRef.current = false;
+            return;
+        }
+
         // Timer: clear when active
         if (resource.type === "timer" && state?.value) {
             sendCommand({ type: "clearTimer" });
@@ -151,8 +167,23 @@ export function useResourceAction(resource: TileRuntimeResource, state?: TileRun
         }
         if (resource.type === "digitalInput" && resource.inputType === "toggle") {
             sendCommand({ type: "toggle" });
+            return;
         }
-    }, [resource, state?.value, sendCommand]);
+        // Analog output: tap-toggle between min and max
+        if (resource.type === "analogOutput") {
+            const min = resource.min ?? 0;
+            const max = resource.max ?? 65535;
+            const current = typeof state?.value === "number" ? state.value : min;
+            const nextValue = current > min ? min : max;
+            sendCommand({ type: "setAnalog", value: nextValue });
+            return;
+        }
+        // Complex: open popover on click
+        if (resource.type === "complex") {
+            options?.onLongPress?.();
+            return;
+        }
+    }, [resource, state?.value, sendCommand, options]);
 
     return {
         onPointerDown,
@@ -161,4 +192,3 @@ export function useResourceAction(resource: TileRuntimeResource, state?: TileRun
         onClick,
     };
 }
-

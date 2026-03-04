@@ -1,12 +1,12 @@
-// rule-engine-runtime.ts
-import { ResourceBase, ResourceType, RuntimeReader, StateValueByResourceType } from "@uhn/blueprint";
+// rule-state-reader.ts
+import { ResourceBase, ResourceType, StateReader, StateValueByResourceType } from "@uhn/blueprint";
 import { assertNever } from "@uxp/common";
 import { ResourceMissingIdError, ResourceStateNotAvailableError, ResourceStateTypeMismatchError } from "@uhn/common";
 import { RuntimeStateService } from "../services/runtime-state.service";
 import { isAnalogValue, isDigitalValue, isTimerValue } from "../utils/runtime-state.util";
 
 
-export function createRuleRuntime({ stateService }: { stateService: RuntimeStateService }): RuntimeReader {
+export function createRuleStateReader({ stateService }: { stateService: RuntimeStateService }): StateReader {
     return {
         getState: <T extends ResourceType>(r: ResourceBase<T>) => {
             if (!r.id) throw new ResourceMissingIdError(r.type);
@@ -33,6 +33,9 @@ export function createRuleRuntime({ stateService }: { stateService: RuntimeState
                     if (!isTimerValue(s.value)) {
                         throw new ResourceStateTypeMismatchError(r.id, r.type, s.value);
                     }
+                    return s.value as StateValueByResourceType<T>;
+                case "complex":
+                    // Complex resources may have computed state (from ComplexComputeService)
                     return s.value as StateValueByResourceType<T>;
                 default:
                     assertNever(r.type, `Unsupported resource type "${r.type}" for getState`);
