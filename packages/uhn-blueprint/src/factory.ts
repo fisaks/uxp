@@ -46,14 +46,14 @@ export function analogOutput<
     return { ...props, type: "analogOutput" };
 }
 
-export function timer<TEdge extends string = string>(
-    props: Omit<TimerResourceBase<TEdge>, "type" | "device" | "pin">
-): TimerResourceBase<TEdge> {
+export function timer<THost extends string = string>(
+    props: Omit<TimerResourceBase<THost>, "type">
+): TimerResourceBase<THost> {
     return { ...props, type: "timer" };
 }
 
-export function complex<TEdge extends string = string>(
-    props: Omit<ComplexResourceBase<TEdge>, "type" | "device" | "pin">
-): ComplexResourceBase<TEdge> {
+export function complex<THost extends string = string>(
+    props: Omit<ComplexResourceBase<THost>, "type">
+): ComplexResourceBase<THost> {
     return { ...props, type: "complex" };
 }

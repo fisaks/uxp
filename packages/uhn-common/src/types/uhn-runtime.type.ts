@@ -1,5 +1,5 @@
 
-import { AnalogInputResourceBase, AnalogOutputResourceBase, DigitalInputResourceBase, DigitalOutputResourceBase, ResourceBase, ResourceType, RuntimeRuleAction } from "@uhn/blueprint";
+import { AnalogInputResourceBase, AnalogOutputResourceBase, DigitalInputResourceBase, DigitalOutputResourceBase, LogicalResourceType, PhysicalResourceType, ResourceType, RuntimeRuleAction } from "@uhn/blueprint";
 
 // --- Runtime rule serialization (for IPC + overview) ---
 
@@ -94,42 +94,71 @@ export type RuntimeComplexTileSummaryConfig =
     | { mode: "carousel"; resourceIds: string[]; intervalMs?: number }
     | { mode: "computed"; unit?: string };
 
-export type RuntimeResource =
-  Omit<ResourceBase<ResourceType>, 'id' | 'name'> & {
+type RuntimeResourceCommon = {
     id: string;
     name: string;
+    description?: string;
+    hidden?: boolean;
     errors?: ResourceErrorCode[];
-  };
+};
 
-export type RuntimeComplexResource = RuntimeResource & {
+export type RuntimePhysicalResource = RuntimeResourceCommon & {
+    type: PhysicalResourceType;
+    edge: string;
+    device: string;
+    pin: number;
+};
+
+export type RuntimeLogicalResource = RuntimeResourceCommon & {
+    type: LogicalResourceType;
+    host: string;
+};
+
+export type RuntimeResource = RuntimePhysicalResource | RuntimeLogicalResource;
+
+export type RuntimeDigitalInputResource = RuntimePhysicalResource & {
+    type: "digitalInput";
+    inputKind: DigitalInputResourceBase["inputKind"];
+    inputType: DigitalInputResourceBase["inputType"];
+};
+
+export type RuntimeDigitalOutputResource = RuntimePhysicalResource & {
+    type: "digitalOutput";
+    outputKind: DigitalOutputResourceBase["outputKind"];
+};
+
+export type RuntimeAnalogInputResource = RuntimePhysicalResource & {
+    type: "analogInput";
+    analogInputKind: AnalogInputResourceBase["analogInputKind"];
+    unit?: string;
+};
+
+export type RuntimeAnalogOutputResource = RuntimePhysicalResource & {
+    type: "analogOutput";
+    analogOutputKind: AnalogOutputResourceBase["analogOutputKind"];
+    min?: number;
+    max?: number;
+    step?: number;
+    unit?: string;
+};
+
+export type RuntimeComplexResource = RuntimeLogicalResource & {
+  type: "complex";
   subResources: RuntimeComplexSubResourceRef[];
   tileSummary?: RuntimeComplexTileSummaryConfig;
 };
 
-export type RuntimeDigitalInputResource =
-  DigitalInputResourceBase & {
-    id: string;
-    name: string;
-    errors?: ResourceErrorCode[];
-  };
-
-export type RuntimeDigitalOutputResource = DigitalOutputResourceBase & {
-  id: string;
-  name: string;
-  errors?: ResourceErrorCode[];
+export type RuntimeTimerResource = RuntimeLogicalResource & {
+  type: "timer";
 };
 
-export type RuntimeAnalogInputResource = AnalogInputResourceBase & {
-  id: string;
-  name: string;
-  errors?: ResourceErrorCode[];
-};
+export function isPhysicalResource(r: RuntimeResource): r is RuntimePhysicalResource {
+    return r.type === "digitalInput" || r.type === "digitalOutput" || r.type === "analogInput" || r.type === "analogOutput";
+}
 
-export type RuntimeAnalogOutputResource = AnalogOutputResourceBase & {
-  id: string;
-  name: string;
-  errors?: ResourceErrorCode[];
-};
+export function isLogicalResource(r: RuntimeResource): r is RuntimeLogicalResource {
+    return r.type === "timer" || r.type === "complex";
+}
 
 export type RuntimeResourceList = RuntimeResource[];
 

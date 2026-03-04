@@ -7,6 +7,7 @@ import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import { Box, Card, CardActionArea, CircularProgress, IconButton, Popover, Tooltip, Typography, alpha } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { usePortalContainerRef } from "@uxp/ui-lib";
+import { isLogicalResource, isPhysicalResource } from "@uhn/common";
 import React, { useCallback, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { useResourceAction } from "../hooks/useResourceAction";
@@ -109,10 +110,17 @@ export const ResourceTile: React.FC<ResourceTileProps> = ({ resource, state }) =
                         <Box sx={{ p: 2, minWidth: 180 }}>
                             <Typography variant="subtitle2">Technical Details</Typography>
                             <Typography variant="body2">ID: {resource.id}</Typography>
-                            <Typography variant="body2">Edge: {resource.edge}</Typography>
-                            <Typography variant="body2">Device: {resource.device}</Typography>
-                            <Typography variant="body2">Pin: {resource.pin}</Typography>
                             <Typography variant="body2">Type: {resource.type}</Typography>
+                            {isPhysicalResource(resource) && (
+                                <>
+                                    <Typography variant="body2">Edge: {resource.edge}</Typography>
+                                    <Typography variant="body2">Device: {resource.device}</Typography>
+                                    <Typography variant="body2">Pin: {resource.pin}</Typography>
+                                </>
+                            )}
+                            {isLogicalResource(resource) && (
+                                <Typography variant="body2">Host: {resource.host}</Typography>
+                            )}
                             <Typography variant="body2">Kind: {resource.inputKind ?? resource.outputKind ?? resource.analogInputKind ?? resource.analogOutputKind ?? "N/A"}</Typography>
                             {resource.inputType && <Typography variant="body2">Input Type: {resource.inputType}</Typography>}
                             {isAnalog && resource.min !== undefined && <Typography variant="body2">Min: {resource.min}</Typography>}

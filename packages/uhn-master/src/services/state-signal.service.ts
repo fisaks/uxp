@@ -1,4 +1,4 @@
-import { ResourceStateValue, RuntimeResource } from "@uhn/common";
+import { ResourceStateValue, RuntimePhysicalResource } from "@uhn/common";
 import { AppLogger } from "@uxp/bff-common";
 import { EventEmitter } from "events";
 import { parseMqttTopic } from "../util/mqtt-topic.util";
@@ -71,7 +71,7 @@ class StateSignalService extends EventEmitter<StateSignalEventMap> {
         }
     }
 
-    setSignalState(resource: Pick<RuntimeResource, "edge" | "id">, value: ResourceStateValue) {
+    setSignalState(resource: Pick<RuntimePhysicalResource, "edge" | "id">, value: ResourceStateValue) {
         const timestamp = Date.now();
 
         this.signalStateByResourceId.set(resource.id, {

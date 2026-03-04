@@ -49,7 +49,7 @@ export class ResourceEventEmitter {
                 // rules cannot attach to complex resources at this point.
                 break;
             default:
-                assertNever(resource.type);
+                assertNever(resource);
         }
 
         if (!events.length) return;

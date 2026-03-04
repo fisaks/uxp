@@ -6,7 +6,7 @@ import { blueprintResourceService } from "./blueprint-resource.service";
 import { subscriptionService } from "./subscription.service";
 
 export type TimerState = {
-    edge: string;
+    host: string;
     active: boolean;
     startedAt: number;
     stopAt: number;
@@ -69,7 +69,7 @@ class StateTimerService extends EventEmitter<StateTimerEventMap> {
             if (prev && prev.timestamp >= payload.timestamp) return;
 
             this.timerStateByResourceId.set(resourceId, {
-                edge,
+                host: edge,
                 active: payload.active,
                 startedAt: payload.startedAt,
                 stopAt: payload.stopAt,

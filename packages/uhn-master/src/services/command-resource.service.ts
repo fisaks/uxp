@@ -1,4 +1,4 @@
-import { RuntimeAnalogOutputResource, RuntimeDigitalInputResource, RuntimeDigitalOutputResource, RuntimeResource, UhnResourceCommand } from "@uhn/common";
+import { isLogicalResource, isPhysicalResource, RuntimeAnalogOutputResource, RuntimeDigitalInputResource, RuntimeDigitalOutputResource, RuntimeResource, UhnResourceCommand } from "@uhn/common";
 import { AppErrorV2 } from "@uxp/bff-common";
 import { blueprintResourceService } from "./blueprint-resource.service";
 import { commandEdgeService } from "./command-edge.service";
@@ -16,10 +16,10 @@ export class CommandsResourceService {
         }
         this.validateResourceAddressability(resource);
         this.validateCommandForResource(resource, command);
-        
-        
-        if (resource.type === "timer") {
-            timerEdgeService.sendTimerCommandToEdge({ id: resource.id, edge: resource.edge }, { action: "clear" });
+
+
+        if (resource.type === "timer" && isLogicalResource(resource)) {
+            timerEdgeService.sendTimerCommandToEdge({ id: resource.id, host: resource.host }, { action: "clear" });
         } else if (resource.type === "digitalOutput") {
             commandEdgeService.sendDigitalCommandToEdge(resource as RuntimeDigitalOutputResource, command);
         } else if (resource.type === "analogOutput" && command.type === "setAnalog") {
@@ -28,27 +28,29 @@ export class CommandsResourceService {
             if (analogResource.min != null && value < analogResource.min) value = analogResource.min;
             if (analogResource.max != null && value > analogResource.max) value = analogResource.max;
             commandEdgeService.sendAnalogCommandToEdge(analogResource, value);
-        } else if (resource.type === "digitalInput" && command.type === "toggle") {
+        } else if (resource.type === "digitalInput" && command.type === "toggle" && isPhysicalResource(resource)) {
             const currentState = stateRuntimeService.getResourceState(resourceId);
             const currentValue = currentState?.value;
             const nextValue = (typeof currentValue === "boolean") ? !currentValue : true;
             stateSignalService.setSignalState(resource, nextValue);
-        } else if (resource.type === "digitalInput" && (command.type === "press" || command.type === "release")) {
+        } else if (resource.type === "digitalInput" && (command.type === "press" || command.type === "release") && isPhysicalResource(resource)) {
             const signalValue = command.type === "press" ? true : false;
             stateSignalService.setSignalState(resource, signalValue);
         }
     }
 
     private validateResourceAddressability(resource: RuntimeResource) {
-        if (resource.type === "timer") {
-            if (!resource.edge) {
-                throw new AppErrorV2({ statusCode: 400, code: "RESOURCE_NOT_ADDRESSABLE", message: `Timer resource ${resource.id} has no edge` });
+        if (isLogicalResource(resource)) {
+            if (!resource.host) {
+                throw new AppErrorV2({ statusCode: 400, code: "RESOURCE_NOT_ADDRESSABLE", message: `${resource.type} resource ${resource.id} has no host` });
             }
             return;
         }
 
-        if (!resource.edge || !resource.device || resource.pin == null) {
-            throw new AppErrorV2({ statusCode: 400, code: "RESOURCE_NOT_ADDRESSABLE", message: `Resource ${resource.id} is not addressable` });
+        if (isPhysicalResource(resource)) {
+            if (!resource.edge || !resource.device || resource.pin == null) {
+                throw new AppErrorV2({ statusCode: 400, code: "RESOURCE_NOT_ADDRESSABLE", message: `Resource ${resource.id} is not addressable` });
+            }
         }
     }
 

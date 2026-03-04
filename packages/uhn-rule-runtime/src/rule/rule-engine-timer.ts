@@ -20,7 +20,7 @@ export function createRuleTimer({ timerService, stateService, mode }: {
     function isTimerActive(timerId: string | undefined): boolean {
         if (!timerId) return false;
         if (mode === "edge") {
-            return timerService.isRunning({ id: timerId, type: "timer", edge: "" });
+            return timerService.isRunning({ id: timerId, type: "timer", host: "" });
         }
         return stateService.get(timerId)?.value === true;
     }

@@ -1,14 +1,8 @@
 import { RuntimeResource, RuntimeResourceList, RuntimeResourceState } from "../types/uhn-runtime.type";
 
-export function makeAddressKey(resource: Pick<RuntimeResource, "edge" | "device" | "type" | "pin">): string | undefined {
+export function makeAddressKey(resource: { edge?: string; device?: string; type?: string; pin?: number }): string | undefined {
     if (resource.edge && resource.device && resource.type && resource.pin !== undefined) {
         return `${resource.edge}:${resource.device}:${resource.type}:${resource.pin}`;
-    }
-    if (resource.edge && resource.device && resource.type) {
-        return `${resource.edge}:${resource.device}:${resource.type}`;
-    }
-    if (resource.edge && resource.device) {
-        return `${resource.edge}:${resource.device}`;
     }
     return undefined;
 }
@@ -78,11 +72,11 @@ export function isRuntimeResourceObject(obj: unknown): obj is RuntimeResource {
     return (
         typeof obj === "object" &&
         obj !== null &&
-        "edge" in obj &&
         "type" in obj &&
         "id" in obj &&
-        typeof (obj as any).edge === "string" &&
         typeof (obj as any).type === "string" &&
-        typeof (obj as any).id === "string"
+        typeof (obj as any).id === "string" &&
+        (("edge" in obj && typeof (obj as any).edge === "string")
+         || ("host" in obj && typeof (obj as any).host === "string"))
     );
 }

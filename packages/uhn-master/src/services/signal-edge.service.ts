@@ -1,4 +1,4 @@
-import { ResourceStateValue, RuntimeResource } from "@uhn/common";
+import { ResourceStateValue, RuntimePhysicalResource } from "@uhn/common";
 import mqttService from "./mqtt.service";
 
 
@@ -22,7 +22,7 @@ export function isSignalStatePayload(payload: unknown): payload is SignalStatePa
 export class SignalEdgeService {
 
     sendStateSignalToEdge(
-        resource: Pick<RuntimeResource, "edge" | "id">,
+        resource: Pick<RuntimePhysicalResource, "edge" | "id">,
         state: SignalState) {
 
 
@@ -35,7 +35,7 @@ export class SignalEdgeService {
     }
 
     clearStateSignalOnEdge(
-        resource: Pick<RuntimeResource, "edge" | "id">) {
+        resource: Pick<RuntimePhysicalResource, "edge" | "id">) {
 
         mqttService.publish(
             this.signalStateTopic(resource.edge, resource.id),

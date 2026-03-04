@@ -1,4 +1,4 @@
-import { makeAddressKey, ResourceErrorCode, resourceIdMatcher, ResourceValidationError, RuntimeResource, RuntimeResourceList } from "@uhn/common";
+import { isLogicalResource, isPhysicalResource, makeAddressKey, ResourceErrorCode, resourceIdMatcher, ResourceValidationError, RuntimeResource, RuntimeResourceList } from "@uhn/common";
 import { AppLogger } from "@uxp/bff-common";
 import { EventEmitter } from "events";
 import { BlueprintFileUtil } from "../util/blueprint-file.util";
@@ -127,81 +127,83 @@ class BlueprintResourceService extends EventEmitter<ResourceEventMap> {
                 }
             }
 
-            // 3) Duplicate physical address
-            const addrKey = makeAddressKey(resource);
-            if (addrKey) {
-                if (addressMap.has(addrKey)) {
-                    const conflict = addressMap.get(addrKey)!;
-                    addErr(
-                        "duplicate-address",
-                        `Duplicate address (${addrKey}) for resources: ${conflict.name ?? conflict.id
-                        }, ${resource.name ?? resource.id}`,
-                        conflict.id
-                    );
-                } else {
-                    addressMap.set(addrKey, resource);
-                }
-            }
-
             // 4. Address & catalog validation
-            // Timer resources only need edge — no device/pin required.
-            if (resource.type === "timer" || resource.type === "complex") {
-                if (!resource.edge) {
-                    addErr("missing-address", `${resource.type === "timer" ? "Timer" : "Complex"} resource '${resource.id ?? resource.name ?? "[unnamed]"}' is missing 'edge'.`);
+            if (isLogicalResource(resource)) {
+                // Logical resources (timer, complex) need host
+                if (!resource.host) {
+                    addErr("missing-address", `${resource.type === "timer" ? "Timer" : "Complex"} resource '${resource.id ?? resource.name ?? "[unnamed]"}' is missing 'host'.`);
                 }
-            } else if (resource.edge && resource.device) {
-                const edgeCatalog = physicalCatalogService.getEdgeCatalog(resource.edge);
-                if (!edgeCatalog) {
-                    addErr(
-                        "unknown-edge",
-                        `Resource references unknown edge '${resource.edge}'.`
-                    );
-                } else {
-                    const catalogDevice = edgeCatalog.devices.find(
-                        (d) => d.name === resource.device
-                    );
-
-                    if (!catalogDevice) {
+            } else if (isPhysicalResource(resource)) {
+                // 3) Duplicate physical address
+                const addrKey = makeAddressKey(resource);
+                if (addrKey) {
+                    if (addressMap.has(addrKey)) {
+                        const conflict = addressMap.get(addrKey)!;
                         addErr(
-                            "unknown-device",
-                            `Resource references unknown device '${resource.device}' on edge '${resource.edge}'.`
+                            "duplicate-address",
+                            `Duplicate address (${addrKey}) for resources: ${conflict.name ?? conflict.id
+                            }, ${resource.name ?? resource.id}`,
+                            conflict.id
                         );
-                    } else if (typeof resource.pin === "number") {
-                        let validPin = false;
-
-                        if (resource.type === "digitalInput" && catalogDevice.digitalInputs) {
-                            const { start, count } = catalogDevice.digitalInputs;
-                            validPin =
-                                resource.pin >= start && resource.pin < start + count;
-                        } else if (
-                            resource.type === "digitalOutput" &&
-                            catalogDevice.digitalOutputs
-                        ) {
-                            const { start, count } = catalogDevice.digitalOutputs;
-                            validPin =
-                                resource.pin >= start && resource.pin < start + count;
-                        } else if (resource.type === "analogInput" && catalogDevice.analogInputs) {
-                            const { start, count } = catalogDevice.analogInputs;
-                            validPin =
-                                resource.pin >= start && resource.pin < start + count;
-                        } else if (resource.type === "analogOutput" && catalogDevice.analogOutputs) {
-                            const { start, count } = catalogDevice.analogOutputs;
-                            validPin =
-                                resource.pin >= start && resource.pin < start + count;
-                        }
-
-                        if (!validPin) {
-                            addErr(
-                                "invalid-pin",
-                                `Resource has invalid pin '${resource.pin}' for device '${resource.device}' on edge '${resource.edge}'.`
-                            );
-                        }
-                    } else if ((resource.type === "digitalInput" || resource.type === "digitalOutput" || resource.type === "analogInput" || resource.type === "analogOutput") && typeof resource.pin !== "number") {
-                        addErr("missing-pin", `Resource '${resource.id ?? resource.name ?? "[unnamed]"}' is missing 'pin'.`);
+                    } else {
+                        addressMap.set(addrKey, resource);
                     }
                 }
-            } else {
-                addErr("missing-address", `Resource '${resource.id ?? resource.name ?? "[unnamed]"}' is missing address information (edge/device).`);
+
+                if (resource.edge && resource.device) {
+                    const edgeCatalog = physicalCatalogService.getEdgeCatalog(resource.edge);
+                    if (!edgeCatalog) {
+                        addErr(
+                            "unknown-edge",
+                            `Resource references unknown edge '${resource.edge}'.`
+                        );
+                    } else {
+                        const catalogDevice = edgeCatalog.devices.find(
+                            (d) => d.name === resource.device
+                        );
+
+                        if (!catalogDevice) {
+                            addErr(
+                                "unknown-device",
+                                `Resource references unknown device '${resource.device}' on edge '${resource.edge}'.`
+                            );
+                        } else if (typeof resource.pin === "number") {
+                            let validPin = false;
+
+                            if (resource.type === "digitalInput" && catalogDevice.digitalInputs) {
+                                const { start, count } = catalogDevice.digitalInputs;
+                                validPin =
+                                    resource.pin >= start && resource.pin < start + count;
+                            } else if (
+                                resource.type === "digitalOutput" &&
+                                catalogDevice.digitalOutputs
+                            ) {
+                                const { start, count } = catalogDevice.digitalOutputs;
+                                validPin =
+                                    resource.pin >= start && resource.pin < start + count;
+                            } else if (resource.type === "analogInput" && catalogDevice.analogInputs) {
+                                const { start, count } = catalogDevice.analogInputs;
+                                validPin =
+                                    resource.pin >= start && resource.pin < start + count;
+                            } else if (resource.type === "analogOutput" && catalogDevice.analogOutputs) {
+                                const { start, count } = catalogDevice.analogOutputs;
+                                validPin =
+                                    resource.pin >= start && resource.pin < start + count;
+                            }
+
+                            if (!validPin) {
+                                addErr(
+                                    "invalid-pin",
+                                    `Resource has invalid pin '${resource.pin}' for device '${resource.device}' on edge '${resource.edge}'.`
+                                );
+                            }
+                        } else if (typeof resource.pin !== "number") {
+                            addErr("missing-pin", `Resource '${resource.id ?? resource.name ?? "[unnamed]"}' is missing 'pin'.`);
+                        }
+                    }
+                } else {
+                    addErr("missing-address", `Resource '${resource.id ?? resource.name ?? "[unnamed]"}' is missing address information (edge/device).`);
+                }
             }
 
         }

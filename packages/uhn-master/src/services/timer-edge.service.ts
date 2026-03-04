@@ -1,4 +1,3 @@
-import { RuntimeResource } from "@uhn/common";
 import mqttService from "./mqtt.service";
 
 type TimerEdgeCommand = {
@@ -9,10 +8,10 @@ type TimerEdgeCommand = {
 
 class TimerEdgeService {
     sendTimerCommandToEdge(
-        resource: Pick<RuntimeResource, "id" | "edge">,
+        resource: { id: string; host: string },
         command: TimerEdgeCommand
     ) {
-        const topic = `uhn/${resource.edge}/timer/cmd/${resource.id}`;
+        const topic = `uhn/${resource.host}/timer/cmd/${resource.id}`;
         const payload = {
             resourceId: resource.id,
             action: command.action,

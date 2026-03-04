@@ -1,5 +1,5 @@
 import type { ResourceType } from "@uhn/blueprint";
-import { makeAddressKey, Range, registerWidth, resourceIdMatcher, ResourceStateDetails, ResourceStateValue, RuntimeResourceList, RuntimeResourceState } from "@uhn/common";
+import { isLogicalResource, isPhysicalResource, makeAddressKey, Range, registerWidth, resourceIdMatcher, ResourceStateDetails, ResourceStateValue, RuntimeResourceList, RuntimeResourceState } from "@uhn/common";
 import { AppLogger } from "@uxp/bff-common";
 import { EventEmitter } from "events";
 
@@ -134,26 +134,22 @@ class StateRuntimeService extends EventEmitter<StateRuntimeEventMap> {
             // Only index valid, addressable resources
             if (!r.id) continue;
             if (r.errors?.length) continue;
+            if (isLogicalResource(r)) {
+                // Timer resources have no device/pin — index by resourceId directly
+                if (r.type === "timer") {
+                    this.timerResourceIds.add(r.id);
 
-            // Timer resources have no device/pin — index by resourceId directly
-            if (r.type === "timer") {
-                this.timerResourceIds.add(r.id);
-                continue;
+                } else if (r.type === "complex") {
+                    this.complexResourceIds.add(r.id);
+                }
+            } else if (isPhysicalResource(r)) {
+                const key = makeAddressKey(r);
+                if (!key) {
+                    AppLogger.warn({ message: `[StateRuntimeService] Resource '${r.id}' has no valid address, skipping runtime indexing.` });
+                    continue;
+                }
+                addressLookup.set(key, r.id);
             }
-
-            // Complex resources have no device/pin — computed state comes from sandbox IPC
-            if (r.type === "complex") {
-                this.complexResourceIds.add(r.id);
-                continue;
-            }
-
-            const key = makeAddressKey(r);
-            if (!key) {
-                AppLogger.warn({ message: `[StateRuntimeService] Resource '${r.id}' has no valid address, skipping runtime indexing.` });
-                continue;
-            }
-
-            addressLookup.set(key, r.id);
         }
         // swap in place once lookup is ready
         this.resourceIdByAddress = addressLookup;

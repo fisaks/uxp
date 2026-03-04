@@ -66,26 +66,27 @@ async function collectResources(resourcesDir: string): Promise<CollectResult> {
 
             for (const [exportName, resource] of Object.entries(mod)) {
                 if (isRuntimeResourceObject(resource)) {
-                    let runtimeResource: RuntimeResource = {
+                    let runtimeResource = {
                         ...resource,
                         name: humanizeResourceId(resource.id),
-                    };
+                    } satisfies RuntimeResource;
                     // Serialize complex resource fields: resource objects → string IDs
-                    if (resource.type === "complex") {
-                        const complex = resource as unknown as ComplexResourceBase;
+                    if (runtimeResource.type === "complex") {
+                        const complex = runtimeResource as unknown as ComplexResourceBase;
                         if (complex.subResources?.length) {
                             if (complex.tileSummary?.mode === "computed" && typeof complex.tileSummary.fn === "function") {
                                 complexComputeEntries.push({
-                                    complexResourceId: resource.id,
+                                    complexResourceId: runtimeResource.id,
                                     fn: complex.tileSummary.fn,
                                     resources: complex.tileSummary.resources ?? [],
                                 });
                             }
-                            const complexRuntime: RuntimeComplexResource = {
+                            const complexRuntime = {
                                 ...runtimeResource,
+                                type: "complex",
                                 subResources: serializeSubResources(complex.subResources),
                                 ...(complex.tileSummary && { tileSummary: serializeTileSummary(complex.tileSummary) }),
-                            };
+                            } satisfies RuntimeComplexResource;
                             runtimeResource = complexRuntime;
                         }
                     }

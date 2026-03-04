@@ -1,17 +1,45 @@
 // Resource Types and Bases
 // resource.ts
-export type ResourceType = "digitalInput" | "digitalOutput" | "analogInput" | "analogOutput" | "timer" | "complex";
+
+export type PhysicalResourceType = "digitalInput" | "digitalOutput" | "analogInput" | "analogOutput";
+export type LogicalResourceType = "timer" | "complex";
+export type ResourceType = PhysicalResourceType | LogicalResourceType;
+
 export type ResourceBase<TType extends ResourceType> = {
     id?: string;
     name?: string;
     description?: string;
     type: TType;
-    edge: string;
-    device?: string;
-    pin?: number;
     /** Hide this resource from the main grid. It remains accessible in complex resource popovers. */
     hidden?: boolean;
 };
+
+export type PhysicalResourceBase<
+    TType extends PhysicalResourceType,
+    TEdge extends string = string,
+    TDevice extends string | number = string,
+    TPin extends number = number
+> = ResourceBase<TType> & {
+    edge: TEdge;
+    device: TDevice;
+    pin: TPin;
+};
+
+export type LogicalResourceBase<
+    TType extends LogicalResourceType,
+    THost extends string = string
+> = ResourceBase<TType> & {
+    host: THost;
+};
+
+export function isPhysicalResourceType(type: ResourceType): type is PhysicalResourceType {
+    return type === "digitalInput" || type === "digitalOutput" || type === "analogInput" || type === "analogOutput";
+}
+
+export function isLogicalResourceType(type: ResourceType): type is LogicalResourceType {
+    return type === "timer" || type === "complex";
+}
+
 export type InputType = "toggle" | "push";
 export type BaseInputKind = "button" | "pir" | "lightSensor";
 export type BaseOutputKind = "relay" | "socket" | "light" | "indicator";
@@ -28,10 +56,7 @@ export type DigitalInputResourceBase<
     TEdge extends string = string,
     TDevice extends string | number = string,
     TPin extends number = number
-> = ResourceBase<"digitalInput"> & {
-    edge: TEdge;
-    device: TDevice;
-    pin: TPin;
+> = PhysicalResourceBase<"digitalInput", TEdge, TDevice, TPin> & {
     inputKind: TInputKind; //defined by project like "button" | "pir" | "lightSensor" etc.
     inputType: InputType;//"toggle" | "push"
 };
@@ -42,10 +67,7 @@ export type DigitalOutputResourceBase<
     TEdge extends string = string,
     TDevice extends string | number = string,
     TPin extends number = number
-> = ResourceBase<"digitalOutput"> & {
-    edge: TEdge;
-    device: TDevice;
-    pin: TPin;
+> = PhysicalResourceBase<"digitalOutput", TEdge, TDevice, TPin> & {
     outputKind: TOutputKind; //defined by project like "relay" | "socket" | "light" | "indicator" etc
 };
 
@@ -56,10 +78,7 @@ export type AnalogInputResourceBase<
     TEdge extends string = string,
     TDevice extends string | number = string,
     TPin extends number = number
-> = ResourceBase<"analogInput"> & {
-    edge: TEdge;
-    device: TDevice;
-    pin: TPin;
+> = PhysicalResourceBase<"analogInput", TEdge, TDevice, TPin> & {
     analogInputKind: TInputKind;
     /** Unit label for display (e.g. "°C", "%", "W") */
     unit?: string;
@@ -71,10 +90,7 @@ export type AnalogOutputResourceBase<
     TEdge extends string = string,
     TDevice extends string | number = string,
     TPin extends number = number
-> = ResourceBase<"analogOutput"> & {
-    edge: TEdge;
-    device: TDevice;
-    pin: TPin;
+> = PhysicalResourceBase<"analogOutput", TEdge, TDevice, TPin> & {
     analogOutputKind: TOutputKind;
     /** Minimum settable value. Default: 0 */
     min?: number;
@@ -86,9 +102,7 @@ export type AnalogOutputResourceBase<
     unit?: string;
 };
 
-export type TimerResourceBase<TEdge extends string = string> = ResourceBase<"timer"> & {
-    edge: TEdge;
-};
+export type TimerResourceBase<THost extends string = string> = LogicalResourceBase<"timer", THost>;
 
 // Complex (Multi-Physical) Resource
 
@@ -110,11 +124,9 @@ export type ComplexSubResourceRef = {
     group?: string;
 };
 
-export type ComplexResourceBase<TEdge extends string = string> = ResourceBase<"complex"> & {
-    edge: TEdge;
+export type ComplexResourceBase<THost extends string = string> = LogicalResourceBase<"complex", THost> & {
     /** Ordered list of sub-resource references */
     subResources: ComplexSubResourceRef[];
     /** How the tile summary displays. Default: first sub-resource as primary */
     tileSummary?: ComplexTileSummaryConfig;
 };
-

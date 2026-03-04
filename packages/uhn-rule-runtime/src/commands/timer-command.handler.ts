@@ -15,7 +15,7 @@ export function handleTimerCommand({ timerService, runMode }: RuleRuntimeDepende
     const { resourceId, action, durationMs, mode } = cmd.payload;
 
     // Build a minimal timer resource for the service API
-    const timerResource = { id: resourceId, type: "timer" as const, edge: "" };
+    const timerResource = { id: resourceId, type: "timer" as const, host: "" };
 
     switch (action) {
         case "start": {
