@@ -264,6 +264,10 @@ export type RuleRuntimeCommandMap = {
     request: Omit<RuleRuntimeStateFullUpdateCommand, "kind">;
     response: void;
   };
+  timerCommand: {
+    request: Omit<RuleRuntimeTimerCommand, "kind">;
+    response: void;
+  };
   muteCommand: {
     request: Omit<RuleRuntimeMuteCommand, "kind">;
     response: void;

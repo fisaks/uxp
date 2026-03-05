@@ -47,15 +47,18 @@ export class RuleEngine {
     private readonly hysteresisState = new Map<string, HysteresisEntry>();
     private readonly stateReader: StateReader;
     private readonly mode: RuntimeMode;
+    private readonly edgeName?: string;
     constructor(
         triggerEventBus: TriggerEventBus,
         private readonly rulesService: RuntimeRulesService,
         private readonly stateService: RuntimeStateService,
         private readonly timerService: RuntimeTimerService,
         private readonly muteService: RuntimeMuteService,
-        mode: RuntimeMode
+        mode: RuntimeMode,
+        edgeName?: string,
     ) {
         this.mode = mode;
+        this.edgeName = edgeName;
         this.stateReader = createRuleStateReader({ stateService: this.stateService });
         // Subscribe to state changes
         triggerEventBus.on((event) => {
@@ -269,6 +272,7 @@ export class RuleEngine {
             timerService: this.timerService,
             stateService: this.stateService,
             mode: this.mode,
+            edgeName: this.edgeName,
         });
 
         const ruleMute = createRuleMute({ muteService: this.muteService });

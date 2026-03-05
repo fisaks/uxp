@@ -2,6 +2,7 @@ import { isLogicalResource, isPhysicalResource, RuntimeAnalogOutputResource, Run
 import { AppErrorV2 } from "@uxp/bff-common";
 import { blueprintResourceService } from "./blueprint-resource.service";
 import { commandEdgeService } from "./command-edge.service";
+import { ruleRuntimeProcessService } from "./rule-runtime-process.service";
 import { stateRuntimeService } from "./state-runtime.service";
 import { stateSignalService } from "./state-signal.service";
 import { timerEdgeService } from "./timer-edge.service";
@@ -19,7 +20,14 @@ export class CommandsResourceService {
 
 
         if (resource.type === "timer" && isLogicalResource(resource)) {
-            timerEdgeService.sendTimerCommandToEdge({ id: resource.id, host: resource.host }, { action: "clear" });
+            if (resource.host === "master") {
+                ruleRuntimeProcessService.sendEvent<"timerCommand">({
+                    cmd: "timerCommand",
+                    payload: { resourceId: resource.id, action: "clear" },
+                });
+            } else {
+                timerEdgeService.sendTimerCommandToEdge({ id: resource.id, host: resource.host }, { action: "clear" });
+            }
         } else if (resource.type === "digitalOutput") {
             commandEdgeService.sendDigitalCommandToEdge(resource as RuntimeDigitalOutputResource, command);
         } else if (resource.type === "analogOutput" && command.type === "setAnalog") {

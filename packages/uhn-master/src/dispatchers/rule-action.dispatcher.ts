@@ -8,7 +8,7 @@
  *   which runs the actual timer and publishes state back via MQTT
  */
 import { RuntimeRuleAction } from "@uhn/blueprint";
-import { RuntimeAnalogOutputResource, RuntimeDigitalOutputResource } from "@uhn/common";
+import { isLogicalResource, RuntimeAnalogOutputResource, RuntimeDigitalOutputResource } from "@uhn/common";
 import { AppLogger } from "@uxp/bff-common";
 import { assertNever } from "@uxp/common";
 import { blueprintResourceService } from "../services/blueprint-resource.service";
@@ -102,6 +102,10 @@ function handleEmitSignalAction(action: Extract<RuntimeRuleAction, { type: "emit
 function handleTimerStartAction(action: Extract<RuntimeRuleAction, { type: "timerStart" }>) {
     const resource = blueprintResourceService.getResourceById(action.resourceId);
     if (resource?.type === "timer") {
+        if (isLogicalResource(resource) && resource.host === "master") {
+            AppLogger.warn({ message: `TimerStart dispatched for master-hosted timer ${action.resourceId} — should have been executed locally` });
+            return;
+        }
         timerEdgeService.sendTimerCommandToEdge(resource, {
             action: "start",
             durationMs: action.durationMs,
@@ -117,6 +121,10 @@ function handleTimerStartAction(action: Extract<RuntimeRuleAction, { type: "time
 function handleTimerClearAction(action: Extract<RuntimeRuleAction, { type: "timerClear" }>) {
     const resource = blueprintResourceService.getResourceById(action.resourceId);
     if (resource?.type === "timer") {
+        if (isLogicalResource(resource) && resource.host === "master") {
+            AppLogger.warn({ message: `TimerClear dispatched for master-hosted timer ${action.resourceId} — should have been executed locally` });
+            return;
+        }
         timerEdgeService.sendTimerCommandToEdge(resource, { action: "clear" });
         return;
     }

@@ -1,8 +1,9 @@
-import { ResourceStateValue } from "@uhn/common";
+import { ResourceStateValue, RuleRuntimeTimerStateChangedMessage } from "@uhn/common";
 import { AppLogger } from "@uxp/bff-common";
 import { EventEmitter } from "events";
 import { parseMqttTopic } from "../util/mqtt-topic.util";
 import { blueprintResourceService } from "./blueprint-resource.service";
+import { ruleRuntimeProcessService } from "./rule-runtime-process.service";
 import { subscriptionService } from "./subscription.service";
 
 export type TimerState = {
@@ -49,6 +50,9 @@ class StateTimerService extends EventEmitter<StateTimerEventMap> {
         subscriptionService.on("timerState", (topic, payload) => {
             this.handleTimerState(topic, payload);
         });
+        ruleRuntimeProcessService.on("onTimerStateChanged", (msg) => {
+            this.handleLocalTimerState(msg.payload);
+        });
     }
 
     private handleTimerState(topic: string, payload: unknown) {
@@ -79,6 +83,22 @@ class StateTimerService extends EventEmitter<StateTimerEventMap> {
             // Emit as boolean value for the runtime state service
             this.emit("timerStateChanged", resourceId, payload.active, payload.timestamp, payload.startedAt, payload.stopAt);
         }
+    }
+
+    handleLocalTimerState(payload: RuleRuntimeTimerStateChangedMessage["payload"]) {
+        const resourceId = payload.id;
+        const timestamp = Date.now();
+        const prev = this.timerStateByResourceId.get(resourceId);
+        if (prev && prev.timestamp >= timestamp) return;
+
+        this.timerStateByResourceId.set(resourceId, {
+            host: "master",
+            active: payload.active,
+            startedAt: payload.startedAt,
+            stopAt: payload.stopAt,
+            timestamp,
+        });
+        this.emit("timerStateChanged", resourceId, payload.active, timestamp, payload.startedAt, payload.stopAt);
     }
 
     clearAll() {

@@ -40,10 +40,11 @@ async function main() {
     const muteService = new RuntimeMuteService();
 
     // Instances register listeners in constructors; keep references to prevent accidental GC/lint removal.
-    const ruleEngine = new RuleEngine(triggerEventBus, rulesService, stateService, timerService, muteService, runMode);
+    const ruleEngine = new RuleEngine(triggerEventBus, rulesService, stateService, timerService, muteService, runMode, edgeName);
 
     const router = createCommandRouter({
         runMode: runMode,
+        edgeName,
         resourceService,
         rulesService,
         stateService,

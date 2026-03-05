@@ -1,21 +1,31 @@
-import { RuleRuntimeTimerCommand } from "@uhn/common";
+import { isLogicalResource, RuleRuntimeTimerCommand } from "@uhn/common";
 import { runtimeOutput } from "../io/runtime-output";
 import { RuleRuntimeDependencies } from "../types/rule-runtime.type";
 
-export function handleTimerCommand({ timerService, runMode }: RuleRuntimeDependencies, cmd: RuleRuntimeTimerCommand) {
-    if (runMode !== "edge") {
+export function handleTimerCommand({ timerService, resourceService, runMode, edgeName }: RuleRuntimeDependencies, cmd: RuleRuntimeTimerCommand) {
+    const { resourceId, action, durationMs, mode } = cmd.payload;
+
+    const resource = resourceService.getById(resourceId);
+    if (!resource || resource.type !== "timer" || !isLogicalResource(resource)) {
         runtimeOutput.log({
             component: "handleTimerCommand",
-            level: "warn",
-            message: `timerCommand received in ${runMode} mode — timer commands should only be sent to edge runtimes`,
+            level: "error",
+            message: `Timer resource ${resourceId} not found or not a timer`,
         });
         return;
     }
 
-    const { resourceId, action, durationMs, mode } = cmd.payload;
+    const localHost = runMode === "master" ? "master" : edgeName;
+    if (resource.host !== localHost) {
+        runtimeOutput.log({
+            component: "handleTimerCommand",
+            level: "warn",
+            message: `Timer ${resourceId} is hosted on ${resource.host}, not on this runtime (${localHost}) — ignoring command`,
+        });
+        return;
+    }
 
-    // Build a minimal timer resource for the service API
-    const timerResource = { id: resourceId, type: "timer" as const, host: "" };
+    const timerResource = { id: resourceId, type: "timer" as const, host: resource.host };
 
     switch (action) {
         case "start": {

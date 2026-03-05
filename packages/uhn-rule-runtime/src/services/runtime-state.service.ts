@@ -13,13 +13,14 @@ export class RuntimeStateService extends EventEmitter<RuntimeStateServiceEventMa
 
     update(resourceId: string, value: ResourceStateValue | undefined, timestamp: number) {
         const prev = this.state.get(resourceId);
-        const next: ResourceState = { value, timestamp };
 
-        // Always update but only emit if value has changed
+        // Reject stale updates — a newer state is already stored
+        if (prev && prev.timestamp > timestamp) return;
+
+        const next: ResourceState = { value, timestamp };
         this.state.set(resourceId, next);
-        if (prev?.value === next.value) {
-            return;
-        }
+
+        if (prev?.value === next.value) return;
 
         this.emit("stateChanged", {
             resourceId,

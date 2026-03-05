@@ -10,6 +10,7 @@ export type RuntimeMode = typeof RuntimeModes[number];
 
 export type RuleRuntimeDependencies = {
     runMode: RuntimeMode;
+    edgeName?: string;
     resourceService: RuntimeResourceService;
     stateService: RuntimeStateService;
     rulesService: RuntimeRulesService;
