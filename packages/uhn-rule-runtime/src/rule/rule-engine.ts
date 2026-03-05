@@ -125,9 +125,9 @@ export class RuleEngine {
 
         if (isResourceTrigger(trigger)) {
             if (trigger.event !== event.event) return false;
-            // Handle onChanged with hysteresis for analog resources
-            const isAnalog = trigger.resource.type === "analogInput" || trigger.resource.type === "analogOutput";
-            if (trigger.event === "changed" && trigger.hysteresis !== undefined && isAnalog && typeof event.value === "number") {
+            // Handle onChanged with hysteresis for analog/complex resources
+            const supportsHysteresis = trigger.resource.type === "analogInput" || trigger.resource.type === "analogOutput" || trigger.resource.type === "complex";
+            if (trigger.event === "changed" && trigger.hysteresis !== undefined && supportsHysteresis && typeof event.value === "number") {
                 return this.matchChangedWithHysteresis(trigger.hysteresis, event.value, ruleId, triggerIdx);
             }
             return true;

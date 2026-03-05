@@ -27,7 +27,7 @@ export const AnalogOutputPanel: React.FC<AnalogOutputPanelProps> = ({
 }) => {
     const theme = useTheme();
     const portalContainer = usePortalContainerRef();
-    const sendCommand = useSendResourceCommand(resource.id, state?.value);
+    const sendCommand = useSendResourceCommand(resource.id);
     const { localValue, handleChange, handleChangeCommitted, sendExact } =
         useAnalogSlider(resource, state, sendCommand);
 

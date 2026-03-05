@@ -4,12 +4,14 @@ import { RootState } from "../../app/store";
 import { fullStateReceived, stateReceived } from "../runtime-state/runtimeStateSlice";
 import {
     clearAllCommandFeedback,
+    commandAcknowledged,
     commandFailed,
     commandFeedbackCleared,
     commandResolved
 } from "./resourceCommandFeedbackSlice";
 
 const ERROR_AUTO_CLEAR_MS = 6000;
+const ACK_RESOLVE_FALLBACK_MS = 1000;
 
 export const resourceCommandFeedbackListenerMiddleware = createListenerMiddleware();
 
@@ -32,6 +34,24 @@ resourceCommandFeedbackListenerMiddleware.startListening({
             commandFeedbackCleared({ resourceId, occurredAt })
         );
 
+    },
+});
+
+/**
+ * Ack fallback: resolve pending after a short grace period.
+ * If a stateReceived arrives first, commandResolved fires immediately and
+ * the startedAt nonce check makes this timer a no-op.
+ */
+resourceCommandFeedbackListenerMiddleware.startListening({
+    actionCreator: commandAcknowledged,
+    effect: async (action, api) => {
+        const { resourceId, startedAt } = action.payload;
+        await api.delay(ACK_RESOLVE_FALLBACK_MS);
+        const state: RootState = api.getState() as RootState;
+        const fb = state.resourceCommandFeedback.byResourceId[resourceId];
+        if (fb?.status === "pending" && fb.startedAt === startedAt) {
+            api.dispatch(commandResolved({ resourceId }));
+        }
     },
 });
 

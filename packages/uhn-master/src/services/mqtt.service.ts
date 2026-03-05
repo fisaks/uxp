@@ -1,5 +1,6 @@
 import { AppLogger, MqttService } from "@uxp/bff-common";
 import { env } from "process";
+import { blueprintRuntimeSupervisorService } from "./blueprint-runtime-supervisor.service";
 import { subscriptionService } from "./subscription.service";
 
 export const MASTER_STATUS_TOPIC = "uhn/master/status";
@@ -31,6 +32,7 @@ for (const sig of ["SIGINT", "SIGTERM"]) {
     process.on(sig, async () => {
         await mqttService.publishAsync(MASTER_STATUS_TOPIC, "offline", { qos: 1, retain: true });
         mqttService.disconnect();
+        await blueprintRuntimeSupervisorService.stop();
         process.exit(0);
     });
 }

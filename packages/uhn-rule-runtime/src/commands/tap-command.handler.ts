@@ -1,0 +1,29 @@
+import { isLogicalResource, RuleRuntimeTapCommand } from "@uhn/common";
+import { runtimeOutput } from "../io/runtime-output";
+import { RuleRuntimeDependencies } from "../types/rule-runtime.type";
+
+export function handleTapCommand({ resourceService, triggerEventBus }: RuleRuntimeDependencies, cmd: RuleRuntimeTapCommand) {
+    const { resourceId, timestamp } = cmd.payload;
+
+    const resource = resourceService.getById(resourceId);
+    if (!resource || resource.type !== "complex" || !isLogicalResource(resource)) {
+        runtimeOutput.log({
+            component: "handleTapCommand",
+            level: "error",
+            message: `Complex resource ${resourceId} not found or not a complex resource`,
+        });
+        return;
+    }
+
+    triggerEventBus.emit({
+        resource,
+        event: "tap",
+        timestamp,
+    });
+
+    runtimeOutput.log({
+        component: "handleTapCommand",
+        level: "info",
+        message: `Tap event emitted for complex resource ${resourceId}`,
+    });
+}

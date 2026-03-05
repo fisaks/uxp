@@ -1,5 +1,5 @@
 import { BaseAnalogInputKind, BaseAnalogOutputKind, BaseInputKind, BaseOutputKind, InputType } from "@uhn/blueprint";
-import { RuntimeComplexSubResourceRef, RuntimeComplexTileSummaryConfig, RuntimeResource, RuntimeResourceState } from "@uhn/common";
+import { RuntimeComplexSubResourceRef, RuntimeResource, RuntimeResourceState } from "@uhn/common";
 
 // Helper types
 
@@ -13,7 +13,8 @@ export type TileRuntimeResource = RuntimeResource & {
     max?: number;
     step?: number;
     unit?: string;
+    inactiveValue?: number;
+    emitsTap?: boolean;
     subResources?: RuntimeComplexSubResourceRef[];
-    tileSummary?: RuntimeComplexTileSummaryConfig;
 };
 export type TileRuntimeResourceState = Pick<RuntimeResourceState, "value" | "timestamp" | "details">;

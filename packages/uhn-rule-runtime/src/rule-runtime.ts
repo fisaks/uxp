@@ -49,6 +49,7 @@ async function main() {
         stateService,
         timerService,
         muteService,
+        triggerEventBus,
     });
     const resourceEventEmitter = new ResourceEventEmitter(stateService, triggerEventBus, resourceService);
     const inputGestureEmitter = new InputGestureEmitter(stateService, rulesService, triggerEventBus, resourceService);

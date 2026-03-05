@@ -7,9 +7,9 @@ import { RuntimeStateService } from "./runtime-state.service";
 /**
  * Runs compute functions for complex resources when their dependency resources change state.
  *
- * Each complex resource with a `tileSummary.mode === "computed"` entry has:
+ * Each complex resource has:
  * - A `fn` that takes a Map<resource, value> and returns a value
- * - A `resources` array that defines which resources to watch
+ * - A `resources` array that defines which dependency resources to watch
  *
  * When any watched resource changes, the fn is called and the result is
  * stored as the complex resource's own state via stateService.update().

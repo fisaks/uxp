@@ -44,6 +44,15 @@ export class CommandsResourceService {
         } else if (resource.type === "digitalInput" && (command.type === "press" || command.type === "release") && isPhysicalResource(resource)) {
             const signalValue = command.type === "press" ? true : false;
             stateSignalService.setSignalState(resource, signalValue);
+        } else if (resource.type === "complex" && command.type === "tap" && isLogicalResource(resource)) {
+            if (resource.host === "master") {
+                ruleRuntimeProcessService.sendEvent<"tapCommand">({
+                    cmd: "tapCommand",
+                    payload: { resourceId: resource.id, timestamp: Date.now() },
+                });
+            } else {
+                logicalResourceEdgeService.sendCommandToEdge({ id: resource.id, host: resource.host }, { action: "tap" });
+            }
         }
     }
 
@@ -92,6 +101,13 @@ export class CommandsResourceService {
             }
             if (inputResource.inputType === "toggle" && command.type !== "toggle") {
                 throw new AppErrorV2({ statusCode: 400, code: "INVALID_RESOURCE_COMMAND", message: `Invalid command type ${command.type} for digitalInput toggle resource` });
+            }
+            return;
+        }
+
+        if (resource.type === "complex") {
+            if (command.type !== "tap") {
+                throw new AppErrorV2({ statusCode: 400, code: "INVALID_RESOURCE_COMMAND", message: `Invalid command type ${command.type} for complex resource` });
             }
             return;
         }

@@ -88,11 +88,6 @@ export type RuntimeComplexSubResourceRef = {
     group?: string;
 };
 
-/** Runtime version of ComplexTileSummaryConfig — resource objects resolved to string IDs, fn stays in sandbox */
-export type RuntimeComplexTileSummaryConfig =
-    | { mode: "primary"; resourceId: string }
-    | { mode: "carousel"; resourceIds: string[]; intervalMs?: number }
-    | { mode: "computed"; unit?: string };
 
 type RuntimeResourceCommon = {
     id: string;
@@ -145,7 +140,9 @@ export type RuntimeAnalogOutputResource = RuntimePhysicalResource & {
 export type RuntimeComplexResource = RuntimeLogicalResource & {
   type: "complex";
   subResources: RuntimeComplexSubResourceRef[];
-  tileSummary?: RuntimeComplexTileSummaryConfig;
+  unit?: string;
+  inactiveValue?: number;
+  emitsTap?: boolean;
 };
 
 export type RuntimeTimerResource = RuntimeLogicalResource & {
@@ -195,10 +192,20 @@ export type RuleRuntimeMuteCommand = {
   };
 };
 
+export type RuleRuntimeTapCommand = {
+  kind: "event";
+  cmd: "tapCommand";
+  payload: {
+    resourceId: string;
+    timestamp: number;
+  };
+};
+
 export type RuleRuntimeCommand = RuleRuntimeStateUpdateCommand
   | RuleRuntimeStateFullUpdateCommand
   | RuleRuntimeTimerCommand
-  | RuleRuntimeMuteCommand;
+  | RuleRuntimeMuteCommand
+  | RuleRuntimeTapCommand;
 
 
 export type RuleRuntimeResourcesLoadedMessage = {
@@ -268,6 +275,10 @@ export type RuleRuntimeCommandMap = {
   };
   muteCommand: {
     request: Omit<RuleRuntimeMuteCommand, "kind">;
+    response: void;
+  };
+  tapCommand: {
+    request: Omit<RuleRuntimeTapCommand, "kind">;
     response: void;
   };
 };

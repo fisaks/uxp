@@ -109,12 +109,6 @@ export type TimerResourceBase<THost extends string = string> = LogicalResourceBa
 /** Compute function that derives a value from sub-resource states */
 export type ComplexComputeFn = (values: Map<ResourceBase<ResourceType>, boolean | number>) => boolean | number;
 
-/** How the complex tile summarizes its sub-resources on the grid */
-export type ComplexTileSummaryConfig =
-    | { mode: "primary"; resource: ResourceBase<ResourceType> }
-    | { mode: "carousel"; resources: ResourceBase<ResourceType>[]; intervalMs?: number }
-    | { mode: "computed"; fn: ComplexComputeFn; resources: ResourceBase<ResourceType>[]; unit?: string };
-
 export type ComplexSubResourceRef = {
     resource: ResourceBase<ResourceType>;
     /** Display label override within the complex resource popover */
@@ -125,8 +119,16 @@ export type ComplexSubResourceRef = {
 };
 
 export type ComplexResourceBase<THost extends string = string> = LogicalResourceBase<"complex", THost> & {
-    /** Ordered list of sub-resource references */
+    /** Compute function that derives this resource's state from dependency values */
+    computeFn: ComplexComputeFn;
+    /** Resources whose state values are passed to computeFn (can differ from subResources) */
+    computeResources: ResourceBase<ResourceType>[];
+    /** Unit label for display (e.g. "W", "%") */
+    unit?: string;
+    /** The numeric value that represents the inactive/off state. Active when computed value !== inactiveValue. Default: 0 */
+    inactiveValue?: number;
+    /** When true, short clicks send a tap command (for rule triggers). When false, all clicks open the popover. Default: false */
+    emitsTap?: boolean;
+    /** Ordered list of sub-resource references (for UI popover) */
     subResources: ComplexSubResourceRef[];
-    /** How the tile summary displays. Default: first sub-resource as primary */
-    tileSummary?: ComplexTileSummaryConfig;
 };

@@ -5,7 +5,7 @@ import { runtimeOutput } from "../io/runtime-output";
 import { RuntimeResourceService } from "../services/runtime-resource.service";
 import type { RuntimeStateService } from "../services/runtime-state.service";
 import type { RuntimeStateChange } from "../types/rule-runtime.type";
-import { getAnalogInputEventsFromStateChange, getAnalogOutputEventsFromStateChange, getEventsFromStateChange, getTimerEventsFromStateChange } from "./rule-engine.utils";
+import { getAnalogInputEventsFromStateChange, getAnalogOutputEventsFromStateChange, getComplexEventsFromStateChange, getEventsFromStateChange, getTimerEventsFromStateChange } from "./rule-engine.utils";
 import type { TriggerEventBus } from "./trigger-event-bus";
 
 
@@ -45,8 +45,7 @@ export class ResourceEventEmitter {
                 events.push(...getTimerEventsFromStateChange(prev, next));
                 break;
             case "complex":
-                // Computed complex resources do receive state changes, but
-                // rules cannot attach to complex resources at this point.
+                events.push(...getComplexEventsFromStateChange(prev, next));
                 break;
             default:
                 assertNever(resource);

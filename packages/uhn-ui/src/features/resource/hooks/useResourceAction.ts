@@ -16,7 +16,7 @@ export function useResourceAction(
     state?: TileRuntimeResourceState,
     options?: UseResourceActionOptions
 ) {
-    const sendCommand = useSendResourceCommand(resource.id, state?.value);
+    const sendCommand = useSendResourceCommand(resource.id);
 
     const hasActivePointerInteractionRef = useRef(false);
     const pressCommittedAtRef = useRef<number | null>(null);
@@ -101,7 +101,7 @@ export function useResourceAction(
                 }
             }
 
-            if (resource.type === "analogOutput" && options?.onLongPress) {
+            if ((resource.type === "analogOutput" || resource.type === "complex") && options?.onLongPress) {
                 if (e.pointerType === "touch") {
                     // On touch, delay long-press start to disambiguate scroll
                     clearPressIntentDelay();
@@ -178,9 +178,13 @@ export function useResourceAction(
             sendCommand({ type: "setAnalog", value: nextValue });
             return;
         }
-        // Complex: open popover on click
+        // Complex: tappable sends tap command, otherwise open popover
         if (resource.type === "complex") {
-            options?.onLongPress?.();
+            if (resource.emitsTap) {
+                sendCommand({ type: "tap" });
+            } else {
+                options?.onLongPress?.();
+            }
             return;
         }
     }, [resource, state?.value, sendCommand, options]);

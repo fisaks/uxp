@@ -194,6 +194,9 @@ export const ResourceTile: React.FC<ResourceTileProps> = ({ resource, state }) =
                 {...actions}
             >
                 <Box className="resource-main-icon-container"
+                    onPointerDown={hasInteractionPanel ? (e: React.PointerEvent) => {
+                        e.stopPropagation();
+                    } : undefined}
                     onClick={hasInteractionPanel ? (e: React.MouseEvent) => {
                         e.preventDefault();
                         e.stopPropagation();

@@ -1,7 +1,7 @@
 import mqttService from "./mqtt.service";
 
 type LogicalResourceEdgeCommand = {
-    action: "start" | "clear";
+    action: "start" | "clear" | "tap";
     durationMs?: number;
     mode?: "restart" | "startOnce";
 };

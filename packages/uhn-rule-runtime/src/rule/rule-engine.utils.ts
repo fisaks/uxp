@@ -75,6 +75,21 @@ export function getTimerEventsFromStateChange(
     return events;
 }
 
+export function getComplexEventsFromStateChange(
+    prev: ResourceState | undefined,
+    next: ResourceState
+): TriggerEvent[] {
+    if (typeof next.value === "boolean") {
+        // Boolean complex: same as digital — changed, activated, deactivated
+        return getEventsFromStateChange(prev, next);
+    }
+    if (typeof next.value === "number") {
+        // Numeric complex: only "changed" — threshold triggers handle above/below
+        return prev?.value !== next.value ? ["changed"] : [];
+    }
+    return [];
+}
+
 export function isPushButton(
     resource: ResourceBase<ResourceType>
 ): resource is DigitalInputResourceBase<"button"> {

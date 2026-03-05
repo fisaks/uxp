@@ -27,11 +27,15 @@ const resourceCommandFeedbackSlice = createSlice({
     name: "resourceCommandFeedback",
     initialState,
     reducers: {
-        commandStarted: (state, action: PayloadAction<{ resourceId: string }>) => {
+        commandStarted: (state, action: PayloadAction<{ resourceId: string; startedAt: number }>) => {
             state.byResourceId[action.payload.resourceId] = {
                 status: "pending",
-                startedAt: Date.now(),
+                startedAt: action.payload.startedAt,
             };
+        },
+
+        commandAcknowledged: (_state, _action: PayloadAction<{ resourceId: string; startedAt: number }>) => {
+            // No state mutation — triggers fallback timer in listener middleware
         },
 
         commandResolved: (state, action: PayloadAction<{ resourceId: string }>) => {
@@ -74,6 +78,7 @@ const resourceCommandFeedbackSlice = createSlice({
 
 export const {
     commandStarted,
+    commandAcknowledged,
     commandResolved,
     commandFailed,
     commandFeedbackCleared,

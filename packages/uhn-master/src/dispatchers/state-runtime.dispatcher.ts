@@ -10,6 +10,9 @@ let initialized = false;
 
 function sendFullStateUpdateToRuleRuntime(states: RuntimeResourceState[]) {
     if (!ruleRuntimeProcessService.canSendCommands()) {
+        AppLogger.warn({
+            message: `[StateRuntimeDispatcher] Cannot send full state update to rule runtime because it is not ready`,
+        });
         return;
     }
 

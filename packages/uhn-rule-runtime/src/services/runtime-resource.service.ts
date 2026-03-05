@@ -1,6 +1,6 @@
 // services/runtime-resource.service.ts
-import { ComplexComputeFn, ComplexResourceBase, ComplexSubResourceRef, ComplexTileSummaryConfig, ResourceBase, ResourceType } from "@uhn/blueprint";
-import { humanizeResourceId, isRuntimeResourceObject, RuntimeComplexResource, RuntimeComplexSubResourceRef, RuntimeComplexTileSummaryConfig, RuntimeResource, RuntimeResourceList } from "@uhn/common";
+import { ComplexComputeFn, ComplexResourceBase, ComplexSubResourceRef, ResourceBase, ResourceType } from "@uhn/blueprint";
+import { humanizeResourceId, isRuntimeResourceObject, RuntimeComplexResource, RuntimeComplexSubResourceRef, RuntimeResource, RuntimeResourceList } from "@uhn/common";
 import fs from "fs-extra";
 import path from "path";
 import { runtimeOutput } from "../io/runtime-output";
@@ -22,17 +22,6 @@ function serializeSubResources(refs: ComplexSubResourceRef[]): RuntimeComplexSub
     }));
 }
 
-/** Serialize blueprint ComplexTileSummaryConfig (resource objects) → runtime (string IDs). fn stays in sandbox. */
-function serializeTileSummary(cfg: ComplexTileSummaryConfig): RuntimeComplexTileSummaryConfig {
-    switch (cfg.mode) {
-        case "primary":
-            return { mode: "primary", resourceId: cfg.resource.id! };
-        case "carousel":
-            return { mode: "carousel", resourceIds: cfg.resources.map(r => r.id!), intervalMs: cfg.intervalMs };
-        case "computed":
-            return { mode: "computed", unit: cfg.unit };
-    }
-}
 
 type CollectResult = {
     resources: RuntimeResourceList;
@@ -73,22 +62,22 @@ async function collectResources(resourcesDir: string): Promise<CollectResult> {
                     // Serialize complex resource fields: resource objects → string IDs
                     if (runtimeResource.type === "complex") {
                         const complex = runtimeResource as unknown as ComplexResourceBase;
-                        if (complex.subResources?.length) {
-                            if (complex.tileSummary?.mode === "computed" && typeof complex.tileSummary.fn === "function") {
-                                complexComputeEntries.push({
-                                    complexResourceId: runtimeResource.id,
-                                    fn: complex.tileSummary.fn,
-                                    resources: complex.tileSummary.resources ?? [],
-                                });
-                            }
-                            const complexRuntime = {
-                                ...runtimeResource,
-                                type: "complex",
-                                subResources: serializeSubResources(complex.subResources),
-                                ...(complex.tileSummary && { tileSummary: serializeTileSummary(complex.tileSummary) }),
-                            } satisfies RuntimeComplexResource;
-                            runtimeResource = complexRuntime;
+                        if (typeof complex.computeFn === "function") {
+                            complexComputeEntries.push({
+                                complexResourceId: runtimeResource.id,
+                                fn: complex.computeFn,
+                                resources: complex.computeResources ?? [],
+                            });
                         }
+                        const complexRuntime = {
+                            ...runtimeResource,
+                            type: "complex",
+                            subResources: serializeSubResources(complex.subResources ?? []),
+                            unit: complex.unit,
+                            inactiveValue: complex.inactiveValue,
+                            emitsTap: complex.emitsTap,
+                        } satisfies RuntimeComplexResource;
+                        runtimeResource = complexRuntime;
                     }
                     allResources.push(runtimeResource);
                 } else {

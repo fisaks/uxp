@@ -5,6 +5,7 @@ import { RuleRuntimeDependencies } from "../types/rule-runtime.type";
 import { handleMuteCommand } from "./mute-command.handler";
 import { handleStateFullUpdate } from "./state-full-update.handler";
 import { handleStateUpdate } from "./state-update.handler";
+import { handleTapCommand } from "./tap-command.handler";
 import { handleTimerCommand } from "./timer-command.handler";
 
 export function createCommandRouter(deps: RuleRuntimeDependencies) {
@@ -23,6 +24,9 @@ export function createCommandRouter(deps: RuleRuntimeDependencies) {
                         break;
                     case "muteCommand":
                         handleMuteCommand(deps, cmd);
+                        break;
+                    case "tapCommand":
+                        handleTapCommand(deps, cmd);
                         break;
                     default:
                         handleUnknownCommand(cmd);

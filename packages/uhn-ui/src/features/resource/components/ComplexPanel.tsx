@@ -222,7 +222,7 @@ const AnalogOutputControl: React.FC<{
     state: TileRuntimeResourceState | undefined;
     iconColor: string;
 }> = ({ resource, state, iconColor }) => {
-    const sendCommand = useSendResourceCommand(resource.id, state?.value);
+    const sendCommand = useSendResourceCommand(resource.id);
     const { localValue, handleChange, handleChangeCommitted, sendExact } =
         useAnalogSlider(resource, state, sendCommand);
 

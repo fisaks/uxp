@@ -35,7 +35,9 @@ export function createRuleStateReader({ stateService }: { stateService: RuntimeS
                     }
                     return s.value as StateValueByResourceType<T>;
                 case "complex":
-                    // Complex resources may have computed state (from ComplexComputeService)
+                    if (!isDigitalValue(s.value) && !isAnalogValue(s.value)) {
+                        throw new ResourceStateTypeMismatchError(r.id, r.type, s.value);
+                    }
                     return s.value as StateValueByResourceType<T>;
                 default:
                     assertNever(r.type, `Unsupported resource type "${r.type}" for getState`);

@@ -31,13 +31,18 @@ export type SetAnalogCommand = {
     value: number;
 };
 
+export type TapCommand = {
+    type: "tap";
+};
+
 export type UhnResourceCommand =
     | ToggleCommand
     | SetCommand
     | PressCommand
     | ReleaseCommand
     | ClearTimerCommand
-    | SetAnalogCommand;
+    | SetAnalogCommand
+    | TapCommand;
 
 export type ToggleCommand = {
     type: "toggle";
@@ -171,6 +176,14 @@ export const UhnResourceCommandPayloadSchema: MessagePayloadSchema<UhnResourceCo
                         value: { type: 'number' }
                     },
                     required: ['type', 'value'],
+                    additionalProperties: false
+                },
+                {
+                    type: 'object',
+                    properties: {
+                        type: { const: 'tap' }
+                    },
+                    required: ['type'],
                     additionalProperties: false
                 }
             ]

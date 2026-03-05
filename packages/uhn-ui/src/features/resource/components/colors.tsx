@@ -256,7 +256,15 @@ export function getResourceIconColor(
     }
 
     if (resource.type === "complex") {
-        return complexColors.icon.active[mode];
+        let complexActive: boolean;
+        if (typeof state?.value === "boolean") {
+            complexActive = state.value;
+        } else if (typeof state?.value === "number") {
+            complexActive = state.value !== (resource.inactiveValue ?? 0);
+        } else {
+            complexActive = false;
+        }
+        return complexActive ? complexColors.icon.active[mode] : complexColors.icon.inactive[mode];
     }
 
     return theme.palette.text.disabled;
