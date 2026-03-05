@@ -10,11 +10,14 @@ export function getEventsFromStateChange(
         events.push("changed");
     }
 
-    if (prev?.value === false && next.value === true) {
+    // Treat missing previous state as false (resource not yet seen)
+    const prevValue = prev?.value ?? false;
+
+    if (prevValue === false && next.value === true) {
         events.push("activated");
     }
 
-    if (prev?.value === true && next.value === false) {
+    if (prevValue === true && next.value === false) {
         events.push("deactivated");
     }
 

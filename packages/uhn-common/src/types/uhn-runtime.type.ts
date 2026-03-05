@@ -234,24 +234,22 @@ export type RuleRuntimeReadyMessage = {
   cmd: "ready";
 };
 
-export type RuleRuntimeTimerStateChangedMessage = {
+export type RuleRuntimeLogicalResourceStateChangedMessage = {
   kind: "event";
-  cmd: "timerStateChanged";
-  payload: { id: string; active: boolean; startedAt: number; stopAt: number };
-};
-
-export type RuleRuntimeComputedStateChangedMessage = {
-  kind: "event";
-  cmd: "computedStateChanged";
-  payload: { resourceId: string; value: ResourceStateValue; timestamp: number };
+  cmd: "logicalResourceStateChanged";
+  payload: {
+    resourceId: string;
+    value: ResourceStateValue;
+    timestamp: number;
+    details?: ResourceStateDetails;
+  };
 };
 
 export type RuleRuntimeResponse = RuleRuntimeReadyMessage
   | RuleRuntimeActionMessage
   | RuleRuntimeResourceMissingMessage
   | RuleRuntimeLogMessage
-  | RuleRuntimeTimerStateChangedMessage
-  | RuleRuntimeComputedStateChangedMessage
+  | RuleRuntimeLogicalResourceStateChangedMessage
   | RuleRuntimeRulesLoadedMessage
   | RuleRuntimeResourcesLoadedMessage;
 

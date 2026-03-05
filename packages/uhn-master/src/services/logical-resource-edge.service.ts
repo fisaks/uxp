@@ -1,17 +1,17 @@
 import mqttService from "./mqtt.service";
 
-type TimerEdgeCommand = {
+type LogicalResourceEdgeCommand = {
     action: "start" | "clear";
     durationMs?: number;
     mode?: "restart" | "startOnce";
 };
 
-class TimerEdgeService {
-    sendTimerCommandToEdge(
+class LogicalResourceEdgeService {
+    sendCommandToEdge(
         resource: { id: string; host: string },
-        command: TimerEdgeCommand
+        command: LogicalResourceEdgeCommand
     ) {
-        const topic = `uhn/${resource.host}/timer/cmd/${resource.id}`;
+        const topic = `uhn/${resource.host}/logical-resource/cmd/${resource.id}`;
         const payload = {
             resourceId: resource.id,
             action: command.action,
@@ -23,4 +23,4 @@ class TimerEdgeService {
     }
 }
 
-export const timerEdgeService = new TimerEdgeService();
+export const logicalResourceEdgeService = new LogicalResourceEdgeService();

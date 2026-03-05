@@ -88,7 +88,7 @@ export class ComplexComputeService {
             // Send computed value to master via IPC
             runtimeOutput.send({
                 kind: "event",
-                cmd: "computedStateChanged",
+                cmd: "logicalResourceStateChanged",
                 payload: { resourceId: entry.complexResourceId, value: result, timestamp },
             });
         } catch (err) {

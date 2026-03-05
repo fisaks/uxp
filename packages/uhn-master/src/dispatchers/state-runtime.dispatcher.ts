@@ -1,5 +1,6 @@
 import { AppLogger } from "@uxp/bff-common";
 import { ResourceStateValue, RuntimeResourceState } from "packages/uhn-common/src/types/uhn-runtime.type";
+import { blueprintRuntimeSupervisorService } from "../services/blueprint-runtime-supervisor.service";
 import { ruleRuntimeProcessService } from "../services/rule-runtime-process.service";
 import { stateRuntimeService } from "../services/state-runtime.service";
 import { UHNAppServerWebSocketManager } from "../ws/UHNAppServerWebSocketManager";
@@ -74,6 +75,16 @@ export function initStateRuntimeDispatcher(): void {
         });
     });
 
-
+    // When the runtime becomes ready, send the full state snapshot.
+    // The runtimeStatesChanged event fires during resourcesLoaded processing
+    // (before the runtime sends "ready"), so stateFullUpdate gets silently
+    // dropped by canSendCommands(). Re-send once the runtime is actually ready.
+    blueprintRuntimeSupervisorService.on("ruleRuntimeReady", () => {
+        const states = stateRuntimeService.getAllStates();
+        AppLogger.info({
+            message: `[StateRuntimeDispatcher] Runtime ready, sending stateFullUpdate with ${states.length} resources`,
+        });
+        sendFullStateUpdateToRuleRuntime(states);
+    });
 
 }

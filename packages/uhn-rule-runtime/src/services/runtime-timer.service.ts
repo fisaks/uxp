@@ -1,6 +1,6 @@
 import { TimerResourceBase } from "@uhn/blueprint";
-import { ResourceMissingIdError } from "@uhn/common";
-import { EventEmitter } from "stream";
+import { ResourceMissingIdError, ResourceStateDetails } from "@uhn/common";
+import { runtimeOutput } from "../io/runtime-output";
 import { TimerAPI, TimerRuntimeState } from "../types/timer-runtime.type";
 import { RuntimeStateService } from "./runtime-state.service";
 
@@ -9,16 +9,11 @@ type InternalTimer = {
     state: TimerRuntimeState;
 };
 
-export type TimerRuntimeEventMap = {
-    timerStateChanged: [state: TimerRuntimeState];
-};
-
-export class RuntimeTimerService extends EventEmitter<TimerRuntimeEventMap> implements TimerAPI {
+export class RuntimeTimerService implements TimerAPI {
 
     private readonly timers = new Map<string, InternalTimer>();
 
     constructor(private readonly stateService: RuntimeStateService) {
-        super();
     }
 
     start(timer: TimerResourceBase, delayMs: number) {
@@ -40,7 +35,7 @@ export class RuntimeTimerService extends EventEmitter<TimerRuntimeEventMap> impl
 
         this.stateService.update(timer.id, true, now);
 
-        this.emit("timerStateChanged", timerState);
+        this.sendLogicalResourceState(timerState);
 
         const timeout = setTimeout(() => {
 
@@ -56,7 +51,7 @@ export class RuntimeTimerService extends EventEmitter<TimerRuntimeEventMap> impl
             };
 
             this.stateService.update(timerState.id, false, endedAt);
-            this.emit("timerStateChanged", endedState);
+            this.sendLogicalResourceState(endedState);
         }, Math.max(0, delayMs));
 
         this.timers.set(timer.id, { timeout, state: timerState });
@@ -79,7 +74,7 @@ export class RuntimeTimerService extends EventEmitter<TimerRuntimeEventMap> impl
         };
 
         this.stateService.update(timer.id, false, now);
-        this.emit("timerStateChanged", clearedState);
+        this.sendLogicalResourceState(clearedState);
     }
 
     private clearTimeout(timerId: string, timer: InternalTimer | undefined) {
@@ -99,5 +94,19 @@ export class RuntimeTimerService extends EventEmitter<TimerRuntimeEventMap> impl
         return this.timers.get(timer.id)?.state;
     }
 
-
+    private sendLogicalResourceState(state: TimerRuntimeState) {
+        const details: ResourceStateDetails | undefined = state.active
+            ? { type: "timer", startedAt: state.startedAt, stopAt: state.stopAt }
+            : undefined;
+        runtimeOutput.send({
+            kind: "event",
+            cmd: "logicalResourceStateChanged",
+            payload: {
+                resourceId: state.id,
+                value: state.active,
+                timestamp: Date.now(),
+                ...(details && { details }),
+            },
+        });
+    }
 }

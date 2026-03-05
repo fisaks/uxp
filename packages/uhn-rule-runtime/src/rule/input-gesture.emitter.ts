@@ -43,14 +43,17 @@ export class InputGestureEmitter {
             return;
         }
 
+        // Treat missing previous state as false (button not pressed)
+        const prevValue = prev?.value ?? false;
+
         // press
-        if (prev?.value === false && next.value === true) {
+        if (prevValue === false && next.value === true) {
             this.onPress(resource, next.timestamp);
             return;
         }
 
         // release
-        if (prev?.value === true && next.value === false) {
+        if (prevValue === true && next.value === false) {
             this.onRelease(resource, next.timestamp);
         }
     }

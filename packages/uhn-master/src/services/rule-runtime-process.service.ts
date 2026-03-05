@@ -1,6 +1,6 @@
 //services/rule-runtime-process.service.ts
 
-import { FireAndForgetCmdKey, isRuleRuntimeEventObject, RuleRuntimeActionMessage, RuleRuntimeCommand, RuleRuntimeCommandMap, RuleRuntimeComputedStateChangedMessage, RuleRuntimeLogMessage, RuleRuntimeResourcesLoadedMessage, RuleRuntimeRulesLoadedMessage, RuleRuntimeTimerStateChangedMessage } from "@uhn/common";
+import { FireAndForgetCmdKey, isRuleRuntimeEventObject, RuleRuntimeActionMessage, RuleRuntimeCommand, RuleRuntimeCommandMap, RuleRuntimeLogicalResourceStateChangedMessage, RuleRuntimeLogMessage, RuleRuntimeResourcesLoadedMessage, RuleRuntimeRulesLoadedMessage } from "@uhn/common";
 import { AppErrorV2, AppLogger, fileExists, pathExists, readFile, removeFile, writeFile } from "@uxp/bff-common";
 import { assertNever } from "@uxp/common";
 import { ChildProcess, spawn, SpawnOptions } from "child_process";
@@ -28,8 +28,7 @@ type SandboxConfig = {
 
 type RuleRuntimeProcessEventMap = {
     onActionEvent: [response: RuleRuntimeActionMessage];
-    onComputedStateChanged: [response: RuleRuntimeComputedStateChangedMessage];
-    onTimerStateChanged: [response: RuleRuntimeTimerStateChangedMessage];
+    onLogicalResourceStateChanged: [response: RuleRuntimeLogicalResourceStateChangedMessage];
     onRulesLoaded: [response: RuleRuntimeRulesLoadedMessage];
     onResourcesLoaded: [response: RuleRuntimeResourcesLoadedMessage];
     exit: [code: number | null, signal: NodeJS.Signals | null];
@@ -393,11 +392,8 @@ class RuleRuntimeProcessService extends EventEmitter<RuleRuntimeProcessEventMap>
                         case "resourcesLoaded":
                             this.emit("onResourcesLoaded", resp);
                             continue;
-                        case "timerStateChanged":
-                            this.handleTimerStateChanged(resp);
-                            continue;
-                        case "computedStateChanged":
-                            this.emit("onComputedStateChanged", resp);
+                        case "logicalResourceStateChanged":
+                            this.emit("onLogicalResourceStateChanged", resp);
                             continue;
                         default:
                             assertNever(resp);
@@ -415,10 +411,6 @@ class RuleRuntimeProcessService extends EventEmitter<RuleRuntimeProcessEventMap>
             await this.onExit(false);
             this.emit("exit", code, signal);
         });
-    }
-
-    private handleTimerStateChanged(resp: RuleRuntimeTimerStateChangedMessage) {
-        this.emit("onTimerStateChanged", resp);
     }
 
     async stopRuleRuntime() {

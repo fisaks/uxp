@@ -4,11 +4,10 @@ import { AppLogger } from "@uxp/bff-common";
 import { EventEmitter } from "events";
 
 import { blueprintResourceService } from "./blueprint-resource.service";
+import { logicalResourceStateService } from "./logical-resource-state.service";
 import { physicalCatalogService } from "./physical-catalog.service";
-import { ruleRuntimeProcessService } from "./rule-runtime-process.service";
 import { PhysicalDeviceState, statePhysicalService } from "./state-physical.service";
 import { stateSignalService } from "./state-signal.service";
-import { stateTimerService } from "./state-timer.service";
 
 
 /**
@@ -69,11 +68,8 @@ class StateRuntimeService extends EventEmitter<StateRuntimeEventMap> {
     /** physical-address-key urn -> resourceId */
     private resourceIdByAddress = new Map<string, string>();
 
-    /** Timer resources indexed by resourceId (no address key) */
-    private timerResourceIds = new Set<string>();
-
-    /** Complex resources indexed by resourceId (computed state comes from sandbox) */
-    private complexResourceIds = new Set<string>();
+    /** Logical resources (timers + complex) indexed by resourceId */
+    private logicalResourceIds = new Set<string>();
 
     /** resourceId -> current runtime state */
     private stateByResourceId = new Map<string, RuntimeState>();
@@ -109,16 +105,10 @@ class StateRuntimeService extends EventEmitter<StateRuntimeEventMap> {
                 this.handleSignalState(resourceId, value, timestamp);
             }
         );
-        stateTimerService.on(
-            "timerStateChanged",
-            (resourceId, value, timestamp, startedAt, stopAt) => {
-                this.handleTimerState(resourceId, value, timestamp, startedAt, stopAt);
-            }
-        );
-        ruleRuntimeProcessService.on(
-            "onComputedStateChanged",
-            (msg) => {
-                this.handleComputedState(msg.payload.resourceId, msg.payload.value, msg.payload.timestamp);
+        logicalResourceStateService.on(
+            "logicalResourceStateChanged",
+            (resourceId, value, timestamp, details) => {
+                this.handleLogicalResourceState(resourceId, value, timestamp, details);
             }
         );
     }
@@ -135,12 +125,8 @@ class StateRuntimeService extends EventEmitter<StateRuntimeEventMap> {
             if (!r.id) continue;
             if (r.errors?.length) continue;
             if (isLogicalResource(r)) {
-                // Timer resources have no device/pin — index by resourceId directly
-                if (r.type === "timer") {
-                    this.timerResourceIds.add(r.id);
-
-                } else if (r.type === "complex") {
-                    this.complexResourceIds.add(r.id);
+                if (r.type === "timer" || r.type === "complex") {
+                    this.logicalResourceIds.add(r.id);
                 }
             } else if (isPhysicalResource(r)) {
                 const key = makeAddressKey(r);
@@ -160,14 +146,14 @@ class StateRuntimeService extends EventEmitter<StateRuntimeEventMap> {
         for (const [resourceId, state] of stateSignalService.getAllSignalStates()) {
             this.handleSignalState(resourceId, state.value, state.timestamp);
         }
-        for (const [resourceId, state] of stateTimerService.getAllTimerStates()) {
-            this.handleTimerState(resourceId, state.active, state.timestamp, state.startedAt, state.stopAt);
+        for (const [resourceId, state] of logicalResourceStateService.getAllStates()) {
+            this.handleLogicalResourceState(resourceId, state.value, state.timestamp, state.details);
         }
         this.emit("runtimeStatesChanged", this.getAllStates());
         this.emitStateChanges = true;
 
         AppLogger.info({
-            message: `[StateRuntimeService] Runtime index rebuilt (${this.resourceIdByAddress.size} addressable + ${this.timerResourceIds.size} timer + ${this.complexResourceIds.size} complex resources)`,
+            message: `[StateRuntimeService] Runtime index rebuilt (${this.resourceIdByAddress.size} addressable + ${this.logicalResourceIds.size} logical resources)`,
         });
     }
 
@@ -179,8 +165,7 @@ class StateRuntimeService extends EventEmitter<StateRuntimeEventMap> {
      */
     private reset() {
         this.resourceIdByAddress.clear();
-        this.timerResourceIds.clear();
-        this.complexResourceIds.clear();
+        this.logicalResourceIds.clear();
         this.stateByResourceId.clear();
         if (this.emitStateChanges) this.emit("runtimeStateReset");
         this.emitStateChanges = false;
@@ -258,68 +243,32 @@ class StateRuntimeService extends EventEmitter<StateRuntimeEventMap> {
 
     }
     /* -------------------------------------------------- */
-    /* Timer state updates                                */
+    /* Logical resource state updates (timers + complex)   */
     /* -------------------------------------------------- */
 
     /**
-     * Handles timer state from edge (single-tier, authoritative).
-     * Timers bypass the physical/signal tier model — the edge is the
-     * sole authority on timer state.
+     * Handles logical resource state from edge or master (single-tier, authoritative).
+     * Logical resources (timers, complex) bypass the physical/signal tier model.
      */
-    private handleTimerState(
+    private handleLogicalResourceState(
         resourceId: string,
         value: ResourceStateValue,
         timestamp: number,
-        startedAt: number,
-        stopAt: number
+        details?: ResourceStateDetails
     ) {
-        if (this.timerResourceIds.size === 0 && this.resourceIdByAddress.size === 0) return;
-        if (!this.timerResourceIds.has(resourceId)) return;
+        if (!this.logicalResourceIds.has(resourceId)) return;
 
         const prev = this.stateByResourceId.get(resourceId);
         if (prev && prev.timestamp >= timestamp) return;
 
-        const details: ResourceStateDetails | undefined = value ? { type: "timer", startedAt, stopAt } : undefined;
-
         this.stateByResourceId.set(resourceId, {
-            physical: value,
-            physicalTimestamp: timestamp,
             computed: value,
             timestamp,
-            details,
+            ...(details && { details }),
         });
 
         if (!prev || prev.computed !== value || prev.details?.stopAt !== details?.stopAt) {
             this.emitRuntimeStateChangedIfEnabled(resourceId, value, timestamp, details);
-        }
-    }
-
-    /* -------------------------------------------------- */
-    /* Computed state (complex resources from sandbox)     */
-    /* -------------------------------------------------- */
-
-    /**
-     * Handles computed state from the sandbox runtime (via IPC).
-     * Complex resources bypass the physical/signal tier model —
-     * the sandbox compute function is the sole authority.
-     */
-    handleComputedState(
-        resourceId: string,
-        value: ResourceStateValue,
-        timestamp: number
-    ) {
-        if (!this.complexResourceIds.has(resourceId)) return;
-
-        const prev = this.stateByResourceId.get(resourceId);
-        if (prev && prev.timestamp >= timestamp) return;
-
-        this.stateByResourceId.set(resourceId, {
-            computed: value,
-            timestamp,
-        });
-
-        if (!prev || prev.computed !== value) {
-            this.emitRuntimeStateChangedIfEnabled(resourceId, value, timestamp);
         }
     }
 

@@ -16,7 +16,7 @@ import { commandEdgeService } from "../services/command-edge.service";
 import { muteEdgeService } from "../services/mute-edge.service";
 import { ruleRuntimeProcessService } from "../services/rule-runtime-process.service";
 import { stateSignalService } from "../services/state-signal.service";
-import { timerEdgeService } from "../services/timer-edge.service";
+import { logicalResourceEdgeService } from "../services/logical-resource-edge.service";
 
 
 let initialized = false;
@@ -106,7 +106,7 @@ function handleTimerStartAction(action: Extract<RuntimeRuleAction, { type: "time
             AppLogger.warn({ message: `TimerStart dispatched for master-hosted timer ${action.resourceId} — should have been executed locally` });
             return;
         }
-        timerEdgeService.sendTimerCommandToEdge(resource, {
+        logicalResourceEdgeService.sendCommandToEdge(resource, {
             action: "start",
             durationMs: action.durationMs,
             mode: action.mode,
@@ -125,7 +125,7 @@ function handleTimerClearAction(action: Extract<RuntimeRuleAction, { type: "time
             AppLogger.warn({ message: `TimerClear dispatched for master-hosted timer ${action.resourceId} — should have been executed locally` });
             return;
         }
-        timerEdgeService.sendTimerCommandToEdge(resource, { action: "clear" });
+        logicalResourceEdgeService.sendCommandToEdge(resource, { action: "clear" });
         return;
     }
     AppLogger.warn({

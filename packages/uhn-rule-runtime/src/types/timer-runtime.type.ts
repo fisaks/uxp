@@ -1,4 +1,4 @@
-import type { TimerResourceBase } from "@uhn/blueprint"; // adjust import
+import type { TimerResourceBase } from "@uhn/blueprint";
 
 export type TimerRuntimeState = {
     id: string; // timer.id
@@ -6,12 +6,6 @@ export type TimerRuntimeState = {
     startedAt: number; // epoch ms
     stopAt: number; // epoch ms
 };
-
-export type TimerRuntimeEvent =
-    | { type: "timerStateChanged"; state: TimerRuntimeState }
-    | { type: "timerRemoved"; timerId: string };
-
-export type TimerRuntimeListener = (ev: TimerRuntimeEvent) => void;
 
 export type TimerAPI = {
     start(timer: TimerResourceBase, delayMs: number): void;

@@ -5,7 +5,7 @@ import { commandEdgeService } from "./command-edge.service";
 import { ruleRuntimeProcessService } from "./rule-runtime-process.service";
 import { stateRuntimeService } from "./state-runtime.service";
 import { stateSignalService } from "./state-signal.service";
-import { timerEdgeService } from "./timer-edge.service";
+import { logicalResourceEdgeService } from "./logical-resource-edge.service";
 
 export class CommandsResourceService {
 
@@ -26,7 +26,7 @@ export class CommandsResourceService {
                     payload: { resourceId: resource.id, action: "clear" },
                 });
             } else {
-                timerEdgeService.sendTimerCommandToEdge({ id: resource.id, host: resource.host }, { action: "clear" });
+                logicalResourceEdgeService.sendCommandToEdge({ id: resource.id, host: resource.host }, { action: "clear" });
             }
         } else if (resource.type === "digitalOutput") {
             commandEdgeService.sendDigitalCommandToEdge(resource as RuntimeDigitalOutputResource, command);
