@@ -4,7 +4,7 @@ import { AppLogger } from "@uxp/bff-common";
 import { EventEmitter } from "events";
 
 import { blueprintResourceService } from "./blueprint-resource.service";
-import { logicalResourceStateService } from "./logical-resource-state.service";
+import { logicalResourceStateService } from "./state-logical-resource.service";
 import { physicalCatalogService } from "./physical-catalog.service";
 import { PhysicalDeviceState, statePhysicalService } from "./state-physical.service";
 import { stateSignalService } from "./state-signal.service";
@@ -106,7 +106,7 @@ class StateRuntimeService extends EventEmitter<StateRuntimeEventMap> {
             }
         );
         logicalResourceStateService.on(
-            "logicalResourceStateChanged",
+            "stateChanged",
             (resourceId, value, timestamp, details) => {
                 this.handleLogicalResourceState(resourceId, value, timestamp, details);
             }
@@ -125,7 +125,7 @@ class StateRuntimeService extends EventEmitter<StateRuntimeEventMap> {
             if (!r.id) continue;
             if (r.errors?.length) continue;
             if (isLogicalResource(r)) {
-                if (r.type === "timer" || r.type === "complex") {
+                if (r.type === "timer" || r.type === "complex" || r.type === "virtualInput") {
                     this.logicalResourceIds.add(r.id);
                 }
             } else if (isPhysicalResource(r)) {

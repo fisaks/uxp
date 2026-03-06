@@ -1,4 +1,4 @@
-import { isLogicalResource, isPhysicalResource, RuntimeAnalogOutputResource, RuntimeDigitalInputResource, RuntimeDigitalOutputResource, RuntimeResource, UhnResourceCommand } from "@uhn/common";
+import { isLogicalResource, isPhysicalResource, ResourceStateValue, RuntimeAnalogOutputResource, RuntimeDigitalInputResource, RuntimeDigitalOutputResource, RuntimeLogicalResource, RuntimeResource, RuntimeVirtualInputResource, UhnResourceCommand } from "@uhn/common";
 import { AppErrorV2 } from "@uxp/bff-common";
 import { blueprintResourceService } from "./blueprint-resource.service";
 import { commandEdgeService } from "./command-edge.service";
@@ -6,9 +6,12 @@ import { ruleRuntimeProcessService } from "./rule-runtime-process.service";
 import { stateRuntimeService } from "./state-runtime.service";
 import { stateSignalService } from "./state-signal.service";
 import { logicalResourceEdgeService } from "./logical-resource-edge.service";
+import { logicalResourceStateService } from "./state-logical-resource.service";
+
+/** Duration in ms for the simulated press pulse on virtualInput push tap. */
+const VIRTUAL_PRESS_DURATION_MS = 300;
 
 export class CommandsResourceService {
-
 
     async executeResourceCommand(resourceId: string, command: UhnResourceCommand): Promise<void> {
         const resource = blueprintResourceService.getResourceById(resourceId);
@@ -18,43 +21,127 @@ export class CommandsResourceService {
         this.validateResourceAddressability(resource);
         this.validateCommandForResource(resource, command);
 
+        switch (resource.type) {
+            case "timer":
+                return this.handleTimer(resource as RuntimeLogicalResource);
+            case "digitalOutput":
+                return this.handleDigitalOutput(resource as RuntimeDigitalOutputResource, command);
+            case "analogOutput":
+                return this.handleAnalogOutput(resource as RuntimeAnalogOutputResource, command);
+            case "digitalInput":
+                return this.handleDigitalInput(resource as RuntimeDigitalInputResource, resourceId, command);
+            case "complex":
+                return this.handleComplex(resource as RuntimeLogicalResource);
+            case "virtualInput":
+                return this.handleVirtualInput(resource as RuntimeVirtualInputResource, resourceId, command);
+        }
+    }
 
-        if (resource.type === "timer" && isLogicalResource(resource)) {
-            if (resource.host === "master") {
-                ruleRuntimeProcessService.sendEvent<"timerCommand">({
-                    cmd: "timerCommand",
-                    payload: { resourceId: resource.id, action: "clear" },
-                });
-            } else {
-                logicalResourceEdgeService.sendCommandToEdge({ id: resource.id, host: resource.host }, { action: "clear" });
-            }
-        } else if (resource.type === "digitalOutput") {
-            commandEdgeService.sendDigitalCommandToEdge(resource as RuntimeDigitalOutputResource, command);
-        } else if (resource.type === "analogOutput" && command.type === "setAnalog") {
-            const analogResource = resource as RuntimeAnalogOutputResource;
-            let value = command.value;
-            if (analogResource.min != null && value < analogResource.min) value = analogResource.min;
-            if (analogResource.max != null && value > analogResource.max) value = analogResource.max;
-            commandEdgeService.sendAnalogCommandToEdge(analogResource, value);
-        } else if (resource.type === "digitalInput" && command.type === "toggle" && isPhysicalResource(resource)) {
+    /* -------------------------------------------------- */
+    /* Per-type command handlers                          */
+    /* -------------------------------------------------- */
+
+    private handleTimer(resource: RuntimeLogicalResource) {
+        this.sendLogicalCommand(resource, { cmd: "timerCommand", payload: { resourceId: resource.id, action: "clear" } }, { action: "clear" });
+    }
+
+    private handleDigitalOutput(resource: RuntimeDigitalOutputResource, command: UhnResourceCommand) {
+        commandEdgeService.sendDigitalCommandToEdge(resource, command);
+    }
+
+    private handleAnalogOutput(resource: RuntimeAnalogOutputResource, command: UhnResourceCommand) {
+        if (command.type !== "setAnalog") return;
+        let value = command.value;
+        if (resource.min != null && value < resource.min) value = resource.min;
+        if (resource.max != null && value > resource.max) value = resource.max;
+        commandEdgeService.sendAnalogCommandToEdge(resource, value);
+    }
+
+    private handleDigitalInput(resource: RuntimeDigitalInputResource, resourceId: string, command: UhnResourceCommand) {
+        if (command.type === "toggle") {
             const currentState = stateRuntimeService.getResourceState(resourceId);
             const currentValue = currentState?.value;
             const nextValue = (typeof currentValue === "boolean") ? !currentValue : true;
             stateSignalService.setSignalState(resource, nextValue);
-        } else if (resource.type === "digitalInput" && (command.type === "press" || command.type === "release") && isPhysicalResource(resource)) {
-            const signalValue = command.type === "press" ? true : false;
-            stateSignalService.setSignalState(resource, signalValue);
-        } else if (resource.type === "complex" && command.type === "tap" && isLogicalResource(resource)) {
-            if (resource.host === "master") {
-                ruleRuntimeProcessService.sendEvent<"tapCommand">({
-                    cmd: "tapCommand",
-                    payload: { resourceId: resource.id, timestamp: Date.now() },
-                });
-            } else {
-                logicalResourceEdgeService.sendCommandToEdge({ id: resource.id, host: resource.host }, { action: "tap" });
-            }
+        } else if (command.type === "press" || command.type === "release") {
+            stateSignalService.setSignalState(resource, command.type === "press");
         }
     }
+
+    private handleComplex(resource: RuntimeLogicalResource) {
+        const timestamp = Date.now();
+        this.sendLogicalCommand(resource,
+            { cmd: "tapCommand", payload: { resourceId: resource.id, timestamp } },
+            { action: "tap" },
+        );
+    }
+
+    private handleVirtualInput(resource: RuntimeVirtualInputResource, resourceId: string, command: UhnResourceCommand) {
+        if (resource.inputType === "toggle" && command.type === "toggle") {
+            const currentState = stateRuntimeService.getResourceState(resourceId);
+            const currentValue = currentState?.value;
+            const nextValue = (typeof currentValue === "boolean") ? !currentValue : true;
+            // Propagate through logicalResourceStateService (not directly to
+            // stateRuntimeService) so the state is cached and survives blueprint reloads.
+            this.setLogicalResourceState(resource, nextValue, Date.now());
+        } else if (command.type === "tap") {
+            // Simulate a brief press pulse (true → delay → false) for visual feedback
+            // and to fire activated/deactivated rule triggers, mirroring how physical
+            // push buttons produce a signal state change alongside the tap gesture.
+            const timestamp = Date.now();
+            this.setLogicalResourceState(resource, true, timestamp);
+            this.sendLogicalCommand(resource,
+                { cmd: "tapCommand", payload: { resourceId: resource.id, timestamp } },
+                { action: "tap" },
+            );
+            setTimeout(() => {
+                this.setLogicalResourceState(resource, false, Date.now());
+            }, VIRTUAL_PRESS_DURATION_MS);
+        }
+    }
+
+    /* -------------------------------------------------- */
+    /* Logical resource routing helpers                   */
+    /* -------------------------------------------------- */
+
+    /**
+     * Sets state for a logical resource, routing to master runtime or edge.
+     * Propagates through logicalResourceStateService so the state is cached
+     * and survives blueprint reloads.
+     */
+    private setLogicalResourceState(resource: RuntimeLogicalResource, value: ResourceStateValue, timestamp: number) {
+        if (resource.host === "master") {
+            ruleRuntimeProcessService.sendEvent<"stateUpdate">({
+                cmd: "stateUpdate",
+                payload: { resourceId: resource.id, value, timestamp },
+            });
+            logicalResourceStateService.handleLocalState({
+                resourceId: resource.id, value, timestamp,
+            });
+        } else {
+            logicalResourceEdgeService.sendCommandToEdge(
+                { id: resource.id, host: resource.host },
+                { action: "setState", value },
+            );
+        }
+    }
+
+    /** Routes a logical resource command to master runtime or edge. */
+    private sendLogicalCommand(
+        resource: RuntimeLogicalResource,
+        runtimeEvent: Parameters<typeof ruleRuntimeProcessService.sendEvent>[0],
+        edgeCommand: Parameters<typeof logicalResourceEdgeService.sendCommandToEdge>[1],
+    ) {
+        if (resource.host === "master") {
+            ruleRuntimeProcessService.sendEvent(runtimeEvent);
+        } else {
+            logicalResourceEdgeService.sendCommandToEdge({ id: resource.id, host: resource.host }, edgeCommand);
+        }
+    }
+
+    /* -------------------------------------------------- */
+    /* Validation                                         */
+    /* -------------------------------------------------- */
 
     private validateResourceAddressability(resource: RuntimeResource) {
         if (isLogicalResource(resource)) {
@@ -108,6 +195,17 @@ export class CommandsResourceService {
         if (resource.type === "complex") {
             if (command.type !== "tap") {
                 throw new AppErrorV2({ statusCode: 400, code: "INVALID_RESOURCE_COMMAND", message: `Invalid command type ${command.type} for complex resource` });
+            }
+            return;
+        }
+
+        if (resource.type === "virtualInput") {
+            const viResource = resource as RuntimeVirtualInputResource;
+            if (viResource.inputType === "push" && command.type !== "tap") {
+                throw new AppErrorV2({ statusCode: 400, code: "INVALID_RESOURCE_COMMAND", message: `Invalid command type ${command.type} for virtualInput push resource` });
+            }
+            if (viResource.inputType === "toggle" && command.type !== "toggle") {
+                throw new AppErrorV2({ statusCode: 400, code: "INVALID_RESOURCE_COMMAND", message: `Invalid command type ${command.type} for virtualInput toggle resource` });
             }
             return;
         }

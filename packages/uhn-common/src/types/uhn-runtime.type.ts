@@ -149,12 +149,17 @@ export type RuntimeTimerResource = RuntimeLogicalResource & {
   type: "timer";
 };
 
+export type RuntimeVirtualInputResource = RuntimeLogicalResource & {
+  type: "virtualInput";
+  inputType: "push" | "toggle";
+};
+
 export function isPhysicalResource(r: RuntimeResource): r is RuntimePhysicalResource {
     return r.type === "digitalInput" || r.type === "digitalOutput" || r.type === "analogInput" || r.type === "analogOutput";
 }
 
 export function isLogicalResource(r: RuntimeResource): r is RuntimeLogicalResource {
-    return r.type === "timer" || r.type === "complex";
+    return r.type === "timer" || r.type === "complex" || r.type === "virtualInput";
 }
 
 export type RuntimeResourceList = RuntimeResource[];

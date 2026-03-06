@@ -7,7 +7,6 @@ import FluorescentOutlinedIcon from '@mui/icons-material/FluorescentOutlined';
 import LightbulbIcon from "@mui/icons-material/Lightbulb";
 import OpacityIcon from "@mui/icons-material/Opacity";
 import PowerIcon from "@mui/icons-material/Power";
-import RadioButtonCheckedIcon from "@mui/icons-material/RadioButtonChecked";
 import SensorsIcon from "@mui/icons-material/Sensors";
 import SpeedIcon from "@mui/icons-material/Speed";
 import ThermostatIcon from "@mui/icons-material/Thermostat";
@@ -21,6 +20,7 @@ import WbSunnyIcon from "@mui/icons-material/WbSunny";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import TimerIcon from "@mui/icons-material/Timer";
 import TimerOffIcon from "@mui/icons-material/TimerOff";
+import TouchAppIcon from "@mui/icons-material/TouchApp";
 
 import LightbulbOutlinedIcon from "@mui/icons-material/LightbulbOutlined";
 
@@ -86,8 +86,8 @@ const outputKindIcons: OutputKindIcons = {
 const inputKindIcons: InputKindIcons = {
   button: {
     push: {
-      active: <RadioButtonCheckedIcon />,
-      inactive: <RadioButtonCheckedIcon />,
+      active: <TouchAppIcon />,
+      inactive: <TouchAppIcon />,
     },
     toggle: {
       active: <ToggleOnIcon />,
@@ -177,6 +177,17 @@ export function getResourceIcon(
   // -------------------------
   if (resource.type === "complex") {
     return <DashboardIcon />;
+  }
+
+  // -------------------------
+  // Virtual Inputs
+  // -------------------------
+  if (resource.type === "virtualInput") {
+    const inputType = resource.inputType ?? "push";
+    if (inputType === "toggle") {
+      return active ? <ToggleOnIcon /> : <ToggleOffIcon />;
+    }
+    return <TouchAppIcon />;
   }
 
   // -------------------------

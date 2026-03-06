@@ -169,6 +169,14 @@ export function useResourceAction(
             sendCommand({ type: "toggle" });
             return;
         }
+        if (resource.type === "virtualInput" && resource.inputType === "toggle") {
+            sendCommand({ type: "toggle" });
+            return;
+        }
+        if (resource.type === "virtualInput" && resource.inputType === "push") {
+            sendCommand({ type: "tap" });
+            return;
+        }
         // Analog output: tap-toggle between min and max
         if (resource.type === "analogOutput") {
             const min = resource.min ?? 0;

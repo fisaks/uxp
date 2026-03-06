@@ -1,6 +1,6 @@
 // Factory Functions
 // factory.ts
-import { AnalogInputResourceBase, AnalogOutputResourceBase, ComplexResourceBase, DigitalInputResourceBase, DigitalOutputResourceBase, TimerResourceBase } from "./resource";
+import { AnalogInputResourceBase, AnalogOutputResourceBase, ComplexResourceBase, DigitalInputResourceBase, DigitalOutputResourceBase, TimerResourceBase, VirtualInputResourceBase } from "./resource";
 
 export function digitalInput<
     TInputKind extends string = string,
@@ -56,4 +56,10 @@ export function complex<THost extends string = string>(
     props: Omit<ComplexResourceBase<THost>, "type">
 ): ComplexResourceBase<THost> {
     return { ...props, type: "complex" };
+}
+
+export function virtualInput<THost extends string = string>(
+    props: Omit<VirtualInputResourceBase<THost>, "type">
+): VirtualInputResourceBase<THost> {
+    return { ...props, type: "virtualInput" };
 }

@@ -6,11 +6,11 @@ export function handleTapCommand({ resourceService, triggerEventBus }: RuleRunti
     const { resourceId, timestamp } = cmd.payload;
 
     const resource = resourceService.getById(resourceId);
-    if (!resource || resource.type !== "complex" || !isLogicalResource(resource)) {
+    if (!resource || !isLogicalResource(resource) || (resource.type !== "complex" && resource.type !== "virtualInput")) {
         runtimeOutput.log({
             component: "handleTapCommand",
             level: "error",
-            message: `Complex resource ${resourceId} not found or not a complex resource`,
+            message: `Resource ${resourceId} not found or not a tappable logical resource`,
         });
         return;
     }
@@ -24,6 +24,6 @@ export function handleTapCommand({ resourceService, triggerEventBus }: RuleRunti
     runtimeOutput.log({
         component: "handleTapCommand",
         level: "info",
-        message: `Tap event emitted for complex resource ${resourceId}`,
+        message: `Tap event emitted for ${resource.type} resource ${resourceId}`,
     });
 }

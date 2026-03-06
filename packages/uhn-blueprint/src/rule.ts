@@ -8,6 +8,7 @@ import type {
     ResourceBase,
     ResourceType,
     TimerResourceBase,
+    VirtualInputResourceBase,
 } from "./resource";
 
 // --------- Runtime state value ---------
@@ -16,7 +17,7 @@ export type DigitalStateValue = Extract<StateValue, boolean>;
 export type TimerStateValue = Extract<StateValue, boolean>;
 export type AnalogStateValue = Extract<StateValue, number>;
 export type StateValueByResourceType<T extends ResourceType> =
-    T extends "digitalInput" | "digitalOutput"
+    T extends "digitalInput" | "digitalOutput" | "virtualInput"
     ? DigitalStateValue
     : T extends "analogInput" | "analogOutput"
     ? AnalogStateValue
@@ -66,7 +67,7 @@ export type RuleTrigger =
     }
     | {
         kind: "tap";
-        resource: DigitalInputResourceBase | ComplexResourceBase;
+        resource: DigitalInputResourceBase | ComplexResourceBase | VirtualInputResourceBase;
     }
     | {
         kind: "longPress";
@@ -122,7 +123,7 @@ export type RuleAction =
     }
     | {
         type: "emitSignal"; // optional: e.g. transient overrides
-        resource: DigitalInputResourceBase;
+        resource: DigitalInputResourceBase | VirtualInputResourceBase;
         value: DigitalStateValue | undefined;
     };
 
@@ -256,14 +257,14 @@ export const isBlueprintRule = (obj: unknown): obj is BlueprintRule => {
 export type RuleBuilder = {
     executionTarget(p: RuleExecutionTarget): RuleBuilder;
 
-    onActivated(resource: DigitalInputResourceBase | DigitalOutputResourceBase | AnalogOutputResourceBase | ComplexResourceBase): RuleBuilder;
-    onDeactivated(resource: DigitalInputResourceBase | DigitalOutputResourceBase | AnalogOutputResourceBase | ComplexResourceBase): RuleBuilder;
-    onChanged(resource: DigitalInputResourceBase | DigitalOutputResourceBase | AnalogInputResourceBase | AnalogOutputResourceBase | ComplexResourceBase, opts?: NumericTriggerOptions): RuleBuilder;
+    onActivated(resource: DigitalInputResourceBase | DigitalOutputResourceBase | AnalogOutputResourceBase | ComplexResourceBase | VirtualInputResourceBase): RuleBuilder;
+    onDeactivated(resource: DigitalInputResourceBase | DigitalOutputResourceBase | AnalogOutputResourceBase | ComplexResourceBase | VirtualInputResourceBase): RuleBuilder;
+    onChanged(resource: DigitalInputResourceBase | DigitalOutputResourceBase | AnalogInputResourceBase | AnalogOutputResourceBase | ComplexResourceBase | VirtualInputResourceBase, opts?: NumericTriggerOptions): RuleBuilder;
 
     onAbove(resource: AnalogInputResourceBase | AnalogOutputResourceBase | ComplexResourceBase, threshold: number, opts?: NumericTriggerOptions): RuleBuilder;
     onBelow(resource: AnalogInputResourceBase | AnalogOutputResourceBase | ComplexResourceBase, threshold: number, opts?: NumericTriggerOptions): RuleBuilder;
 
-    onTap(resource: DigitalInputResourceBase<"button"> | ComplexResourceBase): RuleBuilder;
+    onTap(resource: DigitalInputResourceBase<"button"> | ComplexResourceBase | VirtualInputResourceBase): RuleBuilder;
     onLongPress(resource: DigitalInputResourceBase<"button">, thresholdMs: number): RuleBuilder;
 
     onTimerActivated(timer: TimerResourceBase): RuleBuilder;

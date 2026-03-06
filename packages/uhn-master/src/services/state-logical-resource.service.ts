@@ -33,10 +33,15 @@ function isLogicalResourceStatePayload(payload: unknown): payload is LogicalReso
 }
 
 export type LogicalResourceStateEventMap = {
-    logicalResourceStateChanged: [resourceId: string, value: ResourceStateValue, timestamp: number, details?: ResourceStateDetails];
+    stateChanged: [resourceId: string, value: ResourceStateValue, timestamp: number, details?: ResourceStateDetails];
 };
 
 class LogicalResourceStateService extends EventEmitter<LogicalResourceStateEventMap> {
+    /**
+     * Cache of logical resource state. StateRuntimeService replays this on
+     * blueprint reload (when it resets its own state) since MQTT retained
+     * messages are only delivered once on initial subscription.
+     */
     private stateByResourceId = new Map<string, LogicalResourceState>();
 
     constructor() {
@@ -76,7 +81,7 @@ class LogicalResourceStateService extends EventEmitter<LogicalResourceStateEvent
                 ...(payload.details && { details: payload.details }),
             });
 
-            this.emit("logicalResourceStateChanged", resourceId, payload.value, payload.timestamp, payload.details);
+            this.emit("stateChanged", resourceId, payload.value, payload.timestamp, payload.details);
         }
     }
 
@@ -92,7 +97,7 @@ class LogicalResourceStateService extends EventEmitter<LogicalResourceStateEvent
             timestamp,
             ...(payload.details && { details: payload.details }),
         });
-        this.emit("logicalResourceStateChanged", resourceId, payload.value, timestamp, payload.details);
+        this.emit("stateChanged", resourceId, payload.value, timestamp, payload.details);
     }
 
     clearAll() {
