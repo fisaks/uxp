@@ -125,7 +125,7 @@ class StateRuntimeService extends EventEmitter<StateRuntimeEventMap> {
             if (!r.id) continue;
             if (r.errors?.length) continue;
             if (isLogicalResource(r)) {
-                if (r.type === "timer" || r.type === "complex" || r.type === "virtualDigitalInput") {
+                if (r.type === "timer" || r.type === "complex" || r.type === "virtualDigitalInput" || r.type === "virtualAnalogOutput") {
                     this.logicalResourceIds.add(r.id);
                 }
             } else if (isPhysicalResource(r)) {

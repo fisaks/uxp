@@ -21,6 +21,8 @@ export async function buildBlueprint(projectRoot: string): Promise<string> {
     const resourcesTmp = path.join(tmpSrc, "resources");
     const rulesSrc = path.join(srcDir, "rules");
     const rulesTmp = path.join(tmpSrc, "rules");
+    const viewsSrc = path.join(srcDir, "views");
+    const viewsTmp = path.join(tmpSrc, "views");
     const factorySrc = path.join(srcDir, "factory");
     const factoryTmp = path.join(tmpSrc, "factory");
     const tsconfigPath = path.join(projectRoot, "tsconfig.json");
@@ -55,12 +57,14 @@ export async function buildBlueprint(projectRoot: string): Promise<string> {
                 return false;
             }
 
-            // skip resources and rules completely
+            // skip resources, rules, and views completely
             if (
                 rel === "resources" ||
                 rel.startsWith(`resources${path.sep}`) ||
                 rel === "rules" ||
-                rel.startsWith(`rules${path.sep}`)
+                rel.startsWith(`rules${path.sep}`) ||
+                rel === "views" ||
+                rel.startsWith(`views${path.sep}`)
             ) {
                 return false;
             }
@@ -86,6 +90,16 @@ export async function buildBlueprint(projectRoot: string): Promise<string> {
         tsconfigPath: tsconfigPath,
         mode: "rule",
     });
+
+    // 3b) Normalize views (optional — build succeeds without src/views/)
+    if (await fs.pathExists(viewsSrc)) {
+        await normalizeBlueprint({
+            sourceDir: viewsSrc,
+            targetDir: viewsTmp,
+            tsconfigPath: tsconfigPath,
+            mode: "view",
+        });
+    }
 
     // 3.5) Resolve and inject execution targets
     await resolveExecutionTargets({

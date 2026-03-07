@@ -26,6 +26,7 @@ export function createRuleStateReader({ stateService }: { stateService: RuntimeS
                     return s.value as StateValueByResourceType<T>;
                 case "analogInput":
                 case "analogOutput":
+                case "virtualAnalogOutput":
                     if (!isAnalogValue(s.value)) {
                         throw new ResourceStateTypeMismatchError(r.id, r.type, s.value);
                     }

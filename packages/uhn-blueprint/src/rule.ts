@@ -8,6 +8,7 @@ import type {
     ResourceBase,
     ResourceType,
     TimerResourceBase,
+    VirtualAnalogOutputResourceBase,
     VirtualDigitalInputResourceBase,
 } from "./resource";
 
@@ -19,7 +20,7 @@ export type AnalogStateValue = Extract<StateValue, number>;
 export type StateValueByResourceType<T extends ResourceType> =
     T extends "digitalInput" | "digitalOutput" | "virtualDigitalInput"
     ? DigitalStateValue
-    : T extends "analogInput" | "analogOutput"
+    : T extends "analogInput" | "analogOutput" | "virtualAnalogOutput"
     ? AnalogStateValue
     : T extends "timer"
     ? TimerStateValue
@@ -118,7 +119,7 @@ export type RuleAction =
     }
     | {
         type: "setAnalogOutput";
-        resource: AnalogOutputResourceBase;
+        resource: AnalogOutputResourceBase | VirtualAnalogOutputResourceBase;
         value: AnalogStateValue
     }
     | {
@@ -257,9 +258,9 @@ export const isBlueprintRule = (obj: unknown): obj is BlueprintRule => {
 export type RuleBuilder = {
     executionTarget(p: RuleExecutionTarget): RuleBuilder;
 
-    onActivated(resource: DigitalInputResourceBase | DigitalOutputResourceBase | AnalogOutputResourceBase | ComplexResourceBase | VirtualDigitalInputResourceBase): RuleBuilder;
-    onDeactivated(resource: DigitalInputResourceBase | DigitalOutputResourceBase | AnalogOutputResourceBase | ComplexResourceBase | VirtualDigitalInputResourceBase): RuleBuilder;
-    onChanged(resource: DigitalInputResourceBase | DigitalOutputResourceBase | AnalogInputResourceBase | AnalogOutputResourceBase | ComplexResourceBase | VirtualDigitalInputResourceBase, opts?: NumericTriggerOptions): RuleBuilder;
+    onActivated(resource: DigitalInputResourceBase | DigitalOutputResourceBase | AnalogOutputResourceBase | ComplexResourceBase | VirtualDigitalInputResourceBase | VirtualAnalogOutputResourceBase): RuleBuilder;
+    onDeactivated(resource: DigitalInputResourceBase | DigitalOutputResourceBase | AnalogOutputResourceBase | ComplexResourceBase | VirtualDigitalInputResourceBase | VirtualAnalogOutputResourceBase): RuleBuilder;
+    onChanged(resource: DigitalInputResourceBase | DigitalOutputResourceBase | AnalogInputResourceBase | AnalogOutputResourceBase | ComplexResourceBase | VirtualDigitalInputResourceBase | VirtualAnalogOutputResourceBase, opts?: NumericTriggerOptions): RuleBuilder;
 
     onAbove(resource: AnalogInputResourceBase | AnalogOutputResourceBase | ComplexResourceBase, threshold: number, opts?: NumericTriggerOptions): RuleBuilder;
     onBelow(resource: AnalogInputResourceBase | AnalogOutputResourceBase | ComplexResourceBase, threshold: number, opts?: NumericTriggerOptions): RuleBuilder;

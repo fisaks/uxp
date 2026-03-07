@@ -1,5 +1,5 @@
 
-import { AnalogInputResourceBase, AnalogOutputResourceBase, DigitalInputResourceBase, DigitalOutputResourceBase, LogicalResourceType, PhysicalResourceType, ResourceType, RuntimeRuleAction } from "@uhn/blueprint";
+import { AnalogInputResourceBase, AnalogOutputResourceBase, DigitalInputResourceBase, DigitalOutputResourceBase, LogicalResourceType, PhysicalResourceType, ResourceType, RuntimeRuleAction, StateDisplayAggregation, StateDisplayStyle, ViewActiveCondition, ViewCommandType, ViewStateAggregation } from "@uhn/blueprint";
 
 // --- Runtime rule serialization (for IPC + overview) ---
 
@@ -154,12 +154,20 @@ export type RuntimeVirtualDigitalInputResource = RuntimeLogicalResource & {
   inputType: "push" | "toggle";
 };
 
+export type RuntimeVirtualAnalogOutputResource = RuntimeLogicalResource & {
+  type: "virtualAnalogOutput";
+  min?: number;
+  max?: number;
+  step?: number;
+  unit?: string;
+};
+
 export function isPhysicalResource(r: RuntimeResource): r is RuntimePhysicalResource {
     return r.type === "digitalInput" || r.type === "digitalOutput" || r.type === "analogInput" || r.type === "analogOutput";
 }
 
 export function isLogicalResource(r: RuntimeResource): r is RuntimeLogicalResource {
-    return r.type === "timer" || r.type === "complex" || r.type === "virtualDigitalInput";
+    return r.type === "timer" || r.type === "complex" || r.type === "virtualDigitalInput" || r.type === "virtualAnalogOutput";
 }
 
 export type RuntimeResourceList = RuntimeResource[];
@@ -206,11 +214,22 @@ export type RuleRuntimeTapCommand = {
   };
 };
 
+export type RuleRuntimeLongPressCommand = {
+  kind: "event";
+  cmd: "longPressCommand";
+  payload: {
+    resourceId: string;
+    timestamp: number;
+    thresholdMs: number;
+  };
+};
+
 export type RuleRuntimeCommand = RuleRuntimeStateUpdateCommand
   | RuleRuntimeStateFullUpdateCommand
   | RuleRuntimeTimerCommand
   | RuleRuntimeMuteCommand
-  | RuleRuntimeTapCommand;
+  | RuleRuntimeTapCommand
+  | RuleRuntimeLongPressCommand;
 
 
 export type RuleRuntimeResourcesLoadedMessage = {
@@ -286,9 +305,59 @@ export type RuleRuntimeCommandMap = {
     request: Omit<RuleRuntimeTapCommand, "kind">;
     response: void;
   };
+  longPressCommand: {
+    request: Omit<RuleRuntimeLongPressCommand, "kind">;
+    response: void;
+  };
 };
 
 export type FireAndForgetCmdKey = keyof RuleRuntimeCommandMap;
+
+// --- Runtime InteractionView types (resourceId instead of resource objects) ---
+
+export type RuntimeViewStateSource = {
+    resourceId: string;
+    activeWhen?: ViewActiveCondition;
+};
+
+export type RuntimeViewCommandTarget = {
+    resourceId: string;
+    type: ViewCommandType;
+    holdMs?: number;
+    min?: number;
+    max?: number;
+    step?: number;
+    unit?: string;
+};
+
+export type RuntimeViewCommand = RuntimeViewCommandTarget & {
+    onDeactivate?: RuntimeViewCommandTarget;
+};
+
+export type RuntimeStateDisplayItem = {
+    resourceId: string;
+    label?: string;
+    unit?: string;
+    style?: StateDisplayStyle;
+    icon?: string;
+};
+
+export type RuntimeViewStateDisplay = {
+    items: RuntimeStateDisplayItem[];
+    aggregation?: StateDisplayAggregation;
+};
+
+export type RuntimeInteractionView = {
+    id: string;
+    name?: string;
+    description?: string;
+    icon?: string;
+    stateFrom: RuntimeViewStateSource[];
+    stateAggregation?: ViewStateAggregation;
+    activeWhen?: ViewActiveCondition;
+    command?: RuntimeViewCommand;
+    stateDisplay?: RuntimeViewStateDisplay;
+};
 
 export function isRuleRuntimeEventObject(obj: unknown): obj is Extract<RuleRuntimeResponse, { kind: "event" }> {
   return (

@@ -2,7 +2,7 @@
 // resource.ts
 
 export type PhysicalResourceType = "digitalInput" | "digitalOutput" | "analogInput" | "analogOutput";
-export type LogicalResourceType = "timer" | "complex" | "virtualDigitalInput";
+export type LogicalResourceType = "timer" | "complex" | "virtualDigitalInput" | "virtualAnalogOutput";
 export type ResourceType = PhysicalResourceType | LogicalResourceType;
 
 export type ResourceBase<TType extends ResourceType> = {
@@ -37,7 +37,7 @@ export function isPhysicalResourceType(type: ResourceType): type is PhysicalReso
 }
 
 export function isLogicalResourceType(type: ResourceType): type is LogicalResourceType {
-    return type === "timer" || type === "complex" || type === "virtualDigitalInput";
+    return type === "timer" || type === "complex" || type === "virtualDigitalInput" || type === "virtualAnalogOutput";
 }
 
 export type InputType = "toggle" | "push";
@@ -107,6 +107,18 @@ export type TimerResourceBase<THost extends string = string> = LogicalResourceBa
 // Virtual Input Resource — software-only button (no physical device)
 export type VirtualDigitalInputResourceBase<THost extends string = string> = LogicalResourceBase<"virtualDigitalInput", THost> & {
     inputType: InputType;
+};
+
+// Virtual Analog Output Resource — software-only analog output (no physical device)
+export type VirtualAnalogOutputResourceBase<THost extends string = string> = LogicalResourceBase<"virtualAnalogOutput", THost> & {
+    /** Minimum settable value. Default: 0 */
+    min?: number;
+    /** Maximum settable value. Default: 65535 */
+    max?: number;
+    /** Step increment for value changes. Default: 1 */
+    step?: number;
+    /** Unit label for display (e.g. "%", "rpm") */
+    unit?: string;
 };
 
 // Complex (Multi-Physical) Resource

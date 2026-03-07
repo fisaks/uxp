@@ -8,7 +8,7 @@
  *   which runs the actual timer and publishes state back via MQTT
  */
 import { RuntimeRuleAction } from "@uhn/blueprint";
-import { isLogicalResource, RuntimeAnalogOutputResource, RuntimeDigitalOutputResource } from "@uhn/common";
+import { isLogicalResource, RuntimeAnalogOutputResource, RuntimeDigitalOutputResource, RuntimeVirtualAnalogOutputResource } from "@uhn/common";
 import { AppLogger } from "@uxp/bff-common";
 import { assertNever } from "@uxp/common";
 import { blueprintResourceService } from "../services/blueprint-resource.service";
@@ -17,6 +17,7 @@ import { muteEdgeService } from "../services/mute-edge.service";
 import { ruleRuntimeProcessService } from "../services/rule-runtime-process.service";
 import { stateSignalService } from "../services/state-signal.service";
 import { logicalResourceEdgeService } from "../services/logical-resource-edge.service";
+import { logicalResourceStateService } from "../services/state-logical-resource.service";
 
 
 let initialized = false;
@@ -81,6 +82,28 @@ function handleSetAnalogOutputAction(action: Extract<RuntimeRuleAction, { type: 
             value = analogResource.max;
         }
         commandEdgeService.sendAnalogCommandToEdge(analogResource, value);
+        return;
+    }
+    if (resource?.type === "virtualAnalogOutput") {
+        const vaoResource = resource as RuntimeVirtualAnalogOutputResource;
+        let value = action.value;
+        if (vaoResource.min != null && value < vaoResource.min) value = vaoResource.min;
+        if (vaoResource.max != null && value > vaoResource.max) value = vaoResource.max;
+        const timestamp = Date.now();
+        if (vaoResource.host === "master") {
+            ruleRuntimeProcessService.sendEvent<"stateUpdate">({
+                cmd: "stateUpdate",
+                payload: { resourceId: vaoResource.id, value, timestamp },
+            });
+            logicalResourceStateService.handleLocalState({
+                resourceId: vaoResource.id, value, timestamp,
+            });
+        } else {
+            logicalResourceEdgeService.sendCommandToEdge(
+                { id: vaoResource.id, host: vaoResource.host },
+                { action: "setState", value },
+            );
+        }
         return;
     }
     AppLogger.warn({

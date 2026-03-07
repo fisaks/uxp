@@ -1,16 +1,18 @@
-import { isLogicalResource, RuleRuntimeTapCommand } from "@uhn/common";
+import { RuleRuntimeTapCommand } from "@uhn/common";
 import { runtimeOutput } from "../io/runtime-output";
 import { RuleRuntimeDependencies } from "../types/rule-runtime.type";
+
+const TAPPABLE_TYPES = new Set(["complex", "virtualDigitalInput", "digitalInput"]);
 
 export function handleTapCommand({ resourceService, triggerEventBus }: RuleRuntimeDependencies, cmd: RuleRuntimeTapCommand) {
     const { resourceId, timestamp } = cmd.payload;
 
     const resource = resourceService.getById(resourceId);
-    if (!resource || !isLogicalResource(resource) || (resource.type !== "complex" && resource.type !== "virtualDigitalInput")) {
+    if (!resource || !TAPPABLE_TYPES.has(resource.type)) {
         runtimeOutput.log({
             component: "handleTapCommand",
             level: "error",
-            message: `Resource ${resourceId} not found or not a tappable logical resource`,
+            message: `Resource ${resourceId} not found or not a tappable resource`,
         });
         return;
     }

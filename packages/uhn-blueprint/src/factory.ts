@@ -1,6 +1,6 @@
 // Factory Functions
 // factory.ts
-import { AnalogInputResourceBase, AnalogOutputResourceBase, ComplexResourceBase, DigitalInputResourceBase, DigitalOutputResourceBase, TimerResourceBase, VirtualDigitalInputResourceBase } from "./resource";
+import { AnalogInputResourceBase, AnalogOutputResourceBase, ComplexResourceBase, DigitalInputResourceBase, DigitalOutputResourceBase, TimerResourceBase, VirtualAnalogOutputResourceBase, VirtualDigitalInputResourceBase } from "./resource";
 
 export function digitalInput<
     TInputKind extends string = string,
@@ -62,4 +62,10 @@ export function virtualDigitalInput<THost extends string = string>(
     props: Omit<VirtualDigitalInputResourceBase<THost>, "type">
 ): VirtualDigitalInputResourceBase<THost> {
     return { ...props, type: "virtualDigitalInput" };
+}
+
+export function virtualAnalogOutput<THost extends string = string>(
+    props: Omit<VirtualAnalogOutputResourceBase<THost>, "type">
+): VirtualAnalogOutputResourceBase<THost> {
+    return { ...props, type: "virtualAnalogOutput" };
 }

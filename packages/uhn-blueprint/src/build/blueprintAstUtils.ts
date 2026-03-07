@@ -104,6 +104,28 @@ export function extractIdValue(node: Node): string | undefined {
  * --------------------------------- */
 
 /**
+ * Detect view() factory identifiers imported from "@uhn/blueprint".
+ * Supports aliasing: import { view as myView } from "@uhn/blueprint"
+ */
+const VIEW_FACTORY_NAMES = new Set(["view"]);
+
+export function collectViewFactories(sf: SourceFile): Set<string> {
+    const views = new Set<string>();
+
+    for (const imp of sf.getImportDeclarations()) {
+        if (imp.getModuleSpecifierValue() !== "@uhn/blueprint") continue;
+
+        for (const n of imp.getNamedImports()) {
+            if (VIEW_FACTORY_NAMES.has(n.getName())) {
+                views.add(n.getAliasNode()?.getText() ?? n.getName());
+            }
+        }
+    }
+
+    return views;
+}
+
+/**
  * Detect rule() factory identifiers imported from "@uhn/blueprint".
  * Supports aliasing: import { rule as myRule } from "@uhn/blueprint"
  */

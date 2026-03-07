@@ -40,6 +40,7 @@ export class ResourceEventEmitter {
                 events.push(...getAnalogInputEventsFromStateChange(prev, next));
                 break;
             case "analogOutput":
+            case "virtualAnalogOutput":
                 events.push(...getAnalogOutputEventsFromStateChange(prev, next));
                 break;
             case "timer":

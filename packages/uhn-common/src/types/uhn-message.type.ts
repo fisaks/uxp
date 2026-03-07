@@ -35,6 +35,11 @@ export type TapCommand = {
     type: "tap";
 };
 
+export type LongPressCommand = {
+    type: "longPress";
+    holdMs: number;
+};
+
 export type UhnResourceCommand =
     | ToggleCommand
     | SetCommand
@@ -42,7 +47,8 @@ export type UhnResourceCommand =
     | ReleaseCommand
     | ClearTimerCommand
     | SetAnalogCommand
-    | TapCommand;
+    | TapCommand
+    | LongPressCommand;
 
 export type ToggleCommand = {
     type: "toggle";
@@ -184,6 +190,15 @@ export const UhnResourceCommandPayloadSchema: MessagePayloadSchema<UhnResourceCo
                         type: { const: 'tap' }
                     },
                     required: ['type'],
+                    additionalProperties: false
+                },
+                {
+                    type: 'object',
+                    properties: {
+                        type: { const: 'longPress' },
+                        holdMs: { type: 'number', minimum: 1 }
+                    },
+                    required: ['type', 'holdMs'],
                     additionalProperties: false
                 }
             ]

@@ -3,6 +3,7 @@ import path from "path";
 import { CallExpression, Node, Project, SourceFile, SyntaxKind } from "ts-morph";
 import {
   collectRuleFactories,
+  collectViewFactories,
   collectNamedImportsFromPaths,
   getRootCallExpression,
 } from "./blueprintAstUtils";
@@ -12,22 +13,23 @@ type Issue = { file: string; line: number; message: string };
 /**
  * Blueprint factory usage validator.
  *
- * This file statically analyzes a blueprint’s TypeScript source using ts-morph
+ * This file statically analyzes a blueprint's TypeScript source using ts-morph
  * and enforces strict placement rules for factory calls:
  *
  * - Rule factories (e.g. rule(...)) are only allowed in src/rules
  * - Resource factories are only allowed in src/resources
+ * - View factories (e.g. view(...)) are only allowed in src/views
  * - src/factory may only export reusable factory helpers.
  *
  * The validator works by:
  *  - Loading the project via tsconfig
  *  - Scanning all source files under the blueprint src root
- *  - Collecting imported rule and resource factory identifiers (including aliases)
+ *  - Collecting imported rule, resource, and view factory identifiers (including aliases)
  *  - Walking all call expressions and resolving their root factory call
  *  - Reporting precise file/line errors for invalid usage
  *
  * This prevents accidental cross-layer coupling, keeps blueprint structure
- * predictable, and ensures that rules, resources, and factories remain
+ * predictable, and ensures that rules, resources, views, and factories remain
  * clearly separated at build time rather than failing at runtime.
  *
  * On any violation, validation fails with a consolidated, human-readable error
@@ -55,10 +57,12 @@ export async function validateBlueprintFactories(opts: {
         const inRules = rel === "rules" || rel.startsWith("rules/");
         const inResources = rel === "resources" || rel.startsWith("resources/");
         const inFactory = rel === "factory" || rel.startsWith("factory/");
-        const inOther = !inRules && !inResources && !inFactory;
+        const inViews = rel === "views" || rel.startsWith("views/");
+        const inOther = !inRules && !inResources && !inFactory && !inViews;
 
         const ruleFactories = collectRuleFactories(sf); // identifiers (including alias) for rule()
         const resourceFactories = collectNamedImportsFromPaths(sf, [factoryPath]);
+        const viewFactories = collectViewFactories(sf);
 
         // Walk all call expressions
         const calls = sf.getDescendantsOfKind(SyntaxKind.CallExpression);
@@ -73,8 +77,9 @@ export async function validateBlueprintFactories(opts: {
             // classify call
             const isRule = ruleFactories.has(rootName);
             const isResource = resourceFactories.has(rootName);
+            const isView = viewFactories.has(rootName);
 
-            if (!isRule && !isResource) continue;
+            if (!isRule && !isResource && !isView) continue;
 
             if (inRules && isResource) {
                 issues.push({
@@ -105,12 +110,52 @@ export async function validateBlueprintFactories(opts: {
                 });
             }
 
-            if (inOther && (isRule || isResource)) {
+            if (inFactory && isView) {
                 issues.push({
                     file: sf.getFilePath(),
                     line: call.getStartLineNumber(),
                     message:
-                        `Factory "${rootName}" is not allowed outside src/rules or src/resources. ` +
+                        `View factory "${rootName}" is not allowed in src/factory. ` +
+                        `Views must be defined in src/views.`,
+                });
+            }
+
+            if (inViews && (isRule || isResource)) {
+                issues.push({
+                    file: sf.getFilePath(),
+                    line: call.getStartLineNumber(),
+                    message:
+                        `Factory "${rootName}" is not allowed in src/views. ` +
+                        `Only view factories are allowed here.`,
+                });
+            }
+
+            if (inRules && isView) {
+                issues.push({
+                    file: sf.getFilePath(),
+                    line: call.getStartLineNumber(),
+                    message:
+                        `View factory "${rootName}" is not allowed in src/rules. ` +
+                        `Views must be defined in src/views.`,
+                });
+            }
+
+            if (inResources && isView) {
+                issues.push({
+                    file: sf.getFilePath(),
+                    line: call.getStartLineNumber(),
+                    message:
+                        `View factory "${rootName}" is not allowed in src/resources. ` +
+                        `Views must be defined in src/views.`,
+                });
+            }
+
+            if (inOther && (isRule || isResource || isView)) {
+                issues.push({
+                    file: sf.getFilePath(),
+                    line: call.getStartLineNumber(),
+                    message:
+                        `Factory "${rootName}" is not allowed outside src/rules, src/resources, or src/views. ` +
                         `Move it to the appropriate folder.`,
                 });
             }

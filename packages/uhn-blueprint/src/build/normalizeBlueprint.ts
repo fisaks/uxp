@@ -2,7 +2,7 @@
 import fs from "fs-extra";
 import path from "path";
 import { Node, Project } from "ts-morph";
-import { collectNamedImportsFromPaths, collectRuleFactories, extractIdValue, getRootCallExpression, isValidIdentifier, unwrapExpression } from "./blueprintAstUtils";
+import { collectNamedImportsFromPaths, collectRuleFactories, collectViewFactories, extractIdValue, getRootCallExpression, isValidIdentifier, unwrapExpression } from "./blueprintAstUtils";
 
 type NormalizeError = {
     file: string;
@@ -11,7 +11,7 @@ type NormalizeError = {
     message: string;
 };
 
-type NormalizeMode = "resource" | "rule";
+type NormalizeMode = "resource" | "rule" | "view";
 
 /**
  * Blueprint normalization pass.
@@ -19,7 +19,7 @@ type NormalizeMode = "resource" | "rule";
  * This file statically rewrites a blueprint’s TypeScript source to enforce
  * consistent, machine-friendly rule and resource definitions.
  *
- * The normalizer operates in either "resource" or "rule" mode and:
+ * The normalizer operates in "resource", "rule", or "view" mode and:
  *
  * - Copies the source blueprint into a target directory for safe mutation
  * - Detects top-level rule/resource factory calls
@@ -31,10 +31,11 @@ type NormalizeMode = "resource" | "rule";
  *
  * In resource mode, direct object-literal resources are also supported.
  * In rule mode, normalization always targets the root rule(...) call.
+ * In view mode, normalization targets view(...) calls (single call, not chained).
  *
- * The result is a normalized blueprint where all rules and resources are
- * explicitly exported, uniquely identified, and safe to load deterministically
- * at runtime.
+ * The result is a normalized blueprint where all rules, resources, and views
+ * are explicitly exported, uniquely identified, and safe to load
+ * deterministically at runtime.
  *
  * Any unrecoverable issue (invalid shape, missing id, duplicates) causes
  * normalization to fail with a detailed, user-facing error report.
@@ -74,12 +75,19 @@ export async function normalizeBlueprint(opts: {
             mode === "resource" ? collectNamedImportsFromPaths(sf, [factoryPath!]) : new Set<string>();
         const ruleFactories =
             mode === "rule" ? collectRuleFactories(sf) : new Set<string>(); // usually just {"rule"} if imported
+        const viewFactories =
+            mode === "view" ? collectViewFactories(sf) : new Set<string>();
 
         const isEntityCall = (init: Node): boolean => {
             if (!Node.isCallExpression(init)) return false;
             if (mode === "resource") {
                 const expr = init.getExpression();
                 return Node.isIdentifier(expr) && resourceFactories.has(expr.getText());
+            }
+            if (mode === "view") {
+                // view() is a single call (not chained like rule().onTap().run())
+                const expr = init.getExpression();
+                return Node.isIdentifier(expr) && viewFactories.has(expr.getText());
             }
             // rule mode
             const root = getRootCallExpression(init);
