@@ -6,7 +6,7 @@ export function handleTapCommand({ resourceService, triggerEventBus }: RuleRunti
     const { resourceId, timestamp } = cmd.payload;
 
     const resource = resourceService.getById(resourceId);
-    if (!resource || !isLogicalResource(resource) || (resource.type !== "complex" && resource.type !== "virtualInput")) {
+    if (!resource || !isLogicalResource(resource) || (resource.type !== "complex" && resource.type !== "virtualDigitalInput")) {
         runtimeOutput.log({
             component: "handleTapCommand",
             level: "error",

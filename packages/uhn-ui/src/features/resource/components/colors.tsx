@@ -218,7 +218,7 @@ const complexColors = {
     },
 } as const;
 
-const virtualInputColors = {
+const virtualDigitalInputColors = {
     icon: {
         active: { light: "#00897B", dark: "#4DB6AC" },
         inactive: { light: "#9E9E9E", dark: "#9E9E9E" },
@@ -278,8 +278,8 @@ export function getResourceIconColor(
         return complexActive ? complexColors.icon.active[mode] : complexColors.icon.inactive[mode];
     }
 
-    if (resource.type === "virtualInput") {
-        return active ? virtualInputColors.icon.active[mode] : virtualInputColors.icon.inactive[mode];
+    if (resource.type === "virtualDigitalInput") {
+        return active ? virtualDigitalInputColors.icon.active[mode] : virtualDigitalInputColors.icon.inactive[mode];
     }
 
     return theme.palette.text.disabled;
@@ -325,8 +325,8 @@ export function getResourceSurfaceColor(
         return alpha(complexColors.surface[mode], mode === "dark" ? 0.06 : 0.045);
     }
 
-    if (resource.type === "virtualInput") {
-        return alpha(virtualInputColors.surface[mode], mode === "dark" ? 0.06 : 0.045);
+    if (resource.type === "virtualDigitalInput") {
+        return alpha(virtualDigitalInputColors.surface[mode], mode === "dark" ? 0.06 : 0.045);
     }
 
     return "transparent";

@@ -33,7 +33,7 @@ export class ResourceEventEmitter {
         switch (resource.type) {
             case "digitalInput":
             case "digitalOutput":
-            case "virtualInput":
+            case "virtualDigitalInput":
                 events.push(...getEventsFromStateChange(prev, next));
                 break;
             case "analogInput":

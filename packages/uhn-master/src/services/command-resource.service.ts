@@ -1,4 +1,4 @@
-import { isLogicalResource, isPhysicalResource, ResourceStateValue, RuntimeAnalogOutputResource, RuntimeDigitalInputResource, RuntimeDigitalOutputResource, RuntimeLogicalResource, RuntimeResource, RuntimeVirtualInputResource, UhnResourceCommand } from "@uhn/common";
+import { isLogicalResource, isPhysicalResource, ResourceStateValue, RuntimeAnalogOutputResource, RuntimeDigitalInputResource, RuntimeDigitalOutputResource, RuntimeLogicalResource, RuntimeResource, RuntimeVirtualDigitalInputResource, UhnResourceCommand } from "@uhn/common";
 import { AppErrorV2 } from "@uxp/bff-common";
 import { blueprintResourceService } from "./blueprint-resource.service";
 import { commandEdgeService } from "./command-edge.service";
@@ -8,7 +8,7 @@ import { stateSignalService } from "./state-signal.service";
 import { logicalResourceEdgeService } from "./logical-resource-edge.service";
 import { logicalResourceStateService } from "./state-logical-resource.service";
 
-/** Duration in ms for the simulated press pulse on virtualInput push tap. */
+/** Duration in ms for the simulated press pulse on virtualDigitalInput push tap. */
 const VIRTUAL_PRESS_DURATION_MS = 300;
 
 export class CommandsResourceService {
@@ -32,8 +32,8 @@ export class CommandsResourceService {
                 return this.handleDigitalInput(resource as RuntimeDigitalInputResource, resourceId, command);
             case "complex":
                 return this.handleComplex(resource as RuntimeLogicalResource);
-            case "virtualInput":
-                return this.handleVirtualInput(resource as RuntimeVirtualInputResource, resourceId, command);
+            case "virtualDigitalInput":
+                return this.handleVirtualDigitalInput(resource as RuntimeVirtualDigitalInputResource, resourceId, command);
         }
     }
 
@@ -76,7 +76,7 @@ export class CommandsResourceService {
         );
     }
 
-    private handleVirtualInput(resource: RuntimeVirtualInputResource, resourceId: string, command: UhnResourceCommand) {
+    private handleVirtualDigitalInput(resource: RuntimeVirtualDigitalInputResource, resourceId: string, command: UhnResourceCommand) {
         if (resource.inputType === "toggle" && command.type === "toggle") {
             const currentState = stateRuntimeService.getResourceState(resourceId);
             const currentValue = currentState?.value;
@@ -199,13 +199,13 @@ export class CommandsResourceService {
             return;
         }
 
-        if (resource.type === "virtualInput") {
-            const viResource = resource as RuntimeVirtualInputResource;
+        if (resource.type === "virtualDigitalInput") {
+            const viResource = resource as RuntimeVirtualDigitalInputResource;
             if (viResource.inputType === "push" && command.type !== "tap") {
-                throw new AppErrorV2({ statusCode: 400, code: "INVALID_RESOURCE_COMMAND", message: `Invalid command type ${command.type} for virtualInput push resource` });
+                throw new AppErrorV2({ statusCode: 400, code: "INVALID_RESOURCE_COMMAND", message: `Invalid command type ${command.type} for virtualDigitalInput push resource` });
             }
             if (viResource.inputType === "toggle" && command.type !== "toggle") {
-                throw new AppErrorV2({ statusCode: 400, code: "INVALID_RESOURCE_COMMAND", message: `Invalid command type ${command.type} for virtualInput toggle resource` });
+                throw new AppErrorV2({ statusCode: 400, code: "INVALID_RESOURCE_COMMAND", message: `Invalid command type ${command.type} for virtualDigitalInput toggle resource` });
             }
             return;
         }

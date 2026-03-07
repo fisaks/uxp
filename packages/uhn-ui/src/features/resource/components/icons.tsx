@@ -182,7 +182,7 @@ export function getResourceIcon(
   // -------------------------
   // Virtual Inputs
   // -------------------------
-  if (resource.type === "virtualInput") {
+  if (resource.type === "virtualDigitalInput") {
     const inputType = resource.inputType ?? "push";
     if (inputType === "toggle") {
       return active ? <ToggleOnIcon /> : <ToggleOffIcon />;

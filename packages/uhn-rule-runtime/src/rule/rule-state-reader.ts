@@ -19,7 +19,7 @@ export function createRuleStateReader({ stateService }: { stateService: RuntimeS
             switch (r.type) {
                 case "digitalInput":
                 case "digitalOutput":
-                case "virtualInput":
+                case "virtualDigitalInput":
                     if (!isDigitalValue(s.value)) {
                         throw new ResourceStateTypeMismatchError(r.id, r.type, s.value);
                     }

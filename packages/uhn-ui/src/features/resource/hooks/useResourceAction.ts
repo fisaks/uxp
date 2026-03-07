@@ -169,11 +169,11 @@ export function useResourceAction(
             sendCommand({ type: "toggle" });
             return;
         }
-        if (resource.type === "virtualInput" && resource.inputType === "toggle") {
+        if (resource.type === "virtualDigitalInput" && resource.inputType === "toggle") {
             sendCommand({ type: "toggle" });
             return;
         }
-        if (resource.type === "virtualInput" && resource.inputType === "push") {
+        if (resource.type === "virtualDigitalInput" && resource.inputType === "push") {
             sendCommand({ type: "tap" });
             return;
         }

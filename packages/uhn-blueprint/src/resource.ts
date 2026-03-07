@@ -2,7 +2,7 @@
 // resource.ts
 
 export type PhysicalResourceType = "digitalInput" | "digitalOutput" | "analogInput" | "analogOutput";
-export type LogicalResourceType = "timer" | "complex" | "virtualInput";
+export type LogicalResourceType = "timer" | "complex" | "virtualDigitalInput";
 export type ResourceType = PhysicalResourceType | LogicalResourceType;
 
 export type ResourceBase<TType extends ResourceType> = {
@@ -37,7 +37,7 @@ export function isPhysicalResourceType(type: ResourceType): type is PhysicalReso
 }
 
 export function isLogicalResourceType(type: ResourceType): type is LogicalResourceType {
-    return type === "timer" || type === "complex" || type === "virtualInput";
+    return type === "timer" || type === "complex" || type === "virtualDigitalInput";
 }
 
 export type InputType = "toggle" | "push";
@@ -105,7 +105,7 @@ export type AnalogOutputResourceBase<
 export type TimerResourceBase<THost extends string = string> = LogicalResourceBase<"timer", THost>;
 
 // Virtual Input Resource — software-only button (no physical device)
-export type VirtualInputResourceBase<THost extends string = string> = LogicalResourceBase<"virtualInput", THost> & {
+export type VirtualDigitalInputResourceBase<THost extends string = string> = LogicalResourceBase<"virtualDigitalInput", THost> & {
     inputType: InputType;
 };
 
