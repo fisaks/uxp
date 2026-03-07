@@ -57,7 +57,7 @@ async function collectResources(resourcesDir: string): Promise<CollectResult> {
                 if (isRuntimeResourceObject(resource)) {
                     let runtimeResource = {
                         ...resource,
-                        name: humanizeResourceId(resource.id),
+                        name: resource.name ?? humanizeResourceId(resource.id),
                     } satisfies RuntimeResource;
                     // Serialize complex resource fields: resource objects → string IDs
                     if (runtimeResource.type === "complex") {

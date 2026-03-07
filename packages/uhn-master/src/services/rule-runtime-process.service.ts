@@ -1,6 +1,6 @@
 //services/rule-runtime-process.service.ts
 
-import { FireAndForgetCmdKey, isRuleRuntimeEventObject, RuleRuntimeActionMessage, RuleRuntimeCommand, RuleRuntimeCommandMap, RuleRuntimeLogicalResourceStateChangedMessage, RuleRuntimeLogMessage, RuleRuntimeResourcesLoadedMessage, RuleRuntimeRulesLoadedMessage } from "@uhn/common";
+import { FireAndForgetCmdKey, isRuleRuntimeEventObject, RuleRuntimeActionMessage, RuleRuntimeCommand, RuleRuntimeCommandMap, RuleRuntimeLogicalResourceStateChangedMessage, RuleRuntimeLogMessage, RuleRuntimeResourcesLoadedMessage, RuleRuntimeRulesLoadedMessage, RuleRuntimeViewsLoadedMessage } from "@uhn/common";
 import { AppErrorV2, AppLogger, fileExists, pathExists, readFile, removeFile, writeFile } from "@uxp/bff-common";
 import { assertNever } from "@uxp/common";
 import { ChildProcess, spawn, SpawnOptions } from "child_process";
@@ -31,6 +31,7 @@ type RuleRuntimeProcessEventMap = {
     onLogicalResourceStateChanged: [response: RuleRuntimeLogicalResourceStateChangedMessage];
     onRulesLoaded: [response: RuleRuntimeRulesLoadedMessage];
     onResourcesLoaded: [response: RuleRuntimeResourcesLoadedMessage];
+    onViewsLoaded: [response: RuleRuntimeViewsLoadedMessage];
     exit: [code: number | null, signal: NodeJS.Signals | null];
 };
 
@@ -391,6 +392,9 @@ class RuleRuntimeProcessService extends EventEmitter<RuleRuntimeProcessEventMap>
                             continue;
                         case "resourcesLoaded":
                             this.emit("onResourcesLoaded", resp);
+                            continue;
+                        case "viewsLoaded":
+                            this.emit("onViewsLoaded", resp);
                             continue;
                         case "logicalResourceStateChanged":
                             this.emit("onLogicalResourceStateChanged", resp);

@@ -7,6 +7,8 @@ import { UploadBlueprintPage } from "./features/blueprint/pages/UploadBlueprintP
 import { TopicTracePage } from "./features/topic-trace/pages/TopicTracePage";
 import { BlueprintListPage } from "./features/blueprint/pages/BlueprintListPage";
 import { ResourcePage } from "./features/resource/pages/ResourcePage";
+import { IconPreviewPage } from "./features/blueprint/pages/IconPreviewPage";
+import { ViewPage } from "./features/view/pages/ViewPage";
 
 export const UHNBody = () => {
     const theme = useTheme();
@@ -38,6 +40,13 @@ export const UHNBody = () => {
                         componentProp: "to",
                         active: location.pathname === "/blueprints/upload",
                     },
+                    {
+                        label: "Icons",
+                        link: `/blueprints/icons`,
+                        component: Link,
+                        componentProp: "to",
+                        active: location.pathname === "/blueprints/icons",
+                    },
                 ]
             },
             {
@@ -46,8 +55,14 @@ export const UHNBody = () => {
                 component: Link,
                 componentProp: "to",
                 active: location.pathname === "/resources",
-
-            }
+            },
+            {
+                label: "Views",
+                link: "/views",
+                component: Link,
+                componentProp: "to",
+                active: location.pathname === "/views",
+            },
 
         ];
     }, [basePath, location.pathname]);
@@ -60,7 +75,9 @@ export const UHNBody = () => {
                     <Route path="/topic-trace" element={<TopicTracePage />} />
                     <Route path="/blueprints" element={<BlueprintListPage />} />
                     <Route path="/blueprints/upload" element={<UploadBlueprintPage />} />
+                    <Route path="/blueprints/icons" element={<IconPreviewPage />} />
                     <Route path="/resources" element={<ResourcePage />} />
+                    <Route path="/views" element={<ViewPage />} />
                     <Route path="*" element={<TopicTracePage />} />
                 </Routes>
 

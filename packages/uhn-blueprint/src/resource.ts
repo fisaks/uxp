@@ -1,6 +1,8 @@
 // Resource Types and Bases
 // resource.ts
 
+import { BlueprintIcon } from "./icon";
+
 export type PhysicalResourceType = "digitalInput" | "digitalOutput" | "analogInput" | "analogOutput";
 export type LogicalResourceType = "timer" | "complex" | "virtualDigitalInput" | "virtualAnalogOutput";
 export type ResourceType = PhysicalResourceType | LogicalResourceType;
@@ -10,6 +12,8 @@ export type ResourceBase<TType extends ResourceType> = {
     name?: string;
     description?: string;
     type: TType;
+    /** Override the default type-based icon. Uses BlueprintIcon names (e.g. "lighting:bulb"). */
+    icon?: BlueprintIcon;
     /** Hide this resource from the main grid. It remains accessible in complex resource popovers. */
     hidden?: boolean;
 };

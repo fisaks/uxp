@@ -1,5 +1,5 @@
 
-import { AnalogInputResourceBase, AnalogOutputResourceBase, DigitalInputResourceBase, DigitalOutputResourceBase, LogicalResourceType, PhysicalResourceType, ResourceType, RuntimeRuleAction, StateDisplayAggregation, StateDisplayStyle, ViewActiveCondition, ViewCommandType, ViewStateAggregation } from "@uhn/blueprint";
+import { AnalogInputResourceBase, AnalogOutputResourceBase, BlueprintIcon, DigitalInputResourceBase, DigitalOutputResourceBase, LogicalResourceType, PhysicalResourceType, ResourceType, RuntimeRuleAction, StateDisplayAggregation, StateDisplayStyle, ViewActiveCondition, ViewCommandType, ViewStateAggregation } from "@uhn/blueprint";
 
 // --- Runtime rule serialization (for IPC + overview) ---
 
@@ -93,6 +93,7 @@ type RuntimeResourceCommon = {
     id: string;
     name: string;
     description?: string;
+    icon?: BlueprintIcon;
     hidden?: boolean;
     errors?: ResourceErrorCode[];
 };
@@ -276,13 +277,20 @@ export type RuleRuntimeLogicalResourceStateChangedMessage = {
   };
 };
 
+export type RuleRuntimeViewsLoadedMessage = {
+  kind: "event";
+  cmd: "viewsLoaded";
+  views: RuntimeInteractionView[];
+};
+
 export type RuleRuntimeResponse = RuleRuntimeReadyMessage
   | RuleRuntimeActionMessage
   | RuleRuntimeResourceMissingMessage
   | RuleRuntimeLogMessage
   | RuleRuntimeLogicalResourceStateChangedMessage
   | RuleRuntimeRulesLoadedMessage
-  | RuleRuntimeResourcesLoadedMessage;
+  | RuleRuntimeResourcesLoadedMessage
+  | RuleRuntimeViewsLoadedMessage;
 
 export type RuleRuntimeCommandMap = {
   stateUpdate: {
@@ -334,13 +342,17 @@ export type RuntimeViewCommand = RuntimeViewCommandTarget & {
     onDeactivate?: RuntimeViewCommandTarget;
 };
 
-export type RuntimeStateDisplayItem = {
+type RuntimeStateDisplayItemBase = {
     resourceId: string;
     label?: string;
     unit?: string;
-    style?: StateDisplayStyle;
-    icon?: string;
 };
+
+export type RuntimeStateDisplayItem = RuntimeStateDisplayItemBase & (
+    | { style?: "value" }
+    | { style: "indicator"; icon: BlueprintIcon }
+    | { style: "flash"; icon: BlueprintIcon }
+);
 
 export type RuntimeViewStateDisplay = {
     items: RuntimeStateDisplayItem[];
@@ -349,9 +361,9 @@ export type RuntimeViewStateDisplay = {
 
 export type RuntimeInteractionView = {
     id: string;
-    name?: string;
+    name: string;
     description?: string;
-    icon?: string;
+    icon?: BlueprintIcon;
     stateFrom: RuntimeViewStateSource[];
     stateAggregation?: ViewStateAggregation;
     activeWhen?: ViewActiveCondition;

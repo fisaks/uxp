@@ -13,6 +13,7 @@ import { RuntimeRulesService } from "./services/runtime-rules.service";
 import { RuntimeStateService } from "./services/runtime-state.service";
 import { RuntimeMode, RuntimeModes } from "./types/rule-runtime.type";
 import { RuntimeTimerService } from "./services/runtime-timer.service";
+import { RuntimeViewService } from "./services/runtime-view.service";
 
 const blueprintDir = process.argv[2];
 const runMode = process.argv[3] as RuntimeMode;
@@ -27,11 +28,13 @@ if (!runMode || RuntimeModes.indexOf(runMode) === -1) {
 }
 const resourcesDir = path.join(path.resolve(blueprintDir), "dist", "resources");
 const rulesDir = path.join(path.resolve(blueprintDir), "dist", "rules");
+const viewsDir = path.join(path.resolve(blueprintDir), "dist", "views");
 
 async function main() {
-    const [resourceService, rulesService] = await Promise.all([
+    const [resourceService, rulesService, viewService] = await Promise.all([
         RuntimeResourceService.create(resourcesDir),
         RuntimeRulesService.create(rulesDir, runMode, edgeName),
+        RuntimeViewService.create(viewsDir),
     ]);
     const stateService = new RuntimeStateService();
     const triggerEventBus = new TriggerEventBus();
@@ -71,6 +74,11 @@ async function main() {
         kind: "event",
         cmd: "resourcesLoaded",
         resources: resourceService.list(),
+    });
+    runtimeOutput.send({
+        kind: "event",
+        cmd: "viewsLoaded",
+        views: viewService.list(),
     });
     runtimeOutput.send({ kind: "event", cmd: "ready" });
 }

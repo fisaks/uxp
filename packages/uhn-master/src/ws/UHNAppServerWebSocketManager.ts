@@ -1,4 +1,4 @@
-import { getMatchingResourcesForPattern, getMatchingStateForPattern, RuntimeOverviewPayload, TopicMessagePayload, UHNAppActionPayloadRequestMap, UHNAppActionPayloadResponseMap, UHNAppResponseMessage, UhnFullStateResponse, UhnHealthSnapshot, UhnResourcesResponse, UhnStateResponse, UhnSubscriptionPattern, UhnSystemSnapshot, UhnSystemStatus } from "@uhn/common";
+import { getMatchingResourcesForPattern, getMatchingStateForPattern, RuntimeOverviewPayload, TopicMessagePayload, UHNAppActionPayloadRequestMap, UHNAppActionPayloadResponseMap, UHNAppResponseMessage, UhnFullStateResponse, UhnHealthSnapshot, UhnResourcesResponse, UhnStateResponse, UhnSubscriptionPattern, UhnSystemSnapshot, UhnSystemStatus, UhnViewsResponse } from "@uhn/common";
 import { ServerWebSocketManager, topicMatches } from "@uxp/bff-common";
 
 import { WebSocket } from "ws";
@@ -148,6 +148,14 @@ export class UHNAppServerWebSocketManager extends ServerWebSocketManager<UHNAppA
             action: "uhn:runtime:overview",
             success: true,
             payload: payload
+        });
+    }
+
+    public broadcastViewsMessage(payload: UhnViewsResponse) {
+        this.broadcastToTopic("uhn:view/*", {
+            action: "uhn:views",
+            success: true,
+            payload: payload,
         });
     }
 

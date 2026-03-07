@@ -1,7 +1,7 @@
 
 import { MessagePayloadSchema } from "@uxp/common";
 import { UhnHealthSnapshot } from "./uhn-health.type";
-import { RuntimeOverviewPayload, RuntimeResource, RuntimeResourceState } from "./uhn-runtime.type";
+import { RuntimeInteractionView, RuntimeOverviewPayload, RuntimeResource, RuntimeResourceState } from "./uhn-runtime.type";
 
 
 export type UhnSubscriptionPattern =
@@ -11,7 +11,8 @@ export type UhnSubscriptionPattern =
     | `resource/${string}`
     | `health/*`
     | 'system/*'
-    | 'runtime/*';
+    | 'runtime/*'
+    | 'view/*';
 
 
 export type UhnSubscribePayload = {
@@ -89,11 +90,16 @@ export type UhnSubscribePayloadResponseMap = {
     "uhn:subscribed": UhnSubscribePayload
     "uhn:unsubscribed": UhnSubscribePayload
 }
+export type UhnViewsResponse = {
+    views: RuntimeInteractionView[];
+}
+
 export type UhnResourcePayloadResponseMap = {
     "uhn:resources": UhnResourcesResponse
     "uhn:state": UhnStateResponse
     "uhn:fullState": UhnFullStateResponse,
     "uhn:resource:command": UhnResourceCommandPayload
+    "uhn:views": UhnViewsResponse
 }
 export type UhnHealthPayloadResponseMap = {
     "uhn:health:snapshot": UhnHealthSnapshot
@@ -108,7 +114,7 @@ export const UhnSubscribePayloadSchema: MessagePayloadSchema<UhnSubscribePayload
         patterns: {
             type: 'array', items: {
                 type: 'string',
-                pattern: '^((state|resource)/.*|health/\\*|system/\\*|runtime/\\*)$',
+                pattern: '^((state|resource)/.*|health/\\*|system/\\*|runtime/\\*|view/\\*)$',
                 minLength: 1,
                 maxLength: 256
             },

@@ -30,6 +30,7 @@ import PowerOutlinedIcon from "@mui/icons-material/PowerOutlined";
 
 import SensorsOutlinedIcon from "@mui/icons-material/SensorsOutlined";
 import { BaseAnalogInputKind, BaseAnalogOutputKind, BaseInputKind, BaseOutputKind, InputType } from "@uhn/blueprint";
+import { getBlueprintIcon } from "../../view/blueprintIconMap";
 import { TileRuntimeResource, TileRuntimeResourceState } from "../resource-ui.type";
 import { ReedRelayClosedIcon, ReedRelayOpenIcon } from "./relay-icon";
 
@@ -131,6 +132,14 @@ export function getResourceIcon(
   state?: TileRuntimeResourceState
 ) {
   const active = Boolean(state?.value);
+
+  // -------------------------
+  // Blueprint icon override
+  // -------------------------
+  if (resource.icon) {
+    const IconComponent = getBlueprintIcon(resource.icon);
+    if (IconComponent) return <IconComponent />;
+  }
 
   // -------------------------
   // Outputs

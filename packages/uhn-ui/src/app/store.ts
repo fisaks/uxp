@@ -9,6 +9,7 @@ import resourceCommandFeedback from "../features/resource/resourceCommandFeedbac
 import resourceReducer from "../features/resource/resourceSlice";
 import runtimeStateReducer from "../features/runtime-state/runtimeStateSlice";
 import topicTraceReducer from "../features/topic-trace/topicTraceSlice";
+import viewsReducer from "../features/view/viewSlice";
 
 import { useDispatch } from "react-redux";
 import { uhnApi } from './uhnApi';
@@ -30,6 +31,7 @@ export const createStore = () => {
             resources: resourceReducer,
             resourceCommandFeedback: resourceCommandFeedback,
             runtimeState: runtimeStateReducer,
+            views: viewsReducer,
 
         },
         devTools: process.env.NODE_ENV === "development",

@@ -1,6 +1,7 @@
 // InteractionView types and factory
 // view.ts
 
+import type { BlueprintIcon } from "./icon";
 import type {
     AnalogOutputResourceBase,
     ComplexResourceBase,
@@ -78,18 +79,17 @@ export type ViewCommand = ViewCommandTarget & {
 /* ------------------------------------------------------------------ */
 export type StateDisplayStyle = "value" | "indicator" | "flash";
 
-export type StateDisplayItem = {
+type StateDisplayItemBase = {
     resource: ResourceBase<ResourceType>;
     label?: string;
     unit?: string;
-    /** How to render this item on the tile. Default: "value".
-     *  - "value": always visible, shows resource value as text
-     *  - "indicator": small icon, lit when active, dim when inactive
-     *  - "flash": icon blinks briefly on resource activation, then fades */
-    style?: StateDisplayStyle;
-    /** Custom icon for indicator/flash styles */
-    icon?: string;
 };
+
+export type StateDisplayItem = StateDisplayItemBase & (
+    | { style?: "value" }
+    | { style: "indicator"; icon: BlueprintIcon }
+    | { style: "flash"; icon: BlueprintIcon }
+);
 
 export type StateDisplayAggregation =
     | "sum" | "average" | "max" | "min" | "countActive";
@@ -123,7 +123,7 @@ export type InteractionView = {
     id?: string;
     name?: string;
     description?: string;
-    icon?: string;
+    icon?: BlueprintIcon;
 
     /** Primary state sources — drives icon active/inactive or numeric value */
     stateFrom: ViewStateSource[];

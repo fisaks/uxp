@@ -68,6 +68,14 @@ export function humanizeResourceId(resourceId: string): string {
         .replace(/^./, c => c.toUpperCase());
 }
 
+export function humanizeViewId(viewId: string): string {
+    // Strip "View" suffix or "view" prefix (case-sensitive camelCase patterns)
+    let id = viewId;
+    if (id.endsWith("View")) id = id.slice(0, -4);
+    if (id.startsWith("view")) id = id.charAt(4).toLowerCase() + id.slice(5);
+    return humanizeResourceId(id);
+}
+
 export function isRuntimeResourceObject(obj: unknown): obj is RuntimeResource {
     return (
         typeof obj === "object" &&

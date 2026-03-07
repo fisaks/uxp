@@ -58,7 +58,7 @@ class LogicalResourceStateService extends EventEmitter<LogicalResourceStateEvent
     }
 
     private handleMqttState(topic: string, payload: unknown) {
-        // uhn/+/logical-resource/state/+
+        // uhn/+/resource/state/+
         const parsed = parseMqttTopic(topic, 5);
         if (!parsed) {
             AppLogger.warn(undefined, {

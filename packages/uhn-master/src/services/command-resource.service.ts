@@ -79,17 +79,27 @@ export class CommandsResourceService {
         } else if (command.type === "press" || command.type === "release") {
             stateSignalService.setSignalState(resource, command.type === "press");
         } else if (command.type === "tap") {
-            // Signal command — fire tap event directly to rule runtime, no state change.
+            // Fire tap to master runtime (for any master-targeted rules on this resource).
             ruleRuntimeProcessService.sendEvent<"tapCommand">({
                 cmd: "tapCommand",
-                payload: { resourceId, timestamp: Date.now() },
+                payload: { resourceId, timestamp: Date.now() }, 
             });
+            // Also forward to the edge runtime (for any edge-targeted rules on this resource).
+            logicalResourceEdgeService.sendCommandToEdge(
+                { id: resourceId, host: resource.edge },
+                { action: "tap" },
+            );
         } else if (command.type === "longPress") {
-            // Signal command — fire longPress event directly to rule runtime, no state change.
+            // Fire longPress to master runtime.
             ruleRuntimeProcessService.sendEvent<"longPressCommand">({
                 cmd: "longPressCommand",
                 payload: { resourceId, timestamp: Date.now(), thresholdMs: command.holdMs },
             });
+            // Also forward to the edge runtime.
+            logicalResourceEdgeService.sendCommandToEdge(
+                { id: resourceId, host: resource.edge },
+                { action: "longPress", durationMs: command.holdMs },
+            );
         }
     }
 

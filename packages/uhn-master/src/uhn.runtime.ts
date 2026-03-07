@@ -1,6 +1,7 @@
 //uhn.runtime.ts
 import { AppLogger, runBackgroundTask } from "@uxp/bff-common";
 import { initBlueprintResourceDispatcher } from "./dispatchers/blueprint-resource.dispatcher";
+import { initBlueprintViewDispatcher } from "./dispatchers/blueprint-view.dispatcher";
 import { initMuteEventDispatcher } from "./dispatchers/mute-event.dispatcher";
 import { initRuleActionDispatcher } from "./dispatchers/rule-action.dispatcher";
 import { initStateRuntimeDispatcher } from "./dispatchers/state-runtime.dispatcher";
@@ -16,6 +17,7 @@ const { AppDataSource } = require("./db/typeorm.config");
 import { initRuntimeOverviewDispatcher } from "./dispatchers/runtime-overview.dispatcher";
 import { initUhnSystemDispatcher } from "./dispatchers/uhn-system.dispatcher";
 import "./services/blueprint-resource.service";
+import "./services/blueprint-view.service";
 import "./services/blueprint-runtime-supervisor.service";
 import "./services/blueprint.service";
 import "./services/command-edge.service";
@@ -60,6 +62,7 @@ const setupWebDispatchers = () => {
     // Initialize dispatchers
     initTopicTraceDispatcher();
     initBlueprintResourceDispatcher();
+    initBlueprintViewDispatcher();
     initStateRuntimeDispatcher();
     initRuleActionDispatcher();
     initMuteEventDispatcher();

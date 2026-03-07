@@ -1,7 +1,7 @@
 import mqttService from "./mqtt.service";
 
 type LogicalResourceEdgeCommand = {
-    action: "start" | "clear" | "tap" | "setState";
+    action: "start" | "clear" | "tap" | "longPress" | "setState";
     value?: boolean | number;
     durationMs?: number;
     mode?: "restart" | "startOnce";
@@ -12,7 +12,7 @@ class LogicalResourceEdgeService {
         resource: { id: string; host: string },
         command: LogicalResourceEdgeCommand
     ) {
-        const topic = `uhn/${resource.host}/logical-resource/cmd/${resource.id}`;
+        const topic = `uhn/${resource.host}/resource/cmd/${resource.id}`;
         const payload = {
             resourceId: resource.id,
             action: command.action,

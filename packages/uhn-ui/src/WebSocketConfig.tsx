@@ -11,6 +11,7 @@ import { useAppDispatch } from "./app/store";
 import { resourcesLoaded } from "./features/resource/resourceSlice";
 import { fullStateReceived, stateReceived } from "./features/runtime-state/runtimeStateSlice";
 import { addTopicMessage, setTopicPattern } from "./features/topic-trace/topicTraceSlice";
+import { viewsLoaded } from "./features/view/viewSlice";
 
 
 
@@ -44,6 +45,9 @@ export const WebSocketConfig: React.FC<WebSocketConfigProps> = ({ children }) =>
             if (message.payload) dispatch(fullStateReceived({ response: message.payload, receivedAt: Date.now() }));
             console.log("Received uhn:fullState", message.payload);
         },
+        "uhn:views": (message) => {
+            if (message.payload) dispatch(viewsLoaded({ response: message.payload }));
+        },
         "uhn:subscribed": (message) => {
             console.log("Subscribed to UHN patterns", message.payload);
         },
@@ -64,7 +68,7 @@ export const WebSocketConfig: React.FC<WebSocketConfigProps> = ({ children }) =>
         console.log("WebSocket Reconnect", details);
         setReconnectDetails(details);
         if (details.connected) {
-            ws.sendMessage({ action: "uhn:subscribe", payload: { patterns: ["resource/*", "state/*", "health/*"] } });
+            ws.sendMessage({ action: "uhn:subscribe", payload: { patterns: ["resource/*", "state/*", "health/*", "view/*"] } });
             connected.current = true;
         } else {
             connected.current = false;
@@ -76,7 +80,7 @@ export const WebSocketConfig: React.FC<WebSocketConfigProps> = ({ children }) =>
         // Delay subscription slightly to allow the underlying WebSocket connection/handshake
         // to fully settle before sending subscribe messages, avoiding intermittent race conditions.
         setTimeout(() => {
-            ws.sendMessage({ action: "uhn:subscribe", payload: { patterns: ["resource/*", "state/*", "health/*"] } });
+            ws.sendMessage({ action: "uhn:subscribe", payload: { patterns: ["resource/*", "state/*", "health/*", "view/*"] } });
             connected.current = true;
         }, 500);
 
