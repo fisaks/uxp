@@ -6,5 +6,3 @@ export * from "./rule";
 export * from "./metadata";
 export * from "./view";
 export * from "./icon";
-
-

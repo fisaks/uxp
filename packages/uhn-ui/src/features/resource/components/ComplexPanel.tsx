@@ -88,9 +88,7 @@ const SubResourceRow: React.FC<{
 
     return (
         <Box sx={{ display: "flex", alignItems: "center", gap: 1, minHeight: 36 }}>
-            {React.cloneElement(MainIcon, {
-                sx: { color: iconColor, fontSize: 18, flexShrink: 0 },
-            })}
+            <MainIcon sx={{ color: iconColor, fontSize: 18, flexShrink: 0 }} />
             <Typography
                 variant="body2"
                 sx={{ fontWeight: 500, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}

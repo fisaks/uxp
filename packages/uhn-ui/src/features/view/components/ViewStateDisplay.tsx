@@ -29,14 +29,15 @@ export const ValueItem: React.FC<{ item: StateDisplayValue }> = ({ item }) => {
 
 export const IndicatorItem: React.FC<{ item: StateDisplayValue }> = ({ item }) => {
     const theme = useTheme();
-    const IconComponent = getBlueprintIcon(item.icon as any);
-    if (!IconComponent) return null;
+    const entry = getBlueprintIcon(item.icon as any);
+    if (!entry) return null;
+    const IconComponent = item.active ? entry.active : (entry.inactive ?? entry.active);
     return (
         <IconComponent
             sx={{
                 fontSize: 16,
                 color: item.active
-                    ? theme.palette.info.main
+                    ? (entry.colors?.active[theme.palette.mode] ?? theme.palette.info.main)
                     : theme.palette.action.disabled,
                 transition: "color 0.3s",
             }}
@@ -46,14 +47,15 @@ export const IndicatorItem: React.FC<{ item: StateDisplayValue }> = ({ item }) =
 
 export const FlashItem: React.FC<{ item: StateDisplayValue }> = ({ item }) => {
     const theme = useTheme();
-    const IconComponent = getBlueprintIcon(item.icon as any);
-    if (!IconComponent) return null;
+    const entry = getBlueprintIcon(item.icon as any);
+    if (!entry) return null;
+    const IconComponent = item.active ? entry.active : (entry.inactive ?? entry.active);
     return (
         <IconComponent
             sx={{
                 fontSize: 16,
                 color: item.active
-                    ? theme.palette.info.main
+                    ? (entry.colors?.active[theme.palette.mode] ?? theme.palette.info.main)
                     : "transparent",
                 transition: "color 0.3s",
             }}

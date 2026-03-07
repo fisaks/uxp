@@ -86,9 +86,7 @@ export const AnalogOutputPanel: React.FC<AnalogOutputPanelProps> = ({
         >
             {/* Header: icon + name */}
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
-                {React.cloneElement(MainIcon, {
-                    sx: { color: iconColor, fontSize: 20 },
-                })}
+                <MainIcon sx={{ color: iconColor, fontSize: 20 }} />
                 <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
                     {resource.name}
                 </Typography>

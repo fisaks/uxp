@@ -4,26 +4,46 @@
  *  Add new entries as needed: one line here + one line in UI icon map. */
 export type BlueprintIcon =
     // Lighting
-    | "lighting:bulb" | "lighting:ceiling" | "lighting:flashlight" | "lighting:indicator"
+    | "lighting:bulb" | "lighting:ceiling" | "lighting:flashlight" | "lighting:indicator" | "lighting:spot"
     // Power
     | "power:socket" | "power:plug" | "power:switch" | "power:energy" | "power:current"
     // Sensor
-    | "sensor:motion" | "sensor:pir" | "sensor:temperature" | "sensor:humidity" | "sensor:light"
+    | "sensor:motion" | "sensor:pir" | "sensor:temperature" | "sensor:humidity" | "sensor:light" | "sensor:dark"
+    | "sensor:co2" | "sensor:air" | "sensor:air-quality" | "sensor:dust" | "sensor:cold"
+    | "sensor:leak" | "sensor:water" | "sensor:smoke" | "sensor:fire" | "sensor:alarm"
+    | "sensor:camera" | "sensor:doorbell" | "sensor:pressure" | "sensor:sound"
+    | "sensor:gas" | "sensor:voltage" | "sensor:vibration"
     // Control
     | "control:button" | "control:dimmer" | "control:valve" | "control:timer" | "control:schedule"
     | "control:toggle" | "control:speed" | "control:relay"
+    | "control:pump" | "control:lock" | "control:blind" | "control:shade" | "control:curtain"
+    // Climate
+    | "climate:heater" | "climate:ac" | "climate:fan" | "climate:heat-pump" | "climate:fireplace"
+    // Media
+    | "media:speaker" | "media:microphone" | "media:volume"  | "media:tv"
     // Opening
-    | "opening:door" | "opening:window"
+    | "opening:door" | "opening:window" | "opening:gate"
     // Room
     | "room:kitchen" | "room:bathroom" | "room:bedroom" | "room:living" | "room:hallway"
     | "room:garage" | "room:outdoor" | "room:generic" | "room:toilet"
     | "room:children" | "room:baby" | "room:youth"
     | "room:theatre" | "room:sauna" | "room:gym" | "room:dining" | "room:utility"
     | "room:terrace" | "room:laundry" | "room:ironing" | "room:wardrobe"
+    | "room:office" | "room:pool" | "room:staircase" | "room:basement" | "room:storage"
     // Structure
     | "structure:home" | "structure:floor"
     // Scene
     | "scene:default" | "scene:night" | "scene:away" | "scene:eco" | "scene:dining" | "scene:tv"
+    | "scene:party" | "scene:morning" | "scene:sleep"
+    | "scene:cleaning" | "scene:movie" | "scene:romantic" | "scene:focus" | "scene:welcome"
+    // Device
+    | "device:router" | "device:wifi" | "device:signal" | "device:controller" | "device:gateway" | "device:chip"
+    // Energy
+    | "energy:battery" | "energy:charging" | "energy:solar" | "energy:meter"
+    // Garden
+    | "garden:grass" | "garden:sprinkler" | "garden:tree" | "garden:water"
+    // Vehicle
+    | "vehicle:ev" | "vehicle:charger"
     // Status
-    | "status:dashboard" | "status:device"
+    | "status:dashboard" | "status:device" | "status:warning" | "status:error" | "status:ok" | "status:notification"
     ;

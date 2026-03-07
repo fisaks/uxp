@@ -213,18 +213,15 @@ export const ResourceTile: React.FC<ResourceTileProps> = ({ resource, state }) =
                         cursor: hasInteractionPanel ? "pointer" : undefined,
                     }}>
 
-                    {React.cloneElement(MainIcon, {
-                        sx:
-                        {
-                            color: iconColor,
-                            fontSize: 24,
-                            ...(isPending && {
-                                "--pulse-from": iconColor,
-                                "--pulse-to": alpha(iconColor, 0.45),
-                                animation: "resource-pending-pulse 1.4s ease-in-out infinite",
-                            })
-                        }
-                    })}
+                    <MainIcon sx={{
+                        color: iconColor,
+                        fontSize: 24,
+                        ...(isPending && {
+                            "--pulse-from": iconColor,
+                            "--pulse-to": alpha(iconColor, 0.45),
+                            animation: "resource-pending-pulse 1.4s ease-in-out infinite",
+                        })
+                    }} />
                     {hasInteractionPanel && (
                         <MoreHorizIcon
                             sx={{

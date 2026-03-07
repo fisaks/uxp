@@ -2,6 +2,7 @@
 // view.ts
 
 import type { BlueprintIcon } from "./icon";
+import { commandTypeDefaultIcon } from "./icon-defaults";
 import type {
     AnalogOutputResourceBase,
     ComplexResourceBase,
@@ -147,5 +148,9 @@ export type InteractionView = {
 /* Factory                                                             */
 /* ------------------------------------------------------------------ */
 export function view(props: InteractionView): InteractionView {
-    return { ...props };
+    const stateFromIcon = props.stateFrom.length === 1 ? props.stateFrom[0].resource.icon : undefined;
+    return {
+        ...props,
+        icon: props.icon ?? stateFromIcon ?? (props.command ? commandTypeDefaultIcon[props.command.type] : "status:dashboard"),
+    };
 }

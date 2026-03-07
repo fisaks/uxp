@@ -1,11 +1,11 @@
 import { Box, Card, Grid2, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import React from "react";
-import { blueprintIconMap } from "../../view/blueprintIconMap";
+import { BlueprintIconEntry, blueprintIconMap } from "../../view/blueprintIconMap";
 
 /** Groups icon entries by their category prefix (before the colon). */
-function groupByCategory(entries: [string, React.ComponentType<any>][]): Record<string, [string, React.ComponentType<any>][]> {
-    const groups: Record<string, [string, React.ComponentType<any>][]> = {};
+function groupByCategory(entries: [string, BlueprintIconEntry][]): Record<string, [string, BlueprintIconEntry][]> {
+    const groups: Record<string, [string, BlueprintIconEntry][]> = {};
     for (const entry of entries) {
         const [name] = entry;
         const category = name.split(":")[0];
@@ -17,7 +17,7 @@ function groupByCategory(entries: [string, React.ComponentType<any>][]): Record<
 
 export const IconPreviewPage: React.FC = () => {
     const theme = useTheme();
-    const entries = Object.entries(blueprintIconMap) as [string, React.ComponentType<any>][];
+    const entries = Object.entries(blueprintIconMap) as [string, BlueprintIconEntry][];
     const grouped = groupByCategory(entries);
 
     return (
@@ -29,40 +29,57 @@ export const IconPreviewPage: React.FC = () => {
                         {category}
                     </Typography>
                     <Grid2 container spacing={2}>
-                        {icons.map(([name, IconComponent]) => (
-                            <Grid2 key={name} size={{ xs: 6, sm: 4, md: 3, lg: 2 }}>
-                                <Card
-                                    variant="outlined"
-                                    sx={{
-                                        display: "flex",
-                                        flexDirection: "column",
-                                        alignItems: "center",
-                                        justifyContent: "center",
-                                        py: 2,
-                                        px: 1,
-                                        minHeight: 100,
-                                    }}
-                                >
-                                    <IconComponent sx={{
-                                        fontSize: 36,
-                                        color: theme.palette.text.primary,
-                                        mb: 1,
-                                    }} />
-                                    <Typography
-                                        variant="caption"
-                                        align="center"
+                        {icons.map(([name, entry]) => {
+                            const ActiveIcon = entry.active;
+                            const InactiveIcon = entry.inactive;
+                            const activeColor = entry.colors?.active[theme.palette.mode];
+                            return (
+                                <Grid2 key={name} size={{ xs: 6, sm: 4, md: 3, lg: 2 }}>
+                                    <Card
+                                        variant="outlined"
                                         sx={{
-                                            fontFamily: "monospace",
-                                            fontSize: "0.7rem",
-                                            wordBreak: "break-all",
-                                            color: theme.palette.text.secondary,
+                                            display: "flex",
+                                            flexDirection: "column",
+                                            alignItems: "center",
+                                            justifyContent: "center",
+                                            py: 2,
+                                            px: 1,
+                                            minHeight: 100,
                                         }}
                                     >
-                                        {name}
-                                    </Typography>
-                                </Card>
-                            </Grid2>
-                        ))}
+                                        <Box sx={{ display: "flex", gap: 1.5, mb: 1 }}>
+                                            <ActiveIcon sx={{
+                                                fontSize: 36,
+                                                color: activeColor ?? theme.palette.text.primary,
+                                            }} />
+                                            {InactiveIcon ? (
+                                                <InactiveIcon sx={{
+                                                    fontSize: 36,
+                                                    color: theme.palette.action.disabled,
+                                                }} />
+                                            ) : (
+                                                <ActiveIcon sx={{
+                                                    fontSize: 36,
+                                                    color: theme.palette.action.disabled,
+                                                }} />
+                                            )}
+                                        </Box>
+                                        <Typography
+                                            variant="caption"
+                                            align="center"
+                                            sx={{
+                                                fontFamily: "monospace",
+                                                fontSize: "0.7rem",
+                                                wordBreak: "break-all",
+                                                color: theme.palette.text.secondary,
+                                            }}
+                                        >
+                                            {name}
+                                        </Typography>
+                                    </Card>
+                                </Grid2>
+                            );
+                        })}
                     </Grid2>
                 </Box>
             ))}

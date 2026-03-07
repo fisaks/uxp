@@ -1,27 +1,12 @@
-import DashboardIcon from "@mui/icons-material/Dashboard";
-import TimerIcon from "@mui/icons-material/Timer";
-import ToggleOnIcon from "@mui/icons-material/ToggleOn";
-import TouchAppIcon from "@mui/icons-material/TouchApp";
-import TuneIcon from "@mui/icons-material/Tune";
-import { Box, Card, CardActionArea, CircularProgress, Typography } from "@mui/material";
+import DeviceHubIcon from "@mui/icons-material/DeviceHub";
+import { alpha, Box, Card, CardActionArea, CircularProgress, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import { SvgIconProps } from "@mui/material/SvgIcon";
-import { ViewCommandType } from "@uhn/blueprint";
 import { RuntimeInteractionView, RuntimeViewCommandTarget } from "@uhn/common";
 import React, { useCallback, useMemo, useState } from "react";
 import { getBlueprintIcon } from "../blueprintIconMap";
 import { useSendViewCommand } from "../hooks/useSendViewCommand";
 import { StateDisplayValue } from "../viewSelectors";
 import { FlashItem, IndicatorItem, ViewValueDisplay } from "./ViewStateDisplay";
-
-const defaultIconByCommandType: Record<ViewCommandType, React.ComponentType<SvgIconProps>> = {
-    tap: TouchAppIcon,
-    toggle: ToggleOnIcon,
-    longPress: TouchAppIcon,
-    setAnalog: TuneIcon,
-    clearTimer: TimerIcon,
-};
-const displayOnlyIcon = DashboardIcon;
 
 type ViewTileProps = {
     view: RuntimeInteractionView;
@@ -76,19 +61,18 @@ export const ViewTile: React.FC<ViewTileProps> = ({ view, active, stateDisplayVa
         }
     }, [view.command, active, sendForTarget]);
 
-    const IconComponent = getBlueprintIcon(view.icon)
-        ?? (view.command ? defaultIconByCommandType[view.command.type] : displayOnlyIcon);
+    const iconEntry = getBlueprintIcon(view.icon);
+    const IconComponent = iconEntry
+        ? (active || !iconEntry.inactive ? iconEntry.active : iconEntry.inactive)
+        : DeviceHubIcon;
 
-    const activeColor = theme.palette.mode === "light"
-        ? theme.palette.primary.main
-        : theme.palette.primary.light;
+    const mode = theme.palette.mode;
+    const activeColor = iconEntry?.colors?.active[mode] ?? theme.palette.primary.main;
     const inactiveColor = theme.palette.action.disabled;
     const iconColor = active ? activeColor : inactiveColor;
 
-    const surfaceColor = active
-        ? theme.palette.mode === "light"
-            ? `rgba(25, 118, 210, 0.045)`
-            : `rgba(144, 202, 249, 0.06)`
+    const surfaceColor = active && iconEntry?.colors
+        ? alpha(iconEntry.colors.surface[mode], mode === "dark" ? 0.06 : 0.045)
         : undefined;
 
     const displayName = view.name ?? view.id;
