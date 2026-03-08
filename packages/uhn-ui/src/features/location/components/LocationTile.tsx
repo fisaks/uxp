@@ -1,7 +1,6 @@
 import TuneIcon from "@mui/icons-material/Tune";
 import { Box, Card, CardActionArea, CircularProgress } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import { usePortalContainerRef } from "@uxp/ui-lib";
 import { RuntimeInteractionView } from "@uhn/common";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import { useSelector } from "react-redux";
@@ -142,7 +141,6 @@ const LocationTileView: React.FC<LocationTileViewProps> = ({ view, active, state
 
 const LocationTileResource: React.FC<LocationTileResourceProps> = ({ resource, state, nameOverride }) => {
     const theme = useTheme();
-    const portalContainer = usePortalContainerRef();
     const commandFb = useSelector(selectResourceCommandFeedbackById(resource.id));
     const sendResourceCommand = useSendResourceCommand(resource.id);
     const tileActionAreaRef = useRef<HTMLButtonElement>(null);
