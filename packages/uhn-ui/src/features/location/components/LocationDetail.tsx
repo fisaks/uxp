@@ -1,7 +1,8 @@
 import { Grid2, Typography } from "@mui/material";
-import { RuntimeLocation, RuntimeLocationItem } from "@uhn/common";
+import { RuntimeLocation, RuntimeLocationItem, RuntimeResource } from "@uhn/common";
 import React from "react";
 import { useSelector } from "react-redux";
+import { TileRuntimeResourceState } from "../../resource/resource-ui.type";
 import { selectResourceById } from "../../resource/resourceSelector";
 import { selectRuntimeStateByResourceId } from "../../runtime-state/runtimeStateSelector";
 import { selectViewsWithStateById, ViewWithState } from "../../view/viewSelectors";
@@ -39,8 +40,8 @@ export const LocationDetail: React.FC<LocationDetailProps> = ({ location }) => {
 type LocationItemTileProps = {
     item: RuntimeLocationItem;
     viewsById: Record<string, ViewWithState>;
-    resourceById: Record<string, any>;
-    stateById: Record<string, any>;
+    resourceById: Record<string, RuntimeResource>;
+    stateById: Record<string, TileRuntimeResourceState>;
 };
 
 const LocationItemTile: React.FC<LocationItemTileProps> = ({ item, viewsById, resourceById, stateById }) => {
