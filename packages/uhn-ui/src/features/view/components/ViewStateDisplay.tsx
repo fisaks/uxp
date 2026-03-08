@@ -3,10 +3,10 @@ import { useTheme } from "@mui/material/styles";
 import React from "react";
 import { formatCountdown, useCountdown } from "../../resource/hooks/useCountdown";
 import { getBlueprintIcon } from "../blueprintIconMap";
-import { StateDisplayValue } from "../viewSelectors";
+import { TileStateItem } from "../../shared/tile.types";
 
 /** Compact value item for flanking layout — label on top, value below */
-export const ValueItemCompact: React.FC<{ item: StateDisplayValue; align: "left" | "right" }> = ({ item, align }) => {
+export const ValueItemCompact: React.FC<{ item: TileStateItem; align: "left" | "right" }> = ({ item, align }) => {
     const isTimer = item.resourceType === "timer";
     const remaining = useCountdown(item.details, item.active);
 
@@ -54,7 +54,7 @@ export const ValueItemCompact: React.FC<{ item: StateDisplayValue; align: "left"
 
 /** Renders the flanking column (left or right side of icon) */
 export const FlankingColumn: React.FC<{
-    items: StateDisplayValue[];
+    items: TileStateItem[];
     align: "left" | "right";
 }> = ({ items, align }) => {
     if (items.length === 0) return <Box sx={{ flex: 1 }} />;
@@ -79,10 +79,10 @@ export const FlankingColumn: React.FC<{
 };
 
 /** Splits value items into left/right arrays for flanking layout */
-export function splitFlankingValues(items: StateDisplayValue[]): { left: StateDisplayValue[]; right: StateDisplayValue[] } {
+export function splitFlankingValues(items: TileStateItem[]): { left: TileStateItem[]; right: TileStateItem[] } {
     const valueItems = items.filter(i => i.style === "value");
-    const left: StateDisplayValue[] = [];
-    const right: StateDisplayValue[] = [];
+    const left: TileStateItem[] = [];
+    const right: TileStateItem[] = [];
     for (let i = 0; i < valueItems.length; i++) {
         if (i === 0) left.push(valueItems[i]);
         else if (i === 1) right.push(valueItems[i]);
@@ -92,7 +92,7 @@ export function splitFlankingValues(items: StateDisplayValue[]): { left: StateDi
     return { left, right };
 }
 
-export const IndicatorItem: React.FC<{ item: StateDisplayValue }> = ({ item }) => {
+export const IndicatorItem: React.FC<{ item: TileStateItem }> = ({ item }) => {
     const theme = useTheme();
     const entry = getBlueprintIcon(item.icon as any);
     if (!entry) return null;
@@ -110,7 +110,7 @@ export const IndicatorItem: React.FC<{ item: StateDisplayValue }> = ({ item }) =
     );
 };
 
-export const FlashItem: React.FC<{ item: StateDisplayValue }> = ({ item }) => {
+export const FlashItem: React.FC<{ item: TileStateItem }> = ({ item }) => {
     const theme = useTheme();
     const entry = getBlueprintIcon(item.icon as any);
     if (!entry) return null;

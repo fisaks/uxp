@@ -1,7 +1,8 @@
 import { createSelector } from "@reduxjs/toolkit";
-import { BlueprintIcon, ResourceType, ViewActiveCondition } from "@uhn/blueprint";
+import { ViewActiveCondition } from "@uhn/blueprint";
 import { ResourceStateDetails, ResourceStateValue, RuntimeInteractionView, RuntimeResource } from "@uhn/common";
 import { RootState } from "../../app/store";
+import { TileStateItem } from "../shared/tile.types";
 
 type RuntimeStateEntry = { value: ResourceStateValue | undefined; timestamp: number; details?: ResourceStateDetails };
 type StateMap = Record<string, RuntimeStateEntry>;
@@ -73,18 +74,6 @@ function computeViewActive(view: RuntimeInteractionView, stateMap: StateMap): bo
 /* State display values                                                */
 /* ------------------------------------------------------------------ */
 
-export type StateDisplayValue = {
-    resourceId: string;
-    resourceType?: ResourceType;
-    label?: string;
-    unit?: string;
-    style: "value" | "indicator" | "flash";
-    icon?: BlueprintIcon;
-    value: ResourceStateValue | undefined;
-    active: boolean;
-    timestamp: number;
-    details?: ResourceStateDetails;
-};
 
 type ResourceMap = Record<string, RuntimeResource>;
 
@@ -93,7 +82,7 @@ function computeStateDisplay(
     view: RuntimeInteractionView,
     stateMap: StateMap,
     resourceMap: ResourceMap,
-): StateDisplayValue[] {
+): TileStateItem[] {
     if (!view.stateDisplay) return [];
     return view.stateDisplay.items.map(item => {
         const stateEntry = stateMap[item.resourceId];
@@ -137,7 +126,7 @@ export const selectViewsLoaded = createSelector(
 export type ViewWithState = {
     view: RuntimeInteractionView;
     active: boolean;
-    stateDisplayValues: StateDisplayValue[];
+    stateDisplayValues: TileStateItem[];
 };
 
 /** Combines views with their computed state for rendering.

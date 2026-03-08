@@ -16,9 +16,8 @@ import { stopPropagation } from "../../shared/tileEventHelpers";
 import { useViewAnalogState } from "../../shared/useViewAnalogState";
 import { useViewCommand } from "../../shared/useViewCommand";
 import { useViewIconColors } from "../../shared/useViewIconColors";
-import { IndicatorItem } from "../../view/components/ViewStateDisplay";
 import { useSendViewCommand } from "../../view/hooks/useSendViewCommand";
-import { StateDisplayValue } from "../../view/viewSelectors";
+import { TileStateItem } from "../../shared/tile.types";
 import { TileAnalogSection } from "../../shared/TileAnalogSection";
 import { TileContent } from "../../shared/TileContent";
 
@@ -30,7 +29,7 @@ type LocationTileViewProps = {
     kind: "view";
     view: RuntimeInteractionView;
     active: boolean;
-    stateDisplayValues: StateDisplayValue[];
+    stateDisplayValues: TileStateItem[];
     nameOverride?: string;
 };
 
@@ -61,8 +60,6 @@ const LocationTileView: React.FC<LocationTileViewProps> = ({ view, active, state
     const sendCommand = useSendViewCommand();
     const hasCommand = !!view.command;
     const isAnalog = view.command?.type === "setAnalog";
-    const indicators = useMemo(() => stateDisplayValues.filter(i => i.style === "indicator"), [stateDisplayValues]);
-    const flashItems = useMemo(() => stateDisplayValues.filter(i => i.style === "flash"), [stateDisplayValues]);
 
     const { handleClick, pending } = useViewCommand(view, active, sendCommand);
 
@@ -76,7 +73,6 @@ const LocationTileView: React.FC<LocationTileViewProps> = ({ view, active, state
     const tileContent = (
         <TileContent
             icon={<IconComponent sx={{ fontSize: 40, color: iconColor, transition: "color 0.2s" }} />}
-            flashItems={flashItems}
             stateValues={stateDisplayValues}
             displayName={displayName}
             hasAnalog={isAnalog}
@@ -112,13 +108,6 @@ const LocationTileView: React.FC<LocationTileViewProps> = ({ view, active, state
                 "&:hover": hasCommand ? { boxShadow: 4 } : undefined,
             }}
         >
-            {/* Indicators — centered above main icon */}
-            {indicators.length > 0 && (
-                <Box sx={{ position: "absolute", top: 8, left: "50%", transform: "translateX(-50%)", display: "flex", gap: 0.5, zIndex: 1 }}>
-                    {indicators.map(item => <IndicatorItem key={item.resourceId} item={item} />)}
-                </Box>
-            )}
-
             {hasCommand ? (
                 <CardActionArea onClick={handleClick} disabled={pending} sx={{
                     flex: 1,
@@ -185,7 +174,7 @@ const LocationTileResource: React.FC<LocationTileResourceProps> = ({ resource, s
     const displayName = nameOverride ?? resource.name;
 
     // Build flanking state values from resource state
-    const resourceStateValues = useMemo((): StateDisplayValue[] => {
+    const resourceStateValues = useMemo((): TileStateItem[] => {
         const hasValue = (isReadOnly || isTimer || isComplex) && state?.value !== undefined;
         if (!hasValue) return [];
         // Complex boolean resources show state via icon color, not text

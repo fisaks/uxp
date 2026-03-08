@@ -4,21 +4,20 @@ import { Box, Card, CardActionArea, CircularProgress, IconButton, Popover, Toolt
 import { useTheme } from "@mui/material/styles";
 import { usePortalContainerRef } from "@uxp/ui-lib";
 import { RuntimeInteractionView } from "@uhn/common";
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import { TileAnalogSection } from "../../shared/TileAnalogSection";
+import { TileContent } from "../../shared/TileContent";
 import { createTooltipProps, stopPropagation } from "../../shared/tileEventHelpers";
 import { useViewAnalogState } from "../../shared/useViewAnalogState";
 import { useViewCommand } from "../../shared/useViewCommand";
 import { useViewIconColors } from "../../shared/useViewIconColors";
 import { useSendViewCommand } from "../hooks/useSendViewCommand";
-import { StateDisplayValue } from "../viewSelectors";
-import { TileContent } from "../../shared/TileContent";
-import { IndicatorItem } from "./ViewStateDisplay";
+import { TileStateItem } from "../../shared/tile.types";
 
 type ViewTileProps = {
     view: RuntimeInteractionView;
     active: boolean;
-    stateDisplayValues: StateDisplayValue[];
+    stateDisplayValues: TileStateItem[];
     nameOverride?: string;
 };
 
@@ -33,9 +32,6 @@ export const ViewTile: React.FC<ViewTileProps> = ({ view, active, stateDisplayVa
 
     const tooltipProps = createTooltipProps(portalContainer.current);
 
-    const indicators = useMemo(() => stateDisplayValues.filter(i => i.style === "indicator"), [stateDisplayValues]);
-    const flashItems = useMemo(() => stateDisplayValues.filter(i => i.style === "flash"), [stateDisplayValues]);
-
     const { handleClick, pending } = useViewCommand(view, active, sendCommand);
 
     const { IconComponent, iconColor, surfaceColor } = useViewIconColors(view.icon, active, theme);
@@ -47,7 +43,6 @@ export const ViewTile: React.FC<ViewTileProps> = ({ view, active, stateDisplayVa
     const content = (
         <TileContent
             icon={<IconComponent sx={{ fontSize: 40, color: iconColor, transition: "color 0.2s, transform 0.15s" }} />}
-            flashItems={flashItems}
             stateValues={stateDisplayValues}
             displayName={displayName}
             hasAnalog={isAnalog}
@@ -113,7 +108,7 @@ export const ViewTile: React.FC<ViewTileProps> = ({ view, active, stateDisplayVa
                 </Popover>
             </Box>
 
-            {/* Description icon — top-right (before indicators) */}
+            {/* Description icon — top-right */}
             {view.description && (
                 <Box sx={{ position: "absolute", top: 6, right: 6, zIndex: 2, pointerEvents: "auto" }}>
                     <Tooltip title="Show description" {...tooltipProps}>
@@ -135,22 +130,6 @@ export const ViewTile: React.FC<ViewTileProps> = ({ view, active, stateDisplayVa
                 </Box>
             )}
 
-            {/* Indicators — centered above main icon */}
-            {indicators.length > 0 && (
-                <Box sx={{
-                    position: "absolute",
-                    top: 8,
-                    left: "50%",
-                    transform: "translateX(-50%)",
-                    display: "flex",
-                    gap: 0.5,
-                    zIndex: 1,
-                }}>
-                    {indicators.map(item => (
-                        <IndicatorItem key={item.resourceId} item={item} />
-                    ))}
-                </Box>
-            )}
             {hasCommand ? (
                 <CardActionArea onClick={handleClick} disabled={pending} sx={{
                     flex: 1,
