@@ -2,6 +2,7 @@ import { RuntimeInteractionView, UhnResourceCommand } from "@uhn/common";
 import { useCallback } from "react";
 import { useSelector } from "react-redux";
 import { TileRuntimeResourceState } from "../resource/resource-ui.type";
+import { selectRuntimeStateByResourceId } from "../runtime-state/runtimeStateSelector";
 
 type SendCommandFn = (resourceId: string, command: UhnResourceCommand) => Promise<void>;
 
@@ -14,8 +15,8 @@ export function useViewAnalogState(
         await sendCommand(view.command.resourceId, cmd);
     }, [sendCommand, view.command]);
 
-    const runtimeStateById = useSelector((s: any) => s.runtimeState?.byResourceId);
-    const analogState = view.command ? runtimeStateById?.[view.command.resourceId] : undefined;
+    const runtimeStateById = useSelector(selectRuntimeStateByResourceId);
+    const analogState = view.command ? runtimeStateById[view.command.resourceId] : undefined;
 
     return { analogSendCommand, analogState };
 }

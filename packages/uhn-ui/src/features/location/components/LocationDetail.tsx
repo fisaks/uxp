@@ -2,7 +2,8 @@ import { Grid2, Typography } from "@mui/material";
 import { RuntimeLocation, RuntimeLocationItem } from "@uhn/common";
 import React from "react";
 import { useSelector } from "react-redux";
-import { RootState } from "../../../app/store";
+import { selectResourceById } from "../../resource/resourceSelector";
+import { selectRuntimeStateByResourceId } from "../../runtime-state/runtimeStateSelector";
 import { selectViewsWithStateById, ViewWithState } from "../../view/viewSelectors";
 import { LocationTile } from "./LocationTile";
 
@@ -13,8 +14,8 @@ type LocationDetailProps = {
 export const LocationDetail: React.FC<LocationDetailProps> = ({ location }) => {
     const viewsById = useSelector(selectViewsWithStateById);
 
-    const resourceById = useSelector((state: RootState) => state.resources.byId);
-    const stateById = useSelector((state: RootState) => state.runtimeState.byResourceId);
+    const resourceById = useSelector(selectResourceById);
+    const stateById = useSelector(selectRuntimeStateByResourceId);
 
     return (
         <>
