@@ -3,6 +3,10 @@ import { useCallback, useState } from "react";
 
 type SendCommandFn = (resourceId: string, command: UhnResourceCommand) => Promise<void>;
 
+/** Handles click interaction for view tiles.
+ *  Maps the view's command target type (tap, toggle, longPress, setAnalog, clearTimer)
+ *  to the appropriate resource command. When the view is active and has an onDeactivate
+ *  target, that target is used instead. Returns a click handler and pending state. */
 export function useViewCommand(
     view: RuntimeInteractionView,
     active: boolean,
