@@ -5,7 +5,7 @@ import { commandEdgeService } from "./command-edge.service";
 import { ruleRuntimeProcessService } from "./rule-runtime-process.service";
 import { stateRuntimeService } from "./state-runtime.service";
 import { stateSignalService } from "./state-signal.service";
-import { logicalResourceEdgeService } from "./logical-resource-edge.service";
+import { resourceCmdEdgeService } from "./resource-cmd-edge.service";
 import { logicalResourceStateService } from "./state-logical-resource.service";
 
 /** Duration in ms for the simulated press pulse on virtualDigitalInput push tap. */
@@ -85,7 +85,7 @@ export class CommandsResourceService {
                 payload: { resourceId, timestamp: Date.now() }, 
             });
             // Also forward to the edge runtime (for any edge-targeted rules on this resource).
-            logicalResourceEdgeService.sendCommandToEdge(
+            resourceCmdEdgeService.sendCommandToEdge(
                 { id: resourceId, host: resource.edge },
                 { action: "tap" },
             );
@@ -96,7 +96,7 @@ export class CommandsResourceService {
                 payload: { resourceId, timestamp: Date.now(), thresholdMs: command.holdMs },
             });
             // Also forward to the edge runtime.
-            logicalResourceEdgeService.sendCommandToEdge(
+            resourceCmdEdgeService.sendCommandToEdge(
                 { id: resourceId, host: resource.edge },
                 { action: "longPress", durationMs: command.holdMs },
             );
@@ -162,7 +162,7 @@ export class CommandsResourceService {
                 resourceId: resource.id, value, timestamp,
             });
         } else {
-            logicalResourceEdgeService.sendCommandToEdge(
+            resourceCmdEdgeService.sendCommandToEdge(
                 { id: resource.id, host: resource.host },
                 { action: "setState", value },
             );
@@ -173,12 +173,12 @@ export class CommandsResourceService {
     private sendLogicalCommand(
         resource: RuntimeLogicalResource,
         runtimeEvent: Parameters<typeof ruleRuntimeProcessService.sendEvent>[0],
-        edgeCommand: Parameters<typeof logicalResourceEdgeService.sendCommandToEdge>[1],
+        edgeCommand: Parameters<typeof resourceCmdEdgeService.sendCommandToEdge>[1],
     ) {
         if (resource.host === "master") {
             ruleRuntimeProcessService.sendEvent(runtimeEvent);
         } else {
-            logicalResourceEdgeService.sendCommandToEdge({ id: resource.id, host: resource.host }, edgeCommand);
+            resourceCmdEdgeService.sendCommandToEdge({ id: resource.id, host: resource.host }, edgeCommand);
         }
     }
 

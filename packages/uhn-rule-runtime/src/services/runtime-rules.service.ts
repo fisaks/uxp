@@ -174,6 +174,10 @@ export class RuntimeRulesService {
             message: `Loaded ${rules.length} of ${validated.length} rules for mode "${modeLabel}".`,
         });
         const byResourceId = indexRules(rules);
+        runtimeOutput.log({
+            level: "info", component: "RuntimeRulesService",
+            message: `Indexed rules for ${byResourceId.size} unique resource ID(s): [${Array.from(byResourceId.keys()).join(", ")}]`,
+        });
         return new RuntimeRulesService(rules, validated, byResourceId);
     }
 

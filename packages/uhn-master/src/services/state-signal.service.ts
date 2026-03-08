@@ -3,7 +3,7 @@ import { AppLogger } from "@uxp/bff-common";
 import { EventEmitter } from "events";
 import { parseMqttTopic } from "../util/mqtt-topic.util";
 import { blueprintResourceService } from "./blueprint-resource.service";
-import { isSignalStatePayload, SignalEdgeService } from "./signal-edge.service";
+import { isSignalStatePayload, ResourceSignalEdgeService } from "./resource-signal-edge.service";
 import { subscriptionService } from "./subscription.service";
 
 export type StateSignalEventMap = {
@@ -20,10 +20,10 @@ class StateSignalService extends EventEmitter<StateSignalEventMap> {
     // Signals represent temporary overrides and are lost on restart.
 
     private signalStateByResourceId = new Map<string, SignalState>();
-    private signalEdgeService: SignalEdgeService;
+    private resourceSignalEdgeService: ResourceSignalEdgeService;
     constructor() {
         super();
-        this.signalEdgeService = new SignalEdgeService();
+        this.resourceSignalEdgeService = new ResourceSignalEdgeService();
         blueprintResourceService.on(
             "resourcesCleared",
             () => {
@@ -41,7 +41,7 @@ class StateSignalService extends EventEmitter<StateSignalEventMap> {
     }
 
     private handleSignalState(topic: string, payload: unknown) {
-        //uhn/+/signal/state/+
+        //uhn/+/resource/signal/+
         const parsed = parseMqttTopic(topic, 5);
         if (!parsed) {
             AppLogger.warn(undefined, {
@@ -81,7 +81,7 @@ class StateSignalService extends EventEmitter<StateSignalEventMap> {
         });
 
         this.emit("signalStateChanged", resource.id, value, timestamp);
-        this.signalEdgeService.sendStateSignalToEdge(resource, { value, timestamp });
+        this.resourceSignalEdgeService.sendStateSignalToEdge(resource, { value, timestamp });
     }
 
     clearSignalState(resourceId: string) {
@@ -91,7 +91,7 @@ class StateSignalService extends EventEmitter<StateSignalEventMap> {
 
         this.signalStateByResourceId.delete(resourceId);
         this.emit("signalStateChanged", resourceId, undefined, ts);
-        this.signalEdgeService.clearStateSignalOnEdge({ id: resourceId, edge: state.edge });
+        this.resourceSignalEdgeService.clearStateSignalOnEdge({ id: resourceId, edge: state.edge });
     }
 
     clearAll() {
@@ -100,7 +100,7 @@ class StateSignalService extends EventEmitter<StateSignalEventMap> {
         this.signalStateByResourceId.clear();
         for (const [resourceId, state] of entries) {
             this.emit("signalStateChanged", resourceId, undefined, ts);
-            this.signalEdgeService.clearStateSignalOnEdge({
+            this.resourceSignalEdgeService.clearStateSignalOnEdge({
                 id: resourceId,
                 edge: state.edge
             });

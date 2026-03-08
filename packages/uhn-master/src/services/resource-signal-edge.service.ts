@@ -19,33 +19,30 @@ export function isSignalStatePayload(payload: unknown): payload is SignalStatePa
     return false;
 }
 
-export class SignalEdgeService {
+export class ResourceSignalEdgeService {
 
     sendStateSignalToEdge(
         resource: Pick<RuntimePhysicalResource, "edge" | "id">,
         state: SignalState) {
 
-
         mqttService.publish(
-            this.signalStateTopic(resource.edge, resource.id),
+            this.signalTopic(resource.edge, resource.id),
             { ...state, resourceId: resource.id } satisfies SignalStatePayload,
             { retain: true, qos: 1 }
         );
-
     }
 
     clearStateSignalOnEdge(
         resource: Pick<RuntimePhysicalResource, "edge" | "id">) {
 
         mqttService.publish(
-            this.signalStateTopic(resource.edge, resource.id),
+            this.signalTopic(resource.edge, resource.id),
             null,
             { retain: true, qos: 1 }
         );
-
     }
 
-    private signalStateTopic(edge: string, resourceId: string) {
-        return `uhn/${edge}/signal/state/${resourceId}`;
+    private signalTopic(edge: string, resourceId: string) {
+        return `uhn/${edge}/resource/signal/${resourceId}`;
     }
 }

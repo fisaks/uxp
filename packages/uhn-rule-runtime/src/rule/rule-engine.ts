@@ -80,12 +80,26 @@ export class RuleEngine {
         }
 
         const rules = this.rulesService.getRulesForResource(resourceId);
-        if (!rules.length) return;
+        if (!rules.length) {
+            runtimeOutput.log({
+                level: "debug",
+                component: "RuleEngine",
+                message: `No rules indexed for resource "${resourceId}" (event: ${triggerEvent.event})`,
+            });
+            return;
+        }
 
         for (const ruleCandidate of rules) {
             for (let triggerIdx = 0; triggerIdx < ruleCandidate.triggers.length; triggerIdx++) {
                 const triggerCandidate = ruleCandidate.triggers[triggerIdx];
-                if (!this.triggerMatches(triggerCandidate, triggerEvent, ruleCandidate.id, triggerIdx)) continue;
+                if (!this.triggerMatches(triggerCandidate, triggerEvent, ruleCandidate.id, triggerIdx)) {
+                    runtimeOutput.log({
+                        level: "trace",
+                        component: "RuleEngine",
+                        message: `Trigger[${triggerIdx}] of rule "${ruleCandidate.id}" did not match event "${triggerEvent.event}" for resource "${resourceId}" (trigger kind: ${triggerCandidate.kind}, trigger resourceId: ${triggerCandidate.resource?.id})`,
+                    });
+                    continue;
+                }
 
                 const triggerCause: RuleCause = {
                     resource: triggerEvent.resource,
@@ -105,6 +119,12 @@ export class RuleEngine {
                         kind: "event",
                         cmd: "actions",
                         actions,
+                    });
+                } else {
+                    runtimeOutput.log({
+                        level: "debug",
+                        component: "RuleEngine",
+                        message: `Rule "${ruleCandidate.id}" matched but produced 0 actions for resource "${resourceId}" (event: ${triggerEvent.event})`,
                     });
                 }
             }

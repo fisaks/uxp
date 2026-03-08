@@ -16,7 +16,7 @@ import { commandEdgeService } from "../services/command-edge.service";
 import { muteEdgeService } from "../services/mute-edge.service";
 import { ruleRuntimeProcessService } from "../services/rule-runtime-process.service";
 import { stateSignalService } from "../services/state-signal.service";
-import { logicalResourceEdgeService } from "../services/logical-resource-edge.service";
+import { resourceCmdEdgeService } from "../services/resource-cmd-edge.service";
 import { logicalResourceStateService } from "../services/state-logical-resource.service";
 
 
@@ -99,7 +99,7 @@ function handleSetAnalogOutputAction(action: Extract<RuntimeRuleAction, { type: 
                 resourceId: vaoResource.id, value, timestamp,
             });
         } else {
-            logicalResourceEdgeService.sendCommandToEdge(
+            resourceCmdEdgeService.sendCommandToEdge(
                 { id: vaoResource.id, host: vaoResource.host },
                 { action: "setState", value },
             );
@@ -129,7 +129,7 @@ function handleTimerStartAction(action: Extract<RuntimeRuleAction, { type: "time
             AppLogger.warn({ message: `TimerStart dispatched for master-hosted timer ${action.resourceId} — should have been executed locally` });
             return;
         }
-        logicalResourceEdgeService.sendCommandToEdge(resource, {
+        resourceCmdEdgeService.sendCommandToEdge(resource, {
             action: "start",
             durationMs: action.durationMs,
             mode: action.mode,
@@ -148,7 +148,7 @@ function handleTimerClearAction(action: Extract<RuntimeRuleAction, { type: "time
             AppLogger.warn({ message: `TimerClear dispatched for master-hosted timer ${action.resourceId} — should have been executed locally` });
             return;
         }
-        logicalResourceEdgeService.sendCommandToEdge(resource, { action: "clear" });
+        resourceCmdEdgeService.sendCommandToEdge(resource, { action: "clear" });
         return;
     }
     AppLogger.warn({

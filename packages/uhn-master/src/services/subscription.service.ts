@@ -64,7 +64,7 @@ class SubscriptionService extends EventEmitter<SubscriptionEventMap> {
             this.emit("deviceState", topic, parsed);
         });
 
-        mqttService.subscribe("uhn/+/signal/state/+", (topic, payload) => {
+        mqttService.subscribe("uhn/+/resource/signal/+", (topic, payload) => {
             const parsed = tryParseJson(payload);
             this.emit("signalState", topic, parsed);
         });
