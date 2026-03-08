@@ -153,3 +153,15 @@ export const selectViewsWithState = createSelector(
         });
     }
 );
+
+/** Same as selectViewsWithState but keyed by view ID for O(1) lookups. */
+export const selectViewsWithStateById = createSelector(
+    [selectViewsWithState],
+    (viewsWithState): Record<string, ViewWithState> => {
+        const map: Record<string, ViewWithState> = {};
+        for (const vws of viewsWithState) {
+            map[vws.view.id] = vws;
+        }
+        return map;
+    }
+);

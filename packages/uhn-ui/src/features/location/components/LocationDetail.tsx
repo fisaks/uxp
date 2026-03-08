@@ -3,7 +3,7 @@ import { RuntimeLocation, RuntimeLocationItem } from "@uhn/common";
 import React from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../app/store";
-import { selectViewsWithState, ViewWithState } from "../../view/viewSelectors";
+import { selectViewsWithStateById, ViewWithState } from "../../view/viewSelectors";
 import { LocationTile } from "./LocationTile";
 
 type LocationDetailProps = {
@@ -11,14 +11,7 @@ type LocationDetailProps = {
 };
 
 export const LocationDetail: React.FC<LocationDetailProps> = ({ location }) => {
-    const viewsWithState = useSelector(selectViewsWithState);
-    const viewsById = React.useMemo(() => {
-        const map = new Map<string, ViewWithState>();
-        for (const vws of viewsWithState) {
-            map.set(vws.view.id, vws);
-        }
-        return map;
-    }, [viewsWithState]);
+    const viewsById = useSelector(selectViewsWithStateById);
 
     const resourceById = useSelector((state: RootState) => state.resources.byId);
     const stateById = useSelector((state: RootState) => state.runtimeState.byResourceId);
@@ -44,14 +37,14 @@ export const LocationDetail: React.FC<LocationDetailProps> = ({ location }) => {
 
 type LocationItemTileProps = {
     item: RuntimeLocationItem;
-    viewsById: Map<string, ViewWithState>;
+    viewsById: Record<string, ViewWithState>;
     resourceById: Record<string, any>;
     stateById: Record<string, any>;
 };
 
 const LocationItemTile: React.FC<LocationItemTileProps> = ({ item, viewsById, resourceById, stateById }) => {
     if (item.kind === "view") {
-        const vws = viewsById.get(item.refId);
+        const vws = viewsById[item.refId];
         if (!vws) return null;
         return <LocationTile kind="view" view={vws.view} active={vws.active}
             stateDisplayValues={vws.stateDisplayValues} nameOverride={item.name} />;
