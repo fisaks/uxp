@@ -6,17 +6,26 @@ import { selectRuntimeStateByResourceId } from "../runtime-state/runtimeStateSel
 
 type SendCommandFn = (resourceId: string, command: UhnResourceCommand) => Promise<void>;
 
+type UseViewAnalogStateResult = {
+    analogSendCommand: (cmd: UhnResourceCommand) => Promise<void>;
+    analogState: TileRuntimeResourceState | undefined;
+};
+
+/** Provides analog command sender and current state for a view's target resource.
+ *  Used by view tiles that have a setAnalog command. */
 export function useViewAnalogState(
     view: RuntimeInteractionView,
     sendCommand: SendCommandFn,
-): { analogSendCommand: (cmd: UhnResourceCommand) => Promise<void>; analogState: TileRuntimeResourceState | undefined } {
+): UseViewAnalogStateResult {
     const analogSendCommand = useCallback(async (cmd: UhnResourceCommand) => {
         if (!view.command) return;
         await sendCommand(view.command.resourceId, cmd);
     }, [sendCommand, view.command]);
 
     const runtimeStateById = useSelector(selectRuntimeStateByResourceId);
-    const analogState = view.command ? runtimeStateById[view.command.resourceId] : undefined;
+    const analogState = view.command
+        ? runtimeStateById[view.command.resourceId]
+        : undefined;
 
     return { analogSendCommand, analogState };
 }
