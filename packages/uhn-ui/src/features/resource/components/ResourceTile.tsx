@@ -15,6 +15,7 @@ import { TileRuntimeResource, TileRuntimeResourceState } from "../resource-ui.ty
 import { selectResourceCommandFeedbackById } from "../resourceCommandFeedbackSelector";
 import { getResourceIconColor, getResourceSurfaceColor } from "./colors";
 import { getResourceIcon } from "./icons";
+import { createTooltipProps } from "../../shared/tileEventHelpers";
 import { getTileExtensions } from "./tile-extensions";
 import "./ResourceTile.css";
 type ResourceTileProps = {
@@ -67,8 +68,7 @@ export const ResourceTile: React.FC<ResourceTileProps> = ({ resource, state, nam
     const closeInfo = () => setInfoAnchor(null);
     const closeDesc = () => setDescAnchor(null);
     const haveErrors = resource.errors && resource.errors.length > 0;
-    // Delay for tooltip on PC (600ms), no delay on mobile
-    const tooltipProps = { enterDelay: 600, enterTouchDelay: 0, slotProps: { popper: { container: portalContainer.current } } };
+    const tooltipProps = createTooltipProps(portalContainer.current);
 
     const renderCtx = { resource, state, theme, iconColor, onOpenInteractionPanel: hasInteractionPanel ? openInteractionPanel : undefined };
 

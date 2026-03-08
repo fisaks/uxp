@@ -1,9 +1,8 @@
-import DeviceHubIcon from "@mui/icons-material/DeviceHub";
 import TuneIcon from "@mui/icons-material/Tune";
-import { alpha, Box, Card, CardActionArea, CircularProgress, Typography } from "@mui/material";
+import { Box, Card, CardActionArea, CircularProgress } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { usePortalContainerRef } from "@uxp/ui-lib";
-import { RuntimeInteractionView, RuntimeViewCommandTarget, UhnResourceCommand } from "@uhn/common";
+import { RuntimeInteractionView } from "@uhn/common";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { ComplexPanel } from "../../resource/components/ComplexPanel";
@@ -13,11 +12,15 @@ import { useResourceAction } from "../../resource/hooks/useResourceAction";
 import { useSendResourceCommand } from "../../resource/hooks/useSendResourceCommand";
 import { TileRuntimeResource, TileRuntimeResourceState } from "../../resource/resource-ui.type";
 import { selectResourceCommandFeedbackById } from "../../resource/resourceCommandFeedbackSelector";
-import { getBlueprintIcon } from "../../view/blueprintIconMap";
-import { FlashItem, FlankingColumn, IndicatorItem, splitFlankingValues } from "../../view/components/ViewStateDisplay";
+import { stopPropagation } from "../../shared/tileEventHelpers";
+import { useViewAnalogState } from "../../shared/useViewAnalogState";
+import { useViewCommand } from "../../shared/useViewCommand";
+import { useViewIconColors } from "../../shared/useViewIconColors";
+import { IndicatorItem } from "../../view/components/ViewStateDisplay";
 import { useSendViewCommand } from "../../view/hooks/useSendViewCommand";
 import { StateDisplayValue } from "../../view/viewSelectors";
-import { LocationTileAnalogSection } from "./LocationTileAnalogSection";
+import { TileAnalogSection } from "../../shared/TileAnalogSection";
+import { TileContent } from "../../shared/TileContent";
 
 /* ------------------------------------------------------------------ */
 /* Props                                                               */
@@ -41,17 +44,6 @@ type LocationTileResourceProps = {
 type LocationTileProps = LocationTileViewProps | LocationTileResourceProps;
 
 /* ------------------------------------------------------------------ */
-/* Helpers                                                             */
-/* ------------------------------------------------------------------ */
-
-/** Stops pointer/click events from bubbling to CardActionArea */
-const stopPropagation = {
-    onPointerDown: (e: React.PointerEvent) => e.stopPropagation(),
-    onMouseDown: (e: React.MouseEvent) => e.stopPropagation(),
-    onClick: (e: React.MouseEvent) => e.stopPropagation(),
-};
-
-/* ------------------------------------------------------------------ */
 /* LocationTile                                                        */
 /* ------------------------------------------------------------------ */
 
@@ -68,75 +60,18 @@ const LocationTileView: React.FC<LocationTileViewProps> = ({ view, active, state
     const theme = useTheme();
     const sendCommand = useSendViewCommand();
     const hasCommand = !!view.command;
-    const [pending, setPending] = useState(false);
-
     const isAnalog = view.command?.type === "setAnalog";
     const indicators = useMemo(() => stateDisplayValues.filter(i => i.style === "indicator"), [stateDisplayValues]);
     const flashItems = useMemo(() => stateDisplayValues.filter(i => i.style === "flash"), [stateDisplayValues]);
 
-    const sendForTarget = useCallback(async (target: RuntimeViewCommandTarget) => {
-        switch (target.type) {
-            case "tap":
-                await sendCommand(target.resourceId, { type: "tap" });
-                break;
-            case "toggle":
-                await sendCommand(target.resourceId, { type: "toggle" });
-                break;
-            case "longPress":
-                await sendCommand(target.resourceId, { type: "longPress", holdMs: target.holdMs ?? 1000 });
-                break;
-            case "setAnalog": {
-                const min = target.min ?? 0;
-                const max = target.max ?? 100;
-                const targetValue = active ? min : max;
-                await sendCommand(target.resourceId, { type: "setAnalog", value: targetValue });
-                break;
-            }
-            case "clearTimer":
-                await sendCommand(target.resourceId, { type: "clearTimer" });
-                break;
-        }
-    }, [sendCommand, active]);
-
-    const handleClick = useCallback(async () => {
-        if (!view.command) return;
-        setPending(true);
-        try {
-            if (active && view.command.onDeactivate) {
-                await sendForTarget(view.command.onDeactivate);
-            } else {
-                await sendForTarget(view.command);
-            }
-        } finally {
-            setPending(false);
-        }
-    }, [view.command, active, sendForTarget]);
+    const { handleClick, pending } = useViewCommand(view, active, sendCommand);
 
     // Icon resolution
-    const iconEntry = getBlueprintIcon(view.icon);
-    const IconComponent = iconEntry
-        ? (active || !iconEntry.inactive ? iconEntry.active : iconEntry.inactive)
-        : DeviceHubIcon;
-
-    const mode = theme.palette.mode;
-    const activeColor = iconEntry?.colors?.active[mode] ?? theme.palette.primary.main;
-    const inactiveColor = theme.palette.action.disabled;
-    const iconColor = active ? activeColor : inactiveColor;
-    const surfaceColor = active && iconEntry?.colors
-        ? alpha(iconEntry.colors.surface[mode], mode === "dark" ? 0.06 : 0.045)
-        : undefined;
+    const { IconComponent, iconColor, surfaceColor } = useViewIconColors(view.icon, active, theme);
 
     const displayName = nameOverride ?? view.name ?? view.id;
 
-    // Build sendCommand wrapper for analog section (view commands go through useSendViewCommand)
-    const analogSendCommand = useCallback(async (cmd: UhnResourceCommand) => {
-        if (!view.command) return;
-        await sendCommand(view.command.resourceId, cmd);
-    }, [sendCommand, view.command]);
-
-    // State for analog section — need to get the resource state for the command target
-    const runtimeStateById = useSelector((s: any) => s.runtimeState?.byResourceId);
-    const analogState = view.command ? runtimeStateById?.[view.command.resourceId] : undefined;
+    const { analogSendCommand, analogState } = useViewAnalogState(view, sendCommand);
 
     const tileContent = (
         <TileContent
@@ -150,7 +85,7 @@ const LocationTileView: React.FC<LocationTileViewProps> = ({ view, active, state
 
     const analogSection = isAnalog && view.command && (
         <Box data-analog-section {...stopPropagation}>
-            <LocationTileAnalogSection
+            <TileAnalogSection
                 min={view.command.min ?? 0}
                 max={view.command.max ?? 100}
                 step={view.command.step ?? 1}
@@ -308,7 +243,7 @@ const LocationTileResource: React.FC<LocationTileResourceProps> = ({ resource, s
 
     const analogSection = isAnalog && (
         <Box data-analog-section {...stopPropagation}>
-            <LocationTileAnalogSection
+            <TileAnalogSection
                 min={resource.min ?? 0}
                 max={resource.max ?? 65535}
                 step={resource.step ?? 1}
@@ -382,87 +317,3 @@ const LocationTileResource: React.FC<LocationTileResourceProps> = ({ resource, s
     );
 };
 
-/* ------------------------------------------------------------------ */
-/* Shared tile content layout                                          */
-/* ------------------------------------------------------------------ */
-
-type TileContentProps = {
-    icon: React.ReactNode;
-    iconClickable?: boolean;
-    onIconClick?: (e: React.MouseEvent) => void;
-    flashItems?: StateDisplayValue[];
-    stateValues?: StateDisplayValue[];
-    displayName: string;
-    hasAnalog?: boolean;
-};
-
-const TileContent: React.FC<TileContentProps> = ({ icon, iconClickable, onIconClick, flashItems, stateValues, displayName, hasAnalog }) => {
-    const { left, right } = stateValues ? splitFlankingValues(stateValues) : { left: [], right: [] };
-
-    return (
-        <Box sx={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            pt: 2.5,
-            pb: hasAnalog ? 1 : { xs: 3, sm: 1 },
-            px: 1,
-            width: "100%",
-        }}>
-            {/* Icon row: [left values] [icon] [right values] */}
-            <Box sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: "100%",
-                mb: 0.5,
-            }}>
-                <FlankingColumn items={left} align="right" />
-                <Box
-                    sx={{
-                        position: "relative",
-                        flexShrink: 0,
-                        ...(iconClickable && {
-                            cursor: "pointer",
-                            borderRadius: "50%",
-                            "&:hover": { backgroundColor: "action.hover" },
-                        }),
-                    }}
-                    onPointerDown={iconClickable ? (e: React.PointerEvent) => {
-                        e.stopPropagation();
-                    } : undefined}
-                    onClick={onIconClick}
-                >
-                    {icon}
-                    {flashItems && flashItems.length > 0 && (
-                        <Box sx={{
-                            position: "absolute", bottom: -6, left: "50%", transform: "translateX(-50%)",
-                            display: "flex", gap: 0.25,
-                        }}>
-                            {flashItems.map(item => <FlashItem key={item.resourceId} item={item} />)}
-                        </Box>
-                    )}
-                </Box>
-                <FlankingColumn items={right} align="left" />
-            </Box>
-
-            {/* Display name */}
-            <Typography
-                variant="body2"
-                align="center"
-                sx={{
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    display: "-webkit-box",
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: "vertical",
-                    
-                    lineHeight: "1.2em",
-                }}
-            >
-                {displayName}
-            </Typography>
-
-        </Box>
-    );
-};

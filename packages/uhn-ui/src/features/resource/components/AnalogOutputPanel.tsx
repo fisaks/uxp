@@ -1,16 +1,12 @@
-import AddIcon from "@mui/icons-material/Add";
-import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
-import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import FirstPageIcon from "@mui/icons-material/FirstPage";
-import LastPageIcon from "@mui/icons-material/LastPage";
-import RemoveIcon from "@mui/icons-material/Remove";
-import { Box, IconButton, Popover, Slider, Typography } from "@mui/material";
+import { Box, Popover, Slider, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { usePortalContainerRef } from "@uxp/ui-lib";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React from "react";
 import { TileRuntimeResource, TileRuntimeResourceState } from "../resource-ui.type";
 import { useAnalogSlider } from "../hooks/useAnalogSlider";
 import { useSendResourceCommand } from "../hooks/useSendResourceCommand";
+import { StepButtonRow } from "../../shared/StepButtonRow";
+import { useAnalogInput } from "../../shared/useAnalogInput";
 import { getResourceIcon } from "./icons";
 import { getResourceIconColor } from "./colors";
 
@@ -39,45 +35,11 @@ export const AnalogOutputPanel: React.FC<AnalogOutputPanelProps> = ({
     const bigStep = Math.min(step * 10, (max - min) / 5);
     const unit = resource.unit ?? "";
 
-    const [isEditing, setIsEditing] = useState(false);
-    const inputRef = useRef<HTMLInputElement>(null);
-
     const iconColor = getResourceIconColor(theme, resource, state);
     const MainIcon = getResourceIcon(resource, state);
 
-    // Sync displayed value when not editing
-    useEffect(() => {
-        if (!isEditing && inputRef.current) {
-            inputRef.current.value = `${localValue}${unit ? ` ${unit}` : ""}`;
-        }
-    }, [localValue, unit, isEditing]);
-
-    const handleFocus = useCallback(() => {
-        setIsEditing(true);
-        if (inputRef.current) {
-            inputRef.current.value = String(localValue);
-            inputRef.current.select();
-        }
-    }, [localValue]);
-
-    const commitEdit = useCallback(() => {
-        setIsEditing(false);
-        const parsed = parseFloat(inputRef.current?.value ?? "");
-        if (!isNaN(parsed)) {
-            sendExact(parsed);
-        }
-    }, [sendExact]);
-
-    const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-        if (e.key === "Enter") {
-            inputRef.current?.blur();
-        } else if (e.key === "Escape") {
-            e.stopPropagation();
-            setIsEditing(false);
-            if (inputRef.current) inputRef.current.value = String(localValue);
-            inputRef.current?.blur();
-        }
-    }, [localValue]);
+    const { isEditing, inputRef, handleFocus, commitEdit, handleKeyDown } =
+        useAnalogInput(localValue, unit, sendExact, { stopEscapePropagation: true });
 
     const open = Boolean(anchorEl);
 
@@ -122,29 +84,11 @@ export const AnalogOutputPanel: React.FC<AnalogOutputPanelProps> = ({
                             },
                         }}
                     />
-                    {/* Step controls: [min] « [- +] » [max] */}
-                    <Box sx={{ display: "flex", alignItems: "center", flexWrap: "nowrap", mt: 0.75 }}>
-                        <IconButton size="small" onClick={() => sendExact(min)} sx={{ p: 0.5, "&:hover": { backgroundColor: "action.hover" } }}>
-                            <FirstPageIcon sx={{ fontSize: 18 }} />
-                        </IconButton>
-                        <IconButton size="small" onClick={() => sendExact(localValue - bigStep)} sx={{ p: 0.5, "&:hover": { backgroundColor: "action.hover" } }}>
-                            <ChevronLeftIcon sx={{ fontSize: 18 }} />
-                        </IconButton>
-                        <Box sx={{ flex: 1, display: "flex", justifyContent: "center", gap: 2 }}>
-                            <IconButton size="small" onClick={() => sendExact(localValue - step)} sx={{ p: 0.5, "&:hover": { backgroundColor: "action.hover" } }}>
-                                <RemoveIcon sx={{ fontSize: 16 }} />
-                            </IconButton>
-                            <IconButton size="small" onClick={() => sendExact(localValue + step)} sx={{ p: 0.5, "&:hover": { backgroundColor: "action.hover" } }}>
-                                <AddIcon sx={{ fontSize: 16 }} />
-                            </IconButton>
-                        </Box>
-                        <IconButton size="small" onClick={() => sendExact(localValue + bigStep)} sx={{ p: 0.5, "&:hover": { backgroundColor: "action.hover" } }}>
-                            <ChevronRightIcon sx={{ fontSize: 18 }} />
-                        </IconButton>
-                        <IconButton size="small" onClick={() => sendExact(max)} sx={{ p: 0.5, "&:hover": { backgroundColor: "action.hover" } }}>
-                            <LastPageIcon sx={{ fontSize: 18 }} />
-                        </IconButton>
-                    </Box>
+                    <StepButtonRow
+                        min={min} max={max} step={step} bigStep={bigStep}
+                        localValue={localValue} sendExact={sendExact}
+                        iconSize="medium" centerGap={2} mt={0.75}
+                    />
                 </Box>
                 {/* Right column: editable value — aligned with slider track */}
                 <Box sx={{ display: "flex", alignItems: "center", mt: "-37px" }}>

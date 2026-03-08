@@ -1,17 +1,19 @@
 import DescriptionIcon from "@mui/icons-material/Description";
-import DeviceHubIcon from "@mui/icons-material/DeviceHub";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
-import { alpha, Box, Card, CardActionArea, CircularProgress, IconButton, Popover, Tooltip, Typography } from "@mui/material";
+import { Box, Card, CardActionArea, CircularProgress, IconButton, Popover, Tooltip, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { usePortalContainerRef } from "@uxp/ui-lib";
-import { RuntimeInteractionView, RuntimeViewCommandTarget, UhnResourceCommand } from "@uhn/common";
-import React, { useCallback, useMemo, useState } from "react";
-import { useSelector } from "react-redux";
-import { LocationTileAnalogSection } from "../../location/components/LocationTileAnalogSection";
-import { getBlueprintIcon } from "../blueprintIconMap";
+import { RuntimeInteractionView } from "@uhn/common";
+import React, { useMemo, useState } from "react";
+import { TileAnalogSection } from "../../shared/TileAnalogSection";
+import { createTooltipProps, stopPropagation } from "../../shared/tileEventHelpers";
+import { useViewAnalogState } from "../../shared/useViewAnalogState";
+import { useViewCommand } from "../../shared/useViewCommand";
+import { useViewIconColors } from "../../shared/useViewIconColors";
 import { useSendViewCommand } from "../hooks/useSendViewCommand";
 import { StateDisplayValue } from "../viewSelectors";
-import { FlashItem, FlankingColumn, IndicatorItem, splitFlankingValues } from "./ViewStateDisplay";
+import { TileContent } from "../../shared/TileContent";
+import { IndicatorItem } from "./ViewStateDisplay";
 
 type ViewTileProps = {
     view: RuntimeInteractionView;
@@ -20,155 +22,42 @@ type ViewTileProps = {
     nameOverride?: string;
 };
 
-/** Stops pointer/click events from bubbling to CardActionArea */
-const stopPropagation = {
-    onPointerDown: (e: React.PointerEvent) => e.stopPropagation(),
-    onMouseDown: (e: React.MouseEvent) => e.stopPropagation(),
-    onClick: (e: React.MouseEvent) => e.stopPropagation(),
-};
-
 export const ViewTile: React.FC<ViewTileProps> = ({ view, active, stateDisplayValues, nameOverride }) => {
     const theme = useTheme();
     const portalContainer = usePortalContainerRef();
     const sendCommand = useSendViewCommand();
     const hasCommand = !!view.command;
     const isAnalog = view.command?.type === "setAnalog";
-    const [pending, setPending] = useState(false);
     const [infoAnchor, setInfoAnchor] = useState<null | HTMLElement>(null);
     const [descAnchor, setDescAnchor] = useState<null | HTMLElement>(null);
 
-    const tooltipProps = { enterDelay: 600, enterTouchDelay: 0, slotProps: { popper: { container: portalContainer.current } } };
+    const tooltipProps = createTooltipProps(portalContainer.current);
 
     const indicators = useMemo(() => stateDisplayValues.filter(i => i.style === "indicator"), [stateDisplayValues]);
     const flashItems = useMemo(() => stateDisplayValues.filter(i => i.style === "flash"), [stateDisplayValues]);
 
-    const sendForTarget = useCallback(async (target: RuntimeViewCommandTarget) => {
-        switch (target.type) {
-            case "tap":
-                await sendCommand(target.resourceId, { type: "tap" });
-                break;
-            case "toggle":
-                await sendCommand(target.resourceId, { type: "toggle" });
-                break;
-            case "longPress":
-                await sendCommand(target.resourceId, { type: "longPress", holdMs: target.holdMs ?? 1000 });
-                break;
-            case "setAnalog": {
-                const min = target.min ?? 0;
-                const max = target.max ?? 100;
-                const targetValue = active ? min : max;
-                await sendCommand(target.resourceId, { type: "setAnalog", value: targetValue });
-                break;
-            }
-            case "clearTimer":
-                await sendCommand(target.resourceId, { type: "clearTimer" });
-                break;
-        }
-    }, [sendCommand, view, active]);
+    const { handleClick, pending } = useViewCommand(view, active, sendCommand);
 
-    const handleClick = useCallback(async () => {
-        if (!view.command) return;
-        setPending(true);
-        try {
-            if (active && view.command.onDeactivate) {
-                await sendForTarget(view.command.onDeactivate);
-            } else {
-                await sendForTarget(view.command);
-            }
-        } finally {
-            setPending(false);
-        }
-    }, [view.command, active, sendForTarget]);
-
-    const iconEntry = getBlueprintIcon(view.icon);
-    const IconComponent = iconEntry
-        ? (active || !iconEntry.inactive ? iconEntry.active : iconEntry.inactive)
-        : DeviceHubIcon;
-
-    const mode = theme.palette.mode;
-    const activeColor = iconEntry?.colors?.active[mode] ?? theme.palette.primary.main;
-    const inactiveColor = theme.palette.action.disabled;
-    const iconColor = active ? activeColor : inactiveColor;
-
-    const surfaceColor = active && iconEntry?.colors
-        ? alpha(iconEntry.colors.surface[mode], mode === "dark" ? 0.06 : 0.045)
-        : undefined;
+    const { IconComponent, iconColor, surfaceColor } = useViewIconColors(view.icon, active, theme);
 
     const displayName = nameOverride ?? view.name ?? view.id;
 
-    // Analog section support
-    const analogSendCommand = useCallback(async (cmd: UhnResourceCommand) => {
-        if (!view.command) return;
-        await sendCommand(view.command.resourceId, cmd);
-    }, [sendCommand, view.command]);
-
-    const runtimeStateById = useSelector((s: any) => s.runtimeState?.byResourceId);
-    const analogState = view.command ? runtimeStateById?.[view.command.resourceId] : undefined;
-
-    const { left, right } = splitFlankingValues(stateDisplayValues);
+    const { analogSendCommand, analogState } = useViewAnalogState(view, sendCommand);
 
     const content = (
-        <Box sx={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            pt: "28px",
-            pb: isAnalog ? 1 : { xs: 3, sm: 1 },
-            px: 1,
-            width: "100%",
-        }}>
-            {/* Icon row: [left values] [icon] [right values] */}
-            <Box sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: "100%",
-                mb: 0.5,
-            }}>
-                <FlankingColumn items={left} align="right" />
-                <Box sx={{ position: "relative", flexShrink: 0 }}>
-                    <IconComponent sx={{
-                        fontSize: 40,
-                        color: iconColor,
-                        transition: "color 0.2s, transform 0.15s",
-                    }} />
-                    {flashItems.length > 0 && (
-                        <Box sx={{
-                            position: "absolute",
-                            bottom: -6,
-                            left: "50%",
-                            transform: "translateX(-50%)",
-                            display: "flex",
-                            gap: 0.25,
-                        }}>
-                            {flashItems.map(item => (
-                                <FlashItem key={item.resourceId} item={item} />
-                            ))}
-                        </Box>
-                    )}
-                </Box>
-                <FlankingColumn items={right} align="left" />
-            </Box>
-            <Typography
-                variant="body2"
-                align="center"
-                sx={{
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    display: "-webkit-box",
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: "vertical",
-                    lineHeight: "1.2em",
-                }}
-            >
-                {displayName}
-            </Typography>
-        </Box>
+        <TileContent
+            icon={<IconComponent sx={{ fontSize: 40, color: iconColor, transition: "color 0.2s, transform 0.15s" }} />}
+            flashItems={flashItems}
+            stateValues={stateDisplayValues}
+            displayName={displayName}
+            hasAnalog={isAnalog}
+            pt="28px"
+        />
     );
 
     const analogSection = isAnalog && view.command && (
         <Box data-analog-section {...stopPropagation}>
-            <LocationTileAnalogSection
+            <TileAnalogSection
                 min={view.command.min ?? 0}
                 max={view.command.max ?? 100}
                 step={view.command.step ?? 1}
