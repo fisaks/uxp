@@ -142,6 +142,7 @@ export type RuntimeComplexResource = RuntimeLogicalResource & {
   type: "complex";
   subResources: RuntimeComplexSubResourceRef[];
   unit?: string;
+  stateLabel?: string;
   inactiveValue?: number;
   emitsTap?: boolean;
 };
@@ -283,6 +284,12 @@ export type RuleRuntimeViewsLoadedMessage = {
   views: RuntimeInteractionView[];
 };
 
+export type RuleRuntimeLocationsLoadedMessage = {
+  kind: "event";
+  cmd: "locationsLoaded";
+  locations: RuntimeLocation[];
+};
+
 export type RuleRuntimeResponse = RuleRuntimeReadyMessage
   | RuleRuntimeActionMessage
   | RuleRuntimeResourceMissingMessage
@@ -290,7 +297,8 @@ export type RuleRuntimeResponse = RuleRuntimeReadyMessage
   | RuleRuntimeLogicalResourceStateChangedMessage
   | RuleRuntimeRulesLoadedMessage
   | RuleRuntimeResourcesLoadedMessage
-  | RuleRuntimeViewsLoadedMessage;
+  | RuleRuntimeViewsLoadedMessage
+  | RuleRuntimeLocationsLoadedMessage;
 
 export type RuleRuntimeCommandMap = {
   stateUpdate: {
@@ -369,6 +377,20 @@ export type RuntimeInteractionView = {
     activeWhen?: ViewActiveCondition;
     command?: RuntimeViewCommand;
     stateDisplay?: RuntimeViewStateDisplay;
+};
+
+// --- Runtime Location types (resourceId/viewId instead of objects) ---
+
+export type RuntimeLocationItem =
+    | { kind: "resource"; refId: string; name?: string }
+    | { kind: "view"; refId: string; name?: string };
+
+export type RuntimeLocation = {
+    id: string;
+    name?: string;
+    description?: string;
+    icon?: BlueprintIcon;
+    items: RuntimeLocationItem[];
 };
 
 export function isRuleRuntimeEventObject(obj: unknown): obj is Extract<RuleRuntimeResponse, { kind: "event" }> {

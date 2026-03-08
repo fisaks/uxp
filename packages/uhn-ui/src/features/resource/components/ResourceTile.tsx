@@ -2,7 +2,7 @@ import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import DescriptionIcon from "@mui/icons-material/Description";
 import ErrorIcon from "@mui/icons-material/Error";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
-import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
+import TuneIcon from "@mui/icons-material/Tune";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import { Box, Card, CardActionArea, CircularProgress, IconButton, Popover, Tooltip, Typography, alpha } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
@@ -20,10 +20,10 @@ import "./ResourceTile.css";
 type ResourceTileProps = {
     resource: TileRuntimeResource;
     state?: TileRuntimeResourceState;
-
+    nameOverride?: string;
 };
 
-export const ResourceTile: React.FC<ResourceTileProps> = ({ resource, state }) => {
+export const ResourceTile: React.FC<ResourceTileProps> = ({ resource, state, nameOverride }) => {
     const theme = useTheme();
     const portalContainer = usePortalContainerRef();
     const [infoAnchor, setInfoAnchor] = useState<null | HTMLElement>(null);
@@ -47,6 +47,7 @@ export const ResourceTile: React.FC<ResourceTileProps> = ({ resource, state }) =
     const MainIcon = getResourceIcon(resource, state);
     const iconColor = getResourceIconColor(theme, resource, state);
     const isAnalog = resource.type === "analogInput" || resource.type === "analogOutput";
+    const isReadOnly = resource.type === "analogInput";
     const isPending = commandFb?.status === "pending";
     const isCmdError = commandFb?.status === "error";
     const cmdReason = isCmdError ? commandFb.reason : undefined;
@@ -96,8 +97,8 @@ export const ResourceTile: React.FC<ResourceTileProps> = ({ resource, state }) =
                 {/* (i) Info icon */}
                 <Box sx={{ position: "absolute", top: 6, left: 6, pointerEvents: "auto" }}>
                     <Tooltip title="Technical info" {...tooltipProps}>
-                        <IconButton size="small" onClick={handleInfoIconClick} >
-                            <InfoOutlinedIcon sx={{ fontSize: 16 }} />
+                        <IconButton size="small" onClick={handleInfoIconClick} sx={{ p: 0.5, "&:hover": { backgroundColor: "action.hover" } }}>
+                            <InfoOutlinedIcon sx={{ fontSize: 16, color: "text.secondary" }} />
                         </IconButton>
                     </Tooltip>
                     <Popover
@@ -138,8 +139,8 @@ export const ResourceTile: React.FC<ResourceTileProps> = ({ resource, state }) =
                 {resource.description && (
                     <Box sx={{ position: "absolute", top: 6, right: 6, pointerEvents: "auto" }}>
                         <Tooltip title="Show description" {...tooltipProps}>
-                            <IconButton size="small" onClick={handleDescIconClick} >
-                                <DescriptionIcon sx={{ fontSize: 16 }} />
+                            <IconButton size="small" onClick={handleDescIconClick} sx={{ p: 0.5, "&:hover": { backgroundColor: "action.hover" } }}>
+                                <DescriptionIcon sx={{ fontSize: 16, color: "text.secondary" }} />
                             </IconButton>
                         </Tooltip>
                         <Popover
@@ -172,14 +173,14 @@ export const ResourceTile: React.FC<ResourceTileProps> = ({ resource, state }) =
                         { duration: theme.transitions.duration.short }
                     ),
 
-                    "&:hover": haveErrors ? { backgroundColor: alpha(theme.palette.error.main, 0.1), } : {
+                    "&:hover": haveErrors ? { backgroundColor: alpha(theme.palette.error.main, 0.1), } : isReadOnly ? {} : {
                         backgroundColor: alpha(theme.palette.primary.main, 0.03),
                         "& .resource-main-icon-container": {
                             transform: "translateX(-50%) scale(1.12)",
                         }
                     },
 
-                    "&:active": haveErrors ? {} : {
+                    "&:active": (haveErrors || isReadOnly) ? {} : {
                         transform: "scale(0.97)",
                         boxShadow: 6,
                         "& .resource-main-icon-container": {
@@ -188,9 +189,14 @@ export const ResourceTile: React.FC<ResourceTileProps> = ({ resource, state }) =
                     },
                     "&.Mui-disabled": {
                         pointerEvents: "auto",
-                    }
+                    },
+                    ...(isReadOnly && {
+                        cursor: "default",
+                        "& .MuiCardActionArea-focusHighlight": { display: "none" },
+                    }),
 
                 }}
+                disableRipple={isReadOnly}
                 {...actions}
             >
                 <Box className="resource-main-icon-container"
@@ -223,14 +229,14 @@ export const ResourceTile: React.FC<ResourceTileProps> = ({ resource, state }) =
                         })
                     }} />
                     {hasInteractionPanel && (
-                        <MoreHorizIcon
+                        <TuneIcon
                             sx={{
                                 position: "absolute",
                                 bottom: -4,
                                 right: -8,
-                                fontSize: 12,
+                                fontSize: 16,
                                 color: iconColor,
-                                opacity: 0.4,
+                                opacity: Boolean(state?.value) ? 0.5 : 0.7,
                             }}
                         />
                     )}
@@ -264,11 +270,10 @@ export const ResourceTile: React.FC<ResourceTileProps> = ({ resource, state }) =
 
                 </Box>
 
-                <Box sx={{ display: "flex", alignItems: "center" }}>
+                <Box sx={{ display: "flex", alignItems: "center", width: "100%" }}>
 
-                    <Typography variant="subtitle1" sx={{
-                        fontWeight: 600,
-                        fontSize: "0.85rem",
+                    <Typography variant="body2" align="center" sx={{
+                        width: "100%",
                         display: "-webkit-box",
                         WebkitLineClamp: 2,
                         WebkitBoxOrient: "vertical",
@@ -279,7 +284,7 @@ export const ResourceTile: React.FC<ResourceTileProps> = ({ resource, state }) =
                         lineHeight: 1.2,
                         minHeight: "2.4em", // exactly 2 lines
                     }}>
-                        {resource.name}
+                        {nameOverride ?? resource.name}
                     </Typography>
                 </Box>
             </CardActionArea>

@@ -11,6 +11,7 @@ import { useAppDispatch } from "./app/store";
 import { resourcesLoaded } from "./features/resource/resourceSlice";
 import { fullStateReceived, stateReceived } from "./features/runtime-state/runtimeStateSlice";
 import { addTopicMessage, setTopicPattern } from "./features/topic-trace/topicTraceSlice";
+import { locationsLoaded } from "./features/location/locationSlice";
 import { viewsLoaded } from "./features/view/viewSlice";
 
 
@@ -48,6 +49,9 @@ export const WebSocketConfig: React.FC<WebSocketConfigProps> = ({ children }) =>
         "uhn:views": (message) => {
             if (message.payload) dispatch(viewsLoaded({ response: message.payload }));
         },
+        "uhn:locations": (message) => {
+            if (message.payload) dispatch(locationsLoaded({ response: message.payload }));
+        },
         "uhn:subscribed": (message) => {
             console.log("Subscribed to UHN patterns", message.payload);
         },
@@ -68,7 +72,7 @@ export const WebSocketConfig: React.FC<WebSocketConfigProps> = ({ children }) =>
         console.log("WebSocket Reconnect", details);
         setReconnectDetails(details);
         if (details.connected) {
-            ws.sendMessage({ action: "uhn:subscribe", payload: { patterns: ["resource/*", "state/*", "health/*", "view/*"] } });
+            ws.sendMessage({ action: "uhn:subscribe", payload: { patterns: ["resource/*", "state/*", "health/*", "view/*", "location/*"] } });
             connected.current = true;
         } else {
             connected.current = false;
@@ -80,7 +84,7 @@ export const WebSocketConfig: React.FC<WebSocketConfigProps> = ({ children }) =>
         // Delay subscription slightly to allow the underlying WebSocket connection/handshake
         // to fully settle before sending subscribe messages, avoiding intermittent race conditions.
         setTimeout(() => {
-            ws.sendMessage({ action: "uhn:subscribe", payload: { patterns: ["resource/*", "state/*", "health/*", "view/*"] } });
+            ws.sendMessage({ action: "uhn:subscribe", payload: { patterns: ["resource/*", "state/*", "health/*", "view/*", "location/*"] } });
             connected.current = true;
         }, 500);
 

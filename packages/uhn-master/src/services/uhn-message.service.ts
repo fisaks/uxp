@@ -2,6 +2,7 @@ import { UhnSubscriptionPattern } from "@uhn/common";
 import { WebSocket } from "ws";
 import { systemStatusBroadcaster } from "../system/system-status.broadcaster";
 import { UHNAppServerWebSocketManager } from "../ws/UHNAppServerWebSocketManager";
+import { blueprintLocationService } from "./blueprint-location.service";
 import { blueprintResourceService } from "./blueprint-resource.service";
 import { blueprintViewService } from "./blueprint-view.service";
 import { runtimeOverviewService } from "./runtime-overview.service";
@@ -33,6 +34,7 @@ export class UhnMessageService {
         const shouldSendSystem = patterns.some(pattern => pattern === 'system/*');
         const shouldSendRuntime = patterns.some(p => p === 'runtime/*');
         const shouldSendViews = patterns.some(p => p === 'view/*');
+        const shouldSendLocations = patterns.some(p => p === 'location/*');
 
         if (shouldSendResources) {
             await this.sendResourcesMessage(socket, patterns);
@@ -52,6 +54,9 @@ export class UhnMessageService {
         }
         if (shouldSendViews) {
             this.sendViewsMessage(socket);
+        }
+        if (shouldSendLocations) {
+            this.sendLocationsMessage(socket);
         }
 
     }
@@ -150,6 +155,15 @@ export class UhnMessageService {
             action: "uhn:views",
             success: true,
             payload: { views },
+        });
+    }
+
+    sendLocationsMessage(socket: WebSocket) {
+        const locations = blueprintLocationService.getAllLocations();
+        this.wsManager.sendMessage(socket, {
+            action: "uhn:locations",
+            success: true,
+            payload: { locations },
         });
     }
 

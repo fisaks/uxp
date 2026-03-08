@@ -222,7 +222,7 @@ const AnalogOutputControl: React.FC<{
 }> = ({ resource, state, iconColor }) => {
     const sendCommand = useSendResourceCommand(resource.id);
     const { localValue, handleChange, handleChangeCommitted, sendExact } =
-        useAnalogSlider(resource, state, sendCommand);
+        useAnalogSlider({ min: resource.min, max: resource.max }, state, sendCommand);
 
     const min = resource.min ?? 0;
     const max = resource.max ?? 65535;

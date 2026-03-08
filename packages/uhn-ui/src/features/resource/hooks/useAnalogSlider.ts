@@ -1,16 +1,18 @@
 import { UhnResourceCommand } from "@uhn/common";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { TileRuntimeResource, TileRuntimeResourceState } from "../resource-ui.type";
+import { TileRuntimeResourceState } from "../resource-ui.type";
 
 const DEBOUNCE_MS = 200;
 
+export type AnalogSliderConfig = { min?: number; max?: number };
+
 export function useAnalogSlider(
-    resource: TileRuntimeResource,
+    config: AnalogSliderConfig,
     state: TileRuntimeResourceState | undefined,
     sendCommand: (command: UhnResourceCommand) => Promise<void>
 ) {
-    const min = resource.min ?? 0;
-    const max = resource.max ?? 65535;
+    const min = config.min ?? 0;
+    const max = config.max ?? 65535;
 
     const [localValue, setLocalValue] = useState<number>(
         typeof state?.value === "number" ? state.value : min

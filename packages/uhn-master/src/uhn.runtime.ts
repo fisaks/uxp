@@ -1,6 +1,7 @@
 //uhn.runtime.ts
 import { AppLogger, runBackgroundTask } from "@uxp/bff-common";
 import { initBlueprintResourceDispatcher } from "./dispatchers/blueprint-resource.dispatcher";
+import { initBlueprintLocationDispatcher } from "./dispatchers/blueprint-location.dispatcher";
 import { initBlueprintViewDispatcher } from "./dispatchers/blueprint-view.dispatcher";
 import { initMuteEventDispatcher } from "./dispatchers/mute-event.dispatcher";
 import { initRuleActionDispatcher } from "./dispatchers/rule-action.dispatcher";
@@ -17,6 +18,7 @@ const { AppDataSource } = require("./db/typeorm.config");
 import { initRuntimeOverviewDispatcher } from "./dispatchers/runtime-overview.dispatcher";
 import { initUhnSystemDispatcher } from "./dispatchers/uhn-system.dispatcher";
 import "./services/blueprint-resource.service";
+import "./services/blueprint-location.service";
 import "./services/blueprint-view.service";
 import "./services/blueprint-runtime-supervisor.service";
 import "./services/blueprint.service";
@@ -37,9 +39,13 @@ import "./services/uhn-health.service";
 import "./services/system-command-edge.service";
 
 export async function startUhnRuntime() {
-    await runStartupBackgroundTasks();
+    // Dispatchers MUST be initialized before any runtime events can fire.
+    // They register event listeners on singleton services (stateRuntimeService,
+    // blueprintRuntimeSupervisorService, etc.). If the runtime starts first,
+    // events like ruleRuntimeReady and runtimeStatesChanged fire before
+    // listeners exist, causing the rule runtime to never receive state.
     setupWebDispatchers();
-
+    await runStartupBackgroundTasks();
 }
 
 async function runStartupBackgroundTasks() {
@@ -63,6 +69,7 @@ const setupWebDispatchers = () => {
     initTopicTraceDispatcher();
     initBlueprintResourceDispatcher();
     initBlueprintViewDispatcher();
+    initBlueprintLocationDispatcher();
     initStateRuntimeDispatcher();
     initRuleActionDispatcher();
     initMuteEventDispatcher();

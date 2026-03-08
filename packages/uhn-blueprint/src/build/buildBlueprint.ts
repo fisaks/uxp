@@ -23,6 +23,8 @@ export async function buildBlueprint(projectRoot: string): Promise<string> {
     const rulesTmp = path.join(tmpSrc, "rules");
     const viewsSrc = path.join(srcDir, "views");
     const viewsTmp = path.join(tmpSrc, "views");
+    const locationsSrc = path.join(srcDir, "locations");
+    const locationsTmp = path.join(tmpSrc, "locations");
     const factorySrc = path.join(srcDir, "factory");
     const factoryTmp = path.join(tmpSrc, "factory");
     const tsconfigPath = path.join(projectRoot, "tsconfig.json");
@@ -57,14 +59,16 @@ export async function buildBlueprint(projectRoot: string): Promise<string> {
                 return false;
             }
 
-            // skip resources, rules, and views completely
+            // skip resources, rules, views, and locations completely
             if (
                 rel === "resources" ||
                 rel.startsWith(`resources${path.sep}`) ||
                 rel === "rules" ||
                 rel.startsWith(`rules${path.sep}`) ||
                 rel === "views" ||
-                rel.startsWith(`views${path.sep}`)
+                rel.startsWith(`views${path.sep}`) ||
+                rel === "locations" ||
+                rel.startsWith(`locations${path.sep}`)
             ) {
                 return false;
             }
@@ -98,6 +102,16 @@ export async function buildBlueprint(projectRoot: string): Promise<string> {
             targetDir: viewsTmp,
             tsconfigPath: tsconfigPath,
             mode: "view",
+        });
+    }
+
+    // 3c) Normalize locations (optional — build succeeds without src/locations/)
+    if (await fs.pathExists(locationsSrc)) {
+        await normalizeBlueprint({
+            sourceDir: locationsSrc,
+            targetDir: locationsTmp,
+            tsconfigPath: tsconfigPath,
+            mode: "location",
         });
     }
 

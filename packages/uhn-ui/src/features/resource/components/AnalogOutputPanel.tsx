@@ -1,11 +1,13 @@
+import AddIcon from "@mui/icons-material/Add";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import FirstPageIcon from "@mui/icons-material/FirstPage";
+import LastPageIcon from "@mui/icons-material/LastPage";
 import RemoveIcon from "@mui/icons-material/Remove";
-import AddIcon from "@mui/icons-material/Add";
 import { Box, IconButton, Popover, Slider, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { usePortalContainerRef } from "@uxp/ui-lib";
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { TileRuntimeResource, TileRuntimeResourceState } from "../resource-ui.type";
 import { useAnalogSlider } from "../hooks/useAnalogSlider";
 import { useSendResourceCommand } from "../hooks/useSendResourceCommand";
@@ -29,44 +31,53 @@ export const AnalogOutputPanel: React.FC<AnalogOutputPanelProps> = ({
     const portalContainer = usePortalContainerRef();
     const sendCommand = useSendResourceCommand(resource.id);
     const { localValue, handleChange, handleChangeCommitted, sendExact } =
-        useAnalogSlider(resource, state, sendCommand);
+        useAnalogSlider({ min: resource.min, max: resource.max }, state, sendCommand);
 
     const min = resource.min ?? 0;
     const max = resource.max ?? 65535;
     const step = resource.step ?? 1;
+    const bigStep = Math.min(step * 10, (max - min) / 5);
     const unit = resource.unit ?? "";
 
     const [isEditing, setIsEditing] = useState(false);
-    const [editValue, setEditValue] = useState("");
     const inputRef = useRef<HTMLInputElement>(null);
 
     const iconColor = getResourceIconColor(theme, resource, state);
     const MainIcon = getResourceIcon(resource, state);
 
-    const handleValueClick = useCallback((e: React.MouseEvent) => {
-        e.stopPropagation();
-        setEditValue(String(localValue));
+    // Sync displayed value when not editing
+    useEffect(() => {
+        if (!isEditing && inputRef.current) {
+            inputRef.current.value = `${localValue}${unit ? ` ${unit}` : ""}`;
+        }
+    }, [localValue, unit, isEditing]);
+
+    const handleFocus = useCallback(() => {
         setIsEditing(true);
-        // Focus the input after render
-        setTimeout(() => inputRef.current?.select(), 0);
+        if (inputRef.current) {
+            inputRef.current.value = String(localValue);
+            inputRef.current.select();
+        }
     }, [localValue]);
 
     const commitEdit = useCallback(() => {
         setIsEditing(false);
-        const parsed = parseFloat(editValue);
+        const parsed = parseFloat(inputRef.current?.value ?? "");
         if (!isNaN(parsed)) {
             sendExact(parsed);
         }
-    }, [editValue, sendExact]);
+    }, [sendExact]);
 
     const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
         if (e.key === "Enter") {
-            commitEdit();
+            inputRef.current?.blur();
         } else if (e.key === "Escape") {
             e.stopPropagation();
             setIsEditing(false);
+            if (inputRef.current) inputRef.current.value = String(localValue);
+            inputRef.current?.blur();
         }
-    }, [commitEdit]);
+    }, [localValue]);
 
     const open = Boolean(anchorEl);
 
@@ -92,33 +103,59 @@ export const AnalogOutputPanel: React.FC<AnalogOutputPanelProps> = ({
                 </Typography>
             </Box>
 
-            {/* Slider + value */}
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Slider
-                    value={localValue}
-                    min={min}
-                    max={max}
-                    step={step}
-                    onChange={handleChange}
-                    onChangeCommitted={handleChangeCommitted}
-                    sx={{
-                        flex: 1,
-                        color: iconColor,
-                        "& .MuiSlider-thumb": {
-                            width: 18,
-                            height: 18,
-                        },
-                    }}
-                />
-
-                {isEditing ? (
+            {/* Slider + step controls (left) / value (right) */}
+            <Box sx={{ display: "flex", gap: 1 }}>
+                {/* Left column: slider + step controls */}
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Slider
+                        value={localValue}
+                        min={min}
+                        max={max}
+                        step={step}
+                        onChange={handleChange}
+                        onChangeCommitted={handleChangeCommitted}
+                        sx={{
+                            color: iconColor,
+                            "& .MuiSlider-thumb": {
+                                width: 18,
+                                height: 18,
+                            },
+                        }}
+                    />
+                    {/* Step controls: [min] « [- +] » [max] */}
+                    <Box sx={{ display: "flex", alignItems: "center", flexWrap: "nowrap", mt: 0.75 }}>
+                        <IconButton size="small" onClick={() => sendExact(min)} sx={{ p: 0.5, "&:hover": { backgroundColor: "action.hover" } }}>
+                            <FirstPageIcon sx={{ fontSize: 18 }} />
+                        </IconButton>
+                        <IconButton size="small" onClick={() => sendExact(localValue - bigStep)} sx={{ p: 0.5, "&:hover": { backgroundColor: "action.hover" } }}>
+                            <ChevronLeftIcon sx={{ fontSize: 18 }} />
+                        </IconButton>
+                        <Box sx={{ flex: 1, display: "flex", justifyContent: "center", gap: 2 }}>
+                            <IconButton size="small" onClick={() => sendExact(localValue - step)} sx={{ p: 0.5, "&:hover": { backgroundColor: "action.hover" } }}>
+                                <RemoveIcon sx={{ fontSize: 16 }} />
+                            </IconButton>
+                            <IconButton size="small" onClick={() => sendExact(localValue + step)} sx={{ p: 0.5, "&:hover": { backgroundColor: "action.hover" } }}>
+                                <AddIcon sx={{ fontSize: 16 }} />
+                            </IconButton>
+                        </Box>
+                        <IconButton size="small" onClick={() => sendExact(localValue + bigStep)} sx={{ p: 0.5, "&:hover": { backgroundColor: "action.hover" } }}>
+                            <ChevronRightIcon sx={{ fontSize: 18 }} />
+                        </IconButton>
+                        <IconButton size="small" onClick={() => sendExact(max)} sx={{ p: 0.5, "&:hover": { backgroundColor: "action.hover" } }}>
+                            <LastPageIcon sx={{ fontSize: 18 }} />
+                        </IconButton>
+                    </Box>
+                </Box>
+                {/* Right column: editable value — aligned with slider track */}
+                <Box sx={{ display: "flex", alignItems: "center", mt: "-37px" }}>
                     <input
                         ref={inputRef}
-                        value={editValue}
-                        onChange={(e) => setEditValue(e.target.value)}
+                        defaultValue={`${localValue}${unit ? ` ${unit}` : ""}`}
+                        onFocus={handleFocus}
                         onBlur={commitEdit}
                         onKeyDown={handleKeyDown}
                         inputMode="decimal"
+                        readOnly={!isEditing}
                         style={{
                             fontFamily: "monospace",
                             fontSize: "0.8rem",
@@ -126,72 +163,16 @@ export const AnalogOutputPanel: React.FC<AnalogOutputPanelProps> = ({
                             color: iconColor,
                             background: "transparent",
                             border: "none",
-                            borderBottom: `1.5px solid ${iconColor}`,
+                            borderBottom: isEditing ? `1.5px solid ${iconColor}` : "1.5px solid transparent",
                             outline: "none",
                             width: 48,
                             textAlign: "right",
-                            padding: "0 4px",
+                            padding: "0 2px",
+                            cursor: isEditing ? "text" : "pointer",
+                            borderRadius: 4,
                         }}
                     />
-                ) : (
-                    <Typography
-                        variant="caption"
-                        onClick={handleValueClick}
-                        sx={{
-                            fontFamily: "monospace",
-                            fontSize: "0.8rem",
-                            fontWeight: 600,
-                            color: iconColor,
-                            cursor: "pointer",
-                            minWidth: 48,
-                            textAlign: "right",
-                            userSelect: "none",
-                            borderRadius: 1,
-                            px: 0.5,
-                            "&:hover": {
-                                backgroundColor: "action.hover",
-                            },
-                        }}
-                    >
-                        {localValue}{unit ? ` ${unit}` : ""}
-                    </Typography>
-                )}
-            </Box>
-
-            {/* Step controls: [min] « - + » [max] */}
-            <Box sx={{ display: "flex", alignItems: "center", mt: 0.75 }}>
-                {resource.min !== undefined ? (
-                    <Typography
-                        variant="caption"
-                        onClick={() => sendExact(min)}
-                        sx={{ cursor: "pointer", fontFamily: "monospace", fontWeight: 600, fontSize: "0.7rem", color: "text.secondary", px: 0.5, borderRadius: 1, userSelect: "none", "&:hover": { backgroundColor: "action.hover" } }}
-                    >
-                        {min}{unit ? ` ${unit}` : ""}
-                    </Typography>
-                ) : <Box />}
-                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 2, flex: 1 }}>
-                    <IconButton size="small" onClick={() => sendExact(localValue - step * 10)} sx={{ p: 0.25 }}>
-                        <ChevronLeftIcon sx={{ fontSize: 18 }} />
-                    </IconButton>
-                    <IconButton size="small" onClick={() => sendExact(localValue - step)} sx={{ p: 0.25 }}>
-                        <RemoveIcon sx={{ fontSize: 16 }} />
-                    </IconButton>
-                    <IconButton size="small" onClick={() => sendExact(localValue + step)} sx={{ p: 0.25 }}>
-                        <AddIcon sx={{ fontSize: 16 }} />
-                    </IconButton>
-                    <IconButton size="small" onClick={() => sendExact(localValue + step * 10)} sx={{ p: 0.25 }}>
-                        <ChevronRightIcon sx={{ fontSize: 18 }} />
-                    </IconButton>
                 </Box>
-                {resource.max !== undefined ? (
-                    <Typography
-                        variant="caption"
-                        onClick={() => sendExact(max)}
-                        sx={{ cursor: "pointer", fontFamily: "monospace", fontWeight: 600, fontSize: "0.7rem", color: "text.secondary", px: 0.5, borderRadius: 1, userSelect: "none", "&:hover": { backgroundColor: "action.hover" } }}
-                    >
-                        {max}{unit ? ` ${unit}` : ""}
-                    </Typography>
-                ) : <Box />}
             </Box>
         </Popover>
     );

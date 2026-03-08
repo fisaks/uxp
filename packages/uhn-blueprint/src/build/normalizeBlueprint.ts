@@ -2,7 +2,7 @@
 import fs from "fs-extra";
 import path from "path";
 import { Node, Project } from "ts-morph";
-import { collectNamedImportsFromPaths, collectRuleFactories, collectViewFactories, extractIdValue, getRootCallExpression, isValidIdentifier, unwrapExpression } from "./blueprintAstUtils";
+import { collectLocationFactories, collectNamedImportsFromPaths, collectRuleFactories, collectViewFactories, extractIdValue, getRootCallExpression, isValidIdentifier, unwrapExpression } from "./blueprintAstUtils";
 
 type NormalizeError = {
     file: string;
@@ -11,7 +11,7 @@ type NormalizeError = {
     message: string;
 };
 
-type NormalizeMode = "resource" | "rule" | "view";
+type NormalizeMode = "resource" | "rule" | "view" | "location";
 
 /**
  * Blueprint normalization pass.
@@ -77,6 +77,8 @@ export async function normalizeBlueprint(opts: {
             mode === "rule" ? collectRuleFactories(sf) : new Set<string>(); // usually just {"rule"} if imported
         const viewFactories =
             mode === "view" ? collectViewFactories(sf) : new Set<string>();
+        const locationFactories =
+            mode === "location" ? collectLocationFactories(sf) : new Set<string>();
 
         const isEntityCall = (init: Node): boolean => {
             if (!Node.isCallExpression(init)) return false;
@@ -88,6 +90,11 @@ export async function normalizeBlueprint(opts: {
                 // view() is a single call (not chained like rule().onTap().run())
                 const expr = init.getExpression();
                 return Node.isIdentifier(expr) && viewFactories.has(expr.getText());
+            }
+            if (mode === "location") {
+                // location() is a single call (like view)
+                const expr = init.getExpression();
+                return Node.isIdentifier(expr) && locationFactories.has(expr.getText());
             }
             // rule mode
             const root = getRootCallExpression(init);

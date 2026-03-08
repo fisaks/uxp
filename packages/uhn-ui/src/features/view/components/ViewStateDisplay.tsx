@@ -5,27 +5,92 @@ import { formatCountdown, useCountdown } from "../../resource/hooks/useCountdown
 import { getBlueprintIcon } from "../blueprintIconMap";
 import { StateDisplayValue } from "../viewSelectors";
 
-export const ValueItem: React.FC<{ item: StateDisplayValue }> = ({ item }) => {
+/** Compact value item for flanking layout — label on top, value below */
+export const ValueItemCompact: React.FC<{ item: StateDisplayValue; align: "left" | "right" }> = ({ item, align }) => {
     const isTimer = item.resourceType === "timer";
     const remaining = useCountdown(item.details, item.active);
 
     let formatted: string;
     if (isTimer) {
-        formatted = item.active && remaining > 0 ? formatCountdown(remaining) : "—";
+        if (remaining > 0) {
+            formatted = formatCountdown(remaining);
+        } else if (item.active) {
+            formatted = "Active";
+        } else {
+            formatted = "—";
+        }
     } else if (item.value == null) {
         formatted = "—";
     } else if (typeof item.value === "boolean") {
         formatted = item.value ? "On" : "Off";
     } else {
-        formatted = `${item.value}${item.unit ? ` ${item.unit}` : ""}`;
+        const display = typeof item.value === "number" && !Number.isInteger(item.value)
+            ? item.value.toFixed(1)
+            : item.value;
+        formatted = `${display}${item.unit ? ` ${item.unit}` : ""}`;
     }
 
     return (
-        <Typography variant="caption" color="text.secondary" noWrap>
-            {item.label ? `${item.label}: ` : ""}{formatted}
-        </Typography>
+        <Box sx={{ textAlign: "center", minWidth: "3.5em" }}>
+            {item.label && (
+                <Typography
+                    variant="caption"
+                    noWrap
+                    sx={{ fontSize: "0.7rem", color: "text.secondary", lineHeight: 1.3, display: "block" }}
+                >
+                    {item.label}
+                </Typography>
+            )}
+            <Typography
+                variant="caption"
+                noWrap
+                sx={{ fontFamily: "monospace", fontSize: "0.8rem", fontWeight: 600, color: "text.secondary", lineHeight: 1.3 }}
+            >
+                {formatted}
+            </Typography>
+        </Box>
     );
 };
+
+/** Renders the flanking column (left or right side of icon) */
+export const FlankingColumn: React.FC<{
+    items: StateDisplayValue[];
+    align: "left" | "right";
+}> = ({ items, align }) => {
+    if (items.length === 0) return <Box sx={{ flex: 1 }} />;
+    return (
+        <Box sx={{
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: align === "left" ? "flex-end" : "flex-start",
+            gap: 0.5,
+            minWidth: 0,
+            // Pull values closer to icon instead of sitting at tile edges
+            ...(align === "right" && { pl: 1, pr: 0 }),
+            ...(align === "left" && { pr: 1, pl: 0 }),
+        }}>
+            {items.map(item => (
+                <ValueItemCompact key={item.resourceId} item={item} align={align} />
+            ))}
+        </Box>
+    );
+};
+
+/** Splits value items into left/right arrays for flanking layout */
+export function splitFlankingValues(items: StateDisplayValue[]): { left: StateDisplayValue[]; right: StateDisplayValue[] } {
+    const valueItems = items.filter(i => i.style === "value");
+    const left: StateDisplayValue[] = [];
+    const right: StateDisplayValue[] = [];
+    for (let i = 0; i < valueItems.length; i++) {
+        if (i === 0) left.push(valueItems[i]);
+        else if (i === 1) right.push(valueItems[i]);
+        else if (left.length <= right.length) left.push(valueItems[i]);
+        else right.push(valueItems[i]);
+    }
+    return { left, right };
+}
 
 export const IndicatorItem: React.FC<{ item: StateDisplayValue }> = ({ item }) => {
     const theme = useTheme();
@@ -63,20 +128,3 @@ export const FlashItem: React.FC<{ item: StateDisplayValue }> = ({ item }) => {
     );
 };
 
-type ViewValueDisplayProps = {
-    items: StateDisplayValue[];
-};
-
-/** Renders only value-style stateDisplay items (text values, timers). */
-export const ViewValueDisplay: React.FC<ViewValueDisplayProps> = ({ items }) => {
-    const valueItems = items.filter(i => i.style === "value");
-    if (valueItems.length === 0) return null;
-
-    return (
-        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, minHeight: 20, flexWrap: "wrap" }}>
-            {valueItems.map((item) => (
-                <ValueItem key={item.resourceId} item={item} />
-            ))}
-        </Box>
-    );
-};

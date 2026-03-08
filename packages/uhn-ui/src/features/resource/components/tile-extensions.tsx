@@ -169,6 +169,7 @@ const complexRenderer: TileRendererExtensions = {
 const renderers: Partial<Record<ResourceType, TileRendererExtensions>> = {
     analogInput: analogInputRenderer,
     analogOutput: analogOutputRenderer,
+    virtualAnalogOutput: analogOutputRenderer,
     timer: timerRenderer,
     complex: complexRenderer,
 };

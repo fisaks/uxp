@@ -101,7 +101,7 @@ export function useResourceAction(
                 }
             }
 
-            if ((resource.type === "analogOutput" || resource.type === "complex") && options?.onLongPress) {
+            if ((resource.type === "analogOutput" || resource.type === "virtualAnalogOutput" || resource.type === "complex") && options?.onLongPress) {
                 if (e.pointerType === "touch") {
                     // On touch, delay long-press start to disambiguate scroll
                     clearPressIntentDelay();
@@ -178,7 +178,7 @@ export function useResourceAction(
             return;
         }
         // Analog output: tap-toggle between min and max
-        if (resource.type === "analogOutput") {
+        if (resource.type === "analogOutput" || resource.type === "virtualAnalogOutput") {
             const min = resource.min ?? 0;
             const max = resource.max ?? 65535;
             const current = typeof state?.value === "number" ? state.value : min;

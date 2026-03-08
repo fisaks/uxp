@@ -13,6 +13,7 @@ export type TileRuntimeResource = RuntimeResource & {
     max?: number;
     step?: number;
     unit?: string;
+    stateLabel?: string;
     inactiveValue?: number;
     emitsTap?: boolean;
     subResources?: RuntimeComplexSubResourceRef[];

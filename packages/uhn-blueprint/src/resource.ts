@@ -146,6 +146,8 @@ export type ComplexResourceBase<THost extends string = string> = LogicalResource
     computeResources: ResourceBase<ResourceType>[];
     /** Unit label for display (e.g. "W", "%") */
     unit?: string;
+    /** Label shown beside the icon in tiles (e.g. "Total", "Sum"). */
+    stateLabel?: string;
     /** The numeric value that represents the inactive/off state. Active when computed value !== inactiveValue. Default: 0 */
     inactiveValue?: number;
     /** When true, short clicks send a tap command (for rule triggers). When false, all clicks open the popover. Default: false */
