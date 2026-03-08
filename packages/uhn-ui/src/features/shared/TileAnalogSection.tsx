@@ -30,7 +30,7 @@ export const TileAnalogSection: React.FC<TileAnalogSectionProps> = ({
     return (
         <Box sx={{ px: 1.5, pb: 0.75, pt: 0.5, display: "flex", gap: 1 }}>
             {/* Left column: slider + step controls (aligned widths) */}
-            <Box sx={{ flex: 1, minWidth: 0, ml: "10px" }}>
+            <Box sx={{ flex: 1, minWidth: 0, ml: 1.25 }}>
                 <Slider
                     value={localValue}
                     min={min}
@@ -53,8 +53,10 @@ export const TileAnalogSection: React.FC<TileAnalogSectionProps> = ({
                     iconSize="small" centerGap={1.5} mt={1}
                 />
             </Box>
-            {/* Right column: editable value — aligned with slider track */}
-            <Box sx={{ pt: 0, mt: "-32px", display: "flex", alignItems: "center" }}>
+            {/* Right column: editable value — negative margin aligns input
+               vertically with the slider track center. Fragile if MUI Slider
+               internals or thumb size change. */}
+            <Box sx={{ mt: -4, display: "flex", alignItems: "center" }}>
                 <input
                     ref={inputRef}
                     defaultValue={`${localValue}${unit ? ` ${unit}` : ""}`}

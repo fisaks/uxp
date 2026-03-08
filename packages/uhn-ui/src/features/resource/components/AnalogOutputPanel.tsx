@@ -90,7 +90,9 @@ export const AnalogOutputPanel: React.FC<AnalogOutputPanelProps> = ({
                         iconSize="medium" centerGap={2} mt={0.75}
                     />
                 </Box>
-                {/* Right column: editable value — aligned with slider track */}
+                {/* Right column: editable value — negative margin aligns input
+                   vertically with the slider track center. Fragile if MUI Slider
+                   internals or thumb size change. Does not map to 8px grid. */}
                 <Box sx={{ display: "flex", alignItems: "center", mt: "-37px" }}>
                     <input
                         ref={inputRef}

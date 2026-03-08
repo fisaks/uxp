@@ -163,8 +163,8 @@ export const ResourceTile: React.FC<ResourceTileProps> = ({ resource, state, nam
                 ref={tileActionAreaRef}
                 disabled={haveErrors || isPending}
                 sx={{
-                    // push content below overlay
-                    pt: "40px",
+                    // push content below info/description overlay icons
+                    pt: 5,
                     px: 1.5,
                     pb: 1.25,
 

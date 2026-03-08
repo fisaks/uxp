@@ -51,7 +51,7 @@ export const ViewTile: React.FC<ViewTileProps> = ({ view, active, stateDisplayVa
             stateValues={stateDisplayValues}
             displayName={displayName}
             hasAnalog={isAnalog}
-            pt="28px"
+            pt={3.5}
         />
     );
 
