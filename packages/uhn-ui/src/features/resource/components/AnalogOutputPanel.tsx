@@ -6,7 +6,7 @@ import { TileRuntimeResource, TileRuntimeResourceState } from "../resource-ui.ty
 import { useAnalogSlider } from "../hooks/useAnalogSlider";
 import { useSendResourceCommand } from "../hooks/useSendResourceCommand";
 import { StepButtonRow } from "../../shared/StepButtonRow";
-import { useAnalogInput } from "../../shared/useAnalogInput";
+import { useAnalogEditableInput } from "../../shared/useAnalogEditableInput";
 import { getResourceIcon } from "./icons";
 import { getResourceIconColor } from "./colors";
 
@@ -39,7 +39,7 @@ export const AnalogOutputPanel: React.FC<AnalogOutputPanelProps> = ({
     const MainIcon = getResourceIcon(resource, state);
 
     const { isEditing, inputRef, handleFocus, commitEdit, handleKeyDown } =
-        useAnalogInput(localValue, unit, sendExact, { stopEscapePropagation: true });
+        useAnalogEditableInput(localValue, unit, sendExact, { stopEscapePropagation: true });
 
     const open = Boolean(anchorEl);
 

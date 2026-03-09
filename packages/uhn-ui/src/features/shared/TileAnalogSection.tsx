@@ -4,7 +4,7 @@ import React from "react";
 import { useAnalogSlider } from "../resource/hooks/useAnalogSlider";
 import { TileRuntimeResourceState } from "../resource/resource-ui.type";
 import { StepButtonRow } from "./StepButtonRow";
-import { useAnalogInput } from "./useAnalogInput";
+import { useAnalogEditableInput } from "./useAnalogEditableInput";
 
 type TileAnalogSectionProps = {
     min: number;
@@ -25,7 +25,7 @@ export const TileAnalogSection: React.FC<TileAnalogSectionProps> = ({
     const bigStep = Math.min(step * 10, (max - min) / 5);
 
     const { isEditing, inputRef, handleFocus, commitEdit, handleKeyDown } =
-        useAnalogInput(localValue, unit, sendExact);
+        useAnalogEditableInput(localValue, unit, sendExact);
 
     return (
         <Box sx={{ px: 1.5, pb: 0.75, pt: 0.5, display: "flex", gap: 1 }}>

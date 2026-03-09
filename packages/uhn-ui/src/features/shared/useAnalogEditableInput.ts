@@ -5,7 +5,7 @@ type UseAnalogInputOptions = {
     stopEscapePropagation?: boolean;
 };
 
-export function useAnalogInput(
+export function useAnalogEditableInput(
     localValue: number,
     unit: string,
     sendExact: (value: number) => void,
