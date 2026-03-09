@@ -1,6 +1,6 @@
 // blueprintAstUtils.ts
 import path from "path";
-import { CallExpression, Node, SourceFile } from "ts-morph";
+import { CallExpression, ImportSpecifier, Node, ObjectLiteralExpression, SourceFile, VariableDeclaration } from "ts-morph";
 
 /* ---------------------------------
  * General AST helpers
@@ -44,6 +44,88 @@ export function isPathWithinParent(childPath: string, parentPath: string): boole
 }
 
 /* ---------------------------------
+ * Value resolution helpers
+ * --------------------------------- */
+
+/**
+ * Follow an identifier's symbol to the underlying VariableDeclaration.
+ * Handles both same-file references and cross-file imports.
+ */
+function resolveToVariableDeclaration(node: Node): VariableDeclaration | undefined {
+    if (!Node.isIdentifier(node)) return undefined;
+    const sym = node.getSymbol();
+    if (!sym) return undefined;
+    for (const decl of sym.getDeclarations()) {
+        if (Node.isVariableDeclaration(decl)) return decl;
+        if (Node.isImportSpecifier(decl)) {
+            const resolved = resolveImportSpecifier(decl);
+            if (resolved) return resolved;
+        }
+    }
+    return undefined;
+}
+
+/**
+ * Follow an ImportSpecifier to the original VariableDeclaration in the source file.
+ */
+function resolveImportSpecifier(spec: ImportSpecifier): VariableDeclaration | undefined {
+    const sourceFile = spec.getImportDeclaration().getModuleSpecifierSourceFile();
+    if (!sourceFile) return undefined;
+    const exportName = spec.getName();
+    const varDecl = sourceFile.getVariableDeclaration(exportName);
+    if (varDecl) return varDecl;
+    return undefined;
+}
+
+/**
+ * Resolve a node to a string value. Handles:
+ * - Direct string literals: `"edge1"`
+ * - Const references (same file or imported): `EDGE` where `const EDGE = "edge1"`
+ * - `as const` assertions
+ *
+ * Resolution is one level deep — chained const references are not supported.
+ */
+export function resolveToStringValue(node: Node): string | undefined {
+    const unwrapped = unwrapExpression(node);
+    if (Node.isStringLiteral(unwrapped)) return unwrapped.getLiteralValue();
+    if (Node.isIdentifier(unwrapped)) {
+        const varDecl = resolveToVariableDeclaration(unwrapped);
+        if (varDecl) {
+            const init = varDecl.getInitializer();
+            if (init) {
+                const inner = unwrapExpression(init);
+                if (Node.isStringLiteral(inner)) return inner.getLiteralValue();
+            }
+        }
+    }
+    return undefined;
+}
+
+/**
+ * Resolve a node to an ObjectLiteralExpression. Handles:
+ * - Direct object literals: `{ edge: "edge1", device: "DO1" }`
+ * - Const references (same file or imported): `commonProps` where `const commonProps = { ... }`
+ * - `as const` assertions
+ *
+ * Resolution is one level deep — chained const references are not supported.
+ */
+export function resolveToObjectLiteral(node: Node): ObjectLiteralExpression | undefined {
+    const unwrapped = unwrapExpression(node);
+    if (Node.isObjectLiteralExpression(unwrapped)) return unwrapped;
+    if (Node.isIdentifier(unwrapped)) {
+        const varDecl = resolveToVariableDeclaration(unwrapped);
+        if (varDecl) {
+            const init = varDecl.getInitializer();
+            if (init) {
+                const inner = unwrapExpression(init);
+                if (Node.isObjectLiteralExpression(inner)) return inner;
+            }
+        }
+    }
+    return undefined;
+}
+
+/* ---------------------------------
  * ID helpers
  * --------------------------------- */
 
@@ -54,16 +136,18 @@ export function isValidIdentifier(id: string): boolean {
 }
 
 /**
- * Extract a string literal value for a named property from an object literal
+ * Extract a string value for a named property from an object literal
  * or from the first argument of a call expression.
+ *
+ * Resolves const references (one level deep): `edge: EDGE` where `const EDGE = "edge1"`.
  */
 export function extractPropertyStringValue(node: Node, propertyName: string): string | undefined {
     if (Node.isObjectLiteralExpression(node)) {
         const prop = node.getProperty(propertyName);
         if (prop && Node.isPropertyAssignment(prop)) {
             const init = prop.getInitializer();
-            if (init && Node.isStringLiteral(init)) {
-                return init.getLiteralValue();
+            if (init) {
+                return resolveToStringValue(init);
             }
         }
     }

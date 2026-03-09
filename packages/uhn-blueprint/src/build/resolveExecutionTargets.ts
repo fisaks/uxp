@@ -8,6 +8,7 @@ import {
     getRootCallExpression,
     isLocalImport,
     isPathWithinParent,
+    resolveToObjectLiteral,
     unwrapExpression,
 } from "./blueprintAstUtils";
 
@@ -46,12 +47,10 @@ export async function resolveExecutionTargets(opts: {
         skipAddingFilesFromTsConfig: true,
     });
 
-    project.addSourceFilesAtPaths(path.join(resourcesTmpDir, "**/*.ts"));
-    project.addSourceFilesAtPaths(path.join(rulesTmpDir, "**/*.ts"));
-    project.addSourceFilesAtPaths(path.join(factoryTmpPath, "**/*.ts"));
-    if (scenesTmpDir) {
-        project.addSourceFilesAtPaths(path.join(scenesTmpDir, "**/*.ts"));
-    }
+    // Add all source files so cross-file symbol resolution works
+    // (e.g., const references imported from helper/utility files)
+    const srcRoot = path.dirname(resourcesTmpDir);
+    project.addSourceFilesAtPaths(path.join(srcRoot, "**/*.ts"));
 
     // Step 1: Build resource edge map
     const resourceTargetMap = buildResourceTargetMap(project, resourcesTmpDir);
@@ -210,10 +209,13 @@ export async function resolveExecutionTargets(opts: {
  * Scans all exported resources in the temp resource files.
  *
  * For each resource, inspects the props object literal:
- * - `edge` or `host` is a direct string literal → use it
- * - Has spreads, or the property exists but isn't a string literal → build error
- *   (const refs, spreads, and computed values can't be backtraced at build time)
+ * - `edge` or `host` is a string literal or const reference → use it
+ * - Has spreads → resolve each spread to its source object and extract edge/host
+ * - Property exists but can't be resolved to a string → build error
  * - Neither `edge` nor `host` found → build error
+ *
+ * Resolution is one level deep: `const EDGE = "edge1"` works,
+ * but `const A = B; const B = "edge1"` does not.
  *
  * Physical resources use `edge`, logical resources (timer, complex) use `host`.
  */
@@ -245,7 +247,7 @@ function buildResourceTargetMap(
                 continue;
             }
 
-            // Neither edge nor host found as a string literal — inspect the props object
+            // Neither edge nor host resolved (not a string literal, const ref, or imported const) — inspect props object
             const propsObj = getPropsObject(init);
             if (!propsObj) {
                 errors.push(
@@ -259,16 +261,32 @@ function buildResourceTargetMap(
             const edgeProp = propsObj.getProperty("edge") ?? propsObj.getProperty("host");
 
             if (hasSpreads) {
-                // Spread could hide edge/host — can't backtrace
-                errors.push(
-                    `${sf.getFilePath()}:${v.getStartLineNumber()} — resource "${v.getName()}" ` +
-                    `uses spread in props. \`edge\`/\`host\` must be a direct string literal for build-time backtracing.`
-                );
+                // Try resolving spreads to find edge/host in the source object
+                let spreadResolved: string | undefined;
+                for (const p of propsObj.getProperties()) {
+                    if (!Node.isSpreadAssignment(p)) continue;
+                    const spreadObj = resolveToObjectLiteral(p.getExpression());
+                    if (spreadObj) {
+                        spreadResolved = extractPropertyStringValue(spreadObj, "edge")
+                            ?? extractPropertyStringValue(spreadObj, "host");
+                        if (spreadResolved) break;
+                    }
+                }
+                if (spreadResolved) {
+                    map.set(v.getName(), spreadResolved);
+                } else {
+                    errors.push(
+                        `${sf.getFilePath()}:${v.getStartLineNumber()} — resource "${v.getName()}" ` +
+                        `uses spread in props but \`edge\`/\`host\` could not be resolved. ` +
+                        `Provide \`edge\`/\`host\` as a direct property or in a const object spread.`
+                    );
+                }
             } else if (edgeProp) {
-                // Property exists but isn't a string literal (const ref, computed, etc.)
+                // Property exists but could not be resolved (function call, ternary, chained ref, etc.)
                 errors.push(
                     `${sf.getFilePath()}:${v.getStartLineNumber()} — resource "${v.getName()}" ` +
-                    `has \`edge\`/\`host\` but it's not a string literal. Use a direct string value like \`edge: "edge1"\` or \`host: "edge1"\`.`
+                    `has \`edge\`/\`host\` but its value could not be resolved at build time. ` +
+                    `Use a string literal, a const initialized with a string literal, or an imported const.`
                 );
             } else {
                 // No edge or host property, no spreads → build error
@@ -285,7 +303,7 @@ function buildResourceTargetMap(
         for (const e of errors) {
             console.error(`- ${e}\n`);
         }
-        throw new Error("Some resources have non-backtrackable edge/host values");
+        throw new Error("Some resources have unresolvable edge/host values");
     }
 
     return map;
