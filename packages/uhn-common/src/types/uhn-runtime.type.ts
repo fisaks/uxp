@@ -290,6 +290,27 @@ export type RuleRuntimeLocationsLoadedMessage = {
   locations: RuntimeLocation[];
 };
 
+// --- Runtime Scene types (resourceId instead of resource objects) ---
+
+export type RuntimeSceneCommand =
+    | { type: "setDigitalOutput"; resourceId: string; value: boolean }
+    | { type: "setAnalogOutput"; resourceId: string; value: number }
+    | { type: "emitSignal"; resourceId: string; value: boolean | undefined };
+
+export type RuntimeScene = {
+    id: string;
+    name: string;
+    description?: string;
+    icon?: BlueprintIcon;
+    commands: RuntimeSceneCommand[];
+};
+
+export type RuleRuntimeScenesLoadedMessage = {
+  kind: "event";
+  cmd: "scenesLoaded";
+  scenes: RuntimeScene[];
+};
+
 export type RuleRuntimeResponse = RuleRuntimeReadyMessage
   | RuleRuntimeActionMessage
   | RuleRuntimeResourceMissingMessage
@@ -298,7 +319,8 @@ export type RuleRuntimeResponse = RuleRuntimeReadyMessage
   | RuleRuntimeRulesLoadedMessage
   | RuleRuntimeResourcesLoadedMessage
   | RuleRuntimeViewsLoadedMessage
-  | RuleRuntimeLocationsLoadedMessage;
+  | RuleRuntimeLocationsLoadedMessage
+  | RuleRuntimeScenesLoadedMessage;
 
 export type RuleRuntimeCommandMap = {
   stateUpdate: {
@@ -383,7 +405,8 @@ export type RuntimeInteractionView = {
 
 export type RuntimeLocationItem =
     | { kind: "resource"; refId: string; name?: string }
-    | { kind: "view"; refId: string; name?: string };
+    | { kind: "view"; refId: string; name?: string }
+    | { kind: "scene"; refId: string; name?: string };
 
 export type RuntimeLocation = {
     id: string;

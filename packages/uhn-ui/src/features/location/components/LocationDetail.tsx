@@ -1,10 +1,11 @@
 import { Grid2, Typography } from "@mui/material";
-import { RuntimeLocation, RuntimeLocationItem, RuntimeResource } from "@uhn/common";
+import { RuntimeLocation, RuntimeLocationItem, RuntimeResource, RuntimeScene } from "@uhn/common";
 import React from "react";
 import { useSelector } from "react-redux";
 import { TileRuntimeResourceState } from "../../resource/resource-ui.type";
 import { selectResourceById } from "../../resource/resourceSelector";
 import { selectRuntimeStateByResourceId } from "../../runtime-state/runtimeStateSelector";
+import { selectScenesById } from "../../scene/sceneSelectors";
 import { selectViewsWithStateById, ViewWithState } from "../../view/viewSelectors";
 import { LocationTile } from "./LocationTile";
 
@@ -17,6 +18,7 @@ export const LocationDetail: React.FC<LocationDetailProps> = ({ location }) => {
 
     const resourceById = useSelector(selectResourceById);
     const stateById = useSelector(selectRuntimeStateByResourceId);
+    const scenesById = useSelector(selectScenesById);
 
     return (
         <>
@@ -29,7 +31,7 @@ export const LocationDetail: React.FC<LocationDetailProps> = ({ location }) => {
             <Grid2 container spacing={2} sx={{ width: "100%", margin: 0 }}>
                 {location.items.map((item, idx) => (
                     <Grid2 key={`${item.kind}-${item.refId}-${idx}`} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
-                        <LocationItemTile item={item} viewsById={viewsById} resourceById={resourceById} stateById={stateById} />
+                        <LocationItemTile item={item} viewsById={viewsById} resourceById={resourceById} stateById={stateById} scenesById={scenesById} />
                     </Grid2>
                 ))}
             </Grid2>
@@ -42,9 +44,10 @@ type LocationItemTileProps = {
     viewsById: Record<string, ViewWithState>;
     resourceById: Record<string, RuntimeResource>;
     stateById: Record<string, TileRuntimeResourceState>;
+    scenesById: Record<string, RuntimeScene>;
 };
 
-const LocationItemTile: React.FC<LocationItemTileProps> = ({ item, viewsById, resourceById, stateById }) => {
+const LocationItemTile: React.FC<LocationItemTileProps> = ({ item, viewsById, resourceById, stateById, scenesById }) => {
     if (item.kind === "view") {
         const vws = viewsById[item.refId];
         if (!vws) return null;
@@ -58,6 +61,12 @@ const LocationItemTile: React.FC<LocationItemTileProps> = ({ item, viewsById, re
         const state = stateById[item.refId];
         return <LocationTile kind="resource" resource={resource} state={state}
             nameOverride={item.name} />;
+    }
+
+    if (item.kind === "scene") {
+        const scene = scenesById[item.refId];
+        if (!scene) return null;
+        return <LocationTile kind="scene" scene={scene} nameOverride={item.name} />;
     }
 
     return null;

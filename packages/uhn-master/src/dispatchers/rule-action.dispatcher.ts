@@ -50,6 +50,11 @@ function handleActionEvent(actions: RuntimeRuleAction[]) {
             case "clearMute":
                 handleClearMuteAction(act);
                 break;
+            case "activateScene":
+                // Scene activation is expanded in the rule engine before reaching IPC.
+                // If it somehow arrives here, log a warning and ignore.
+                AppLogger.warn({ message: `Unexpected activateScene action received in dispatcher — should have been expanded in rule engine` });
+                break;
             default:
                 assertNever(act);
         }

@@ -4,6 +4,7 @@ import type {
     RuleAction,
     RuleCause,
     RuleTrigger,
+    SceneAction,
     StateReader,
     RuntimeRuleAction
 } from "@uhn/blueprint";
@@ -330,13 +331,60 @@ export class RuleEngine {
         ruleControl.lastRunAt = eventTime;
         this.ruleExecutionControl.set(ruleCandidate.id, ruleControl);
 
-        const runtimeActions = actions.map(this.toRuntimeAction).filter((a): a is RuntimeRuleAction => a !== undefined);
+        // Expand activateScene actions into individual scene commands
+        const expandedActions = actions.flatMap(action =>
+            action.type === "activateScene" ? action.scene.commands : [action]
+        );
+
+        const reachableActions = this.filterReachableActions(expandedActions);
+
+        const runtimeActions = reachableActions.map(this.toRuntimeAction).filter((a): a is RuntimeRuleAction => a !== undefined);
         const timerActions = ruleTimer.drainPendingActions();
         const muteActions = ruleMute.drainPendingActions();
         return [...runtimeActions, ...timerActions, ...muteActions];
     }
 
+    /**
+     * Filter out actions targeting resources unreachable from this runtime.
+     * Edge runtimes can only dispatch to resources on the same edge;
+     * master can reach all targets so no filtering is needed.
+     */
+    private filterReachableActions(actions: SceneAction[]): SceneAction[] {
+        if (this.mode === "master") return actions;
+
+        return actions.filter(action => {
+            const target = this.getActionResourceTarget(action);
+            if (target && target !== this.edgeName) {
+                runtimeOutput.log({
+                    level: "error",
+                    component: "RuleEngine",
+                    message: `Action targets resource "${action.resource.id}" on "${target}" but this runtime runs on edge "${this.edgeName}" — skipping`,
+                });
+                return false;
+            }
+            return true;
+        });
+    }
+
+    /** Extract the execution target (edge or host) from a scene action's resource. */
+    private getActionResourceTarget(action: SceneAction): string | undefined {
+        switch (action.type) {
+            case "setDigitalOutput":
+                return action.resource.edge;
+            case "setAnalogOutput":
+                return "edge" in action.resource ? action.resource.edge : action.resource.host;
+            case "emitSignal":
+                return "edge" in action.resource ? action.resource.edge : action.resource.host;
+        }
+    }
+
     private toRuntimeAction(action: RuleAction): RuntimeRuleAction | undefined {
+        // activateScene is expanded upstream in tryRunRule — should never reach here
+        if (action.type === "activateScene") {
+            runtimeOutput.log({ level: "error", component: "RuleEngine", message: `activateScene should have been expanded before toRuntimeAction` });
+            return undefined;
+        }
+
         if (!action.resource.id) {
             runtimeOutput.log({ level: "error", component: "RuleEngine", message: `Action resource is missing id: ${JSON.stringify(action)}` });
             return undefined;

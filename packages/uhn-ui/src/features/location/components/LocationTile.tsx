@@ -1,7 +1,7 @@
 import TuneIcon from "@mui/icons-material/Tune";
 import { Box, Card, CardActionArea, CircularProgress } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import { RuntimeInteractionView } from "@uhn/common";
+import { RuntimeInteractionView, RuntimeScene } from "@uhn/common";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { ComplexPanel } from "../../resource/components/ComplexPanel";
@@ -20,6 +20,8 @@ import { useSendViewCommand } from "../../view/hooks/useSendViewCommand";
 import { TileStateItem } from "../../shared/tile.types";
 import { TileAnalogSection } from "../../shared/TileAnalogSection";
 import { TileContent } from "../../shared/TileContent";
+import { useSceneIconColors } from "../../shared/useSceneIconColors";
+import { useSceneCommand } from "../../shared/useSceneCommand";
 
 /* ------------------------------------------------------------------ */
 /* Props                                                               */
@@ -40,7 +42,13 @@ type LocationTileResourceProps = {
     nameOverride?: string;
 };
 
-type LocationTileProps = LocationTileViewProps | LocationTileResourceProps;
+type LocationTileSceneProps = {
+    kind: "scene";
+    scene: RuntimeScene;
+    nameOverride?: string;
+};
+
+type LocationTileProps = LocationTileViewProps | LocationTileResourceProps | LocationTileSceneProps;
 
 /* ------------------------------------------------------------------ */
 /* LocationTile                                                        */
@@ -48,6 +56,7 @@ type LocationTileProps = LocationTileViewProps | LocationTileResourceProps;
 
 export const LocationTile: React.FC<LocationTileProps> = (props) => {
     if (props.kind === "view") return <LocationTileView {...props} />;
+    if (props.kind === "scene") return <LocationTileScene {...props} />;
     return <LocationTileResource {...props} />;
 };
 
@@ -298,6 +307,61 @@ const LocationTileResource: React.FC<LocationTileResourceProps> = ({ resource, s
             )}
 
             {isPending && (
+                <CircularProgress size={16} thickness={5} sx={{ position: "absolute", bottom: 11, right: 11 }} />
+            )}
+        </Card>
+    );
+};
+
+/* ------------------------------------------------------------------ */
+/* Scene variant                                                       */
+/* ------------------------------------------------------------------ */
+
+const LocationTileScene: React.FC<LocationTileSceneProps> = ({ scene, nameOverride }) => {
+    const theme = useTheme();
+    const { handleClick, pending } = useSceneCommand(scene.id);
+
+    const displayName = nameOverride ?? scene.name ?? scene.id;
+    const { IconComponent, iconColor, surfaceColor } = useSceneIconColors(scene.icon, pending, theme);
+
+    return (
+        <Card
+            variant="outlined"
+            sx={{
+                position: "relative",
+                borderRadius: 3,
+                boxShadow: 2,
+                height: { xs: "auto", sm: 154 },
+                display: "flex",
+                flexDirection: "column",
+                backgroundColor: surfaceColor,
+                transition: "background-color 0.3s, box-shadow 0.2s",
+                "&:hover": { boxShadow: 4 },
+            }}
+        >
+            <CardActionArea
+                onClick={handleClick}
+                disabled={pending}
+                sx={{
+                    flex: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "stretch",
+                    justifyContent: "flex-start",
+                    touchAction: "manipulation",
+                    transition: "transform 100ms ease, box-shadow 100ms ease",
+                    "&:active": { transform: "scale(0.97)", boxShadow: 6 },
+                }}
+            >
+                <TileContent
+                    icon={<IconComponent sx={{ fontSize: 40, color: iconColor, transition: "color 0.2s" }} />}
+                    displayName={displayName}
+                    subtitle={scene.description}
+                    stateValues={[]}
+                />
+            </CardActionArea>
+
+            {pending && (
                 <CircularProgress size={16} thickness={5} sx={{ position: "absolute", bottom: 11, right: 11 }} />
             )}
         </Card>

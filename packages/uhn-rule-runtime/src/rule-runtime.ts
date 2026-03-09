@@ -14,6 +14,7 @@ import { RuntimeStateService } from "./services/runtime-state.service";
 import { RuntimeMode, RuntimeModes } from "./types/rule-runtime.type";
 import { RuntimeTimerService } from "./services/runtime-timer.service";
 import { RuntimeLocationService } from "./services/runtime-location.service";
+import { RuntimeSceneService } from "./services/runtime-scene.service";
 import { RuntimeViewService } from "./services/runtime-view.service";
 
 const blueprintDir = process.argv[2];
@@ -31,13 +32,15 @@ const resourcesDir = path.join(path.resolve(blueprintDir), "dist", "resources");
 const rulesDir = path.join(path.resolve(blueprintDir), "dist", "rules");
 const viewsDir = path.join(path.resolve(blueprintDir), "dist", "views");
 const locationsDir = path.join(path.resolve(blueprintDir), "dist", "locations");
+const scenesDir = path.join(path.resolve(blueprintDir), "dist", "scenes");
 
 async function main() {
-    const [resourceService, rulesService, viewService, locationService] = await Promise.all([
+    const [resourceService, rulesService, viewService, locationService, sceneService] = await Promise.all([
         RuntimeResourceService.create(resourcesDir),
         RuntimeRulesService.create(rulesDir, runMode, edgeName),
         RuntimeViewService.create(viewsDir),
         RuntimeLocationService.create(locationsDir),
+        RuntimeSceneService.create(scenesDir),
     ]);
     const stateService = new RuntimeStateService();
     const triggerEventBus = new TriggerEventBus();
@@ -87,6 +90,11 @@ async function main() {
         kind: "event",
         cmd: "locationsLoaded",
         locations: locationService.list(),
+    });
+    runtimeOutput.send({
+        kind: "event",
+        cmd: "scenesLoaded",
+        scenes: sceneService.list(),
     });
     runtimeOutput.send({ kind: "event", cmd: "ready" });
 }

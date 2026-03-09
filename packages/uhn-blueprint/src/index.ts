@@ -6,4 +6,5 @@ export * from "./rule";
 export * from "./metadata";
 export * from "./view";
 export * from "./location";
+export * from "./scene";
 export * from "./icon";

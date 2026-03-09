@@ -148,6 +148,28 @@ export function collectLocationFactories(sf: SourceFile): Set<string> {
 }
 
 /**
+ * Detect scene() factory identifiers imported from "@uhn/blueprint".
+ * Supports aliasing: import { scene as myScene } from "@uhn/blueprint"
+ */
+const SCENE_FACTORY_NAMES = new Set(["scene"]);
+
+export function collectSceneFactories(sf: SourceFile): Set<string> {
+    const scenes = new Set<string>();
+
+    for (const imp of sf.getImportDeclarations()) {
+        if (imp.getModuleSpecifierValue() !== "@uhn/blueprint") continue;
+
+        for (const n of imp.getNamedImports()) {
+            if (SCENE_FACTORY_NAMES.has(n.getName())) {
+                scenes.add(n.getAliasNode()?.getText() ?? n.getName());
+            }
+        }
+    }
+
+    return scenes;
+}
+
+/**
  * Detect rule() factory identifiers imported from "@uhn/blueprint".
  * Supports aliasing: import { rule as myRule } from "@uhn/blueprint"
  */

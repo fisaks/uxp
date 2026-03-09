@@ -1,5 +1,5 @@
 import type { BlueprintLocation, LocationItem } from "@uhn/blueprint";
-import { humanizeLocationId, humanizeResourceId, humanizeViewId, RuntimeLocation, RuntimeLocationItem } from "@uhn/common";
+import { humanizeLocationId, humanizeResourceId, humanizeSceneId, humanizeViewId, RuntimeLocation, RuntimeLocationItem } from "@uhn/common";
 import fs from "fs-extra";
 import path from "path";
 import { runtimeOutput } from "../io/runtime-output";
@@ -56,6 +56,8 @@ function resolveItemName(
 
     const humanized = item.kind === "view"
         ? humanizeViewId(refId)
+        : item.kind === "scene"
+        ? humanizeSceneId(refId)
         : humanizeResourceId(refId);
 
     return stripLocationPrefix(humanized, locationName);

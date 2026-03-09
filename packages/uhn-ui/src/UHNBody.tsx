@@ -9,6 +9,7 @@ import { BlueprintListPage } from "./features/blueprint/pages/BlueprintListPage"
 import { ResourcePage } from "./features/resource/pages/ResourcePage";
 import { IconPreviewPage } from "./features/blueprint/pages/IconPreviewPage";
 import { LocationPage } from "./features/location/pages/LocationPage";
+import { ScenePage } from "./features/scene/pages/ScenePage";
 import { ViewPage } from "./features/view/pages/ViewPage";
 
 export const UHNBody = () => {
@@ -71,6 +72,13 @@ export const UHNBody = () => {
                 componentProp: "to",
                 active: location.pathname === "/locations",
             },
+            {
+                label: "Scenes",
+                link: "/scenes",
+                component: Link,
+                componentProp: "to",
+                active: location.pathname === "/scenes",
+            },
 
         ];
     }, [basePath, location.pathname]);
@@ -87,6 +95,7 @@ export const UHNBody = () => {
                     <Route path="/resources" element={<ResourcePage />} />
                     <Route path="/views" element={<ViewPage />} />
                     <Route path="/locations" element={<LocationPage />} />
+                    <Route path="/scenes" element={<ScenePage />} />
                     <Route path="*" element={<TopicTracePage />} />
                 </Routes>
 

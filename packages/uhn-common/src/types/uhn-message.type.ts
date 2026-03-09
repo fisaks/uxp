@@ -1,7 +1,7 @@
 
 import { MessagePayloadSchema } from "@uxp/common";
 import { UhnHealthSnapshot } from "./uhn-health.type";
-import { RuntimeInteractionView, RuntimeLocation, RuntimeOverviewPayload, RuntimeResource, RuntimeResourceState } from "./uhn-runtime.type";
+import { RuntimeInteractionView, RuntimeLocation, RuntimeOverviewPayload, RuntimeResource, RuntimeResourceState, RuntimeScene } from "./uhn-runtime.type";
 
 
 export type UhnSubscriptionPattern =
@@ -13,7 +13,8 @@ export type UhnSubscriptionPattern =
     | 'system/*'
     | 'runtime/*'
     | 'view/*'
-    | 'location/*';
+    | 'location/*'
+    | 'scene/*';
 
 
 export type UhnSubscribePayload = {
@@ -72,8 +73,12 @@ export type UhnSubscribePayloadRequestMap = {
     "uhn:subscribe": UhnSubscribePayload
     "uhn:unsubscribe": UhnSubscribePayload
 }
+export type UhnSceneActivatePayload = {
+    sceneId: string;
+}
 export type UhnResourcePayloadRequestMap = {
     "uhn:resource:command": UhnResourceCommandPayload
+    "uhn:scene:activate": UhnSceneActivatePayload
 }
 
 export type UhnResourcesResponse = {
@@ -99,6 +104,10 @@ export type UhnLocationsResponse = {
     locations: RuntimeLocation[];
 }
 
+export type UhnScenesResponse = {
+    scenes: RuntimeScene[];
+}
+
 export type UhnResourcePayloadResponseMap = {
     "uhn:resources": UhnResourcesResponse
     "uhn:state": UhnStateResponse
@@ -106,6 +115,7 @@ export type UhnResourcePayloadResponseMap = {
     "uhn:resource:command": UhnResourceCommandPayload
     "uhn:views": UhnViewsResponse
     "uhn:locations": UhnLocationsResponse
+    "uhn:scenes": UhnScenesResponse
 }
 export type UhnHealthPayloadResponseMap = {
     "uhn:health:snapshot": UhnHealthSnapshot
@@ -120,7 +130,7 @@ export const UhnSubscribePayloadSchema: MessagePayloadSchema<UhnSubscribePayload
         patterns: {
             type: 'array', items: {
                 type: 'string',
-                pattern: '^((state|resource)/.*|health/\\*|system/\\*|runtime/\\*|view/\\*|location/\\*)$',
+                pattern: '^((state|resource)/.*|health/\\*|system/\\*|runtime/\\*|view/\\*|location/\\*|scene/\\*)$',
                 minLength: 1,
                 maxLength: 256
             },
@@ -130,6 +140,19 @@ export const UhnSubscribePayloadSchema: MessagePayloadSchema<UhnSubscribePayload
 
     },
     required: ['patterns'],
+    additionalProperties: false
+}
+
+export const UhnSceneActivatePayloadSchema: MessagePayloadSchema<UhnSceneActivatePayload> = {
+    type: 'object',
+    properties: {
+        sceneId: {
+            type: 'string',
+            minLength: 1,
+            maxLength: 256
+        },
+    },
+    required: ['sceneId'],
     additionalProperties: false
 }
 

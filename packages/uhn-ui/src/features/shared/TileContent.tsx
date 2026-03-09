@@ -12,13 +12,15 @@ type TileContentProps = {
     stateValues?: TileStateItem[];
     /** Label shown below the icon */
     displayName: string;
+    /** Optional secondary text shown below the name (e.g. scene description). Clamped to 2 lines. */
+    subtitle?: string;
     /** Reduces bottom padding to make room for the analog slider section below */
     hasAnalog?: boolean;
     /** Top padding — use to clear absolutely positioned elements above (e.g. info icons in ViewTile). Default: 2.5 */
     pt?: number | string;
 };
 
-export const TileContent: React.FC<TileContentProps> = ({ icon, onIconClick, stateValues, displayName, hasAnalog, pt = 2.5 }) => {
+export const TileContent: React.FC<TileContentProps> = ({ icon, onIconClick, stateValues, displayName, subtitle, hasAnalog, pt = 2.5 }) => {
     const { left, right } = stateValues ? splitFlankingValues(stateValues) : { left: [], right: [] };
     const indicators = useMemo(() => stateValues?.filter(i => i.style === "indicator") ?? [], [stateValues]);
     const flashItems = useMemo(() => stateValues?.filter(i => i.style === "flash") ?? [], [stateValues]);
@@ -94,13 +96,32 @@ export const TileContent: React.FC<TileContentProps> = ({ icon, onIconClick, sta
                     overflow: "hidden",
                     textOverflow: "ellipsis",
                     display: "-webkit-box",
-                    WebkitLineClamp: 2,
+                    WebkitLineClamp: subtitle ? 1 : 2,
                     WebkitBoxOrient: "vertical",
                     lineHeight: "1.2em",
                 }}
             >
                 {displayName}
             </Typography>
+
+            {/* Subtitle (e.g. scene description) */}
+            {subtitle && (
+                <Typography
+                    variant="caption"
+                    align="center"
+                    color="text.secondary"
+                    sx={{
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        display: "-webkit-box",
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: "vertical",
+                        lineHeight: "1.3em",
+                    }}
+                >
+                    {subtitle}
+                </Typography>
+            )}
 
         </Box>
     );

@@ -4,6 +4,7 @@ import { systemStatusBroadcaster } from "../system/system-status.broadcaster";
 import { UHNAppServerWebSocketManager } from "../ws/UHNAppServerWebSocketManager";
 import { blueprintLocationService } from "./blueprint-location.service";
 import { blueprintResourceService } from "./blueprint-resource.service";
+import { blueprintSceneService } from "./blueprint-scene.service";
 import { blueprintViewService } from "./blueprint-view.service";
 import { runtimeOverviewService } from "./runtime-overview.service";
 import { stateRuntimeService } from "./state-runtime.service";
@@ -35,6 +36,7 @@ export class UhnMessageService {
         const shouldSendRuntime = patterns.some(p => p === 'runtime/*');
         const shouldSendViews = patterns.some(p => p === 'view/*');
         const shouldSendLocations = patterns.some(p => p === 'location/*');
+        const shouldSendScenes = patterns.some(p => p === 'scene/*');
 
         if (shouldSendResources) {
             await this.sendResourcesMessage(socket, patterns);
@@ -57,6 +59,9 @@ export class UhnMessageService {
         }
         if (shouldSendLocations) {
             this.sendLocationsMessage(socket);
+        }
+        if (shouldSendScenes) {
+            this.sendScenesMessage(socket);
         }
 
     }
@@ -164,6 +169,15 @@ export class UhnMessageService {
             action: "uhn:locations",
             success: true,
             payload: { locations },
+        });
+    }
+
+    sendScenesMessage(socket: WebSocket) {
+        const scenes = blueprintSceneService.getAllScenes();
+        this.wsManager.sendMessage(socket, {
+            action: "uhn:scenes",
+            success: true,
+            payload: { scenes },
         });
     }
 

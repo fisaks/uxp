@@ -25,6 +25,8 @@ export async function buildBlueprint(projectRoot: string): Promise<string> {
     const viewsTmp = path.join(tmpSrc, "views");
     const locationsSrc = path.join(srcDir, "locations");
     const locationsTmp = path.join(tmpSrc, "locations");
+    const scenesSrc = path.join(srcDir, "scenes");
+    const scenesTmp = path.join(tmpSrc, "scenes");
     const factorySrc = path.join(srcDir, "factory");
     const factoryTmp = path.join(tmpSrc, "factory");
     const tsconfigPath = path.join(projectRoot, "tsconfig.json");
@@ -68,7 +70,9 @@ export async function buildBlueprint(projectRoot: string): Promise<string> {
                 rel === "views" ||
                 rel.startsWith(`views${path.sep}`) ||
                 rel === "locations" ||
-                rel.startsWith(`locations${path.sep}`)
+                rel.startsWith(`locations${path.sep}`) ||
+                rel === "scenes" ||
+                rel.startsWith(`scenes${path.sep}`)
             ) {
                 return false;
             }
@@ -115,12 +119,23 @@ export async function buildBlueprint(projectRoot: string): Promise<string> {
         });
     }
 
+    // 3d) Normalize scenes (optional — build succeeds without src/scenes/)
+    if (await fs.pathExists(scenesSrc)) {
+        await normalizeBlueprint({
+            sourceDir: scenesSrc,
+            targetDir: scenesTmp,
+            tsconfigPath: tsconfigPath,
+            mode: "scene",
+        });
+    }
+
     // 3.5) Resolve and inject execution targets
     await resolveExecutionTargets({
         resourcesTmpDir: resourcesTmp,
         rulesTmpDir: rulesTmp,
         tsconfigPath,
         factoryTmpPath: factoryTmp,
+        scenesTmpDir: await fs.pathExists(scenesTmp) ? scenesTmp : undefined,
     });
 
     // 3.6) Auto-inject emitsTap on complex resources used in .onTap() triggers

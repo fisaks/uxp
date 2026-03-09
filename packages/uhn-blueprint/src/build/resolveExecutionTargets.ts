@@ -17,10 +17,18 @@ import {
  * For each rule file:
  * 1. Collect imports resolving to resources — look up each resource's execution target
  *    (physical resources use `edge`, logical resources use `host`)
- * 2. For local non-resource imports — DFS check if the chain touches resources.
- *    If yes, default to master with info message.
+ * 2. For local non-resource imports (scenes, utilities, etc.) — DFS check if
+ *    the import chain touches resources. If yes, default to master with info
+ *    message. This is critical for scenes: a rule importing a scene that
+ *    references resources from multiple edges must run on master, since edge
+ *    runtimes cannot route commands cross-edge.
  * 3. Library imports — skip
  * 4. Single target → that target, multiple targets → "master"
+ *
+ * Scene files (when `scenesTmpDir` is provided) are added to the analysis
+ * project so the DFS can trace rule → scene → resource import chains.
+ * Without this, scene imports appear as dead-ends and the rule may be
+ * incorrectly assigned to an edge that cannot execute the scene's commands.
  *
  * Manual overrides (author-set executionTarget) are always respected.
  */
@@ -29,8 +37,9 @@ export async function resolveExecutionTargets(opts: {
     rulesTmpDir: string;
     tsconfigPath: string;
     factoryTmpPath: string;
+    scenesTmpDir?: string;
 }): Promise<void> {
-    const { resourcesTmpDir, rulesTmpDir, tsconfigPath, factoryTmpPath } = opts;
+    const { resourcesTmpDir, rulesTmpDir, tsconfigPath, factoryTmpPath, scenesTmpDir } = opts;
 
     const project = new Project({
         tsConfigFilePath: tsconfigPath,
@@ -40,6 +49,9 @@ export async function resolveExecutionTargets(opts: {
     project.addSourceFilesAtPaths(path.join(resourcesTmpDir, "**/*.ts"));
     project.addSourceFilesAtPaths(path.join(rulesTmpDir, "**/*.ts"));
     project.addSourceFilesAtPaths(path.join(factoryTmpPath, "**/*.ts"));
+    if (scenesTmpDir) {
+        project.addSourceFilesAtPaths(path.join(scenesTmpDir, "**/*.ts"));
+    }
 
     // Step 1: Build resource edge map
     const resourceTargetMap = buildResourceTargetMap(project, resourcesTmpDir);

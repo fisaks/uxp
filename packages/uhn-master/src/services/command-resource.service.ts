@@ -12,11 +12,15 @@ import { logicalResourceStateService } from "./state-logical-resource.service";
 const VIRTUAL_PRESS_DURATION_MS = 300;
 
 /**
- * Handles resource commands from the UI.
+ * Handles resource commands from the UI and from scene activation.
  *
- * Entry point: `uhn:resource:command` WebSocket message
- *   → UhnCommandHandler.resourceCommand()
- *   → executeResourceCommand(resourceId, command)
+ * Entry points:
+ *   - `uhn:resource:command` WebSocket message
+ *       → UhnCommandHandler.resourceCommand()
+ *       → executeResourceCommand(resourceId, command)
+ *   - `uhn:scene:activate` WebSocket message
+ *       → CommandSceneService.activateScene()
+ *       → executeResourceCommand(resourceId, command) per scene command
  *
  * Validates the command against the resource type, then dispatches
  * to per-type handlers that either route to the edge (physical resources)

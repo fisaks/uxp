@@ -10,6 +10,7 @@ import resourceReducer from "../features/resource/resourceSlice";
 import runtimeStateReducer from "../features/runtime-state/runtimeStateSlice";
 import topicTraceReducer from "../features/topic-trace/topicTraceSlice";
 import locationsReducer from "../features/location/locationSlice";
+import scenesReducer from "../features/scene/sceneSlice";
 import viewsReducer from "../features/view/viewSlice";
 
 import { useDispatch } from "react-redux";
@@ -34,6 +35,7 @@ export const createStore = () => {
             runtimeState: runtimeStateReducer,
             views: viewsReducer,
             locations: locationsReducer,
+            scenes: scenesReducer,
 
         },
         devTools: process.env.NODE_ENV === "development",

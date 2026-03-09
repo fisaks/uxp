@@ -4,6 +4,7 @@ import { CallExpression, Node, Project, SourceFile, SyntaxKind } from "ts-morph"
 import {
   collectLocationFactories,
   collectRuleFactories,
+  collectSceneFactories,
   collectViewFactories,
   collectNamedImportsFromPaths,
   getRootCallExpression,
@@ -60,12 +61,14 @@ export async function validateBlueprintFactories(opts: {
         const inFactory = rel === "factory" || rel.startsWith("factory/");
         const inViews = rel === "views" || rel.startsWith("views/");
         const inLocations = rel === "locations" || rel.startsWith("locations/");
-        const inOther = !inRules && !inResources && !inFactory && !inViews && !inLocations;
+        const inScenes = rel === "scenes" || rel.startsWith("scenes/");
+        const inOther = !inRules && !inResources && !inFactory && !inViews && !inLocations && !inScenes;
 
         const ruleFactories = collectRuleFactories(sf); // identifiers (including alias) for rule()
         const resourceFactories = collectNamedImportsFromPaths(sf, [factoryPath]);
         const viewFactories = collectViewFactories(sf);
         const locationFactories = collectLocationFactories(sf);
+        const sceneFactories = collectSceneFactories(sf);
 
         // Walk all call expressions
         const calls = sf.getDescendantsOfKind(SyntaxKind.CallExpression);
@@ -82,8 +85,9 @@ export async function validateBlueprintFactories(opts: {
             const isResource = resourceFactories.has(rootName);
             const isView = viewFactories.has(rootName);
             const isLocation = locationFactories.has(rootName);
+            const isScene = sceneFactories.has(rootName);
 
-            if (!isRule && !isResource && !isView && !isLocation) continue;
+            if (!isRule && !isResource && !isView && !isLocation && !isScene) continue;
 
             if (inRules && isResource) {
                 issues.push({
@@ -114,17 +118,19 @@ export async function validateBlueprintFactories(opts: {
                 });
             }
 
-            if (inFactory && (isView || isLocation)) {
+            if (inFactory && (isView || isLocation || isScene)) {
+                const entity = isView ? "Views" : isLocation ? "Locations" : "Scenes";
+                const dir = isView ? "views" : isLocation ? "locations" : "scenes";
                 issues.push({
                     file: sf.getFilePath(),
                     line: call.getStartLineNumber(),
                     message:
                         `Factory "${rootName}" is not allowed in src/factory. ` +
-                        `${isView ? "Views" : "Locations"} must be defined in src/${isView ? "views" : "locations"}.`,
+                        `${entity} must be defined in src/${dir}.`,
                 });
             }
 
-            if (inViews && (isRule || isResource || isLocation)) {
+            if (inViews && (isRule || isResource || isLocation || isScene)) {
                 issues.push({
                     file: sf.getFilePath(),
                     line: call.getStartLineNumber(),
@@ -134,7 +140,7 @@ export async function validateBlueprintFactories(opts: {
                 });
             }
 
-            if (inLocations && (isRule || isResource || isView)) {
+            if (inLocations && (isRule || isResource || isView || isScene)) {
                 issues.push({
                     file: sf.getFilePath(),
                     line: call.getStartLineNumber(),
@@ -144,32 +150,42 @@ export async function validateBlueprintFactories(opts: {
                 });
             }
 
-            if (inRules && (isView || isLocation)) {
+            if (inScenes && (isRule || isResource || isView || isLocation)) {
+                issues.push({
+                    file: sf.getFilePath(),
+                    line: call.getStartLineNumber(),
+                    message:
+                        `Factory "${rootName}" is not allowed in src/scenes. ` +
+                        `Only scene factories are allowed here.`,
+                });
+            }
+
+            if (inRules && (isView || isLocation || isScene)) {
                 issues.push({
                     file: sf.getFilePath(),
                     line: call.getStartLineNumber(),
                     message:
                         `Factory "${rootName}" is not allowed in src/rules. ` +
-                        `${isView ? "Views" : "Locations"} must be defined in src/${isView ? "views" : "locations"}.`,
+                        `Define it in the appropriate folder.`,
                 });
             }
 
-            if (inResources && (isView || isLocation)) {
+            if (inResources && (isView || isLocation || isScene)) {
                 issues.push({
                     file: sf.getFilePath(),
                     line: call.getStartLineNumber(),
                     message:
                         `Factory "${rootName}" is not allowed in src/resources. ` +
-                        `${isView ? "Views" : "Locations"} must be defined in src/${isView ? "views" : "locations"}.`,
+                        `Define it in the appropriate folder.`,
                 });
             }
 
-            if (inOther && (isRule || isResource || isView || isLocation)) {
+            if (inOther && (isRule || isResource || isView || isLocation || isScene)) {
                 issues.push({
                     file: sf.getFilePath(),
                     line: call.getStartLineNumber(),
                     message:
-                        `Factory "${rootName}" is not allowed outside src/rules, src/resources, src/views, or src/locations. ` +
+                        `Factory "${rootName}" is not allowed outside src/rules, src/resources, src/views, src/locations, or src/scenes. ` +
                         `Move it to the appropriate folder.`,
                 });
             }

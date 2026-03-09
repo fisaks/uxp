@@ -11,6 +11,7 @@ import type {
     VirtualAnalogOutputResourceBase,
     VirtualDigitalInputResourceBase,
 } from "./resource";
+import type { BlueprintScene } from "./scene";
 
 // --------- Runtime state value ---------
 export type StateValue = boolean | number;
@@ -126,6 +127,10 @@ export type RuleAction =
         type: "emitSignal"; // optional: e.g. transient overrides
         resource: DigitalInputResourceBase | VirtualDigitalInputResourceBase;
         value: DigitalStateValue | undefined;
+    }
+    | {
+        type: "activateScene";
+        scene: BlueprintScene;
     };
 
 /**
@@ -193,6 +198,10 @@ export type RuntimeRuleAction =
         targetType: "rule" | "resource";
         targetId: string;
         identifier?: string;
+    }
+    | {
+        type: "activateScene";
+        sceneId: string;
     };
 
 // --------- Context ---------
