@@ -172,12 +172,12 @@ const LocationTileResource: React.FC<LocationTileResourceProps> = ({ resource, s
 
     const displayName = nameOverride ?? resource.name;
 
-    // Build flanking state values from resource state
+    // Build flanking state values — only resource types that show a text value
     const resourceStateValues = useMemo((): TileStateItem[] => {
-        const hasValue = (isReadOnly || isTimer || isComplex) && state?.value !== undefined;
-        if (!hasValue) return [];
+        if (!isReadOnly && !isTimer && !isComplex) return [];
+        if (state?.value === undefined) return [];
         // Complex boolean resources show state via icon color, not text
-        if (isComplex && typeof state?.value === "boolean") return [];
+        if (isComplex && typeof state.value === "boolean") return [];
 
         // Derive label from resource type/kind
         let label: string | undefined;
@@ -217,7 +217,6 @@ const LocationTileResource: React.FC<LocationTileResourceProps> = ({ resource, s
                     <MainIcon sx={{ fontSize: 40, color: iconColor, transition: "color 0.2s" }} />
                 )
             }
-            iconClickable={hasComplexPanel}
             onIconClick={hasComplexPanel ? (e) => {
                 e.preventDefault();
                 e.stopPropagation();

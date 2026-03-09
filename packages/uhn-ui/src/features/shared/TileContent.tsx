@@ -4,16 +4,21 @@ import { FlashItem, FlankingColumn, IndicatorItem, splitFlankingValues } from ".
 import { TileStateItem } from "./tile.types";
 
 type TileContentProps = {
+    /** Main icon element (e.g. MUI SvgIcon with color and size applied) */
     icon: React.ReactNode;
-    iconClickable?: boolean;
+    /** When set, icon gets a pointer cursor, hover highlight, and this click handler. Used by complex resource tiles. */
     onIconClick?: (e: React.MouseEvent) => void;
+    /** State items to display — filtered internally into flanking values, indicators, and flash badges */
     stateValues?: TileStateItem[];
+    /** Label shown below the icon */
     displayName: string;
+    /** Reduces bottom padding to make room for the analog slider section below */
     hasAnalog?: boolean;
+    /** Top padding — use to clear absolutely positioned elements above (e.g. info icons in ViewTile). Default: 2.5 */
     pt?: number | string;
 };
 
-export const TileContent: React.FC<TileContentProps> = ({ icon, iconClickable, onIconClick, stateValues, displayName, hasAnalog, pt = 2.5 }) => {
+export const TileContent: React.FC<TileContentProps> = ({ icon, onIconClick, stateValues, displayName, hasAnalog, pt = 2.5 }) => {
     const { left, right } = stateValues ? splitFlankingValues(stateValues) : { left: [], right: [] };
     const indicators = useMemo(() => stateValues?.filter(i => i.style === "indicator") ?? [], [stateValues]);
     const flashItems = useMemo(() => stateValues?.filter(i => i.style === "flash") ?? [], [stateValues]);
@@ -57,13 +62,13 @@ export const TileContent: React.FC<TileContentProps> = ({ icon, iconClickable, o
                     sx={{
                         position: "relative",
                         flexShrink: 0,
-                        ...(iconClickable && {
+                        ...(onIconClick && {
                             cursor: "pointer",
                             borderRadius: "50%",
                             "&:hover": { backgroundColor: "action.hover" },
                         }),
                     }}
-                    onPointerDown={iconClickable ? (e: React.PointerEvent) => {
+                    onPointerDown={onIconClick ? (e: React.PointerEvent) => {
                         e.stopPropagation();
                     } : undefined}
                     onClick={onIconClick}
