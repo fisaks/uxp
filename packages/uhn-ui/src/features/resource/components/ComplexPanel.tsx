@@ -8,6 +8,7 @@ import { selectRuntimeState } from "../../runtime-state/runtimeStateSelector";
 import { selectResourceById } from "../resourceSelector";
 import { useSendResourceCommand } from "../hooks/useSendResourceCommand";
 import { useAnalogSlider } from "../hooks/useAnalogSlider";
+import { isResourceActive } from "../isResourceActive";
 import { TileRuntimeResource, TileRuntimeResourceState } from "../resource-ui.type";
 import { getResourceIcon } from "./icons";
 import { getResourceIconColor } from "./colors";
@@ -130,7 +131,7 @@ const DigitalOutputControl: React.FC<{
     state: TileRuntimeResourceState | undefined;
 }> = ({ resource, state }) => {
     const sendCommand = useSendResourceCommand(resource.id);
-    const checked = Boolean(state?.value);
+    const checked = isResourceActive(resource, state);
 
     const handleToggle = useCallback(() => {
         sendCommand({ type: "toggle" });
@@ -150,7 +151,7 @@ const DigitalInputToggleControl: React.FC<{
     state: TileRuntimeResourceState | undefined;
 }> = ({ resource, state }) => {
     const sendCommand = useSendResourceCommand(resource.id);
-    const checked = Boolean(state?.value);
+    const checked = isResourceActive(resource, state);
 
     const handleToggle = useCallback(() => {
         sendCommand({ type: "toggle" });
@@ -174,7 +175,7 @@ const DigitalInputPushControl: React.FC<{
 }> = ({ resource, state, iconColor }) => {
     const sendCommand = useSendResourceCommand(resource.id);
     const pressCommittedAtRef = useRef<number | null>(null);
-    const active = Boolean(state?.value);
+    const active = isResourceActive(resource, state);
 
     const handlePointerDown = useCallback((e: React.PointerEvent) => {
         if (e.pointerType === "mouse" && e.button !== 0) return;

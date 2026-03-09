@@ -11,6 +11,7 @@ import { isLogicalResource, isPhysicalResource } from "@uhn/common";
 import React, { useCallback, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { useResourceAction } from "../hooks/useResourceAction";
+import { isResourceActive } from "../isResourceActive";
 import { TileRuntimeResource, TileRuntimeResourceState } from "../resource-ui.type";
 import { selectResourceCommandFeedbackById } from "../resourceCommandFeedbackSelector";
 import { getResourceIconColor, getResourceSurfaceColor } from "./colors";
@@ -236,7 +237,7 @@ export const ResourceTile: React.FC<ResourceTileProps> = ({ resource, state, nam
                                 right: -8,
                                 fontSize: 16,
                                 color: iconColor,
-                                opacity: Boolean(state?.value) ? 0.5 : 0.7,
+                                opacity: isResourceActive(resource, state) ? 0.5 : 0.7,
                             }}
                         />
                     )}

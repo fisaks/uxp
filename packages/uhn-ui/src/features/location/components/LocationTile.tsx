@@ -9,6 +9,7 @@ import { getResourceIcon } from "../../resource/components/icons";
 import { getResourceIconColor, getResourceSurfaceColor } from "../../resource/components/colors";
 import { useResourceAction } from "../../resource/hooks/useResourceAction";
 import { useSendResourceCommand } from "../../resource/hooks/useSendResourceCommand";
+import { isResourceActive } from "../../resource/isResourceActive";
 import { TileRuntimeResource, TileRuntimeResourceState } from "../../resource/resource-ui.type";
 import { selectResourceCommandFeedbackById } from "../../resource/resourceCommandFeedbackSelector";
 import { stopPropagation } from "../../shared/tileEventHelpers";
@@ -151,7 +152,7 @@ const LocationTileResource: React.FC<LocationTileResourceProps> = ({ resource, s
     const isComplex = resource.type === "complex";
     const isReadOnly = resource.type === "analogInput";
     const hasComplexPanel = isComplex && (resource.subResources?.length ?? 0) > 0;
-    const active = Boolean(state?.value);
+    const active = isResourceActive(resource, state);
     const isPending = commandFb?.status === "pending";
     const hasErrors = resource.errors && resource.errors.length > 0;
 

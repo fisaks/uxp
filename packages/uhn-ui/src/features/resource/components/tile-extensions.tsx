@@ -3,6 +3,7 @@ import { Box, Typography } from "@mui/material";
 import { ResourceType } from "@uhn/blueprint";
 import React, { ReactNode } from "react";
 import { formatCountdown, useCountdown } from "../hooks/useCountdown";
+import { isResourceActive } from "../isResourceActive";
 import { TileRuntimeResource, TileRuntimeResourceState } from "../resource-ui.type";
 import { AnalogOutputPanel } from "./AnalogOutputPanel";
 import { ComplexTileValue } from "./ComplexTileValue";
@@ -111,7 +112,7 @@ function AnalogTileValue({ ctx, interactive, onInteract }: {
 
 function TimerTileValue({ ctx }: { ctx: TileRenderContext }) {
     const { state, iconColor } = ctx;
-    const timerActive = ctx.resource.type === "timer" && Boolean(state?.value);
+    const timerActive = ctx.resource.type === "timer" && isResourceActive(ctx.resource, state);
     const remainingSeconds = useCountdown(state?.details, timerActive);
 
     if (!timerActive || remainingSeconds <= 0) return null;

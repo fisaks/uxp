@@ -1,5 +1,6 @@
 import { alpha, Theme } from "@mui/material";
 import { getBlueprintIcon } from "../../view/blueprintIconMap";
+import { isResourceActive } from "../isResourceActive";
 import { TileRuntimeResource, TileRuntimeResourceState } from "../resource-ui.type";
 
 export function getResourceIconColor(
@@ -10,7 +11,7 @@ export function getResourceIconColor(
     if (resource.errors?.length) return theme.palette.error.main;
 
     const entry = resource.icon ? getBlueprintIcon(resource.icon) : undefined;
-    const active = Boolean(state?.value);
+    const active = isResourceActive(resource, state);
 
     if (!active) return theme.palette.action.disabled;
     if (entry?.colors) return entry.colors.active[theme.palette.mode];
