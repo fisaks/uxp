@@ -36,7 +36,7 @@ export const ComplexPanel: React.FC<ComplexPanelProps> = ({ ctx }) => {
             anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
             transformOrigin={{ vertical: "top", horizontal: "center" }}
             slotProps={{
-                paper: { sx: { minWidth: 280, maxWidth: 360, p: 2 } },
+                paper: { sx: { minWidth: 280, maxWidth: 360, maxHeight: "70vh", overflow: "auto", p: 2 } },
             }}
         >
             <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5 }}>
