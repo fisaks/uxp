@@ -1,8 +1,9 @@
-import { AppLogger, Route, Token, UseQueryRunner } from "@uxp/bff-common";
+import { AppErrorV2, AppLogger, Route, Token, UseQueryRunner } from "@uxp/bff-common";
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 
-import { ActivateBlueprintSchema, BlueprintVersionLogSchema, DeleteBlueprintVersionSchema, DownloadBlueprintSchema, ListActivationsForVersionSchema, ListActivationsSchema } from "@uhn/common";
+import { ActivateBlueprintSchema, BlueprintVersionLogSchema, CliUploadBlueprintSchema, DeleteBlueprintVersionSchema, DownloadBlueprintSchema, ListActivationsForVersionSchema, ListActivationsSchema } from "@uhn/common";
 import { BlueprintMapper } from "../mappers/blueprint.mapper";
+import { apiTokenService } from "../services/api-token.service";
 import { blueprintService } from "../services/blueprint.service";
 import { edgeIdentityService } from "../services/edge-identity.service";
 import { verify } from "../util/ed25519";
@@ -26,6 +27,8 @@ function validateInternalDownloadRequest(req: FastifyRequest): boolean {
     }
     return verified;
 }
+
+
 export class BlueprintController {
     private fastify: FastifyInstance;
     constructor(fastify: FastifyInstance) {
@@ -154,5 +157,17 @@ export class BlueprintController {
             reply.status(500).send({ error: "Failed to read blueprint file" });
         });
         return reply.send(blueprint.stream);
+    }
+
+    @Route("post", "/cli/upload-blueprint", { authenticate: false, schema: CliUploadBlueprintSchema })
+    @UseQueryRunner({ transactional: true })
+    async cliUploadBlueprint(req: FastifyRequest<{ Querystring: { activate?: boolean } }>, _reply: FastifyReply) {
+        const authHeader = req.headers["authorization"];
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+            throw new AppErrorV2({ statusCode: 401, code: "INVALID_API_TOKEN", message: "Missing or malformed Authorization header." });
+        }
+        const apiToken = await apiTokenService.verifyToken(authHeader.slice("Bearer ".length));
+
+        return await blueprintService.cliUploadBlueprint(req, apiToken, { activate: req.query.activate === true });
     }
 }

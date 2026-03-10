@@ -32,6 +32,9 @@ export const ErrorCodes = {
     RESOURCE_NOT_ADDRESSABLE: "RESOURCE_NOT_ADDRESSABLE",
     APP_ENTRY_NOT_CONFIGURED: "APP_ENTRY_NOT_CONFIGURED",
     SYSTEM_BUSY: "SYSTEM_BUSY",
+    INVALID_API_TOKEN: "INVALID_API_TOKEN",
+    API_TOKEN_REVOKED: "API_TOKEN_REVOKED",
+    API_TOKEN_IDENTIFIER_MISMATCH: "API_TOKEN_IDENTIFIER_MISMATCH",
     // Add more error codes as needed
 } as const;
 
@@ -68,6 +71,9 @@ export const ErrorMessages: Record<ErrorCode, string> = {
     RESOURCE_NOT_ADDRESSABLE: "The resource is not addressable.",
     APP_ENTRY_NOT_CONFIGURED: "The application entry point is not configured.",
     SYSTEM_BUSY: "The system is currently busy processing another command. Please try again later.",
+    INVALID_API_TOKEN: "The provided API token is invalid.",
+    API_TOKEN_REVOKED: "The provided API token has been revoked.",
+    API_TOKEN_IDENTIFIER_MISMATCH: "The API token is not authorized for this blueprint identifier.",
     // Add more error mappings as needed
 };
 export type ErrorCode = keyof typeof ErrorCodes;

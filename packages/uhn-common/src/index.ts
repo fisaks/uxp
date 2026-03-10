@@ -10,3 +10,5 @@ export * from "./types/uhn-system.type";
 export * from "./util/data.util";
 export * from "./util/resource.util";
 export * from "./errors/rule-runtime.error";
+export * from "./types/api-token.type";
+export * from "./schemas/api-token.schema";

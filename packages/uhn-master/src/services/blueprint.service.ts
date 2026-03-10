@@ -5,6 +5,8 @@ import { FastifyRequest } from "fastify";
 import { DateTime } from "luxon";
 import { BlueprintActivationEntity } from "../db/entities/BlueprintActivationEntity";
 import { BlueprintEntity } from "../db/entities/BlueprintEntity";
+import { ApiTokenEntity } from "../db/entities/ApiTokenEntity";
+import { ApiTokenRepository } from "../repositories/api-token.repository";
 import { BlueprintMapper } from "../mappers/blueprint.mapper";
 import { BlueprintActivationRepository } from "../repositories/blueprint-activation.repository";
 import { BlueprintRepository } from "../repositories/blueprint.repository";
@@ -27,35 +29,62 @@ type BlueprintEventMap = {
 
 class BlueprintService extends EventEmitter<BlueprintEventMap> {
 
-    async uploadBlueprint(request: FastifyRequest) {
+    private async processUpload(request: FastifyRequest, uploadedBy: string, requiredIdentifier?: string) {
         const upload = await BlueprintFileUtil.handleAndValidateUpload(request);
-        const user = request.user as Token
-
         const metadata = await BlueprintMetaDataUtil.readBlueprintMetadataFromZip(upload.zipPath);
-        const version = await BlueprintRepository.getNextBlueprintVersion(metadata.identifier)
 
-        const { blueprintZip } = await BlueprintFileUtil.moveAndOrganizeUploadedBlueprint(upload.zipPath, upload.fileType, metadata.identifier, version);
+        if (requiredIdentifier && requiredIdentifier !== metadata.identifier) {
+            throw new AppErrorV2({
+                statusCode: 403,
+                code: "API_TOKEN_IDENTIFIER_MISMATCH",
+                message: `The API token is authorized for blueprint "${requiredIdentifier}" but the uploaded blueprint has identifier "${metadata.identifier}".`,
+            });
+        }
+
+        const version = await BlueprintRepository.getNextBlueprintVersion(metadata.identifier);
+        const { blueprintZip } = await BlueprintFileUtil.moveAndOrganizeUploadedBlueprint(
+            upload.zipPath, upload.fileType, metadata.identifier, version
+        );
 
         const blueprintEntity = new BlueprintEntity({
             identifier: metadata.identifier,
             name: metadata.name,
-            version: version,
+            version,
             zipPath: blueprintZip,
-            status: 'idle',
-            metadata: metadata,
+            status: "idle",
+            metadata,
             active: false,
-            uploadedBy: user.username,
-
+            uploadedBy,
         });
-        const newBlueprint = await BlueprintRepository.save(blueprintEntity)
+        await BlueprintRepository.save(blueprintEntity);
 
         AppLogger.info({
-            message: `Uploaded blueprint ${metadata.name} with identifier ${metadata.identifier} version ${version} and internal id ${newBlueprint.id}`,
+            message: `Uploaded blueprint ${metadata.name} (${metadata.identifier} v${version}) by ${uploadedBy}`,
         });
 
-        return { identifier: metadata.identifier, version } satisfies BlueprintUploadResponse;
+        return { identifier: metadata.identifier, version };
     }
 
+    async uploadBlueprint(request: FastifyRequest) {
+        const user = request.user as Token;
+        return await this.processUpload(request, user.username) satisfies BlueprintUploadResponse;
+    }
+
+    async cliUploadBlueprint(request: FastifyRequest, apiToken: ApiTokenEntity, opts: { activate: boolean }) {
+        const uploadedBy = `api-token:${apiToken.label}`;
+        const result = await this.processUpload(request, uploadedBy, apiToken.blueprintIdentifier);
+
+        let activated = false;
+        if (opts.activate) {
+            await this.activateBlueprint(result.identifier, result.version, uploadedBy);
+            activated = true;
+        }
+
+        apiToken.lastUsedAt = DateTime.now();
+        await ApiTokenRepository.save(apiToken);
+
+        return { ...result, activated };
+    }
 
     async deactivateBlueprint(identifier: string, version: number, deActivatedBy: string) {
 
