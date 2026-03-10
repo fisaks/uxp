@@ -8,33 +8,33 @@ const baseTheme = createTheme({
   typography: {
     fontFamily: "'Roboto', 'Arial', sans-serif",
     h1: {
-      fontSize: "2.0rem", // 32px
-      fontWeight: 700,
+      fontSize: "1.625rem",
+      fontWeight: 600,
       lineHeight: 1.3,
     },
     h2: {
-      fontSize: "1.75rem",
+      fontSize: "1.375rem",
       fontWeight: 600,
       lineHeight: 1.3,
     },
     h3: {
-      fontSize: "1.5rem",
+      fontSize: "1.2rem",
       fontWeight: 500,
       lineHeight: 1.4,
     },
     h4: {
-      fontSize: "1.25rem",
+      fontSize: "1.075rem",
       fontWeight: 500,
       lineHeight: 1.5,
     },
     h5: {
-      fontSize: "1.125rem",
-      fontWeight: 400,
+      fontSize: "1rem",
+      fontWeight: 500,
       lineHeight: 1.6,
     },
     h6: {
-      fontSize: "1rem",
-      fontWeight: 400,
+      fontSize: "0.875rem",
+      fontWeight: 500,
       lineHeight: 1.7,
     },
   },
