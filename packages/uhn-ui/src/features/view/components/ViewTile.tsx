@@ -1,18 +1,18 @@
-import DescriptionIcon from "@mui/icons-material/Description";
-import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
-import { Box, Card, CardActionArea, CircularProgress, IconButton, Popover, Tooltip, Typography } from "@mui/material";
+import { Box, Card, CardActionArea, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import { usePortalContainerRef } from "@uxp/ui-lib";
 import { RuntimeInteractionView } from "@uhn/common";
-import React, { useState } from "react";
+import React from "react";
 import { TileAnalogSection } from "../../shared/TileAnalogSection";
 import { TileContent } from "../../shared/TileContent";
-import { createTooltipProps, stopPropagation } from "../../shared/tileEventHelpers";
+import { TileDescriptionPopover } from "../../shared/TileDescriptionPopover";
+import { TileInfoPopover } from "../../shared/TileInfoPopover";
+import { TilePendingIndicator } from "../../shared/TilePendingIndicator";
+import { stopPropagation } from "../../shared/tileEventHelpers";
+import { TileStateItem } from "../../shared/tile.types";
 import { useViewAnalogState } from "../../shared/useViewAnalogState";
 import { useViewCommand } from "../../shared/useViewCommand";
 import { useViewIconColors } from "../../shared/useViewIconColors";
 import { useSendViewCommand } from "../hooks/useSendViewCommand";
-import { TileStateItem } from "../../shared/tile.types";
 
 type ViewTileProps = {
     view: RuntimeInteractionView;
@@ -23,14 +23,9 @@ type ViewTileProps = {
 
 export const ViewTile: React.FC<ViewTileProps> = ({ view, active, stateDisplayValues, nameOverride }) => {
     const theme = useTheme();
-    const portalContainer = usePortalContainerRef();
     const sendCommand = useSendViewCommand();
     const hasCommand = !!view.command;
     const isAnalog = view.command?.type === "setAnalog";
-    const [infoAnchor, setInfoAnchor] = useState<null | HTMLElement>(null);
-    const [descAnchor, setDescAnchor] = useState<null | HTMLElement>(null);
-
-    const tooltipProps = createTooltipProps(portalContainer.current);
 
     const { handleClick, pending } = useViewCommand(view, active, sendCommand);
 
@@ -82,53 +77,19 @@ export const ViewTile: React.FC<ViewTileProps> = ({ view, active, stateDisplayVa
             }}
         >
             {/* Info icon — top-left */}
-            <Box sx={{ position: "absolute", top: 6, left: 6, zIndex: 2, pointerEvents: "auto" }}>
-                <Tooltip title="Technical info" {...tooltipProps}>
-                    <IconButton size="small" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setInfoAnchor(e.currentTarget); }} sx={{ p: 0.5, "&:hover": { backgroundColor: "action.hover" } }}>
-                        <InfoOutlinedIcon sx={{ fontSize: 16, color: "text.secondary" }} />
-                    </IconButton>
-                </Tooltip>
-                <Popover
-                    open={!!infoAnchor}
-                    anchorEl={infoAnchor}
-                    onClose={() => setInfoAnchor(null)}
-                    container={portalContainer.current}
-                    anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-                >
-                    <Box sx={{ p: 2, minWidth: 180 }}>
-                        <Typography variant="subtitle2">View Details</Typography>
-                        <Typography variant="body2">ID: {view.id}</Typography>
-                        {view.command && <Typography variant="body2">Command: {view.command.type}</Typography>}
-                        {view.command && <Typography variant="body2">Target: {view.command.resourceId}</Typography>}
-                        {view.stateFrom.length > 0 && (
-                            <Typography variant="body2">State from: {view.stateFrom.map(s => s.resourceId).join(", ")}</Typography>
-                        )}
-                        {view.stateAggregation && <Typography variant="body2">Aggregation: {view.stateAggregation}</Typography>}
-                    </Box>
-                </Popover>
-            </Box>
+            <TileInfoPopover>
+                <Typography variant="subtitle2">View Details</Typography>
+                <Typography variant="body2">ID: {view.id}</Typography>
+                {view.command && <Typography variant="body2">Command: {view.command.type}</Typography>}
+                {view.command && <Typography variant="body2">Target: {view.command.resourceId}</Typography>}
+                {view.stateFrom.length > 0 && (
+                    <Typography variant="body2">State from: {view.stateFrom.map(s => s.resourceId).join(", ")}</Typography>
+                )}
+                {view.stateAggregation && <Typography variant="body2">Aggregation: {view.stateAggregation}</Typography>}
+            </TileInfoPopover>
 
             {/* Description icon — top-right */}
-            {view.description && (
-                <Box sx={{ position: "absolute", top: 6, right: 6, zIndex: 2, pointerEvents: "auto" }}>
-                    <Tooltip title="Show description" {...tooltipProps}>
-                        <IconButton size="small" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setDescAnchor(e.currentTarget); }} sx={{ p: 0.5, "&:hover": { backgroundColor: "action.hover" } }}>
-                            <DescriptionIcon sx={{ fontSize: 16, color: "text.secondary" }} />
-                        </IconButton>
-                    </Tooltip>
-                    <Popover
-                        open={!!descAnchor}
-                        anchorEl={descAnchor}
-                        onClose={() => setDescAnchor(null)}
-                        container={portalContainer.current}
-                        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-                    >
-                        <Box sx={{ p: 2, minWidth: 200 }}>
-                            <Typography variant="body2">{view.description}</Typography>
-                        </Box>
-                    </Popover>
-                </Box>
-            )}
+            <TileDescriptionPopover description={view.description} />
 
             {hasCommand ? (
                 <CardActionArea onClick={handleClick} disabled={pending} sx={{
@@ -151,13 +112,7 @@ export const ViewTile: React.FC<ViewTileProps> = ({ view, active, stateDisplayVa
                 </Box>
             )}
 
-            {pending && (
-                <CircularProgress
-                    size={16}
-                    thickness={5}
-                    sx={{ position: "absolute", bottom: 11, right: 11 }}
-                />
-            )}
+            <TilePendingIndicator pending={pending} />
         </Card>
     );
 };

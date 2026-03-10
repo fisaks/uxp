@@ -1,22 +1,23 @@
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
-import DescriptionIcon from "@mui/icons-material/Description";
 import ErrorIcon from "@mui/icons-material/Error";
-import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import TuneIcon from "@mui/icons-material/Tune";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
-import { Box, Card, CardActionArea, CircularProgress, IconButton, Popover, Tooltip, Typography, alpha } from "@mui/material";
+import { Box, Card, CardActionArea, Tooltip, Typography, alpha } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { usePortalContainerRef } from "@uxp/ui-lib";
 import { isLogicalResource, isPhysicalResource } from "@uhn/common";
 import React, { useCallback, useRef, useState } from "react";
 import { useSelector } from "react-redux";
+import { TileDescriptionPopover } from "../../shared/TileDescriptionPopover";
+import { TileInfoPopover } from "../../shared/TileInfoPopover";
+import { TilePendingIndicator } from "../../shared/TilePendingIndicator";
+import { createTooltipProps } from "../../shared/tileEventHelpers";
 import { useResourceAction } from "../hooks/useResourceAction";
 import { isResourceActive } from "../isResourceActive";
 import { TileRuntimeResource, TileRuntimeResourceState } from "../resource-ui.type";
 import { selectResourceCommandFeedbackById } from "../resourceCommandFeedbackSelector";
 import { getResourceIconColor, getResourceSurfaceColor } from "./colors";
 import { getResourceIcon } from "./icons";
-import { createTooltipProps } from "../../shared/tileEventHelpers";
 import { getTileExtensions } from "./tile-extensions";
 import "./ResourceTile.css";
 type ResourceTileProps = {
@@ -28,8 +29,6 @@ type ResourceTileProps = {
 export const ResourceTile: React.FC<ResourceTileProps> = ({ resource, state, nameOverride }) => {
     const theme = useTheme();
     const portalContainer = usePortalContainerRef();
-    const [infoAnchor, setInfoAnchor] = useState<null | HTMLElement>(null);
-    const [descAnchor, setDescAnchor] = useState<null | HTMLElement>(null);
     const [interactionPanelAnchor, setInteractionPanelAnchor] = useState<null | HTMLElement>(null);
     const tileActionAreaRef = useRef<HTMLButtonElement>(null);
     const commandFb = useSelector(selectResourceCommandFeedbackById(resource.id));
@@ -54,20 +53,6 @@ export const ResourceTile: React.FC<ResourceTileProps> = ({ resource, state, nam
     const isCmdError = commandFb?.status === "error";
     const cmdReason = isCmdError ? commandFb.reason : undefined;
 
-    // Info and Description popover logic
-    const handleInfoIconClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setInfoAnchor(e.currentTarget as HTMLElement);
-    };
-    const handleDescIconClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setDescAnchor(e.currentTarget as HTMLElement);
-    };
-
-    const closeInfo = () => setInfoAnchor(null);
-    const closeDesc = () => setDescAnchor(null);
     const haveErrors = resource.errors && resource.errors.length > 0;
     const tooltipProps = createTooltipProps(portalContainer.current);
 
@@ -96,67 +81,32 @@ export const ResourceTile: React.FC<ResourceTileProps> = ({ resource, state, nam
                 }}
             >
                 {/* (i) Info icon */}
-                <Box sx={{ position: "absolute", top: 6, left: 6, pointerEvents: "auto" }}>
-                    <Tooltip title="Technical info" {...tooltipProps}>
-                        <IconButton size="small" onClick={handleInfoIconClick} sx={{ p: 0.5, "&:hover": { backgroundColor: "action.hover" } }}>
-                            <InfoOutlinedIcon sx={{ fontSize: 16, color: "text.secondary" }} />
-                        </IconButton>
-                    </Tooltip>
-                    <Popover
-                        open={!!infoAnchor}
-                        anchorEl={infoAnchor}
-                        onClose={closeInfo}
-                        container={portalContainer.current}
-                        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-                    >
-                        <Box sx={{ p: 2, minWidth: 180 }}>
-                            <Typography variant="subtitle2">Technical Details</Typography>
-                            <Typography variant="body2">ID: {resource.id}</Typography>
-                            <Typography variant="body2">Type: {resource.type}</Typography>
-                            {isPhysicalResource(resource) && (
-                                <>
-                                    <Typography variant="body2">Edge: {resource.edge}</Typography>
-                                    <Typography variant="body2">Device: {resource.device}</Typography>
-                                    <Typography variant="body2">Pin: {resource.pin}</Typography>
-                                </>
-                            )}
-                            {isLogicalResource(resource) && (
-                                <Typography variant="body2">Host: {resource.host}</Typography>
-                            )}
-                            <Typography variant="body2">Kind: {resource.inputKind ?? resource.outputKind ?? resource.analogInputKind ?? resource.analogOutputKind ?? "N/A"}</Typography>
-                            {resource.inputType && <Typography variant="body2">Input Type: {resource.inputType}</Typography>}
-                            {isAnalog && resource.min !== undefined && <Typography variant="body2">Min: {resource.min}</Typography>}
-                            {isAnalog && resource.max !== undefined && <Typography variant="body2">Max: {resource.max}</Typography>}
-                            {isAnalog && resource.unit && <Typography variant="body2">Unit: {resource.unit}</Typography>}
-
-                        </Box>
-                    </Popover>
-                </Box>
+                <TileInfoPopover>
+                    <Typography variant="subtitle2">Technical Details</Typography>
+                    <Typography variant="body2">ID: {resource.id}</Typography>
+                    <Typography variant="body2">Type: {resource.type}</Typography>
+                    {isPhysicalResource(resource) && (
+                        <>
+                            <Typography variant="body2">Edge: {resource.edge}</Typography>
+                            <Typography variant="body2">Device: {resource.device}</Typography>
+                            <Typography variant="body2">Pin: {resource.pin}</Typography>
+                        </>
+                    )}
+                    {isLogicalResource(resource) && (
+                        <Typography variant="body2">Host: {resource.host}</Typography>
+                    )}
+                    <Typography variant="body2">Kind: {resource.inputKind ?? resource.outputKind ?? resource.analogInputKind ?? resource.analogOutputKind ?? "N/A"}</Typography>
+                    {resource.inputType && <Typography variant="body2">Input Type: {resource.inputType}</Typography>}
+                    {isAnalog && resource.min !== undefined && <Typography variant="body2">Min: {resource.min}</Typography>}
+                    {isAnalog && resource.max !== undefined && <Typography variant="body2">Max: {resource.max}</Typography>}
+                    {isAnalog && resource.unit && <Typography variant="body2">Unit: {resource.unit}</Typography>}
+                </TileInfoPopover>
 
                 {/* Type-specific overlay content (analog value, timer countdown, etc.) */}
                 {tileExtensions?.renderValue?.(renderCtx)}
 
                 {/* Description icon (upper right) */}
-                {resource.description && (
-                    <Box sx={{ position: "absolute", top: 6, right: 6, pointerEvents: "auto" }}>
-                        <Tooltip title="Show description" {...tooltipProps}>
-                            <IconButton size="small" onClick={handleDescIconClick} sx={{ p: 0.5, "&:hover": { backgroundColor: "action.hover" } }}>
-                                <DescriptionIcon sx={{ fontSize: 16, color: "text.secondary" }} />
-                            </IconButton>
-                        </Tooltip>
-                        <Popover
-                            open={!!descAnchor}
-                            anchorEl={descAnchor}
-                            onClose={closeDesc}
-                            container={portalContainer.current}
-                            anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-                        >
-                            <Box sx={{ p: 2, minWidth: 200 }}>
-                                <Typography variant="body2">{resource.description}</Typography>
-                            </Box>
-                        </Popover>
-                    </Box>
-                )}
+                <TileDescriptionPopover description={resource.description} />
 
             </Box>
             {/* Main content row: kind icon, name */}
@@ -289,61 +239,16 @@ export const ResourceTile: React.FC<ResourceTileProps> = ({ resource, state, nam
                     </Typography>
                 </Box>
             </CardActionArea>
-            {isPending && (
-                <CircularProgress
-                    size={16}
-                    thickness={5}
-                    sx={{
-                        position: "absolute",
-                        bottom: 11,
-                        right: 11,
-                        p: 0.25,
-                    }}
-                />
-            )}
+            <TilePendingIndicator pending={isPending} />
 
             {isCmdError && (
-                <Box
-                    sx={{
-                        position: "absolute",
-                        bottom: 0,
-                        right: 0,
-                        width: 34,
-                        height: 34,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        zIndex: 2,
-                        pointerEvents: "auto",   // icons clickable
-
-                    }}
-                >
-                    <Tooltip title={commandFb.error} {...tooltipProps}>
-                        {cmdReason === "timeout" ? (
-                            <AccessTimeIcon
-                                sx={{
-                                    position: "absolute",
-                                    bottom: 11,
-                                    right: 11,
-                                    fontSize: 16,
-                                    color: "warning.main",
-
-                                }}
-                            />
-                        ) : (
-                            <WarningAmberIcon
-                                sx={{
-                                    position: "absolute",
-                                    bottom: 11,
-                                    right: 11,
-                                    fontSize: 16,
-                                    color: "warning.main",
-
-                                }}
-                            />
-                        )}
-                    </Tooltip>
-                </Box>
+                <Tooltip title={commandFb.error} {...tooltipProps}>
+                    {cmdReason === "timeout" ? (
+                        <AccessTimeIcon sx={{ position: "absolute", bottom: 11, right: 11, fontSize: 16, color: "warning.main", zIndex: 2 }} />
+                    ) : (
+                        <WarningAmberIcon sx={{ position: "absolute", bottom: 11, right: 11, fontSize: 16, color: "warning.main", zIndex: 2 }} />
+                    )}
+                </Tooltip>
             )}
 
             {/* Type-specific expanded popover (analog slider, complex detail, etc.) */}
