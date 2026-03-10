@@ -26,7 +26,7 @@ services:
         restart: unless-stopped
         ports: ["2883:1883"]
         volumes:
-            - ./mosquitto/config:/mosquitto/config
+            - ./mosquitto/config:/mosquitto/config:ro
             - ./mosquitto/data:/mosquitto/data
             - ./mosquitto/log:/mosquitto/log
             
