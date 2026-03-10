@@ -50,6 +50,7 @@ function serializeView(v: InteractionView): RuntimeInteractionView {
                 ...("max" in v.command && v.command.max != null && { max: v.command.max }),
                 ...("step" in v.command && v.command.step != null && { step: v.command.step }),
                 ...("unit" in v.command && v.command.unit != null && { unit: v.command.unit }),
+                ...("defaultOnValue" in v.command && v.command.defaultOnValue != null && { defaultOnValue: v.command.defaultOnValue }),
                 ...(v.command.onDeactivate && {
                     onDeactivate: {
                         resourceId: v.command.onDeactivate.resource.id!,
@@ -59,6 +60,7 @@ function serializeView(v: InteractionView): RuntimeInteractionView {
                         ...("max" in v.command.onDeactivate && v.command.onDeactivate.max != null && { max: v.command.onDeactivate.max }),
                         ...("step" in v.command.onDeactivate && v.command.onDeactivate.step != null && { step: v.command.onDeactivate.step }),
                         ...("unit" in v.command.onDeactivate && v.command.onDeactivate.unit != null && { unit: v.command.onDeactivate.unit }),
+                        ...("defaultOnValue" in v.command.onDeactivate && v.command.onDeactivate.defaultOnValue != null && { defaultOnValue: v.command.onDeactivate.defaultOnValue }),
                     },
                 }),
             },

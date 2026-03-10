@@ -135,6 +135,7 @@ export type RuntimeAnalogOutputResource = RuntimePhysicalResource & {
     max?: number;
     step?: number;
     unit?: string;
+    defaultOnValue?: number;
 };
 
 export type RuntimeComplexResource = RuntimeLogicalResource & {
@@ -161,6 +162,7 @@ export type RuntimeVirtualAnalogOutputResource = RuntimeLogicalResource & {
   max?: number;
   step?: number;
   unit?: string;
+  defaultOnValue?: number;
 };
 
 export function isPhysicalResource(r: RuntimeResource): r is RuntimePhysicalResource {
@@ -365,6 +367,7 @@ export type RuntimeViewCommandTarget = {
     max?: number;
     step?: number;
     unit?: string;
+    defaultOnValue?: number;
 };
 
 export type RuntimeViewCommand = RuntimeViewCommandTarget & {

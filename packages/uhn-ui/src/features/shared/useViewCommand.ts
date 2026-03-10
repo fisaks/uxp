@@ -28,7 +28,7 @@ export function useViewCommand(
             case "setAnalog": {
                 const min = target.min ?? 0;
                 const max = target.max ?? 100;
-                const targetValue = active ? min : max;
+                const targetValue = active ? min : (target.defaultOnValue ?? max);
                 await sendCommand(target.resourceId, { type: "setAnalog", value: targetValue });
                 break;
             }

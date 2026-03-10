@@ -181,8 +181,9 @@ export function useResourceAction(
         if (resource.type === "analogOutput" || resource.type === "virtualAnalogOutput") {
             const min = resource.min ?? 0;
             const max = resource.max ?? 65535;
+            const onValue = resource.defaultOnValue ?? max;
             const current = typeof state?.value === "number" ? state.value : min;
-            const nextValue = current > min ? min : max;
+            const nextValue = current > min ? min : onValue;
             sendCommand({ type: "setAnalog", value: nextValue });
             return;
         }

@@ -62,6 +62,8 @@ export type ViewCommandTarget =
         max?: number;
         step?: number;
         unit?: string;
+        /** Value used when toggling "on" via tap. Falls back to max when omitted. */
+        defaultOnValue?: number;
     }
     | {
         resource: TimerResourceBase;

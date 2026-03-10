@@ -102,6 +102,8 @@ export type AnalogOutputResourceBase<
     step?: number;
     /** Unit label for display (e.g. "%", "rpm") */
     unit?: string;
+    /** Value used when toggling "on" via tap. Falls back to max when omitted. */
+    defaultOnValue?: number;
 };
 
 export type TimerResourceBase<THost extends string = string> = LogicalResourceBase<"timer", THost>;
@@ -121,6 +123,8 @@ export type VirtualAnalogOutputResourceBase<THost extends string = string> = Log
     step?: number;
     /** Unit label for display (e.g. "%", "rpm") */
     unit?: string;
+    /** Value used when toggling "on" via tap. Falls back to max when omitted. */
+    defaultOnValue?: number;
 };
 
 // Complex (Multi-Physical) Resource
