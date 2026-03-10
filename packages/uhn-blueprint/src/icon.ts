@@ -15,12 +15,10 @@ export type BlueprintIcon =
     | "sensor:gas" | "sensor:voltage" | "sensor:vibration"
     // Control
     | "control:button" | "control:dimmer" | "control:valve" | "control:timer" | "control:schedule"
-    | "control:toggle" | "control:speed" | "control:relay"
-    | "control:pump" | "control:lock" | "control:blind" | "control:shade" | "control:curtain"
+    | "control:toggle" | "control:speed" | "control:relay" | "control:pump" | "control:lock"
+    | "control:blind" | "control:shade" | "control:curtain" | "control:volume"
     // Climate
     | "climate:heater" | "climate:ac" | "climate:fan" | "climate:heat-pump" | "climate:fireplace"
-    // Media
-    | "media:speaker" | "media:microphone" | "media:volume"  | "media:tv"
     // Opening
     | "opening:door" | "opening:window" | "opening:gate"
     // Room
@@ -38,6 +36,10 @@ export type BlueprintIcon =
     | "scene:cleaning" | "scene:movie" | "scene:romantic" | "scene:focus" | "scene:welcome"
     // Device
     | "device:router" | "device:wifi" | "device:signal" | "device:controller" | "device:gateway" | "device:chip"
+    | "device:tv" | "device:speaker" | "device:microphone"
+    | "device:computer" | "device:laptop" | "device:gaming" | "device:printer"
+    | "device:coffee" | "device:microwave" | "device:fridge" | "device:washer"
+    | "device:iron" | "device:blender" | "device:charger"
     // Energy
     | "energy:battery" | "energy:charging" | "energy:solar" | "energy:meter"
     // Garden

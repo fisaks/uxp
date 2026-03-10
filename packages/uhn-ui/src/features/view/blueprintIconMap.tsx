@@ -5,18 +5,21 @@ import BatteryChargingFullIcon from "@mui/icons-material/BatteryChargingFull";
 import BatteryFullIcon from "@mui/icons-material/BatteryFull";
 import BedIcon from "@mui/icons-material/Bed";
 import BedtimeIcon from "@mui/icons-material/Bedtime";
+import BlenderIcon from "@mui/icons-material/Blender";
 import BlindsIcon from "@mui/icons-material/Blinds";
 import BlindsClosedIcon from "@mui/icons-material/BlindsClosed";
 import BoltIcon from "@mui/icons-material/Bolt";
 import BrunchDiningIcon from "@mui/icons-material/BrunchDining";
 import CelebrationIcon from "@mui/icons-material/Celebration";
 import CenterFocusStrongIcon from "@mui/icons-material/CenterFocusStrong";
+import ChargingStationIcon from "@mui/icons-material/ChargingStation";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CheckroomIcon from "@mui/icons-material/Checkroom";
 import ChildCareIcon from "@mui/icons-material/ChildCare";
 import CleaningServicesIcon from "@mui/icons-material/CleaningServices";
 import CloudIcon from "@mui/icons-material/Cloud";
 import Co2Icon from "@mui/icons-material/Co2";
+import CoffeeMakerIcon from "@mui/icons-material/CoffeeMaker";
 import CompressIcon from "@mui/icons-material/Compress";
 import ComputerIcon from "@mui/icons-material/Computer";
 import CottageIcon from "@mui/icons-material/Cottage";
@@ -56,6 +59,7 @@ import InventoryIcon from "@mui/icons-material/Inventory";
 import IronIcon from "@mui/icons-material/Iron";
 import KitchenIcon from "@mui/icons-material/Kitchen";
 import LanIcon from "@mui/icons-material/Lan";
+import LaptopIcon from "@mui/icons-material/Laptop";
 import LayersIcon from "@mui/icons-material/Layers";
 import LightIcon from "@mui/icons-material/Light";
 import LightbulbIcon from "@mui/icons-material/Lightbulb";
@@ -67,9 +71,10 @@ import LockIcon from "@mui/icons-material/Lock";
 import LockOpenIcon from "@mui/icons-material/LockOpen";
 import MeetingRoomIcon from "@mui/icons-material/MeetingRoom";
 import MemoryIcon from "@mui/icons-material/Memory";
-import MovieIcon from "@mui/icons-material/Movie";
 import MicIcon from "@mui/icons-material/Mic";
 import MicOffIcon from "@mui/icons-material/MicOff";
+import MicrowaveIcon from "@mui/icons-material/Microwave";
+import MovieIcon from "@mui/icons-material/Movie";
 import NatureIcon from "@mui/icons-material/Nature";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import NotificationsNoneIcon from "@mui/icons-material/NotificationsNone";
@@ -82,6 +87,7 @@ import PoolIcon from "@mui/icons-material/Pool";
 import PowerIcon from "@mui/icons-material/Power";
 import PowerOutlinedIcon from "@mui/icons-material/PowerOutlined";
 import PowerSettingsNewIcon from "@mui/icons-material/PowerSettingsNew";
+import PrintIcon from "@mui/icons-material/Print";
 import RestaurantIcon from "@mui/icons-material/Restaurant";
 import RollerShadesIcon from "@mui/icons-material/RollerShades";
 import RollerShadesClosedIcon from "@mui/icons-material/RollerShadesClosed";
@@ -109,15 +115,15 @@ import TouchAppIcon from "@mui/icons-material/TouchApp";
 import TuneIcon from "@mui/icons-material/Tune";
 import TungstenIcon from "@mui/icons-material/Tungsten";
 import TvIcon from "@mui/icons-material/Tv";
+import VibrationIcon from "@mui/icons-material/Vibration";
 import VideocamIcon from "@mui/icons-material/Videocam";
 import VideocamOffIcon from "@mui/icons-material/VideocamOff";
-import VibrationIcon from "@mui/icons-material/Vibration";
 import VolumeOffIcon from "@mui/icons-material/VolumeOff";
 import VolumeUpIcon from "@mui/icons-material/VolumeUp";
 import WarningIcon from "@mui/icons-material/Warning";
 import WaterIcon from "@mui/icons-material/Water";
-import WavingHandIcon from "@mui/icons-material/WavingHand";
 import WaterDropIcon from "@mui/icons-material/WaterDrop";
+import WavingHandIcon from "@mui/icons-material/WavingHand";
 import WbSunnyIcon from "@mui/icons-material/WbSunny";
 import WbTwilightIcon from "@mui/icons-material/WbTwilight";
 import WcIcon from "@mui/icons-material/Wc";
@@ -201,17 +207,13 @@ export const blueprintIconMap: Record<BlueprintIcon, BlueprintIconEntry> = {
     "control:blind": icon(BlindsIcon, BlindsClosedIcon, color("#795548", "#A1887F")),
     "control:shade": icon(RollerShadesIcon, RollerShadesClosedIcon, color("#795548", "#A1887F")),
     "control:curtain": icon(CurtainsIcon, CurtainsClosedIcon, color("#795548", "#A1887F")),
+    "control:volume": icon(VolumeUpIcon, VolumeOffIcon, color("#5C6BC0", "#9FA8DA")),
     // Climate
     "climate:heater": icon(FireplaceIcon, undefined, color("#E64A19", "#FF8A65")),
     "climate:ac": icon(AcUnitIcon, undefined, color("#29B6F6", "#81D4FA")),
     "climate:fan": icon(AirIcon, undefined, color("#78909C", "#B0BEC5")),
     "climate:heat-pump": icon(HeatPumpIcon, undefined, color("#E64A19", "#FF8A65")),
     "climate:fireplace": icon(FireplaceIcon, undefined, color("#BF360C", "#FF8A65")),
-    // Media
-    "media:speaker": icon(SpeakerIcon, undefined, color("#5C6BC0", "#9FA8DA")),
-    "media:microphone": icon(MicIcon, MicOffIcon, color("#5C6BC0", "#9FA8DA")),
-    "media:volume": icon(VolumeUpIcon, VolumeOffIcon, color("#5C6BC0", "#9FA8DA")),
-    "media:tv": icon(TvIcon, undefined, color("#5C6BC0", "#9FA8DA")),
     // Opening
     "opening:door": icon(DoorFrontIcon, undefined, color("#795548", "#A1887F")),
     "opening:window": icon(WindowIcon, undefined, color("#795548", "#A1887F")),
@@ -268,6 +270,20 @@ export const blueprintIconMap: Record<BlueprintIcon, BlueprintIconEntry> = {
     "device:controller": icon(DeveloperBoardIcon, undefined, color("#78909C", "#B0BEC5")),
     "device:gateway": icon(LanIcon, undefined, color("#78909C", "#B0BEC5")),
     "device:chip": icon(MemoryIcon, undefined, color("#78909C", "#B0BEC5")),
+    "device:tv": icon(TvIcon, undefined, color("#78909C", "#B0BEC5")),
+    "device:speaker": icon(SpeakerIcon, undefined, color("#78909C", "#B0BEC5")),
+    "device:microphone": icon(MicIcon, MicOffIcon, color("#78909C", "#B0BEC5")),
+    "device:computer": icon(ComputerIcon, undefined, color("#78909C", "#B0BEC5")),
+    "device:laptop": icon(LaptopIcon, undefined, color("#78909C", "#B0BEC5")),
+    "device:gaming": icon(SportsEsportsIcon, undefined, color("#78909C", "#B0BEC5")),
+    "device:printer": icon(PrintIcon, undefined, color("#78909C", "#B0BEC5")),
+    "device:coffee": icon(CoffeeMakerIcon, undefined, color("#78909C", "#B0BEC5")),
+    "device:microwave": icon(MicrowaveIcon, undefined, color("#78909C", "#B0BEC5")),
+    "device:fridge": icon(KitchenIcon, undefined, color("#78909C", "#B0BEC5")),
+    "device:washer": icon(LocalLaundryServiceIcon, undefined, color("#78909C", "#B0BEC5")),
+    "device:iron": icon(IronIcon, undefined, color("#78909C", "#B0BEC5")),
+    "device:blender": icon(BlenderIcon, undefined, color("#78909C", "#B0BEC5")),
+    "device:charger": icon(ChargingStationIcon, undefined, color("#78909C", "#B0BEC5")),
     // Energy
     "energy:battery": icon(BatteryFullIcon, undefined, color("#F57C00", "#FFB74D")),
     "energy:charging": icon(BatteryChargingFullIcon, undefined, color("#F57C00", "#FFB74D")),
