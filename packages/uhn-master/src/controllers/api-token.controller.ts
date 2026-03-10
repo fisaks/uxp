@@ -1,6 +1,7 @@
 import { CreateApiTokenSchema, RevokeApiTokenSchema } from "@uhn/common";
 import { AppLogger, Route, Token, UseQueryRunner } from "@uxp/bff-common";
 import { FastifyReply, FastifyRequest } from "fastify";
+import env from "../env";
 import { apiTokenService } from "../services/api-token.service";
 
 export class ApiTokenController {
@@ -13,7 +14,8 @@ export class ApiTokenController {
 
         AppLogger.info(req, { message: `API token creation requested by ${user.username} for blueprint "${blueprintIdentifier}"` });
 
-        return await apiTokenService.createToken(label, blueprintIdentifier, user.username);
+        const result = await apiTokenService.createToken(label, blueprintIdentifier, user.username);
+        return { ...result, url: env.UHN_MASTER_INTERNAL_URL };
     }
 
     @Route("get", "/api-tokens", { authenticate: true, roles: ["admin"] })

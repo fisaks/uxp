@@ -24,6 +24,8 @@ export async function uploadBlueprint(opts: UploadOptions): Promise<void> {
 
     const uploadUrl = `${opts.url}/api/cli/upload-blueprint?activate=${opts.activate}`;
 
+    console.log(`⬆️  Uploading blueprint to ${opts.url}...`);
+
     let response: Response;
     try {
         response = await fetch(uploadUrl, {

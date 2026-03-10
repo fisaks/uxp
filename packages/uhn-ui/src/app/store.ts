@@ -2,6 +2,7 @@ import { configureStore } from "@reduxjs/toolkit";
 import { remoteAppReducer, uploadTrackingReducer } from "@uxp/ui-lib";
 import { createLogger } from "redux-logger";
 
+import apiTokenReducer from "../features/api-token/apiTokenSlice";
 import blueprintReducer from "../features/blueprint/blueprintSlice";
 import loadingErrorReducer from "../features/loading-error/loadingErrorSlice";
 import { resourceCommandFeedbackListenerMiddleware } from "../features/resource/resourceCommandFeedbackListeners";
@@ -25,6 +26,7 @@ export const createStore = () => {
     return configureStore({
         reducer: {
             remoteApp: remoteAppReducer,
+            apiToken: apiTokenReducer,
             loadingError: loadingErrorReducer,
             uploadTracking: uploadTrackingReducer,
             topicTrace: topicTraceReducer,

@@ -23,7 +23,7 @@ export const BlueprintListPage: React.FC = () => {
     error
 
     return (
-        <Box>
+        <Box sx={{ maxWidth: 1200, mx: "auto" }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <Typography variant="h1">Blueprints</Typography>
                 <ReloadIconButton isLoading={isFetching} reload={refetch} />
@@ -36,7 +36,6 @@ export const BlueprintListPage: React.FC = () => {
                 <Paper elevation={3} sx={{
                     mt: 2,
                     p: 3,
-                    maxWidth: 1200,
                     display: "flex",
                     flexDirection: "column",
                     gap: 2,

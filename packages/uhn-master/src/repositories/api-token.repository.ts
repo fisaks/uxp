@@ -1,4 +1,5 @@
 import { AppErrorV2, getRequestContext } from "@uxp/bff-common";
+import { IsNull } from "typeorm";
 import { ApiTokenEntity } from "../db/entities/ApiTokenEntity";
 
 function getRepo() {
@@ -31,9 +32,16 @@ async function findById(id: number): Promise<ApiTokenEntity | null> {
     });
 }
 
+async function findActiveByLabelAndIdentifier(label: string, blueprintIdentifier: string): Promise<ApiTokenEntity | null> {
+    return getRepo().findOne({
+        where: { label, blueprintIdentifier, revokedAt: IsNull() },
+    });
+}
+
 export const ApiTokenRepository = {
     save,
     findByTokenHash,
     findAll,
     findById,
+    findActiveByLabelAndIdentifier,
 };

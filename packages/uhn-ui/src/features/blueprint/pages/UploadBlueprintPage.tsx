@@ -144,7 +144,7 @@ export const UploadBlueprintPage = () => {
     };
     const isSubmitting = uploadStatus?.status === "uploading";
     return (
-        <Box >
+        <Box sx={{ maxWidth: 1200, mx: "auto" }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <Typography variant="h1">Upload Blueprint</Typography>
 
@@ -239,7 +239,6 @@ export const UploadBlueprintPage = () => {
                 sx={{
                     mt: 2,
                     p: 3,
-                    maxWidth: 1200,
                     display: "flex",
                     flexDirection: "column",
                     gap: 2,

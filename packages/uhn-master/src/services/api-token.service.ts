@@ -22,7 +22,12 @@ function toApiTokenInfo(entity: ApiTokenEntity): ApiTokenInfo {
     };
 }
 
-async function createToken(label: string, blueprintIdentifier: string, createdBy: string): Promise<ApiTokenCreateResponse> {
+async function createToken(label: string, blueprintIdentifier: string, createdBy: string): Promise<Omit<ApiTokenCreateResponse, "url">> {
+    const existing = await ApiTokenRepository.findActiveByLabelAndIdentifier(label, blueprintIdentifier);
+    if (existing) {
+        throw new AppErrorV2({ statusCode: 409, code: "API_TOKEN_LABEL_EXISTS", message: "An API token with this label already exists for this blueprint identifier." });
+    }
+
     const plainToken = randomBytes(32).toString("hex");
     const tokenHash = hashToken(plainToken);
     const lastFourChars = plainToken.slice(-4);

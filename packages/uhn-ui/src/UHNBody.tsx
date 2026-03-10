@@ -9,6 +9,7 @@ import { BlueprintListPage } from "./features/blueprint/pages/BlueprintListPage"
 import { ResourcePage } from "./features/resource/pages/ResourcePage";
 import { IconPreviewPage } from "./features/blueprint/pages/IconPreviewPage";
 import { LocationPage } from "./features/location/pages/LocationPage";
+import { ApiTokenPage } from "./features/api-token/pages/ApiTokenPage";
 import { ScenePage } from "./features/scene/pages/ScenePage";
 import { ViewPage } from "./features/view/pages/ViewPage";
 
@@ -49,6 +50,13 @@ export const UHNBody = () => {
                         componentProp: "to",
                         active: location.pathname === "/blueprints/icons",
                     },
+                    {
+                        label: "API Tokens",
+                        link: `/blueprints/api-tokens`,
+                        component: Link,
+                        componentProp: "to",
+                        active: location.pathname === "/blueprints/api-tokens",
+                    },
                 ]
             },
             {
@@ -79,7 +87,6 @@ export const UHNBody = () => {
                 componentProp: "to",
                 active: location.pathname === "/scenes",
             },
-
         ];
     }, [basePath, location.pathname]);
 
@@ -96,6 +103,7 @@ export const UHNBody = () => {
                     <Route path="/views" element={<ViewPage />} />
                     <Route path="/locations" element={<LocationPage />} />
                     <Route path="/scenes" element={<ScenePage />} />
+                    <Route path="/blueprints/api-tokens" element={<ApiTokenPage />} />
                     <Route path="*" element={<TopicTracePage />} />
                 </Routes>
 

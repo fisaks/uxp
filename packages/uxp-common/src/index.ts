@@ -13,6 +13,7 @@ export * from "./utils/urlUtil";
 export * from "./utils/fileUtil";
 export * from "./utils/dateUtil";
 export * from "./utils/equalUtil";
+export * from "./utils/clipboardUtil";
 export * from "./uxp/health.types";
 export * from "./uxp/pagesRoutesApps.types";
 export * from "./general.types";

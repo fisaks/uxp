@@ -21,31 +21,21 @@ export async function run(): Promise<void> {
     try {
         switch (command) {
             case "build": {
-                const zipPath = await buildBlueprint(projectRoot);
-                console.log("✅ Blueprint built successfully");
-                console.log(`📦 ${zipPath}`);
+                await doBuild(projectRoot);
+                return;
+            }
+
+            case "bupload": {
+                const builtZip = await doBuild(projectRoot);
+                await doUpload(projectRoot, flags, builtZip);
                 return;
             }
 
             case "upload": {
-                const identifier = readBlueprintIdentifier(projectRoot);
-
-                let token = typeof flags.token === "string" ? flags.token : undefined;
-                let url = typeof flags.url === "string" ? flags.url : undefined;
-
-                if (!token || !url) {
-                    const config = readConfig(identifier);
-                    token = token ?? config.token;
-                    url = url ?? config.url;
-                }
-
                 const zipPath = typeof flags.file === "string"
                     ? path.resolve(flags.file)
                     : path.join(projectRoot, "dist", "blueprint.zip");
-
-                const activate = flags.activate !== "false";
-
-                await uploadBlueprint({ token, url, zipPath, activate });
+                await doUpload(projectRoot, flags, zipPath);
                 return;
             }
 
@@ -67,6 +57,30 @@ export async function run(): Promise<void> {
     }
 }
 
+async function doBuild(projectRoot: string): Promise<string> {
+    const zipPath = await buildBlueprint(projectRoot);
+    console.log("✅ Blueprint built successfully");
+    console.log(`📦 ${zipPath}`);
+    return zipPath;
+}
+
+async function doUpload(projectRoot: string, flags: Record<string, string | true>, zipPath: string): Promise<void> {
+    const identifier = readBlueprintIdentifier(projectRoot);
+
+    let token = typeof flags.token === "string" ? flags.token : undefined;
+    let url = typeof flags.url === "string" ? flags.url : undefined;
+
+    if (!token || !url) {
+        const config = readConfig(identifier);
+        token = token ?? config.token;
+        url = url ?? config.url;
+    }
+
+    const activate = flags.activate !== "false";
+
+    await uploadBlueprint({ token, url, zipPath, activate });
+}
+
 function readBlueprintIdentifier(projectRoot: string): string {
     const blueprintPath = path.join(projectRoot, "blueprint.json");
     if (!fs.existsSync(blueprintPath)) {
@@ -86,10 +100,12 @@ uhn-blueprint
 Usage:
   uhn-blueprint build [options]
   uhn-blueprint upload [options]
+  uhn-blueprint bupload [options]
 
 Commands:
   build     Build a blueprint ZIP for upload to UHN.
   upload    Upload a built blueprint ZIP to UHN.
+  bupload   Build + upload in one step.
 
 General options:
   --project <path>  Path to blueprint project root (default: cwd)

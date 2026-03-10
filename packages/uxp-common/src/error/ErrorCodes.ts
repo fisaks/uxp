@@ -35,6 +35,7 @@ export const ErrorCodes = {
     INVALID_API_TOKEN: "INVALID_API_TOKEN",
     API_TOKEN_REVOKED: "API_TOKEN_REVOKED",
     API_TOKEN_IDENTIFIER_MISMATCH: "API_TOKEN_IDENTIFIER_MISMATCH",
+    API_TOKEN_LABEL_EXISTS: "API_TOKEN_LABEL_EXISTS",
     // Add more error codes as needed
 } as const;
 
@@ -74,6 +75,7 @@ export const ErrorMessages: Record<ErrorCode, string> = {
     INVALID_API_TOKEN: "The provided API token is invalid.",
     API_TOKEN_REVOKED: "The provided API token has been revoked.",
     API_TOKEN_IDENTIFIER_MISMATCH: "The API token is not authorized for this blueprint identifier.",
+    API_TOKEN_LABEL_EXISTS: "An API token with this label already exists for this blueprint identifier.",
     // Add more error mappings as needed
 };
 export type ErrorCode = keyof typeof ErrorCodes;

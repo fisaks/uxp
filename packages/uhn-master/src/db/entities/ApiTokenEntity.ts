@@ -46,7 +46,7 @@ export class ApiTokenEntity {
         type: 'datetime',
         transformer: {
             to: (value: DateTime) => (value ? value.toJSDate() : value),
-            from: (value: Date) => DateTime.fromJSDate(value),
+            from: (value: Date) => (value ? DateTime.fromJSDate(value) : null),
         },
         nullable: true,
     })
@@ -56,7 +56,7 @@ export class ApiTokenEntity {
         type: 'datetime',
         transformer: {
             to: (value: DateTime) => (value ? value.toJSDate() : value),
-            from: (value: Date) => DateTime.fromJSDate(value),
+            from: (value: Date) => (value ? DateTime.fromJSDate(value) : null),
         },
         nullable: true,
     })

@@ -7,8 +7,8 @@ export const uhnApi = createApi({
   baseQuery: axiosBaseQuery(),
   tagTypes: [
     'Blueprints',
-    'BlueprintActivations'
-    // Add feature tagTypes here
+    'BlueprintActivations',
+    'ApiTokens',
   ],
   endpoints: () => ({}), // Empty, features will inject endpoints
 });

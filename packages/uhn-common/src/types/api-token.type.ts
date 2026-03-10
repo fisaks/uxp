@@ -14,4 +14,5 @@ export type ApiTokenCreateResponse = {
     token: string;
     label: string;
     blueprintIdentifier: string;
+    url: string;
 };
