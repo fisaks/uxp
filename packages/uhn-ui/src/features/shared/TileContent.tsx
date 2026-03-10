@@ -1,6 +1,6 @@
 import { Box, Typography } from "@mui/material";
 import React, { useMemo } from "react";
-import { FlashItem, FlankingColumn, IndicatorItem, splitFlankingValues } from "../view/components/ViewStateDisplay";
+import { FlashItem, FlankingColumn, IndicatorItem, splitFlankingValues } from "./TileStateDisplay";
 import { TileStateItem } from "./tile.types";
 
 type TileContentProps = {

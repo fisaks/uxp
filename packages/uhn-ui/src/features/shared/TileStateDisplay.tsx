@@ -1,9 +1,9 @@
 import { Box, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import React from "react";
-import { formatCountdown, useCountdown } from "../../resource/hooks/useCountdown";
-import { getBlueprintIcon } from "../blueprintIconMap";
-import { TileStateItem } from "../../shared/tile.types";
+import { formatCountdown, useCountdown } from "../resource/hooks/useCountdown";
+import { getBlueprintIcon } from "../view/blueprintIconMap";
+import { TileStateItem } from "./tile.types";
 
 /** Compact value item for flanking layout — label on top, value below */
 export const ValueItemCompact: React.FC<{ item: TileStateItem; align: "left" | "right" }> = ({ item, align }) => {
