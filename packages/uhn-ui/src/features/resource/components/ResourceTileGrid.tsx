@@ -4,8 +4,7 @@ import { selectResourcesWithState } from "../resourceSelector";
 import { ResourceTile } from "./ResourceTile";
 
 export const ResourceTileGrid = () => {
-    const allTiles = useSelector(selectResourcesWithState);
-    const tiles = allTiles.filter(({ resource }) => !resource.hidden);
+    const tiles = useSelector(selectResourcesWithState);
 
     return (
         <Grid2 container spacing={2} sx={{ width: "100%", margin: 0 }}>

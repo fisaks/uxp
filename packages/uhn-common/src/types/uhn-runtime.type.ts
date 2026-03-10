@@ -94,7 +94,6 @@ type RuntimeResourceCommon = {
     name: string;
     description?: string;
     icon?: BlueprintIcon;
-    hidden?: boolean;
     errors?: ResourceErrorCode[];
 };
 

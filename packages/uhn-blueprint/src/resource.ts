@@ -14,8 +14,6 @@ export type ResourceBase<TType extends ResourceType> = {
     type: TType;
     /** Override the default type-based icon. Uses BlueprintIcon names (e.g. "lighting:bulb"). */
     icon?: BlueprintIcon;
-    /** Hide this resource from the main grid. It remains accessible in complex resource popovers. */
-    hidden?: boolean;
 };
 
 export type PhysicalResourceBase<
