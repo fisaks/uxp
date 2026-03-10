@@ -1,5 +1,5 @@
-// Factory Functions
-// factory.ts
+// Resource Factory Functions
+// resource-factory.ts
 import { analogInputKindDefaultIcon, analogOutputKindDefaultIcon, inputKindDefaultIcon, logicalTypeDefaultIcon, outputKindDefaultIcon } from "./icon-defaults";
 import { AnalogInputResourceBase, AnalogOutputResourceBase, BaseAnalogInputKind, BaseAnalogOutputKind, BaseInputKind, BaseOutputKind, ComplexResourceBase, DigitalInputResourceBase, DigitalOutputResourceBase, TimerResourceBase, VirtualAnalogOutputResourceBase, VirtualDigitalInputResourceBase } from "./resource";
 

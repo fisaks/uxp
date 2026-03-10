@@ -277,7 +277,7 @@ export function collectRuleFactories(sf: SourceFile): Set<string> {
  * Collect named imports that should be treated as resource factories.
  */
 const blueprintAllowedNames = new Set(
-    Object.keys(require("../factory")).filter(n => n !== "rule")
+    Object.keys(require("../resource-factory"))
 );
 export function collectNamedImportsFromPaths(
     sf: SourceFile,

@@ -1,5 +1,5 @@
 export * from "./resource"
-export * from "./factory";
+export * from "./resource-factory";
 export * from "./compute";
 export * from "./duration";
 export * from "./rule";
