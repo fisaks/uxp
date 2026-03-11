@@ -115,6 +115,16 @@ The home automation system uses an MQTT-based architecture with a master-edge pa
 - **Prettier**: Configured in `.prettierrc`, enforced via lint-staged + Husky pre-commit hooks
 - **Environment**: `.env.template` documents all required variables. Copy to `.env.dev`/`.env.prod`. BFFs need `DATABASE_HOST`, `JWT_SECRET`, and app-specific DB credentials.
 
+## UHN Design Principles
+
+**Single control path — UI must never bypass the rule system.**
+
+All system behavior flows through: `emitSignal(resource) → rule → resource`. This applies to physical buttons, UI interactions, voice commands, and API calls equally. InteractionViews simulate physical interaction (e.g., pressing a button) rather than controlling resources directly. This ensures rules always fire and side effects are never skipped.
+
+**Command palette and UI actions must only target location-assigned items.** If a view, resource, or scene is assigned to a location, it means the blueprint author intentionally exposed it as a user interaction point with proper rule chains backing it. Items that exist only in the technical section are for inspection, not interaction. Generating commands that bypass this (e.g., sending directly to a relay instead of through its view/button) would skip rules and miss side effects.
+
+See `docs/uhn/prompts/uhn_architecture_prompt.md` for the full architectural model (resources, rules, views, scenes, locations).
+
 ## Infrastructure
 
 - **Docker Compose**: MySQL 8.0 (`db-server`), Mosquitto MQTT broker (`mqtt`), plus app containers
