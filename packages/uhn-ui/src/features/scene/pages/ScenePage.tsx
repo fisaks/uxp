@@ -1,7 +1,9 @@
+import MovieIcon from "@mui/icons-material/Movie";
 import { Box, Grid2, Typography } from "@mui/material";
 import { ReloadIconButton } from "@uxp/ui-lib";
 import { useState } from "react";
 import { useSelector } from "react-redux";
+import { wideGridItemSx } from "../../shared/tileGridSx";
 import { useUHNWebSocket } from "../../../app/UHNAppBrowserWebSocketManager";
 import { SceneTile } from "../components/SceneTile";
 import { selectAllScenes } from "../sceneSelectors";
@@ -24,6 +26,7 @@ export const ScenePage = () => {
     return (
         <Box>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <MovieIcon sx={{ color: "primary.main" }} />
                 <Typography variant="h1">Scenes</Typography>
                 <ReloadIconButton isLoading={loading} reload={refetch} />
             </Box>
@@ -31,7 +34,8 @@ export const ScenePage = () => {
                 {scenes.length > 0 ? (
                     <Grid2 container spacing={2} sx={{ width: "100%", margin: 0 }}>
                         {scenes.map(scene => (
-                            <Grid2 key={scene.id} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
+                            <Grid2 key={scene.id} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}
+                                sx={wideGridItemSx}>
                                 <SceneTile scene={scene} />
                             </Grid2>
                         ))}

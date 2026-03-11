@@ -146,6 +146,7 @@ export const UploadBlueprintPage = () => {
     return (
         <Box sx={{ maxWidth: 1200, mx: "auto" }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <CloudUploadIcon sx={{ color: "primary.main" }} />
                 <Typography variant="h1">Upload Blueprint</Typography>
 
             </Box>

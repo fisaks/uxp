@@ -2,6 +2,7 @@ import { Grid2, Typography } from "@mui/material";
 import { RuntimeLocation, RuntimeLocationItem, RuntimeResource, RuntimeScene } from "@uhn/common";
 import React from "react";
 import { useSelector } from "react-redux";
+import { wideGridItemSx } from "../../shared/tileGridSx";
 import { TileRuntimeResourceState } from "../../resource/resource-ui.type";
 import { selectResourceById } from "../../resource/resourceSelector";
 import { selectRuntimeStateByResourceId } from "../../runtime-state/runtimeStateSelector";
@@ -30,7 +31,8 @@ export const LocationDetail: React.FC<LocationDetailProps> = ({ location }) => {
             )}
             <Grid2 container spacing={2} sx={{ width: "100%", margin: 0 }}>
                 {location.items.map((item, idx) => (
-                    <Grid2 key={`${item.kind}-${item.refId}-${idx}`} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
+                    <Grid2 key={`${item.kind}-${item.refId}-${idx}`} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}
+                        sx={wideGridItemSx}>
                         <LocationItemTile item={item} viewsById={viewsById} resourceById={resourceById} stateById={stateById} scenesById={scenesById} />
                     </Grid2>
                 ))}

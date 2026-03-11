@@ -1,4 +1,5 @@
 
+import MemoryIcon from "@mui/icons-material/Memory";
 import { Box, Typography } from "@mui/material"
 import { ReloadIconButton } from "@uxp/ui-lib"
 import { useState } from "react"
@@ -21,6 +22,7 @@ export const ResourcePage = () => {
 
     return <Box>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <MemoryIcon sx={{ color: "primary.main" }} />
             <Typography variant="h1">Resources</Typography>
             <ReloadIconButton isLoading={loading} reload={refetch} />
 

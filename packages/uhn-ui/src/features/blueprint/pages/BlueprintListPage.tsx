@@ -1,3 +1,4 @@
+import DescriptionIcon from "@mui/icons-material/Description";
 import HistoryIcon from "@mui/icons-material/History";
 import { Box, IconButton, Paper, Typography, useTheme } from "@mui/material";
 import { ReloadIconButton } from "@uxp/ui-lib";
@@ -20,11 +21,10 @@ export const BlueprintListPage: React.FC = () => {
         dispatch(openActivationListDialog(undefined));
     }, [dispatch]);
 
-    error
-
     return (
         <Box sx={{ maxWidth: 1200, mx: "auto" }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <DescriptionIcon sx={{ color: "primary.main" }} />
                 <Typography variant="h1">Blueprints</Typography>
                 <ReloadIconButton isLoading={isFetching} reload={refetch} />
                 <IconButton onClick={showActivationList} title="View Activation History"

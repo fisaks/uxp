@@ -4,8 +4,10 @@ import { getUxpWindow } from "@uxp/ui-lib";
 import React from "react";
 
 const links = [
-    { label: "Blueprints", target: "/blueprints" },
-    { label: "Resources", target: "/resources" },
+    { label: "Technical", target: "/technical" },
+    { label: "Blueprints", target: "/technical/blueprints" },
+    { label: "Upload Blueprint", target: "/technical/blueprints/upload" },
+    { label: "Resources", target: "/technical/resources" },
 ];
 
 export const QuickLinksSection: React.FC = () => {

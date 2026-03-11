@@ -72,6 +72,10 @@
   - Adapt on my usage
   - Adapt on all user usage
 
+## User Preferences (via UXP Control Panel)
+
+- Usage-based ordering mode (disable / my usage / all usage)
+
 ## UXP Control Panel Extension
 
 - UXP control panel exists under profile icon in topbar.

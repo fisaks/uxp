@@ -1,13 +1,17 @@
-import { Box, Typography } from "@mui/material";
+import HomeIcon from "@mui/icons-material/Home";
+import SettingsIcon from "@mui/icons-material/Settings";
+import { Box, IconButton, Typography } from "@mui/material";
 import { ReloadIconButton } from "@uxp/ui-lib";
 import { useCallback, useState } from "react";
 import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import { useUHNWebSocket } from "../../../app/UHNAppBrowserWebSocketManager";
 import { LocationDetail } from "../components/LocationDetail";
 import { LocationNav } from "../components/LocationNav";
 import { selectAllLocations } from "../locationSelectors";
 
 export const LocationPage = () => {
+    const navigate = useNavigate();
     const { sendMessageAsync } = useUHNWebSocket();
     const locations = useSelector(selectAllLocations);
     const [selectedId, setSelectedId] = useState<string | undefined>(undefined);
@@ -35,8 +39,13 @@ export const LocationPage = () => {
     return (
         <Box>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <HomeIcon sx={{ color: "primary.main" }} />
                 <Typography variant="h1">Locations</Typography>
                 <ReloadIconButton isLoading={loading} reload={refetch} />
+                <IconButton onClick={() => navigate("/technical")} title="Technical"
+                    sx={{ color: "primary.main" }}>
+                    <SettingsIcon />
+                </IconButton>
             </Box>
             <Box mt={2}>
                 {locations.length > 0 ? (

@@ -1,3 +1,4 @@
+import ImageIcon from "@mui/icons-material/Image";
 import { Box, Card, Grid2, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import React from "react";
@@ -21,8 +22,11 @@ export const IconPreviewPage: React.FC = () => {
     const grouped = groupByCategory(entries);
 
     return (
-        <Box sx={{ p: 3 }}>
-            <Typography variant="h5" sx={{ mb: 3 }}>Blueprint Icons</Typography>
+        <Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 3 }}>
+                <ImageIcon sx={{ color: "primary.main" }} />
+                <Typography variant="h1">Icons</Typography>
+            </Box>
             {Object.entries(grouped).map(([category, icons]) => (
                 <Box key={category} sx={{ mb: 4 }}>
                     <Typography variant="h6" sx={{ mb: 2, textTransform: "capitalize" }}>

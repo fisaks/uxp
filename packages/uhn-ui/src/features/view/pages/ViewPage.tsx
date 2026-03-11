@@ -1,3 +1,4 @@
+import ViewQuiltIcon from "@mui/icons-material/ViewQuilt";
 import { Box, Typography } from "@mui/material";
 import { ReloadIconButton } from "@uxp/ui-lib";
 import { useState } from "react";
@@ -21,6 +22,7 @@ export const ViewPage = () => {
     return (
         <Box>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <ViewQuiltIcon sx={{ color: "primary.main" }} />
                 <Typography variant="h1">Views</Typography>
                 <ReloadIconButton isLoading={loading} reload={refetch} />
             </Box>
