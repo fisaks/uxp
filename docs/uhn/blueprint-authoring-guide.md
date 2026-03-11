@@ -96,7 +96,93 @@ The UXP monorepo must be checked out alongside the blueprint project.
 pnpm build
 ```
 
-Produces `dist/blueprint.zip` — upload this to UHN Master.
+Produces `dist/blueprint.zip` — upload this to UHN Master via the CLI (see [Deploying](#deploying)).
+
+---
+
+## Deploying
+
+The `uhn-blueprint` CLI can upload a built blueprint directly to UHN Master, authenticated with an API token.
+
+### 1. Create an API Token
+
+In the UHN admin UI, go to **Blueprints → API Tokens** and create a new token. Each token is scoped to a single blueprint identifier — it can only upload blueprints matching that identifier.
+
+When the token is created, the UI displays it **once**. You have two options:
+
+- **Download .uhn Config** — downloads a ready-to-use JSON config file
+- **Copy** — copies the raw token string to your clipboard
+
+### 2. Configure the CLI
+
+Place the downloaded config file at `~/.uhn/<identifier>.json`. The directory and file must have strict permissions:
+
+```bash
+mkdir -p ~/.uhn && chmod 700 ~/.uhn
+# Move or create the config file
+chmod 600 ~/.uhn/my-home.json
+```
+
+The config file contains:
+
+```json
+{
+    "url": "http://192.168.1.100:3005",
+    "identifier": "my-home",
+    "token": "<api-token>"
+}
+```
+
+| Field | Description |
+|-------|-------------|
+| `url` | UHN Master URL (provided automatically in the download) |
+| `identifier` | Blueprint identifier (must match `blueprint.json`) |
+| `token` | API token (64-character hex string) |
+
+### 3. Upload
+
+Three CLI commands are available:
+
+```bash
+# Build only — produces dist/blueprint.zip
+uhn-blueprint build
+
+# Upload a previously built blueprint
+uhn-blueprint upload
+
+# Build + upload in one step
+uhn-blueprint bupload
+```
+
+By default, the uploaded blueprint is **activated** immediately. To upload without activating:
+
+```bash
+uhn-blueprint upload --no-activate
+uhn-blueprint bupload --no-activate
+```
+
+### CLI Options
+
+| Option | Description |
+|--------|-------------|
+| `--project <path>` | Path to blueprint project root (default: current directory) |
+| `--token <token>` | API token (overrides `~/.uhn/` config) |
+| `--url <url>` | UHN Master URL (overrides `~/.uhn/` config) |
+| `--file <path>` | Path to blueprint zip (default: `dist/blueprint.zip`) |
+| `--no-activate` | Upload without activating (default: activate) |
+
+**Inline credentials** — you can skip the config file entirely by passing `--token` and `--url` directly. This is useful for CI/CD pipelines:
+
+```bash
+uhn-blueprint bupload --token "$UHN_TOKEN" --url "$UHN_URL" --no-activate
+```
+
+### Security Notes
+
+- Tokens are stored as SHA-256 hashes on the server — the plain token is only shown once at creation time
+- Each token is scoped to one blueprint identifier; uploading a different blueprint is rejected
+- The CLI enforces `700` permissions on `~/.uhn/` and `600` on config files
+- Tokens can be revoked at any time from the admin UI
 
 ---
 
