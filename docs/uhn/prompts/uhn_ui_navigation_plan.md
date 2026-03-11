@@ -1,4 +1,4 @@
-# UHN UI Navigation & Interaction Plan
+  # UHN UI Navigation & Interaction Plan
 
 ## Core Principles
 
@@ -86,9 +86,9 @@
 
 ## Phases
 
-1. **Navigation restructuring** — Remove sidebar, locations as home, technical section landing page with badges, breadcrumb navigation, update System Panel quick links.
-2. **Expandable locations with pinned tiles** — Collapsed/expandable location sections, pinned tile ordering, location switcher dropdown with scroll-to and intersection observer, performance (render only first row when collapsed).
-3. **Favorites** — Top section on home page, per-user stored in DB, behaves like a location, manual drag-and-drop ordering.
+1. ~~**Navigation restructuring**~~ ✅ `79a0ca6` — Remove sidebar, locations as home, technical section landing page with badges, breadcrumb navigation, update System Panel quick links.
+2. ~~**Expandable location sections with switcher**~~ ✅ `30a6331` — Collapsed/expandable location sections, sticky search/location switcher with scroll-to and intersection observer, expand/collapse all, JS-based sticky for Shadow DOM, performance (unmountOnExit on collapsed overflow).
+3. **Favorites** *(delayed)* — Top section on home page, per-user stored in DB, behaves like a location, manual drag-and-drop ordering. Includes pinned tile ordering within locations.
 4. **Technical section search + deep linking** — Inline free text filter on Resources/Views/Scenes/Rules pages, deep linking to specific items.
 5. **Rules delivery + UI** — Rules page in technical section, master/edge indicator, triggers visible.
 6. **Command palette** — Search input on home, overlay on technical pages, client-side derived commands from location-assigned items.
