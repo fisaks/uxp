@@ -1,7 +1,7 @@
 import { SchemaValidate } from "@uxp/common";
-import { LocationOrderParams, SaveLocationOrderRequest } from "../types/user-location-order.type";
+import { LocationItemOrderParams, SaveLocationItemOrderRequest } from "../types/user-location-item-order.type";
 
-export const SaveLocationOrderSchema: SchemaValidate<SaveLocationOrderRequest, undefined, LocationOrderParams> = {
+export const SaveLocationItemOrderSchema: SchemaValidate<SaveLocationItemOrderRequest, undefined, LocationItemOrderParams> = {
     body: {
         type: "object",
         properties: {
@@ -31,7 +31,7 @@ export const SaveLocationOrderSchema: SchemaValidate<SaveLocationOrderRequest, u
     },
 };
 
-export const DeleteLocationOrderSchema: SchemaValidate<undefined, undefined, LocationOrderParams> = {
+export const DeleteLocationItemOrderSchema: SchemaValidate<undefined, undefined, LocationItemOrderParams> = {
     params: {
         type: "object",
         properties: {

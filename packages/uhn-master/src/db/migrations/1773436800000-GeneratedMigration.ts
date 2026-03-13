@@ -11,15 +11,15 @@ export class GeneratedMigration1773436800000 implements MigrationInterface {
         await queryRunner.query(`CREATE UNIQUE INDEX \`IDX_USER_FAV_UNIQUE\` ON \`user_favorite\` (\`blueprintIdentifier\`, \`username\`, \`itemKind\`, \`itemRefId\`)`);
         await queryRunner.query(`CREATE INDEX \`IDX_USER_FAV_USER\` ON \`user_favorite\` (\`blueprintIdentifier\`, \`username\`)`);
 
-        // Create user_location_order table
-        await queryRunner.query(`CREATE TABLE \`user_location_order\` (\`id\` int NOT NULL AUTO_INCREMENT, \`blueprintIdentifier\` varchar(128) NOT NULL, \`username\` varchar(64) NOT NULL, \`locationId\` varchar(128) NOT NULL, \`locationItems\` json NOT NULL, \`createdAt\` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), INDEX \`IDX_USER_LOC_ORDER_USER\` (\`blueprintIdentifier\`, \`username\`), UNIQUE INDEX \`IDX_USER_LOC_ORDER_UNIQUE\` (\`blueprintIdentifier\`, \`username\`, \`locationId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        // Create user_location_item_order table
+        await queryRunner.query(`CREATE TABLE \`user_location_item_order\` (\`id\` int NOT NULL AUTO_INCREMENT, \`blueprintIdentifier\` varchar(128) NOT NULL, \`username\` varchar(64) NOT NULL, \`locationId\` varchar(128) NOT NULL, \`locationItems\` json NOT NULL, \`createdAt\` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updatedAt\` timestamp(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), INDEX \`IDX_USER_LOC_ITEM_ORDER_USER\` (\`blueprintIdentifier\`, \`username\`), UNIQUE INDEX \`IDX_USER_LOC_ITEM_ORDER_UNIQUE\` (\`blueprintIdentifier\`, \`username\`, \`locationId\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        // Drop user_location_order
-        await queryRunner.query(`DROP INDEX \`IDX_USER_LOC_ORDER_UNIQUE\` ON \`user_location_order\``);
-        await queryRunner.query(`DROP INDEX \`IDX_USER_LOC_ORDER_USER\` ON \`user_location_order\``);
-        await queryRunner.query(`DROP TABLE \`user_location_order\``);
+        // Drop user_location_item_order table
+        await queryRunner.query(`DROP INDEX \`IDX_USER_LOC_ITEM_ORDER_UNIQUE\` ON \`user_location_item_order\``);
+        await queryRunner.query(`DROP INDEX \`IDX_USER_LOC_ITEM_ORDER_USER\` ON \`user_location_item_order\``);
+        await queryRunner.query(`DROP TABLE \`user_location_item_order\``);
 
         // Revert user_favorite changes
         await queryRunner.query(`DROP INDEX \`IDX_USER_FAV_UNIQUE\` ON \`user_favorite\``);

@@ -17,7 +17,7 @@ import { LOCATION_TOP, LocationSwitcher } from "../components/LocationSwitcher";
 import { ReorderLocationsDialog } from "../components/ReorderLocationsDialog";
 import { useLocationIntersectionObserver } from "../hooks/useLocationIntersectionObserver";
 import { useOrderedLocations } from "../hooks/useOrderedLocations";
-import { useFetchLocationOrdersQuery, useSaveLocationOrderMutation, useDeleteLocationOrderMutation } from "../location-order.api";
+import { useFetchLocationItemOrdersQuery, useSaveLocationItemOrderMutation, useDeleteLocationItemOrderMutation } from "../location-item-order.api";
 import { useFetchLocationSectionOrderQuery } from "../location-section-order.api";
 import { SCROLL_OVERRIDE_TIMEOUT } from "../locationConstants";
 import { selectAllLocations } from "../locationSelectors";
@@ -27,10 +27,10 @@ export const LocationPage = () => {
     const { sendMessageAsync } = useUHNWebSocket();
     const blueprintLocations = useSelector(selectAllLocations);
     const { data: favorites } = useFetchFavoritesQuery();
-    const { data: locationOrders } = useFetchLocationOrdersQuery();
+    const { data: locationItemOrders } = useFetchLocationItemOrdersQuery();
     const { data: locationSectionOrder } = useFetchLocationSectionOrderQuery();
-    const [saveLocationOrder] = useSaveLocationOrderMutation();
-    const [deleteLocationOrder] = useDeleteLocationOrderMutation();
+    const [saveLocationItemOrder] = useSaveLocationItemOrderMutation();
+    const [deleteLocationItemOrder] = useDeleteLocationItemOrderMutation();
     const hasFavorites = (favorites?.length ?? 0) > 0;
     const [loading, setLoading] = useState(false);
     const [reorderDialogOpen, setReorderDialogOpen] = useState(false);
@@ -40,15 +40,15 @@ export const LocationPage = () => {
     const locationIds = useMemo(() => locations.map(l => l.id), [locations]);
 
     /** Maps locationId → saved item order for quick lookup per section. */
-    const locationOrderMap = useMemo(() => {
+    const locationItemOrderMap = useMemo(() => {
         const map = new Map<string, LocationItemRef[]>();
-        if (locationOrders) {
-            for (const order of locationOrders) {
+        if (locationItemOrders) {
+            for (const order of locationItemOrders) {
                 map.set(order.locationId, order.locationItems);
             }
         }
         return map;
-    }, [locationOrders]);
+    }, [locationItemOrders]);
 
     // Include favorites in the section IDs for IntersectionObserver tracking
     const allSectionIds = useMemo(
@@ -108,13 +108,13 @@ export const LocationPage = () => {
         }
     }, []);
 
-    const handleLocationReorder = useCallback((locationId: string, locationItems: LocationItemRef[]) => {
-        saveLocationOrder({ locationId, locationItems });
-    }, [saveLocationOrder]);
+    const handleLocationItemReorder = useCallback((locationId: string, locationItems: LocationItemRef[]) => {
+        saveLocationItemOrder({ locationId, locationItems });
+    }, [saveLocationItemOrder]);
 
-    const handleResetLocationOrder = useCallback((locationId: string) => {
-        deleteLocationOrder(locationId);
-    }, [deleteLocationOrder]);
+    const handleResetLocationItemOrder = useCallback((locationId: string) => {
+        deleteLocationItemOrder(locationId);
+    }, [deleteLocationItemOrder]);
 
     const displayActiveId = scrollOverrideRef.current ?? activeLocationId;
 
@@ -170,12 +170,12 @@ export const LocationPage = () => {
                             <LocationSection
                                 key={location.id}
                                 location={location}
-                                savedOrder={locationOrderMap.get(location.id)}
+                                savedOrder={locationItemOrderMap.get(location.id)}
                                 sectionRef={(el) => { sectionRefs.current[location.id] = el; }}
                                 expanded={expandedIds.has(location.id)}
                                 onExpandToggle={() => toggleSection(location.id)}
-                                onReorder={(locationItems) => handleLocationReorder(location.id, locationItems)}
-                                onResetOrder={() => handleResetLocationOrder(location.id)}
+                                onReorder={(locationItems) => handleLocationItemReorder(location.id, locationItems)}
+                                onResetOrder={() => handleResetLocationItemOrder(location.id)}
                             />
                         ))}
                         {/* Ensures the last section can scroll fully to the top */}

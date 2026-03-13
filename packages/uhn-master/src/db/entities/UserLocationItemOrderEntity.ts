@@ -9,12 +9,12 @@ import {
     UpdateDateColumn,
 } from 'typeorm';
 
-@Entity({ name: 'user_location_order' })
-@Index("IDX_USER_LOC_ORDER_UNIQUE", ["blueprintIdentifier", "username", "locationId"], { unique: true })
-@Index("IDX_USER_LOC_ORDER_USER", ["blueprintIdentifier", "username"])
-export class UserLocationOrderEntity {
+@Entity({ name: 'user_location_item_order' })
+@Index("IDX_USER_LOC_ITEM_ORDER_UNIQUE", ["blueprintIdentifier", "username", "locationId"], { unique: true })
+@Index("IDX_USER_LOC_ITEM_ORDER_USER", ["blueprintIdentifier", "username"])
+export class UserLocationItemOrderEntity {
 
-    constructor(init?: Partial<UserLocationOrderEntity>) {
+    constructor(init?: Partial<UserLocationItemOrderEntity>) {
         Object.assign(this, init);
     }
 

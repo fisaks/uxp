@@ -1,27 +1,27 @@
 import { AppErrorV2, getRequestContext } from "@uxp/bff-common";
-import { UserLocationOrderEntity } from "../db/entities/UserLocationOrderEntity";
+import { UserLocationItemOrderEntity } from "../db/entities/UserLocationItemOrderEntity";
 
 function getRepo() {
     const { queryRunner } = getRequestContext(true);
     if (!queryRunner) {
         throw new AppErrorV2({ statusCode: 500, code: "INTERNAL_SERVER_ERROR", message: "QueryRunner is missing in request context" });
     }
-    return queryRunner.manager.getRepository(UserLocationOrderEntity);
+    return queryRunner.manager.getRepository(UserLocationItemOrderEntity);
 }
 
-async function findByUser(blueprintIdentifier: string, username: string): Promise<UserLocationOrderEntity[]> {
+async function findByUser(blueprintIdentifier: string, username: string): Promise<UserLocationItemOrderEntity[]> {
     return getRepo().find({
         where: { blueprintIdentifier, username },
     });
 }
 
-async function findByUserAndLocation(blueprintIdentifier: string, username: string, locationId: string): Promise<UserLocationOrderEntity | null> {
+async function findByUserAndLocation(blueprintIdentifier: string, username: string, locationId: string): Promise<UserLocationItemOrderEntity | null> {
     return getRepo().findOne({
         where: { blueprintIdentifier, username, locationId },
     });
 }
 
-async function save(entity: UserLocationOrderEntity): Promise<UserLocationOrderEntity> {
+async function save(entity: UserLocationItemOrderEntity): Promise<UserLocationItemOrderEntity> {
     return getRepo().save(entity);
 }
 
@@ -30,7 +30,7 @@ async function removeByUserAndLocation(blueprintIdentifier: string, username: st
     return result.affected ?? 0;
 }
 
-export const UserLocationOrderRepository = {
+export const UserLocationItemOrderRepository = {
     findByUser,
     findByUserAndLocation,
     save,

@@ -2,15 +2,15 @@ import { UserLocationItemKind } from "./user-favorite.type";
 
 export type LocationItemRef = { kind: UserLocationItemKind; refId: string };
 
-export type UserLocationOrder = {
+export type UserLocationItemOrder = {
     locationId: string;
     locationItems: LocationItemRef[];
 };
 
-export type SaveLocationOrderRequest = {
+export type SaveLocationItemOrderRequest = {
     locationItems: LocationItemRef[];
 };
 
-export type LocationOrderParams = {
+export type LocationItemOrderParams = {
     locationId: string;
 };
