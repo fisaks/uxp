@@ -1,9 +1,11 @@
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import SearchIcon from "@mui/icons-material/Search";
+import StarIcon from "@mui/icons-material/Star";
 import { Box, FormControl, InputAdornment, MenuItem, Select, SelectChangeEvent, TextField, useTheme } from "@mui/material";
 import { RuntimeLocation } from "@uhn/common";
 import { usePortalContainerRef } from "@uxp/ui-lib";
 import React from "react";
+import { LOCATION_FAVORITES } from "../../favorite/components/FavoritesSection";
 import { getBlueprintIcon } from "../../view/blueprintIconMap";
 import { APP_BAR_HEIGHT } from "../locationConstants";
 import { useStickyOnScroll } from "../hooks/useStickyOnScroll";
@@ -26,10 +28,11 @@ type LocationSwitcherProps = {
     locations: RuntimeLocation[];
     activeLocationId: string | undefined;
     onLocationSelect: (locationId: string) => void;
+    hasFavorites?: boolean;
 };
 
 export const LocationSwitcher: React.FC<LocationSwitcherProps> = ({
-    locations, activeLocationId, onLocationSelect,
+    locations, activeLocationId, onLocationSelect, hasFavorites,
 }) => {
     const portalContainer = usePortalContainerRef();
     const theme = useTheme();
@@ -79,6 +82,9 @@ export const LocationSwitcher: React.FC<LocationSwitcherProps> = ({
                             if (selected === LOCATION_TOP) {
                                 return <LocationOption icon={ArrowUpwardIcon} label="Top" truncate />;
                             }
+                            if (selected === LOCATION_FAVORITES) {
+                                return <LocationOption icon={StarIcon} label="Favorites" truncate />;
+                            }
                             const loc = locations.find(l => l.id === selected);
                             if (!loc) return null;
                             const Icon = loc.icon ? getBlueprintIcon(loc.icon)?.active : undefined;
@@ -88,6 +94,11 @@ export const LocationSwitcher: React.FC<LocationSwitcherProps> = ({
                         <MenuItem value={LOCATION_TOP}>
                             <LocationOption icon={ArrowUpwardIcon} label="Top" />
                         </MenuItem>
+                        {hasFavorites && (
+                            <MenuItem value={LOCATION_FAVORITES}>
+                                <LocationOption icon={StarIcon} label="Favorites" />
+                            </MenuItem>
+                        )}
                         {locations.map(loc => {
                             const Icon = loc.icon ? getBlueprintIcon(loc.icon)?.active : undefined;
                             return (

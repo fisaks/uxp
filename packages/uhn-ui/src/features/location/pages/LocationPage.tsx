@@ -8,6 +8,8 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { useUHNWebSocket } from "../../../app/UHNAppBrowserWebSocketManager";
+import { useFetchFavoritesQuery } from "../../favorite/favorite.api";
+import { FavoritesSection, LOCATION_FAVORITES } from "../../favorite/components/FavoritesSection";
 import { LocationSection } from "../components/LocationSection";
 import { LOCATION_TOP, LocationSwitcher } from "../components/LocationSwitcher";
 import { useLocationIntersectionObserver } from "../hooks/useLocationIntersectionObserver";
@@ -18,11 +20,19 @@ export const LocationPage = () => {
     const navigate = useNavigate();
     const { sendMessageAsync } = useUHNWebSocket();
     const locations = useSelector(selectAllLocations);
+    const { data: favorites } = useFetchFavoritesQuery();
+    const hasFavorites = (favorites?.length ?? 0) > 0;
     const [loading, setLoading] = useState(false);
     const locationIds = useMemo(() => locations.map(l => l.id), [locations]);
 
+    // Include favorites in the section IDs for IntersectionObserver tracking
+    const allSectionIds = useMemo(
+        () => hasFavorites ? [LOCATION_FAVORITES, ...locationIds] : locationIds,
+        [hasFavorites, locationIds],
+    );
+
     const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
-    const allExpanded = locationIds.length > 0 && expandedIds.size >= locationIds.length;
+    const allExpanded = allSectionIds.length > 0 && expandedIds.size >= allSectionIds.length;
 
     const toggleSection = useCallback((id: string) => {
         setExpandedIds(prev => {
@@ -37,13 +47,13 @@ export const LocationPage = () => {
         if (allExpanded) {
             setExpandedIds(new Set());
         } else {
-            setExpandedIds(new Set(locationIds));
+            setExpandedIds(new Set(allSectionIds));
         }
-    }, [allExpanded, locationIds]);
+    }, [allExpanded, allSectionIds]);
 
     const pageHeaderRef = useRef<HTMLDivElement>(null);
     const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
-    const activeLocationId = useLocationIntersectionObserver(sectionRefs, locationIds);
+    const activeLocationId = useLocationIntersectionObserver(sectionRefs, allSectionIds);
 
     // When the user picks a location from the switcher, smooth scrolling takes
     // ~800ms to reach the target section. During that animation the intersection
@@ -106,9 +116,18 @@ export const LocationPage = () => {
                     <>
                         <LocationSwitcher
                             locations={locations}
-                            activeLocationId={displayActiveId ?? locationIds[0]}
+                            activeLocationId={displayActiveId ?? allSectionIds[0]}
                             onLocationSelect={handleSwitcherSelect}
+                            hasFavorites={hasFavorites}
                         />
+                        {hasFavorites && (
+                            <FavoritesSection
+                                favorites={favorites!}
+                                sectionRef={(el) => { sectionRefs.current[LOCATION_FAVORITES] = el; }}
+                                expanded={expandedIds.has(LOCATION_FAVORITES)}
+                                onExpandToggle={() => toggleSection(LOCATION_FAVORITES)}
+                            />
+                        )}
                         {locations.map(location => (
                             <LocationSection
                                 key={location.id}

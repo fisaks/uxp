@@ -2,6 +2,7 @@ import { Box, Collapse, Grid2 } from "@mui/material";
 import { RuntimeLocation, RuntimeLocationItem } from "@uhn/common";
 import React from "react";
 import { useSelector } from "react-redux";
+import { useFavoriteSet, useToggleFavorite } from "../../favorite/favoriteHooks";
 import { wideGridItemSx } from "../../shared/tileGridSx";
 import { selectResourceById } from "../../resource/resourceSelector";
 import { selectRuntimeStateByResourceId } from "../../runtime-state/runtimeStateSelector";
@@ -27,6 +28,8 @@ export const LocationSection: React.FC<LocationSectionProps> = ({ location, sect
     const resourceById = useSelector(selectResourceById);
     const stateById = useSelector(selectRuntimeStateByResourceId);
     const scenesById = useSelector(selectScenesById);
+    const favoriteSet = useFavoriteSet();
+    const toggleFavorite = useToggleFavorite();
 
     const firstRowItems = location.items.slice(0, tilesPerRow);
     const overflowItems = location.items.slice(tilesPerRow);
@@ -41,6 +44,8 @@ export const LocationSection: React.FC<LocationSectionProps> = ({ location, sect
                 resourceById={resourceById}
                 stateById={stateById}
                 scenesById={scenesById}
+                isFavorite={favoriteSet.has(`${item.kind}:${item.refId}`)}
+                onToggleFavorite={() => toggleFavorite(item.kind, item.refId)}
             />
         </Grid2>
     );

@@ -1,0 +1,119 @@
+import { closestCenter, DndContext, DragEndEvent, MouseSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { arrayMove, rectSortingStrategy, SortableContext } from "@dnd-kit/sortable";
+import { Box, Collapse, Grid2 } from "@mui/material";
+import { RuntimeLocationItem, UserFavorite } from "@uhn/common";
+import React, { useCallback, useMemo } from "react";
+import { useSelector } from "react-redux";
+import { selectResourceById } from "../../resource/resourceSelector";
+import { selectRuntimeStateByResourceId } from "../../runtime-state/runtimeStateSelector";
+import { selectScenesById } from "../../scene/sceneSelectors";
+import { selectViewsWithStateById } from "../../view/viewSelectors";
+import { STICKY_OFFSET } from "../../location/locationConstants";
+import { useVisibleTileCount } from "../../location/hooks/useVisibleTileCount";
+import { useReorderFavoritesMutation } from "../favorite.api";
+import { useToggleFavorite } from "../favoriteHooks";
+import { FavoritesSectionHeader } from "./FavoritesSectionHeader";
+import { SortableFavoriteTile } from "./SortableFavoriteTile";
+
+export const LOCATION_FAVORITES = "__favorites__";
+
+type FavoritesSectionProps = {
+    favorites: UserFavorite[];
+    sectionRef: React.Ref<HTMLDivElement>;
+    expanded: boolean;
+    onExpandToggle: () => void;
+};
+
+export const FavoritesSection: React.FC<FavoritesSectionProps> = ({
+    favorites, sectionRef, expanded, onExpandToggle,
+}) => {
+    const tilesPerRow = useVisibleTileCount();
+    const toggleFavorite = useToggleFavorite();
+    const [reorderFavorites] = useReorderFavoritesMutation();
+
+    const viewsById = useSelector(selectViewsWithStateById);
+    const resourceById = useSelector(selectResourceById);
+    const stateById = useSelector(selectRuntimeStateByResourceId);
+    const scenesById = useSelector(selectScenesById);
+
+    const firstRowFavs = favorites.slice(0, tilesPerRow);
+    const overflowFavs = favorites.slice(tilesPerRow);
+    const hasOverflow = favorites.length > tilesPerRow;
+
+    const sortableIds = useMemo(
+        () => favorites.map(f => String(f.id)),
+        [favorites],
+    );
+
+    const sensors = useSensors(
+        useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
+        useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } }),
+    );
+
+    const handleDragEnd = useCallback((event: DragEndEvent) => {
+        const { active, over } = event;
+        if (!over || active.id === over.id) return;
+
+        const oldIndex = sortableIds.indexOf(String(active.id));
+        const newIndex = sortableIds.indexOf(String(over.id));
+        if (oldIndex === -1 || newIndex === -1) return;
+
+        const newOrder = arrayMove(sortableIds, oldIndex, newIndex);
+        reorderFavorites(newOrder.map(Number));
+    }, [sortableIds, reorderFavorites]);
+
+    const toItem = (fav: UserFavorite): RuntimeLocationItem => ({
+        kind: fav.itemKind,
+        refId: fav.itemRefId,
+    });
+
+    if (favorites.length === 0) return null;
+
+    return (
+        <Box ref={sectionRef} data-location-id={LOCATION_FAVORITES} sx={{ mb: 4, scrollMarginTop: `${STICKY_OFFSET}px` }}>
+            <FavoritesSectionHeader
+                expanded={expanded}
+                onExpandToggle={onExpandToggle}
+                totalItems={favorites.length}
+                visibleItems={Math.min(favorites.length, tilesPerRow)}
+                hasOverflow={hasOverflow}
+            />
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                <SortableContext items={sortableIds} strategy={rectSortingStrategy}>
+                    <Grid2 container spacing={2} sx={{ width: "100%", margin: 0 }}>
+                        {firstRowFavs.map(fav => (
+                            <SortableFavoriteTile
+                                key={fav.id}
+                                id={String(fav.id)}
+                                item={toItem(fav)}
+                                viewsById={viewsById}
+                                resourceById={resourceById}
+                                stateById={stateById}
+                                scenesById={scenesById}
+                                onToggleFavorite={() => toggleFavorite(fav.itemKind, fav.itemRefId)}
+                            />
+                        ))}
+                    </Grid2>
+                    {hasOverflow && (
+                        <Collapse in={expanded} timeout="auto" unmountOnExit>
+                            <Grid2 container spacing={2} sx={{ width: "100%", margin: 0, mt: 2 }}>
+                                {overflowFavs.map(fav => (
+                                    <SortableFavoriteTile
+                                        key={fav.id}
+                                        id={String(fav.id)}
+                                        item={toItem(fav)}
+                                        viewsById={viewsById}
+                                        resourceById={resourceById}
+                                        stateById={stateById}
+                                        scenesById={scenesById}
+                                        onToggleFavorite={() => toggleFavorite(fav.itemKind, fav.itemRefId)}
+                                    />
+                                ))}
+                            </Grid2>
+                        </Collapse>
+                    )}
+                </SortableContext>
+            </DndContext>
+        </Box>
+    );
+};

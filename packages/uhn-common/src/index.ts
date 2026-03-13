@@ -12,3 +12,5 @@ export * from "./util/resource.util";
 export * from "./errors/rule-runtime.error";
 export * from "./types/api-token.type";
 export * from "./schemas/api-token.schema";
+export * from "./types/user-favorite.type";
+export * from "./schemas/user-favorite.schema";
