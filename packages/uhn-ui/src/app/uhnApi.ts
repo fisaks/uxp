@@ -11,6 +11,7 @@ export const uhnApi = createApi({
     'ApiTokens',
     'Favorites',
     'LocationOrders',
+    'LocationSectionOrder',
   ],
   endpoints: () => ({}), // Empty, features will inject endpoints
 });

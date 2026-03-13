@@ -1,5 +1,6 @@
 import HomeIcon from "@mui/icons-material/Home";
 import SettingsIcon from "@mui/icons-material/Settings";
+import SwapVertIcon from "@mui/icons-material/SwapVert";
 import UnfoldLessIcon from "@mui/icons-material/UnfoldLess";
 import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore";
 import { Box, IconButton, Typography } from "@mui/material";
@@ -13,21 +14,29 @@ import { useFetchFavoritesQuery } from "../../favorite/favorite.api";
 import { FavoritesSection, LOCATION_FAVORITES } from "../../favorite/components/FavoritesSection";
 import { LocationSection } from "../components/LocationSection";
 import { LOCATION_TOP, LocationSwitcher } from "../components/LocationSwitcher";
+import { ReorderLocationsDialog } from "../components/ReorderLocationsDialog";
 import { useLocationIntersectionObserver } from "../hooks/useLocationIntersectionObserver";
+import { useOrderedLocations } from "../hooks/useOrderedLocations";
 import { useFetchLocationOrdersQuery, useSaveLocationOrderMutation, useDeleteLocationOrderMutation } from "../location-order.api";
+import { useFetchLocationSectionOrderQuery } from "../location-section-order.api";
 import { SCROLL_OVERRIDE_TIMEOUT } from "../locationConstants";
 import { selectAllLocations } from "../locationSelectors";
 
 export const LocationPage = () => {
     const navigate = useNavigate();
     const { sendMessageAsync } = useUHNWebSocket();
-    const locations = useSelector(selectAllLocations);
+    const blueprintLocations = useSelector(selectAllLocations);
     const { data: favorites } = useFetchFavoritesQuery();
     const { data: locationOrders } = useFetchLocationOrdersQuery();
+    const { data: locationSectionOrder } = useFetchLocationSectionOrderQuery();
     const [saveLocationOrder] = useSaveLocationOrderMutation();
     const [deleteLocationOrder] = useDeleteLocationOrderMutation();
     const hasFavorites = (favorites?.length ?? 0) > 0;
     const [loading, setLoading] = useState(false);
+    const [reorderDialogOpen, setReorderDialogOpen] = useState(false);
+
+    const savedLocationSectionIds = locationSectionOrder?.locationIds;
+    const locations = useOrderedLocations(blueprintLocations, savedLocationSectionIds?.length ? savedLocationSectionIds : undefined);
     const locationIds = useMemo(() => locations.map(l => l.id), [locations]);
 
     /** Maps locationId → saved item order for quick lookup per section. */
@@ -127,8 +136,13 @@ export const LocationPage = () => {
                 <ReloadIconButton isLoading={loading} reload={refetch} />
                 <IconButton onClick={toggleAll}
                     title={allExpanded ? "Collapse all" : "Expand all"}
-                    sx={{ color: "text.secondary" }}>
+                    sx={{ color: "primary.main" }}>
                     {allExpanded ? <UnfoldLessIcon /> : <UnfoldMoreIcon />}
+                </IconButton>
+                <IconButton onClick={() => setReorderDialogOpen(true)}
+                    title="Reorder locations"
+                    sx={{ color: "primary.main" }}>
+                    <SwapVertIcon />
                 </IconButton>
                 <IconButton onClick={() => navigate("/technical")} title="Technical"
                     sx={{ color: "primary.main" }}>
@@ -173,6 +187,10 @@ export const LocationPage = () => {
                     </Typography>
                 )}
             </Box>
+            <ReorderLocationsDialog
+                open={reorderDialogOpen}
+                onClose={() => setReorderDialogOpen(false)}
+            />
         </Box>
     );
 };

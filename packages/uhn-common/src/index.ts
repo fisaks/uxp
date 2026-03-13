@@ -16,3 +16,5 @@ export * from "./types/user-favorite.type";
 export * from "./schemas/user-favorite.schema";
 export * from "./types/user-location-order.type";
 export * from "./schemas/user-location-order.schema";
+export * from "./types/user-location-section-order.type";
+export * from "./schemas/user-location-section-order.schema";
