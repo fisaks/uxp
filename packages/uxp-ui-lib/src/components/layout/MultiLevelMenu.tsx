@@ -1,4 +1,4 @@
-import { Button, IconButton, Menu, ModalProps, Tooltip } from "@mui/material";
+import { Button, IconButton, Menu, ModalProps, SxProps, Theme, Tooltip } from "@mui/material";
 import React, { MouseEventHandler, useMemo, useState } from "react";
 import { MenuItemType, RecursiveMenuItem } from "./RecursiveMenuItem";
 
@@ -7,6 +7,7 @@ interface MultiLevelMenuProps<T = void> {
     itemData?: T;
     triggerLabel?: string;
     triggerIcon?: React.ReactNode;
+    triggerSx?: SxProps<Theme>;
     tooltipText?: string;
     container?: ModalProps["container"];
     onClick?: MouseEventHandler<HTMLButtonElement> | undefined;
@@ -17,6 +18,7 @@ const MultiLevelMenu = <T,>({
     menuItems,
     triggerLabel,
     triggerIcon,
+    triggerSx,
     tooltipText,
     container,
     onClick,
@@ -43,7 +45,7 @@ const MultiLevelMenu = <T,>({
                 <span>
                     {" "}
                     {/* Ensures tooltip works for disabled elements */}
-                    {triggerIcon ? <IconButton onClick={handleMenuOpen}>{triggerIcon}</IconButton> : null}
+                    {triggerIcon ? <IconButton onClick={handleMenuOpen} sx={triggerSx}>{triggerIcon}</IconButton> : null}
                     {triggerLabel ? <Button onClick={handleMenuOpen}>{triggerLabel}</Button> : null}
                 </span>
             </Tooltip>

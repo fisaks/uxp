@@ -33,7 +33,7 @@ export const ReloadIconButton = ({ reload, isLoading }: ReloadIconButtonProps) =
                         aria-label="reload settings"
                         onClick={onClick}
                         disabled={isLoading}
-                        sx={{ color: theme.palette.primary.main }}
+                        sx={{ color: theme.palette.primary.main, "&:hover": { bgcolor: "action.hover" } }}
                     >
                         {showLoading ? <Loading size={20} /> : <RefreshIcon />}
                     </IconButton>

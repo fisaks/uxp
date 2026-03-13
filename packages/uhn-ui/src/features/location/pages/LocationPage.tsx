@@ -136,16 +136,16 @@ export const LocationPage = () => {
                 <ReloadIconButton isLoading={loading} reload={refetch} />
                 <IconButton onClick={toggleAll}
                     title={allExpanded ? "Collapse all" : "Expand all"}
-                    sx={{ color: "primary.main" }}>
+                    sx={{ color: "primary.main", "&:hover": { bgcolor: "action.hover" } }}>
                     {allExpanded ? <UnfoldLessIcon /> : <UnfoldMoreIcon />}
                 </IconButton>
                 <IconButton onClick={() => setReorderDialogOpen(true)}
                     title="Reorder locations"
-                    sx={{ color: "primary.main" }}>
+                    sx={{ color: "primary.main", "&:hover": { bgcolor: "action.hover" } }}>
                     <SwapVertIcon />
                 </IconButton>
                 <IconButton onClick={() => navigate("/technical")} title="Technical"
-                    sx={{ color: "primary.main" }}>
+                    sx={{ color: "primary.main", "&:hover": { bgcolor: "action.hover" } }}>
                     <SettingsIcon />
                 </IconButton>
             </Box>

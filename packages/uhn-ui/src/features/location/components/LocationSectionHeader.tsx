@@ -64,13 +64,14 @@ export const LocationSectionHeader: React.FC<LocationSectionHeaderProps> = ({
                 </Typography>
             )}
             {hasOverflow && (
-                <IconButton size="small" sx={{ color: "text.secondary" }} onClick={(e) => { e.stopPropagation(); onExpandToggle(); }}>
+                <IconButton size="small" sx={{ color: "text.secondary", "&:hover": { bgcolor: "action.hover" } }} onClick={(e) => { e.stopPropagation(); onExpandToggle(); }}>
                     {expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
                 </IconButton>
             )}
             <div onClick={(e) => e.stopPropagation()} style={{ marginLeft: "auto", visibility: hasCustomOrder ? "visible" : "hidden" }}>
                 <MultiLevelMenu
                     triggerIcon={<MoreVertIcon />}
+                    triggerSx={{ color: "text.secondary", "&:hover": { bgcolor: "action.hover" } }}
                     tooltipText="Actions"
                     container={portalContainer.current}
                     menuItems={menuItems}
