@@ -29,6 +29,14 @@ export class UserFavoriteController {
         return { id };
     }
 
+    @Route("delete", "/user/favorites", { authenticate: true })
+    @UseQueryRunner({ transactional: true })
+    async removeAllFavorites(req: FastifyRequest, _reply: FastifyReply) {
+        const user = req.user as Token;
+        const count = await userFavoriteService.removeAllFavorites(user.username);
+        return { count };
+    }
+
     @Route("put", "/user/favorites/reorder", { authenticate: true, schema: ReorderFavoritesSchema })
     @UseQueryRunner({ transactional: true })
     async reorderFavorites(req: FastifyRequest<{ Body: ReorderFavoritesRequest }>, _reply: FastifyReply) {

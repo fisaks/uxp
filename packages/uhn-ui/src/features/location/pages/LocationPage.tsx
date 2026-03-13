@@ -3,6 +3,7 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import UnfoldLessIcon from "@mui/icons-material/UnfoldLess";
 import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore";
 import { Box, IconButton, Typography } from "@mui/material";
+import { LocationItemRef } from "@uhn/common";
 import { ReloadIconButton } from "@uxp/ui-lib";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useSelector } from "react-redux";
@@ -13,6 +14,7 @@ import { FavoritesSection, LOCATION_FAVORITES } from "../../favorite/components/
 import { LocationSection } from "../components/LocationSection";
 import { LOCATION_TOP, LocationSwitcher } from "../components/LocationSwitcher";
 import { useLocationIntersectionObserver } from "../hooks/useLocationIntersectionObserver";
+import { useFetchLocationOrdersQuery, useSaveLocationOrderMutation, useDeleteLocationOrderMutation } from "../location-order.api";
 import { SCROLL_OVERRIDE_TIMEOUT } from "../locationConstants";
 import { selectAllLocations } from "../locationSelectors";
 
@@ -21,9 +23,23 @@ export const LocationPage = () => {
     const { sendMessageAsync } = useUHNWebSocket();
     const locations = useSelector(selectAllLocations);
     const { data: favorites } = useFetchFavoritesQuery();
+    const { data: locationOrders } = useFetchLocationOrdersQuery();
+    const [saveLocationOrder] = useSaveLocationOrderMutation();
+    const [deleteLocationOrder] = useDeleteLocationOrderMutation();
     const hasFavorites = (favorites?.length ?? 0) > 0;
     const [loading, setLoading] = useState(false);
     const locationIds = useMemo(() => locations.map(l => l.id), [locations]);
+
+    /** Maps locationId → saved item order for quick lookup per section. */
+    const locationOrderMap = useMemo(() => {
+        const map = new Map<string, LocationItemRef[]>();
+        if (locationOrders) {
+            for (const order of locationOrders) {
+                map.set(order.locationId, order.locationItems);
+            }
+        }
+        return map;
+    }, [locationOrders]);
 
     // Include favorites in the section IDs for IntersectionObserver tracking
     const allSectionIds = useMemo(
@@ -83,6 +99,14 @@ export const LocationPage = () => {
         }
     }, []);
 
+    const handleLocationReorder = useCallback((locationId: string, locationItems: LocationItemRef[]) => {
+        saveLocationOrder({ locationId, locationItems });
+    }, [saveLocationOrder]);
+
+    const handleResetLocationOrder = useCallback((locationId: string) => {
+        deleteLocationOrder(locationId);
+    }, [deleteLocationOrder]);
+
     const displayActiveId = scrollOverrideRef.current ?? activeLocationId;
 
     const refetch = async () => {
@@ -132,9 +156,12 @@ export const LocationPage = () => {
                             <LocationSection
                                 key={location.id}
                                 location={location}
+                                savedOrder={locationOrderMap.get(location.id)}
                                 sectionRef={(el) => { sectionRefs.current[location.id] = el; }}
                                 expanded={expandedIds.has(location.id)}
                                 onExpandToggle={() => toggleSection(location.id)}
+                                onReorder={(locationItems) => handleLocationReorder(location.id, locationItems)}
+                                onResetOrder={() => handleResetLocationOrder(location.id)}
                             />
                         ))}
                         {/* Ensures the last section can scroll fully to the top */}

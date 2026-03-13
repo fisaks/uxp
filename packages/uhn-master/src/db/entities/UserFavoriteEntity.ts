@@ -1,4 +1,4 @@
-import { UserFavoriteItemKind } from '@uhn/common';
+import { UserLocationItemKind } from '@uhn/common';
 import { DateTime } from 'luxon';
 import {
     Column,
@@ -9,8 +9,8 @@ import {
 } from 'typeorm';
 
 @Entity({ name: 'user_favorite' })
-@Index("IDX_USER_FAV_UNIQUE", ["username", "itemKind", "itemRefId"], { unique: true })
-@Index("IDX_USER_FAV_USER", ["username"])
+@Index("IDX_USER_FAV_UNIQUE", ["blueprintIdentifier", "username", "itemKind", "itemRefId"], { unique: true })
+@Index("IDX_USER_FAV_USER", ["blueprintIdentifier", "username"])
 export class UserFavoriteEntity {
 
     constructor(init?: Partial<UserFavoriteEntity>) {
@@ -20,11 +20,14 @@ export class UserFavoriteEntity {
     @PrimaryGeneratedColumn()
     id!: number;
 
+    @Column({ type: 'varchar', length: 128, nullable: false })
+    blueprintIdentifier!: string;
+
     @Column({ type: 'varchar', length: 64, nullable: false })
     username!: string;
 
     @Column({ type: 'enum', enum: ['resource', 'view', 'scene'], nullable: false })
-    itemKind!: UserFavoriteItemKind;
+    itemKind!: UserLocationItemKind;
 
     @Column({ type: 'varchar', length: 128, nullable: false })
     itemRefId!: string;

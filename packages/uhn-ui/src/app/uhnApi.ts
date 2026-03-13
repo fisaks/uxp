@@ -10,6 +10,7 @@ export const uhnApi = createApi({
     'BlueprintActivations',
     'ApiTokens',
     'Favorites',
+    'LocationOrders',
   ],
   endpoints: () => ({}), // Empty, features will inject endpoints
 });

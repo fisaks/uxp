@@ -1,4 +1,4 @@
-import { UserFavoriteItemKind } from "@uhn/common";
+import { UserLocationItemKind } from "@uhn/common";
 import { useCallback, useMemo } from "react";
 import { useAddFavoriteMutation, useFetchFavoritesQuery, useRemoveFavoriteMutation } from "./favorite.api";
 
@@ -17,7 +17,7 @@ export function useToggleFavorite() {
     const [addFavorite] = useAddFavoriteMutation();
     const [removeFavorite] = useRemoveFavoriteMutation();
 
-    return useCallback((itemKind: UserFavoriteItemKind, itemRefId: string) => {
+    return useCallback((itemKind: UserLocationItemKind, itemRefId: string) => {
         const existing = favorites?.find(f => f.itemKind === itemKind && f.itemRefId === itemRefId);
         if (existing) {
             removeFavorite(existing.id);

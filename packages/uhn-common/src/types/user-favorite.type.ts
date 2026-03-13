@@ -1,14 +1,14 @@
-export type UserFavoriteItemKind = "resource" | "view" | "scene";
+export type UserLocationItemKind = "resource" | "view" | "scene";
 
 export type UserFavorite = {
     id: number;
-    itemKind: UserFavoriteItemKind;
+    itemKind: UserLocationItemKind;
     itemRefId: string;
     sortOrder: number;
 };
 
 export type AddFavoriteRequest = {
-    itemKind: UserFavoriteItemKind;
+    itemKind: UserLocationItemKind;
     itemRefId: string;
 };
 

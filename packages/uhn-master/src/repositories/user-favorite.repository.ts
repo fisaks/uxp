@@ -1,4 +1,4 @@
-import { UserFavoriteItemKind } from "@uhn/common";
+import { UserLocationItemKind } from "@uhn/common";
 import { AppErrorV2, getRequestContext } from "@uxp/bff-common";
 import { UserFavoriteEntity } from "../db/entities/UserFavoriteEntity";
 
@@ -10,16 +10,16 @@ function getRepo() {
     return queryRunner.manager.getRepository(UserFavoriteEntity);
 }
 
-async function findByUser(username: string): Promise<UserFavoriteEntity[]> {
+async function findByUser(blueprintIdentifier: string, username: string): Promise<UserFavoriteEntity[]> {
     return getRepo().find({
-        where: { username },
+        where: { blueprintIdentifier, username },
         order: { sortOrder: "ASC" },
     });
 }
 
-async function findByUserAndItem(username: string, itemKind: UserFavoriteItemKind, itemRefId: string): Promise<UserFavoriteEntity | null> {
+async function findByUserAndItem(blueprintIdentifier: string, username: string, itemKind: UserLocationItemKind, itemRefId: string): Promise<UserFavoriteEntity | null> {
     return getRepo().findOne({
-        where: { username, itemKind, itemRefId },
+        where: { blueprintIdentifier, username, itemKind, itemRefId },
     });
 }
 
@@ -37,11 +37,16 @@ async function remove(entity: UserFavoriteEntity): Promise<UserFavoriteEntity> {
     return getRepo().remove(entity);
 }
 
-async function getMaxSortOrder(username: string): Promise<number> {
+async function removeAllByUser(blueprintIdentifier: string, username: string): Promise<number> {
+    const result = await getRepo().delete({ blueprintIdentifier, username });
+    return result.affected ?? 0;
+}
+
+async function getMaxSortOrder(blueprintIdentifier: string, username: string): Promise<number> {
     const result = await getRepo()
         .createQueryBuilder("fav")
         .select("MAX(fav.sortOrder)", "maxOrder")
-        .where("fav.username = :username", { username })
+        .where("fav.blueprintIdentifier = :blueprintIdentifier AND fav.username = :username", { blueprintIdentifier, username })
         .getRawOne();
     return result?.maxOrder ?? -1;
 }
@@ -52,5 +57,6 @@ export const UserFavoriteRepository = {
     findByIdAndUser,
     save,
     remove,
+    removeAllByUser,
     getMaxSortOrder,
 };

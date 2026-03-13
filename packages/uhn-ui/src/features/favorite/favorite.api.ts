@@ -1,4 +1,4 @@
-import { UserFavorite, UserFavoriteItemKind } from "@uhn/common";
+import { UserFavorite, UserLocationItemKind } from "@uhn/common";
 import { uhnApi } from "../../app/uhnApi";
 import { getBaseUrl } from "../../config";
 
@@ -9,7 +9,7 @@ export const favoriteApi = uhnApi.injectEndpoints({
             providesTags: ["Favorites"],
         }),
 
-        addFavorite: builder.mutation<UserFavorite, { itemKind: UserFavoriteItemKind; itemRefId: string }>({
+        addFavorite: builder.mutation<UserFavorite, { itemKind: UserLocationItemKind; itemRefId: string }>({
             query: ({ itemKind, itemRefId }) => ({
                 url: `${getBaseUrl()}/api/user/favorites`,
                 method: "POST",
@@ -21,6 +21,14 @@ export const favoriteApi = uhnApi.injectEndpoints({
         removeFavorite: builder.mutation<{ id: number }, number>({
             query: (id) => ({
                 url: `${getBaseUrl()}/api/user/favorites/${id}`,
+                method: "DELETE",
+            }),
+            invalidatesTags: ["Favorites"],
+        }),
+
+        removeAllFavorites: builder.mutation<{ count: number }, void>({
+            query: () => ({
+                url: `${getBaseUrl()}/api/user/favorites`,
                 method: "DELETE",
             }),
             invalidatesTags: ["Favorites"],
@@ -66,5 +74,6 @@ export const {
     useFetchFavoritesQuery,
     useAddFavoriteMutation,
     useRemoveFavoriteMutation,
+    useRemoveAllFavoritesMutation,
     useReorderFavoritesMutation,
 } = favoriteApi;

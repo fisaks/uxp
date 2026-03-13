@@ -8,12 +8,13 @@ import { selectResourceById } from "../../resource/resourceSelector";
 import { selectRuntimeStateByResourceId } from "../../runtime-state/runtimeStateSelector";
 import { selectScenesById } from "../../scene/sceneSelectors";
 import { selectViewsWithStateById } from "../../view/viewSelectors";
+import { LocationItemTile } from "../../location/components/LocationItemTile";
 import { STICKY_OFFSET } from "../../location/locationConstants";
 import { useVisibleTileCount } from "../../location/hooks/useVisibleTileCount";
+import { SortableTile } from "../../shared/components/SortableTile";
 import { useReorderFavoritesMutation } from "../favorite.api";
 import { useToggleFavorite } from "../favoriteHooks";
 import { FavoritesSectionHeader } from "./FavoritesSectionHeader";
-import { SortableFavoriteTile } from "./SortableFavoriteTile";
 
 export const LOCATION_FAVORITES = "__favorites__";
 
@@ -67,6 +68,20 @@ export const FavoritesSection: React.FC<FavoritesSectionProps> = ({
         refId: fav.itemRefId,
     });
 
+    const renderTile = (fav: UserFavorite) => (
+        <SortableTile key={fav.id} id={String(fav.id)}>
+            <LocationItemTile
+                item={toItem(fav)}
+                viewsById={viewsById}
+                resourceById={resourceById}
+                stateById={stateById}
+                scenesById={scenesById}
+                isFavorite
+                onToggleFavorite={() => toggleFavorite(fav.itemKind, fav.itemRefId)}
+            />
+        </SortableTile>
+    );
+
     if (favorites.length === 0) return null;
 
     return (
@@ -81,34 +96,12 @@ export const FavoritesSection: React.FC<FavoritesSectionProps> = ({
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                 <SortableContext items={sortableIds} strategy={rectSortingStrategy}>
                     <Grid2 container spacing={2} sx={{ width: "100%", margin: 0 }}>
-                        {firstRowFavs.map(fav => (
-                            <SortableFavoriteTile
-                                key={fav.id}
-                                id={String(fav.id)}
-                                item={toItem(fav)}
-                                viewsById={viewsById}
-                                resourceById={resourceById}
-                                stateById={stateById}
-                                scenesById={scenesById}
-                                onToggleFavorite={() => toggleFavorite(fav.itemKind, fav.itemRefId)}
-                            />
-                        ))}
+                        {firstRowFavs.map(renderTile)}
                     </Grid2>
                     {hasOverflow && (
                         <Collapse in={expanded} timeout="auto" unmountOnExit>
                             <Grid2 container spacing={2} sx={{ width: "100%", margin: 0, mt: 2 }}>
-                                {overflowFavs.map(fav => (
-                                    <SortableFavoriteTile
-                                        key={fav.id}
-                                        id={String(fav.id)}
-                                        item={toItem(fav)}
-                                        viewsById={viewsById}
-                                        resourceById={resourceById}
-                                        stateById={stateById}
-                                        scenesById={scenesById}
-                                        onToggleFavorite={() => toggleFavorite(fav.itemKind, fav.itemRefId)}
-                                    />
-                                ))}
+                                {overflowFavs.map(renderTile)}
                             </Grid2>
                         </Collapse>
                     )}

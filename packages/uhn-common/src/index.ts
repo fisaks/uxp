@@ -14,3 +14,5 @@ export * from "./types/api-token.type";
 export * from "./schemas/api-token.schema";
 export * from "./types/user-favorite.type";
 export * from "./schemas/user-favorite.schema";
+export * from "./types/user-location-order.type";
+export * from "./schemas/user-location-order.schema";
