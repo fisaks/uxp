@@ -8,8 +8,8 @@ import {
     UpdateDateColumn,
 } from 'typeorm';
 
-@Entity({ name: 'user_section_order' })
-@Index("IDX_USER_SECTION_ORDER_UNIQUE", ["blueprintIdentifier", "username"], { unique: true })
+@Entity({ name: 'user_location_section_order' })
+@Index("IDX_USER_LOC_SECTION_ORDER_UNIQUE", ["blueprintIdentifier", "username"], { unique: true })
 export class UserLocationSectionOrderEntity {
 
     constructor(init?: Partial<UserLocationSectionOrderEntity>) {
