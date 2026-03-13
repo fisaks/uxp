@@ -19,12 +19,8 @@ export const FavoriteStarButton: React.FC<FavoriteStarButtonProps> = ({ isFavori
             right: 4,
             zIndex: 1,
             color: isFavorite ? "warning.main" : "action.disabled",
-            bgcolor: "background.paper",
-            opacity: isFavorite ? 1 : 0,
-            transition: "opacity 0.2s",
-            "&:hover": { bgcolor: "background.paper", color: "warning.main" },
-            "@media (hover: none)": { opacity: 1 },
-            ".tile-wrapper:hover &": { opacity: 1 },
+            bgcolor: "transparent",
+            "&:hover": { bgcolor: "action.hover", color: "warning.main" },
             p: 0.5,
         }}
     >
