@@ -17,6 +17,7 @@ export const FavoriteStarButton: React.FC<FavoriteStarButtonProps> = ({ isFavori
                 onClick={(e) => { e.stopPropagation(); onToggle(); }}
                 tooltip={isFavorite ? "Remove from favorites" : "Add to favorites"}
                 tooltipPortal={portalContainer}
+                enterDelay={1000}
                 sx={{
                     color: isFavorite ? "warning.main" : "action.disabled",
                     bgcolor: "transparent",

@@ -64,7 +64,7 @@ export const LocationSectionHeader: React.FC<LocationSectionHeaderProps> = ({
                 </Typography>
             )}
             {hasOverflow && (
-                <TooltipIconButton size="small" tooltipPortal={portalContainer} sx={{ color: "text.secondary" }} onClick={(e) => { e.stopPropagation(); onExpandToggle(); }}>
+                <TooltipIconButton size="small" tooltip={expanded ? "Show less" : "Show more"} tooltipPortal={portalContainer} enterDelay={1000} sx={{ color: "text.secondary" }} onClick={(e) => { e.stopPropagation(); onExpandToggle(); }}>
                     {expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
                 </TooltipIconButton>
             )}

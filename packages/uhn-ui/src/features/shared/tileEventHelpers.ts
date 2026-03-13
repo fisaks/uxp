@@ -10,6 +10,7 @@ export const stopPropagation = {
 /** Creates tooltip props with Shadow DOM portal container and standard delays */
 export const createTooltipProps = (container: HTMLElement | null) => ({
     enterDelay: 600,
+    enterNextDelay: 600,
     enterTouchDelay: 0,
     slotProps: { popper: { container } },
 });
