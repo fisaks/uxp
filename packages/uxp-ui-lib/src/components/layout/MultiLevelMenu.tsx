@@ -41,7 +41,7 @@ const MultiLevelMenu = <T,>({
 
     return (
         <div>
-            <Tooltip title={tooltipText || ""} arrow slotProps={slotProps}>
+            <Tooltip title={tooltipText || ""} arrow enterDelay={500} enterNextDelay={500} slotProps={slotProps}>
                 <span>
                     {" "}
                     {/* Ensures tooltip works for disabled elements */}

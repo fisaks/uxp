@@ -5,8 +5,10 @@ type WithOptionalTooltipProps = {
     tooltip?: string;
     portalContainer?: React.RefObject<HTMLElement | null>;
     children: React.ReactElement;
-    error?: boolean
-    success?: boolean
+    error?: boolean;
+    success?: boolean;
+    arrow?: boolean;
+    enterDelay?: number;
 };
 
 export const WithOptionalTooltip: React.FC<WithOptionalTooltipProps> = ({
@@ -14,8 +16,9 @@ export const WithOptionalTooltip: React.FC<WithOptionalTooltipProps> = ({
     children,
     portalContainer,
     error,
-    success
-
+    success,
+    arrow,
+    enterDelay = 500,
 }) => {
     if (!tooltip) return children;
 
@@ -44,6 +47,9 @@ export const WithOptionalTooltip: React.FC<WithOptionalTooltipProps> = ({
     return (
         <Tooltip
             title={tooltip}
+            arrow={arrow}
+            enterDelay={enterDelay}
+            enterNextDelay={enterDelay}
             slotProps={{
                 ...slotProps,
                 ...(error || success ? colorProps : {})

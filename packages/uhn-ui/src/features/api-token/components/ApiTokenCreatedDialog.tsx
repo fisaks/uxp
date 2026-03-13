@@ -15,7 +15,7 @@ import {
     Typography,
 } from "@mui/material";
 import { copyToClipboard } from "@uxp/common";
-import { usePortalContainerRef } from "@uxp/ui-lib";
+import { TooltipIconButton, usePortalContainerRef } from "@uxp/ui-lib";
 import { useCallback, useState } from "react";
 import { useSelector } from "react-redux";
 import { useAppDispatch } from "../../../app/store";
@@ -129,9 +129,9 @@ export const ApiTokenCreatedDialog: React.FC = () => {
                                 },
                             }}
                         />
-                        <IconButton onClick={handleCopyToken} title="Copy token">
+                        <TooltipIconButton onClick={handleCopyToken} tooltip="Copy token" tooltipPortal={portalContainer}>
                             <ContentCopyIcon />
-                        </IconButton>
+                        </TooltipIconButton>
                     </Box>
                     <Typography
                         variant="caption"

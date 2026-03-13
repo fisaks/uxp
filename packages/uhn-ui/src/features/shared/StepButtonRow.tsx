@@ -4,7 +4,8 @@ import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import FirstPageIcon from "@mui/icons-material/FirstPage";
 import LastPageIcon from "@mui/icons-material/LastPage";
 import RemoveIcon from "@mui/icons-material/Remove";
-import { Box, IconButton } from "@mui/material";
+import { Box } from "@mui/material";
+import { TooltipIconButton, usePortalContainerRef } from "@uxp/ui-lib";
 import React from "react";
 
 type StepButtonRowProps = {
@@ -22,7 +23,7 @@ type StepButtonRowProps = {
     mt?: number;
 };
 
-const hoverSx = { "&:hover": { backgroundColor: "action.hover" } };
+const ENTER_DELAY = 1000;
 
 export const StepButtonRow: React.FC<StepButtonRowProps> = ({
     min, max, step, bigStep, localValue, sendExact,
@@ -30,31 +31,38 @@ export const StepButtonRow: React.FC<StepButtonRowProps> = ({
     centerGap = 1.5,
     mt = 0,
 }) => {
+    const portalContainer = usePortalContainerRef();
     const outerSize = iconSize === "small" ? 16 : 18;
     const innerSize = iconSize === "small" ? 14 : 16;
 
     return (
         <Box sx={{ display: "flex", alignItems: "center", flexWrap: "nowrap", mt }}>
-            <IconButton size="small" onClick={() => sendExact(min)} sx={{ p: 0.5, ...hoverSx }}>
+            <TooltipIconButton size="small" onClick={() => sendExact(min)} sx={{ p: 0.5 }}
+                tooltip={`Minimum (${min})`} tooltipPortal={portalContainer} enterDelay={ENTER_DELAY}>
                 <FirstPageIcon sx={{ fontSize: outerSize }} />
-            </IconButton>
-            <IconButton size="small" onClick={() => sendExact(localValue - bigStep)} sx={{ p: 0.5, ...hoverSx }}>
+            </TooltipIconButton>
+            <TooltipIconButton size="small" onClick={() => sendExact(localValue - bigStep)} sx={{ p: 0.5 }}
+                tooltip={`−${bigStep}`} tooltipPortal={portalContainer} enterDelay={ENTER_DELAY}>
                 <ChevronLeftIcon sx={{ fontSize: outerSize }} />
-            </IconButton>
+            </TooltipIconButton>
             <Box sx={{ flex: 1, display: "flex", justifyContent: "center", gap: centerGap }}>
-                <IconButton size="small" onClick={() => sendExact(localValue - step)} sx={{ p: 0.5, ...hoverSx }}>
+                <TooltipIconButton size="small" onClick={() => sendExact(localValue - step)} sx={{ p: 0.5 }}
+                    tooltip={`−${step}`} tooltipPortal={portalContainer} enterDelay={ENTER_DELAY}>
                     <RemoveIcon sx={{ fontSize: innerSize }} />
-                </IconButton>
-                <IconButton size="small" onClick={() => sendExact(localValue + step)} sx={{ p: 0.5, ...hoverSx }}>
+                </TooltipIconButton>
+                <TooltipIconButton size="small" onClick={() => sendExact(localValue + step)} sx={{ p: 0.5 }}
+                    tooltip={`+${step}`} tooltipPortal={portalContainer} enterDelay={ENTER_DELAY}>
                     <AddIcon sx={{ fontSize: innerSize }} />
-                </IconButton>
+                </TooltipIconButton>
             </Box>
-            <IconButton size="small" onClick={() => sendExact(localValue + bigStep)} sx={{ p: 0.5, ...hoverSx }}>
+            <TooltipIconButton size="small" onClick={() => sendExact(localValue + bigStep)} sx={{ p: 0.5 }}
+                tooltip={`+${bigStep}`} tooltipPortal={portalContainer} enterDelay={ENTER_DELAY}>
                 <ChevronRightIcon sx={{ fontSize: outerSize }} />
-            </IconButton>
-            <IconButton size="small" onClick={() => sendExact(max)} sx={{ p: 0.5, ...hoverSx }}>
+            </TooltipIconButton>
+            <TooltipIconButton size="small" onClick={() => sendExact(max)} sx={{ p: 0.5 }}
+                tooltip={`Maximum (${max})`} tooltipPortal={portalContainer} enterDelay={ENTER_DELAY}>
                 <LastPageIcon sx={{ fontSize: outerSize }} />
-            </IconButton>
+            </TooltipIconButton>
         </Box>
     );
 };

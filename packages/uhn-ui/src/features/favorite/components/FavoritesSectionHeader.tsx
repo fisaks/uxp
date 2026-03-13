@@ -3,8 +3,8 @@ import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import StarIcon from "@mui/icons-material/Star";
-import { Box, IconButton, Typography } from "@mui/material";
-import { MenuItemType, MultiLevelMenu, usePortalContainerRef } from "@uxp/ui-lib";
+import { Box, Typography } from "@mui/material";
+import { MenuItemType, MultiLevelMenu, TooltipIconButton, usePortalContainerRef } from "@uxp/ui-lib";
 import React, { useCallback, useMemo, useState } from "react";
 import { useRemoveAllFavoritesMutation } from "../favorite.api";
 import { RemoveAllFavoritesDialog } from "./RemoveAllFavoritesDialog";
@@ -60,16 +60,16 @@ export const FavoritesSectionHeader: React.FC<FavoritesSectionHeaderProps> = ({
                     </Typography>
                 )}
                 {hasOverflow && (
-                    <IconButton size="small" sx={{ color: "text.secondary", "&:hover": { bgcolor: "action.hover" } }}
+                    <TooltipIconButton size="small" tooltipPortal={portalContainer} sx={{ color: "text.secondary" }}
                         onClick={(e) => { e.stopPropagation(); onExpandToggle(); }}>
                         {expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                    </IconButton>
+                    </TooltipIconButton>
                 )}
                 <div onClick={(e) => e.stopPropagation()} style={{ marginLeft: "auto" }}>
                     <MultiLevelMenu
                         triggerIcon={<MoreVertIcon />}
                         triggerSx={{ color: "text.secondary", "&:hover": { bgcolor: "action.hover" } }}
-                        tooltipText="Actions"
+                        tooltipText="Favorites actions"
                         container={portalContainer.current}
                         menuItems={menuItems}
                     />

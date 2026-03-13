@@ -14,6 +14,7 @@ export * from "./forms/GhostHintAutocomplete";
 export * from "./forms/AsyncIconButton";
 export * from "./forms/AsyncButton";
 export * from "./forms/ReadOnlyTextField";
+export * from "./forms/TooltipIconButton";
 
 //.layout
 export * from "./layout/AppBodyContent";

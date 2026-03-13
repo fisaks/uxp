@@ -1,7 +1,7 @@
 import DescriptionIcon from "@mui/icons-material/Description";
 import HistoryIcon from "@mui/icons-material/History";
-import { Box, IconButton, Paper, Typography, useTheme } from "@mui/material";
-import { ReloadIconButton } from "@uxp/ui-lib";
+import { Box, Paper, Typography } from "@mui/material";
+import { ReloadIconButton, TooltipIconButton, usePortalContainerRef } from "@uxp/ui-lib";
 import { useCallback } from "react";
 import { useAppDispatch } from "../../../app/store";
 
@@ -13,7 +13,7 @@ import { BlueprintVersionLogDialog } from "../components/BlueprintVersionLogDial
 
 
 export const BlueprintListPage: React.FC = () => {
-    const theme = useTheme();
+    const portalContainer = usePortalContainerRef();
     const dispatch = useAppDispatch();
     const { isLoading, isFetching,error, refetch } = useFetchBlueprintsQuery();
 
@@ -27,10 +27,11 @@ export const BlueprintListPage: React.FC = () => {
                 <DescriptionIcon sx={{ color: "primary.main" }} />
                 <Typography variant="h1">Blueprints</Typography>
                 <ReloadIconButton isLoading={isFetching} reload={refetch} />
-                <IconButton onClick={showActivationList} title="View Activation History"
-                    sx={{ color: theme.palette.primary.main }}                    >
+                <TooltipIconButton onClick={showActivationList} tooltip="View Activation History"
+                    tooltipPortal={portalContainer}
+                    sx={{ color: "primary.main" }}>
                     <HistoryIcon />
-                </IconButton>
+                </TooltipIconButton>
             </Box>
             <Box mt={2}>
                 <Paper elevation={3} sx={{

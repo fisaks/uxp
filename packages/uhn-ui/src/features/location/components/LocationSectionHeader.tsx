@@ -2,9 +2,9 @@ import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
-import { Box, IconButton, Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { RuntimeLocation } from "@uhn/common";
-import { MenuItemType, MultiLevelMenu, usePortalContainerRef } from "@uxp/ui-lib";
+import { MenuItemType, MultiLevelMenu, TooltipIconButton, usePortalContainerRef } from "@uxp/ui-lib";
 import React, { useMemo } from "react";
 import { getBlueprintIcon } from "../../view/blueprintIconMap";
 
@@ -64,15 +64,15 @@ export const LocationSectionHeader: React.FC<LocationSectionHeaderProps> = ({
                 </Typography>
             )}
             {hasOverflow && (
-                <IconButton size="small" sx={{ color: "text.secondary", "&:hover": { bgcolor: "action.hover" } }} onClick={(e) => { e.stopPropagation(); onExpandToggle(); }}>
+                <TooltipIconButton size="small" tooltipPortal={portalContainer} sx={{ color: "text.secondary" }} onClick={(e) => { e.stopPropagation(); onExpandToggle(); }}>
                     {expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                </IconButton>
+                </TooltipIconButton>
             )}
             <div onClick={(e) => e.stopPropagation()} style={{ marginLeft: "auto", visibility: hasCustomOrder ? "visible" : "hidden" }}>
                 <MultiLevelMenu
                     triggerIcon={<MoreVertIcon />}
                     triggerSx={{ color: "text.secondary", "&:hover": { bgcolor: "action.hover" } }}
-                    tooltipText="Actions"
+                    tooltipText={`${location.name ?? location.id} actions`}
                     container={portalContainer.current}
                     menuItems={menuItems}
                 />

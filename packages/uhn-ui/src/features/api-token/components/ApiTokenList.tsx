@@ -2,7 +2,6 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import {
     Box,
     Chip,
-    IconButton,
     Table,
     TableBody,
     TableCell,
@@ -19,6 +18,7 @@ import {
     LinearFetchLine,
     Loading,
     mapApiErrorsToMessageString,
+    TooltipIconButton,
     usePortalContainerRef,
     withErrorHandler,
     withLoading,
@@ -129,14 +129,15 @@ const ApiTokenRow: React.FC<{ token: ApiTokenInfo }> = ({ token }) => {
                         />
                     )}
                     {!isRevoked && (
-                        <IconButton
+                        <TooltipIconButton
                             onClick={handleRevoke}
-                            title="Revoke token"
+                            tooltip="Revoke token"
+                            tooltipPortal={portalContainer}
                             size="small"
                             color="error"
                         >
                             <DeleteIcon />
-                        </IconButton>
+                        </TooltipIconButton>
                     )}
                 </TableCell>
             </TableRow>

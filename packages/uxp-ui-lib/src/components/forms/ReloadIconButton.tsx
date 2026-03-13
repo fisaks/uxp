@@ -1,15 +1,15 @@
 import RefreshIcon from "@mui/icons-material/Refresh";
-import { IconButton, Tooltip, useTheme } from "@mui/material";
-import { MouseEventHandler, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { MouseEventHandler, useCallback, useEffect, useMemo, useState } from "react";
 import { Loading } from "../layout/Loading";
+import React from "react";
+import { TooltipIconButton } from "./TooltipIconButton";
 
 type ReloadIconButtonProps = {
     reload: MouseEventHandler<HTMLButtonElement>;
     isLoading: boolean;
+    tooltipPortal?: React.RefObject<HTMLElement | null>;
 };
-export const ReloadIconButton = ({ reload, isLoading }: ReloadIconButtonProps) => {
-    const popupContainerRef = useRef<HTMLDivElement>(null);
-    const theme = useTheme();
+export const ReloadIconButton = ({ reload, isLoading, tooltipPortal }: ReloadIconButtonProps) => {
     const [reloadTriggeredFromHere, setReloadTriggeredFromHere] = useState(false);
     const onClick: MouseEventHandler<HTMLButtonElement> = useCallback(
         (e) => {
@@ -26,20 +26,15 @@ export const ReloadIconButton = ({ reload, isLoading }: ReloadIconButtonProps) =
 
     const showLoading = useMemo(() => isLoading && reloadTriggeredFromHere, [isLoading, reloadTriggeredFromHere]);
     return (
-        <div ref={popupContainerRef}>
-            <Tooltip title={showLoading ? "Refreshing..." : "Reload"} slotProps={{ popper: { container: popupContainerRef.current } }}>
-                <span>
-                    <IconButton
-                        aria-label="reload settings"
-                        onClick={onClick}
-                        disabled={isLoading}
-                        sx={{ color: theme.palette.primary.main, "&:hover": { bgcolor: "action.hover" } }}
-                    >
-                        {showLoading ? <Loading size={20} /> : <RefreshIcon />}
-                    </IconButton>
-                </span>
-            </Tooltip>
-        </div>
+        <TooltipIconButton
+            tooltip={showLoading ? "Refreshing..." : "Reload"}
+            tooltipPortal={tooltipPortal}
+            onClick={onClick}
+            disabled={isLoading}
+            sx={{ color: "primary.main" }}
+        >
+            {showLoading ? <Loading size={20} /> : <RefreshIcon />}
+        </TooltipIconButton>
     );
 };
 export default ReloadIconButton;

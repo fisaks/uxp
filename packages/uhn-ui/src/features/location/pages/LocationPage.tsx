@@ -3,9 +3,9 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import SwapVertIcon from "@mui/icons-material/SwapVert";
 import UnfoldLessIcon from "@mui/icons-material/UnfoldLess";
 import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore";
-import { Box, IconButton, Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { LocationItemRef } from "@uhn/common";
-import { ReloadIconButton } from "@uxp/ui-lib";
+import { ReloadIconButton, TooltipIconButton, usePortalContainerRef } from "@uxp/ui-lib";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -24,6 +24,7 @@ import { selectAllLocations } from "../locationSelectors";
 
 export const LocationPage = () => {
     const navigate = useNavigate();
+    const portalContainer = usePortalContainerRef();
     const { sendMessageAsync } = useUHNWebSocket();
     const blueprintLocations = useSelector(selectAllLocations);
     const { data: favorites } = useFetchFavoritesQuery();
@@ -133,21 +134,25 @@ export const LocationPage = () => {
             <Box ref={pageHeaderRef} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <HomeIcon sx={{ color: "primary.main" }} />
                 <Typography variant="h1">Locations</Typography>
-                <ReloadIconButton isLoading={loading} reload={refetch} />
-                <IconButton onClick={toggleAll}
-                    title={allExpanded ? "Collapse all" : "Expand all"}
-                    sx={{ color: "primary.main", "&:hover": { bgcolor: "action.hover" } }}>
+                <ReloadIconButton isLoading={loading} reload={refetch} tooltipPortal={portalContainer} />
+                <TooltipIconButton onClick={toggleAll}
+                    tooltip={allExpanded ? "Collapse all" : "Expand all"}
+                    tooltipPortal={portalContainer}
+                    sx={{ color: "primary.main" }}>
                     {allExpanded ? <UnfoldLessIcon /> : <UnfoldMoreIcon />}
-                </IconButton>
-                <IconButton onClick={() => setReorderDialogOpen(true)}
-                    title="Reorder locations"
-                    sx={{ color: "primary.main", "&:hover": { bgcolor: "action.hover" } }}>
+                </TooltipIconButton>
+                <TooltipIconButton onClick={() => setReorderDialogOpen(true)}
+                    tooltip="Reorder locations"
+                    tooltipPortal={portalContainer}
+                    sx={{ color: "primary.main" }}>
                     <SwapVertIcon />
-                </IconButton>
-                <IconButton onClick={() => navigate("/technical")} title="Technical"
-                    sx={{ color: "primary.main", "&:hover": { bgcolor: "action.hover" } }}>
+                </TooltipIconButton>
+                <TooltipIconButton onClick={() => navigate("/technical")}
+                    tooltip="Technical"
+                    tooltipPortal={portalContainer}
+                    sx={{ color: "primary.main" }}>
                     <SettingsIcon />
-                </IconButton>
+                </TooltipIconButton>
             </Box>
             <Box mt={2}>
                 {locations.length > 0 ? (

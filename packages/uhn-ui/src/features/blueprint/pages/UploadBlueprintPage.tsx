@@ -1,9 +1,9 @@
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import HistoryIcon from "@mui/icons-material/History";
-import { Alert, Button, Checkbox, FormControlLabel, IconButton, Paper, Typography, useTheme } from "@mui/material";
+import { Alert, Button, Checkbox, FormControlLabel, Paper, Typography } from "@mui/material";
 import Box from "@mui/material/Box/Box";
 import { BlueprintUploadResponse } from "@uhn/common";
-import { ErrorCodeMessageMap, FormattedMessageType, ReloadIconButton, UploadProgress, UploadStatus, useUploadTracker } from "@uxp/ui-lib";
+import { ErrorCodeMessageMap, FormattedMessageType, ReloadIconButton, TooltipIconButton, UploadProgress, UploadStatus, usePortalContainerRef, useUploadTracker } from "@uxp/ui-lib";
 
 import { ChangeEvent, FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
@@ -32,7 +32,7 @@ export const UploadBlueprintPage = () => {
     const uploadTracker = useUploadTracker(uploadBlueprint);
     const [file, setFile] = useState<File | null>(null);
     const dispatch = useAppDispatch();
-    const theme = useTheme();
+    const portalContainer = usePortalContainerRef();
     const [uploadStatus, setUploadStatus] = useState<UploadStatus<BlueprintUploadResponse> | undefined>(undefined);
     const blueprintsLoading = useSelector(selectActionIsLoading("blueprint/fetchBlueprints"));
     const blueprintsError = useSelector(selectActionError("blueprint/fetchBlueprints"));
@@ -230,10 +230,11 @@ export const UploadBlueprintPage = () => {
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 3 }}>
                 <Typography variant="h2">Uploaded Blueprints</Typography>
                 <ReloadIconButton isLoading={blueprintsLoading} reload={loadBlueprints} />
-                <IconButton onClick={showActivationList} title="View Activation History"
-                    sx={{ color: theme.palette.primary.main }}                    >
+                <TooltipIconButton onClick={showActivationList} tooltip="View Activation History"
+                    tooltipPortal={portalContainer}
+                    sx={{ color: "primary.main" }}>
                     <HistoryIcon />
-                </IconButton>
+                </TooltipIconButton>
             </Box>
             <Paper
                 elevation={3}
