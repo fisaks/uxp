@@ -88,7 +88,7 @@
 
 1. ~~**Navigation restructuring**~~ ✅ `79a0ca6` — Remove sidebar, locations as home, technical section landing page with badges, breadcrumb navigation, update System Panel quick links.
 2. ~~**Expandable location sections with switcher**~~ ✅ `30a6331` — Collapsed/expandable location sections, sticky search/location switcher with scroll-to and intersection observer, expand/collapse all, JS-based sticky for Shadow DOM, performance (unmountOnExit on collapsed overflow).
-3. **Favorites** *(delayed)* — Top section on home page, per-user stored in DB, behaves like a location, manual drag-and-drop ordering. Includes pinned tile ordering within locations.
+3. ~~**Favorites + location ordering + UI polish**~~ ✅ — Per-user favorites stored in DB with drag-and-drop ordering, favorites section on home page behaving like a location. Per-user location section reorder (drag-and-drop dialog) and per-location item reorder stored in DB. Shadow DOM hover fix for all IconButtons. TooltipIconButton component replacing native browser tooltips with styled MUI tooltips across all pages. Configurable tooltip enterDelay (500ms default, 1000ms for rapid-tap buttons). Arrow tooltips on icon buttons. Location/favorites section headers with contextual tooltip text and 3-dot menu actions.
 4. **Technical section search + deep linking** — Inline free text filter on Resources/Views/Scenes/Rules pages, deep linking to specific items.
 5. **Rules delivery + UI** — Rules page in technical section, master/edge indicator, triggers visible.
 6. **Command palette** — Search input on home, overlay on technical pages, client-side derived commands from location-assigned items.

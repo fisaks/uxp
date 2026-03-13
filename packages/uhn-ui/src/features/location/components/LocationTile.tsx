@@ -22,6 +22,7 @@ import { TileAnalogSection } from "../../shared/TileAnalogSection";
 import { TileContent } from "../../shared/TileContent";
 import { useSceneIconColors } from "../../shared/useSceneIconColors";
 import { useSceneCommand } from "../../shared/useSceneCommand";
+import { TechnicalLinkButton } from "./TechnicalLinkButton";
 
 /* ------------------------------------------------------------------ */
 /* Props                                                               */
@@ -138,8 +139,10 @@ const LocationTileView: React.FC<LocationTileViewProps> = ({ view, active, state
                 </Box>
             )}
 
-            {pending && (
+            {pending ? (
                 <CircularProgress size={16} thickness={5} sx={{ position: "absolute", bottom: 11, right: 11 }} />
+            ) : (
+                <TechnicalLinkButton to={`/technical/views/${view.id}`} />
             )}
         </Card>
     );
@@ -306,8 +309,10 @@ const LocationTileResource: React.FC<LocationTileResourceProps> = ({ resource, s
                 }} />
             )}
 
-            {isPending && (
+            {isPending ? (
                 <CircularProgress size={16} thickness={5} sx={{ position: "absolute", bottom: 11, right: 11 }} />
+            ) : (
+                <TechnicalLinkButton to={`/technical/resources/${resource.id}`} />
             )}
         </Card>
     );
@@ -361,8 +366,10 @@ const LocationTileScene: React.FC<LocationTileSceneProps> = ({ scene, nameOverri
                 />
             </CardActionArea>
 
-            {pending && (
+            {pending ? (
                 <CircularProgress size={16} thickness={5} sx={{ position: "absolute", bottom: 11, right: 11 }} />
+            ) : (
+                <TechnicalLinkButton to={`/technical/scenes/${scene.id}`} />
             )}
         </Card>
     );

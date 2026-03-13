@@ -1,6 +1,8 @@
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import { Breadcrumbs, Link as MuiLink, Typography } from "@mui/material";
+import { useSelector } from "react-redux";
 import { Link, useLocation } from "react-router-dom";
+import { RootState } from "../../../app/store";
 
 const routeLabels: Record<string, string> = {
     "/technical": "Technical",
@@ -14,12 +16,40 @@ const routeLabels: Record<string, string> = {
     "/technical/scenes": "Scenes",
 };
 
+/** Sections that support deep linking via /:itemId suffix. */
+const deepLinkSections = ["/technical/resources", "/technical/views", "/technical/scenes"];
+
+type DeepLinkInfo = { section: string; itemId: string } | null;
+
+function parseDeepLink(pathname: string): DeepLinkInfo {
+    for (const section of deepLinkSections) {
+        if (pathname.startsWith(section + "/")) {
+            return { section, itemId: pathname.slice(section.length + 1) };
+        }
+    }
+    return null;
+}
+
+/** Resolve item name from Redux by section + itemId. Falls back to itemId. */
+function selectItemName(state: RootState, section: string, itemId: string): string {
+    switch (section) {
+        case "/technical/resources":
+            return state.resources.byId[itemId]?.name ?? itemId;
+        case "/technical/views":
+            return state.views.byId[itemId]?.name ?? itemId;
+        case "/technical/scenes":
+            return state.scenes.byId[itemId]?.name ?? itemId;
+        default:
+            return itemId;
+    }
+}
+
 type BreadcrumbSegment = {
     label: string;
     to: string;
 };
 
-function buildBreadcrumbs(pathname: string): BreadcrumbSegment[] {
+function buildBreadcrumbs(pathname: string, deepLink: DeepLinkInfo): BreadcrumbSegment[] {
     const segments: BreadcrumbSegment[] = [
         { label: "Home", to: "/" },
     ];
@@ -32,13 +62,24 @@ function buildBreadcrumbs(pathname: string): BreadcrumbSegment[] {
         segments.push({ label: "Blueprints", to: "/technical/blueprints" });
     }
 
+    // When deep linking, the section label becomes a link too
+    if (deepLink) {
+        segments.push({ label: routeLabels[deepLink.section] ?? "", to: deepLink.section });
+    }
+
     return segments;
 }
 
 export const TechnicalBreadcrumb: React.FC = () => {
     const location = useLocation();
-    const crumbs = buildBreadcrumbs(location.pathname);
-    const currentLabel = routeLabels[location.pathname] ?? "";
+    const deepLink = parseDeepLink(location.pathname);
+    const crumbs = buildBreadcrumbs(location.pathname, deepLink);
+
+    const itemName = useSelector((state: RootState) =>
+        deepLink ? selectItemName(state, deepLink.section, deepLink.itemId) : null
+    );
+
+    const currentLabel = deepLink ? (itemName ?? deepLink.itemId) : (routeLabels[location.pathname] ?? "");
 
     return (
         <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} sx={{ mb: 2 }}>

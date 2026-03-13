@@ -11,6 +11,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
  */
 export function useStickyOnScroll(topOffset: number = 64) {
     const stickyBoxRef = useRef<HTMLDivElement>(null);
+    // When true the element has scrolled past topOffset — the caller should
+    // render a position:fixed clone and hide the in-flow original (keep it in
+    // the DOM to preserve layout height and provide the measurement rect).
     const [isFixed, setIsFixed] = useState(false);
     const [width, setWidth] = useState<number | undefined>(undefined);
 

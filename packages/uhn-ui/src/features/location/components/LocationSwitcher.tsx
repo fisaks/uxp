@@ -8,7 +8,7 @@ import React from "react";
 import { LOCATION_FAVORITES } from "../../favorite/components/FavoritesSection";
 import { getBlueprintIcon } from "../../view/blueprintIconMap";
 import { APP_BAR_HEIGHT } from "../locationConstants";
-import { useStickyOnScroll } from "../hooks/useStickyOnScroll";
+import { useStickyOnScroll } from "../../shared/useStickyOnScroll";
 
 export const LOCATION_TOP = "__top__";
 

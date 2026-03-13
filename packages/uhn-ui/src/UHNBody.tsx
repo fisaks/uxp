@@ -39,10 +39,19 @@ export const UHNBody = () => {
                 <Route path="/technical/resources" element={
                     <TechnicalPageWrapper><ResourcePage /></TechnicalPageWrapper>
                 } />
+                <Route path="/technical/resources/:itemId" element={
+                    <TechnicalPageWrapper><ResourcePage /></TechnicalPageWrapper>
+                } />
                 <Route path="/technical/views" element={
                     <TechnicalPageWrapper><ViewPage /></TechnicalPageWrapper>
                 } />
+                <Route path="/technical/views/:itemId" element={
+                    <TechnicalPageWrapper><ViewPage /></TechnicalPageWrapper>
+                } />
                 <Route path="/technical/scenes" element={
+                    <TechnicalPageWrapper><ScenePage /></TechnicalPageWrapper>
+                } />
+                <Route path="/technical/scenes/:itemId" element={
                     <TechnicalPageWrapper><ScenePage /></TechnicalPageWrapper>
                 } />
 
