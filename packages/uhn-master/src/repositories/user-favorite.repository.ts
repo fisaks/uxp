@@ -1,3 +1,4 @@
+import { UserFavoriteItemKind } from "@uhn/common";
 import { AppErrorV2, getRequestContext } from "@uxp/bff-common";
 import { UserFavoriteEntity } from "../db/entities/UserFavoriteEntity";
 
@@ -16,9 +17,9 @@ async function findByUser(username: string): Promise<UserFavoriteEntity[]> {
     });
 }
 
-async function findByUserAndItem(username: string, itemKind: string, itemRefId: string): Promise<UserFavoriteEntity | null> {
+async function findByUserAndItem(username: string, itemKind: UserFavoriteItemKind, itemRefId: string): Promise<UserFavoriteEntity | null> {
     return getRepo().findOne({
-        where: { username, itemKind: itemKind as UserFavoriteEntity["itemKind"], itemRefId },
+        where: { username, itemKind, itemRefId },
     });
 }
 
