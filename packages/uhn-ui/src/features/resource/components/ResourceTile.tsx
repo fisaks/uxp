@@ -20,7 +20,7 @@ import { createTooltipProps } from "../../shared/tileEventHelpers";
 import { useResourceAction } from "../hooks/useResourceAction";
 import { isResourceActive } from "../isResourceActive";
 import { TileRuntimeResource, TileRuntimeResourceState } from "../resource-ui.type";
-import { selectRulesByResourceId } from "../../rule/ruleSelectors";
+import { selectRulesByActionHintResourceId, selectRulesByResourceId } from "../../rule/ruleSelectors";
 import { selectResourceCommandFeedbackById } from "../resourceCommandFeedbackSelector";
 import { getResourceIconColor, getResourceSurfaceColor } from "./colors";
 import { getResourceIcon } from "./icons";
@@ -47,6 +47,8 @@ export const ResourceTile: React.FC<ResourceTileProps> = ({ resource, state, nam
     const commandFb = useSelector(selectResourceCommandFeedbackById(resource.id));
     const rulesByResourceId = useSelector(selectRulesByResourceId);
     const triggeringRules = rulesByResourceId[resource.id];
+    const rulesByActionHint = useSelector(selectRulesByActionHintResourceId);
+    const targetOfRules = rulesByActionHint[resource.id];
 
     const tileExtensions = getTileExtensions(resource.type);
     const hasInteractionPanel = Boolean(tileExtensions?.renderInteractionPanel);
@@ -115,11 +117,16 @@ export const ResourceTile: React.FC<ResourceTileProps> = ({ resource, state, nam
                         {isAnalog && resource.min !== undefined && <Typography variant="body2">Min: {resource.min}</Typography>}
                         {isAnalog && resource.max !== undefined && <Typography variant="body2">Max: {resource.max}</Typography>}
                         {isAnalog && resource.unit && <Typography variant="body2">Unit: {resource.unit}</Typography>}
-                        {triggeringRules && triggeringRules.length > 0 && (
+                        {(triggeringRules?.length > 0 || targetOfRules?.length > 0) && (
                             <Box sx={{ mt: 1 }}>
                                 <TechnicalDeepLink to={`/technical/rules?search=${encodeURIComponent(resource.id)}`}>
-                                    <Typography variant="subtitle2" component="span">Rules ({triggeringRules.length})</Typography>
+                                    <Typography variant="body2" component="span" color="inherit">See attached rules</Typography>
                                 </TechnicalDeepLink>
+                            </Box>
+                        )}
+                        {triggeringRules && triggeringRules.length > 0 && (
+                            <Box sx={{ mt: 1 }}>
+                                <Typography variant="subtitle2">Triggered by ({triggeringRules.length})</Typography>
                                 {triggeringRules.map(rule => {
                                     const trigger = rule.triggers.find(t => t.resourceId === resource.id);
                                     return (
@@ -130,6 +137,18 @@ export const ResourceTile: React.FC<ResourceTileProps> = ({ resource, state, nam
                                         </Typography>
                                     );
                                 })}
+                            </Box>
+                        )}
+                        {targetOfRules && targetOfRules.length > 0 && (
+                            <Box sx={{ mt: 1 }}>
+                                <Typography variant="subtitle2">Action target of ({targetOfRules.length})</Typography>
+                                {targetOfRules.map(rule => (
+                                    <Typography key={rule.id} variant="body2" sx={{ fontFamily: "monospace", fontSize: "0.75rem" }}>
+                                        <TechnicalDeepLink to={`/technical/rules/${rule.id}`}>
+                                            {rule.name ?? rule.id}
+                                        </TechnicalDeepLink>
+                                    </Typography>
+                                ))}
                             </Box>
                         )}
                     </TileInfoPopover>

@@ -19,6 +19,8 @@ export type RuntimeRuleInfo = {
   priority?: number;
   suppressMs?: number;
   cooldownMs?: number;
+  /** Resource IDs this rule's actions typically affect (author-declared hint for UI). */
+  actionHintResourceIds?: string[];
 };
 
 export type RuleRuntimeRulesLoadedMessage = {

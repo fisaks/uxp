@@ -21,3 +21,17 @@ export const selectRulesByResourceId = createSelector(
         return map;
     }
 );
+
+export const selectRulesByActionHintResourceId = createSelector(
+    [selectAllRules],
+    (rules): Record<string, RuntimeRuleInfo[]> => {
+        const map: Record<string, RuntimeRuleInfo[]> = {};
+        for (const rule of rules) {
+            if (!rule.actionHintResourceIds) continue;
+            for (const id of rule.actionHintResourceIds) {
+                (map[id] ??= []).push(rule);
+            }
+        }
+        return map;
+    }
+);

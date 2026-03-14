@@ -26,6 +26,7 @@ type RuleGroup = { target: string; rules: RuntimeRuleInfo[] };
  *  because it joins data from two slices (rules + resources) and is cheap derived data. */
 const buildSearchText = (rule: RuntimeRuleInfo, resourceById: Record<string, RuntimeResource>): string => {
     const triggerResources = rule.triggers.map(t => resourceById[t.resourceId]).filter(Boolean);
+    const actionHintResources = (rule.actionHintResourceIds ?? []).map(id => resourceById[id]).filter(Boolean);
     const triggerKinds = rule.triggers.map(t => t.kind);
     const triggerEvents = rule.triggers
         .map(t => ("event" in t ? (t as { event?: string }).event : undefined))
@@ -35,6 +36,8 @@ const buildSearchText = (rule: RuntimeRuleInfo, resourceById: Record<string, Run
         rule.executionTarget ?? "master",
         ...rule.triggers.map(t => t.resourceId),
         ...triggerResources.flatMap(r => [r.name, isPhysicalResource(r) ? r.edge : isLogicalResource(r) ? r.host : undefined]),
+        ...(rule.actionHintResourceIds ?? []),
+        ...actionHintResources.flatMap(r => [r.name, isPhysicalResource(r) ? r.edge : isLogicalResource(r) ? r.host : undefined]),
         ...triggerKinds,
         ...triggerEvents,
     ].filter(Boolean).join(" ").toLowerCase();

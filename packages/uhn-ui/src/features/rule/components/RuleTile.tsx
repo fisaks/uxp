@@ -74,6 +74,16 @@ export const RuleTile: React.FC<RuleTileProps> = ({ rule, selected, onSelect }) 
                         ))}
                     </Box>
                 )}
+                {rule.actionHintResourceIds && rule.actionHintResourceIds.length > 0 && (
+                    <Box sx={{ mt: 1 }}>
+                        <Typography variant="subtitle2">Action Hints ({rule.actionHintResourceIds.length})</Typography>
+                        {rule.actionHintResourceIds.map(id => (
+                            <Typography key={id} variant="body2" sx={{ fontFamily: "monospace", fontSize: "0.75rem" }}>
+                                <TechnicalDeepLink to={`/technical/resources/${id}`}>{id}</TechnicalDeepLink>
+                            </Typography>
+                        ))}
+                    </Box>
+                )}
             </TileInfoPopover>
 
             <TileDescriptionPopover description={rule.description} />

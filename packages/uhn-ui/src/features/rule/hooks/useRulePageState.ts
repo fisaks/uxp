@@ -44,11 +44,18 @@ export function useRulePageState({ allRules, resourceById, highlightedTileId }: 
         [allRules, selectedRuleIds]
     );
 
-    const triggerResourceIds = useMemo(() => {
+    // All resource IDs derived from selected rules (triggers + action hints).
+    // Used by handleRemoveResource to decide whether to add to removedResourceIds.
+    const ruleResourceIds = useMemo(() => {
         const set = new Set<string>();
         for (const rule of selectedRules) {
             for (const trigger of rule.triggers) {
                 set.add(trigger.resourceId);
+            }
+            if (rule.actionHintResourceIds) {
+                for (const id of rule.actionHintResourceIds) {
+                    set.add(id);
+                }
             }
         }
         return set;
@@ -66,6 +73,11 @@ export function useRulePageState({ allRules, resourceById, highlightedTileId }: 
             for (const trigger of rule.triggers) {
                 seen.add(trigger.resourceId);
             }
+            if (rule.actionHintResourceIds) {
+                for (const id of rule.actionHintResourceIds) {
+                    seen.add(id);
+                }
+            }
         }
         for (const id of extraResourceIds) {
             seen.add(id);
@@ -81,12 +93,20 @@ export function useRulePageState({ allRules, resourceById, highlightedTileId }: 
         const kept = storedOrder.filter(id => displayedResourceIdSet.has(id));
         const keptSet = new Set(kept);
         const added: string[] = [];
-        // Add trigger resources first (in rule order), then extras
+        // Add trigger resources first, then action hints (in rule order), then extras
         for (const rule of selectedRules) {
             for (const trigger of rule.triggers) {
                 if (!keptSet.has(trigger.resourceId) && displayedResourceIdSet.has(trigger.resourceId)) {
                     keptSet.add(trigger.resourceId);
                     added.push(trigger.resourceId);
+                }
+            }
+            if (rule.actionHintResourceIds) {
+                for (const id of rule.actionHintResourceIds) {
+                    if (!keptSet.has(id) && displayedResourceIdSet.has(id)) {
+                        keptSet.add(id);
+                        added.push(id);
+                    }
                 }
             }
         }
@@ -108,14 +128,17 @@ export function useRulePageState({ allRules, resourceById, highlightedTileId }: 
             next.delete(ruleId);
         }
 
-        // When re-selecting a rule, clear removals for its trigger resources
+        // When re-selecting a rule, clear removals for its trigger and action hint resources
         // so they reappear. Removals for other rules' resources stay intact.
         let newRemoved = [...removedResourceIds];
         if (selecting) {
             const rule = allRules.find(r => r.id === ruleId);
             if (rule) {
-                const triggerIds = new Set(rule.triggers.map(t => t.resourceId));
-                newRemoved = newRemoved.filter(id => !triggerIds.has(id));
+                const ruleIds = new Set([
+                    ...rule.triggers.map(t => t.resourceId),
+                    ...(rule.actionHintResourceIds ?? []),
+                ]);
+                newRemoved = newRemoved.filter(id => !ruleIds.has(id));
             }
         }
 
@@ -140,12 +163,12 @@ export function useRulePageState({ allRules, resourceById, highlightedTileId }: 
         // Remove from extra if present
         const newExtra = extraResourceIds.filter(e => e !== id);
         // Add to removed if it's a trigger resource
-        const newRemoved = triggerResourceIds.has(id) && !removedResourceIds.has(id)
+        const newRemoved = ruleResourceIds.has(id) && !removedResourceIds.has(id)
             ? [...removedResourceIds, id]
             : [...removedResourceIds];
         const newOrder = orderedResourceIds.filter(r => r !== id);
         updatePageState({ extraResourceIds: newExtra, removedResourceIds: newRemoved, orderedResourceIds: newOrder }, false);
-    }, [extraResourceIds, removedResourceIds, triggerResourceIds, orderedResourceIds, updatePageState]);
+    }, [extraResourceIds, removedResourceIds, ruleResourceIds, orderedResourceIds, updatePageState]);
 
     const handleReorderResources = useCallback((reordered: string[]) => {
         updatePageState({ orderedResourceIds: reordered }, false);

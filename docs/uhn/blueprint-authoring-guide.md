@@ -706,6 +706,47 @@ rule({ description: "..." })
 
 The key difference: suppress starts on **trigger**, cooldown starts on **execution**. A rule with `suppress(2000)` that receives a trigger will suppress further triggers for 2 seconds regardless of whether the rule ran. A rule with `cooldown(5000)` will accept a trigger and run, then block for 5 seconds after running.
 
+### Action Hints
+
+Action hints declare which resources a rule's actions typically affect. They are optional metadata for the UI — when provided, the rule detail panel shows the hinted resources alongside the trigger resources, making it easy to interact with both inputs and outputs while testing.
+
+```typescript
+export const toggleLight = rule({ description: "Toggle ceiling light" })
+    .onTap(wallButton)
+    .actionHints(ceilingLight)
+    .run((ctx) => {
+        const isOn = ctx.runtime.getState(ceilingLight);
+        return ruleActions([
+            { type: "setDigitalOutput", resource: ceilingLight, value: !isOn },
+        ]);
+    });
+```
+
+Multiple resources can be passed:
+
+```typescript
+.actionHints(fanSpeed, ventIndicator)
+```
+
+Timers are resources too — if a rule starts, restarts, or clears a timer via `ctx.timers`, include the timer in `.actionHints()`:
+
+```typescript
+export const pirStartsTimer = rule({ description: "PIR starts auto-off timer" })
+    .onActivated(pirSensor)
+    .actionHints(autoOffTimer)
+    .run((ctx) => {
+        ctx.timers.start(autoOffTimer, minutes(10), "restart");
+        return [];
+    });
+```
+
+Action hints are **author-declared** — the runtime does not infer them from the `run()` function. If a rule conditionally affects different resources depending on state, list all of them. If a rule has no meaningful output resources (e.g. logging-only or scene activation), omit `.actionHints()` entirely.
+
+In the UI:
+- The **rule tile** info popover shows an "Action Hints" section with deep links to each resource.
+- The **resource tile** info popover shows an "Action target of" section listing rules that hint at it.
+- Selecting a rule in the rules page adds both trigger and action hint resources to the detail panel.
+
 ### Common Patterns
 
 **PIR + auto-off timer:**

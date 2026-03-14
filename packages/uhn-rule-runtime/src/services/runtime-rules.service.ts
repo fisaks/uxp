@@ -150,6 +150,7 @@ function serializeRule(rule: BlueprintRule): RuntimeRuleInfo {
         ...(rule.priority != null && { priority: rule.priority }),
         ...(rule.suppressMs != null && { suppressMs: rule.suppressMs }),
         ...(rule.cooldownMs != null && { cooldownMs: rule.cooldownMs }),
+        ...(rule.actionHints?.length && { actionHintResourceIds: rule.actionHints.map(r => r.id).filter((id): id is string => id != null) }),
     };
 }
 

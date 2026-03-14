@@ -244,6 +244,10 @@ export type BlueprintRuleMeta = {
     suppressMs?: number;
     cooldownMs?: number;
     priority?: number;
+
+    /** Optional hint listing resources this rule's actions typically affect.
+     *  Used by the UI to show action targets alongside trigger resources. */
+    actionHints?: ResourceBase<ResourceType>[];
 };
 
 export type BlueprintRule = BlueprintRuleMeta & {
@@ -281,6 +285,9 @@ export type RuleBuilder = {
     onTimerDeactivated(timer: TimerResourceBase): RuleBuilder;
 
     priority(n: number): RuleBuilder;
+    /** Hint listing resources this rule's actions typically affect.
+     *  Shown in the UI alongside trigger resources for testing. */
+    actionHints(...resources: ResourceBase<ResourceType>[]): RuleBuilder;
     /**
     * Suppress: ignore noisy triggers.
     * After a triggering event, ignore further triggers for X milliseconds.
@@ -399,6 +406,11 @@ export function rule(
 
         priority(n) {
             meta.priority = n;
+            return this;
+        },
+
+        actionHints(...resources) {
+            meta.actionHints = resources;
             return this;
         },
 
