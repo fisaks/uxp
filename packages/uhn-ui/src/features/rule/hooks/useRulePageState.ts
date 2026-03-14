@@ -151,12 +151,18 @@ export function useRulePageState({ allRules, resourceById, highlightedTileId }: 
         updatePageState({ orderedResourceIds: reordered }, false);
     }, [updatePageState]);
 
+    const handleRemoveAllResources = useCallback(() => {
+        const merged = new Set([...removedResourceIds, ...orderedResourceIds]);
+        updatePageState({ extraResourceIds: [], removedResourceIds: [...merged], orderedResourceIds: [] }, false);
+    }, [removedResourceIds, orderedResourceIds, updatePageState]);
+
     return {
         selectedRuleIds,
         orderedResourceIds,
         handleSelectRule,
         handleManualAddResource,
         handleRemoveResource,
+        handleRemoveAllResources,
         handleReorderResources,
         /** Pass to useTechnicalSearch as locationState */
         locationState: location.state,
@@ -176,6 +182,8 @@ type UseRulePageStateResult = {
     handleManualAddResource: (_: unknown, value: RuntimeResource | null) => void;
     /** Remove a resource from the detail panel (hides trigger resources, deletes extras). */
     handleRemoveResource: (id: string) => void;
+    /** Remove all resources from the detail panel (clears extras, marks all trigger resources as removed). */
+    handleRemoveAllResources: () => void;
     /** Persist a new drag-and-drop ordering of resources. */
     handleReorderResources: (reordered: string[]) => void;
     /** Raw location.state — pass to useTechnicalSearch to restore search term across navigations. */

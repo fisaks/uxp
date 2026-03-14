@@ -12,6 +12,7 @@ type MobileResourceDialogProps = {
     resourceIds: string[];
     hasSelection: boolean;
     onRemoveResource: (id: string) => void;
+    onRemoveAll: () => void;
     onReorder: (orderedIds: string[]) => void;
     resourceById: Record<string, RuntimeResource>;
 };
@@ -24,6 +25,7 @@ export const MobileResourceDialog: React.FC<MobileResourceDialogProps> = ({
     resourceIds,
     hasSelection,
     onRemoveResource,
+    onRemoveAll,
     onReorder,
     resourceById,
 }) => (
@@ -50,6 +52,7 @@ export const MobileResourceDialog: React.FC<MobileResourceDialogProps> = ({
                 resourceIds={resourceIds}
                 hasSelection={hasSelection}
                 onRemoveResource={onRemoveResource}
+                onRemoveAll={onRemoveAll}
                 onReorder={onReorder}
                 resourceById={resourceById}
             />

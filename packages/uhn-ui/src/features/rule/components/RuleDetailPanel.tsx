@@ -1,5 +1,7 @@
+import ClearIcon from "@mui/icons-material/Clear";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
-import { Box, Grid2, Typography } from "@mui/material";
+import { Box, Grid2, IconButton, Tooltip, Typography } from "@mui/material";
+import { usePortalContainerRef } from "@uxp/ui-lib";
 import { closestCenter, DndContext, DragEndEvent, MouseSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { arrayMove, rectSortingStrategy, SortableContext, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -14,6 +16,7 @@ type RuleDetailPanelProps = {
     resourceIds: string[];
     hasSelection: boolean;
     onRemoveResource: (id: string) => void;
+    onRemoveAll: () => void;
     onReorder: (orderedIds: string[]) => void;
     resourceById: Record<string, RuntimeResource>;
 };
@@ -83,7 +86,8 @@ const SortableResourceTile: React.FC<SortableResourceTileProps> = ({ resourceId,
     );
 };
 
-export const RuleDetailPanel: React.FC<RuleDetailPanelProps> = ({ resourceIds, hasSelection, onRemoveResource, onReorder, resourceById }) => {
+export const RuleDetailPanel: React.FC<RuleDetailPanelProps> = ({ resourceIds, hasSelection, onRemoveResource, onRemoveAll, onReorder, resourceById }) => {
+    const portalContainer = usePortalContainerRef();
     const stateById = useSelector(selectRuntimeStateByResourceId);
 
     const sensors = useSensors(
@@ -112,9 +116,18 @@ export const RuleDetailPanel: React.FC<RuleDetailPanelProps> = ({ resourceIds, h
 
     return (
         <Box sx={{ p: 2 }}>
-            <Typography variant="subtitle2">
-                Resources ({resourceIds.length})
-            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                <Typography variant="subtitle2">
+                    Resources ({resourceIds.length})
+                </Typography>
+                {resourceIds.length > 0 && (
+                    <Tooltip title="Remove all resources" slotProps={{ popper: { container: portalContainer.current } }}>
+                        <IconButton size="small" onClick={onRemoveAll} sx={{ p: 0.25, color: "action.disabled", "&:hover": { color: "text.secondary" } }}>
+                            <ClearIcon sx={{ fontSize: 16 }} />
+                        </IconButton>
+                    </Tooltip>
+                )}
+            </Box>
             <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1, lineHeight: 1.3 }}>
                 Interact with resources to validate rule behavior. Add additional resources as needed.
             </Typography>

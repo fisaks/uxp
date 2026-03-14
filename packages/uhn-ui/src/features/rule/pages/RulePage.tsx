@@ -1,9 +1,10 @@
 import AccountTreeIcon from "@mui/icons-material/AccountTree";
+import DeselectIcon from "@mui/icons-material/Deselect";
 import ListAltIcon from "@mui/icons-material/ListAlt";
 import SearchIcon from "@mui/icons-material/Search";
-import { Autocomplete, Badge, Box, Grid2, IconButton, InputAdornment, Paper, TextField, Typography } from "@mui/material";
+import { Autocomplete, Badge, Box, IconButton, InputAdornment, Paper, TextField, Typography } from "@mui/material";
 import { RuntimeResource, RuntimeRuleInfo, isLogicalResource, isPhysicalResource } from "@uhn/common";
-import { ReloadIconButton, usePortalContainerRef } from "@uxp/ui-lib";
+import { ReloadIconButton, TooltipIconButton, usePortalContainerRef } from "@uxp/ui-lib";
 import { useEffect, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import { useUHNWebSocket } from "../../../app/UHNAppBrowserWebSocketManager";
@@ -82,6 +83,7 @@ export const RulePage = () => {
         handleSelectRule,
         handleManualAddResource,
         handleRemoveResource,
+        handleRemoveAllResources,
         handleReorderResources,
         locationState,
         updatePageState,
@@ -127,6 +129,14 @@ export const RulePage = () => {
             size="small"
             options={allResources}
             getOptionLabel={(r) => r.name ?? r.id}
+            filterOptions={(options, { inputValue }) => {
+                const words = inputValue.toLowerCase().split(/\s+/).filter(Boolean);
+                if (words.length === 0) return options;
+                return options.filter(r => {
+                    const text = `${r.id} ${r.name ?? ""}`.toLowerCase();
+                    return words.every(w => text.includes(w));
+                });
+            }}
             onChange={handleManualAddResource}
             value={null}
             blurOnSelect
@@ -177,6 +187,15 @@ export const RulePage = () => {
                 <AccountTreeIcon sx={{ color: "primary.main" }} />
                 <Typography variant="h1">Rules</Typography>
                 <ReloadIconButton isLoading={loading} reload={refetch} />
+                <TooltipIconButton
+                    onClick={() => updatePageState({ selectedRuleIds: [], removedResourceIds: [] }, false)}
+                    tooltip={selectedRuleIds.size > 0 ? "Clear rule selection" : "No rules selected"}
+                    tooltipPortal={portalContainer}
+                    disabled={selectedRuleIds.size === 0}
+                    sx={{ color: "primary.main" }}
+                >
+                    <DeselectIcon />
+                </TooltipIconButton>
             </Box>
 
             <Box sx={{ display: "flex", gap: 2 }}>
@@ -226,6 +245,7 @@ export const RulePage = () => {
                             resourceIds={orderedResourceIds}
                             hasSelection={selectedRuleIds.size > 0}
                             onRemoveResource={handleRemoveResource}
+                            onRemoveAll={handleRemoveAllResources}
                             onReorder={handleReorderResources}
                             resourceById={resourceById}
                         />
@@ -241,6 +261,7 @@ export const RulePage = () => {
                 resourceIds={orderedResourceIds}
                 hasSelection={selectedRuleIds.size > 0}
                 onRemoveResource={handleRemoveResource}
+                onRemoveAll={handleRemoveAllResources}
                 onReorder={handleReorderResources}
                 resourceById={resourceById}
             />
