@@ -3,6 +3,7 @@ import { AppLogger, runBackgroundTask } from "@uxp/bff-common";
 import { initBlueprintResourceDispatcher } from "./dispatchers/blueprint-resource.dispatcher";
 import { initBlueprintLocationDispatcher } from "./dispatchers/blueprint-location.dispatcher";
 import { initBlueprintSceneDispatcher } from "./dispatchers/blueprint-scene.dispatcher";
+import { initRuleDispatcher } from "./dispatchers/rule.dispatcher";
 import { initBlueprintViewDispatcher } from "./dispatchers/blueprint-view.dispatcher";
 import { initMuteEventDispatcher } from "./dispatchers/mute-event.dispatcher";
 import { initRuleActionDispatcher } from "./dispatchers/rule-action.dispatcher";
@@ -79,5 +80,6 @@ const setupWebDispatchers = () => {
     initUhnHealthDispatcher();
     initUhnSystemDispatcher();
     initRuntimeOverviewDispatcher();
+    initRuleDispatcher();
 };
 

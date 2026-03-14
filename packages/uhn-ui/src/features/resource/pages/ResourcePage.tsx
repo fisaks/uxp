@@ -70,6 +70,7 @@ export const ResourcePage = () => {
                 totalCount={totalCount}
                 deepLinkLabel={deepLinkLabel}
                 onScrollToHighlightedTile={scrollToHighlightedTile}
+                historyKey="uhn-resource-search-history"
             />
             <Box mt={2}>
                 {filteredItems.length > 0 ? (

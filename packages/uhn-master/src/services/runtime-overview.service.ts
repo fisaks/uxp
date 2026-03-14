@@ -9,6 +9,7 @@ import { subscriptionService } from "./subscription.service";
 
 type RuntimeOverviewEventMap = {
     overviewChanged: [payload: RuntimeOverviewPayload];
+    rulesChanged: [rules: RuntimeRuleInfo[]];
 };
 
 /**
@@ -38,6 +39,7 @@ class RuntimeOverviewService extends EventEmitter<RuntimeOverviewEventMap> {
             this.masterLoadedRuleCount = msg.rules.length;
             if (msg.allRules) {
                 this.allRules = msg.allRules;
+                this.emit("rulesChanged", this.allRules);
             }
             this.emitOverview();
         });
@@ -57,6 +59,7 @@ class RuntimeOverviewService extends EventEmitter<RuntimeOverviewEventMap> {
             this.masterRuntimeStatus = "stopped";
             this.masterLoadedRuleCount = null;
             this.allRules = [];
+            this.emit("rulesChanged", this.allRules);
             this.emitOverview();
         });
 
@@ -71,6 +74,7 @@ class RuntimeOverviewService extends EventEmitter<RuntimeOverviewEventMap> {
             this.masterRuntimeStatus = "unconfigured";
             this.masterLoadedRuleCount = null;
             this.allRules = [];
+            this.emit("rulesChanged", this.allRules);
             this.emitOverview();
         });
 
@@ -118,6 +122,10 @@ class RuntimeOverviewService extends EventEmitter<RuntimeOverviewEventMap> {
         return this.buildOverview();
     }
 
+    getAllRules(): RuntimeRuleInfo[] {
+        return this.allRules;
+    }
+
     getEdgeRuntimeStatus(edgeId: string): RuntimeStatus | undefined {
         return this.edgeRuntimeStatus.get(edgeId);
     }
@@ -127,13 +135,12 @@ class RuntimeOverviewService extends EventEmitter<RuntimeOverviewEventMap> {
         const runtimes: RuntimeInfo[] = [];
 
         // Master runtime
-        const masterRules = rulesByTarget.get("master") ?? [];
+        const masterRuleCount = (rulesByTarget.get("master") ?? []).length;
         runtimes.push({
             runtimeId: "master",
             status: this.masterRuntimeStatus,
-            expectedRuleCount: masterRules.length,
+            expectedRuleCount: masterRuleCount,
             loadedRuleCount: this.masterLoadedRuleCount,
-            rules: masterRules,
         });
 
         // Collect all known edge names (from rules + status + loaded counts)
@@ -145,13 +152,12 @@ class RuntimeOverviewService extends EventEmitter<RuntimeOverviewEventMap> {
         for (const edgeId of this.edgeLoadedRuleCount.keys()) edgeNames.add(edgeId);
 
         for (const edgeId of Array.from(edgeNames).sort()) {
-            const edgeRules = rulesByTarget.get(edgeId) ?? [];
+            const edgeRuleCount = (rulesByTarget.get(edgeId) ?? []).length;
             runtimes.push({
                 runtimeId: edgeId,
                 status: this.edgeRuntimeStatus.get(edgeId) ?? "unconfigured",
-                expectedRuleCount: edgeRules.length,
+                expectedRuleCount: edgeRuleCount,
                 loadedRuleCount: this.edgeLoadedRuleCount.get(edgeId) ?? null,
-                rules: edgeRules,
             });
         }
 

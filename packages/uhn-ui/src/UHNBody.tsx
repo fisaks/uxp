@@ -6,6 +6,7 @@ import { IconPreviewPage } from "./features/blueprint/pages/IconPreviewPage";
 import { UploadBlueprintPage } from "./features/blueprint/pages/UploadBlueprintPage";
 import { LocationPage } from "./features/location/pages/LocationPage";
 import { ResourcePage } from "./features/resource/pages/ResourcePage";
+import { RulePage } from "./features/rule/pages/RulePage";
 import { ScenePage } from "./features/scene/pages/ScenePage";
 import { TechnicalPageWrapper } from "./features/technical/components/TechnicalPageWrapper";
 import { TechnicalPage } from "./features/technical/pages/TechnicalPage";
@@ -53,6 +54,12 @@ export const UHNBody = () => {
                 } />
                 <Route path="/technical/scenes/:itemId" element={
                     <TechnicalPageWrapper><ScenePage /></TechnicalPageWrapper>
+                } />
+                <Route path="/technical/rules" element={
+                    <TechnicalPageWrapper><RulePage /></TechnicalPageWrapper>
+                } />
+                <Route path="/technical/rules/:itemId" element={
+                    <TechnicalPageWrapper><RulePage /></TechnicalPageWrapper>
                 } />
 
                 <Route path="*" element={<LocationPage />} />

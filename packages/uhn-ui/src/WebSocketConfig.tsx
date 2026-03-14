@@ -12,6 +12,8 @@ import { resourcesLoaded } from "./features/resource/resourceSlice";
 import { fullStateReceived, stateReceived } from "./features/runtime-state/runtimeStateSlice";
 import { addTopicMessage, setTopicPattern } from "./features/topic-trace/topicTraceSlice";
 import { locationsLoaded } from "./features/location/locationSlice";
+import { rulesLoaded } from "./features/rule/ruleSlice";
+import { runtimeOverviewLoaded } from "./features/runtime-overview/runtimeOverviewSlice";
 import { scenesLoaded } from "./features/scene/sceneSlice";
 import { viewsLoaded } from "./features/view/viewSlice";
 
@@ -56,6 +58,12 @@ export const WebSocketConfig: React.FC<WebSocketConfigProps> = ({ children }) =>
         "uhn:scenes": (message) => {
             if (message.payload) dispatch(scenesLoaded({ response: message.payload }));
         },
+        "uhn:rules": (message) => {
+            if (message.payload) dispatch(rulesLoaded({ response: message.payload }));
+        },
+        "uhn:runtime:overview": (message) => {
+            if (message.payload) dispatch(runtimeOverviewLoaded({ response: message.payload }));
+        },
         "uhn:subscribed": (message) => {
             console.log("Subscribed to UHN patterns", message.payload);
         },
@@ -76,7 +84,7 @@ export const WebSocketConfig: React.FC<WebSocketConfigProps> = ({ children }) =>
         console.log("WebSocket Reconnect", details);
         setReconnectDetails(details);
         if (details.connected) {
-            ws.sendMessage({ action: "uhn:subscribe", payload: { patterns: ["resource/*", "state/*", "health/*", "view/*", "location/*", "scene/*"] } });
+            ws.sendMessage({ action: "uhn:subscribe", payload: { patterns: ["resource/*", "state/*", "health/*", "view/*", "location/*", "scene/*", "rule/*", "runtime/*"] } });
             connected.current = true;
         } else {
             connected.current = false;
@@ -88,7 +96,7 @@ export const WebSocketConfig: React.FC<WebSocketConfigProps> = ({ children }) =>
         // Delay subscription slightly to allow the underlying WebSocket connection/handshake
         // to fully settle before sending subscribe messages, avoiding intermittent race conditions.
         setTimeout(() => {
-            ws.sendMessage({ action: "uhn:subscribe", payload: { patterns: ["resource/*", "state/*", "health/*", "view/*", "location/*", "scene/*"] } });
+            ws.sendMessage({ action: "uhn:subscribe", payload: { patterns: ["resource/*", "state/*", "health/*", "view/*", "location/*", "scene/*", "rule/*", "runtime/*"] } });
             connected.current = true;
         }, 500);
 

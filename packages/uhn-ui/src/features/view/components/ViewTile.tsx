@@ -7,6 +7,7 @@ import { TileContent } from "../../shared/TileContent";
 import { TileDescriptionPopover } from "../../shared/TileDescriptionPopover";
 import { TileInfoPopover } from "../../shared/TileInfoPopover";
 import { TilePendingIndicator } from "../../shared/TilePendingIndicator";
+import { TechnicalDeepLink } from "../../shared/TechnicalDeepLink";
 import { stopPropagation } from "../../shared/tileEventHelpers";
 import { TileStateItem } from "../../shared/tile.types";
 import { useViewAnalogState } from "../../shared/useViewAnalogState";
@@ -81,9 +82,24 @@ export const ViewTile: React.FC<ViewTileProps> = ({ view, active, stateDisplayVa
                 <Typography variant="subtitle2">View Details</Typography>
                 <Typography variant="body2">ID: {view.id}</Typography>
                 {view.command && <Typography variant="body2">Command: {view.command.type}</Typography>}
-                {view.command && <Typography variant="body2">Target: {view.command.resourceId}</Typography>}
+                {view.command && (
+                    <Typography variant="body2">Target:{" "}
+                        <TechnicalDeepLink to={`/technical/resources/${view.command.resourceId}`}>
+                            {view.command.resourceId}
+                        </TechnicalDeepLink>
+                    </Typography>
+                )}
                 {view.stateFrom.length > 0 && (
-                    <Typography variant="body2">State from: {view.stateFrom.map(s => s.resourceId).join(", ")}</Typography>
+                    <Box sx={{ mt: 0.5 }}>
+                        <Typography variant="body2">State from:</Typography>
+                        {view.stateFrom.map((s, i) => (
+                            <Typography key={i} variant="body2" sx={{ fontFamily: "monospace", fontSize: "0.75rem" }}>
+                                <TechnicalDeepLink to={`/technical/resources/${s.resourceId}`}>
+                                    {s.resourceId}
+                                </TechnicalDeepLink>
+                            </Typography>
+                        ))}
+                    </Box>
                 )}
                 {view.stateAggregation && <Typography variant="body2">Aggregation: {view.stateAggregation}</Typography>}
             </TileInfoPopover>

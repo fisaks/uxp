@@ -14,10 +14,11 @@ const routeLabels: Record<string, string> = {
     "/technical/resources": "Resources",
     "/technical/views": "Views",
     "/technical/scenes": "Scenes",
+    "/technical/rules": "Rules",
 };
 
 /** Sections that support deep linking via /:itemId suffix. */
-const deepLinkSections = ["/technical/resources", "/technical/views", "/technical/scenes"];
+const deepLinkSections = ["/technical/resources", "/technical/views", "/technical/scenes", "/technical/rules"];
 
 type DeepLinkInfo = { section: string; itemId: string } | null;
 
@@ -39,6 +40,8 @@ function selectItemName(state: RootState, section: string, itemId: string): stri
             return state.views.byId[itemId]?.name ?? itemId;
         case "/technical/scenes":
             return state.scenes.byId[itemId]?.name ?? itemId;
+        case "/technical/rules":
+            return state.rules.byId[itemId]?.name ?? itemId;
         default:
             return itemId;
     }

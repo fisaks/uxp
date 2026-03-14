@@ -11,6 +11,8 @@ import resourceReducer from "../features/resource/resourceSlice";
 import runtimeStateReducer from "../features/runtime-state/runtimeStateSlice";
 import topicTraceReducer from "../features/topic-trace/topicTraceSlice";
 import locationsReducer from "../features/location/locationSlice";
+import rulesReducer from "../features/rule/ruleSlice";
+import runtimeOverviewReducer from "../features/runtime-overview/runtimeOverviewSlice";
 import scenesReducer from "../features/scene/sceneSlice";
 import viewsReducer from "../features/view/viewSlice";
 
@@ -38,6 +40,8 @@ export const createStore = () => {
             views: viewsReducer,
             locations: locationsReducer,
             scenes: scenesReducer,
+            rules: rulesReducer,
+            runtimeOverview: runtimeOverviewReducer,
 
         },
         devTools: process.env.NODE_ENV === "development",

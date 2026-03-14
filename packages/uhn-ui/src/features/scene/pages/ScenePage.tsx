@@ -69,6 +69,7 @@ export const ScenePage = () => {
                 totalCount={totalCount}
                 deepLinkLabel={deepLinkLabel}
                 onScrollToHighlightedTile={scrollToHighlightedTile}
+                historyKey="uhn-scene-search-history"
             />
             <Box mt={2}>
                 {filteredItems.length > 0 ? (

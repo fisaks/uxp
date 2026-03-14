@@ -73,6 +73,7 @@ export const ViewPage = () => {
                 totalCount={totalCount}
                 deepLinkLabel={deepLinkLabel}
                 onScrollToHighlightedTile={scrollToHighlightedTile}
+                historyKey="uhn-view-search-history"
             />
             <Box mt={2}>
                 {filteredItems.length > 0 ? (

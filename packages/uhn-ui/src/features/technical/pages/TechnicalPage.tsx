@@ -1,3 +1,4 @@
+import AccountTreeIcon from "@mui/icons-material/AccountTree";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import DescriptionIcon from "@mui/icons-material/Description";
 import HubIcon from "@mui/icons-material/Hub";
@@ -59,6 +60,12 @@ const technicalItems: TechnicalCardItem[] = [
         description: "View and trigger defined scenes",
         icon: <MovieIcon sx={{ fontSize: 40 }} />,
         to: "/technical/scenes",
+    },
+    {
+        title: "Rules",
+        description: "View all rules, triggers, and execution targets",
+        icon: <AccountTreeIcon sx={{ fontSize: 40 }} />,
+        to: "/technical/rules",
     },
     {
         title: "Topic Trace",

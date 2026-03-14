@@ -37,6 +37,7 @@ export class UhnMessageService {
         const shouldSendViews = patterns.some(p => p === 'view/*');
         const shouldSendLocations = patterns.some(p => p === 'location/*');
         const shouldSendScenes = patterns.some(p => p === 'scene/*');
+        const shouldSendRules = patterns.some(p => p === 'rule/*');
 
         if (shouldSendResources) {
             await this.sendResourcesMessage(socket, patterns);
@@ -62,6 +63,9 @@ export class UhnMessageService {
         }
         if (shouldSendScenes) {
             this.sendScenesMessage(socket);
+        }
+        if (shouldSendRules) {
+            this.sendRulesMessage(socket);
         }
 
     }
@@ -178,6 +182,15 @@ export class UhnMessageService {
             action: "uhn:scenes",
             success: true,
             payload: { scenes },
+        });
+    }
+
+    sendRulesMessage(socket: WebSocket) {
+        const rules = runtimeOverviewService.getAllRules();
+        this.wsManager.sendMessage(socket, {
+            action: "uhn:rules",
+            success: true,
+            payload: { rules },
         });
     }
 

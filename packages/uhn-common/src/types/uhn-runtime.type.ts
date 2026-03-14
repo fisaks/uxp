@@ -38,7 +38,6 @@ export type RuntimeInfo = {
   status: RuntimeStatus;
   expectedRuleCount: number;
   loadedRuleCount: number | null;
-  rules: RuntimeRuleInfo[];
 };
 
 export type RuntimeOverviewPayload = {

@@ -9,6 +9,8 @@ export type SearchIndexEntry<T> = { item: T; text: string };
 type UseTechnicalSearchOptions<T> = {
     /** Pre-computed search index — each entry pairs an item with its lowercase searchable text. */
     searchIndex: SearchIndexEntry<T>[];
+    /** Optional location state to preserve when updating the search URL param. */
+    locationState?: unknown;
 };
 
 type UseTechnicalSearchResult<T> = {
@@ -27,6 +29,7 @@ type UseTechnicalSearchResult<T> = {
  */
 export function useTechnicalSearch<T>({
     searchIndex,
+    locationState,
 }: UseTechnicalSearchOptions<T>): UseTechnicalSearchResult<T> {
     // Reads ?search= from the browser URL so the filter is restored on page load
     const [searchParams, setSearchParams] = useSearchParams();
@@ -48,11 +51,11 @@ export function useTechnicalSearch<T>({
                         }
                         return next;
                     },
-                    { replace: true }
+                    { replace: true, state: locationState }
                 );
             }, DEBOUNCE_MS);
         },
-        [setSearchParams]
+        [setSearchParams, locationState]
     );
 
     const onSearchChange = useCallback(

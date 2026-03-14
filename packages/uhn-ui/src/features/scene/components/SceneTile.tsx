@@ -2,7 +2,9 @@ import { Box, Card, CardActionArea, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { RuntimeScene, RuntimeSceneCommand } from "@uhn/common";
 import React from "react";
+import { TechnicalDeepLink } from "../../shared/TechnicalDeepLink";
 import { TileContent } from "../../shared/TileContent";
+import { TileDescriptionPopover } from "../../shared/TileDescriptionPopover";
 import { TileInfoPopover } from "../../shared/TileInfoPopover";
 import { TilePendingIndicator } from "../../shared/TilePendingIndicator";
 import { useSceneCommand } from "../../shared/useSceneCommand";
@@ -13,14 +15,14 @@ type SceneTileProps = {
     nameOverride?: string;
 };
 
-function formatCommand(cmd: RuntimeSceneCommand): string {
+function formatCommandValue(cmd: RuntimeSceneCommand): string {
     switch (cmd.type) {
         case "setDigitalOutput":
-            return `${cmd.resourceId} → ${cmd.value ? "ON" : "OFF"}`;
+            return cmd.value ? "ON" : "OFF";
         case "setAnalogOutput":
-            return `${cmd.resourceId} → ${cmd.value}`;
+            return String(cmd.value);
         case "emitSignal":
-            return `${cmd.resourceId} → ${cmd.value === undefined ? "toggle" : cmd.value ? "ON" : "OFF"}`;
+            return cmd.value === undefined ? "toggle" : cmd.value ? "ON" : "OFF";
     }
 }
 
@@ -55,12 +57,18 @@ export const SceneTile: React.FC<SceneTileProps> = ({ scene, nameOverride }) => 
                         <Typography variant="subtitle2">Actions ({scene.commands.length})</Typography>
                         {scene.commands.map((cmd, i) => (
                             <Typography key={i} variant="body2" sx={{ fontFamily: "monospace", fontSize: "0.75rem" }}>
-                                {formatCommand(cmd)}
+                                <TechnicalDeepLink to={`/technical/resources/${cmd.resourceId}`}>
+                                    {cmd.resourceId}
+                                </TechnicalDeepLink>
+                                {" → "}{formatCommandValue(cmd)}
                             </Typography>
                         ))}
                     </Box>
                 )}
             </TileInfoPopover>
+
+            {/* Description icon — top-right */}
+            <TileDescriptionPopover description={scene.description} />
 
             <CardActionArea
                 onClick={handleClick}
