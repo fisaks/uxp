@@ -405,6 +405,7 @@ All entities (resources, views, scenes, locations, rules) support:
 | `id` | `string` | Unique identifier (see below) |
 | `name` | `string` | Display name (see below) |
 | `description` | `string` | Description shown in info popover |
+| `keywords` | `string[]` | Alternative search terms for the command palette (see below) |
 | `icon` | `BlueprintIcon` | Override default icon (see [Icons](#icons)) |
 
 **ID and name derivation chain:**
@@ -413,6 +414,31 @@ All entities (resources, views, scenes, locations, rules) support:
 2. **`name`** defaults to a humanized form of the `id` with entity-type prefixes/suffixes stripped. For example: `locationKitchen` → "Kitchen", `sceneKitchenEvening` → "Kitchen Evening", `viewKitchenCeilingLight` → "Kitchen Ceiling Light". You can override `name` explicitly if the auto-derived name isn't what you want.
 3. **Inside a location**, item names are further shortened by stripping the location name as a prefix. "Kitchen Ceiling Light" inside location "Kitchen" becomes just "Ceiling Light". This happens automatically — no configuration needed. Explicit `name` overrides on location items bypass this logic.
 
+**Keywords** let users find entities by terms that don't appear in the name, description, or ID. The command palette searches keywords alongside the other text fields, so a voice command or typed query can match on any of them.
+
+- Only add terms that aren't already covered by the `name`, `description`, or export name — those are already searchable.
+- Good keywords are synonyms, informal names, or use-case terms that a user might say naturally.
+
+```typescript
+export const kitchenLightCeiling = outputLight({
+    edge: "edge1", device: "DO1", pin: 0,
+    description: "Main ceiling light in the kitchen area",
+    keywords: ["overhead", "room light"],
+});
+
+export const sceneKitchenEvening = scene({
+    name: "Kitchen Evening",
+    description: "Cozy evening lighting with dining table and night light",
+    keywords: ["dinner", "romantic"],
+    commands: [...],
+});
+
+export const locationKitchen = location({
+    name: "Kitchen",
+    keywords: ["cooking", "dining area"],
+    items: [...],
+});
+```
 
 ---
 
@@ -823,7 +849,7 @@ Icons use a scoped `"category:name"` format. Each resource type, view command, s
 | `energy` | `battery`, `charging`, `solar`, `meter` |
 | `garden` | `grass`, `sprinkler`, `tree`, `water` |
 | `vehicle` | `ev`, `charger` |
-| `status` | `dashboard`, `device`, `warning`, `error`, `ok`, `notification` |
+| `status` | `dashboard`, `device`, `warning`, `error`, `ok`, `notification`, `favorite` |
 | `structure` | `home`, `floor` |
 
 ### Default Icon Assignment

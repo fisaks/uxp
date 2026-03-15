@@ -32,6 +32,7 @@ function serializeScene(scene: BlueprintScene): RuntimeScene {
         id: scene.id!,
         name: scene.name ?? humanizeSceneId(scene.id!),
         description: scene.description,
+        keywords: scene.keywords,
         icon: scene.icon,
         commands: scene.commands.map(serializeCommand),
     };

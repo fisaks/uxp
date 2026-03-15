@@ -36,6 +36,8 @@ export type BlueprintLocation = {
     id?: string;
     name?: string;
     description?: string;
+    /** Alternative search terms (e.g. ["living room", "lounge"] for a location). */
+    keywords?: string[];
     icon?: BlueprintIcon;
     items: LocationItem[];
 };
@@ -68,17 +70,9 @@ function resolveItem(input: LocationItemInput): LocationItem {
     return { kind: "resource", ref: input as ResourceBase<ResourceType> };
 }
 
-export function location(props: {
-    id?: string;
-    name?: string;
-    description?: string;
-    icon?: BlueprintIcon;
-    items: LocationItemInput[];
-}): BlueprintLocation {
+export function location(props: Omit<BlueprintLocation, "items"> & { items: LocationItemInput[] }): BlueprintLocation {
     return {
-        id: props.id,
-        name: props.name,
-        description: props.description,
+        ...props,
         icon: props.icon ?? "room:generic",
         items: props.items.map(resolveItem),
     };

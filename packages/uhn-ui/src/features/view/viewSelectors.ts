@@ -113,6 +113,11 @@ const selectViewState = (state: RootState) => state.views;
 const selectRuntimeStateSlice = (state: RootState) => state.runtimeState;
 const selectResourceById = (state: RootState) => state.resources.byId;
 
+export const selectViewsById = createSelector(
+    [selectViewState],
+    (views): Record<string, RuntimeInteractionView> => views.byId
+);
+
 export const selectAllViews = createSelector(
     [selectViewState],
     (views): RuntimeInteractionView[] => views.allIds.map(id => views.byId[id])

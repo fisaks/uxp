@@ -104,6 +104,7 @@ import SpeakerIcon from "@mui/icons-material/Speaker";
 import SpeedIcon from "@mui/icons-material/Speed";
 import SportsEsportsIcon from "@mui/icons-material/SportsEsports";
 import StairsIcon from "@mui/icons-material/Stairs";
+import StarIcon from "@mui/icons-material/Star";
 import TheaterComedyIcon from "@mui/icons-material/TheaterComedy";
 import TheatersIcon from "@mui/icons-material/Theaters";
 import ThermostatIcon from "@mui/icons-material/Thermostat";
@@ -304,6 +305,7 @@ export const blueprintIconMap: Record<BlueprintIcon, BlueprintIconEntry> = {
     "status:error": icon(ErrorIcon, undefined, color("#D32F2F", "#EF5350")),
     "status:ok": icon(CheckCircleIcon, undefined, color("#388E3C", "#66BB6A")),
     "status:notification": icon(NotificationsIcon, undefined, color("#5C6BC0", "#9FA8DA")),
+    "status:favorite": icon(StarIcon, undefined, color("#FFA000", "#FFD54F")),
 };
 
 /** Look up icon entry by BlueprintIcon name. Returns undefined if not found. */

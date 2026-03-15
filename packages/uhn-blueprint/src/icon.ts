@@ -47,5 +47,5 @@ export type BlueprintIcon =
     // Vehicle
     | "vehicle:ev" | "vehicle:charger"
     // Status
-    | "status:dashboard" | "status:device" | "status:warning" | "status:error" | "status:ok" | "status:notification"
+    | "status:dashboard" | "status:device" | "status:warning" | "status:error" | "status:ok" | "status:notification" | "status:favorite"
     ;

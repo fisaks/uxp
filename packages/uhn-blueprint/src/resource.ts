@@ -11,6 +11,8 @@ export type ResourceBase<TType extends ResourceType> = {
     id?: string;
     name?: string;
     description?: string;
+    /** Alternative search terms (e.g. ["main light", "overhead"] for a ceiling light). */
+    keywords?: string[];
     type: TType;
     /** Override the default type-based icon. Uses BlueprintIcon names (e.g. "lighting:bulb"). */
     icon?: BlueprintIcon;

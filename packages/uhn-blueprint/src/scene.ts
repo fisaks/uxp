@@ -30,6 +30,8 @@ export type BlueprintScene = {
     id?: string;
     name?: string;
     description?: string;
+    /** Alternative search terms (e.g. ["movie mode", "cinema"] for a scene). */
+    keywords?: string[];
     icon?: BlueprintIcon;
     commands: SceneAction[];
 };
@@ -47,18 +49,9 @@ export const isBlueprintScene = (obj: unknown): obj is BlueprintScene => {
 /* Factory                                                             */
 /* ------------------------------------------------------------------ */
 
-export function scene(props: {
-    id?: string;
-    name?: string;
-    description?: string;
-    icon?: BlueprintIcon;
-    commands: SceneAction[];
-}): BlueprintScene {
+export function scene(props: BlueprintScene): BlueprintScene {
     return {
-        id: props.id,
-        name: props.name,
-        description: props.description,
+        ...props,
         icon: props.icon ?? "scene:default",
-        commands: props.commands,
     };
 }

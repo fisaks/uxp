@@ -71,6 +71,7 @@ function serializeLocation(loc: BlueprintLocation): RuntimeLocation {
         id: loc.id!,
         name: locationName,
         description: loc.description,
+        keywords: loc.keywords,
         icon: loc.icon,
         items: loc.items.map((item): RuntimeLocationItem => {
             const name = resolveItemName(item, locationName);

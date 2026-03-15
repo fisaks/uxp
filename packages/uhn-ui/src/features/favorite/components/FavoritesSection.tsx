@@ -3,6 +3,7 @@ import { arrayMove, rectSortingStrategy, SortableContext } from "@dnd-kit/sortab
 import { Box, Collapse, Grid2 } from "@mui/material";
 import { RuntimeLocationItem, UserFavorite } from "@uhn/common";
 import React, { useCallback, useMemo } from "react";
+import { fuzzyTokenMatch } from "../../shared/fuzzyMatch";
 import { useSelector } from "react-redux";
 import { selectResourceById } from "../../resource/resourceSelector";
 import { selectRuntimeStateByResourceId } from "../../runtime-state/runtimeStateSelector";
@@ -10,6 +11,7 @@ import { selectScenesById } from "../../scene/sceneSelectors";
 import { selectViewsWithStateById } from "../../view/viewSelectors";
 import { LocationItemTile } from "../../location/components/LocationItemTile";
 import { STICKY_OFFSET } from "../../location/locationConstants";
+import { selectItemSearchTextMap } from "../../location/locationSelectors";
 import { useVisibleTileCount } from "../../location/hooks/useVisibleTileCount";
 import { SortableTile } from "../../shared/components/SortableTile";
 import { useReorderFavoritesMutation } from "../favorite.api";
@@ -23,10 +25,12 @@ type FavoritesSectionProps = {
     sectionRef: React.Ref<HTMLDivElement>;
     expanded: boolean;
     onExpandToggle: () => void;
+    /** When set, filters visible favorites to those matching (multi-word AND on name/id). */
+    filterTerm?: string;
 };
 
 export const FavoritesSection: React.FC<FavoritesSectionProps> = ({
-    favorites, sectionRef, expanded, onExpandToggle,
+    favorites, sectionRef, expanded, onExpandToggle, filterTerm,
 }) => {
     const tilesPerRow = useVisibleTileCount();
     const toggleFavorite = useToggleFavorite();
@@ -36,10 +40,21 @@ export const FavoritesSection: React.FC<FavoritesSectionProps> = ({
     const resourceById = useSelector(selectResourceById);
     const stateById = useSelector(selectRuntimeStateByResourceId);
     const scenesById = useSelector(selectScenesById);
+    const searchTextMap = useSelector(selectItemSearchTextMap);
 
-    const firstRowFavs = favorites.slice(0, tilesPerRow);
-    const overflowFavs = favorites.slice(tilesPerRow);
-    const hasOverflow = favorites.length > tilesPerRow;
+    // Filter favorites when search term is active (search text is precomputed in the selector)
+    const filteredFavorites = useMemo(() => {
+        if (!filterTerm?.trim()) return favorites;
+        const tokens = filterTerm.toLowerCase().trim().split(/\s+/);
+        return favorites.filter(fav => {
+            const text = searchTextMap[`${fav.itemKind}:${fav.itemRefId}`] ?? "";
+            return tokens.every(token => fuzzyTokenMatch(token, text));
+        });
+    }, [favorites, filterTerm, searchTextMap]);
+
+    const firstRowFavs = filteredFavorites.slice(0, tilesPerRow);
+    const overflowFavs = filteredFavorites.slice(tilesPerRow);
+    const hasOverflow = filteredFavorites.length > tilesPerRow;
 
     const sortableIds = useMemo(
         () => favorites.map(f => String(f.id)),
@@ -68,7 +83,8 @@ export const FavoritesSection: React.FC<FavoritesSectionProps> = ({
         refId: fav.itemRefId,
     });
 
-    const renderTile = (fav: UserFavorite) => (
+    const renderTile = (fav: UserFavorite) => {
+        return (
         <SortableTile key={fav.id} id={String(fav.id)}>
             <LocationItemTile
                 item={toItem(fav)}
@@ -80,9 +96,13 @@ export const FavoritesSection: React.FC<FavoritesSectionProps> = ({
                 onToggleFavorite={() => toggleFavorite(fav.itemKind, fav.itemRefId)}
             />
         </SortableTile>
-    );
+        );
+    };
 
     if (favorites.length === 0) return null;
+    if (filterTerm?.trim() && filteredFavorites.length === 0) {
+        return <Box ref={sectionRef} data-location-id={LOCATION_FAVORITES} sx={{ display: "none" }} />;
+    }
 
     return (
         <Box ref={sectionRef} data-location-id={LOCATION_FAVORITES} sx={{ mb: 4, scrollMarginTop: `${STICKY_OFFSET}px` }}>

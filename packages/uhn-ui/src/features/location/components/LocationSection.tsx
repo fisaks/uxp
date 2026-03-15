@@ -3,6 +3,7 @@ import { arrayMove, rectSortingStrategy, SortableContext } from "@dnd-kit/sortab
 import { Box, Collapse, Grid2 } from "@mui/material";
 import { LocationItemRef, RuntimeLocation, RuntimeLocationItem } from "@uhn/common";
 import React, { useCallback, useMemo } from "react";
+import { fuzzyTokenMatch } from "../../shared/fuzzyMatch";
 import { useSelector } from "react-redux";
 import { useFavoriteSet, useToggleFavorite } from "../../favorite/favoriteHooks";
 import { selectResourceById } from "../../resource/resourceSelector";
@@ -13,6 +14,7 @@ import { selectViewsWithStateById } from "../../view/viewSelectors";
 import { STICKY_OFFSET } from "../locationConstants";
 import { useVisibleTileCount } from "../hooks/useVisibleTileCount";
 import { useOrderedLocationItems } from "../hooks/useOrderedLocationItems";
+import { selectItemSearchTextMap } from "../locationSelectors";
 import { LocationItemTile } from "./LocationItemTile";
 import { LocationSectionHeader } from "./LocationSectionHeader";
 
@@ -28,29 +30,45 @@ type LocationSectionProps = {
     onReorder: (locationItems: LocationItemRef[]) => void;
     /** Called when the user resets the custom order back to blueprint default. */
     onResetOrder: () => void;
+    /** When set, filters visible items to those matching (multi-word AND on name/id/description). */
+    filterTerm?: string;
+    /** Item key (kind:refId) to highlight with a ring border. */
+    highlightedItemKey?: string | null;
 };
 
 export const LocationSection: React.FC<LocationSectionProps> = ({
-    location, savedOrder, sectionRef, expanded, onExpandToggle, onReorder, onResetOrder,
+    location, savedOrder, sectionRef, expanded, onExpandToggle, onReorder, onResetOrder, filterTerm, highlightedItemKey,
 }) => {
-    const locationItems = useOrderedLocationItems(location.items, savedOrder);
+    const allLocationItems = useOrderedLocationItems(location.items, savedOrder);
     const hasCustomOrder = !!savedOrder;
     const tilesPerRow = useVisibleTileCount();
-    const hasOverflow = locationItems.length > tilesPerRow;
 
     const viewsById = useSelector(selectViewsWithStateById);
     const resourceById = useSelector(selectResourceById);
     const stateById = useSelector(selectRuntimeStateByResourceId);
     const scenesById = useSelector(selectScenesById);
+    const searchTextMap = useSelector(selectItemSearchTextMap);
     const favoriteSet = useFavoriteSet();
     const toggleFavorite = useToggleFavorite();
 
+    // Filter items when search term is active (search text is precomputed in the selector)
+    const locationItems = useMemo(() => {
+        if (!filterTerm?.trim()) return allLocationItems;
+        const tokens = filterTerm.toLowerCase().trim().split(/\s+/);
+        return allLocationItems.filter(item => {
+            const text = searchTextMap[`${item.kind}:${item.refId}`] ?? "";
+            return tokens.every(token => fuzzyTokenMatch(token, text));
+        });
+    }, [allLocationItems, filterTerm, searchTextMap]);
+
+    const hasOverflow = locationItems.length > tilesPerRow;
     const firstRowItems = locationItems.slice(0, tilesPerRow);
     const overflowItems = locationItems.slice(tilesPerRow);
 
+    // DnD uses unfiltered items so reorder always produces a complete list
     const sortableIds = useMemo(
-        () => locationItems.map(item => `${item.kind}:${item.refId}`),
-        [locationItems],
+        () => allLocationItems.map(item => `${item.kind}:${item.refId}`),
+        [allLocationItems],
     );
 
     const sensors = useSensors(
@@ -74,19 +92,27 @@ export const LocationSection: React.FC<LocationSectionProps> = ({
         onReorder(reorderedItems);
     }, [sortableIds, onReorder]);
 
-    const renderTile = (item: RuntimeLocationItem) => (
-        <SortableTile key={`${item.kind}:${item.refId}`} id={`${item.kind}:${item.refId}`}>
-            <LocationItemTile
-                item={item}
-                viewsById={viewsById}
-                resourceById={resourceById}
-                stateById={stateById}
-                scenesById={scenesById}
-                isFavorite={favoriteSet.has(`${item.kind}:${item.refId}`)}
-                onToggleFavorite={() => toggleFavorite(item.kind, item.refId)}
-            />
-        </SortableTile>
-    );
+    const renderTile = (item: RuntimeLocationItem) => {
+        const itemKey = `${item.kind}:${item.refId}`;
+        return (
+            <SortableTile key={itemKey} id={itemKey} highlighted={highlightedItemKey === itemKey}>
+                <LocationItemTile
+                    item={item}
+                    viewsById={viewsById}
+                    resourceById={resourceById}
+                    stateById={stateById}
+                    scenesById={scenesById}
+                    isFavorite={favoriteSet.has(itemKey)}
+                    onToggleFavorite={() => toggleFavorite(item.kind, item.refId)}
+                />
+            </SortableTile>
+        );
+    };
+
+    // Hide section entirely when filter produces no matches
+    if (filterTerm?.trim() && locationItems.length === 0) {
+        return <Box ref={sectionRef} data-location-id={location.id} sx={{ display: "none" }} />;
+    }
 
     return (
         <Box ref={sectionRef} data-location-id={location.id} sx={{ mb: 4, scrollMarginTop: `${STICKY_OFFSET}px` }}>
@@ -94,7 +120,7 @@ export const LocationSection: React.FC<LocationSectionProps> = ({
                 location={location}
                 expanded={expanded}
                 onExpandToggle={onExpandToggle}
-                totalItems={locationItems.length}
+                totalItems={allLocationItems.length}
                 visibleItems={Math.min(locationItems.length, tilesPerRow)}
                 hasOverflow={hasOverflow}
                 hasCustomOrder={hasCustomOrder}

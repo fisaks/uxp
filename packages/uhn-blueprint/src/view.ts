@@ -126,6 +126,8 @@ export type InteractionView = {
     id?: string;
     name?: string;
     description?: string;
+    /** Alternative search terms (e.g. ["main light", "overhead"] for a ceiling light). */
+    keywords?: string[];
     icon?: BlueprintIcon;
 
     /** Primary state sources — drives icon active/inactive or numeric value */

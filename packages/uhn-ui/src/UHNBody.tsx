@@ -1,5 +1,8 @@
 import { AppBodyContent } from "@uxp/ui-lib";
-import { Route, Routes } from "react-router-dom";
+import { Route, Routes, useLocation } from "react-router-dom";
+import { CommandPaletteDialog } from "./features/command-palette/CommandPaletteDialog";
+import { CommandPaletteProvider } from "./features/command-palette/CommandPaletteContext";
+import { useCommandPaletteShortcut } from "./features/command-palette/useCommandPaletteShortcut";
 import { ApiTokenPage } from "./features/api-token/pages/ApiTokenPage";
 import { BlueprintListPage } from "./features/blueprint/pages/BlueprintListPage";
 import { IconPreviewPage } from "./features/blueprint/pages/IconPreviewPage";
@@ -14,8 +17,14 @@ import { TopicTracePage } from "./features/topic-trace/pages/TopicTracePage";
 import { ViewPage } from "./features/view/pages/ViewPage";
 
 export const UHNBody = () => {
+    const location = useLocation();
+    const isHomePage = location.pathname === "/" || (!location.pathname.startsWith("/technical"));
+    const { paletteOpen, paletteClose, paletteTrigger } = useCommandPaletteShortcut(!isHomePage);
+
     return (
         <AppBodyContent appHaveOwnLeftSideBar={false}>
+            <CommandPaletteDialog open={paletteOpen} onClose={paletteClose} />
+            <CommandPaletteProvider value={paletteTrigger}>
             <Routes>
                 <Route path="/" element={<LocationPage />} />
 
@@ -64,6 +73,7 @@ export const UHNBody = () => {
 
                 <Route path="*" element={<LocationPage />} />
             </Routes>
+            </CommandPaletteProvider>
         </AppBodyContent>
     );
 };

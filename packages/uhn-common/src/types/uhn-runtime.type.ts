@@ -94,6 +94,7 @@ type RuntimeResourceCommon = {
     id: string;
     name: string;
     description?: string;
+    keywords?: string[];
     icon?: BlueprintIcon;
     errors?: ResourceErrorCode[];
 };
@@ -303,6 +304,7 @@ export type RuntimeScene = {
     id: string;
     name: string;
     description?: string;
+    keywords?: string[];
     icon?: BlueprintIcon;
     commands: RuntimeSceneCommand[];
 };
@@ -396,6 +398,7 @@ export type RuntimeInteractionView = {
     id: string;
     name: string;
     description?: string;
+    keywords?: string[];
     icon?: BlueprintIcon;
     stateFrom: RuntimeViewStateSource[];
     stateAggregation?: ViewStateAggregation;
@@ -415,6 +418,7 @@ export type RuntimeLocation = {
     id: string;
     name?: string;
     description?: string;
+    keywords?: string[];
     icon?: BlueprintIcon;
     items: RuntimeLocationItem[];
 };

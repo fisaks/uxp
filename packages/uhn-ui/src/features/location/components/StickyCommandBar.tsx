@@ -1,10 +1,11 @@
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
-import SearchIcon from "@mui/icons-material/Search";
 import StarIcon from "@mui/icons-material/Star";
-import { Box, FormControl, InputAdornment, MenuItem, Select, SelectChangeEvent, TextField, useTheme } from "@mui/material";
+import { Box, FormControl, MenuItem, Select, SelectChangeEvent, useTheme } from "@mui/material";
 import { RuntimeLocation } from "@uhn/common";
 import { usePortalContainerRef } from "@uxp/ui-lib";
-import React from "react";
+import React, { useState } from "react";
+import { QuickActionId } from "../../command-palette/commandPalette.types";
+import { CommandPaletteAutocomplete } from "../../command-palette/CommandPaletteAutocomplete";
 import { LOCATION_FAVORITES } from "../../favorite/components/FavoritesSection";
 import { getBlueprintIcon } from "../../view/blueprintIconMap";
 import { APP_BAR_HEIGHT } from "../locationConstants";
@@ -24,20 +25,29 @@ const LocationOption: React.FC<{ icon?: React.ElementType; label: string; trunca
     </Box>
 );
 
-type LocationSwitcherProps = {
+type StickyCommandBarProps = {
     locations: RuntimeLocation[];
     activeLocationId: string | undefined;
+    /** Called when the user picks a location from the dropdown selector (scroll only). */
     onLocationSelect: (locationId: string) => void;
+    /** Called when the command palette selects a location (scroll + expand). */
+    onPaletteLocationSelect: (locationId: string) => void;
     hasFavorites?: boolean;
+    onSearchTermChange?: (term: string) => void;
+    onHighlightItem?: (itemKey: string, locationId: string) => void;
+    onQuickAction?: (action: QuickActionId) => void;
+    /** External filter term to display in the command palette input. */
+    filterTerm?: string;
 };
 
-export const LocationSwitcher: React.FC<LocationSwitcherProps> = ({
-    locations, activeLocationId, onLocationSelect, hasFavorites,
+export const StickyCommandBar: React.FC<StickyCommandBarProps> = ({
+    locations, activeLocationId, onLocationSelect, onPaletteLocationSelect, hasFavorites, onSearchTermChange, onHighlightItem, onQuickAction, filterTerm,
 }) => {
     const portalContainer = usePortalContainerRef();
     const theme = useTheme();
     const selectTextColor = (theme.typography.h2 as React.CSSProperties).color ?? theme.palette.text.primary;
     const { stickyBoxRef, isFixed, fixedWidth } = useStickyOnScroll(APP_BAR_HEIGHT);
+    const [paletteFocused, setPaletteFocused] = useState(false);
 
     const handleLocationSelection = (event: SelectChangeEvent<string>) => {
         onLocationSelect(event.target.value);
@@ -48,22 +58,20 @@ export const LocationSwitcher: React.FC<LocationSwitcherProps> = ({
             display: "flex", alignItems: "center", gap: 1,
             maxWidth: { xs: "100%", sm: 800, md: 900 }, mx: "auto",
         }}>
-            <TextField
-                size="small"
-                placeholder="Search or command..."
-                slotProps={{
-                    input: {
-                        startAdornment: (
-                            <InputAdornment position="start">
-                                <SearchIcon fontSize="small" sx={{ color: "primary.main" }} />
-                            </InputAdornment>
-                        ),
-                    },
-                }}
+            <CommandPaletteAutocomplete
+                onLocationSelect={onPaletteLocationSelect}
+                onSearchTermChange={onSearchTermChange}
+                onHighlightItem={onHighlightItem}
+                onQuickAction={onQuickAction}
+                onFocusChange={setPaletteFocused}
+                filterTerm={filterTerm}
                 sx={{ flex: 1, minWidth: "60%", maxWidth: { xs: "100%", sm: 400 } }}
             />
             {locations.length > 1 && (
-                <FormControl size="small" sx={{ minWidth: 0, flex: 1 }}>
+                <FormControl size="small" sx={{
+                    minWidth: 0, flex: 1,
+                    display: paletteFocused ? { xs: "none", sm: "inline-flex" } : "inline-flex",
+                }}>
                     <Select
                         value={activeLocationId ?? ""}
                         onChange={handleLocationSelection}
