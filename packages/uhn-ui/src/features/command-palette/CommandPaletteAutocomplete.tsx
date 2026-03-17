@@ -537,6 +537,7 @@ export const CommandPaletteAutocomplete: React.FC<CommandPaletteAutocompleteProp
                             htmlInput: {
                                 ...params.inputProps,
                                 "data-palette-input": true,
+                                readOnly: voice.phase !== "idle",
                                 onKeyDown: makeInputKeyDown(params.inputProps?.onKeyDown as React.KeyboardEventHandler<HTMLInputElement> | undefined),
                             },
                             input: {
@@ -582,6 +583,7 @@ export const CommandPaletteAutocomplete: React.FC<CommandPaletteAutocompleteProp
                                                 <>
                                                     <TooltipIconButton
                                                         size="small"
+                                                        onMouseDown={(e) => e.preventDefault()}
                                                         onClick={voice.toggleSpeaker}
                                                         tooltip={voice.speakerEnabled ? "Disable voice readout" : "Enable voice readout"}
                                                         tooltipPortal={portalContainer}
@@ -591,6 +593,7 @@ export const CommandPaletteAutocomplete: React.FC<CommandPaletteAutocompleteProp
                                                     </TooltipIconButton>
                                                     <TooltipIconButton
                                                         size="small"
+                                                        onMouseDown={(e) => e.preventDefault()}
                                                         onClick={voice.toggleMic}
                                                         tooltip={voice.phase === "listening" ? "Stop listening" : "Voice input"}
                                                         tooltipPortal={portalContainer}

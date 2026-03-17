@@ -18,6 +18,7 @@ tsconfig.tsbuildinfo
 packages/uxp-ui/.htpasswd
 packages/uxp-bff/build_types
 .history
+nginx/dev-certs/
 build_types
 packages/uxp-bff/src/db/private-migrations/
 

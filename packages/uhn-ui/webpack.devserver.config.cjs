@@ -15,7 +15,15 @@ module.exports = merge(baseConfig, {
             },
         ],
         port: 3030, // Port for the development server
+        host: "0.0.0.0",
+        allowedHosts: "all",
         hot: true, // Enable hot module replacement
+        client: {
+            webSocketURL: "auto://0.0.0.0:0/ws-uhn",
+        },
+        webSocketServer: {
+            options: { path: "/ws-uhn" },
+        },
         watchFiles: [
             path.resolve(__dirname, "./src"),
             path.resolve(__dirname, "../uhn-common"),

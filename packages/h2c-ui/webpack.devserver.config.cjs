@@ -19,7 +19,15 @@ module.exports = merge(baseConfig, {
             },
         ],
         port: 3010, // Port for the development server
+        host: "0.0.0.0",
+        allowedHosts: "all",
         hot: true, // Enable hot module replacement
+        client: {
+            webSocketURL: "auto://0.0.0.0:0/ws-h2c",
+        },
+        webSocketServer: {
+            options: { path: "/ws-h2c" },
+        },
         watchFiles: [
             path.resolve(__dirname, "./src"),
             path.resolve(__dirname, "../h2c-common"),

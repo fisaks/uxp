@@ -89,6 +89,7 @@ export function useSpeechRecognition({
     const [error, setError] = useState<string | null>(null);
 
     const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
+    const listeningRef = useRef(false);
     const errorTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // Keep callbacks in refs so the recognition instance doesn't need to be recreated
@@ -157,10 +158,12 @@ export function useSpeechRecognition({
         };
 
         recognition.onstart = () => {
+            listeningRef.current = true;
             setListening(true);
         };
 
         recognition.onend = () => {
+            listeningRef.current = false;
             setListening(false);
         };
 
@@ -173,22 +176,19 @@ export function useSpeechRecognition({
     }, [lang, maxAlternatives]);
 
     const start = useCallback(() => {
-        if (!recognitionRef.current || listening) return;
+        if (!recognitionRef.current || listeningRef.current) return;
         setError(null);
         try {
             recognitionRef.current.start();
-            // listening state is set by the onstart event, not here —
-            // on mobile over HTTP, start() may succeed but recognition
-            // silently fails without ever firing onstart.
         } catch (e) {
             console.warn("[SpeechRecognition] start() failed:", e);
         }
-    }, [listening]);
+    }, []);
 
     const stop = useCallback(() => {
-        if (!recognitionRef.current || !listening) return;
+        if (!recognitionRef.current || !listeningRef.current) return;
         recognitionRef.current.stop();
-    }, [listening]);
+    }, []);
 
     return { supported, listening, start, stop, error };
 }

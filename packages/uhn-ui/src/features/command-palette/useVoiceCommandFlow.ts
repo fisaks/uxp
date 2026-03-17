@@ -485,6 +485,8 @@ export function useVoiceCommandFlow({
         utterance.onerror = onFinished;
         setTtsSpeaking(true);
         recognition.stop();
+        // Chrome Android: cancel() before speak() to clear stuck internal queue
+        window.speechSynthesis.cancel();
         window.speechSynthesis.speak(utterance);
     };
 
@@ -673,6 +675,16 @@ export function useVoiceCommandFlow({
         if (phase === "idle") {
             setPhase("listening");
             recognition.start();
+            // Unlock speechSynthesis on mobile: the first speak() call must
+            // happen inside a user gesture (tap/click), otherwise the browser
+            // silently blocks all future TTS.
+            if (speakerEnabledRef.current && typeof window.speechSynthesis !== "undefined") {
+                window.speechSynthesis.cancel();
+                const unlock = new SpeechSynthesisUtterance("Listening.");
+                unlock.onend = () => {};
+                unlock.onerror = () => {};
+                window.speechSynthesis.speak(unlock);
+            }
         } else if (phase === "listening") {
             recognition.stop();
             setPhase("idle");
@@ -684,6 +696,26 @@ export function useVoiceCommandFlow({
             doStopRef.current();
         }
     }, [phase, recognition]);
+
+    // Screen Wake Lock: keep the screen on while voice mode is active.
+    // Without this, the screen turns off on mobile and recognition stops.
+    const wakeLockRef = useRef<WakeLockSentinel | null>(null);
+    useEffect(() => {
+        if (phase === "idle") {
+            wakeLockRef.current?.release();
+            wakeLockRef.current = null;
+            return;
+        }
+        if (!wakeLockRef.current && "wakeLock" in navigator) {
+            navigator.wakeLock.request("screen").then(lock => {
+                wakeLockRef.current = lock;
+            }).catch(() => { /* permission denied or not supported */ });
+        }
+        return () => {
+            wakeLockRef.current?.release();
+            wakeLockRef.current = null;
+        };
+    }, [phase]);
 
     // Cleanup on unmount
     useEffect(() => {

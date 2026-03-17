@@ -13,7 +13,7 @@ start_dev_env() {
     fi
     
     
-    docker compose -f docker-compose.yaml -f docker-compose.dev.yaml up -d db-server mqtt
+    docker compose -f docker-compose.yaml -f docker-compose.dev.yaml up -d db-server mqtt dev-https
     
     
     echo "⏳ Waiting for Mosquitto to be ready on localhost:2883..."
@@ -66,10 +66,13 @@ start_dev_env() {
     tmux new-window -t $SESSION_NAME -n 'demo&h2c'
     
     tmux split-window -v -t $SESSION_NAME:1
+    tmux split-window -v -t $SESSION_NAME:1
     tmux select-pane -t 0
     tmux split-window -h -t $SESSION_NAME:1
-    tmux select-pane -t 2MASTER
+    tmux select-pane -t 2
     tmux split-window -h -t $SESSION_NAME:1
+
+
     tmux send-keys -t $SESSION_NAME:1.0 "pnpm run start:demo-bff" C-m
     tmux send-keys -t $SESSION_NAME:1.1 "pnpm run start:demo-app" C-m
     
@@ -78,7 +81,13 @@ start_dev_env() {
     
     #tmux send-keys -t $SESSION_NAME:1.2 "pnpm run start:h2c-bff" C-m
     tmux send-keys -t $SESSION_NAME:1.3 "pnpm run start:h2c-app" C-m
-    
+
+    #tmux resize-pane -t 1.4 -y 5
+    tmux resize-pane -t 1.0 -y 43%
+    tmux resize-pane -t 1.2 -y 42%
+    tmux resize-pane -t 1.4 -y 15%
+    tmux send-keys -t $SESSION_NAME:1.4 "docker logs -f uxp-dev-https" C-m
+
     tmux new-window -t $SESSION_NAME -n 'uhn'
     tmux split-window -v -t $SESSION_NAME:2
     tmux split-window -v -t $SESSION_NAME:2
