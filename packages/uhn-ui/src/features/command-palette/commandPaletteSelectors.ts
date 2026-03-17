@@ -1,5 +1,5 @@
 import { createSelector } from "@reduxjs/toolkit";
-import { RuntimeInteractionView, RuntimeLocation, RuntimeResource, RuntimeScene, UhnResourceCommand } from "@uhn/common";
+import { RuntimeComplexResource, RuntimeInteractionView, RuntimeLocation, RuntimeResource, RuntimeScene, RuntimeViewCommandTarget, UhnResourceCommand } from "@uhn/common";
 import { favoriteApi } from "../favorite/favorite.api";
 import { LOCATION_FAVORITES } from "../favorite/components/FavoritesSection";
 import { selectAllLocations } from "../location/locationSelectors";
@@ -12,6 +12,21 @@ import { PaletteGroup, PaletteItem } from "./commandPalette.types";
 /* ------------------------------------------------------------------ */
 /* Helpers                                                              */
 /* ------------------------------------------------------------------ */
+
+/** Convert a blueprint command target to a resource command for dispatch. */
+function toResourceCommand(target: RuntimeViewCommandTarget): UhnResourceCommand | undefined {
+    switch (target.type) {
+        case "tap": return { type: "tap" };
+        case "toggle": return { type: "toggle" };
+        case "longPress": return { type: "longPress", holdMs: target.holdMs ?? 1000 };
+        case "setAnalog": return { type: "setAnalog", value: target.min ?? 0 };
+        case "clearTimer": return { type: "clearTimer" };
+        default: return undefined;
+    }
+}
+
+/** Synonym verbs added to Location entries so users can type "locate kitchen", "find kitchen", etc. */
+const LOCATION_VERBS = "locate find jump show where";
 
 function buildSearchText(group: PaletteGroup, locationName: string, itemName: string, id: string, description?: string, verb?: string, keywords?: string[]): string {
     const parts = verb ? [verb, group, locationName, itemName, id] : [group, locationName, itemName, id];
@@ -53,14 +68,11 @@ function buildViewActions(
 
             // Use onDeactivate target if active and available
             const deactivateTarget = active && cmd.onDeactivate ? cmd.onDeactivate : undefined;
-            const deactivateCommand: UhnResourceCommand | undefined = deactivateTarget
-                ? deactivateTarget.type === "tap" ? { type: "tap" }
-                    : deactivateTarget.type === "toggle" ? { type: "toggle" }
-                        : deactivateTarget.type === "longPress" ? { type: "longPress", holdMs: deactivateTarget.holdMs ?? 1000 }
-                            : deactivateTarget.type === "setAnalog" ? { type: "setAnalog", value: deactivateTarget.min ?? 0 }
-                                : deactivateTarget.type === "clearTimer" ? { type: "clearTimer" }
-                                    : undefined
-                : undefined;
+            const deactivateCommand = deactivateTarget ? toResourceCommand(deactivateTarget) : undefined;
+
+            // Voice deactivateAction: always use onDeactivate if one exists, regardless of current state
+            const voiceDeactivateCmd = cmd.onDeactivate;
+            const voiceDeactivateCommand = voiceDeactivateCmd ? toResourceCommand(voiceDeactivateCmd) : undefined;
 
             // Single state-based action; searchText includes both on/off aliases
             return [{
@@ -74,6 +86,10 @@ function buildViewActions(
                     resourceId: active ? (deactivateTarget?.resourceId ?? resourceId) : resourceId,
                     command: active ? (deactivateCommand ?? command) : command,
                 },
+                activateAction: { resourceId, command },
+                deactivateAction: voiceDeactivateCmd
+                    ? { resourceId: voiceDeactivateCmd.resourceId ?? resourceId, command: voiceDeactivateCommand ?? command }
+                    : { resourceId, command },
             }];
         }
 
@@ -97,6 +113,8 @@ function buildViewActions(
                     type: "send-command", resourceId,
                     command: { type: "setAnalog", value: active ? min : (defaultOnValue ?? max) },
                 },
+                activateAction: { resourceId, command: { type: "setAnalog", value: defaultOnValue ?? max } },
+                deactivateAction: { resourceId, command: { type: "setAnalog", value: min } },
             });
             // Set to N% (analog fallback — resolved at filter time)
             items.push({
@@ -109,8 +127,10 @@ function buildViewActions(
                 action: {
                     type: "open-analog-popup", resourceId,
                     command: { type: "setAnalog", value: 0 },
-                    min, max, step, unit, label: itemName,
+                    min, max, step, unit, label: itemName, defaultOnValue,
                 },
+                activateAction: { resourceId, command: { type: "setAnalog", value: defaultOnValue ?? max } },
+                deactivateAction: { resourceId, command: { type: "setAnalog", value: min } },
             });
             return items;
         }
@@ -156,6 +176,8 @@ function buildRawResourceActions(
             icon, group, active,
             searchText: buildSearchText(group, locationName, itemName, resource.id, desc, "turn on off toggle switch", kw),
             action: { type: "send-command", resourceId: resource.id, command: { type: "set", value: !active } },
+            activateAction: { resourceId: resource.id, command: { type: "set", value: true } },
+            deactivateAction: { resourceId: resource.id, command: { type: "set", value: false } },
         }];
     }
 
@@ -179,6 +201,8 @@ function buildRawResourceActions(
                     type: "send-command", resourceId: resource.id,
                     command: { type: "setAnalog", value: active ? min : (defaultOnValue ?? max) },
                 },
+                activateAction: { resourceId: resource.id, command: { type: "setAnalog", value: defaultOnValue ?? max } },
+                deactivateAction: { resourceId: resource.id, command: { type: "setAnalog", value: min } },
             },
             {
                 id: `action:set:resource:${resource.id}:${location.id}`,
@@ -190,10 +214,25 @@ function buildRawResourceActions(
                 action: {
                     type: "open-analog-popup", resourceId: resource.id,
                     command: { type: "setAnalog", value: 0 },
-                    min, max, step, unit, label: itemName,
+                    min, max, step, unit, label: itemName, defaultOnValue,
                 },
+                activateAction: { resourceId: resource.id, command: { type: "setAnalog", value: defaultOnValue ?? max } },
+                deactivateAction: { resourceId: resource.id, command: { type: "setAnalog", value: min } },
             },
         ];
+    }
+
+    if (resource.type === "complex" && (resource as RuntimeComplexResource).emitsTap) {
+        return [{
+            id: `action:tap:resource:${resource.id}:${location.id}`,
+            label: active ? `Turn off ${itemName}` : `Turn on ${itemName}`,
+            secondary: locationName,
+            icon, group, active,
+            searchText: buildSearchText(group, locationName, itemName, resource.id, desc, "turn on off tap trigger", kw),
+            action: { type: "send-command", resourceId: resource.id, command: { type: "tap" } },
+            activateAction: { resourceId: resource.id, command: { type: "tap" } },
+            deactivateAction: { resourceId: resource.id, command: { type: "tap" } },
+        }];
     }
 
     return [];
@@ -238,8 +277,24 @@ export const selectCommandPaletteItems = createSelector(
                 label: "Favorites",
                 icon: "status:favorite",
                 group: "Locations",
-                searchText: "locations favorites starred bookmarks saved",
+                searchText: `locations ${LOCATION_VERBS} favorites starred bookmarks saved`,
                 action: { type: "scroll-to-location", locationId: LOCATION_FAVORITES },
+            });
+            items.push({
+                id: `expand:${LOCATION_FAVORITES}`,
+                label: "Expand Favorites",
+                icon: "status:favorite",
+                group: "Quick Actions",
+                searchText: buildSearchText("Quick Actions", "", "Favorites", LOCATION_FAVORITES, undefined, "expand open show"),
+                action: { type: "expand-location", locationId: LOCATION_FAVORITES },
+            });
+            items.push({
+                id: `collapse:${LOCATION_FAVORITES}`,
+                label: "Collapse Favorites",
+                icon: "status:favorite",
+                group: "Quick Actions",
+                searchText: buildSearchText("Quick Actions", "", "Favorites", LOCATION_FAVORITES, undefined, "collapse close hide"),
+                action: { type: "collapse-location", locationId: LOCATION_FAVORITES },
             });
         }
 
@@ -252,8 +307,26 @@ export const selectCommandPaletteItems = createSelector(
                 label: locationName,
                 icon: location.icon,
                 group: "Locations",
-                searchText: buildSearchText("Locations", "", locationName, location.id, location.description, undefined, location.keywords),
+                searchText: buildSearchText("Locations", "", locationName, location.id, location.description, LOCATION_VERBS, location.keywords),
                 action: { type: "scroll-to-location", locationId: location.id },
+            });
+
+            // Expand / collapse location
+            items.push({
+                id: `expand:${location.id}`,
+                label: `Expand ${locationName}`,
+                icon: location.icon,
+                group: "Quick Actions",
+                searchText: buildSearchText("Quick Actions", "", locationName, location.id, undefined, "expand open show"),
+                action: { type: "expand-location", locationId: location.id },
+            });
+            items.push({
+                id: `collapse:${location.id}`,
+                label: `Collapse ${locationName}`,
+                icon: location.icon,
+                group: "Quick Actions",
+                searchText: buildSearchText("Quick Actions", "", locationName, location.id, undefined, "collapse close hide"),
+                action: { type: "collapse-location", locationId: location.id },
             });
 
             for (const locItem of location.items) {

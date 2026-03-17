@@ -72,6 +72,23 @@ function maxDistance(tokenLength: number): number {
  * The allowed distance scales with token length: floor(length / 3).
  * Tokens of 1-2 characters require an exact substring match.
  */
+/**
+ * Common filler words stripped before matching. These appear in natural speech
+ * ("set dimmer **to** 90", "turn **the** light on") but aren't in search text.
+ * "on"/"off" are intentionally kept — they are meaningful verb parts.
+ */
+const STOP_WORDS = new Set(["to", "the", "a", "an", "my", "please", "is", "at", "in", "for", "it", "of"]);
+
+/** Split text into lowercase tokens with stop words removed. Returns empty array if all tokens are stop words. */
+export function searchTokens(text: string): string[] {
+    return text.toLowerCase().trim().split(/\s+/).filter(t => t && !STOP_WORDS.has(t));
+}
+
+/** Exact substring match — the fast path of `fuzzyTokenMatch` without Damerau-Levenshtein fallback. Used by voice command resolver where fuzzy matching would create false positives. */
+export function exactTokenMatch(token: string, text: string): boolean {
+    return text.includes(token);
+}
+
 export function fuzzyTokenMatch(token: string, text: string): boolean {
     // Fast path: exact substring match
     if (text.includes(token)) return true;

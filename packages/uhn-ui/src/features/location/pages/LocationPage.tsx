@@ -40,6 +40,7 @@ export const LocationPage = () => {
     const [loading, setLoading] = useState(false);
     const [reorderDialogOpen, setReorderDialogOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
+    const [filterExact, setFilterExact] = useState(false);
     const [highlightedItemKey, setHighlightedItemKey] = useState<string | null>(null);
     const highlightTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
     const expandedIdsRef = useRef<Set<string>>(new Set());
@@ -88,10 +89,10 @@ export const LocationPage = () => {
         return map;
     }, [locations, locationItemOrderMap]);
 
-    const handleHighlightItem = useCallback((itemKey: string, locationId: string) => {
+    const handleHighlightItem = useCallback((itemKey: string, locationId: string, durationMs?: number) => {
         setHighlightedItemKey(itemKey);
         clearTimeout(highlightTimeoutRef.current);
-        highlightTimeoutRef.current = setTimeout(() => setHighlightedItemKey(null), 5000);
+        highlightTimeoutRef.current = setTimeout(() => setHighlightedItemKey(null), durationMs ?? 5000);
 
         // Only expand if the item is in the overflow area (beyond the first visible row)
         const itemIndex = itemIndexMapRef.current.get(itemKey) ?? -1;
@@ -136,6 +137,22 @@ export const LocationPage = () => {
             const next = new Set(prev);
             if (next.has(id)) next.delete(id);
             else next.add(id);
+            return next;
+        });
+    }, []);
+
+    const expandLocation = useCallback((id: string) => {
+        setExpandedIds(prev => {
+            const next = new Set(prev);
+            next.add(id);
+            return next;
+        });
+    }, []);
+
+    const collapseLocation = useCallback((id: string) => {
+        setExpandedIds(prev => {
+            const next = new Set(prev);
+            next.delete(id);
             return next;
         });
     }, []);
@@ -316,6 +333,7 @@ export const LocationPage = () => {
                 break;
             case "clear-filter":
                 setSearchTerm("");
+                setFilterExact(false);
                 break;
             default:
                 assertNever(action, "Unhandled quick action type");
@@ -358,9 +376,11 @@ export const LocationPage = () => {
                             onLocationSelect={handleSwitcherSelect}
                             onPaletteLocationSelect={handlePaletteLocationSelect}
                             hasFavorites={hasFavorites}
-                            onSearchTermChange={setSearchTerm}
+                            onSearchTermChange={(term, exact) => { setSearchTerm(term); setFilterExact(!!exact); }}
                             onHighlightItem={handleHighlightItem}
                             onQuickAction={handleQuickAction}
+                            onExpandLocation={expandLocation}
+                            onCollapseLocation={collapseLocation}
                             filterTerm={searchTerm}
                         />
                         {hasFavorites && (
@@ -370,6 +390,7 @@ export const LocationPage = () => {
                                 expanded={expandedIds.has(LOCATION_FAVORITES)}
                                 onExpandToggle={() => toggleSection(LOCATION_FAVORITES)}
                                 filterTerm={searchTerm}
+                                filterExact={filterExact}
                             />
                         )}
                         {locations.map(location => (
@@ -383,6 +404,7 @@ export const LocationPage = () => {
                                 onReorder={(locationItems) => handleLocationItemReorder(location.id, locationItems)}
                                 onResetOrder={() => handleResetLocationItemOrder(location.id)}
                                 filterTerm={searchTerm}
+                                filterExact={filterExact}
                                 highlightedItemKey={highlightedItemKey}
                             />
                         ))}

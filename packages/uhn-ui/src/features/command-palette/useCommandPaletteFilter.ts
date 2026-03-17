@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { fuzzyTokenMatch } from "../shared/fuzzyMatch";
+import { fuzzyTokenMatch, searchTokens } from "../shared/fuzzyMatch";
 import { PaletteItem } from "./commandPalette.types";
 
 type UseCommandPaletteFilterResult = {
@@ -37,7 +37,8 @@ export function useCommandPaletteFilter(
         const parsed = parseTrailingNumber(trimmed);
         const parsedAnalogValue = parsed?.numericValue;
         const textForFiltering = parsed?.textPart ?? trimmed;
-        const tokens = textForFiltering.toLowerCase().split(/\s+/);
+        const tokens = searchTokens(textForFiltering);
+        if (tokens.length === 0) return { filteredItems: [] };
 
         const filteredItems: PaletteItem[] = [];
 

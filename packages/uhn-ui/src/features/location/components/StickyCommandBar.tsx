@@ -33,15 +33,17 @@ type StickyCommandBarProps = {
     /** Called when the command palette selects a location (scroll + expand). */
     onPaletteLocationSelect: (locationId: string) => void;
     hasFavorites?: boolean;
-    onSearchTermChange?: (term: string) => void;
-    onHighlightItem?: (itemKey: string, locationId: string) => void;
+    onSearchTermChange?: (term: string, exact?: boolean) => void;
+    onHighlightItem?: (itemKey: string, locationId: string, durationMs?: number) => void;
     onQuickAction?: (action: QuickActionId) => void;
+    onExpandLocation?: (locationId: string) => void;
+    onCollapseLocation?: (locationId: string) => void;
     /** External filter term to display in the command palette input. */
     filterTerm?: string;
 };
 
 export const StickyCommandBar: React.FC<StickyCommandBarProps> = ({
-    locations, activeLocationId, onLocationSelect, onPaletteLocationSelect, hasFavorites, onSearchTermChange, onHighlightItem, onQuickAction, filterTerm,
+    locations, activeLocationId, onLocationSelect, onPaletteLocationSelect, hasFavorites, onSearchTermChange, onHighlightItem, onQuickAction, onExpandLocation, onCollapseLocation, filterTerm,
 }) => {
     const portalContainer = usePortalContainerRef();
     const theme = useTheme();
@@ -53,95 +55,93 @@ export const StickyCommandBar: React.FC<StickyCommandBarProps> = ({
         onLocationSelect(event.target.value);
     };
 
-    const barContent = (
-        <Box sx={{
-            display: "flex", alignItems: "center", gap: 1,
-            maxWidth: { xs: "100%", sm: 800, md: 900 }, mx: "auto",
-        }}>
-            <CommandPaletteAutocomplete
-                onLocationSelect={onPaletteLocationSelect}
-                onSearchTermChange={onSearchTermChange}
-                onHighlightItem={onHighlightItem}
-                onQuickAction={onQuickAction}
-                onFocusChange={setPaletteFocused}
-                filterTerm={filterTerm}
-                sx={{ flex: 1, minWidth: "60%", maxWidth: { xs: "100%", sm: 400 } }}
-            />
-            {locations.length > 1 && (
-                <FormControl size="small" sx={{
-                    minWidth: 0, flex: 1,
-                    display: paletteFocused ? { xs: "none", sm: "inline-flex" } : "inline-flex",
-                }}>
-                    <Select
-                        value={activeLocationId ?? ""}
-                        onChange={handleLocationSelection}
-                        displayEmpty
-                        MenuProps={{ container: portalContainer.current }}
-                        sx={{
-                            "& .MuiSelect-select": {
-                                color: selectTextColor,
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                                whiteSpace: "nowrap",
-                            },
-                            "& .MuiSelect-icon": { color: "text.secondary" },
-                        }}
-                        renderValue={(selected) => {
-                            if (selected === LOCATION_TOP) {
-                                return <LocationOption icon={ArrowUpwardIcon} label="Top" truncate />;
-                            }
-                            if (selected === LOCATION_FAVORITES) {
-                                return <LocationOption icon={StarIcon} label="Favorites" truncate />;
-                            }
-                            const loc = locations.find(l => l.id === selected);
-                            if (!loc) return null;
-                            const Icon = loc.icon ? getBlueprintIcon(loc.icon)?.active : undefined;
-                            return <LocationOption icon={Icon} label={loc.name ?? loc.id} truncate />;
-                        }}
-                    >
-                        <MenuItem value={LOCATION_TOP}>
-                            <LocationOption icon={ArrowUpwardIcon} label="Top" />
-                        </MenuItem>
-                        {hasFavorites && (
-                            <MenuItem value={LOCATION_FAVORITES}>
-                                <LocationOption icon={StarIcon} label="Favorites" />
-                            </MenuItem>
-                        )}
-                        {locations.map(loc => {
-                            const Icon = loc.icon ? getBlueprintIcon(loc.icon)?.active : undefined;
-                            return (
-                                <MenuItem key={loc.id} value={loc.id}>
-                                    <LocationOption icon={Icon} label={loc.name ?? loc.id} />
-                                </MenuItem>
-                            );
-                        })}
-                    </Select>
-                </FormControl>
-            )}
-        </Box>
-    );
-
+    // Single bar content — rendered once to preserve component state (voice, etc.)
+    // across the in-flow ↔ fixed transition. When fixed, the ref box acts as a
+    // height spacer so the page doesn't jump.
     return (
         <>
-            {/* Sticky box: always renders bar content to maintain consistent height,
-                hidden visually when fixed to avoid layout shift during smooth scroll */}
-            <Box ref={stickyBoxRef} sx={{ mb: 2, visibility: isFixed ? "hidden" : "visible" }}>
-                {barContent}
-            </Box>
-            {/* Fixed bar: rendered when scrolled past threshold */}
-            {isFixed && (
-                <Box sx={{
+            <Box ref={stickyBoxRef} sx={{ mb: 2, ...(isFixed && { visibility: "hidden" }) }} />
+            <Box sx={{
+                position: "relative",
+
+                ...(isFixed && {
                     position: "fixed",
                     top: APP_BAR_HEIGHT,
                     width: fixedWidth,
-                    zIndex: theme.zIndex.appBar - 1,
+                    zIndex: theme.zIndex.appBar + 101,
                     bgcolor: "background.default",
                     py: 1,
                     boxShadow: 1,
+                }),
+            }}>
+                <Box sx={{
+                    display: "flex", alignItems: "center", gap: 1,
+                    maxWidth: { xs: "100%", sm: 800, md: 900 }, mx: "auto",
                 }}>
-                    {barContent}
+                    <CommandPaletteAutocomplete
+                        onLocationSelect={onPaletteLocationSelect}
+                        onSearchTermChange={onSearchTermChange}
+                        onHighlightItem={onHighlightItem}
+                        onQuickAction={onQuickAction}
+                        onExpandLocation={onExpandLocation}
+                        onCollapseLocation={onCollapseLocation}
+                        onFocusChange={setPaletteFocused}
+                        filterTerm={filterTerm}
+                        sx={{ flex: 1, minWidth: "60%", maxWidth: { xs: "100%", sm: 400 } }}
+                    />
+                    {locations.length > 1 && (
+                        <FormControl size="small" sx={{
+                            minWidth: 0, flex: 1,
+                            display: paletteFocused ? { xs: "none", sm: "inline-flex" } : "inline-flex",
+                        }}>
+                            <Select
+                                value={activeLocationId ?? ""}
+                                onChange={handleLocationSelection}
+                                displayEmpty
+                                MenuProps={{ container: portalContainer.current }}
+                                sx={{
+                                    "& .MuiSelect-select": {
+                                        color: selectTextColor,
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis",
+                                        whiteSpace: "nowrap",
+                                    },
+                                    "& .MuiSelect-icon": { color: "text.secondary" },
+                                }}
+                                renderValue={(selected) => {
+                                    if (selected === LOCATION_TOP) {
+                                        return <LocationOption icon={ArrowUpwardIcon} label="Top" truncate />;
+                                    }
+                                    if (selected === LOCATION_FAVORITES) {
+                                        return <LocationOption icon={StarIcon} label="Favorites" truncate />;
+                                    }
+                                    const loc = locations.find(l => l.id === selected);
+                                    if (!loc) return null;
+                                    const Icon = loc.icon ? getBlueprintIcon(loc.icon)?.active : undefined;
+                                    return <LocationOption icon={Icon} label={loc.name ?? loc.id} truncate />;
+                                }}
+                            >
+                                <MenuItem value={LOCATION_TOP}>
+                                    <LocationOption icon={ArrowUpwardIcon} label="Top" />
+                                </MenuItem>
+                                {hasFavorites && (
+                                    <MenuItem value={LOCATION_FAVORITES}>
+                                        <LocationOption icon={StarIcon} label="Favorites" />
+                                    </MenuItem>
+                                )}
+                                {locations.map(loc => {
+                                    const Icon = loc.icon ? getBlueprintIcon(loc.icon)?.active : undefined;
+                                    return (
+                                        <MenuItem key={loc.id} value={loc.id}>
+                                            <LocationOption icon={Icon} label={loc.name ?? loc.id} />
+                                        </MenuItem>
+                                    );
+                                })}
+                            </Select>
+                        </FormControl>
+                    )}
                 </Box>
-            )}
+            </Box>
         </>
     );
 };

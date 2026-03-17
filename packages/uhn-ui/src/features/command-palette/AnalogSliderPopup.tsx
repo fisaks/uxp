@@ -1,14 +1,16 @@
-import { Box, Dialog, DialogContent, DialogTitle, IconButton, Slider, useTheme } from "@mui/material";
+import { Box, Dialog, DialogContent, DialogTitle, IconButton, Slider, Typography, useTheme } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { UhnResourceCommand } from "@uhn/common";
 import { usePortalContainerRef } from "@uxp/ui-lib";
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useEffect, useMemo } from "react";
 import { useSelector } from "react-redux";
 import { useAnalogSlider } from "../resource/hooks/useAnalogSlider";
 import { selectRuntimeStateById } from "../runtime-state/runtimeStateSelector";
 import { useAnalogEditableInput } from "../shared/useAnalogEditableInput";
 import { useSendViewCommand } from "../view/hooks/useSendViewCommand";
 import { StepButtonRow } from "../shared/StepButtonRow";
+import { AnalogValueVoiceHandlers } from "./commandPalette.types";
+import { useAnalogValueVoiceControl } from "./useAnalogValueVoiceControl";
 
 type AnalogSliderPopupProps = {
     open: boolean;
@@ -19,10 +21,24 @@ type AnalogSliderPopupProps = {
     step: number;
     unit?: string;
     resourceId: string;
+    /** Whether voice was active when the popup was opened — enables voice control and TTS. */
+    voiceActive?: boolean;
+    /** Whether TTS readout is enabled — reads the current value aloud on open. */
+    speakerEnabled?: boolean;
+    /** Default "on" value from the blueprint (e.g. a dimmer's preferred brightness). Falls back to max. */
+    defaultOnValue?: number;
+    /** Ref shared with the voice flow — analog voice handlers register here while active. */
+    analogValueVoiceControlRef: React.MutableRefObject<AnalogValueVoiceHandlers | null>;
 };
 
+/**
+ * Modal dialog for precise analog value control (slider, step buttons, text input).
+ * Opened from the command palette when an analog item is selected without a trailing number.
+ * When opened from voice mode, registers handlers in analogValueVoiceControlRef so the single
+ * SpeechRecognition in useVoiceCommandFlow redirects results here for numeric/relative commands.
+ */
 export const AnalogSliderPopup: React.FC<AnalogSliderPopupProps> = ({
-    open, onClose, label, min, max, step, unit, resourceId,
+    open, onClose, label, min, max, step, unit, defaultOnValue, resourceId, voiceActive, speakerEnabled, analogValueVoiceControlRef,
 }) => {
     const portalContainer = usePortalContainerRef();
     const theme = useTheme();
@@ -44,6 +60,30 @@ export const AnalogSliderPopup: React.FC<AnalogSliderPopupProps> = ({
 
     const { isEditing, inputRef, handleFocus, commitEdit, handleKeyDown } =
         useAnalogEditableInput(localValue, displayUnit, sendExact, { stopEscapePropagation: true });
+
+    // TTS readout: speak the current value when the popup opens with speaker enabled.
+    // Reads from Redux state (always current) instead of localValue which may be
+    // stale on the render where open transitions to true.
+    useEffect(() => {
+        const canSpeak = open && voiceActive && speakerEnabled && typeof window.speechSynthesis !== "undefined";
+        if (!canSpeak) return;
+        const currentValue = typeof state?.value === "number" ? state.value : null;
+        if (currentValue == null) return;
+        const displayUnit = unit ?? "%";
+        const text = `${label} is at ${currentValue} ${displayUnit}. Say a number to adjust.`;
+        const utterance = new SpeechSynthesisUtterance(text);
+        window.speechSynthesis.speak(utterance);
+        return () => { window.speechSynthesis.cancel(); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only on open/close
+    }, [open]);
+
+    // Voice control: only active when the popup was opened from voice mode.
+    // Does NOT create its own SpeechRecognition — registers handlers in
+    // analogValueVoiceControlRef so the parent voice flow redirects results here.
+    const { lastTranscript } = useAnalogValueVoiceControl({
+        voiceActive: open && !!voiceActive,
+        localValue, min, max, step, bigStep, defaultOnValue, sendExact, onClose, analogValueVoiceControlRef,
+    });
 
     return (
         <Dialog
@@ -110,6 +150,26 @@ export const AnalogSliderPopup: React.FC<AnalogSliderPopupProps> = ({
                         localValue={localValue} sendExact={sendExact}
                         iconSize="medium" centerGap={2} mt={1}
                     />
+                    {voiceActive && (
+                        <Box sx={{ minHeight: 40 }}>
+                            <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{ display: "block", textAlign: "center", mt: 1.5, fontSize: "0.8rem" }}
+                            >
+                                {'Voice: say a number · "increase" / "decrease" · "much more" · "maximum" / "minimum" · "close"'}
+                            </Typography>
+                            <Typography
+                                variant="caption"
+                                sx={{
+                                    display: "block", textAlign: "center", mt: 0.5, fontSize: "0.8rem", fontStyle: "italic",
+                                    visibility: lastTranscript ? "visible" : "hidden",
+                                }}
+                            >
+                                {lastTranscript ? `Heard: "${lastTranscript}"` : "\u00a0"}
+                            </Typography>
+                        </Box>
+                    )}
                 </Box>
             </DialogContent>
         </Dialog>

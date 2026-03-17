@@ -4,26 +4,16 @@ import { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSendSceneCommand } from "../scene/hooks/useSendSceneCommand";
 import { useSendViewCommand } from "../view/hooks/useSendViewCommand";
-import { PaletteAction, PaletteItem, QuickActionId } from "./commandPalette.types";
-
-type AnalogPopupState = {
-    open: boolean;
-    resourceId: string;
-    min: number;
-    max: number;
-    step: number;
-    unit?: string;
-    label: string;
-};
+import { AnalogPopupState, PaletteAction, PaletteItem, QuickActionId } from "./commandPalette.types";
 
 type UseCommandPaletteActionsOptions = {
     onLocationSelect?: (locationId: string) => void;
-    onAnalogInputNeeded?: (state: Omit<AnalogPopupState, "open">) => void;
-    onHighlightItem?: (itemKey: string, locationId: string) => void;
+    onAnalogInputNeeded?: (state: Omit<AnalogPopupState, "open" | "voiceActive">) => void;
+    onHighlightItem?: (itemKey: string, locationId: string, durationMs?: number) => void;
     onQuickAction?: (action: QuickActionId) => void;
+    onExpandLocation?: (locationId: string) => void;
+    onCollapseLocation?: (locationId: string) => void;
 };
-
-export type { AnalogPopupState };
 
 /**
  * Returns an `execute` callback that dispatches a palette item's action.
@@ -34,7 +24,7 @@ export type { AnalogPopupState };
  * caller-supplied callbacks so the hosting component can coordinate UI
  * responses like scrolling, highlighting, or opening popups.
  */
-export function useCommandPaletteActions({ onLocationSelect, onAnalogInputNeeded, onHighlightItem, onQuickAction }: UseCommandPaletteActionsOptions = {}) {
+export function useCommandPaletteActions({ onLocationSelect, onAnalogInputNeeded, onHighlightItem, onQuickAction, onExpandLocation, onCollapseLocation }: UseCommandPaletteActionsOptions = {}) {
     const navigate = useNavigate();
     const sendCommand = useSendViewCommand();
     const sendSceneCommand = useSendSceneCommand();
@@ -71,6 +61,7 @@ export function useCommandPaletteActions({ onLocationSelect, onAnalogInputNeeded
                     step: action.step ?? 1,
                     unit: action.unit,
                     label: action.label,
+                    defaultOnValue: action.defaultOnValue,
                 });
                 break;
 
@@ -82,6 +73,14 @@ export function useCommandPaletteActions({ onLocationSelect, onAnalogInputNeeded
                 onQuickAction?.(action.action);
                 break;
 
+            case "expand-location":
+                onExpandLocation?.(action.locationId);
+                break;
+
+            case "collapse-location":
+                onCollapseLocation?.(action.locationId);
+                break;
+
             case "filter-grid":
                 // Handled directly in CommandPaletteAutocomplete — no-op here
                 break;
@@ -89,7 +88,7 @@ export function useCommandPaletteActions({ onLocationSelect, onAnalogInputNeeded
             default:
                 assertNever(action, "Unhandled palette action type");
         }
-    }, [navigate, sendCommand, sendSceneCommand, onLocationSelect, onAnalogInputNeeded, onHighlightItem, onQuickAction]);
+    }, [navigate, sendCommand, sendSceneCommand, onLocationSelect, onAnalogInputNeeded, onHighlightItem, onQuickAction, onExpandLocation, onCollapseLocation]);
 
     return execute;
 }

@@ -3,7 +3,7 @@ import { arrayMove, rectSortingStrategy, SortableContext } from "@dnd-kit/sortab
 import { Box, Collapse, Grid2 } from "@mui/material";
 import { RuntimeLocationItem, UserFavorite } from "@uhn/common";
 import React, { useCallback, useMemo } from "react";
-import { fuzzyTokenMatch } from "../../shared/fuzzyMatch";
+import { exactTokenMatch, fuzzyTokenMatch, searchTokens } from "../../shared/fuzzyMatch";
 import { useSelector } from "react-redux";
 import { selectResourceById } from "../../resource/resourceSelector";
 import { selectRuntimeStateByResourceId } from "../../runtime-state/runtimeStateSelector";
@@ -27,10 +27,12 @@ type FavoritesSectionProps = {
     onExpandToggle: () => void;
     /** When set, filters visible favorites to those matching (multi-word AND on name/id). */
     filterTerm?: string;
+    /** When true, use exact matching instead of fuzzy (used for voice-originated filters). */
+    filterExact?: boolean;
 };
 
 export const FavoritesSection: React.FC<FavoritesSectionProps> = ({
-    favorites, sectionRef, expanded, onExpandToggle, filterTerm,
+    favorites, sectionRef, expanded, onExpandToggle, filterTerm, filterExact,
 }) => {
     const tilesPerRow = useVisibleTileCount();
     const toggleFavorite = useToggleFavorite();
@@ -45,12 +47,14 @@ export const FavoritesSection: React.FC<FavoritesSectionProps> = ({
     // Filter favorites when search term is active (search text is precomputed in the selector)
     const filteredFavorites = useMemo(() => {
         if (!filterTerm?.trim()) return favorites;
-        const tokens = filterTerm.toLowerCase().trim().split(/\s+/);
+        const tokens = searchTokens(filterTerm);
+        if (tokens.length === 0) return favorites;
+        const matchFn = filterExact ? exactTokenMatch : fuzzyTokenMatch;
         return favorites.filter(fav => {
             const text = searchTextMap[`${fav.itemKind}:${fav.itemRefId}`] ?? "";
-            return tokens.every(token => fuzzyTokenMatch(token, text));
+            return tokens.every(token => matchFn(token, text));
         });
-    }, [favorites, filterTerm, searchTextMap]);
+    }, [favorites, filterTerm, searchTextMap, filterExact]);
 
     const firstRowFavs = filteredFavorites.slice(0, tilesPerRow);
     const overflowFavs = filteredFavorites.slice(tilesPerRow);

@@ -125,6 +125,10 @@ All system behavior flows through: `emitSignal(resource) → rule → resource`.
 
 See `docs/uhn/prompts/uhn_architecture_prompt.md` for the full architectural model (resources, rules, views, scenes, locations).
 
+## Known Future Caveats
+
+**Mi-Light / unreliable-state devices**: Mi-Light bulbs (and similar) accept commands but don't report state back. The UI's `item.active` only reflects the last command UHN sent, not the physical truth (e.g. someone used the physical remote). The voice command noop check (`useVoiceCommandResolver.ts`) currently trusts `item.active` and says "already on/off" — this will give wrong results for these devices. When Mi-Light resource types are added, introduce a `stateReliable` flag (from the blueprint) that flows through to `PaletteItem` so the noop check can be skipped. There is a TODO comment in `useVoiceCommandResolver.ts` marking the exact location.
+
 ## Infrastructure
 
 - **Docker Compose**: MySQL 8.0 (`db-server`), Mosquitto MQTT broker (`mqtt`), plus app containers

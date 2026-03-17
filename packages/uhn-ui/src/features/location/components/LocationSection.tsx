@@ -3,7 +3,7 @@ import { arrayMove, rectSortingStrategy, SortableContext } from "@dnd-kit/sortab
 import { Box, Collapse, Grid2 } from "@mui/material";
 import { LocationItemRef, RuntimeLocation, RuntimeLocationItem } from "@uhn/common";
 import React, { useCallback, useMemo } from "react";
-import { fuzzyTokenMatch } from "../../shared/fuzzyMatch";
+import { exactTokenMatch, fuzzyTokenMatch, searchTokens } from "../../shared/fuzzyMatch";
 import { useSelector } from "react-redux";
 import { useFavoriteSet, useToggleFavorite } from "../../favorite/favoriteHooks";
 import { selectResourceById } from "../../resource/resourceSelector";
@@ -32,12 +32,14 @@ type LocationSectionProps = {
     onResetOrder: () => void;
     /** When set, filters visible items to those matching (multi-word AND on name/id/description). */
     filterTerm?: string;
+    /** When true, use exact matching instead of fuzzy (used for voice-originated filters). */
+    filterExact?: boolean;
     /** Item key (kind:refId) to highlight with a ring border. */
     highlightedItemKey?: string | null;
 };
 
 export const LocationSection: React.FC<LocationSectionProps> = ({
-    location, savedOrder, sectionRef, expanded, onExpandToggle, onReorder, onResetOrder, filterTerm, highlightedItemKey,
+    location, savedOrder, sectionRef, expanded, onExpandToggle, onReorder, onResetOrder, filterTerm, filterExact, highlightedItemKey,
 }) => {
     const allLocationItems = useOrderedLocationItems(location.items, savedOrder);
     const hasCustomOrder = !!savedOrder;
@@ -54,12 +56,14 @@ export const LocationSection: React.FC<LocationSectionProps> = ({
     // Filter items when search term is active (search text is precomputed in the selector)
     const locationItems = useMemo(() => {
         if (!filterTerm?.trim()) return allLocationItems;
-        const tokens = filterTerm.toLowerCase().trim().split(/\s+/);
+        const tokens = searchTokens(filterTerm);
+        if (tokens.length === 0) return allLocationItems;
+        const matchFn = filterExact ? exactTokenMatch : fuzzyTokenMatch;
         return allLocationItems.filter(item => {
             const text = searchTextMap[`${item.kind}:${item.refId}`] ?? "";
-            return tokens.every(token => fuzzyTokenMatch(token, text));
+            return tokens.every(token => matchFn(token, text));
         });
-    }, [allLocationItems, filterTerm, searchTextMap]);
+    }, [allLocationItems, filterTerm, searchTextMap, filterExact]);
 
     const hasOverflow = locationItems.length > tilesPerRow;
     const firstRowItems = locationItems.slice(0, tilesPerRow);

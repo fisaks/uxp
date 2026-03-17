@@ -71,7 +71,7 @@ export const CommandPaletteDialog: React.FC<CommandPaletteDialogProps> = ({ open
                 },
             }}
         >
-            <DialogContent sx={{ p: 2 }}>
+            <DialogContent sx={{ py: 4, px: 2 }}>
                 <CommandPaletteAutocomplete
                     autoFocus
                     onClose={onClose}
