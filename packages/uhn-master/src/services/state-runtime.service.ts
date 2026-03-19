@@ -6,6 +6,7 @@ import { EventEmitter } from "events";
 import { blueprintResourceService } from "./blueprint-resource.service";
 import { logicalResourceStateService } from "./state-logical-resource.service";
 import { physicalCatalogService } from "./physical-catalog.service";
+import { devicePinStateService, DevicePinState } from "./state-physical-resource.service";
 import { PhysicalDeviceState, statePhysicalService } from "./state-physical.service";
 import { stateSignalService } from "./state-signal.service";
 
@@ -111,6 +112,12 @@ class StateRuntimeService extends EventEmitter<StateRuntimeEventMap> {
                 this.handleLogicalResourceState(resourceId, value, timestamp, details);
             }
         );
+        devicePinStateService.on(
+            "devicePinStateChanged",
+            (state) => {
+                this.handleDevicePinState(state);
+            }
+        );
     }
 
     /* -------------------------------------------------- */
@@ -142,6 +149,9 @@ class StateRuntimeService extends EventEmitter<StateRuntimeEventMap> {
 
         for (const deviceState of statePhysicalService.getAllDeviceStates()) {
             this.handlePhysicalState(deviceState);
+        }
+        for (const state of devicePinStateService.getAllStates()) {
+            this.handleDevicePinState(state);
         }
         for (const [resourceId, state] of stateSignalService.getAllSignalStates()) {
             this.handleSignalState(resourceId, state.value, state.timestamp);
@@ -273,7 +283,31 @@ class StateRuntimeService extends EventEmitter<StateRuntimeEventMap> {
     }
 
     /* -------------------------------------------------- */
-    /* Physical device updates                            */
+    /* Per-pin physical updates (IHC, etc.)               */
+    /* -------------------------------------------------- */
+
+    /**
+     * Handles per-pin physical state from drivers that produce individual
+     * typed values (IHC, future Zigbee, etc.) via device/{name}/pin/{pin}.
+     * Resolves the physical address to a resource ID and routes to
+     * updatePhysicalState() for three-tier P/S/C processing.
+     */
+    private handleDevicePinState(state: DevicePinState) {
+        if (this.resourceIdByAddress.size === 0) return;
+        const key = makeAddressKey({
+            edge: state.edge,
+            device: state.device,
+            type: state.type,
+            pin: state.pin,
+        });
+        if (!key) return;
+        const resourceId = this.resourceIdByAddress.get(key);
+        if (!resourceId) return;
+        this.updatePhysicalState(resourceId, state.value, state.timestamp);
+    }
+
+    /* -------------------------------------------------- */
+    /* Device-level physical updates (byte arrays)         */
     /* -------------------------------------------------- */
 
     private handlePhysicalState(deviceState: PhysicalDeviceState) {

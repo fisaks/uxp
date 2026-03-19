@@ -254,10 +254,16 @@ class RuleRuntimeProcessService extends EventEmitter<RuleRuntimeProcessEventMap>
                 command: raw.cmd,
                 args: raw.args,
                 cwd: "/uhn-runtime/packages/uhn-rule-runtime",
+                // COREPACK_HOME: sandbox has HOME=/tmp and loopback-only networking,
+                // so corepack can't find its cache or fetch from npm. We point it
+                // to a pre-populated cache inside the Node installation (/uhn-node
+                // maps to the nvm Node directory on the host). After upgrading pnpm:
+                //   cp -r ~/.cache/node/corepack ~/.nvm/versions/node/v22.11.0/.corepack-cache
                 env: [
                     `PATH=/uhn-node/bin:/usr/bin:/bin`,
                     'HOME=/tmp',
-                    `TZ=${env.TZ ?? "UTC"}`
+                    `TZ=${env.TZ ?? "UTC"}`,
+                    'COREPACK_HOME=/uhn-node/.corepack-cache',
                 ],
                 limits: {
                     memoryBytes: 512 * 1024 * 1024, // 512 MB

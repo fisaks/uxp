@@ -37,11 +37,19 @@ export type CatalogPayload = {
     devices: DeviceSummary[]
 }
 
+export type CatalogResource = {
+    id: number;
+    hexId?: string;
+    type: string;
+};
+
 export type DeviceSummary = {
     name: string;
-    unitId: number;
+    unitId?: number;
     type: string;
-    busId: string;
+    busId?: string;
+    bypassSignalState?: boolean;
+    resources?: CatalogResource[];
     digitalOutputs?: Range;
     digitalInputs?: Range;
     analogOutputs?: Range;

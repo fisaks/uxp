@@ -7,9 +7,14 @@ import { stateRuntimeService } from "./state-runtime.service";
 import { stateSignalService } from "./state-signal.service";
 import { resourceCmdEdgeService } from "./resource-cmd-edge.service";
 import { logicalResourceStateService } from "./state-logical-resource.service";
+import { physicalCatalogService } from "./physical-catalog.service";
 
-/** Duration in ms for the simulated press pulse on virtualDigitalInput push tap. */
+/** Duration in ms for the simulated press pulse on virtualDigitalInput/complex push tap. */
 const VIRTUAL_PRESS_DURATION_MS = 300;
+/** Duration in ms for synthetic activate → deactivate on digitalInput tap. */
+const PRESS_DURATION_MS = 50;
+/** Extra ms added to longPress thresholdMs so the runtime's setTimeout fires before the synthetic release. */
+const LONG_PRESS_BUFFER_MS = 100;
 
 /**
  * Handles resource commands from the UI and from scene activation.
@@ -83,36 +88,67 @@ export class CommandsResourceService {
         } else if (command.type === "press" || command.type === "release") {
             stateSignalService.setSignalState(resource, command.type === "press");
         } else if (command.type === "tap") {
-            // Fire tap to master runtime (for any master-targeted rules on this resource).
-            ruleRuntimeProcessService.sendEvent<"tapCommand">({
-                cmd: "tapCommand",
-                payload: { resourceId, timestamp: Date.now() }, 
-            });
-            // Also forward to the edge runtime (for any edge-targeted rules on this resource).
+            const bypassSignal = physicalCatalogService.deviceBypassesSignalState(resource.edge, resource.device);
+            // Always forward tap to edge — edge handles driver pulse or synthetic state.
             resourceCmdEdgeService.sendCommandToEdge(
                 { id: resourceId, host: resource.edge },
                 { action: "tap" },
             );
+            if (!bypassSignal) {
+                // Non-owning driver: inject synthetic press pulse to master runtime.
+                // InputGestureEmitter auto-detects tap from the state cycle.
+                const timestamp = Date.now();
+                ruleRuntimeProcessService.sendEvent<"stateUpdate">({
+                    cmd: "stateUpdate",
+                    payload: { resourceId, value: true, timestamp },
+                });
+                setTimeout(() => {
+                    ruleRuntimeProcessService.sendEvent<"stateUpdate">({
+                        cmd: "stateUpdate",
+                        payload: { resourceId, value: false, timestamp: Date.now() },
+                    });
+                }, PRESS_DURATION_MS);
+            }
+            // Driver with bypassSignalState: physical state round-trip via MQTT generates
+            // activated, deactivated, tap in the master runtime automatically.
         } else if (command.type === "longPress") {
-            // Fire longPress to master runtime.
-            ruleRuntimeProcessService.sendEvent<"longPressCommand">({
-                cmd: "longPressCommand",
-                payload: { resourceId, timestamp: Date.now(), thresholdMs: command.holdMs },
-            });
-            // Also forward to the edge runtime.
+            const bypassSignal = physicalCatalogService.deviceBypassesSignalState(resource.edge, resource.device);
+            // Always forward longPress to edge — edge handles driver hold or synthetic state.
             resourceCmdEdgeService.sendCommandToEdge(
                 { id: resourceId, host: resource.edge },
                 { action: "longPress", durationMs: command.holdMs },
             );
+            if (!bypassSignal) {
+                // Non-owning driver: inject synthetic press-hold-release to master runtime.
+                const timestamp = Date.now();
+                ruleRuntimeProcessService.sendEvent<"stateUpdate">({
+                    cmd: "stateUpdate",
+                    payload: { resourceId, value: true, timestamp },
+                });
+                setTimeout(() => {
+                    ruleRuntimeProcessService.sendEvent<"stateUpdate">({
+                        cmd: "stateUpdate",
+                        payload: { resourceId, value: false, timestamp: Date.now() },
+                    });
+                }, command.holdMs + LONG_PRESS_BUFFER_MS);
+            }
+            // Driver with bypassSignalState: edge holds the driver signal, physical state
+            // round-trip generates longPress in the master runtime.
         }
     }
 
     private handleComplex(resource: RuntimeLogicalResource) {
+        // Synthetic state pulse (activated/deactivated) + explicit tapCommand,
+        // same pattern as handleVirtualDigitalInput tap.
         const timestamp = Date.now();
+        this.setLogicalResourceState(resource, true, timestamp);
         this.sendLogicalCommand(resource,
             { cmd: "tapCommand", payload: { resourceId: resource.id, timestamp } },
             { action: "tap" },
         );
+        setTimeout(() => {
+            this.setLogicalResourceState(resource, false, Date.now());
+        }, VIRTUAL_PRESS_DURATION_MS);
     }
 
     private handleVirtualAnalogOutput(resource: RuntimeVirtualAnalogOutputResource, command: UhnResourceCommand) {

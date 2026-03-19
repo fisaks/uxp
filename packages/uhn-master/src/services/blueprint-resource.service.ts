@@ -170,32 +170,43 @@ class BlueprintResourceService extends EventEmitter<ResourceEventMap> {
                         } else if (typeof resource.pin === "number") {
                             let validPin = false;
 
-                            if (resource.type === "digitalInput" && catalogDevice.digitalInputs) {
-                                const { start, count } = catalogDevice.digitalInputs;
-                                validPin =
-                                    resource.pin >= start && resource.pin < start + count;
-                            } else if (
-                                resource.type === "digitalOutput" &&
-                                catalogDevice.digitalOutputs
-                            ) {
-                                const { start, count } = catalogDevice.digitalOutputs;
-                                validPin =
-                                    resource.pin >= start && resource.pin < start + count;
-                            } else if (resource.type === "analogInput" && catalogDevice.analogInputs) {
-                                const { start, count } = catalogDevice.analogInputs;
-                                validPin =
-                                    resource.pin >= start && resource.pin < start + count;
-                            } else if (resource.type === "analogOutput" && catalogDevice.analogOutputs) {
-                                const { start, count } = catalogDevice.analogOutputs;
-                                validPin =
-                                    resource.pin >= start && resource.pin < start + count;
-                            }
-
-                            if (!validPin) {
-                                addErr(
-                                    "invalid-pin",
-                                    `Resource has invalid pin '${resource.pin}' for device '${resource.device}' on edge '${resource.edge}'.`
-                                );
+                            if (catalogDevice.resources?.length) {
+                                // IHC (and future drivers): validate pin against individual resource ID list
+                                validPin = catalogDevice.resources.some(r => r.id === resource.pin);
+                                if (!validPin) {
+                                    addErr(
+                                        "invalid-pin",
+                                        `Resource pin ${resource.pin} (0x${resource.pin.toString(16).toUpperCase()}) not found in '${resource.device}' catalog on edge '${resource.edge}'.`
+                                    );
+                                }
+                            } else {
+                                // Modbus: validate pin against contiguous range
+                                if (resource.type === "digitalInput" && catalogDevice.digitalInputs) {
+                                    const { start, count } = catalogDevice.digitalInputs;
+                                    validPin =
+                                        resource.pin >= start && resource.pin < start + count;
+                                } else if (
+                                    resource.type === "digitalOutput" &&
+                                    catalogDevice.digitalOutputs
+                                ) {
+                                    const { start, count } = catalogDevice.digitalOutputs;
+                                    validPin =
+                                        resource.pin >= start && resource.pin < start + count;
+                                } else if (resource.type === "analogInput" && catalogDevice.analogInputs) {
+                                    const { start, count } = catalogDevice.analogInputs;
+                                    validPin =
+                                        resource.pin >= start && resource.pin < start + count;
+                                } else if (resource.type === "analogOutput" && catalogDevice.analogOutputs) {
+                                    const { start, count } = catalogDevice.analogOutputs;
+                                    validPin =
+                                        resource.pin >= start && resource.pin < start + count;
+                                }
+                                if (!validPin) {
+                                    addErr(
+                                        "invalid-pin",
+                                        `Resource has invalid pin '${resource.pin}' for device '${resource.device}' on edge '${resource.edge}'.`
+                                    );
+                                }
                             }
                         } else if (typeof resource.pin !== "number") {
                             addErr("missing-pin", `Resource '${resource.id ?? resource.name ?? "[unnamed]"}' is missing 'pin'.`);

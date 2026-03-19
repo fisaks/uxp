@@ -25,6 +25,10 @@ function isCatalogPayload(obj: unknown): obj is CatalogPayload {
 function rangeKey(r?: Range): string {
     return r ? `${r.start}:${r.count}:${r.type ?? "uint16"}` : "-";
 }
+function resourcesKey(resources?: { id: number; type: string }[]): string {
+    if (!resources?.length) return "-";
+    return resources.map(r => `${r.id}:${r.type}`).sort().join(",");
+}
 function fingerprintCatalog(payload: CatalogPayload): string {
     const devices = [...payload.devices].sort((a, b) =>
         a.name.localeCompare(b.name)
@@ -35,6 +39,7 @@ function fingerprintCatalog(payload: CatalogPayload): string {
         rangeKey(d.digitalOutputs),
         rangeKey(d.analogInputs),
         rangeKey(d.analogOutputs),
+        resourcesKey(d.resources),
     ].join("|"));
 
     return fnv1a(stable.join("\n"));
@@ -98,6 +103,12 @@ class PhysicalCatalogService extends EventEmitter<CatalogEventMap> {
             return undefined
         }
         return catalog.devices.find(d => d.name === device);
+    }
+
+    /** Returns true if signals bypass the S (signal) tier and go directly to the device driver. */
+    deviceBypassesSignalState(edge: string, device: string): boolean {
+        const summary = this.getEdgeDeviceSummary(edge, device);
+        return summary?.bypassSignalState ?? false;
     }
 }
 
