@@ -42,6 +42,7 @@ export type TapCommand = {
 export type LongPressCommand = {
     type: "longPress";
     holdMs: number;
+    simulateHold?: boolean;
 };
 
 export type UhnResourceCommand =

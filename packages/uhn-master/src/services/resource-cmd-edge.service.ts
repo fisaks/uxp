@@ -5,6 +5,7 @@ type ResourceCmdEdgeCommand = {
     value?: boolean | number;
     durationMs?: number;
     mode?: "restart" | "startOnce";
+    simulateHold?: boolean;
 };
 
 class ResourceCmdEdgeService {
@@ -19,6 +20,7 @@ class ResourceCmdEdgeService {
             value: command.value,
             durationMs: command.durationMs,
             mode: command.mode,
+            simulateHold: command.simulateHold,
             timestamp: Date.now(),
         };
         mqttService.publish(topic, payload, { retain: false, qos: 1 });

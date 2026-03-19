@@ -23,7 +23,11 @@ export function useViewCommand(
                 await sendCommand(target.resourceId, { type: "toggle" });
                 break;
             case "longPress":
-                await sendCommand(target.resourceId, { type: "longPress", holdMs: target.holdMs ?? 1000 });
+                await sendCommand(target.resourceId, {
+                    type: "longPress",
+                    holdMs: target.holdMs ?? 1000,
+                    simulateHold: target.simulateHold,
+                });
                 break;
             case "setAnalog": {
                 const min = target.min ?? 0;

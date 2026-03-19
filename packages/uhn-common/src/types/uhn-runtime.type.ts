@@ -366,6 +366,7 @@ export type RuntimeViewCommandTarget = {
     resourceId: string;
     type: ViewCommandType;
     holdMs?: number;
+    simulateHold?: boolean;
     min?: number;
     max?: number;
     step?: number;

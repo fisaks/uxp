@@ -54,6 +54,11 @@ export type ViewCommandTarget =
         /** Duration in ms. Sent directly as a longPress event,
          *  no UI gesture detection — the UI fires it immediately on tap. */
         holdMs: number;
+        /** When true, the edge simulates a physical hold (activate → wait holdMs → deactivate)
+         *  so InputGestureEmitter detects the longPress from the state cycle.
+         *  When false (default), a longPressCommand is forwarded directly to the runtime
+         *  for instant rule execution. */
+        simulateHold?: boolean;
     }
     | {
         resource: AnalogOutputResourceBase | VirtualAnalogOutputResourceBase;

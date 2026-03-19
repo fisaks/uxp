@@ -113,13 +113,29 @@ export class CommandsResourceService {
             // activated, deactivated, tap in the master runtime automatically.
         } else if (command.type === "longPress") {
             const bypassSignal = physicalCatalogService.deviceBypassesSignalState(resource.edge, resource.device);
-            // Always forward longPress to edge — edge handles driver hold or synthetic state.
-            resourceCmdEdgeService.sendCommandToEdge(
-                { id: resourceId, host: resource.edge },
-                { action: "longPress", durationMs: command.holdMs },
-            );
-            if (!bypassSignal) {
-                // Non-owning driver: inject synthetic press-hold-release to master runtime.
+            if (!command.simulateHold) {
+                // Default: forward longPressCommand directly to both edge and master runtime — instant.
+                resourceCmdEdgeService.sendCommandToEdge(
+                    { id: resourceId, host: resource.edge },
+                    { action: "longPress", durationMs: command.holdMs },
+                );
+                ruleRuntimeProcessService.sendEvent<"longPressCommand">({
+                    cmd: "longPressCommand",
+                    payload: { resourceId, timestamp: Date.now(), thresholdMs: command.holdMs },
+                });
+            } else if (bypassSignal) {
+                // simulateHold + bypassSignalState driver (IHC): hold driver signal on edge,
+                // physical state round-trip generates longPress in master runtime.
+                resourceCmdEdgeService.sendCommandToEdge(
+                    { id: resourceId, host: resource.edge },
+                    { action: "longPress", durationMs: command.holdMs, simulateHold: true },
+                );
+            } else {
+                // simulateHold + no bypassSignalState driver: simulate hold on both edge and master.
+                resourceCmdEdgeService.sendCommandToEdge(
+                    { id: resourceId, host: resource.edge },
+                    { action: "longPress", durationMs: command.holdMs, simulateHold: true },
+                );
                 const timestamp = Date.now();
                 ruleRuntimeProcessService.sendEvent<"stateUpdate">({
                     cmd: "stateUpdate",
@@ -132,8 +148,6 @@ export class CommandsResourceService {
                     });
                 }, command.holdMs + LONG_PRESS_BUFFER_MS);
             }
-            // Driver with bypassSignalState: edge holds the driver signal, physical state
-            // round-trip generates longPress in the master runtime.
         }
     }
 
