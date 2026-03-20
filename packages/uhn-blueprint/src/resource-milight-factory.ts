@@ -47,6 +47,20 @@ export const MilightEffect = {
 
 export type MilightEffectMode = typeof MilightEffect[keyof typeof MilightEffect];
 
+// ─── Predefined Hue Color Constants ────────────────────────────────────────
+
+/** FUT069 predefined hue values (protocol-native 0-255 range) */
+export const MilightColor = {
+    Red: 0x10,
+    Orange: 0x15,
+    Yellow: 0x30,
+    Green: 0x60,
+    Blue: 0xB0,
+    Magenta: 0xF0,
+} as const;
+
+export type MilightColorValue = typeof MilightColor[keyof typeof MilightColor];
+
 // ─── Shared Props (pin omitted — assigned by each factory) ──────────────────
 
 type MilightOutputProps<E extends string, D extends string | number> =
