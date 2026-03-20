@@ -524,6 +524,48 @@ Secondary information shown on the tile alongside the main icon:
 
 Omit `command` for a display-only tile (no interaction, just shows state).
 
+### Controls
+
+Views can expose additional resource controls via a popover panel. This is useful when a view represents a multi-function device (e.g., an RGB+CCT light with brightness, color temperature, hue, saturation, and effects).
+
+```typescript
+export const viewToiletMilightCeiling = view({
+    stateFrom: [{ resource: toiletMilightCeiling }],
+    command: { resource: toiletPanelButtonTopLeft, type: "tap" },
+    controls: [
+        { resource: toiletMilightCeilingPower, label: "Power", group: "Power" },
+        { resource: toiletMilightCeilingNightMode, label: "Night Mode" },
+        { resource: toiletMilightCeilingBrightness, label: "Brightness", group: "Light", inline: true },
+        { resource: toiletMilightCeilingColorTemp, label: "Color Temp" },
+        { resource: toiletMilightCeilingHue, label: "Hue", group: "Color" },
+        { resource: toiletMilightCeilingSaturation, label: "Saturation" },
+        { resource: toiletMilightCeilingMode, label: "Effect Mode", group: "Effects" },
+        { resource: toiletMilightCeilingSpeedUp, label: "Speed Up" },
+        { resource: toiletMilightCeilingSpeedDown, label: "Speed Down" },
+    ],
+    icon: "lighting:ceiling",
+    description: "Mi-Light RGB+CCT ceiling downlight with brightness control",
+});
+```
+
+Each control entry:
+
+| Field | Description |
+|-------|-------------|
+| `resource` | The resource to control (any type) |
+| `label` | Display label in the popover (optional, falls back to resource name) |
+| `group` | Section group header — controls with the same group are visually grouped |
+| `inline` | When `true`, promotes an analog resource to an inline slider on the tile itself |
+
+**Inline slider:** Only the first analog resource with `inline: true` renders as a tile slider. Digital `inline` is not yet supported (silently ignored). When the view's command is already `setAnalog`, the command slider takes precedence and `inline` is ignored.
+
+**Popover behavior:**
+- Controls present (2+ or any non-inline) → TuneIcon overlay on the tile icon; clicking it opens a popover with all controls and the view's command at the top
+- Single control with `inline: true` and no other controls → inline slider on tile, no popover
+- No controls → no TuneIcon, no popover
+
+Controls use direct resource commands (press/release, setAnalog) — they interact with the physical resource directly. The view's command in the popover header uses the same view command path as tapping the tile (goes through ResourceCmdSubscriber).
+
 ---
 
 ## Scenes
