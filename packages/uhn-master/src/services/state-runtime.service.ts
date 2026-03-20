@@ -476,14 +476,13 @@ class StateRuntimeService extends EventEmitter<StateRuntimeEventMap> {
         const signal = shouldClearSignal ? undefined : prev?.signal;
 
         const computed = signal !== undefined ? signal : physical;
-        const computedTimestamp = computed !== prev?.computed ? timestamp : prev!.timestamp;
         this.stateByResourceId.set(resourceId, {
             physical,
             physicalTimestamp: timestamp,
             signal,
             signalTimestamp: prev?.signalTimestamp,
             computed,
-            timestamp: computedTimestamp,
+            timestamp,
         });
 
         AppLogger.isDebugLevel() &&
@@ -500,16 +499,16 @@ class StateRuntimeService extends EventEmitter<StateRuntimeEventMap> {
                     signalTimestamp: prev?.signalTimestamp,
                     prevComputed: prev?.computed,
                     computed,
-                    computedTimestamp,
                 },
             });
 
         if (shouldClearSignal) {
             stateSignalService.clearSignalState(resourceId);
         }
-        if (!prev || prev.computed !== computed) {
-            this.emitRuntimeStateChangedIfEnabled(resourceId, computed, timestamp);
-        }
+        // Always emit — stale/duplicate timestamps are rejected at the top of this method.
+        // Same-value updates with a new timestamp (e.g. Mi-Light gatekeeper reconfirm,
+        // Modbus heartbeat) must reach the UI so optimistic local state can snap back.
+        this.emitRuntimeStateChangedIfEnabled(resourceId, computed, timestamp);
 
     }
 

@@ -20,12 +20,14 @@ export function useAnalogSlider(
     const isDraggingRef = useRef(false);
     const debounceTimerRef = useRef<number | null>(null);
 
-    // Sync from incoming state when not actively dragging
+    // Sync from incoming state when not actively dragging.
+    // Depends on timestamp so that same-value reconfirmations (e.g. Mi-Light
+    // gatekeeper drop) still reset the optimistic localValue.
     useEffect(() => {
         if (!isDraggingRef.current && typeof state?.value === "number") {
             setLocalValue(state.value);
         }
-    }, [state?.value]);
+    }, [state?.value, state?.timestamp]);
 
     const cancelDebounce = () => {
         if (debounceTimerRef.current !== null) {

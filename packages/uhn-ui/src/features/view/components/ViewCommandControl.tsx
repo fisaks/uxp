@@ -1,6 +1,6 @@
-import { Box, IconButton, Slider, Switch, Typography } from "@mui/material";
-import RadioButtonCheckedIcon from "@mui/icons-material/RadioButtonChecked";
+import { Box, IconButton, Slider, Switch, type SvgIconProps, Typography } from "@mui/material";
 import ClearIcon from "@mui/icons-material/Clear";
+import TouchAppIcon from "@mui/icons-material/TouchApp";
 import { useTheme } from "@mui/material/styles";
 import { RuntimeViewCommand, UhnResourceCommand } from "@uhn/common";
 import { assertNever } from "@uxp/common";
@@ -11,6 +11,7 @@ import { useAnalogSlider } from "../../resource/hooks/useAnalogSlider";
 import { sendForTarget } from "../../shared/viewCommandHelpers";
 
 type SendCommandFn = (resourceId: string, command: UhnResourceCommand) => Promise<void>;
+type IconComponent = React.ComponentType<SvgIconProps>;
 
 type ViewCommandSlots = {
     /** Compact control for the title row (tap/toggle/longPress/clearTimer) */
@@ -27,16 +28,18 @@ export function useViewCommandSlots(
     command: RuntimeViewCommand | undefined,
     active: boolean,
     sendCommand: SendCommandFn,
+    Icon?: IconComponent,
+    iconColor?: string,
 ): ViewCommandSlots {
     const theme = useTheme();
-    const iconColor = active ? theme.palette.primary.main : theme.palette.text.secondary;
+    const resolvedIconColor = iconColor ?? (active ? theme.palette.primary.main : theme.palette.text.secondary);
 
     if (!command) return { titleAction: null, headerContent: null };
 
     switch (command.type) {
         case "tap":
             return {
-                titleAction: <TapControl command={command} sendCommand={sendCommand} active={active} iconColor={iconColor} />,
+                titleAction: <TapControl command={command} sendCommand={sendCommand} active={active} iconColor={resolvedIconColor} Icon={Icon} />,
                 headerContent: null,
             };
         case "toggle":
@@ -46,17 +49,17 @@ export function useViewCommandSlots(
             };
         case "longPress":
             return {
-                titleAction: <LongPressControl command={command} sendCommand={sendCommand} active={active} iconColor={iconColor} />,
+                titleAction: <LongPressControl command={command} sendCommand={sendCommand} active={active} iconColor={resolvedIconColor} Icon={Icon} />,
                 headerContent: null,
             };
         case "setAnalog":
             return {
                 titleAction: null,
-                headerContent: <SetAnalogControl command={command} sendCommand={sendCommand} iconColor={iconColor} />,
+                headerContent: <SetAnalogControl command={command} sendCommand={sendCommand} iconColor={resolvedIconColor} />,
             };
         case "clearTimer":
             return {
-                titleAction: <ClearTimerControl command={command} sendCommand={sendCommand} iconColor={iconColor} />,
+                titleAction: <ClearTimerControl command={command} sendCommand={sendCommand} iconColor={resolvedIconColor} />,
                 headerContent: null,
             };
         default:
@@ -73,7 +76,8 @@ const TapControl: React.FC<{
     sendCommand: SendCommandFn;
     active: boolean;
     iconColor: string;
-}> = ({ command, sendCommand, active, iconColor }) => {
+    Icon?: IconComponent;
+}> = ({ command, sendCommand, active, iconColor, Icon }) => {
     const [pending, setPending] = useState(false);
 
     const handleTap = useCallback(async () => {
@@ -85,6 +89,8 @@ const TapControl: React.FC<{
             setPending(false);
         }
     }, [command, sendCommand, active]);
+
+    const ButtonIcon = Icon ?? TouchAppIcon;
 
     return (
         <IconButton
@@ -98,7 +104,7 @@ const TapControl: React.FC<{
                 p: 0.5,
             }}
         >
-            <RadioButtonCheckedIcon sx={{ fontSize: 16 }} />
+            <ButtonIcon sx={{ fontSize: 16 }} />
         </IconButton>
     );
 };
@@ -127,7 +133,8 @@ const LongPressControl: React.FC<{
     sendCommand: SendCommandFn;
     active: boolean;
     iconColor: string;
-}> = ({ command, sendCommand, active, iconColor }) => {
+    Icon?: IconComponent;
+}> = ({ command, sendCommand, active, iconColor, Icon }) => {
     const [pending, setPending] = useState(false);
 
     const handlePress = useCallback(async () => {
@@ -139,6 +146,8 @@ const LongPressControl: React.FC<{
             setPending(false);
         }
     }, [command, sendCommand, active]);
+
+    const ButtonIcon = Icon ?? TouchAppIcon;
 
     return (
         <IconButton
@@ -152,7 +161,7 @@ const LongPressControl: React.FC<{
                 p: 0.5,
             }}
         >
-            <RadioButtonCheckedIcon sx={{ fontSize: 16 }} />
+            <ButtonIcon sx={{ fontSize: 16 }} />
         </IconButton>
     );
 };

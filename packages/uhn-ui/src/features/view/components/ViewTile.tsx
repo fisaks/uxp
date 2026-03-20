@@ -45,7 +45,7 @@ export const ViewTile: React.FC<ViewTileProps> = ({ view, active, stateDisplayVa
     const hasInlineAnalog = !!inlineControl && !isAnalog;
     const showAnalog = isAnalog || hasInlineAnalog;
 
-    const commandSlots = useViewCommandSlots(view.command, active, sendCommand);
+    const commandSlots = useViewCommandSlots(view.command, active, sendCommand, IconComponent, iconColor);
 
     // Controls popover: show when there are controls beyond a single inline-only one
     const singleInlineOnly = view.controls?.length === 1 && view.controls[0].inline;
