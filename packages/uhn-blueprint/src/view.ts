@@ -125,6 +125,24 @@ export type ViewStateAggregation =
     | "sum" | "average" | "max" | "min";
 
 /* ------------------------------------------------------------------ */
+/* Controls                                                            */
+/* ------------------------------------------------------------------ */
+/** A control accessible from a view tile — rendered in the popover,
+ *  optionally promoted to an inline slider on the tile. */
+export type ViewControl = {
+    resource: ResourceBase<ResourceType>;
+    /** Display label in the popover */
+    label?: string;
+    /** Section group header in the popover */
+    group?: string;
+    /** Promote to inline tile control. Only the first analog resource
+     *  with inline: true renders as a slider. Digital inline is not
+     *  yet supported (flag is silently ignored). Ignored when the
+     *  view's command is setAnalog (already has a slider). */
+    inline?: boolean;
+};
+
+/* ------------------------------------------------------------------ */
 /* The View                                                            */
 /* ------------------------------------------------------------------ */
 export type InteractionView = {
@@ -151,6 +169,12 @@ export type InteractionView = {
 
     /** Secondary information shown on the tile */
     stateDisplay?: ViewStateDisplay;
+
+    /** Additional controls accessible from this view tile.
+     *  When present (and more than one or non-inline), a TuneIcon overlay
+     *  appears on the tile icon and clicking it opens a popover with all
+     *  controls. The view's command is also shown at the top of the popover. */
+    controls?: ViewControl[];
 };
 
 /* ------------------------------------------------------------------ */

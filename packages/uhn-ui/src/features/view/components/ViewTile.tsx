@@ -1,8 +1,10 @@
 import { Box, Card, CardActionArea, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { RuntimeInteractionView } from "@uhn/common";
-import React from "react";
+import React, { useCallback, useRef, useState } from "react";
+import { SubResourcePopover } from "../../shared/SubResourcePopover";
 import { TileAnalogSection } from "../../shared/TileAnalogSection";
+import { TuneOverlayIcon } from "../../shared/TuneOverlayIcon";
 import { TileContent } from "../../shared/TileContent";
 import { TileDescriptionPopover } from "../../shared/TileDescriptionPopover";
 import { TileInfoPopover } from "../../shared/TileInfoPopover";
@@ -14,6 +16,7 @@ import { useViewAnalogState } from "../../shared/useViewAnalogState";
 import { useViewCommand } from "../../shared/useViewCommand";
 import { useViewIconColors } from "../../shared/useViewIconColors";
 import { useSendViewCommand } from "../hooks/useSendViewCommand";
+import { useViewCommandSlots } from "./ViewCommandControl";
 
 type ViewTileProps = {
     view: RuntimeInteractionView;
@@ -34,29 +37,71 @@ export const ViewTile: React.FC<ViewTileProps> = ({ view, active, stateDisplayVa
 
     const displayName = nameOverride ?? view.name ?? view.id;
 
-    const { analogSendCommand, analogState } = useViewAnalogState(view, sendCommand);
+    const {
+        analogSendCommand, analogState,
+        inlineControl, inlineResource, inlineAnalogSendCommand, inlineAnalogState,
+    } = useViewAnalogState(view, sendCommand);
+
+    const hasInlineAnalog = !!inlineControl && !isAnalog;
+    const showAnalog = isAnalog || hasInlineAnalog;
+
+    const commandSlots = useViewCommandSlots(view.command, active, sendCommand);
+
+    // Controls popover: show when there are controls beyond a single inline-only one
+    const singleInlineOnly = view.controls?.length === 1 && view.controls[0].inline;
+    const hasPopover = (view.controls?.length ?? 0) > 0 && !singleInlineOnly;
+
+    const [controlsAnchor, setControlsAnchor] = useState<HTMLElement | null>(null);
+    const tileRef = useRef<HTMLButtonElement>(null);
+
+    const openControls = useCallback((e: React.MouseEvent) => {
+        e.stopPropagation();
+        e.preventDefault();
+        setControlsAnchor(tileRef.current);
+    }, []);
+    const closeControls = useCallback(() => setControlsAnchor(null), []);
+
+    const iconElement = (
+        <TuneOverlayIcon show={hasPopover} color={iconColor} active={active}>
+            <IconComponent sx={{ fontSize: 40, color: iconColor, transition: "color 0.2s, transform 0.15s" }} />
+        </TuneOverlayIcon>
+    );
 
     const content = (
         <TileContent
-            icon={<IconComponent sx={{ fontSize: 40, color: iconColor, transition: "color 0.2s, transform 0.15s" }} />}
+            icon={iconElement}
+            onIconClick={hasPopover ? openControls : undefined}
             stateValues={stateDisplayValues}
             displayName={displayName}
-            hasAnalog={isAnalog}
+            hasAnalog={showAnalog}
             pt={3.5}
         />
     );
 
-    const analogSection = isAnalog && view.command && (
+    // Analog section: from command setAnalog OR inline control
+    const analogSection = showAnalog && (
         <Box data-analog-section {...stopPropagation}>
-            <TileAnalogSection
-                min={view.command.min ?? 0}
-                max={view.command.max ?? 100}
-                step={view.command.step ?? 1}
-                unit={view.command.unit ?? ""}
-                iconColor={iconColor}
-                state={analogState}
-                sendCommand={analogSendCommand}
-            />
+            {isAnalog && view.command ? (
+                <TileAnalogSection
+                    min={view.command.min ?? 0}
+                    max={view.command.max ?? 100}
+                    step={view.command.step ?? 1}
+                    unit={view.command.unit ?? ""}
+                    iconColor={iconColor}
+                    state={analogState}
+                    sendCommand={analogSendCommand}
+                />
+            ) : hasInlineAnalog && inlineResource ? (
+                <TileAnalogSection
+                    min={inlineResource.min ?? 0}
+                    max={inlineResource.max ?? 100}
+                    step={inlineResource.step ?? 1}
+                    unit={inlineResource.unit ?? ""}
+                    iconColor={iconColor}
+                    state={inlineAnalogState}
+                    sendCommand={inlineAnalogSendCommand}
+                />
+            ) : null}
         </Box>
     );
 
@@ -102,13 +147,26 @@ export const ViewTile: React.FC<ViewTileProps> = ({ view, active, stateDisplayVa
                     </Box>
                 )}
                 {view.stateAggregation && <Typography variant="body2">Aggregation: {view.stateAggregation}</Typography>}
+                {view.controls && view.controls.length > 0 && (
+                    <Box sx={{ mt: 0.5 }}>
+                        <Typography variant="body2">Controls ({view.controls.length}):</Typography>
+                        {view.controls.map((c, i) => (
+                            <Typography key={i} variant="body2" sx={{ fontFamily: "monospace", fontSize: "0.75rem" }}>
+                                <TechnicalDeepLink to={`/technical/resources/${c.resourceId}`}>
+                                    {c.resourceId}
+                                </TechnicalDeepLink>
+                                {c.inline ? " (inline)" : ""}
+                            </Typography>
+                        ))}
+                    </Box>
+                )}
             </TileInfoPopover>
 
             {/* Description icon — top-right */}
             <TileDescriptionPopover description={view.description} />
 
             {hasCommand ? (
-                <CardActionArea onClick={handleClick} disabled={pending} sx={{
+                <CardActionArea ref={tileRef} onClick={handleClick} disabled={pending} sx={{
                     flex: 1,
                     display: "flex",
                     flexDirection: "column",
@@ -129,6 +187,18 @@ export const ViewTile: React.FC<ViewTileProps> = ({ view, active, stateDisplayVa
             )}
 
             <TilePendingIndicator pending={pending} />
+
+            {/* Controls popover */}
+            {hasPopover && view.controls && (
+                <SubResourcePopover
+                    items={view.controls}
+                    title={displayName}
+                    anchorEl={controlsAnchor}
+                    onClose={closeControls}
+                    titleAction={commandSlots.titleAction}
+                    headerContent={commandSlots.headerContent}
+                />
+            )}
         </Card>
     );
 };

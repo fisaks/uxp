@@ -72,6 +72,14 @@ function serializeView(v: InteractionView): RuntimeInteractionView {
                 ...(v.stateDisplay.aggregation && { aggregation: v.stateDisplay.aggregation }),
             },
         }),
+        ...(v.controls && v.controls.length > 0 && {
+            controls: v.controls.map(c => ({
+                resourceId: c.resource.id!,
+                ...(c.label && { label: c.label }),
+                ...(c.group && { group: c.group }),
+                ...(c.inline && { inline: true }),
+            })),
+        }),
     };
 }
 

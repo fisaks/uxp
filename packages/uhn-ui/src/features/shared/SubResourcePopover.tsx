@@ -4,28 +4,42 @@ import { useTheme } from "@mui/material/styles";
 import { usePortalContainerRef } from "@uxp/ui-lib";
 import React, { useCallback, useRef, useState } from "react";
 import { useSelector } from "react-redux";
-import { selectRuntimeState } from "../../runtime-state/runtimeStateSelector";
-import { selectResourceById } from "../resourceSelector";
-import { useSendResourceCommand } from "../hooks/useSendResourceCommand";
-import { useAnalogSlider } from "../hooks/useAnalogSlider";
-import { isResourceActive } from "../isResourceActive";
-import { TileRuntimeResource, TileRuntimeResourceState } from "../resource-ui.type";
-import { getResourceIcon } from "./icons";
-import { getResourceIconColor } from "./colors";
-import { TilePopoverContext } from "./tile-extensions";
+import { selectRuntimeState } from "../runtime-state/runtimeStateSelector";
+import { selectResourceById } from "../resource/resourceSelector";
+import { useSendResourceCommand } from "../resource/hooks/useSendResourceCommand";
+import { useAnalogSlider } from "../resource/hooks/useAnalogSlider";
+import { isResourceActive } from "../resource/isResourceActive";
+import { TileRuntimeResource, TileRuntimeResourceState } from "../resource/resource-ui.type";
+import { getResourceIcon } from "../resource/components/icons";
+import { getResourceIconColor } from "../resource/components/colors";
 
-type ComplexPanelProps = {
-    ctx: TilePopoverContext;
+/** Minimal shape needed by the popover — satisfied by both
+ *  RuntimeComplexSubResourceRef and RuntimeViewControl. */
+type PopoverItem = {
+    resourceId: string;
+    label?: string;
+    group?: string;
 };
 
-export const ComplexPanel: React.FC<ComplexPanelProps> = ({ ctx }) => {
-    const { resource, anchorEl, onClose } = ctx;
+type SubResourcePopoverProps = {
+    items: PopoverItem[];
+    title: string;
+    anchorEl: HTMLElement | null;
+    onClose: () => void;
+    /** Inline action rendered right-aligned in the title row (e.g. toggle, tap button) */
+    titleAction?: React.ReactNode;
+    /** Full-width content rendered below the title row (e.g. analog slider) */
+    headerContent?: React.ReactNode;
+};
+
+export const SubResourcePopover: React.FC<SubResourcePopoverProps> = ({
+    items, title, anchorEl, onClose, titleAction, headerContent,
+}) => {
     const portalContainer = usePortalContainerRef();
     const resourceById = useSelector(selectResourceById);
     const runtimeState = useSelector(selectRuntimeState);
-    const subResources = resource.subResources;
 
-    if (!subResources?.length) return null;
+    if (!items.length) return null;
 
     return (
         <Popover
@@ -39,17 +53,31 @@ export const ComplexPanel: React.FC<ComplexPanelProps> = ({ ctx }) => {
                 paper: { sx: { minWidth: 280, maxWidth: 360, maxHeight: "70vh", overflow: "auto", p: 2 } },
             }}
         >
-            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5 }}>
-                {resource.name}
-            </Typography>
+            <Box sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+                mb: (headerContent ? 0.5 : 1.5),
+            }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600, flex: 1, minWidth: 0 }}>
+                    {title}
+                </Typography>
+                {titleAction}
+            </Box>
+
+            {headerContent && (
+                <Box sx={{ mb: 1.5, pb: 1, borderBottom: 1, borderColor: "divider" }}>
+                    {headerContent}
+                </Box>
+            )}
 
             <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-                {subResources.map((subRef, i) => {
+                {items.map((subRef, i) => {
                     const subResource = resourceById[subRef.resourceId] as TileRuntimeResource | undefined;
                     const subState = runtimeState.byResourceId[subRef.resourceId] as TileRuntimeResourceState | undefined;
                     if (!subResource) return null;
 
-                    const showGroupHeader = subRef.group && subRef.group !== subResources[i - 1]?.group;
+                    const showGroupHeader = subRef.group && subRef.group !== items[i - 1]?.group;
 
                     return (
                         <React.Fragment key={subRef.resourceId}>
@@ -110,16 +138,17 @@ const SubResourceControl: React.FC<{
     state: TileRuntimeResourceState | undefined;
     iconColor: string;
 }> = ({ resource, state, iconColor }) => {
-    if (resource.type === "digitalOutput") {
+    const t = resource.type;
+    if (t === "digitalOutput") {
         return <DigitalOutputControl resource={resource} state={state} />;
     }
-    if (resource.type === "digitalInput") {
+    if (t === "digitalInput" || t === "virtualDigitalInput") {
         if (resource.inputType === "push") {
             return <DigitalInputPushControl resource={resource} state={state} iconColor={iconColor} />;
         }
         return <DigitalInputToggleControl resource={resource} state={state} />;
     }
-    if (resource.type === "analogOutput") {
+    if (t === "analogOutput" || t === "virtualAnalogOutput") {
         return <AnalogOutputControl resource={resource} state={state} iconColor={iconColor} />;
     }
     // Read-only for analog inputs and timers

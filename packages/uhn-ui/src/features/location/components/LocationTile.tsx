@@ -1,10 +1,8 @@
-import TuneIcon from "@mui/icons-material/Tune";
 import { Box, Card, CardActionArea, CircularProgress } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { RuntimeInteractionView, RuntimeScene } from "@uhn/common";
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import { useSelector } from "react-redux";
-import { ComplexPanel } from "../../resource/components/ComplexPanel";
 import { getResourceIcon } from "../../resource/components/icons";
 import { getResourceIconColor, getResourceSurfaceColor } from "../../resource/components/colors";
 import { useResourceAction } from "../../resource/hooks/useResourceAction";
@@ -12,13 +10,16 @@ import { useSendResourceCommand } from "../../resource/hooks/useSendResourceComm
 import { isResourceActive } from "../../resource/isResourceActive";
 import { TileRuntimeResource, TileRuntimeResourceState } from "../../resource/resource-ui.type";
 import { selectResourceCommandFeedbackById } from "../../resource/resourceCommandFeedbackSelector";
+import { SubResourcePopover } from "../../shared/SubResourcePopover";
 import { stopPropagation } from "../../shared/tileEventHelpers";
 import { useViewAnalogState } from "../../shared/useViewAnalogState";
 import { useViewCommand } from "../../shared/useViewCommand";
 import { useViewIconColors } from "../../shared/useViewIconColors";
 import { useSendViewCommand } from "../../view/hooks/useSendViewCommand";
+import { useViewCommandSlots } from "../../view/components/ViewCommandControl";
 import { TileStateItem } from "../../shared/tile.types";
 import { TileAnalogSection } from "../../shared/TileAnalogSection";
+import { TuneOverlayIcon } from "../../shared/TuneOverlayIcon";
 import { TileContent } from "../../shared/TileContent";
 import { useSceneIconColors } from "../../shared/useSceneIconColors";
 import { useSceneCommand } from "../../shared/useSceneCommand";
@@ -78,28 +79,69 @@ const LocationTileView: React.FC<LocationTileViewProps> = ({ view, active, state
 
     const displayName = nameOverride ?? view.name ?? view.id;
 
-    const { analogSendCommand, analogState } = useViewAnalogState(view, sendCommand);
+    const {
+        analogSendCommand, analogState,
+        inlineControl, inlineResource, inlineAnalogSendCommand, inlineAnalogState,
+    } = useViewAnalogState(view, sendCommand);
+
+    const hasInlineAnalog = !!inlineControl && !isAnalog;
+    const showAnalog = isAnalog || hasInlineAnalog;
+
+    const commandSlots = useViewCommandSlots(view.command, active, sendCommand);
+
+    // Controls popover: show when there are controls beyond a single inline-only one
+    const singleInlineOnly = view.controls?.length === 1 && view.controls[0].inline;
+    const hasPopover = (view.controls?.length ?? 0) > 0 && !singleInlineOnly;
+
+    const [controlsAnchor, setControlsAnchor] = useState<HTMLElement | null>(null);
+    const tileRef = useRef<HTMLButtonElement>(null);
+
+    const openControls = useCallback((e: React.MouseEvent) => {
+        e.stopPropagation();
+        e.preventDefault();
+        setControlsAnchor(tileRef.current);
+    }, []);
+    const closeControls = useCallback(() => setControlsAnchor(null), []);
+
+    const iconElement = (
+        <TuneOverlayIcon show={hasPopover} color={iconColor} active={active}>
+            <IconComponent sx={{ fontSize: 40, color: iconColor, transition: "color 0.2s" }} />
+        </TuneOverlayIcon>
+    );
 
     const tileContent = (
         <TileContent
-            icon={<IconComponent sx={{ fontSize: 40, color: iconColor, transition: "color 0.2s" }} />}
+            icon={iconElement}
+            onIconClick={hasPopover ? openControls : undefined}
             stateValues={stateDisplayValues}
             displayName={displayName}
-            hasAnalog={isAnalog}
+            hasAnalog={showAnalog}
         />
     );
 
-    const analogSection = isAnalog && view.command && (
+    const analogSection = showAnalog && (
         <Box data-analog-section {...stopPropagation}>
-            <TileAnalogSection
-                min={view.command.min ?? 0}
-                max={view.command.max ?? 100}
-                step={view.command.step ?? 1}
-                unit={view.command.unit ?? ""}
-                iconColor={iconColor}
-                state={analogState}
-                sendCommand={analogSendCommand}
-            />
+            {isAnalog && view.command ? (
+                <TileAnalogSection
+                    min={view.command.min ?? 0}
+                    max={view.command.max ?? 100}
+                    step={view.command.step ?? 1}
+                    unit={view.command.unit ?? ""}
+                    iconColor={iconColor}
+                    state={analogState}
+                    sendCommand={analogSendCommand}
+                />
+            ) : hasInlineAnalog && inlineResource ? (
+                <TileAnalogSection
+                    min={inlineResource.min ?? 0}
+                    max={inlineResource.max ?? 100}
+                    step={inlineResource.step ?? 1}
+                    unit={inlineResource.unit ?? ""}
+                    iconColor={iconColor}
+                    state={inlineAnalogState}
+                    sendCommand={inlineAnalogSendCommand}
+                />
+            ) : null}
         </Box>
     );
 
@@ -119,7 +161,7 @@ const LocationTileView: React.FC<LocationTileViewProps> = ({ view, active, state
             }}
         >
             {hasCommand ? (
-                <CardActionArea onClick={handleClick} disabled={pending} sx={{
+                <CardActionArea ref={tileRef} onClick={handleClick} disabled={pending} sx={{
                     flex: 1,
                     display: "flex",
                     flexDirection: "column",
@@ -143,6 +185,18 @@ const LocationTileView: React.FC<LocationTileViewProps> = ({ view, active, state
                 <CircularProgress size={16} thickness={5} sx={{ position: "absolute", bottom: 11, right: 11 }} />
             ) : (
                 <TechnicalLinkButton to={`/technical/views/${view.id}`} />
+            )}
+
+            {/* Controls popover */}
+            {hasPopover && view.controls && (
+                <SubResourcePopover
+                    items={view.controls}
+                    title={displayName}
+                    anchorEl={controlsAnchor}
+                    onClose={closeControls}
+                    titleAction={commandSlots.titleAction}
+                    headerContent={commandSlots.headerContent}
+                />
             )}
         </Card>
     );
@@ -171,6 +225,7 @@ const LocationTileResource: React.FC<LocationTileResourceProps> = ({ resource, s
     const openComplexPanel = useCallback(() => {
         setComplexPanelAnchor(tileActionAreaRef.current);
     }, []);
+    const closeComplexPanel = useCallback(() => setComplexPanelAnchor(null), []);
 
     // Resource interaction — complex resources get long-press callback to open panel
     const actions = useResourceAction(resource, state, {
@@ -217,17 +272,9 @@ const LocationTileResource: React.FC<LocationTileResourceProps> = ({ resource, s
     const tileContent = (
         <TileContent
             icon={
-                hasComplexPanel ? (
-                    <Box sx={{ position: "relative", display: "inline-flex" }}>
-                        <MainIcon sx={{ fontSize: 40, color: iconColor, transition: "color 0.2s" }} />
-                        <TuneIcon sx={{
-                            position: "absolute", bottom: -4, right: -8,
-                            fontSize: 16, color: iconColor, opacity: active ? 0.5 : 0.7,
-                        }} />
-                    </Box>
-                ) : (
+                <TuneOverlayIcon show={hasComplexPanel} color={iconColor} active={active}>
                     <MainIcon sx={{ fontSize: 40, color: iconColor, transition: "color 0.2s" }} />
-                )
+                </TuneOverlayIcon>
             }
             onIconClick={hasComplexPanel ? (e) => {
                 e.preventDefault();
@@ -298,15 +345,13 @@ const LocationTileResource: React.FC<LocationTileResourceProps> = ({ resource, s
             )}
 
             {/* Complex panel popover */}
-            {hasComplexPanel && (
-                <ComplexPanel ctx={{
-                    resource,
-                    state,
-                    theme,
-                    iconColor,
-                    anchorEl: complexPanelAnchor,
-                    onClose: () => setComplexPanelAnchor(null),
-                }} />
+            {hasComplexPanel && resource.subResources && (
+                <SubResourcePopover
+                    items={resource.subResources}
+                    title={resource.name}
+                    anchorEl={complexPanelAnchor}
+                    onClose={closeComplexPanel}
+                />
             )}
 
             {isPending ? (

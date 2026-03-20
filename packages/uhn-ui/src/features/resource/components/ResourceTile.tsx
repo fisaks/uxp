@@ -2,7 +2,6 @@ import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import CloseIcon from "@mui/icons-material/Close";
 import ErrorIcon from "@mui/icons-material/Error";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
-import TuneIcon from "@mui/icons-material/Tune";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import { Box, Card, CardActionArea, IconButton, Tooltip, Typography, alpha } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
@@ -16,6 +15,7 @@ import { TileDescriptionPopover } from "../../shared/TileDescriptionPopover";
 import { triggerEventLabel } from "../../shared/triggerEventLabel";
 import { TileInfoPopover } from "../../shared/TileInfoPopover";
 import { TilePendingIndicator } from "../../shared/TilePendingIndicator";
+import { TuneOverlayIcon } from "../../shared/TuneOverlayIcon";
 import { createTooltipProps } from "../../shared/tileEventHelpers";
 import { useResourceAction } from "../hooks/useResourceAction";
 import { isResourceActive } from "../isResourceActive";
@@ -222,27 +222,17 @@ export const ResourceTile: React.FC<ResourceTileProps> = ({ resource, state, nam
                         cursor: hasInteractionPanel ? "pointer" : undefined,
                     }}>
 
-                    <MainIcon sx={{
-                        color: iconColor,
-                        fontSize: 24,
-                        ...(isPending && {
-                            "--pulse-from": iconColor,
-                            "--pulse-to": alpha(iconColor, 0.45),
-                            animation: "resource-pending-pulse 1.4s ease-in-out infinite",
-                        })
-                    }} />
-                    {hasInteractionPanel && (
-                        <TuneIcon
-                            sx={{
-                                position: "absolute",
-                                bottom: -4,
-                                right: -8,
-                                fontSize: 16,
-                                color: iconColor,
-                                opacity: isResourceActive(resource, state) ? 0.5 : 0.7,
-                            }}
-                        />
-                    )}
+                    <TuneOverlayIcon show={hasInteractionPanel} color={iconColor} active={isResourceActive(resource, state)}>
+                        <MainIcon sx={{
+                            color: iconColor,
+                            fontSize: 24,
+                            ...(isPending && {
+                                "--pulse-from": iconColor,
+                                "--pulse-to": alpha(iconColor, 0.45),
+                                animation: "resource-pending-pulse 1.4s ease-in-out infinite",
+                            })
+                        }} />
+                    </TuneOverlayIcon>
                     {haveErrors && (
                         <Tooltip title={
                             <Box>

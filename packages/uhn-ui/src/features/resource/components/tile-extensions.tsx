@@ -7,7 +7,7 @@ import { isResourceActive } from "../isResourceActive";
 import { TileRuntimeResource, TileRuntimeResourceState } from "../resource-ui.type";
 import { AnalogOutputPanel } from "./AnalogOutputPanel";
 import { ComplexTileValue } from "./ComplexTileValue";
-import { ComplexPanel } from "./ComplexPanel";
+import { SubResourcePopover } from "../../shared/SubResourcePopover";
 
 /* ------------------------------------------------------------------ */
 /* Types                                                               */
@@ -164,7 +164,14 @@ const timerRenderer: TileRendererExtensions = {
 
 const complexRenderer: TileRendererExtensions = {
     renderValue: (ctx) => <ComplexTileValue ctx={ctx} />,
-    renderInteractionPanel: (ctx) => <ComplexPanel ctx={ctx} />,
+    renderInteractionPanel: (ctx) => (
+        <SubResourcePopover
+            items={ctx.resource.subResources ?? []}
+            title={ctx.resource.name}
+            anchorEl={ctx.anchorEl}
+            onClose={ctx.onClose}
+        />
+    ),
 };
 
 const renderers: Partial<Record<ResourceType, TileRendererExtensions>> = {

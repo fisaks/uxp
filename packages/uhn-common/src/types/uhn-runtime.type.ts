@@ -395,6 +395,13 @@ export type RuntimeViewStateDisplay = {
     aggregation?: StateDisplayAggregation;
 };
 
+export type RuntimeViewControl = {
+    resourceId: string;
+    label?: string;
+    group?: string;
+    inline?: boolean;
+};
+
 export type RuntimeInteractionView = {
     id: string;
     name: string;
@@ -406,6 +413,7 @@ export type RuntimeInteractionView = {
     activeWhen?: ViewActiveCondition;
     command?: RuntimeViewCommand;
     stateDisplay?: RuntimeViewStateDisplay;
+    controls?: RuntimeViewControl[];
 };
 
 // --- Runtime Location types (resourceId/viewId instead of objects) ---
