@@ -7,7 +7,10 @@ import { assertNever } from "@uxp/common";
 import React, { useCallback, useState } from "react";
 import { useSelector } from "react-redux";
 import { selectRuntimeStateByResourceId } from "../../runtime-state/runtimeStateSelector";
+import { selectResourceById } from "../../resource/resourceSelector";
+import { TileRuntimeResource } from "../../resource/resource-ui.type";
 import { useAnalogSlider } from "../../resource/hooks/useAnalogSlider";
+import { AnalogSelectControl } from "../../shared/AnalogSelectControl";
 import { sendForTarget } from "../../shared/viewCommandHelpers";
 
 type SendCommandFn = (resourceId: string, command: UhnResourceCommand) => Promise<void>;
@@ -172,7 +175,9 @@ const SetAnalogControl: React.FC<{
     iconColor: string;
 }> = ({ command, sendCommand, iconColor }) => {
     const runtimeStateById = useSelector(selectRuntimeStateByResourceId);
+    const resourceById = useSelector(selectResourceById);
     const state = runtimeStateById[command.resourceId];
+    const resource = resourceById[command.resourceId] as TileRuntimeResource | undefined;
 
     const analogSendCommand = useCallback(async (cmd: UhnResourceCommand) => {
         await sendCommand(command.resourceId, cmd);
@@ -183,8 +188,22 @@ const SetAnalogControl: React.FC<{
     const step = command.step ?? 1;
     const unit = command.unit ?? "";
 
-    const { localValue, handleChange, handleChangeCommitted } =
+    const { localValue, handleChange, handleChangeCommitted, sendExact } =
         useAnalogSlider({ min, max }, state, analogSendCommand);
+
+    const options = command.options ?? resource?.options;
+    const hasOptions = options && options.length > 0;
+
+    if (hasOptions) {
+        return (
+            <AnalogSelectControl
+                options={options}
+                value={localValue}
+                onChange={sendExact}
+                iconColor={iconColor}
+            />
+        );
+    }
 
     return (
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>

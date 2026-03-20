@@ -1,5 +1,5 @@
 
-import { AnalogInputResourceBase, AnalogOutputResourceBase, BlueprintIcon, DigitalInputResourceBase, DigitalOutputResourceBase, LogicalResourceType, PhysicalResourceType, ResourceType, RuntimeRuleAction, StateDisplayAggregation, StateDisplayStyle, ViewActiveCondition, ViewCommandType, ViewStateAggregation } from "@uhn/blueprint";
+import { AnalogInputResourceBase, AnalogOutputOption, AnalogOutputResourceBase, BlueprintIcon, DigitalInputResourceBase, DigitalOutputResourceBase, LogicalResourceType, PhysicalResourceType, ResourceType, RuntimeRuleAction, StateDisplayAggregation, StateDisplayStyle, ViewActiveCondition, ViewCommandType, ViewStateAggregation } from "@uhn/blueprint";
 
 // --- Runtime rule serialization (for IPC + overview) ---
 
@@ -138,6 +138,7 @@ export type RuntimeAnalogOutputResource = RuntimePhysicalResource & {
     step?: number;
     unit?: string;
     defaultOnValue?: number;
+    options?: AnalogOutputOption[];
 };
 
 export type RuntimeComplexResource = RuntimeLogicalResource & {
@@ -165,6 +166,7 @@ export type RuntimeVirtualAnalogOutputResource = RuntimeLogicalResource & {
   step?: number;
   unit?: string;
   defaultOnValue?: number;
+  options?: AnalogOutputOption[];
 };
 
 export function isPhysicalResource(r: RuntimeResource): r is RuntimePhysicalResource {
@@ -372,6 +374,7 @@ export type RuntimeViewCommandTarget = {
     step?: number;
     unit?: string;
     defaultOnValue?: number;
+    options?: AnalogOutputOption[];
 };
 
 export type RuntimeViewCommand = RuntimeViewCommandTarget & {

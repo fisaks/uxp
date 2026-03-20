@@ -10,6 +10,7 @@ import { useSendResourceCommand } from "../resource/hooks/useSendResourceCommand
 import { useAnalogSlider } from "../resource/hooks/useAnalogSlider";
 import { isResourceActive } from "../resource/isResourceActive";
 import { TileRuntimeResource, TileRuntimeResourceState } from "../resource/resource-ui.type";
+import { AnalogSelectControl } from "./AnalogSelectControl";
 import { getResourceIcon } from "../resource/components/icons";
 import { getResourceIconColor } from "../resource/components/colors";
 
@@ -265,6 +266,20 @@ const AnalogOutputControl: React.FC<{
     const sendCommand = useSendResourceCommand(resource.id);
     const { localValue, handleChange, handleChangeCommitted, sendExact } =
         useAnalogSlider({ min: resource.min, max: resource.max }, state, sendCommand);
+
+    const hasOptions = resource.options && resource.options.length > 0;
+
+    if (hasOptions) {
+        return (
+            <AnalogSelectControl
+                options={resource.options!}
+                value={localValue}
+                onChange={sendExact}
+                iconColor={iconColor}
+                disabled={disabled}
+            />
+        );
+    }
 
     const min = resource.min ?? 0;
     const max = resource.max ?? 65535;

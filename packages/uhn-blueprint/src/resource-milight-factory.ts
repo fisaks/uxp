@@ -166,7 +166,17 @@ export function milightMode<E extends string, D extends string | number>(
     props: MilightAnalogProps<E, D>,
 ) {
     return analogOutput<"mode", E, D, typeof MilightPin.Mode>({
-        min: 1, max: 9, step: 1, unit: "",
+        options: [
+            { value: MilightEffect.ColorFade, label: "Color Fade" },
+            { value: MilightEffect.WhiteStrobe, label: "White Strobe" },
+            { value: MilightEffect.RGBWFade, label: "RGBW Fade" },
+            { value: MilightEffect.ColorFlash, label: "Color Flash" },
+            { value: MilightEffect.Disco, label: "Disco" },
+            { value: MilightEffect.RedRamp, label: "Red Ramp" },
+            { value: MilightEffect.GreenRamp, label: "Green Ramp" },
+            { value: MilightEffect.BlueRamp, label: "Blue Ramp" },
+            { value: MilightEffect.ColorChangeFlash, label: "Color Change Flash" },
+        ],
         icon: "control:mode",
         ...props,
         pin: MilightPin.Mode,

@@ -1,4 +1,4 @@
-import { BaseAnalogInputKind, BaseAnalogOutputKind, BaseInputKind, BaseOutputKind, InputType } from "@uhn/blueprint";
+import { AnalogOutputOption, BaseAnalogInputKind, BaseAnalogOutputKind, BaseInputKind, BaseOutputKind, InputType } from "@uhn/blueprint";
 import { RuntimeComplexSubResourceRef, RuntimeResource, RuntimeResourceState } from "@uhn/common";
 
 // Helper types
@@ -14,6 +14,7 @@ export type TileRuntimeResource = RuntimeResource & {
     step?: number;
     unit?: string;
     defaultOnValue?: number;
+    options?: AnalogOutputOption[];
     stateLabel?: string;
     inactiveValue?: number;
     emitsTap?: boolean;

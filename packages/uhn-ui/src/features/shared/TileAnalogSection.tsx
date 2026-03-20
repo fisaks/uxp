@@ -1,8 +1,10 @@
 import { Box, Slider } from "@mui/material";
+import { AnalogOutputOption } from "@uhn/blueprint";
 import { UhnResourceCommand } from "@uhn/common";
 import React from "react";
 import { useAnalogSlider } from "../resource/hooks/useAnalogSlider";
 import { TileRuntimeResourceState } from "../resource/resource-ui.type";
+import { AnalogSelectControl } from "./AnalogSelectControl";
 import { StepButtonRow } from "./StepButtonRow";
 import { useAnalogEditableInput } from "./useAnalogEditableInput";
 
@@ -15,13 +17,30 @@ type TileAnalogSectionProps = {
     state: TileRuntimeResourceState | undefined;
     sendCommand: (command: UhnResourceCommand) => Promise<void>;
     disabled?: boolean;
+    options?: AnalogOutputOption[];
 };
 
 export const TileAnalogSection: React.FC<TileAnalogSectionProps> = ({
-    min, max, step, unit, iconColor, state, sendCommand, disabled,
+    min, max, step, unit, iconColor, state, sendCommand, disabled, options,
 }) => {
     const { localValue, handleChange, handleChangeCommitted, sendExact } =
         useAnalogSlider({ min, max }, state, sendCommand);
+
+    const hasOptions = options && options.length > 0;
+
+    if (hasOptions) {
+        return (
+            <Box sx={{ px: 1.5, pb: 0.75, pt: 0.5, display: "flex", justifyContent: "center" }}>
+                <AnalogSelectControl
+                    options={options}
+                    value={localValue}
+                    onChange={sendExact}
+                    iconColor={iconColor}
+                    disabled={disabled}
+                />
+            </Box>
+        );
+    }
 
     const bigStep = Math.min(step * 10, (max - min) / 5);
 

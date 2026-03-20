@@ -4,6 +4,7 @@
 import type { BlueprintIcon } from "./icon";
 import { commandTypeDefaultIcon } from "./icon-defaults";
 import type {
+    AnalogOutputOption,
     AnalogOutputResourceBase,
     ComplexResourceBase,
     DigitalInputResourceBase,
@@ -69,6 +70,8 @@ export type ViewCommandTarget =
         unit?: string;
         /** Value used when toggling "on" via tap. Falls back to max when omitted. */
         defaultOnValue?: number;
+        /** Override resource-level options for this view command. */
+        options?: AnalogOutputOption[];
     }
     | {
         resource: TimerResourceBase;

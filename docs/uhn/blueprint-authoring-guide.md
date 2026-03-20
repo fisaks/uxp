@@ -228,7 +228,7 @@ Physical resources map to hardware on edge servers via `edge`, `device`, and `pi
 | `digitalInput` | `digitalInput()` | `inputKind`, `inputType` ("push" or "toggle") |
 | `digitalOutput` | `digitalOutput()` | `outputKind` |
 | `analogInput` | `analogInput()` | `analogInputKind`, `unit` |
-| `analogOutput` | `analogOutput()` | `analogOutputKind`, `min`, `max`, `step`, `unit` |
+| `analogOutput` | `analogOutput()` | `analogOutputKind`, `min`, `max`, `step`, `unit`, `options` |
 
 ```typescript
 import { digitalOutput, digitalInput, analogInput } from "@uhn/blueprint";
@@ -259,6 +259,30 @@ export const kitchenTemperature = analogInput({
     description: "Kitchen temperature sensor",
 });
 ```
+
+### Analog Output Options
+
+Analog outputs can define `options` — an array of `{ value, label }` pairs representing discrete named values. When present, the UI renders a select dropdown instead of a slider. This is useful for hardware modes that map to specific numeric values (e.g., effect programs, fan presets).
+
+```typescript
+import { analogOutput } from "@uhn/blueprint";
+
+export const milightMode = analogOutput({
+    edge: "edge1",
+    device: "milight-1",
+    pin: 9,
+    analogOutputKind: "mode",
+    min: 1, max: 9, step: 1, unit: "",
+    options: [
+        { value: 1, label: "Color Fade" },
+        { value: 2, label: "White Strobe" },
+        { value: 3, label: "RGBW Fade" },
+        // ...
+    ],
+});
+```
+
+The Mi-Light factory (`milightMode()`) includes options automatically. View commands can override a resource's options via `options` on the `setAnalog` command (same pattern as `min`/`max`/`step`/`unit`).
 
 ### Logical Resources
 
@@ -500,7 +524,7 @@ The `command` property defines the tile's click behavior:
 | `"tap"` | Send tap event | Button press simulation |
 | `"toggle"` | Flip digital state | Light on/off |
 | `"longPress"` | Send long-press with duration | `{ type: "longPress", holdMs: 1000 }` |
-| `"setAnalog"` | Inline slider control | `{ type: "setAnalog", min: 0, max: 100, step: 5, unit: "%" }` |
+| `"setAnalog"` | Inline slider or select control | `{ type: "setAnalog", min: 0, max: 100, step: 5, unit: "%" }` |
 | `"clearTimer"` | Stop a running timer | Timer reset |
 
 **Deactivation override:** Use `onDeactivate` for different behavior when the view is active:
@@ -511,6 +535,20 @@ command: {
     onDeactivate: { resource: offButton, type: "tap" },
 },
 ```
+
+**Options override:** A `setAnalog` command can override the resource's `options` (or add options when the resource has none):
+
+```typescript
+command: {
+    resource: effectModeResource, type: "setAnalog",
+    options: [
+        { value: 1, label: "Warm" },
+        { value: 2, label: "Cool" },
+    ],
+},
+```
+
+When neither the command nor the resource has `options`, the UI renders the standard slider.
 
 ### State Display
 

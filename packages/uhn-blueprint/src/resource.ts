@@ -88,6 +88,12 @@ export type AnalogInputResourceBase<
     unit?: string;
 };
 
+// Analog Output Option (for discrete named values, e.g. effect modes)
+export type AnalogOutputOption = {
+    value: number;
+    label: string;
+};
+
 // Analog Output Resource (generic)
 export type AnalogOutputResourceBase<
     TOutputKind extends AnalogOutputKind = AnalogOutputKind,
@@ -106,6 +112,8 @@ export type AnalogOutputResourceBase<
     unit?: string;
     /** Value used when toggling "on" via tap. Falls back to max when omitted. */
     defaultOnValue?: number;
+    /** Named discrete values. When present, UI renders a select instead of a slider. */
+    options?: AnalogOutputOption[];
 };
 
 export type TimerResourceBase<THost extends string = string> = LogicalResourceBase<"timer", THost>;
@@ -127,6 +135,8 @@ export type VirtualAnalogOutputResourceBase<THost extends string = string> = Log
     unit?: string;
     /** Value used when toggling "on" via tap. Falls back to max when omitted. */
     defaultOnValue?: number;
+    /** Named discrete values. When present, UI renders a select instead of a slider. */
+    options?: AnalogOutputOption[];
 };
 
 // Complex (Multi-Physical) Resource
