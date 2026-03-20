@@ -1,4 +1,5 @@
 // blueprintAstUtils.ts
+import fs from "fs";
 import path from "path";
 import { CallExpression, ImportSpecifier, Node, ObjectLiteralExpression, SourceFile, VariableDeclaration } from "ts-morph";
 
@@ -274,11 +275,29 @@ export function collectRuleFactories(sf: SourceFile): Set<string> {
 }
 
 /**
- * Collect named imports that should be treated as resource factories.
+ * Collect resource factory function names from resource-*-factory files.
+ *
+ * Discovers all files matching `resource-*-factory` in the @uhn/blueprint
+ * package directory and collects only the function-typed exports.
+ * Skips constants, objects, and types — only actual factory functions pass.
  */
-const blueprintAllowedNames = new Set(
-    Object.keys(require("../resource-factory"))
-);
+const blueprintResourceFactoryNames = (() => {
+    const names = new Set<string>();
+    const pkgDir = path.resolve(__dirname, "..");
+    const filePattern = /^resource(-\w+)?-factory\.(ts|js)$/;
+    for (const file of fs.readdirSync(pkgDir)) {
+        if (filePattern.test(file)) {
+            const mod = require(path.join(pkgDir, file));
+            for (const [name, value] of Object.entries(mod)) {
+                if (typeof value === "function") {
+                    names.add(name);
+                }
+            }
+        }
+    }
+    return names;
+})();
+
 export function collectNamedImportsFromPaths(
     sf: SourceFile,
     allowedRoots: string[]
@@ -290,7 +309,7 @@ export function collectNamedImportsFromPaths(
 
         if (spec === "@uhn/blueprint") {
             for (const n of imp.getNamedImports()) {
-                if (blueprintAllowedNames.has(n.getName())) {
+                if (blueprintResourceFactoryNames.has(n.getName())) {
                     names.add(n.getAliasNode()?.getText() ?? n.getName());
                 }
             }

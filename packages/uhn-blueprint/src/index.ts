@@ -8,3 +8,4 @@ export * from "./view";
 export * from "./location";
 export * from "./scene";
 export * from "./icon";
+export * from "./resource-milight-factory";

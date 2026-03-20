@@ -16,7 +16,7 @@ export type BlueprintIcon =
     // Control
     | "control:button" | "control:dimmer" | "control:valve" | "control:timer" | "control:schedule"
     | "control:toggle" | "control:speed" | "control:relay" | "control:pump" | "control:lock"
-    | "control:blind" | "control:shade" | "control:curtain" | "control:volume"
+    | "control:blind" | "control:shade" | "control:curtain" | "control:volume" | "control:mode"
     // Climate
     | "climate:heater" | "climate:ac" | "climate:fan" | "climate:heat-pump" | "climate:fireplace"
     // Opening
@@ -42,10 +42,14 @@ export type BlueprintIcon =
     | "device:iron" | "device:blender" | "device:charger"
     // Energy
     | "energy:battery" | "energy:charging" | "energy:solar" | "energy:meter"
+    // Weather
+    | "weather:sun"
     // Garden
     | "garden:grass" | "garden:sprinkler" | "garden:tree" | "garden:water"
     // Vehicle
     | "vehicle:ev" | "vehicle:charger"
+    // Color
+    | "color:brightness" | "color:temperature" | "color:hue" | "color:saturation"
     // Status
     | "status:dashboard" | "status:device" | "status:warning" | "status:error" | "status:ok" | "status:notification" | "status:favorite"
     ;

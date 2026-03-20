@@ -49,6 +49,7 @@ export type DeviceSummary = {
     type: string;
     busId?: string;
     bypassSignalState?: boolean;
+    assumedState?: boolean;
     resources?: CatalogResource[];
     digitalOutputs?: Range;
     digitalInputs?: Range;

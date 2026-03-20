@@ -7,10 +7,13 @@ import BedIcon from "@mui/icons-material/Bed";
 import BedtimeIcon from "@mui/icons-material/Bedtime";
 import BlenderIcon from "@mui/icons-material/Blender";
 import BlindsIcon from "@mui/icons-material/Blinds";
+import BrightnessHighIcon from "@mui/icons-material/BrightnessHigh";
+import BrightnessLowIcon from "@mui/icons-material/BrightnessLow";
 import BlindsClosedIcon from "@mui/icons-material/BlindsClosed";
 import BoltIcon from "@mui/icons-material/Bolt";
 import BrunchDiningIcon from "@mui/icons-material/BrunchDining";
 import CelebrationIcon from "@mui/icons-material/Celebration";
+import ContrastIcon from "@mui/icons-material/Contrast";
 import CenterFocusStrongIcon from "@mui/icons-material/CenterFocusStrong";
 import ChargingStationIcon from "@mui/icons-material/ChargingStation";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
@@ -40,6 +43,7 @@ import ErrorIcon from "@mui/icons-material/Error";
 import EvStationIcon from "@mui/icons-material/EvStation";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import FenceIcon from "@mui/icons-material/Fence";
+import FormatListBulletedIcon from "@mui/icons-material/FormatListBulleted";
 import FireplaceIcon from "@mui/icons-material/Fireplace";
 import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
 import FlashlightOffIcon from "@mui/icons-material/FlashlightOff";
@@ -56,6 +60,7 @@ import HandymanIcon from "@mui/icons-material/Handyman";
 import HeatPumpIcon from "@mui/icons-material/HeatPump";
 import HotTubIcon from "@mui/icons-material/HotTub";
 import InventoryIcon from "@mui/icons-material/Inventory";
+import InvertColorsIcon from "@mui/icons-material/InvertColors";
 import IronIcon from "@mui/icons-material/Iron";
 import KitchenIcon from "@mui/icons-material/Kitchen";
 import LanIcon from "@mui/icons-material/Lan";
@@ -79,6 +84,7 @@ import NatureIcon from "@mui/icons-material/Nature";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import NotificationsNoneIcon from "@mui/icons-material/NotificationsNone";
 import OpacityIcon from "@mui/icons-material/Opacity";
+import PaletteIcon from "@mui/icons-material/Palette";
 import OutdoorGrillIcon from "@mui/icons-material/OutdoorGrill";
 import OutletIcon from "@mui/icons-material/Outlet";
 import ParkIcon from "@mui/icons-material/Park";
@@ -209,6 +215,7 @@ export const blueprintIconMap: Record<BlueprintIcon, BlueprintIconEntry> = {
     "control:shade": icon(RollerShadesIcon, RollerShadesClosedIcon, color("#795548", "#A1887F")),
     "control:curtain": icon(CurtainsIcon, CurtainsClosedIcon, color("#795548", "#A1887F")),
     "control:volume": icon(VolumeUpIcon, VolumeOffIcon, color("#5C6BC0", "#9FA8DA")),
+    "control:mode": icon(FormatListBulletedIcon, undefined, color("#6A1B9A", "#AB47BC", "#4A148C", "#AB47BC")),
     // Climate
     "climate:heater": icon(FireplaceIcon, undefined, color("#E64A19", "#FF8A65")),
     "climate:ac": icon(AcUnitIcon, undefined, color("#29B6F6", "#81D4FA")),
@@ -290,6 +297,8 @@ export const blueprintIconMap: Record<BlueprintIcon, BlueprintIconEntry> = {
     "energy:charging": icon(BatteryChargingFullIcon, undefined, color("#F57C00", "#FFB74D")),
     "energy:solar": icon(SolarPowerIcon, undefined, color("#F9A825", "#FFD54F")),
     "energy:meter": icon(ElectricMeterIcon, undefined, color("#F57C00", "#FFB74D")),
+    // Weather
+    "weather:sun": icon(WbSunnyIcon, undefined, color("#FFA726", "#FFD54F")),
     // Garden
     "garden:grass": icon(GrassIcon, undefined, color("#43A047", "#81C784")),
     "garden:sprinkler": icon(YardIcon, undefined, color("#43A047", "#81C784")),
@@ -298,6 +307,11 @@ export const blueprintIconMap: Record<BlueprintIcon, BlueprintIconEntry> = {
     // Vehicle
     "vehicle:ev": icon(ElectricCarIcon, undefined, color("#00897B", "#4DB6AC")),
     "vehicle:charger": icon(EvStationIcon, undefined, color("#00897B", "#4DB6AC")),
+    // Color
+    "color:brightness": icon(BrightnessHighIcon, BrightnessLowIcon, color("#FFB300", "#FFD54F")),
+    "color:temperature": icon(ContrastIcon, undefined, color("#FFB300", "#FFD54F")),
+    "color:hue": icon(PaletteIcon, undefined, color("#FFB300", "#FFD54F")),
+    "color:saturation": icon(InvertColorsIcon, undefined, color("#FFB300", "#FFD54F")),
     // Status
     "status:dashboard": icon(DashboardIcon, undefined, color("#5C6BC0", "#7986CB", "#3F51B5", "#7986CB")),
     "status:device": icon(DeviceHubIcon, undefined, color("#78909C", "#B0BEC5")),
