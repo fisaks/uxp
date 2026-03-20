@@ -1,13 +1,13 @@
-import { Box, IconButton, Popover, Slider, Switch, Typography } from "@mui/material";
-import RadioButtonCheckedIcon from "@mui/icons-material/RadioButtonChecked";
-import { useTheme } from "@mui/material/styles";
+import { Box, CardActionArea, Popover, Slider, Typography, useMediaQuery } from "@mui/material";
+import { alpha, useTheme } from "@mui/material/styles";
 import { usePortalContainerRef } from "@uxp/ui-lib";
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { selectRuntimeState } from "../runtime-state/runtimeStateSelector";
 import { selectResourceById } from "../resource/resourceSelector";
 import { useSendResourceCommand } from "../resource/hooks/useSendResourceCommand";
 import { useAnalogSlider } from "../resource/hooks/useAnalogSlider";
+import { useAnalogEditableInput } from "./useAnalogEditableInput";
 import { isResourceActive } from "../resource/isResourceActive";
 import { TileRuntimeResource, TileRuntimeResourceState } from "../resource/resource-ui.type";
 import { AnalogSelectControl } from "./AnalogSelectControl";
@@ -21,6 +21,24 @@ type PopoverItem = {
     label?: string;
     group?: string;
 };
+
+type GroupedItems = { name: string; items: PopoverItem[] }[];
+
+function groupItems(items: PopoverItem[]): GroupedItems {
+    const groups: GroupedItems = [];
+    let currentGroup = "";
+    for (const item of items) {
+        if (item.group) currentGroup = item.group;
+        const groupName = currentGroup || "";
+        const last = groups[groups.length - 1];
+        if (last && last.name === groupName) {
+            last.items.push(item);
+        } else {
+            groups.push({ name: groupName, items: [item] });
+        }
+    }
+    return groups;
+}
 
 type SubResourcePopoverProps = {
     items: PopoverItem[];
@@ -41,6 +59,10 @@ export const SubResourcePopover: React.FC<SubResourcePopoverProps> = ({
     const portalContainer = usePortalContainerRef();
     const resourceById = useSelector(selectResourceById);
     const runtimeState = useSelector(selectRuntimeState);
+    const theme = useTheme();
+    const isDesktop = useMediaQuery(theme.breakpoints.up("sm"));
+    const groups = useMemo(() => groupItems(items), [items]);
+    const useHorizontal = isDesktop && groups.length > 1;
 
     if (!items.length) return null;
 
@@ -53,7 +75,15 @@ export const SubResourcePopover: React.FC<SubResourcePopoverProps> = ({
             anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
             transformOrigin={{ vertical: "top", horizontal: "center" }}
             slotProps={{
-                paper: { sx: { minWidth: 280, maxWidth: 360, maxHeight: "70vh", overflow: "auto", p: 2 } },
+                paper: {
+                    sx: {
+                        minWidth: useHorizontal ? 400 : 280,
+                        maxWidth: useHorizontal ? `min(90vw, ${groups.length * 320}px)` : 360,
+                        maxHeight: "70vh",
+                        overflow: "auto",
+                        p: 2,
+                    },
+                },
             }}
         >
             <Box sx={{
@@ -74,34 +104,66 @@ export const SubResourcePopover: React.FC<SubResourcePopoverProps> = ({
                 </Box>
             )}
 
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-                {items.map((subRef, i) => {
-                    const subResource = resourceById[subRef.resourceId] as TileRuntimeResource | undefined;
-                    const subState = runtimeState.byResourceId[subRef.resourceId] as TileRuntimeResourceState | undefined;
-                    if (!subResource) return null;
-
-                    const showGroupHeader = subRef.group && subRef.group !== items[i - 1]?.group;
-
-                    return (
-                        <React.Fragment key={subRef.resourceId}>
-                            {showGroupHeader && (
-                                <Typography
-                                    variant="caption"
-                                    sx={{ fontWeight: 700, color: "text.secondary", mt: i > 0 ? 0.5 : 0 }}
-                                >
-                                    {subRef.group}
+            {useHorizontal ? (
+                <Box sx={{
+                    display: "grid",
+                    gridTemplateColumns: `repeat(${groups.length}, minmax(250px, 1fr))`,
+                    gap: 1.5,
+                }}>
+                    {groups.map(group => (
+                        <Box key={group.name} sx={{ display: "flex", flexDirection: "column", gap: 1, bgcolor: "action.hover", borderRadius: 1.5, p: 1, boxShadow: 1 }}>
+                            {group.name && (
+                                <Typography variant="caption" sx={{ fontWeight: 700, color: "text.secondary" }}>
+                                    {group.name}
                                 </Typography>
                             )}
-                            <SubResourceRow
-                                resource={subResource}
-                                state={subState}
-                                label={subRef.label}
-                                disabled={disabled}
-                            />
-                        </React.Fragment>
-                    );
-                })}
-            </Box>
+                            {group.items.map(subRef => {
+                                const subResource = resourceById[subRef.resourceId] as TileRuntimeResource | undefined;
+                                const subState = runtimeState.byResourceId[subRef.resourceId] as TileRuntimeResourceState | undefined;
+                                if (!subResource) return null;
+                                return (
+                                    <SubResourceRow
+                                        key={subRef.resourceId}
+                                        resource={subResource}
+                                        state={subState}
+                                        label={subRef.label}
+                                        disabled={disabled}
+                                    />
+                                );
+                            })}
+                        </Box>
+                    ))}
+                </Box>
+            ) : (
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+                    {items.map((subRef, i) => {
+                        const subResource = resourceById[subRef.resourceId] as TileRuntimeResource | undefined;
+                        const subState = runtimeState.byResourceId[subRef.resourceId] as TileRuntimeResourceState | undefined;
+                        if (!subResource) return null;
+
+                        const showGroupHeader = subRef.group && subRef.group !== items[i - 1]?.group;
+
+                        return (
+                            <React.Fragment key={subRef.resourceId}>
+                                {showGroupHeader && (
+                                    <Typography
+                                        variant="caption"
+                                        sx={{ fontWeight: 700, color: "text.secondary", mt: i > 0 ? 0.5 : 0 }}
+                                    >
+                                        {subRef.group}
+                                    </Typography>
+                                )}
+                                <SubResourceRow
+                                    resource={subResource}
+                                    state={subState}
+                                    label={subRef.label}
+                                    disabled={disabled}
+                                />
+                            </React.Fragment>
+                        );
+                    })}
+                </Box>
+            )}
         </Popover>
     );
 };
@@ -109,6 +171,8 @@ export const SubResourcePopover: React.FC<SubResourcePopoverProps> = ({
 /* ------------------------------------------------------------------ */
 /* Sub-resource row: renders native control per type                    */
 /* ------------------------------------------------------------------ */
+
+const MIN_PRESS_DURATION_MS = 300;
 
 const SubResourceRow: React.FC<{
     resource: TileRuntimeResource;
@@ -119,117 +183,33 @@ const SubResourceRow: React.FC<{
     const theme = useTheme();
     const iconColor = getResourceIconColor(theme, resource, state);
     const MainIcon = getResourceIcon(resource, state);
-
-    return (
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, minHeight: 36 }}>
-            <MainIcon sx={{ color: iconColor, fontSize: 18, flexShrink: 0 }} />
-            <Typography
-                variant="body2"
-                sx={{ fontWeight: 500, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
-            >
-                {label ?? resource.name}
-            </Typography>
-            <SubResourceControl resource={resource} state={state} iconColor={iconColor} disabled={disabled} />
-        </Box>
-    );
-};
-
-/* ------------------------------------------------------------------ */
-/* Type-specific controls                                              */
-/* ------------------------------------------------------------------ */
-
-const SubResourceControl: React.FC<{
-    resource: TileRuntimeResource;
-    state: TileRuntimeResourceState | undefined;
-    iconColor: string;
-    disabled?: boolean;
-}> = ({ resource, state, iconColor, disabled }) => {
-    const t = resource.type;
-    if (t === "digitalOutput") {
-        return <DigitalOutputControl resource={resource} state={state} disabled={disabled} />;
-    }
-    if (t === "digitalInput" || t === "virtualDigitalInput") {
-        if (resource.inputType === "push") {
-            return <DigitalInputPushControl resource={resource} state={state} iconColor={iconColor} disabled={disabled} />;
-        }
-        return <DigitalInputToggleControl resource={resource} state={state} disabled={disabled} />;
-    }
-    if (t === "analogOutput" || t === "virtualAnalogOutput") {
-        return <AnalogOutputControl resource={resource} state={state} iconColor={iconColor} disabled={disabled} />;
-    }
-    // Read-only for analog inputs and timers
-    return <ReadOnlyValue resource={resource} state={state} iconColor={iconColor} />;
-};
-
-const DigitalOutputControl: React.FC<{
-    resource: TileRuntimeResource;
-    state: TileRuntimeResourceState | undefined;
-    disabled?: boolean;
-}> = ({ resource, state, disabled }) => {
-    const sendCommand = useSendResourceCommand(resource.id);
-    const checked = isResourceActive(resource, state);
-
-    const handleToggle = useCallback(() => {
-        sendCommand({ type: "toggle" });
-    }, [sendCommand]);
-
-    return (
-        <Switch
-            size="small"
-            checked={checked}
-            onChange={handleToggle}
-            disabled={disabled}
-        />
-    );
-};
-
-const DigitalInputToggleControl: React.FC<{
-    resource: TileRuntimeResource;
-    state: TileRuntimeResourceState | undefined;
-    disabled?: boolean;
-}> = ({ resource, state, disabled }) => {
-    const sendCommand = useSendResourceCommand(resource.id);
-    const checked = isResourceActive(resource, state);
-
-    const handleToggle = useCallback(() => {
-        sendCommand({ type: "toggle" });
-    }, [sendCommand]);
-
-    return (
-        <Switch
-            size="small"
-            checked={checked}
-            onChange={handleToggle}
-            disabled={disabled}
-        />
-    );
-};
-
-const MIN_PRESS_DURATION_MS = 300;
-
-const DigitalInputPushControl: React.FC<{
-    resource: TileRuntimeResource;
-    state: TileRuntimeResourceState | undefined;
-    iconColor: string;
-    disabled?: boolean;
-}> = ({ resource, state, iconColor, disabled }) => {
+    const active = isResourceActive(resource, state);
     const sendCommand = useSendResourceCommand(resource.id);
     const pressCommittedAtRef = useRef<number | null>(null);
-    const active = isResourceActive(resource, state);
+
+    const t = resource.type;
+    const isDigital = t === "digitalOutput" || t === "digitalInput" || t === "virtualDigitalInput";
+    const isPush = isDigital && resource.inputType === "push";
+    const isAnalog = t === "analogOutput" || t === "virtualAnalogOutput";
+
+    const handleTileClick = useCallback(() => {
+        if (disabled || !isDigital || isPush) return;
+        sendCommand({ type: "toggle" });
+    }, [sendCommand, disabled, isDigital, isPush]);
 
     const handlePointerDown = useCallback((e: React.PointerEvent) => {
+        if (!isPush || disabled) return;
         if (e.pointerType === "mouse" && e.button !== 0) return;
         e.currentTarget.setPointerCapture(e.pointerId);
         pressCommittedAtRef.current = Date.now();
         sendCommand({ type: "press" });
-    }, [sendCommand]);
+    }, [sendCommand, isPush, disabled]);
 
     const handlePointerUp = useCallback(() => {
         if (pressCommittedAtRef.current === null) return;
         const elapsed = Date.now() - pressCommittedAtRef.current;
         const remaining = MIN_PRESS_DURATION_MS - elapsed;
         pressCommittedAtRef.current = null;
-
         const release = () => sendCommand({ type: "release" });
         if (remaining > 0) {
             window.setTimeout(release, remaining);
@@ -238,23 +218,57 @@ const DigitalInputPushControl: React.FC<{
         }
     }, [sendCommand]);
 
-    return (
-        <IconButton
-            size="small"
-            onPointerDown={handlePointerDown}
-            onPointerUp={handlePointerUp}
-            onPointerCancel={handlePointerUp}
-            disabled={disabled}
-            sx={{
-                color: active ? iconColor : "action.disabled",
-                border: 1,
-                borderColor: active ? iconColor : "divider",
-                p: 0.5,
-            }}
-        >
-            <RadioButtonCheckedIcon sx={{ fontSize: 16 }} />
-        </IconButton>
+    const tileContent = (
+        <>
+            <MainIcon sx={{ color: iconColor, fontSize: 22 }} />
+            <Typography variant="caption" sx={{
+                fontWeight: 500, textAlign: "center",
+                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                width: "100%",
+            }}>
+                {label ?? resource.name}
+            </Typography>
+            {isAnalog && (
+                <Box sx={{ width: "100%" }}>
+                    <AnalogOutputControl resource={resource} state={state} iconColor={iconColor} disabled={disabled} />
+                </Box>
+            )}
+            {!isDigital && !isAnalog && state?.value !== undefined && (
+                <ReadOnlyValue resource={resource} state={state} iconColor={iconColor} />
+            )}
+        </>
     );
+
+    const tileSx = {
+        display: "flex", flexDirection: "column", alignItems: "center",
+        border: 1,
+        borderColor: isDigital && active ? "transparent" : "divider",
+        borderRadius: 1.5,
+        p: 1, gap: 0,
+        bgcolor: isDigital && active ? alpha(iconColor, 0.08) : undefined,
+        transition: "border-color 0.2s, background-color 0.2s",
+    } as const;
+
+    if (isDigital) {
+        return (
+            <CardActionArea
+                onClick={!isPush ? handleTileClick : undefined}
+                onPointerDown={isPush ? handlePointerDown : undefined}
+                onPointerUp={isPush ? handlePointerUp : undefined}
+                onPointerCancel={isPush ? handlePointerUp : undefined}
+                disabled={disabled}
+                sx={{
+                    ...tileSx,
+                    userSelect: "none",
+                    "&:active": { transform: "scale(0.97)" },
+                }}
+            >
+                {tileContent}
+            </CardActionArea>
+        );
+    }
+
+    return <Box sx={tileSx}>{tileContent}</Box>;
 };
 
 const AnalogOutputControl: React.FC<{
@@ -286,36 +300,11 @@ const AnalogOutputControl: React.FC<{
     const step = resource.step ?? 1;
     const unit = resource.unit ?? "";
 
-    const [isEditing, setIsEditing] = useState(false);
-    const [editValue, setEditValue] = useState("");
-    const inputRef = useRef<HTMLInputElement>(null);
-
-    const handleValueClick = useCallback((e: React.MouseEvent) => {
-        if (disabled) return;
-        e.stopPropagation();
-        setEditValue(String(localValue));
-        setIsEditing(true);
-        setTimeout(() => inputRef.current?.select(), 0);
-    }, [localValue, disabled]);
-
-    const commitEdit = useCallback(() => {
-        setIsEditing(false);
-        const parsed = parseFloat(editValue);
-        if (!isNaN(parsed)) {
-            sendExact(parsed);
-        }
-    }, [editValue, sendExact]);
-
-    const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-        if (e.key === "Enter") {
-            commitEdit();
-        } else if (e.key === "Escape") {
-            setIsEditing(false);
-        }
-    }, [commitEdit]);
+    const { isEditing, inputRef, handleFocus, commitEdit, handleKeyDown } =
+        useAnalogEditableInput(localValue, unit, sendExact, { stopEscapePropagation: true });
 
     return (
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, flex: "0 0 140px" }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Slider
                 value={localValue}
                 min={min}
@@ -330,51 +319,32 @@ const AnalogOutputControl: React.FC<{
                     color: iconColor,
                 }}
             />
-            {isEditing ? (
-                <input
-                    ref={inputRef}
-                    value={editValue}
-                    onChange={(e) => setEditValue(e.target.value)}
-                    onBlur={commitEdit}
-                    onKeyDown={handleKeyDown}
-                    inputMode="decimal"
-                    style={{
-                        fontFamily: "monospace",
-                        fontSize: "0.7rem",
-                        fontWeight: 600,
-                        color: iconColor,
-                        background: "transparent",
-                        border: "none",
-                        borderBottom: `1.5px solid ${iconColor}`,
-                        outline: "none",
-                        width: 36,
-                        textAlign: "right",
-                        padding: "0 2px",
-                    }}
-                />
-            ) : (
-                <Typography
-                    variant="caption"
-                    onClick={handleValueClick}
-                    sx={{
-                        fontFamily: "monospace",
-                        fontSize: "0.7rem",
-                        fontWeight: 600,
-                        color: iconColor,
-                        minWidth: 36,
-                        textAlign: "right",
-                        cursor: "pointer",
-                        userSelect: "none",
-                        borderRadius: 1,
-                        px: 0.25,
-                        "&:hover": {
-                            backgroundColor: "action.hover",
-                        },
-                    }}
-                >
-                    {localValue}{unit ? ` ${unit}` : ""}
-                </Typography>
-            )}
+            <input
+                ref={inputRef}
+                defaultValue={`${localValue}${unit ? ` ${unit}` : ""}`}
+                onFocus={handleFocus}
+                onBlur={commitEdit}
+                onKeyDown={handleKeyDown}
+                onPointerDown={(e) => e.stopPropagation()}
+                inputMode="decimal"
+                readOnly={!isEditing}
+                disabled={disabled}
+                style={{
+                    fontFamily: "monospace",
+                    fontSize: "0.7rem",
+                    fontWeight: 600,
+                    color: iconColor,
+                    background: "transparent",
+                    border: "none",
+                    borderBottom: isEditing ? `1.5px solid ${iconColor}` : "1.5px solid transparent",
+                    outline: "none",
+                    width: 36,
+                    textAlign: "right",
+                    padding: "0 2px",
+                    cursor: isEditing ? "text" : "pointer",
+                    borderRadius: 4,
+                }}
+            />
         </Box>
     );
 };

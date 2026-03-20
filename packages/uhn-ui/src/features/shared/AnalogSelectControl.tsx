@@ -38,8 +38,8 @@ export const AnalogSelectControl: React.FC<AnalogSelectControlProps> = ({
             size="small"
             disabled={disabled}
             MenuProps={{ container: portalContainer.current }}
+            fullWidth
             sx={{
-                minWidth: 120,
                 "& .MuiSelect-select": {
                     fontFamily: "monospace",
                     fontSize: "0.8rem",

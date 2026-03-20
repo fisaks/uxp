@@ -194,7 +194,7 @@ const LocationTileView: React.FC<LocationTileViewProps> = ({ view, active, state
             {hasPopover && view.controls && (
                 <SubResourcePopover
                     items={view.controls}
-                    title={displayName}
+                    title={view.name ?? displayName}
                     anchorEl={controlsAnchor}
                     onClose={closeControls}
                     titleAction={commandSlots.titleAction}

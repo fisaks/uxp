@@ -195,7 +195,7 @@ export const ViewTile: React.FC<ViewTileProps> = ({ view, active, stateDisplayVa
             {hasPopover && view.controls && (
                 <SubResourcePopover
                     items={view.controls}
-                    title={displayName}
+                    title={view.name ?? displayName}
                     anchorEl={controlsAnchor}
                     onClose={closeControls}
                     titleAction={commandSlots.titleAction}
