@@ -21,6 +21,7 @@ type StepButtonRowProps = {
     centerGap?: number;
     /** Top margin */
     mt?: number;
+    disabled?: boolean;
 };
 
 const ENTER_DELAY = 1000;
@@ -30,6 +31,7 @@ export const StepButtonRow: React.FC<StepButtonRowProps> = ({
     iconSize = "small",
     centerGap = 1.5,
     mt = 0,
+    disabled,
 }) => {
     const portalContainer = usePortalContainerRef();
     const outerSize = iconSize === "small" ? 16 : 18;
@@ -40,29 +42,29 @@ export const StepButtonRow: React.FC<StepButtonRowProps> = ({
             {/* Render as <span> instead of <button> so these are valid inside
                CardActionArea's <button> (avoids DOM nesting warning). ButtonBase
                still applies role="button", tabIndex, ripple, and keyboard handling. */}
-            <TooltipIconButton component="span" size="small" onClick={() => sendExact(min)} sx={{ p: 0.5 }}
+            <TooltipIconButton component="span" size="small" disabled={disabled} onClick={() => sendExact(min)} sx={{ p: 0.5 }}
                 tooltip={`Minimum (${min})`} tooltipPortal={portalContainer} enterDelay={ENTER_DELAY}>
                 <FirstPageIcon sx={{ fontSize: outerSize }} />
             </TooltipIconButton>
-            <TooltipIconButton component="span" size="small" onClick={() => sendExact(localValue - bigStep)} sx={{ p: 0.5 }}
+            <TooltipIconButton component="span" size="small" disabled={disabled} onClick={() => sendExact(localValue - bigStep)} sx={{ p: 0.5 }}
                 tooltip={`−${bigStep}`} tooltipPortal={portalContainer} enterDelay={ENTER_DELAY}>
                 <ChevronLeftIcon sx={{ fontSize: outerSize }} />
             </TooltipIconButton>
             <Box sx={{ flex: 1, display: "flex", justifyContent: "center", gap: centerGap }}>
-                <TooltipIconButton component="span" size="small" onClick={() => sendExact(localValue - step)} sx={{ p: 0.5 }}
+                <TooltipIconButton component="span" size="small" disabled={disabled} onClick={() => sendExact(localValue - step)} sx={{ p: 0.5 }}
                     tooltip={`−${step}`} tooltipPortal={portalContainer} enterDelay={ENTER_DELAY}>
                     <RemoveIcon sx={{ fontSize: innerSize }} />
                 </TooltipIconButton>
-                <TooltipIconButton component="span" size="small" onClick={() => sendExact(localValue + step)} sx={{ p: 0.5 }}
+                <TooltipIconButton component="span" size="small" disabled={disabled} onClick={() => sendExact(localValue + step)} sx={{ p: 0.5 }}
                     tooltip={`+${step}`} tooltipPortal={portalContainer} enterDelay={ENTER_DELAY}>
                     <AddIcon sx={{ fontSize: innerSize }} />
                 </TooltipIconButton>
             </Box>
-            <TooltipIconButton component="span" size="small" onClick={() => sendExact(localValue + bigStep)} sx={{ p: 0.5 }}
+            <TooltipIconButton component="span" size="small" disabled={disabled} onClick={() => sendExact(localValue + bigStep)} sx={{ p: 0.5 }}
                 tooltip={`+${bigStep}`} tooltipPortal={portalContainer} enterDelay={ENTER_DELAY}>
                 <ChevronRightIcon sx={{ fontSize: outerSize }} />
             </TooltipIconButton>
-            <TooltipIconButton component="span" size="small" onClick={() => sendExact(max)} sx={{ p: 0.5 }}
+            <TooltipIconButton component="span" size="small" disabled={disabled} onClick={() => sendExact(max)} sx={{ p: 0.5 }}
                 tooltip={`Maximum (${max})`} tooltipPortal={portalContainer} enterDelay={ENTER_DELAY}>
                 <LastPageIcon sx={{ fontSize: outerSize }} />
             </TooltipIconButton>

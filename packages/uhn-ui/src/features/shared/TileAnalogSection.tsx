@@ -14,10 +14,11 @@ type TileAnalogSectionProps = {
     iconColor: string;
     state: TileRuntimeResourceState | undefined;
     sendCommand: (command: UhnResourceCommand) => Promise<void>;
+    disabled?: boolean;
 };
 
 export const TileAnalogSection: React.FC<TileAnalogSectionProps> = ({
-    min, max, step, unit, iconColor, state, sendCommand,
+    min, max, step, unit, iconColor, state, sendCommand, disabled,
 }) => {
     const { localValue, handleChange, handleChangeCommitted, sendExact } =
         useAnalogSlider({ min, max }, state, sendCommand);
@@ -36,6 +37,7 @@ export const TileAnalogSection: React.FC<TileAnalogSectionProps> = ({
                     min={min}
                     max={max}
                     step={step}
+                    disabled={disabled}
                     onChange={handleChange}
                     onChangeCommitted={handleChangeCommitted}
                     size="small"
@@ -50,6 +52,7 @@ export const TileAnalogSection: React.FC<TileAnalogSectionProps> = ({
                 <StepButtonRow
                     min={min} max={max} step={step} bigStep={bigStep}
                     localValue={localValue} sendExact={sendExact}
+                    disabled={disabled}
                     iconSize="small" centerGap={1.5} mt={1}
                 />
             </Box>
@@ -67,6 +70,7 @@ export const TileAnalogSection: React.FC<TileAnalogSectionProps> = ({
                     onMouseDown={(e) => e.stopPropagation()}
                     inputMode="decimal"
                     readOnly={!isEditing}
+                    disabled={disabled}
                     style={{
                         fontFamily: "monospace",
                         fontSize: "0.8rem",

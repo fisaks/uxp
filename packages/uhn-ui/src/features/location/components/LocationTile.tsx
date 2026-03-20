@@ -140,6 +140,7 @@ const LocationTileView: React.FC<LocationTileViewProps> = ({ view, active, state
                     iconColor={iconColor}
                     state={inlineAnalogState}
                     sendCommand={inlineAnalogSendCommand}
+                    disabled={!active}
                 />
             ) : null}
         </Box>
@@ -196,6 +197,7 @@ const LocationTileView: React.FC<LocationTileViewProps> = ({ view, active, state
                     onClose={closeControls}
                     titleAction={commandSlots.titleAction}
                     headerContent={commandSlots.headerContent}
+                    disabled={!active}
                 />
             )}
         </Card>

@@ -100,6 +100,7 @@ export const ViewTile: React.FC<ViewTileProps> = ({ view, active, stateDisplayVa
                     iconColor={iconColor}
                     state={inlineAnalogState}
                     sendCommand={inlineAnalogSendCommand}
+                    disabled={!active}
                 />
             ) : null}
         </Box>
@@ -197,6 +198,7 @@ export const ViewTile: React.FC<ViewTileProps> = ({ view, active, stateDisplayVa
                     onClose={closeControls}
                     titleAction={commandSlots.titleAction}
                     headerContent={commandSlots.headerContent}
+                    disabled={!active}
                 />
             )}
         </Card>

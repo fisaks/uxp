@@ -30,10 +30,12 @@ type SubResourcePopoverProps = {
     titleAction?: React.ReactNode;
     /** Full-width content rendered below the title row (e.g. analog slider) */
     headerContent?: React.ReactNode;
+    /** Disable all interactive controls (e.g. when the parent view is inactive) */
+    disabled?: boolean;
 };
 
 export const SubResourcePopover: React.FC<SubResourcePopoverProps> = ({
-    items, title, anchorEl, onClose, titleAction, headerContent,
+    items, title, anchorEl, onClose, titleAction, headerContent, disabled,
 }) => {
     const portalContainer = usePortalContainerRef();
     const resourceById = useSelector(selectResourceById);
@@ -93,6 +95,7 @@ export const SubResourcePopover: React.FC<SubResourcePopoverProps> = ({
                                 resource={subResource}
                                 state={subState}
                                 label={subRef.label}
+                                disabled={disabled}
                             />
                         </React.Fragment>
                     );
@@ -110,7 +113,8 @@ const SubResourceRow: React.FC<{
     resource: TileRuntimeResource;
     state: TileRuntimeResourceState | undefined;
     label?: string;
-}> = ({ resource, state, label }) => {
+    disabled?: boolean;
+}> = ({ resource, state, label, disabled }) => {
     const theme = useTheme();
     const iconColor = getResourceIconColor(theme, resource, state);
     const MainIcon = getResourceIcon(resource, state);
@@ -124,7 +128,7 @@ const SubResourceRow: React.FC<{
             >
                 {label ?? resource.name}
             </Typography>
-            <SubResourceControl resource={resource} state={state} iconColor={iconColor} />
+            <SubResourceControl resource={resource} state={state} iconColor={iconColor} disabled={disabled} />
         </Box>
     );
 };
@@ -137,19 +141,20 @@ const SubResourceControl: React.FC<{
     resource: TileRuntimeResource;
     state: TileRuntimeResourceState | undefined;
     iconColor: string;
-}> = ({ resource, state, iconColor }) => {
+    disabled?: boolean;
+}> = ({ resource, state, iconColor, disabled }) => {
     const t = resource.type;
     if (t === "digitalOutput") {
-        return <DigitalOutputControl resource={resource} state={state} />;
+        return <DigitalOutputControl resource={resource} state={state} disabled={disabled} />;
     }
     if (t === "digitalInput" || t === "virtualDigitalInput") {
         if (resource.inputType === "push") {
-            return <DigitalInputPushControl resource={resource} state={state} iconColor={iconColor} />;
+            return <DigitalInputPushControl resource={resource} state={state} iconColor={iconColor} disabled={disabled} />;
         }
-        return <DigitalInputToggleControl resource={resource} state={state} />;
+        return <DigitalInputToggleControl resource={resource} state={state} disabled={disabled} />;
     }
     if (t === "analogOutput" || t === "virtualAnalogOutput") {
-        return <AnalogOutputControl resource={resource} state={state} iconColor={iconColor} />;
+        return <AnalogOutputControl resource={resource} state={state} iconColor={iconColor} disabled={disabled} />;
     }
     // Read-only for analog inputs and timers
     return <ReadOnlyValue resource={resource} state={state} iconColor={iconColor} />;
@@ -158,7 +163,8 @@ const SubResourceControl: React.FC<{
 const DigitalOutputControl: React.FC<{
     resource: TileRuntimeResource;
     state: TileRuntimeResourceState | undefined;
-}> = ({ resource, state }) => {
+    disabled?: boolean;
+}> = ({ resource, state, disabled }) => {
     const sendCommand = useSendResourceCommand(resource.id);
     const checked = isResourceActive(resource, state);
 
@@ -171,6 +177,7 @@ const DigitalOutputControl: React.FC<{
             size="small"
             checked={checked}
             onChange={handleToggle}
+            disabled={disabled}
         />
     );
 };
@@ -178,7 +185,8 @@ const DigitalOutputControl: React.FC<{
 const DigitalInputToggleControl: React.FC<{
     resource: TileRuntimeResource;
     state: TileRuntimeResourceState | undefined;
-}> = ({ resource, state }) => {
+    disabled?: boolean;
+}> = ({ resource, state, disabled }) => {
     const sendCommand = useSendResourceCommand(resource.id);
     const checked = isResourceActive(resource, state);
 
@@ -191,6 +199,7 @@ const DigitalInputToggleControl: React.FC<{
             size="small"
             checked={checked}
             onChange={handleToggle}
+            disabled={disabled}
         />
     );
 };
@@ -201,7 +210,8 @@ const DigitalInputPushControl: React.FC<{
     resource: TileRuntimeResource;
     state: TileRuntimeResourceState | undefined;
     iconColor: string;
-}> = ({ resource, state, iconColor }) => {
+    disabled?: boolean;
+}> = ({ resource, state, iconColor, disabled }) => {
     const sendCommand = useSendResourceCommand(resource.id);
     const pressCommittedAtRef = useRef<number | null>(null);
     const active = isResourceActive(resource, state);
@@ -233,6 +243,7 @@ const DigitalInputPushControl: React.FC<{
             onPointerDown={handlePointerDown}
             onPointerUp={handlePointerUp}
             onPointerCancel={handlePointerUp}
+            disabled={disabled}
             sx={{
                 color: active ? iconColor : "action.disabled",
                 border: 1,
@@ -249,7 +260,8 @@ const AnalogOutputControl: React.FC<{
     resource: TileRuntimeResource;
     state: TileRuntimeResourceState | undefined;
     iconColor: string;
-}> = ({ resource, state, iconColor }) => {
+    disabled?: boolean;
+}> = ({ resource, state, iconColor, disabled }) => {
     const sendCommand = useSendResourceCommand(resource.id);
     const { localValue, handleChange, handleChangeCommitted, sendExact } =
         useAnalogSlider({ min: resource.min, max: resource.max }, state, sendCommand);
@@ -264,11 +276,12 @@ const AnalogOutputControl: React.FC<{
     const inputRef = useRef<HTMLInputElement>(null);
 
     const handleValueClick = useCallback((e: React.MouseEvent) => {
+        if (disabled) return;
         e.stopPropagation();
         setEditValue(String(localValue));
         setIsEditing(true);
         setTimeout(() => inputRef.current?.select(), 0);
-    }, [localValue]);
+    }, [localValue, disabled]);
 
     const commitEdit = useCallback(() => {
         setIsEditing(false);
@@ -294,6 +307,7 @@ const AnalogOutputControl: React.FC<{
                 max={max}
                 step={step}
                 size="small"
+                disabled={disabled}
                 onChange={handleChange}
                 onChangeCommitted={handleChangeCommitted}
                 sx={{
