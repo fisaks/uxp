@@ -167,19 +167,21 @@ class BlueprintResourceService extends EventEmitter<ResourceEventMap> {
                                 "unknown-device",
                                 `Resource references unknown device '${resource.device}' on edge '${resource.edge}'.`
                             );
-                        } else if (typeof resource.pin === "number") {
+                        } else if (resource.pin !== undefined) {
                             let validPin = false;
 
                             if (catalogDevice.resources?.length) {
-                                // IHC (and future drivers): validate pin against individual resource ID list
-                                validPin = catalogDevice.resources.some(r => r.id === resource.pin);
+                                // IHC/Z2M: validate pin against individual resource ID list
+                                validPin = catalogDevice.resources.some(
+                                    r => r.id === resource.pin && r.type === resource.type
+                                );
                                 if (!validPin) {
                                     addErr(
                                         "invalid-pin",
-                                        `Resource pin ${resource.pin} (0x${resource.pin.toString(16).toUpperCase()}) not found in '${resource.device}' catalog on edge '${resource.edge}'.`
+                                        `Resource pin '${resource.pin}' (type '${resource.type}') not found in '${resource.device}' catalog on edge '${resource.edge}'.`
                                     );
                                 }
-                            } else {
+                            } else if (typeof resource.pin === "number") {
                                 // Modbus: validate pin against contiguous range
                                 if (resource.type === "digitalInput" && catalogDevice.digitalInputs) {
                                     const { start, count } = catalogDevice.digitalInputs;
@@ -207,8 +209,14 @@ class BlueprintResourceService extends EventEmitter<ResourceEventMap> {
                                         `Resource has invalid pin '${resource.pin}' for device '${resource.device}' on edge '${resource.edge}'.`
                                     );
                                 }
+                            } else {
+                                // String pin on device without resources list — invalid
+                                addErr(
+                                    "invalid-pin",
+                                    `Resource has string pin '${resource.pin}' but device '${resource.device}' has no resource catalog on edge '${resource.edge}'.`
+                                );
                             }
-                        } else if (typeof resource.pin !== "number") {
+                        } else {
                             addErr("missing-pin", `Resource '${resource.id ?? resource.name ?? "[unnamed]"}' is missing 'pin'.`);
                         }
                     }

@@ -7,7 +7,7 @@ export function digitalInput<
     TInputKind extends string = string,
     TEdge extends string = string,
     TDevice extends string | number = string | number,
-    TPin extends number = number
+    TPin extends number | string = number | string
 >(
     props: Omit<DigitalInputResourceBase<TInputKind, TEdge, TDevice, TPin>, "type">
 ): DigitalInputResourceBase<TInputKind, TEdge, TDevice, TPin> {
@@ -21,7 +21,7 @@ export function digitalOutput<
     TOutputKind extends string = string,
     TEdge extends string = string,
     TDevice extends string | number = string | number,
-    TPin extends number = number
+    TPin extends number | string = number | string
 >(
     props: Omit<DigitalOutputResourceBase<TOutputKind, TEdge, TDevice, TPin>, "type">
 ): DigitalOutputResourceBase<TOutputKind, TEdge, TDevice, TPin> {
@@ -32,7 +32,7 @@ export function analogInput<
     TInputKind extends string = string,
     TEdge extends string = string,
     TDevice extends string | number = string | number,
-    TPin extends number = number
+    TPin extends number | string = number | string
 >(
     props: Omit<AnalogInputResourceBase<TInputKind, TEdge, TDevice, TPin>, "type">
 ): AnalogInputResourceBase<TInputKind, TEdge, TDevice, TPin> {
@@ -43,7 +43,7 @@ export function analogOutput<
     TOutputKind extends string = string,
     TEdge extends string = string,
     TDevice extends string | number = string | number,
-    TPin extends number = number
+    TPin extends number | string = number | string
 >(
     props: Omit<AnalogOutputResourceBase<TOutputKind, TEdge, TDevice, TPin>, "type">
 ): AnalogOutputResourceBase<TOutputKind, TEdge, TDevice, TPin> {

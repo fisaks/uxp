@@ -24,8 +24,8 @@ export const ValueItemCompact: React.FC<{ item: TileStateItem; align: "left" | "
     } else if (typeof item.value === "boolean") {
         formatted = item.value ? "On" : "Off";
     } else {
-        const display = typeof item.value === "number" && !Number.isInteger(item.value)
-            ? item.value.toFixed(1)
+        const display = typeof item.value === "number"
+            ? item.value.toFixed(item.decimalPrecision ?? (Number.isInteger(item.value) ? 0 : 1))
             : item.value;
         formatted = `${display}${item.unit ? ` ${item.unit}` : ""}`;
     }

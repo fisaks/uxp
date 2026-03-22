@@ -7,7 +7,7 @@ import { subscriptionService } from "./subscription.service";
 
 type DevicePinMQTTPayload = {
     type: ResourceType;
-    pin: number;
+    pin: number | string;
     value: ResourceStateValue;
     timestamp: number;
 };
@@ -16,12 +16,13 @@ export type DevicePinState = {
     edge: string;
     device: string;
     type: ResourceType;
-    pin: number;
+    pin: number | string;
     value: ResourceStateValue;
     timestamp: number;
 };
 
 function isDevicePinStatePayload(payload: unknown): payload is DevicePinMQTTPayload {
+    const p = payload as DevicePinMQTTPayload;
     return (
         typeof payload === "object" &&
         payload !== null &&
@@ -29,9 +30,9 @@ function isDevicePinStatePayload(payload: unknown): payload is DevicePinMQTTPayl
         "pin" in payload &&
         "value" in payload &&
         "timestamp" in payload &&
-        typeof (payload as DevicePinMQTTPayload).type === "string" &&
-        typeof (payload as DevicePinMQTTPayload).pin === "number" &&
-        typeof (payload as DevicePinMQTTPayload).timestamp === "number"
+        typeof p.type === "string" &&
+        (typeof p.pin === "number" || typeof p.pin === "string") &&
+        typeof p.timestamp === "number"
     );
 }
 

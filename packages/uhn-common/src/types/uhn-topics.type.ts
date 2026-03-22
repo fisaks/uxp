@@ -38,8 +38,7 @@ export type CatalogPayload = {
 }
 
 export type CatalogResource = {
-    id: number;
-    hexId?: string;
+    id: number | string; // numeric (IHC resource ID) or string (Z2M property name)
     type: string;
 };
 

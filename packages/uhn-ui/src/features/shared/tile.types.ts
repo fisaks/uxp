@@ -10,6 +10,7 @@ export type TileStateItem = {
     resourceType?: ResourceType;
     label?: string;
     unit?: string;
+    decimalPrecision?: number; // resolved from resource definition
     style: "value" | "indicator" | "flash";
     icon?: BlueprintIcon;
     value: ResourceStateValue | undefined;

@@ -25,7 +25,7 @@ function isCatalogPayload(obj: unknown): obj is CatalogPayload {
 function rangeKey(r?: Range): string {
     return r ? `${r.start}:${r.count}:${r.type ?? "uint16"}` : "-";
 }
-function resourcesKey(resources?: { id: number; type: string }[]): string {
+function resourcesKey(resources?: { id: number | string; type: string }[]): string {
     if (!resources?.length) return "-";
     return resources.map(r => `${r.id}:${r.type}`).sort().join(",");
 }

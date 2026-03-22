@@ -1,8 +1,14 @@
 import { createSelector } from "@reduxjs/toolkit";
 import { ViewActiveCondition } from "@uhn/blueprint";
-import { ResourceStateDetails, ResourceStateValue, RuntimeInteractionView, RuntimeResource } from "@uhn/common";
+import { ResourceStateDetails, ResourceStateValue, RuntimeAnalogInputResource, RuntimeAnalogOutputResource, RuntimeInteractionView, RuntimeResource } from "@uhn/common";
 import { RootState } from "../../app/store";
 import { TileStateItem } from "../shared/tile.types";
+
+type AnalogResource = RuntimeAnalogInputResource | RuntimeAnalogOutputResource;
+
+function isAnalogResource(r: RuntimeResource): r is AnalogResource {
+    return r.type === "analogInput" || r.type === "analogOutput";
+}
 
 type RuntimeStateEntry = { value: ResourceStateValue | undefined; timestamp: number; details?: ResourceStateDetails };
 type StateMap = Record<string, RuntimeStateEntry>;
@@ -43,7 +49,9 @@ function getNumericValue(value: ResourceStateValue | undefined): number {
 /** Aggregates stateFrom sources into a single active/inactive boolean for the view tile icon. */
 function computeViewActive(view: RuntimeInteractionView, stateMap: StateMap): boolean {
     const { stateFrom, stateAggregation = "any", activeWhen } = view;
-    if (stateFrom.length === 0) return false;
+    // Display-only views (no stateFrom) are always active — they show live data,
+    // not an on/off state, so a grey "inactive" icon would look like a dead sensor.
+    if (stateFrom.length === 0) return true;
 
     const isNumericAggregation = stateAggregation === "sum" || stateAggregation === "average"
         || stateAggregation === "max" || stateAggregation === "min";
@@ -90,11 +98,16 @@ function computeStateDisplay(
         const value = stateEntry?.value;
         const min = resource && "min" in resource ? (resource as any).min as number | undefined : undefined;
         const active = isResourceActive(value, min != null ? { above: min } : undefined);
+        // Resolve unit and decimalPrecision from resource (analog types only)
+        const analog = resource && isAnalogResource(resource) ? resource : undefined;
+        const resourceUnit = analog?.unit;
+        const resourceDecimals = analog?.decimalPrecision;
         return {
             resourceId: item.resourceId,
             resourceType: resource?.type,
             label: item.label,
-            unit: item.unit,
+            unit: item.unit ?? resourceUnit,
+            decimalPrecision: resourceDecimals,
             style: item.style ?? "value",
             ...("icon" in item && { icon: item.icon }),
             value,

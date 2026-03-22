@@ -22,7 +22,7 @@ export type PhysicalResourceBase<
     TType extends PhysicalResourceType,
     TEdge extends string = string,
     TDevice extends string | number = string,
-    TPin extends number = number
+    TPin extends number | string = number | string
 > = ResourceBase<TType> & {
     edge: TEdge;
     device: TDevice;
@@ -59,7 +59,7 @@ export type DigitalInputResourceBase<
     TInputKind extends InputKind = InputKind,
     TEdge extends string = string,
     TDevice extends string | number = string,
-    TPin extends number = number
+    TPin extends number | string = number | string
 > = PhysicalResourceBase<"digitalInput", TEdge, TDevice, TPin> & {
     inputKind: TInputKind; //defined by project like "button" | "pir" | "lightSensor" etc.
     inputType: InputType;//"toggle" | "push"
@@ -70,7 +70,7 @@ export type DigitalOutputResourceBase<
     TOutputKind extends OutputKind = OutputKind,
     TEdge extends string = string,
     TDevice extends string | number = string,
-    TPin extends number = number
+    TPin extends number | string = number | string
 > = PhysicalResourceBase<"digitalOutput", TEdge, TDevice, TPin> & {
     outputKind: TOutputKind; //defined by project like "relay" | "socket" | "light" | "indicator" etc
 };
@@ -81,11 +81,15 @@ export type AnalogInputResourceBase<
     TInputKind extends AnalogInputKind = AnalogInputKind,
     TEdge extends string = string,
     TDevice extends string | number = string,
-    TPin extends number = number
+    TPin extends number | string = number | string
 > = PhysicalResourceBase<"analogInput", TEdge, TDevice, TPin> & {
     analogInputKind: TInputKind;
     /** Unit label for display (e.g. "°C", "%", "W") */
     unit?: string;
+    /** Number of decimal places for display and edge reporting precision.
+     *  Controls UI formatting and edge transport rounding before change detection,
+     *  reducing unnecessary updates from noisy sensors (e.g. 0 for voltage, 2 for current). */
+    decimalPrecision?: number;
 };
 
 // Analog Output Option (for discrete named values, e.g. effect modes)
@@ -99,7 +103,7 @@ export type AnalogOutputResourceBase<
     TOutputKind extends AnalogOutputKind = AnalogOutputKind,
     TEdge extends string = string,
     TDevice extends string | number = string,
-    TPin extends number = number
+    TPin extends number | string = number | string
 > = PhysicalResourceBase<"analogOutput", TEdge, TDevice, TPin> & {
     analogOutputKind: TOutputKind;
     /** Minimum settable value. Default: 0 */
@@ -114,6 +118,8 @@ export type AnalogOutputResourceBase<
     defaultOnValue?: number;
     /** Named discrete values. When present, UI renders a select instead of a slider. */
     options?: AnalogOutputOption[];
+    /** Number of decimal places for display and reporting precision. */
+    decimalPrecision?: number;
 };
 
 export type TimerResourceBase<THost extends string = string> = LogicalResourceBase<"timer", THost>;

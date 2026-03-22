@@ -103,7 +103,7 @@ export type RuntimePhysicalResource = RuntimeResourceCommon & {
     type: PhysicalResourceType;
     edge: string;
     device: string;
-    pin: number;
+    pin: number | string;
 };
 
 export type RuntimeLogicalResource = RuntimeResourceCommon & {
@@ -128,6 +128,7 @@ export type RuntimeAnalogInputResource = RuntimePhysicalResource & {
     type: "analogInput";
     analogInputKind: AnalogInputResourceBase["analogInputKind"];
     unit?: string;
+    decimalPrecision?: number;
 };
 
 export type RuntimeAnalogOutputResource = RuntimePhysicalResource & {
@@ -139,6 +140,7 @@ export type RuntimeAnalogOutputResource = RuntimePhysicalResource & {
     unit?: string;
     defaultOnValue?: number;
     options?: AnalogOutputOption[];
+    decimalPrecision?: number;
 };
 
 export type RuntimeComplexResource = RuntimeLogicalResource & {

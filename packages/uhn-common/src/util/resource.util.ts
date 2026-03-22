@@ -1,6 +1,6 @@
 import { RuntimeResource, RuntimeResourceList, RuntimeResourceState } from "../types/uhn-runtime.type";
 
-export function makeAddressKey(resource: { edge?: string; device?: string; type?: string; pin?: number }): string | undefined {
+export function makeAddressKey(resource: { edge?: string; device?: string; type?: string; pin?: number | string }): string | undefined {
     if (resource.edge && resource.device && resource.type && resource.pin !== undefined) {
         return `${resource.edge}:${resource.device}:${resource.type}:${resource.pin}`;
     }

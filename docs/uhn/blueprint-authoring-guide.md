@@ -227,8 +227,8 @@ Physical resources map to hardware on edge servers via `edge`, `device`, and `pi
 |------|---------|------------|
 | `digitalInput` | `digitalInput()` | `inputKind`, `inputType` ("push" or "toggle") |
 | `digitalOutput` | `digitalOutput()` | `outputKind` |
-| `analogInput` | `analogInput()` | `analogInputKind`, `unit` |
-| `analogOutput` | `analogOutput()` | `analogOutputKind`, `min`, `max`, `step`, `unit`, `options` |
+| `analogInput` | `analogInput()` | `analogInputKind`, `unit`, `decimalPrecision` |
+| `analogOutput` | `analogOutput()` | `analogOutputKind`, `min`, `max`, `step`, `unit`, `options`, `decimalPrecision` |
 
 ```typescript
 import { digitalOutput, digitalInput, analogInput } from "@uhn/blueprint";
@@ -257,6 +257,38 @@ export const kitchenTemperature = analogInput({
     analogInputKind: "temperature",
     unit: "C",
     description: "Kitchen temperature sensor",
+});
+```
+
+For Zigbee (Z2M) devices, `pin` is a string — the Z2M property name:
+
+```typescript
+export const kitchenTempDisplayTemperature = analogInput({
+    edge: "edge1",
+    device: "kitchen_temperature_display",
+    pin: "temperature",
+    analogInputKind: "temperature",
+    unit: "°C",
+});
+
+export const socketPlug1State = digitalOutput({
+    edge: "edge1",
+    device: "socket_plug_1",
+    pin: "state",
+    outputKind: "socket",
+});
+```
+
+Analog resources can specify `decimalPrecision` to control display formatting and edge reporting precision (reduces noise from sensors that report tiny fluctuations):
+
+```typescript
+export const socketPlug1Power = analogInput({
+    edge: "edge1",
+    device: "socket_plug_1",
+    pin: "power",
+    analogInputKind: "power",
+    unit: "W",
+    decimalPrecision: 0, // round to integer
 });
 ```
 
