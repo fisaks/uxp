@@ -18,6 +18,7 @@ export type Z2MImportOptions = {
     outputDir: string;
     force?: boolean;
     autoExport?: boolean;
+    mappingOnly?: boolean;
 };
 
 type HistoryEntry = {
@@ -70,14 +71,6 @@ export async function z2mImport(opts: Z2MImportOptions): Promise<void> {
         return;
     }
 
-    // Generate zigbee factory (always regenerated)
-    const factoryDir = path.join(opts.outputDir, "factory");
-    fs.mkdirSync(factoryDir, { recursive: true });
-    const factoryContent = generateFactoryFile(parsed, opts.edge);
-    const factoryFilePath = path.join(factoryDir, `zigbee-factory-${opts.edge}.ts`);
-    fs.writeFileSync(factoryFilePath, factoryContent);
-    console.log(`\n  📄 factory/zigbee-factory-${opts.edge}.ts (always regenerated)`);
-
     // Load/update factory mapping — preserves author edits, adds new kinds
     const mapping = loadFactoryMapping();
     const usedKeys = new Set<string>();
@@ -88,6 +81,19 @@ export async function z2mImport(opts: Z2MImportOptions): Promise<void> {
     }
     ensureMappingDefaults(mapping, usedKeys, opts.edge);
     saveFactoryMapping(mapping);
+
+    if (opts.mappingOnly) {
+        console.log(`\n✅ Factory mapping updated (--mapping-only). Review .z2m/factory-mapping.json, then run without --mapping-only to generate files.`);
+        return;
+    }
+
+    // Generate zigbee factory (always regenerated, skips kinds mapped to project factory)
+    const factoryDir = path.join(opts.outputDir, "factory");
+    fs.mkdirSync(factoryDir, { recursive: true });
+    const factoryContent = generateFactoryFile(parsed, opts.edge, mapping);
+    const factoryFilePath = path.join(factoryDir, `zigbee-factory-${opts.edge}.ts`);
+    fs.writeFileSync(factoryFilePath, factoryContent);
+    console.log(`\n  📄 factory/zigbee-factory-${opts.edge}.ts (always regenerated)`);
 
     // Generate resource + view files
     const resourcesDir = path.join(opts.outputDir, "resources");

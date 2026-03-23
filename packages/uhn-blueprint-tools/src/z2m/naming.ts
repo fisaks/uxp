@@ -1,6 +1,6 @@
 /**
  * Converts a Z2M device friendly name to a camelCase variable prefix.
- * kitchen_temperature_display → kitchenTemperatureDisplay
+ * kitchen-temperature-display → kitchenTemperatureDisplay
  * entrance-wardrobe → entranceWardrobe
  * my device 1 → myDevice1
  */

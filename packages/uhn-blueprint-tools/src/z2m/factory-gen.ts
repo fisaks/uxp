@@ -1,3 +1,4 @@
+import type { FactoryMapping } from "./factory-mapping";
 import type { ParsedDevice, UHNProperty } from "./types";
 import { capitalize, deviceToVarPrefix } from "./naming";
 
@@ -7,8 +8,20 @@ type DevicesByKind = Map<string, Set<string>>; // kind → device names
  * Generates a zigbee factory TypeScript file for a specific edge.
  * Exports device type unions and factory wrapper functions.
  * Always regenerated (not author-edited).
+ *
+ * Kinds that are already mapped to a non-zigbee factory in the mapping
+ * are skipped — only device type unions include all devices regardless.
  */
-export function generateFactoryFile(devices: ParsedDevice[], edge: string): string {
+export function generateFactoryFile(devices: ParsedDevice[], edge: string, mapping: FactoryMapping): string {
+    const zigbeeImport = `../factory/zigbee-factory-${edge}`;
+
+    /** Returns true if this type.kind should get a factory in the zigbee file */
+    function needsZigbeeFactory(uhnType: string, kind: string): boolean {
+        const key = `${uhnType}.${kind}`;
+        const ref = mapping[key];
+        // Generate if unmapped (new kind) or mapped to this zigbee factory file
+        return !ref || ref.import === zigbeeImport;
+    }
     const lines: string[] = [];
 
     // Collect device names per resource type + kind
@@ -26,22 +39,34 @@ export function generateFactoryFile(devices: ParsedDevice[], edge: string): stri
     for (const device of devices) {
         for (const prop of device.properties) {
             switch (prop.uhnType) {
-                case "digitalOutput":
+                case "digitalOutput": {
                     allOutputDeviceNames.add(device.friendlyName);
-                    addToKindMap(outputDevices, inferOutputKind(prop, device), device.friendlyName);
+                    const kind = inferOutputKind(prop, device);
+                    if (needsZigbeeFactory("digitalOutput", kind))
+                        addToKindMap(outputDevices, kind, device.friendlyName);
                     break;
-                case "digitalInput":
+                }
+                case "digitalInput": {
                     allInputDeviceNames.add(device.friendlyName);
-                    addToKindMap(inputDevices, inferInputKind(prop), device.friendlyName);
+                    const kind = inferInputKind(prop);
+                    if (needsZigbeeFactory("digitalInput", kind))
+                        addToKindMap(inputDevices, kind, device.friendlyName);
                     break;
-                case "analogInput":
+                }
+                case "analogInput": {
                     allAnalogInputDeviceNames.add(device.friendlyName);
-                    addToKindMap(analogInputDevices, mapAnalogInputKind(prop.pin, prop.unit), device.friendlyName);
+                    const kind = mapAnalogInputKind(prop.pin, prop.unit);
+                    if (needsZigbeeFactory("analogInput", kind))
+                        addToKindMap(analogInputDevices, kind, device.friendlyName);
                     break;
-                case "analogOutput":
+                }
+                case "analogOutput": {
                     allAnalogOutputDeviceNames.add(device.friendlyName);
-                    addToKindMap(analogOutputDevices, mapAnalogOutputKind(prop.pin), device.friendlyName);
+                    const kind = mapAnalogOutputKind(prop.pin);
+                    if (needsZigbeeFactory("analogOutput", kind))
+                        addToKindMap(analogOutputDevices, kind, device.friendlyName);
                     break;
+                }
             }
         }
     }
@@ -50,19 +75,19 @@ export function generateFactoryFile(devices: ParsedDevice[], edge: string): stri
     lines.push(`// Regenerated on every import run. Manual edits will be overwritten.`);
     lines.push(``);
 
-    // Collect which base factories we need
+    // Collect which base factories we need (only for kinds with zigbee factory functions)
     const usedFactories = new Set<string>();
-    if (allOutputDeviceNames.size > 0) usedFactories.add("digitalOutput");
-    if (allInputDeviceNames.size > 0) usedFactories.add("digitalInput");
-    if (allAnalogInputDeviceNames.size > 0) usedFactories.add("analogInput");
-    if (allAnalogOutputDeviceNames.size > 0) usedFactories.add("analogOutput");
+    if (outputDevices.size > 0) usedFactories.add("digitalOutput");
+    if (inputDevices.size > 0) usedFactories.add("digitalInput");
+    if (analogInputDevices.size > 0) usedFactories.add("analogInput");
+    if (analogOutputDevices.size > 0) usedFactories.add("analogOutput");
 
     // Collect which type imports we need
     const usedTypes = new Set<string>();
-    if (allOutputDeviceNames.size > 0) usedTypes.add("DigitalOutputResourceBase");
-    if (allInputDeviceNames.size > 0) usedTypes.add("DigitalInputResourceBase");
-    if (allAnalogInputDeviceNames.size > 0) usedTypes.add("AnalogInputResourceBase");
-    if (allAnalogOutputDeviceNames.size > 0) usedTypes.add("AnalogOutputResourceBase");
+    if (outputDevices.size > 0) usedTypes.add("DigitalOutputResourceBase");
+    if (inputDevices.size > 0) usedTypes.add("DigitalInputResourceBase");
+    if (analogInputDevices.size > 0) usedTypes.add("AnalogInputResourceBase");
+    if (analogOutputDevices.size > 0) usedTypes.add("AnalogOutputResourceBase");
 
     const imports = [...usedFactories, ...usedTypes].sort();
     lines.push(`import { ${imports.join(", ")} } from "@uhn/blueprint";`);

@@ -7,6 +7,7 @@ const SHORT_FLAGS: Record<string, string> = {
     o: "output-dir",
     f: "force",
     x: "export",
+    M: "mapping-only",
     h: "help",
 };
 
@@ -60,6 +61,7 @@ Options:
   -o, --output-dir <path>    Output directory (default: src)
   -f, --force                Regenerate files for devices in import history with missing files
   -x, --export               Auto-export all generated resource consts
+  -M, --mapping-only         Only update factory mapping (no resource/view/factory generation)
   -h, --help                 Show this help
 `);
 }
@@ -86,6 +88,7 @@ async function main() {
             outputDir: typeof flags["output-dir"] === "string" ? flags["output-dir"] : "src",
             force: flags.force === true,
             autoExport: flags.export === true,
+            mappingOnly: flags["mapping-only"] === true,
         });
     } catch (err: any) {
         console.error(`❌ ${err?.message ?? err}`);

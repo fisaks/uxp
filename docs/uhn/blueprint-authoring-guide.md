@@ -265,7 +265,7 @@ For Zigbee (Z2M) devices, `pin` is a string — the Z2M property name:
 ```typescript
 export const kitchenTempDisplayTemperature = analogInput({
     edge: "edge1",
-    device: "kitchen_temperature_display",
+    device: "kitchen-temperature-display",
     pin: "temperature",
     analogInputKind: "temperature",
     unit: "°C",
@@ -273,7 +273,7 @@ export const kitchenTempDisplayTemperature = analogInput({
 
 export const socketPlug1State = digitalOutput({
     edge: "edge1",
-    device: "socket_plug_1",
+    device: "portable-socket-plug",
     pin: "state",
     outputKind: "socket",
 });
@@ -284,7 +284,7 @@ Analog resources can specify `decimalPrecision` to control display formatting an
 ```typescript
 export const socketPlug1Power = analogInput({
     edge: "edge1",
-    device: "socket_plug_1",
+    device: "portable-socket-plug",
     pin: "power",
     analogInputKind: "power",
     unit: "W",
@@ -298,17 +298,20 @@ Instead of writing Zigbee resources manually, use `@uhn/blueprint-tools` to gene
 
 ```bash
 pnpm add -D @uhn/blueprint-tools    # or link locally
-npx uhn-blueprint-tools z2m-import   # reads from Z2M MQTT, generates files
-npx uhn-blueprint-tools z2m-import -x  # auto-export all resources
+npx uhn-blueprint-tools z2m-import              # reads from Z2M MQTT, generates files
+npx uhn-blueprint-tools z2m-import -x           # auto-export all resources
+npx uhn-blueprint-tools z2m-import --mapping-only  # only update factory mapping, no file generation
 ```
 
 The tool reads `bridge/devices` from Z2M, maps exposes to UHN resource types, and generates:
 - A per-edge zigbee factory (`src/factory/zigbee-factory-{edge}.ts`) with type-safe device unions
 - Resource files using the factory (not exported by default — add `export` to activate, or use `-x`)
 - View files with auto-wired `stateFrom`, `command`, and `stateDisplay`
-- Edge config JSON snippet and per-device raw Z2M data in `.z2m-data/`
+- Edge config JSON snippet and per-device raw Z2M data in `.z2m/data/`
 
-The generated factory provides type-safe device unions per edge. You can redirect resource generation to your project's own factories by editing `.z2m-data/factory-mapping.json` — the import tool preserves your edits on re-run.
+The generated factory provides type-safe device unions per edge. You can redirect resource generation to your project's own factories by editing `.z2m/factory-mapping.json` — the import tool preserves your edits on re-run. Kinds that are already mapped to a non-zigbee factory are skipped in the generated zigbee factory file.
+
+**Recommended workflow for new devices:** Run `--mapping-only` first to update the mapping, review and redirect kinds to your project factory where appropriate, then run the full import to generate files.
 
 ### Analog Output Options
 
