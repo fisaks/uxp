@@ -121,22 +121,27 @@ export async function normalizeBlueprint(opts: {
 
         /* ---------------------------------
          * Pass 1: auto-export top-level entities
+         * Resources are NOT auto-exported — only explicitly exported consts
+         * become resources. This allows CLI tools to generate non-exported
+         * resource consts that the author selectively exports.
+         * Views, scenes, locations, and rules are auto-exported as before.
          * --------------------------------- */
-        for (const v of sf.getVariableDeclarations()) {
-            const stmt = v.getVariableStatement();
-            if (!stmt || stmt.getParent() !== sf) continue;
-            if (stmt.isExported()) continue;
+        if (mode !== "resource") {
+            for (const v of sf.getVariableDeclarations()) {
+                const stmt = v.getVariableStatement();
+                if (!stmt || stmt.getParent() !== sf) continue;
+                if (stmt.isExported()) continue;
 
-            const rawInit = v.getInitializer();
-            if (!rawInit) continue;
+                const rawInit = v.getInitializer();
+                if (!rawInit) continue;
 
-            const init = unwrapExpression(rawInit);
+                const init = unwrapExpression(rawInit);
 
-            if (isEntityCall(init)) {
-                stmt.setIsExported(true);
-                updated++;
+                if (isEntityCall(init)) {
+                    stmt.setIsExported(true);
+                    updated++;
+                }
             }
-
         }
 
         /* ---------------------------------

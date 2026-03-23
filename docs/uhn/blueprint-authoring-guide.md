@@ -292,6 +292,24 @@ export const socketPlug1Power = analogInput({
 });
 ```
 
+### Z2M Device Import Tool
+
+Instead of writing Zigbee resources manually, use `@uhn/blueprint-tools` to generate them from Z2M:
+
+```bash
+pnpm add -D @uhn/blueprint-tools    # or link locally
+npx uhn-blueprint-tools z2m-import   # reads from Z2M MQTT, generates files
+npx uhn-blueprint-tools z2m-import -x  # auto-export all resources
+```
+
+The tool reads `bridge/devices` from Z2M, maps exposes to UHN resource types, and generates:
+- A per-edge zigbee factory (`src/factory/zigbee-factory-{edge}.ts`) with type-safe device unions
+- Resource files using the factory (not exported by default — add `export` to activate, or use `-x`)
+- View files with auto-wired `stateFrom`, `command`, and `stateDisplay`
+- Edge config JSON snippet and per-device raw Z2M data in `.z2m-data/`
+
+The generated factory provides type-safe device unions per edge. You can redirect resource generation to your project's own factories by editing `.z2m-data/factory-mapping.json` — the import tool preserves your edits on re-run.
+
 ### Analog Output Options
 
 Analog outputs can define `options` — an array of `{ value, label }` pairs representing discrete named values. When present, the UI renders a select dropdown instead of a slider. This is useful for hardware modes that map to specific numeric values (e.g., effect programs, fan presets).

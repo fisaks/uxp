@@ -1,0 +1,25 @@
+{
+  "name": "@uhn/blueprint-tools",
+  "version": "0.1.0",
+  "type": "commonjs",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "bin": {
+    "uhn-blueprint-tools": "dist/bin/uhn-blueprint-tools.js"
+  },
+  "sideEffects": false,
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "pnpm rimraf --glob -v dist tsconfig.tsbuildinfo"
+  },
+  "dependencies": {
+    "mqtt": "^5.14.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

@@ -23,12 +23,16 @@ export const analogInputKindDefaultIcon: Record<BaseAnalogInputKind, BlueprintIc
     humidity: "sensor:humidity",
     power: "power:energy",
     current: "power:current",
+    voltage: "sensor:voltage",
+    battery: "energy:battery",
+    energy: "energy:meter",
 };
 
 export const analogOutputKindDefaultIcon: Record<BaseAnalogOutputKind, BlueprintIcon> = {
     dimmer: "control:dimmer",
     valve: "control:valve",
     pwm: "control:speed",
+    colorTemp: "color:temperature",
 };
 
 export const logicalTypeDefaultIcon: Record<LogicalResourceType, BlueprintIcon> = {
