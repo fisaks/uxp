@@ -100,6 +100,8 @@ export type RuleCause = {
     // action (actionInput)
     action?: string;
     metadata?: unknown;
+    /** Depth counter for loop prevention. 0 for physical/UI events, incremented for rule-emitted actions. */
+    depth?: number;
 };
 
 export type RuleTimers = {
@@ -140,27 +142,16 @@ export type RuleAction =
         value: DigitalStateValue | undefined;
     }
     | {
+        type: "emitAction";
+        resource: ActionInputResourceBase<any, any>;
+        action: string;
+        metadata?: Record<string, unknown>;
+    }
+    | {
         type: "activateScene";
         scene: BlueprintScene;
     };
 
-/**
- * Typed helper for constructing arrays of {@link RuleAction}.
- *
- * This is an identity function at runtime, but at compile time it:
- * - Ensures that all elements in the array are valid {@link RuleAction}s.
- * - Preserves the tuple type of the input array (including literal types),
- *   which can be useful for further type-level operations.
- *
- * Usage:
- *   const actions = ruleActions([
- *       { type: "setDigitalOutput", resource: someOutput, value: true },
- *       { type: "emitSignal", resource: someInput, value: undefined },
- *   ]);
- */
-export function ruleActions<T extends RuleAction[]>(actions: T): T {
-    return actions;
-}
 
 /**
  * Type guard that narrows `ctx.cause` based on the triggering resource and action.
@@ -193,6 +184,28 @@ export function isCausedBy(ctx: RuleContext, resource: ResourceBase<ResourceType
     if (ctx.cause.resource.id !== resource.id) return false;
     if (action !== undefined) return ctx.cause.action === action;
     return true;
+}
+
+/**
+ * Type-safe factory for constructing a single {@link RuleAction}.
+ *
+ * Usage:
+ *   ruleAction({ type: "setDigitalOutput", resource: light, value: true })
+ *   ruleAction({ type: "setAnalogOutput", resource: dimmer, value: 80 })
+ *   ruleAction({ type: "emitSignal", resource: vdi, value: undefined })
+ *   ruleAction({ type: "emitAction", resource: panel, action: "toggle" })
+ *   ruleAction({ type: "activateScene", scene: movieScene })
+ */
+export function ruleAction(opts: { type: "setDigitalOutput"; resource: DigitalOutputResourceBase; value: DigitalStateValue }): RuleAction;
+export function ruleAction(opts: { type: "setAnalogOutput"; resource: AnalogOutputResourceBase | VirtualAnalogOutputResourceBase; value: AnalogStateValue }): RuleAction;
+export function ruleAction(opts: { type: "emitSignal"; resource: DigitalInputResourceBase | VirtualDigitalInputResourceBase; value: DigitalStateValue | undefined }): RuleAction;
+export function ruleAction<TActions extends string, TAction extends TActions, TMeta extends ActionMetaMap<TActions>>(
+    opts: { type: "emitAction"; resource: ActionInputResourceBase<TActions, TMeta, any, any, any>; action: TAction }
+        & ([TMeta[TAction]] extends [never] ? {} : { metadata: TMeta[TAction] })
+): RuleAction;
+export function ruleAction(opts: { type: "activateScene"; scene: BlueprintScene }): RuleAction;
+export function ruleAction(opts: any): RuleAction {
+    return opts;
 }
 
 /**
@@ -242,6 +255,13 @@ export type RuntimeRuleAction =
         targetType: "rule" | "resource";
         targetId: string;
         identifier?: string;
+    }
+    | {
+        type: "emitAction";
+        resourceId: string;
+        action: string;
+        metadata?: Record<string, unknown>;
+        depth: number;
     }
     | {
         type: "activateScene";

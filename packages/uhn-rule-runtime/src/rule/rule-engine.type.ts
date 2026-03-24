@@ -15,6 +15,8 @@ export type RuleTriggerEvent = {
     value?: ResourceStateValue;
     action?: string;
     metadata?: unknown;
+    /** Depth counter for loop prevention. 0 for physical/UI events, incremented for rule-emitted. */
+    depth?: number;
 };
 
 export type PushPressState = {

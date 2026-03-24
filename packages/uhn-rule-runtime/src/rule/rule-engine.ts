@@ -4,7 +4,6 @@ import type {
     RuleAction,
     RuleCause,
     RuleTrigger,
-    SceneAction,
     StateReader,
     RuntimeRuleAction
 } from "@uhn/blueprint";
@@ -109,6 +108,7 @@ export class RuleEngine {
                     thresholdMs: triggerEvent.thresholdMs,
                     action: triggerEvent.action,
                     metadata: triggerEvent.metadata,
+                    depth: triggerEvent.depth,
                 };
 
                 const actions = this.tryRunRule(
@@ -336,14 +336,15 @@ export class RuleEngine {
         ruleControl.lastRunAt = eventTime;
         this.ruleExecutionControl.set(ruleCandidate.id, ruleControl);
 
-        // Expand activateScene actions into individual scene commands
+        // Expand activateScene actions into individual scene commands.
+        // emitAction passes through (not a scene action).
         const expandedActions = actions.flatMap(action =>
             action.type === "activateScene" ? action.scene.commands : [action]
-        );
+        ) as Exclude<RuleAction, { type: "activateScene" }>[];
 
         const reachableActions = this.filterReachableActions(expandedActions);
 
-        const runtimeActions = reachableActions.map(this.toRuntimeAction).filter((a): a is RuntimeRuleAction => a !== undefined);
+        const runtimeActions = reachableActions.map(a => this.toRuntimeAction(a, runCause)).filter((a): a is RuntimeRuleAction => a !== undefined);
         const timerActions = ruleTimer.drainPendingActions();
         const muteActions = ruleMute.drainPendingActions();
         return [...runtimeActions, ...timerActions, ...muteActions];
@@ -354,7 +355,7 @@ export class RuleEngine {
      * Edge runtimes can only dispatch to resources on the same edge;
      * master can reach all targets so no filtering is needed.
      */
-    private filterReachableActions(actions: SceneAction[]): SceneAction[] {
+    private filterReachableActions(actions: Exclude<RuleAction, { type: "activateScene" }>[]): Exclude<RuleAction, { type: "activateScene" }>[] {
         if (this.mode === "master") return actions;
 
         return actions.filter(action => {
@@ -371,8 +372,8 @@ export class RuleEngine {
         });
     }
 
-    /** Extract the execution target (edge or host) from a scene action's resource. */
-    private getActionResourceTarget(action: SceneAction): string | undefined {
+    /** Extract the execution target (edge or host) from an action's resource. */
+    private getActionResourceTarget(action: Exclude<RuleAction, { type: "activateScene" }>): string | undefined {
         switch (action.type) {
             case "setDigitalOutput":
                 return action.resource.edge;
@@ -380,16 +381,12 @@ export class RuleEngine {
                 return "edge" in action.resource ? action.resource.edge : action.resource.host;
             case "emitSignal":
                 return "edge" in action.resource ? action.resource.edge : action.resource.host;
+            case "emitAction":
+                return action.resource.edge;
         }
     }
 
-    private toRuntimeAction(action: RuleAction): RuntimeRuleAction | undefined {
-        // activateScene is expanded upstream in tryRunRule — should never reach here
-        if (action.type === "activateScene") {
-            runtimeOutput.log({ level: "error", component: "RuleEngine", message: `activateScene should have been expanded before toRuntimeAction` });
-            return undefined;
-        }
-
+    private toRuntimeAction(action: Exclude<RuleAction, { type: "activateScene" }>, cause: RuleCause): RuntimeRuleAction | undefined {
         if (!action.resource.id) {
             runtimeOutput.log({ level: "error", component: "RuleEngine", message: `Action resource is missing id: ${JSON.stringify(action)}` });
             return undefined;
@@ -402,6 +399,23 @@ export class RuleEngine {
                 return { type: "setAnalogOutput", resourceId: action.resource.id, value: action.value };
             case "emitSignal":
                 return { type: "emitSignal", resourceId: action.resource.id, value: action.value };
+            case "emitAction":
+                // Early loop prevention: drop if emitting back to the same resource+action that caused this rule to fire
+                if (cause.event === "action" && cause.resource.id === action.resource.id && cause.action === action.action) {
+                    runtimeOutput.log({
+                        level: "warn",
+                        component: "RuleEngine",
+                        message: `emitAction targets same resource+action as cause — dropping to prevent loop (resource: ${action.resource.id}, action: ${action.action})`,
+                    });
+                    return undefined;
+                }
+                return {
+                    type: "emitAction",
+                    resourceId: action.resource.id,
+                    action: action.action,
+                    metadata: action.metadata,
+                    depth: (cause.depth ?? 0) + 1,
+                };
             default:
                 assertNever(action, "Unsupported RuleAction type in RuleEngine.toRuntimeAction");
         }

@@ -6,6 +6,7 @@ import { formatCountdown, useCountdown } from "../hooks/useCountdown";
 import { isResourceActive } from "../isResourceActive";
 import { TileRuntimeResource, TileRuntimeResourceState } from "../resource-ui.type";
 import { AnalogOutputPanel } from "./AnalogOutputPanel";
+import { ActionInputPanel } from "./ActionInputPanel";
 import { ComplexTileValue } from "./ComplexTileValue";
 import { SubResourcePopover } from "../../shared/SubResourcePopover";
 
@@ -174,12 +175,23 @@ const complexRenderer: TileRendererExtensions = {
     ),
 };
 
+const actionInputRenderer: TileRendererExtensions = {
+    renderInteractionPanel: (ctx) => (
+        <ActionInputPanel
+            resource={ctx.resource}
+            anchorEl={ctx.anchorEl}
+            onClose={ctx.onClose}
+        />
+    ),
+};
+
 const renderers: Partial<Record<ResourceType, TileRendererExtensions>> = {
     analogInput: analogInputRenderer,
     analogOutput: analogOutputRenderer,
     virtualAnalogOutput: analogOutputRenderer,
     timer: timerRenderer,
     complex: complexRenderer,
+    actionInput: actionInputRenderer,
 };
 
 export function getTileExtensions(type: ResourceType): TileRendererExtensions | undefined {

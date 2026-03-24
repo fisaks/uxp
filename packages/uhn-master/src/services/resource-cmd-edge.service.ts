@@ -7,6 +7,8 @@ type ResourceCmdEdgeCommand = {
     mode?: "restart" | "startOnce";
     simulateHold?: boolean;
     metadata?: Record<string, unknown>;
+    /** Loop prevention depth counter for emitAction relay. */
+    depth?: number;
 };
 
 /**
@@ -33,6 +35,7 @@ class ResourceCmdEdgeService {
             simulateHold: command.simulateHold,
             metadata: command.metadata,
             timestamp: Date.now(),
+            depth: command.depth,
         };
         mqttService.publish(topic, payload, { retain: false, qos: 1 });
     }

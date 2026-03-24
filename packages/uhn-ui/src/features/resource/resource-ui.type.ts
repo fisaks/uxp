@@ -19,5 +19,6 @@ export type TileRuntimeResource = RuntimeResource & {
     inactiveValue?: number;
     emitsTap?: boolean;
     subResources?: RuntimeComplexSubResourceRef[];
+    actions?: string[];
 };
 export type TileRuntimeResourceState = Pick<RuntimeResourceState, "value" | "timestamp" | "details">;

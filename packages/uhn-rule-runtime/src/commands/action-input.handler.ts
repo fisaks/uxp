@@ -4,8 +4,15 @@ import { RuleRuntimeDependencies } from "../types/rule-runtime.type";
 
 const ACTION_INPUT_TYPE = "actionInput";
 
+/**
+ * Handles an incoming actionEvent IPC command by emitting a trigger event
+ * into the rule engine's trigger bus.
+ *
+ * Sources: physical button (Z2M transport), UI tap (WebSocket),
+ * edge/master relay (MQTT), or rule-emitted via emitAction (with depth > 0).
+ */
 export function handleActionEvent({ resourceService, triggerEventBus }: RuleRuntimeDependencies, cmd: RuleRuntimeActionEventCommand) {
-    const { resourceId, action, metadata, timestamp } = cmd.payload;
+    const { resourceId, action, metadata, timestamp, depth } = cmd.payload;
 
     if (!action) return; // skip empty action strings
 
@@ -25,6 +32,7 @@ export function handleActionEvent({ resourceService, triggerEventBus }: RuleRunt
         timestamp,
         action,
         metadata,
+        depth: depth ?? 0,
     });
 
     runtimeOutput.log({

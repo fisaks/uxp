@@ -250,6 +250,8 @@ export type RuleRuntimeActionEventCommand = {
     action: string;
     metadata?: Record<string, unknown>;
     timestamp: number;
+    /** Depth counter for loop prevention. 0 for physical/UI events, incremented for rule-emitted. */
+    depth?: number;
   };
 };
 

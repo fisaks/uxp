@@ -820,16 +820,16 @@ Scenes cannot activate other scenes (no recursion).
 ### Scene Activation from Rules
 
 ```typescript
-import { rule, ruleActions } from "@uhn/blueprint";
+import { rule, ruleAction } from "@uhn/blueprint";
 import { sceneKitchenEvening } from "../scenes/kitchen";
 
 export const activateEveningScene = rule({
     description: "Activate evening scene on button tap",
 })
     .onTap(kitchenPanelButton)
-    .run(() => ruleActions([
-        { type: "activateScene", scene: sceneKitchenEvening },
-    ]));
+    .run(() => [
+        ruleAction({ type: "activateScene", scene: sceneKitchenEvening }),
+    ]);
 ```
 
 ---
@@ -872,7 +872,7 @@ items: [
 Rules define automation logic that reacts to resource events and produces actions.
 
 ```typescript
-import { rule, ruleActions } from "@uhn/blueprint";
+import { rule, ruleAction } from "@uhn/blueprint";
 
 export const kitchenCeilingLightToggle = rule({
     description: "Toggle kitchen ceiling light on button tap",
@@ -880,9 +880,9 @@ export const kitchenCeilingLightToggle = rule({
     .onTap(kitchenPanelButton)
     .run((ctx) => {
         const isOn = ctx.runtime.getState(kitchenLightCeiling);
-        return ruleActions([
-            { type: "setDigitalOutput", resource: kitchenLightCeiling, value: !isOn },
-        ]);
+        return [
+            ruleAction({ type: "setDigitalOutput", resource: kitchenLightCeiling, value: !isOn }),
+        ];
     });
 ```
 
@@ -932,7 +932,7 @@ Hysteresis prevents rapid re-triggering. After firing at threshold 70 with hyste
 Inside the `run()` callback, `ctx.cause.action` and `ctx.cause.metadata` are available but loosely typed. Use `isCausedBy()` to narrow them:
 
 ```typescript
-import { rule, ruleActions, isCausedBy } from "@uhn/blueprint";
+import { rule, ruleAction, isCausedBy } from "@uhn/blueprint";
 
 export const panelActions = rule({ description: "Handle panel button actions" })
     .onAction(kitchenPanel, "toggle")
@@ -940,16 +940,16 @@ export const panelActions = rule({ description: "Handle panel button actions" })
     .run((ctx) => {
         if (isCausedBy(ctx, kitchenPanel, "toggle")) {
             const isOn = ctx.runtime.getState(kitchenLightCeiling);
-            return ruleActions([
-                { type: "setDigitalOutput", resource: kitchenLightCeiling, value: !isOn },
-            ]);
+            return [
+                ruleAction({ type: "setDigitalOutput", resource: kitchenLightCeiling, value: !isOn }),
+            ];
         }
 
         if (isCausedBy(ctx, kitchenPanel, "arrow_left_release")) {
             // ctx.cause.metadata is narrowed to { action_duration?: number }
             const held = ctx.cause.metadata.action_duration ?? 0;
             ctx.logger.info(`Arrow left released after ${held}ms`);
-            return ruleActions([...]);
+            return [...];
         }
 
         return [];
@@ -995,25 +995,32 @@ The `run` callback receives a context object:
     ctx.mute.resource(someSensor, minutes(5));
     ctx.mute.clearMute(someRule, "manualOverride");
 
-    return ruleActions([...]);
+    return [...];
 });
 ```
 
 ### Actions
 
+All rule actions are constructed via the `ruleAction()` factory, which provides type safety for each action type:
+
 ```typescript
 // Control a digital output
-{ type: "setDigitalOutput", resource: light, value: true }
+ruleAction({ type: "setDigitalOutput", resource: light, value: true })
 
 // Set an analog value
-{ type: "setAnalogOutput", resource: dimmer, value: 75 }
+ruleAction({ type: "setAnalogOutput", resource: dimmer, value: 75 })
 
 // Emit a signal on a digital input
-{ type: "emitSignal", resource: virtualButton, value: true }
+ruleAction({ type: "emitSignal", resource: virtualButton, value: true })
+
+// Emit an action event on an actionInput resource (rule chaining)
+ruleAction({ type: "emitAction", resource: panel, action: "toggle" })
 
 // Activate a scene (expands to individual commands at runtime)
-{ type: "activateScene", scene: eveningScene }
+ruleAction({ type: "activateScene", scene: eveningScene })
 ```
+
+**`emitAction`** triggers the target resource's `onAction` rules, enabling rule chaining (e.g. PIR detects motion → emitAction simulates a button press → button's rules fire). The action string and metadata are type-checked against the resource's action union. A depth counter prevents infinite loops — the runtime rejects an `emitAction` that targets the same resource+action as the triggering cause, and the host drops events exceeding depth 10.
 
 ### Scheduling
 
@@ -1041,9 +1048,9 @@ export const toggleLight = rule({ description: "Toggle ceiling light" })
     .actionHints(ceilingLight)
     .run((ctx) => {
         const isOn = ctx.runtime.getState(ceilingLight);
-        return ruleActions([
-            { type: "setDigitalOutput", resource: ceilingLight, value: !isOn },
-        ]);
+        return [
+            ruleAction({ type: "setDigitalOutput", resource: ceilingLight, value: !isOn }),
+        ];
     });
 ```
 
@@ -1082,17 +1089,17 @@ export const pirTurnsOnLight = rule({ description: "PIR turns on light" })
     .onActivated(pirSensor)
     .run((ctx) => {
         ctx.timers.start(autoOffTimer, minutes(10), "restart");
-        return ruleActions([
-            { type: "setDigitalOutput", resource: light, value: true },
-        ]);
+        return [
+            ruleAction({ type: "setDigitalOutput", resource: light, value: true }),
+        ];
     });
 
 // Rule 2: Timer expires -> turn off light
 export const timerTurnsOffLight = rule({ description: "Timer turns off light" })
     .onTimerDeactivated(autoOffTimer)
-    .run(() => ruleActions([
-        { type: "setDigitalOutput", resource: light, value: false },
-    ]));
+    .run(() => [
+        ruleAction({ type: "setDigitalOutput", resource: light, value: false }),
+    ]);
 ```
 
 **Manual override with muting:**
@@ -1106,9 +1113,9 @@ export const manualToggle = rule({ description: "Manual toggle with mute" })
         // Mute the auto-off rule for 10 minutes after manual intervention
         ctx.mute.rule(pirTurnsOnLight, minutes(10), "manualOverride");
 
-        return ruleActions([
-            { type: "setDigitalOutput", resource: light, value: !isOn },
-        ]);
+        return [
+            ruleAction({ type: "setDigitalOutput", resource: light, value: !isOn }),
+        ];
     });
 ```
 
@@ -1119,9 +1126,9 @@ export const highHumidityFan = rule({ description: "Start fan on high humidity" 
     .onAbove(humiditySensor, 70, { hysteresis: 5 })
     .run((ctx) => {
         ctx.timers.start(ventTimer, minutes(5), "startOnce");
-        return ruleActions([
-            { type: "setAnalogOutput", resource: fanSpeed, value: 80 },
-        ]);
+        return [
+            ruleAction({ type: "setAnalogOutput", resource: fanSpeed, value: 80 }),
+        ];
     });
 ```
 

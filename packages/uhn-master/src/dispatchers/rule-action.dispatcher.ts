@@ -19,6 +19,8 @@ import { stateSignalService } from "../services/state-signal.service";
 import { resourceCmdEdgeService } from "../services/resource-cmd-edge.service";
 import { logicalResourceStateService } from "../services/state-logical-resource.service";
 
+const MAX_ACTION_DEPTH = 10;
+
 
 let initialized = false;
 
@@ -49,6 +51,9 @@ function handleActionEvent(actions: RuntimeRuleAction[]) {
                 break;
             case "clearMute":
                 handleClearMuteAction(act);
+                break;
+            case "emitAction":
+                handleEmitActionAction(act);
                 break;
             case "activateScene":
                 // Scene activation is expanded in the rule engine before reaching IPC.
@@ -125,6 +130,49 @@ function handleEmitSignalAction(action: Extract<RuntimeRuleAction, { type: "emit
         message: `EmitSignal action received for non-input resource: ${action.resourceId}`
     });
 
+}
+
+function handleEmitActionAction(action: Extract<RuntimeRuleAction, { type: "emitAction" }>) {
+    if (action.depth >= MAX_ACTION_DEPTH) {
+        AppLogger.warn({
+            message: `emitAction depth limit reached (${action.depth}) — dropping to prevent loop`,
+            object: { resourceId: action.resourceId, action: action.action, depth: action.depth },
+        });
+        return;
+    }
+
+    const resource = blueprintResourceService.getResourceById(action.resourceId);
+    if (!resource || resource.type !== "actionInput") {
+        AppLogger.warn({
+            message: `emitAction received for non-actionInput resource: ${action.resourceId}`,
+        });
+        return;
+    }
+
+    // Inject actionEvent to local master runtime
+    if (ruleRuntimeProcessService.canSendCommands()) {
+        ruleRuntimeProcessService.sendEvent<"actionEvent">({
+            cmd: "actionEvent",
+            payload: {
+                resourceId: action.resourceId,
+                action: action.action,
+                metadata: action.metadata,
+                timestamp: Date.now(),
+                depth: action.depth,
+            },
+        });
+    }
+
+    // Forward to owning edge via MQTT for edge runtime
+    resourceCmdEdgeService.sendCommandToEdge(
+        { id: resource.id, host: resource.edge },
+        {
+            action: "action",
+            value: action.action,
+            metadata: action.metadata,
+            depth: action.depth,
+        },
+    );
 }
 
 function handleTimerStartAction(action: Extract<RuntimeRuleAction, { type: "timerStart" }>) {

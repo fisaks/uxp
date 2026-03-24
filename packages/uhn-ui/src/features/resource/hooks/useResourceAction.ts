@@ -187,6 +187,11 @@ export function useResourceAction(
             sendCommand({ type: "setAnalog", value: nextValue });
             return;
         }
+        // ActionInput: open action panel
+        if (resource.type === "actionInput") {
+            options?.onLongPress?.();
+            return;
+        }
         // Complex: tappable sends tap command, otherwise open popover
         if (resource.type === "complex") {
             if (resource.emitsTap) {

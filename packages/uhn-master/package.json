@@ -11,8 +11,8 @@
     "scripts": {
         "build": "pnpm tsc --build",
         "trace": "pnpm tsc --traceResolution",
-        "dev": "tsx watch src/uhn.master.ts",
-        "dev-debug": "tsx watch --inspect=0.0.0.0:9229 src/uhn.master.ts",
+        "dev": "tsx watch src/uhn.master.ts < /dev/null",
+        "dev-debug": "tsx watch --inspect=0.0.0.0:9229 src/uhn.master.ts < /dev/null",
         "clean": "pnpm rimraf --glob -v dist tsconfig.tsbuildinfo build_types",
         "lint": "pnpm eslint .",
         "lint:fix": "pnpm eslint . --fix",

@@ -14,6 +14,7 @@ type ActionEventPayload = {
     action: string;
     timestamp: number;
     metadata?: Record<string, unknown>;
+    depth?: number;
 };
 
 function isActionEventPayload(obj: unknown): obj is ActionEventPayload {
@@ -66,6 +67,7 @@ export function initActionEventDispatcher(): void {
                     action: payload.action,
                     metadata: payload.metadata,
                     timestamp: payload.timestamp,
+                    depth: payload.depth ?? 0,
                 },
             });
         }
