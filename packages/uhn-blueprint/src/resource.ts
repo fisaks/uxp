@@ -22,11 +22,10 @@ export type PhysicalResourceBase<
     TType extends PhysicalResourceType,
     TEdge extends string = string,
     TDevice extends string | number = string,
-    TPin extends number | string = number | string
 > = ResourceBase<TType> & {
     edge: TEdge;
     device: TDevice;
-    pin: TPin;
+    pin: number | string;
 };
 
 export type LogicalResourceBase<
@@ -59,8 +58,7 @@ export type DigitalInputResourceBase<
     TInputKind extends InputKind = InputKind,
     TEdge extends string = string,
     TDevice extends string | number = string,
-    TPin extends number | string = number | string
-> = PhysicalResourceBase<"digitalInput", TEdge, TDevice, TPin> & {
+> = PhysicalResourceBase<"digitalInput", TEdge, TDevice> & {
     inputKind: TInputKind; //defined by project like "button" | "pir" | "lightSensor" etc.
     inputType: InputType;//"toggle" | "push"
 };
@@ -70,8 +68,7 @@ export type DigitalOutputResourceBase<
     TOutputKind extends OutputKind = OutputKind,
     TEdge extends string = string,
     TDevice extends string | number = string,
-    TPin extends number | string = number | string
-> = PhysicalResourceBase<"digitalOutput", TEdge, TDevice, TPin> & {
+> = PhysicalResourceBase<"digitalOutput", TEdge, TDevice> & {
     outputKind: TOutputKind; //defined by project like "relay" | "socket" | "light" | "indicator" etc
 };
 
@@ -81,8 +78,7 @@ export type AnalogInputResourceBase<
     TInputKind extends AnalogInputKind = AnalogInputKind,
     TEdge extends string = string,
     TDevice extends string | number = string,
-    TPin extends number | string = number | string
-> = PhysicalResourceBase<"analogInput", TEdge, TDevice, TPin> & {
+> = PhysicalResourceBase<"analogInput", TEdge, TDevice> & {
     analogInputKind: TInputKind;
     /** Unit label for display (e.g. "°C", "%", "W") */
     unit?: string;
@@ -103,8 +99,7 @@ export type AnalogOutputResourceBase<
     TOutputKind extends AnalogOutputKind = AnalogOutputKind,
     TEdge extends string = string,
     TDevice extends string | number = string,
-    TPin extends number | string = number | string
-> = PhysicalResourceBase<"analogOutput", TEdge, TDevice, TPin> & {
+> = PhysicalResourceBase<"analogOutput", TEdge, TDevice> & {
     analogOutputKind: TOutputKind;
     /** Minimum settable value. Default: 0 */
     min?: number;
@@ -174,8 +169,7 @@ export type ActionInputResourceBase<
     TActionInputKind extends ActionInputKind = ActionInputKind,
     TEdge extends string = string,
     TDevice extends string | number = string,
-    TPin extends number | string = number | string
-> = PhysicalResourceBase<"actionInput", TEdge, TDevice, TPin> & {
+> = PhysicalResourceBase<"actionInput", TEdge, TDevice> & {
     actionInputKind: TActionInputKind;
     actions: TActions[];
     /** Phantom type for per-action metadata — not set at runtime, only used for type inference */

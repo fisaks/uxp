@@ -213,7 +213,7 @@ export type ActionSideEffect = {
  * Action and metadata are constrained by the resource's type parameters.
  */
 export function actionSideEffect<TActions extends string, TAction extends TActions, TMeta extends ActionMetaMap<TActions>>(opts: {
-    resource: ActionInputResourceBase<TActions, TMeta, any, any, any, any>;
+    resource: ActionInputResourceBase<TActions, TMeta, any, any, any>;
     action: TAction;
 } & ([TMeta[TAction]] extends [never] ? {} : { metadata: TMeta[TAction] })): ActionSideEffect {
     return opts as ActionSideEffect;
@@ -274,7 +274,7 @@ export function viewCommand(opts: {
 }): ViewCommand;
 /** Create an action command with per-action type-safe metadata. */
 export function viewCommand<TActions extends string, TAction extends TActions, TMeta extends ActionMetaMap<TActions>>(opts: {
-    resource: ActionInputResourceBase<TActions, TMeta, any, any, any, any>;
+    resource: ActionInputResourceBase<TActions, TMeta, any, any, any>;
     type: "action";
     action: TAction;
     onDeactivate?: ViewCommandTarget;

@@ -111,16 +111,15 @@ export function generateFactoryFile(devices: ParsedDevice[], edge: string, mappi
     const edgeConst = `EDGE_${edge.toUpperCase().replace(/[^A-Z0-9]/g, "_")}_ZIGBEE`;
     lines.push(`export const ${edgeConst} = "${edge}" as const;`);
     lines.push(`type Edge = typeof ${edgeConst};`);
-    lines.push(`type Pin = number | string;`);
     lines.push(``);
 
     // Generate factory wrappers per output kind
     for (const [kind, deviceNames] of outputDevices) {
         const fnName = `zigbee${capitalize(kind)}`;
         const deviceUnion = formatUnion(deviceNames);
-        lines.push(`export type ${capitalize(fnName)}Props = Omit<DigitalOutputResourceBase<"${kind}", Edge, ${deviceUnion}, Pin>, "type" | "outputKind">;`);
+        lines.push(`export type ${capitalize(fnName)}Props = Omit<DigitalOutputResourceBase<"${kind}", Edge, ${deviceUnion}>, "type" | "outputKind">;`);
         lines.push(`export function ${fnName}(props: ${capitalize(fnName)}Props) {`);
-        lines.push(`    return digitalOutput<"${kind}", Edge, ${deviceUnion}, Pin>({ ...props, outputKind: "${kind}" });`);
+        lines.push(`    return digitalOutput<"${kind}", Edge, ${deviceUnion}>({ ...props, outputKind: "${kind}" });`);
         lines.push(`}`);
         lines.push(``);
     }
@@ -129,9 +128,9 @@ export function generateFactoryFile(devices: ParsedDevice[], edge: string, mappi
     for (const [kind, deviceNames] of inputDevices) {
         const fnName = `zigbee${capitalize(kind)}Sensor`;
         const deviceUnion = formatUnion(deviceNames);
-        lines.push(`export type ${capitalize(fnName)}Props = Omit<DigitalInputResourceBase<"${kind}", Edge, ${deviceUnion}, Pin>, "type" | "inputKind" | "inputType">;`);
+        lines.push(`export type ${capitalize(fnName)}Props = Omit<DigitalInputResourceBase<"${kind}", Edge, ${deviceUnion}>, "type" | "inputKind" | "inputType">;`);
         lines.push(`export function ${fnName}(props: ${capitalize(fnName)}Props) {`);
-        lines.push(`    return digitalInput<"${kind}", Edge, ${deviceUnion}, Pin>({ ...props, inputKind: "${kind}", inputType: "push" });`);
+        lines.push(`    return digitalInput<"${kind}", Edge, ${deviceUnion}>({ ...props, inputKind: "${kind}", inputType: "push" });`);
         lines.push(`}`);
         lines.push(``);
     }
@@ -141,9 +140,9 @@ export function generateFactoryFile(devices: ParsedDevice[], edge: string, mappi
         const fnName = `zigbee${capitalize(kind)}Sensor`;
         const deviceUnion = formatUnion(deviceNames);
         const extraProps = getAnalogInputDefaults(kind);
-        lines.push(`export type ${capitalize(fnName)}Props = Omit<AnalogInputResourceBase<"${kind}", Edge, ${deviceUnion}, Pin>, "type" | "analogInputKind">;`);
+        lines.push(`export type ${capitalize(fnName)}Props = Omit<AnalogInputResourceBase<"${kind}", Edge, ${deviceUnion}>, "type" | "analogInputKind">;`);
         lines.push(`export function ${fnName}(props: ${capitalize(fnName)}Props) {`);
-        lines.push(`    return analogInput<"${kind}", Edge, ${deviceUnion}, Pin>({ ${extraProps}...props, analogInputKind: "${kind}" });`);
+        lines.push(`    return analogInput<"${kind}", Edge, ${deviceUnion}>({ ${extraProps}...props, analogInputKind: "${kind}" });`);
         lines.push(`}`);
         lines.push(``);
     }
@@ -152,9 +151,9 @@ export function generateFactoryFile(devices: ParsedDevice[], edge: string, mappi
     for (const [kind, deviceNames] of analogOutputDevices) {
         const fnName = `zigbee${capitalize(kind)}`;
         const deviceUnion = formatUnion(deviceNames);
-        lines.push(`export type ${capitalize(fnName)}Props = Omit<AnalogOutputResourceBase<"${kind}", Edge, ${deviceUnion}, Pin>, "type" | "analogOutputKind">;`);
+        lines.push(`export type ${capitalize(fnName)}Props = Omit<AnalogOutputResourceBase<"${kind}", Edge, ${deviceUnion}>, "type" | "analogOutputKind">;`);
         lines.push(`export function ${fnName}(props: ${capitalize(fnName)}Props) {`);
-        lines.push(`    return analogOutput<"${kind}", Edge, ${deviceUnion}, Pin>({ ...props, analogOutputKind: "${kind}" });`);
+        lines.push(`    return analogOutput<"${kind}", Edge, ${deviceUnion}>({ ...props, analogOutputKind: "${kind}" });`);
         lines.push(`}`);
         lines.push(``);
     }

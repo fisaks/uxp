@@ -7,10 +7,9 @@ export function digitalInput<
     TInputKind extends string = string,
     TEdge extends string = string,
     TDevice extends string | number = string | number,
-    TPin extends number | string = number | string
 >(
-    props: Omit<DigitalInputResourceBase<TInputKind, TEdge, TDevice, TPin>, "type">
-): DigitalInputResourceBase<TInputKind, TEdge, TDevice, TPin> {
+    props: Omit<DigitalInputResourceBase<TInputKind, TEdge, TDevice>, "type">
+): DigitalInputResourceBase<TInputKind, TEdge, TDevice> {
     const kindIcon = props.inputKind === "button" && props.inputType === "toggle"
         ? "control:toggle" as const
         : inputKindDefaultIcon[props.inputKind as BaseInputKind];
@@ -21,10 +20,9 @@ export function digitalOutput<
     TOutputKind extends string = string,
     TEdge extends string = string,
     TDevice extends string | number = string | number,
-    TPin extends number | string = number | string
 >(
-    props: Omit<DigitalOutputResourceBase<TOutputKind, TEdge, TDevice, TPin>, "type">
-): DigitalOutputResourceBase<TOutputKind, TEdge, TDevice, TPin> {
+    props: Omit<DigitalOutputResourceBase<TOutputKind, TEdge, TDevice>, "type">
+): DigitalOutputResourceBase<TOutputKind, TEdge, TDevice> {
     return { ...props, type: "digitalOutput", icon: props.icon ?? outputKindDefaultIcon[props.outputKind as BaseOutputKind] ?? "status:device" };
 }
 
@@ -32,10 +30,9 @@ export function analogInput<
     TInputKind extends string = string,
     TEdge extends string = string,
     TDevice extends string | number = string | number,
-    TPin extends number | string = number | string
 >(
-    props: Omit<AnalogInputResourceBase<TInputKind, TEdge, TDevice, TPin>, "type">
-): AnalogInputResourceBase<TInputKind, TEdge, TDevice, TPin> {
+    props: Omit<AnalogInputResourceBase<TInputKind, TEdge, TDevice>, "type">
+): AnalogInputResourceBase<TInputKind, TEdge, TDevice> {
     return { ...props, type: "analogInput", icon: props.icon ?? analogInputKindDefaultIcon[props.analogInputKind as BaseAnalogInputKind] ?? "status:device" };
 }
 
@@ -43,10 +40,9 @@ export function analogOutput<
     TOutputKind extends string = string,
     TEdge extends string = string,
     TDevice extends string | number = string | number,
-    TPin extends number | string = number | string
 >(
-    props: Omit<AnalogOutputResourceBase<TOutputKind, TEdge, TDevice, TPin>, "type">
-): AnalogOutputResourceBase<TOutputKind, TEdge, TDevice, TPin> {
+    props: Omit<AnalogOutputResourceBase<TOutputKind, TEdge, TDevice>, "type">
+): AnalogOutputResourceBase<TOutputKind, TEdge, TDevice> {
     return { ...props, type: "analogOutput", icon: props.icon ?? analogOutputKindDefaultIcon[props.analogOutputKind as BaseAnalogOutputKind] ?? "status:device" };
 }
 
@@ -81,9 +77,8 @@ export function actionInput<
     TActionInputKind extends string = string,
     TEdge extends string = string,
     TDevice extends string | number = string,
-    TPin extends number | string = number | string
 >(
-    props: Omit<ActionInputResourceBase<TActions, TMeta, TActionInputKind, TEdge, TDevice, TPin>, "type">
-): ActionInputResourceBase<TActions, TMeta, TActionInputKind, TEdge, TDevice, TPin> {
+    props: Omit<ActionInputResourceBase<TActions, TMeta, TActionInputKind, TEdge, TDevice>, "type">
+): ActionInputResourceBase<TActions, TMeta, TActionInputKind, TEdge, TDevice> {
     return { ...props, type: "actionInput", icon: props.icon ?? actionInputKindDefaultIcon[props.actionInputKind as BaseActionInputKind] ?? "control:button" };
 }

@@ -64,13 +64,13 @@ export type MilightColorValue = typeof MilightColor[keyof typeof MilightColor];
 // ─── Shared Props (pin omitted — assigned by each factory) ──────────────────
 
 type MilightOutputProps<E extends string, D extends string | number> =
-    Omit<DigitalOutputResourceBase<string, E, D, number>, "type" | "outputKind" | "pin">;
+    Omit<DigitalOutputResourceBase<string, E, D>, "type" | "outputKind" | "pin">;
 
 type MilightInputProps<E extends string, D extends string | number> =
-    Omit<DigitalInputResourceBase<string, E, D, number>, "type" | "inputKind" | "inputType" | "pin">;
+    Omit<DigitalInputResourceBase<string, E, D>, "type" | "inputKind" | "inputType" | "pin">;
 
 type MilightAnalogProps<E extends string, D extends string | number> =
-    Omit<AnalogOutputResourceBase<string, E, D, number>, "type" | "analogOutputKind" | "pin">;
+    Omit<AnalogOutputResourceBase<string, E, D>, "type" | "analogOutputKind" | "pin">;
 
 // ─── Digital Output Factories (power, night mode) ───────────────────────────
 
@@ -78,7 +78,7 @@ type MilightAnalogProps<E extends string, D extends string | number> =
 export function milightPower<E extends string, D extends string | number>(
     props: MilightOutputProps<E, D>,
 ) {
-    return digitalOutput<"light", E, D, typeof MilightPin.Power>({
+    return digitalOutput<"light", E, D>({
         ...props, pin: MilightPin.Power, outputKind: "light",
     });
 }
@@ -87,7 +87,7 @@ export function milightPower<E extends string, D extends string | number>(
 export function milightNightMode<E extends string, D extends string | number>(
     props: MilightOutputProps<E, D>,
 ) {
-    return digitalOutput<"light", E, D, typeof MilightPin.NightMode>({
+    return digitalOutput<"light", E, D>({
         icon: "scene:night", ...props, pin: MilightPin.NightMode, outputKind: "light",
     });
 }
@@ -98,7 +98,7 @@ export function milightNightMode<E extends string, D extends string | number>(
 export function milightWhiteMode<E extends string, D extends string | number>(
     props: MilightInputProps<E, D>,
 ) {
-    return digitalInput<"button", E, D, typeof MilightPin.WhiteMode>({
+    return digitalInput<"button", E, D>({
         icon: "weather:sun", ...props, pin: MilightPin.WhiteMode, inputKind: "button", inputType: "push",
     });
 }
@@ -107,7 +107,7 @@ export function milightWhiteMode<E extends string, D extends string | number>(
 export function milightSpeedUp<E extends string, D extends string | number>(
     props: MilightInputProps<E, D>,
 ) {
-    return digitalInput<"button", E, D, typeof MilightPin.SpeedUp>({
+    return digitalInput<"button", E, D>({
         icon: "control:speed", ...props, pin: MilightPin.SpeedUp, inputKind: "button", inputType: "push",
     });
 }
@@ -116,7 +116,7 @@ export function milightSpeedUp<E extends string, D extends string | number>(
 export function milightSpeedDown<E extends string, D extends string | number>(
     props: MilightInputProps<E, D>,
 ) {
-    return digitalInput<"button", E, D, typeof MilightPin.SpeedDown>({
+    return digitalInput<"button", E, D>({
         icon: "control:speed", ...props, pin: MilightPin.SpeedDown, inputKind: "button", inputType: "push",
     });
 }
@@ -127,7 +127,7 @@ export function milightSpeedDown<E extends string, D extends string | number>(
 export function milightBrightness<E extends string, D extends string | number>(
     props: MilightAnalogProps<E, D>,
 ) {
-    return analogOutput<"dimmer", E, D, typeof MilightPin.Brightness>({
+    return analogOutput<"dimmer", E, D>({
         min: 0, max: 100, step: 1, unit: "%",
         icon: "color:brightness",
         ...props,
@@ -140,7 +140,7 @@ export function milightBrightness<E extends string, D extends string | number>(
 export function milightColorTemp<E extends string, D extends string | number>(
     props: MilightAnalogProps<E, D>,
 ) {
-    return analogOutput<"colorTemp", E, D, typeof MilightPin.ColorTemp>({
+    return analogOutput<"colorTemp", E, D>({
         min: 0, max: 100, step: 1, unit: "%",
         icon: "color:temperature",
         ...props,
@@ -153,7 +153,7 @@ export function milightColorTemp<E extends string, D extends string | number>(
 export function milightHue<E extends string, D extends string | number>(
     props: MilightAnalogProps<E, D>,
 ) {
-    return analogOutput<"hue", E, D, typeof MilightPin.Hue>({
+    return analogOutput<"hue", E, D>({
         min: 0, max: 255, step: 1, unit: "",
         icon: "color:hue",
         ...props,
@@ -166,7 +166,7 @@ export function milightHue<E extends string, D extends string | number>(
 export function milightSaturation<E extends string, D extends string | number>(
     props: MilightAnalogProps<E, D>,
 ) {
-    return analogOutput<"saturation", E, D, typeof MilightPin.Saturation>({
+    return analogOutput<"saturation", E, D>({
         min: 0, max: 100, step: 1, unit: "%",
         icon: "color:saturation",
         ...props,
@@ -179,7 +179,7 @@ export function milightSaturation<E extends string, D extends string | number>(
 export function milightMode<E extends string, D extends string | number>(
     props: MilightAnalogProps<E, D>,
 ) {
-    return analogOutput<"mode", E, D, typeof MilightPin.Mode>({
+    return analogOutput<"mode", E, D>({
         options: [
             { value: MilightEffect.ColorFade, label: "Color Fade" },
             { value: MilightEffect.WhiteStrobe, label: "White Strobe" },

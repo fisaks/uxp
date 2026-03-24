@@ -185,7 +185,7 @@ export function isCausedBy<
     TMeta extends ActionMetaMap<TActions>,
 >(
     ctx: RuleContext,
-    resource: ActionInputResourceBase<TActions, TMeta, any, any, any, any>,
+    resource: ActionInputResourceBase<TActions, TMeta, any, any, any>,
     action: TAction,
 ): ctx is RuleContext & { cause: RuleCause & { action: TAction; metadata: TMeta[TAction] } };
 export function isCausedBy(ctx: RuleContext, resource: ResourceBase<ResourceType>): boolean;
