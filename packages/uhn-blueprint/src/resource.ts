@@ -3,7 +3,7 @@
 
 import { BlueprintIcon } from "./icon";
 
-export type PhysicalResourceType = "digitalInput" | "digitalOutput" | "analogInput" | "analogOutput" | "actionInput";
+export type PhysicalResourceType = "digitalInput" | "digitalOutput" | "analogInput" | "analogOutput" | "actionInput" | "actionOutput";
 export type LogicalResourceType = "timer" | "complex" | "virtualDigitalInput" | "virtualAnalogOutput";
 export type ResourceType = PhysicalResourceType | LogicalResourceType;
 
@@ -36,7 +36,7 @@ export type LogicalResourceBase<
 };
 
 export function isPhysicalResourceType(type: ResourceType): type is PhysicalResourceType {
-    return type === "digitalInput" || type === "digitalOutput" || type === "analogInput" || type === "analogOutput" || type === "actionInput";
+    return type === "digitalInput" || type === "digitalOutput" || type === "analogInput" || type === "analogOutput" || type === "actionInput" || type === "actionOutput";
 }
 
 export function isLogicalResourceType(type: ResourceType): type is LogicalResourceType {
@@ -174,6 +174,20 @@ export type ActionInputResourceBase<
     actions: TActions[];
     /** Phantom type for per-action metadata — not set at runtime, only used for type inference */
     _meta?: TMeta;
+};
+
+// Action Output Resource — transient write-only commands TO device (light effects, etc.)
+export type BaseActionOutputKind = "effect" | "command";
+export type ActionOutputKind = BaseActionOutputKind | (string & {});
+
+export type ActionOutputResourceBase<
+    TActions extends string = string,
+    TActionOutputKind extends ActionOutputKind = ActionOutputKind,
+    TEdge extends string = string,
+    TDevice extends string | number = string,
+> = PhysicalResourceBase<"actionOutput", TEdge, TDevice> & {
+    actionOutputKind: TActionOutputKind;
+    actions: TActions[];
 };
 
 export type ComplexResourceBase<THost extends string = string> = LogicalResourceBase<"complex", THost> & {

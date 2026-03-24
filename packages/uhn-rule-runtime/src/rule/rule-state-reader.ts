@@ -42,8 +42,8 @@ export function createRuleStateReader({ stateService }: { stateService: RuntimeS
                     }
                     return s.value as StateValueByResourceType<T>;
                 case "actionInput":
-                    // actionInput has no persistent state — getState() should not be called.
-                    // Use ctx.cause.action and ctx.cause.metadata instead.
+                case "actionOutput":
+                    // actionInput/actionOutput have no persistent state — getState() should not be called.
                     // Throws ResourceStateTypeMismatchError (not ResourceStateNotAvailableError)
                     // to avoid triggering edge→master resource escalation.
                     throw new ResourceStateTypeMismatchError(r.id, r.type, s.value);

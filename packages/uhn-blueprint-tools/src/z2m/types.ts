@@ -29,7 +29,7 @@ export type Z2MDevice = {
 };
 
 // Parsed UHN property from Z2M expose
-export type UHNResourceType = "digitalOutput" | "digitalInput" | "analogOutput" | "analogInput" | "actionInput";
+export type UHNResourceType = "digitalOutput" | "digitalInput" | "analogOutput" | "analogInput" | "actionInput" | "actionOutput";
 
 export type UHNProperty = {
     pin: string;

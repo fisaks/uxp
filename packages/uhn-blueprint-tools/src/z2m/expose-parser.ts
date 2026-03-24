@@ -34,6 +34,26 @@ export function parseExposes(exposes: Z2MExpose[], prefix: string = ""): UHNProp
         if (skipPrefixes.some(p => prop === p || (prefix && prefix.startsWith(p)))) continue;
 
         const access = expose.access ?? 0;
+        const writable = (access & 2) !== 0;
+        const readable = (access & 1) !== 0;
+
+        // Write-only non-ON/OFF enum → actionOutput (transient fire-and-forget commands like light effects)
+        if (expose.type === "enum" && writable && !readable && expose.values && expose.values.length > 0 && !isOnOffEnum(expose.values)) {
+            const pin = prefix ? `${prefix}.${prop}` : prop;
+            properties.push({
+                pin,
+                uhnType: "actionOutput",
+                description: expose.description,
+                label: expose.label ?? capitalize(prop.replace(/_/g, " ")),
+                access,
+                category: expose.category,
+                writable: true,
+                isOnOff: false,
+                actionValues: expose.values,
+            });
+            continue;
+        }
+
         // Skip write-only properties (access === 2) — device config, not runtime state
         if (access === 2) continue;
 
@@ -41,7 +61,6 @@ export function parseExposes(exposes: Z2MExpose[], prefix: string = ""): UHNProp
         if (expose.category === "config") continue;
 
         const pin = prefix ? `${prefix}.${prop}` : prop;
-        const writable = (access & 2) !== 0;
 
         // Action property: read-only enum named "action" with values → transient event
         if (expose.type === "enum" && !writable && prop === "action" && expose.values && expose.values.length > 0 && !isOnOffEnum(expose.values)) {

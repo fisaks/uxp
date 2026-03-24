@@ -51,6 +51,11 @@ export type ActionCommand = {
     metadata?: Record<string, unknown>;
 };
 
+export type SetActionOutputCommand = {
+    type: "setActionOutput";
+    action: string;
+};
+
 export type UhnResourceCommand =
     | ToggleCommand
     | SetCommand
@@ -60,7 +65,8 @@ export type UhnResourceCommand =
     | SetAnalogCommand
     | TapCommand
     | LongPressCommand
-    | ActionCommand;
+    | ActionCommand
+    | SetActionOutputCommand;
 
 export type ToggleCommand = {
     type: "toggle";
@@ -256,6 +262,15 @@ export const UhnResourceCommandPayloadSchema: MessagePayloadSchema<UhnResourceCo
                         type: { const: 'action' },
                         action: { type: 'string', minLength: 1 },
                         metadata: { type: 'object' }
+                    },
+                    required: ['type', 'action'],
+                    additionalProperties: false
+                },
+                {
+                    type: 'object',
+                    properties: {
+                        type: { const: 'setActionOutput' },
+                        action: { type: 'string', minLength: 1 }
                     },
                     required: ['type', 'action'],
                     additionalProperties: false

@@ -43,6 +43,7 @@ export function useViewCommandSlots(
         case "tap":
         case "longPress":
         case "action":
+        case "setActionOutput":
             return {
                 titleAction: <PushButtonControl command={command} sendCommand={sendCommand} active={active} iconColor={resolvedIconColor} Icon={Icon} />,
                 headerContent: null,

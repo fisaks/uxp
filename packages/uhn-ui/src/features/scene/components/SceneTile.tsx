@@ -23,6 +23,10 @@ function formatCommandValue(cmd: RuntimeSceneCommand): string {
             return String(cmd.value);
         case "emitSignal":
             return cmd.value === undefined ? "toggle" : cmd.value ? "ON" : "OFF";
+        case "emitAction":
+            return cmd.action;
+        case "setActionOutput":
+            return cmd.action;
     }
 }
 

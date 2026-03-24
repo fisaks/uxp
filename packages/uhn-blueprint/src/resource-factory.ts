@@ -1,7 +1,7 @@
 // Resource Factory Functions
 // resource-factory.ts
-import { actionInputKindDefaultIcon, analogInputKindDefaultIcon, analogOutputKindDefaultIcon, inputKindDefaultIcon, logicalTypeDefaultIcon, outputKindDefaultIcon } from "./icon-defaults";
-import { ActionInputResourceBase, AnalogInputResourceBase, AnalogOutputResourceBase, BaseActionInputKind, BaseAnalogInputKind, BaseAnalogOutputKind, BaseInputKind, BaseOutputKind, ComplexResourceBase, DigitalInputResourceBase, DigitalOutputResourceBase, TimerResourceBase, VirtualAnalogOutputResourceBase, VirtualDigitalInputResourceBase } from "./resource";
+import { actionInputKindDefaultIcon, actionOutputKindDefaultIcon, analogInputKindDefaultIcon, analogOutputKindDefaultIcon, inputKindDefaultIcon, logicalTypeDefaultIcon, outputKindDefaultIcon } from "./icon-defaults";
+import { ActionInputResourceBase, ActionOutputResourceBase, AnalogInputResourceBase, AnalogOutputResourceBase, BaseActionInputKind, BaseActionOutputKind, BaseAnalogInputKind, BaseAnalogOutputKind, BaseInputKind, BaseOutputKind, ComplexResourceBase, DigitalInputResourceBase, DigitalOutputResourceBase, TimerResourceBase, VirtualAnalogOutputResourceBase, VirtualDigitalInputResourceBase } from "./resource";
 
 export function digitalInput<
     TInputKind extends string = string,
@@ -81,4 +81,15 @@ export function actionInput<
     props: Omit<ActionInputResourceBase<TActions, TMeta, TActionInputKind, TEdge, TDevice>, "type">
 ): ActionInputResourceBase<TActions, TMeta, TActionInputKind, TEdge, TDevice> {
     return { ...props, type: "actionInput", icon: props.icon ?? actionInputKindDefaultIcon[props.actionInputKind as BaseActionInputKind] ?? "control:button" };
+}
+
+export function actionOutput<
+    TActions extends string = string,
+    TActionOutputKind extends string = string,
+    TEdge extends string = string,
+    TDevice extends string | number = string,
+>(
+    props: Omit<ActionOutputResourceBase<TActions, TActionOutputKind, TEdge, TDevice>, "type">
+): ActionOutputResourceBase<TActions, TActionOutputKind, TEdge, TDevice> {
+    return { ...props, type: "actionOutput", icon: props.icon ?? actionOutputKindDefaultIcon[props.actionOutputKind as BaseActionOutputKind] ?? "control:button" };
 }

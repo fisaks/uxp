@@ -52,6 +52,17 @@ class CommandSceneService {
                     type: "set",
                     value: cmd.value ?? false,
                 });
+            case "emitAction":
+                return this.commandsResourceService.executeResourceCommand(cmd.resourceId, {
+                    type: "action",
+                    action: cmd.action,
+                    metadata: cmd.metadata,
+                });
+            case "setActionOutput":
+                return this.commandsResourceService.executeResourceCommand(cmd.resourceId, {
+                    type: "setActionOutput",
+                    action: cmd.action,
+                });
             default:
                 assertNever(cmd);
         }

@@ -7,6 +7,7 @@ import { isResourceActive } from "../isResourceActive";
 import { TileRuntimeResource, TileRuntimeResourceState } from "../resource-ui.type";
 import { AnalogOutputPanel } from "./AnalogOutputPanel";
 import { ActionInputPanel } from "./ActionInputPanel";
+import { ActionOutputPanel } from "./ActionOutputPanel";
 import { ComplexTileValue } from "./ComplexTileValue";
 import { SubResourcePopover } from "../../shared/SubResourcePopover";
 
@@ -185,6 +186,16 @@ const actionInputRenderer: TileRendererExtensions = {
     ),
 };
 
+const actionOutputRenderer: TileRendererExtensions = {
+    renderInteractionPanel: (ctx) => (
+        <ActionOutputPanel
+            resource={ctx.resource}
+            anchorEl={ctx.anchorEl}
+            onClose={ctx.onClose}
+        />
+    ),
+};
+
 const renderers: Partial<Record<ResourceType, TileRendererExtensions>> = {
     analogInput: analogInputRenderer,
     analogOutput: analogOutputRenderer,
@@ -192,6 +203,7 @@ const renderers: Partial<Record<ResourceType, TileRendererExtensions>> = {
     timer: timerRenderer,
     complex: complexRenderer,
     actionInput: actionInputRenderer,
+    actionOutput: actionOutputRenderer,
 };
 
 export function getTileExtensions(type: ResourceType): TileRendererExtensions | undefined {

@@ -38,7 +38,15 @@ export async function sendForTarget(
                 await sendCommand(target.resourceId, {
                     type: "action",
                     action: target.action,
-                    ...(target.metadata && { metadata: target.metadata }),
+                    metadata: target.metadata
+                });
+            }
+            break;
+        case "setActionOutput":
+            if (target.action) {
+                await sendCommand(target.resourceId, {
+                    type: "setActionOutput",
+                    action: target.action,
                 });
             }
             break;

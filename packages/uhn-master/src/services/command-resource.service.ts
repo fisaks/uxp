@@ -58,6 +58,8 @@ export class CommandsResourceService {
                 return this.handleVirtualAnalogOutput(resource as RuntimeVirtualAnalogOutputResource, command);
             case "actionInput":
                 return this.handleActionInput(resource, resourceId, command);
+            case "actionOutput":
+                return this.handleActionOutput(resource, resourceId, command);
         }
     }
 
@@ -183,6 +185,16 @@ export class CommandsResourceService {
             resourceCmdEdgeService.sendCommandToEdge(
                 { id: resourceId, host: resource.edge },
                 { action: "action", value: actionValue, ...(metadata && { metadata }) },
+            );
+        }
+    }
+
+    private handleActionOutput(resource: RuntimeResource, resourceId: string, command: UhnResourceCommand) {
+        if (command.type !== "setActionOutput") return;
+        if (isPhysicalResource(resource)) {
+            resourceCmdEdgeService.sendCommandToEdge(
+                { id: resourceId, host: resource.edge },
+                { action: "setActionOutput", value: command.action },
             );
         }
     }
@@ -339,6 +351,13 @@ export class CommandsResourceService {
         if (resource.type === "actionInput") {
             if (command.type !== "action") {
                 throw new AppErrorV2({ statusCode: 400, code: "INVALID_RESOURCE_COMMAND", message: `Invalid command type ${command.type} for actionInput resource` });
+            }
+            return;
+        }
+
+        if (resource.type === "actionOutput") {
+            if (command.type !== "setActionOutput") {
+                throw new AppErrorV2({ statusCode: 400, code: "INVALID_RESOURCE_COMMAND", message: `Invalid command type ${command.type} for actionOutput resource` });
             }
             return;
         }

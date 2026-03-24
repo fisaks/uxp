@@ -230,6 +230,7 @@ Physical resources map to hardware on edge servers via `edge`, `device`, and `pi
 | `analogInput` | `analogInput()` | `analogInputKind`, `unit`, `decimalPrecision` |
 | `analogOutput` | `analogOutput()` | `analogOutputKind`, `min`, `max`, `step`, `unit`, `options`, `decimalPrecision` |
 | `actionInput` | `actionInput()` | `actionInputKind`, `actions`, per-action metadata map |
+| `actionOutput` | `actionOutput()` | `actionOutputKind`, `actions` |
 
 ```typescript
 import { digitalOutput, digitalInput, analogInput } from "@uhn/blueprint";
@@ -335,6 +336,35 @@ export const kitchenPanel = actionInput<PanelActions, PanelMeta>({
 The `actionInputKind` property (`"button"` or `"remote"`) affects default icon assignment. The `z2m-import` tool infers this from the device description — devices described as "remote" or "controller" get `"remote"`, others default to `"button"`.
 
 The per-action metadata map (`TMeta`) enables type-safe metadata access in rules via `isCausedBy()` — see [Rules: .onAction()](#onaction-trigger) for details.
+
+### Action Output Resources
+
+Action outputs are the mirror of action inputs — they send **transient, write-only string commands** to devices (e.g. IKEA LED driver `effect: "blink"`). Like action inputs, they have **no persistent state** and bypass the P/S/C model entirely. `getState()` on an action output is a compile error (`never`).
+
+Action outputs target Z2M device properties that are write-only enums (access bit 2 set, bit 1 not set) with non-ON/OFF values. The `z2m-import` tool detects these automatically.
+
+```typescript
+import { actionOutput } from "@uhn/blueprint";
+
+type EffectActions = "blink" | "breathe" | "okay" | "channel_change" | "finish_effect" | "stop_effect";
+
+export const wardrobeOverheadEffect = actionOutput<EffectActions>({
+    edge: "edge1",
+    device: "master-bedroom-light-wardrobe-overhead",
+    pin: "effect",
+    actionOutputKind: "effect",
+    actions: ["blink", "breathe", "okay", "channel_change", "finish_effect", "stop_effect"],
+    description: "Triggers an effect on the light",
+});
+```
+
+The `actionOutputKind` property (`"effect"` or `"command"`) affects default icon assignment. Unlike action inputs, action outputs have **no metadata** — outbound commands don't need per-action metadata.
+
+Action outputs are used in rules via `setActionOutput` and in scenes:
+
+```typescript
+ruleAction({ type: "setActionOutput", resource: wardrobeOverheadEffect, action: "blink" })
+```
 
 ### Z2M Device Import Tool
 
@@ -630,6 +660,7 @@ The `command` property defines the tile's click behavior:
 | `"setAnalog"` | Inline slider or select control | `{ type: "setAnalog", min: 0, max: 100, step: 5, unit: "%" }` |
 | `"clearTimer"` | Stop a running timer | Timer reset |
 | `"action"` | Fire an action event | `{ type: "action", action: "toggle" }` |
+| `"setActionOutput"` | Send a transient command to device | `{ type: "setActionOutput", action: "blink" }` |
 
 #### viewCommand() Factory
 
@@ -655,6 +686,9 @@ viewCommand({ resource: kitchenTimer, type: "clearTimer" })
 
 // Action — resource must be actionInput, action string checked against action union
 viewCommand({ resource: kitchenPanel, type: "action", action: "toggle" })
+
+// Action output — resource must be actionOutput, sends transient command to device
+viewCommand({ resource: wardrobeEffect, type: "setActionOutput", action: "blink" })
 ```
 
 The action overload is type-safe: the `action` string is checked against the resource's action union, and if the resource's metadata map declares a non-`never` type for that action, `metadata` becomes required:
@@ -807,13 +841,15 @@ export const sceneKitchenEvening = scene({
 
 ### Scene Actions
 
-Scenes support three action types:
+Scenes support five action types:
 
 | Action | Description |
 |--------|-------------|
 | `setDigitalOutput` | Turn a digital output on (`true`) or off (`false`) |
 | `setAnalogOutput` | Set an analog value (e.g., dimmer level) |
 | `emitSignal` | Emit a signal on a digital input (`true`/`false`/`undefined` for toggle) |
+| `emitAction` | Fire an action event on an actionInput resource (triggers rules) |
+| `setActionOutput` | Send a transient command to an actionOutput device (e.g. light effect) |
 
 Scenes cannot activate other scenes (no recursion).
 
@@ -1016,11 +1052,16 @@ ruleAction({ type: "emitSignal", resource: virtualButton, value: true })
 // Emit an action event on an actionInput resource (rule chaining)
 ruleAction({ type: "emitAction", resource: panel, action: "toggle" })
 
+// Send a transient command to an actionOutput device (e.g. light effect)
+ruleAction({ type: "setActionOutput", resource: wardrobeEffect, action: "blink" })
+
 // Activate a scene (expands to individual commands at runtime)
 ruleAction({ type: "activateScene", scene: eveningScene })
 ```
 
 **`emitAction`** triggers the target resource's `onAction` rules, enabling rule chaining (e.g. PIR detects motion → emitAction simulates a button press → button's rules fire). The action string and metadata are type-checked against the resource's action union. A depth counter prevents infinite loops — the runtime rejects an `emitAction` that targets the same resource+action as the triggering cause, and the host drops events exceeding depth 10.
+
+**`setActionOutput`** sends a write-only command directly to the device driver, bypassing the state model and rule engine. It is a terminal command — no depth tracking, no rule chaining. The action string is type-checked against the resource's action union.
 
 ### Scheduling
 

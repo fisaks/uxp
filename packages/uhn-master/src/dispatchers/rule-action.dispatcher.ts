@@ -55,6 +55,9 @@ function handleActionEvent(actions: RuntimeRuleAction[]) {
             case "emitAction":
                 handleEmitActionAction(act);
                 break;
+            case "setActionOutput":
+                handleSetActionOutputAction(act);
+                break;
             case "activateScene":
                 // Scene activation is expanded in the rule engine before reaching IPC.
                 // If it somehow arrives here, log a warning and ignore.
@@ -172,6 +175,21 @@ function handleEmitActionAction(action: Extract<RuntimeRuleAction, { type: "emit
             metadata: action.metadata,
             depth: action.depth,
         },
+    );
+}
+
+function handleSetActionOutputAction(action: Extract<RuntimeRuleAction, { type: "setActionOutput" }>) {
+    const resource = blueprintResourceService.getResourceById(action.resourceId);
+    if (!resource || resource.type !== "actionOutput") {
+        AppLogger.warn({
+            message: `setActionOutput received for non-actionOutput resource: ${action.resourceId}`,
+        });
+        return;
+    }
+
+    resourceCmdEdgeService.sendCommandToEdge(
+        { id: resource.id, host: resource.edge },
+        { action: "setActionOutput", value: action.action },
     );
 }
 

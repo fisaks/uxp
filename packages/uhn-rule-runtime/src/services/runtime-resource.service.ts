@@ -1,6 +1,6 @@
 // services/runtime-resource.service.ts
-import { ActionInputResourceBase, ComplexComputeFn, ComplexResourceBase, ComplexSubResourceRef, ResourceBase, ResourceType } from "@uhn/blueprint";
-import { humanizeResourceId, isRuntimeResourceObject, RuntimeActionInputResource, RuntimeComplexResource, RuntimeComplexSubResourceRef, RuntimeResource, RuntimeResourceList } from "@uhn/common";
+import { ActionInputResourceBase, ActionOutputResourceBase, ComplexComputeFn, ComplexResourceBase, ComplexSubResourceRef, ResourceBase, ResourceType } from "@uhn/blueprint";
+import { humanizeResourceId, isRuntimeResourceObject, RuntimeActionInputResource, RuntimeActionOutputResource, RuntimeComplexResource, RuntimeComplexSubResourceRef, RuntimeResource, RuntimeResourceList } from "@uhn/common";
 import fs from "fs-extra";
 import path from "path";
 import { runtimeOutput } from "../io/runtime-output";
@@ -89,6 +89,17 @@ async function collectResources(resourcesDir: string): Promise<CollectResult> {
                             actions: actionInput.actions ?? [],
                         } satisfies RuntimeActionInputResource;
                         runtimeResource = actionInputRuntime;
+                    }
+                    // Serialize actionOutput resource fields
+                    if (runtimeResource.type === "actionOutput") {
+                        const actionOutput = runtimeResource as unknown as ActionOutputResourceBase;
+                        const actionOutputRuntime = {
+                            ...runtimeResource,
+                            type: "actionOutput",
+                            actionOutputKind: actionOutput.actionOutputKind,
+                            actions: actionOutput.actions ?? [],
+                        } satisfies RuntimeActionOutputResource;
+                        runtimeResource = actionOutputRuntime;
                     }
                     allResources.push(runtimeResource);
                 } else {

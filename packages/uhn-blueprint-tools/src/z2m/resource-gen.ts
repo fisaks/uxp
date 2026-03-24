@@ -42,6 +42,17 @@ export function generateResourceFile(device: ParsedDevice, edge: string, mapping
     }
     lines.push("");
 
+    // Generate action union for actionOutput devices
+    const hasActionOutput = device.properties.some(p => p.uhnType === "actionOutput" && p.actionValues?.length);
+    if (hasActionOutput) {
+        const actionOutputUnionName = `${capitalize(prefix)}ActionOutputActions`;
+        const actionOutputValues = device.properties
+            .filter(p => p.uhnType === "actionOutput" && p.actionValues?.length)
+            .flatMap(p => p.actionValues!);
+        lines.push(`type ${actionOutputUnionName} = ${actionOutputValues.map(a => `"${a}"`).join(" | ")};`);
+        lines.push("");
+    }
+
     // Generate action union + per-action metadata map for actionInput devices (author-editable)
     const hasActionInput = device.properties.some(p => p.uhnType === "actionInput" && p.actionValues?.length);
     if (hasActionInput) {
@@ -68,13 +79,17 @@ export function generateResourceFile(device: ParsedDevice, edge: string, mapping
     for (const prop of device.properties) {
         const varName = resourceVarName(prefix, prop.pin);
         const ref = resolveFactory(prop, device, mapping);
-        const props = buildProps(prop, device, edgeConst);
+        const needsKind = BASE_FACTORIES.has(ref.factory);
+        const props = buildProps(prop, device, edgeConst, needsKind);
         const numericPresets = (prop.presets ?? []).filter(p => typeof p.value === "number");
 
-        // ActionInput: add generic type parameter for action union
+        // ActionInput/ActionOutput: add generic type parameter for action union
         let genericSuffix = "";
         if (prop.uhnType === "actionInput" && prop.actionValues?.length) {
             genericSuffix = `<${capitalize(prefix)}Actions, ${capitalize(prefix)}Meta>`;
+        }
+        if (prop.uhnType === "actionOutput" && prop.actionValues?.length) {
+            genericSuffix = `<${capitalize(prefix)}ActionOutputActions>`;
         }
 
         lines.push(`${exportKeyword}const ${varName} = ${ref.factory}${genericSuffix}({`);
@@ -108,19 +123,22 @@ export function getMappingKey(prop: UHNProperty, device: ParsedDevice): string {
             return `analogOutput.${mapAnalogOutputKind(prop.pin)}`;
         case "actionInput":
             return `actionInput.${inferActionInputKind(device)}`;
+        case "actionOutput":
+            return `actionOutput.${inferActionOutputKind(prop)}`;
     }
 }
+
+/** Base factory names from @uhn/blueprint — when used, buildProps must emit kind properties. */
+const BASE_FACTORIES = new Set(["digitalOutput", "digitalInput", "analogInput", "analogOutput", "actionInput", "actionOutput"]);
 
 function resolveFactory(prop: UHNProperty, device: ParsedDevice, mapping: FactoryMapping): { factory: string; import: string } {
     const key = getMappingKey(prop, device);
     const ref = mapping[key];
     if (ref) return ref;
-    // actionInput defaults to base actionInput() from @uhn/blueprint (not a generated zigbee factory)
-    if (prop.uhnType === "actionInput") return { factory: "actionInput", import: "@uhn/blueprint" };
-    return { factory: key, import: "@uhn/blueprint" };
+    return { factory: prop.uhnType, import: "@uhn/blueprint" };
 }
 
-function buildProps(prop: UHNProperty, device: ParsedDevice, edgeConst: string): string[] {
+function buildProps(prop: UHNProperty, device: ParsedDevice, edgeConst: string, needsKind: boolean): string[] {
     const deviceName = device.friendlyName;
     const props: string[] = [];
     props.push(`device: "${deviceName}",`);
@@ -129,19 +147,36 @@ function buildProps(prop: UHNProperty, device: ParsedDevice, edgeConst: string):
     if (prop.description) {
         props.push(`description: ${JSON.stringify(prop.description)},`);
     }
+    if (prop.uhnType === "digitalOutput" && needsKind) {
+        props.push(`outputKind: "${inferOutputKind(prop, device)}",`);
+    }
+    if (prop.uhnType === "digitalInput" && needsKind) {
+        props.push(`inputKind: "${inferInputKind(prop)}",`);
+        props.push(`inputType: "push",`);
+    }
     if (prop.uhnType === "analogOutput") {
+        if (needsKind) props.push(`analogOutputKind: "${mapAnalogOutputKind(prop.pin)}",`);
         if (prop.unit) props.push(`unit: ${JSON.stringify(prop.unit)},`);
         if (prop.min !== undefined) props.push(`min: ${prop.min},`);
         if (prop.max !== undefined) props.push(`max: ${prop.max},`);
         if (prop.step !== undefined) props.push(`step: ${prop.step},`);
     }
     if (prop.uhnType === "analogInput") {
+        if (needsKind) props.push(`analogInputKind: "${mapAnalogInputKind(prop.pin, prop.unit)}",`);
         if (prop.unit) props.push(`unit: ${JSON.stringify(prop.unit)},`);
         const precision = suggestDecimalPrecision(prop.pin, prop.unit);
         if (precision !== undefined) props.push(`decimalPrecision: ${precision},`);
     }
     if (prop.uhnType === "actionInput" && prop.actionValues?.length) {
         props.push(`actionInputKind: "${inferActionInputKind(device)}",`);
+        props.push(`actions: [`);
+        for (const action of prop.actionValues) {
+            props.push(`    "${action}",`);
+        }
+        props.push(`],`);
+    }
+    if (prop.uhnType === "actionOutput" && prop.actionValues?.length) {
+        props.push(`actionOutputKind: "${inferActionOutputKind(prop)}",`);
         props.push(`actions: [`);
         for (const action of prop.actionValues) {
             props.push(`    "${action}",`);
@@ -194,6 +229,12 @@ function inferActionInputKind(device: ParsedDevice): string {
     const desc = (device.description ?? "").toLowerCase();
     if (/\b(remote|controller)\b/.test(desc)) return "remote";
     return "button";
+}
+
+function inferActionOutputKind(prop: UHNProperty): string {
+    const pin = prop.pin.toLowerCase();
+    if (pin === "effect" || /\beffect\b/.test(prop.description ?? "")) return "effect";
+    return "command";
 }
 
 function suggestDecimalPrecision(pin: string, unit?: string): number | undefined {

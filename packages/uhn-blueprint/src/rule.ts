@@ -2,6 +2,7 @@
 import type {
     ActionInputResourceBase,
     ActionMetaMap,
+    ActionOutputResourceBase,
     AnalogInputResourceBase,
     AnalogOutputResourceBase,
     ComplexResourceBase,
@@ -29,6 +30,8 @@ export type StateValueByResourceType<T extends ResourceType> =
     ? TimerStateValue
     : T extends "complex"
     ? StateValue
+    : T extends "actionInput" | "actionOutput"
+    ? never
     : never;
 export type ResourceState = {
     value: StateValue | undefined; // undefined = unknown
@@ -148,6 +151,11 @@ export type RuleAction =
         metadata?: Record<string, unknown>;
     }
     | {
+        type: "setActionOutput";
+        resource: ActionOutputResourceBase<any>;
+        action: string;
+    }
+    | {
         type: "activateScene";
         scene: BlueprintScene;
     };
@@ -202,6 +210,9 @@ export function ruleAction(opts: { type: "emitSignal"; resource: DigitalInputRes
 export function ruleAction<TActions extends string, TAction extends TActions, TMeta extends ActionMetaMap<TActions>>(
     opts: { type: "emitAction"; resource: ActionInputResourceBase<TActions, TMeta, any, any, any>; action: TAction }
         & ([TMeta[TAction]] extends [never] ? {} : { metadata: TMeta[TAction] })
+): RuleAction;
+export function ruleAction<TActions extends string, TAction extends TActions>(
+    opts: { type: "setActionOutput"; resource: ActionOutputResourceBase<TActions, any, any, any>; action: TAction }
 ): RuleAction;
 export function ruleAction(opts: { type: "activateScene"; scene: BlueprintScene }): RuleAction;
 export function ruleAction(opts: any): RuleAction {
@@ -262,6 +273,11 @@ export type RuntimeRuleAction =
         action: string;
         metadata?: Record<string, unknown>;
         depth: number;
+    }
+    | {
+        type: "setActionOutput";
+        resourceId: string;
+        action: string;
     }
     | {
         type: "activateScene";

@@ -383,6 +383,8 @@ export class RuleEngine {
                 return "edge" in action.resource ? action.resource.edge : action.resource.host;
             case "emitAction":
                 return action.resource.edge;
+            case "setActionOutput":
+                return action.resource.edge;
         }
     }
 
@@ -416,6 +418,8 @@ export class RuleEngine {
                     metadata: action.metadata,
                     depth: (cause.depth ?? 0) + 1,
                 };
+            case "setActionOutput":
+                return { type: "setActionOutput", resourceId: action.resource.id, action: action.action };
             default:
                 assertNever(action, "Unsupported RuleAction type in RuleEngine.toRuntimeAction");
         }

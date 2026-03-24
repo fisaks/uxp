@@ -1,5 +1,5 @@
 
-import { ActionInputResourceBase, AnalogInputResourceBase, AnalogOutputOption, AnalogOutputResourceBase, BlueprintIcon, DigitalInputResourceBase, DigitalOutputResourceBase, LogicalResourceType, PhysicalResourceType, ResourceType, RuntimeRuleAction, StateDisplayAggregation, StateDisplayStyle, ViewActiveCondition, ViewCommandType, ViewStateAggregation } from "@uhn/blueprint";
+import { ActionInputResourceBase, ActionOutputResourceBase, AnalogInputResourceBase, AnalogOutputOption, AnalogOutputResourceBase, BlueprintIcon, DigitalInputResourceBase, DigitalOutputResourceBase, LogicalResourceType, PhysicalResourceType, ResourceType, RuntimeRuleAction, StateDisplayAggregation, StateDisplayStyle, ViewActiveCondition, ViewCommandType, ViewStateAggregation } from "@uhn/blueprint";
 
 // --- Runtime rule serialization (for IPC + overview) ---
 
@@ -178,8 +178,14 @@ export type RuntimeActionInputResource = RuntimePhysicalResource & {
   actions: string[];
 };
 
+export type RuntimeActionOutputResource = RuntimePhysicalResource & {
+  type: "actionOutput";
+  actionOutputKind: ActionOutputResourceBase["actionOutputKind"];
+  actions: string[];
+};
+
 export function isPhysicalResource(r: RuntimeResource): r is RuntimePhysicalResource {
-    return r.type === "digitalInput" || r.type === "digitalOutput" || r.type === "analogInput" || r.type === "analogOutput" || r.type === "actionInput";
+    return r.type === "digitalInput" || r.type === "digitalOutput" || r.type === "analogInput" || r.type === "analogOutput" || r.type === "actionInput" || r.type === "actionOutput";
 }
 
 export function isLogicalResource(r: RuntimeResource): r is RuntimeLogicalResource {
@@ -325,7 +331,9 @@ export type RuleRuntimeLocationsLoadedMessage = {
 export type RuntimeSceneCommand =
     | { type: "setDigitalOutput"; resourceId: string; value: boolean }
     | { type: "setAnalogOutput"; resourceId: string; value: number }
-    | { type: "emitSignal"; resourceId: string; value: boolean | undefined };
+    | { type: "emitSignal"; resourceId: string; value: boolean | undefined }
+    | { type: "emitAction"; resourceId: string; action: string; metadata?: Record<string, unknown> }
+    | { type: "setActionOutput"; resourceId: string; action: string };
 
 export type RuntimeScene = {
     id: string;

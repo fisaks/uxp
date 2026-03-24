@@ -2,7 +2,7 @@
 // Pure data — no React/MUI dependency.
 
 import type { BlueprintIcon } from "./icon";
-import type { BaseActionInputKind, BaseAnalogInputKind, BaseAnalogOutputKind, BaseInputKind, BaseOutputKind, LogicalResourceType } from "./resource";
+import type { BaseActionInputKind, BaseActionOutputKind, BaseAnalogInputKind, BaseAnalogOutputKind, BaseInputKind, BaseOutputKind, LogicalResourceType } from "./resource";
 import type { ViewCommandType } from "./view";
 
 export const outputKindDefaultIcon: Record<BaseOutputKind, BlueprintIcon> = {
@@ -47,6 +47,11 @@ export const actionInputKindDefaultIcon: Record<BaseActionInputKind, BlueprintIc
     remote: "control:button",
 };
 
+export const actionOutputKindDefaultIcon: Record<BaseActionOutputKind, BlueprintIcon> = {
+    effect: "lighting:bulb",
+    command: "control:button",
+};
+
 export const commandTypeDefaultIcon: Record<ViewCommandType, BlueprintIcon> = {
     tap: "control:button",
     toggle: "control:toggle",
@@ -54,4 +59,5 @@ export const commandTypeDefaultIcon: Record<ViewCommandType, BlueprintIcon> = {
     setAnalog: "control:dimmer",
     clearTimer: "control:timer",
     action: "control:button",
+    setActionOutput: "control:button",
 };

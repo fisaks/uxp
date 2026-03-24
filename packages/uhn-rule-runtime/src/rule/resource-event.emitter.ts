@@ -59,7 +59,8 @@ export class ResourceEventEmitter {
                 events.push(...getComplexEventsFromStateChange(prev, next));
                 break;
             case "actionInput":
-                // Action events arrive via IPC (actionEvent), not state changes
+            case "actionOutput":
+                // Action events arrive via IPC (actionEvent/setActionOutput), not state changes
                 break;
             default:
                 assertNever(resource);

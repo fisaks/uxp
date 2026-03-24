@@ -79,7 +79,7 @@ export async function z2mImport(opts: Z2MImportOptions): Promise<void> {
             usedKeys.add(getMappingKey(prop, device));
         }
     }
-    ensureMappingDefaults(mapping, usedKeys, opts.edge);
+    ensureMappingDefaults(mapping, usedKeys);
     saveFactoryMapping(mapping);
 
     if (opts.mappingOnly) {

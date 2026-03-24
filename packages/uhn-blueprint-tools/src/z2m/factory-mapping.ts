@@ -38,22 +38,20 @@ export function saveFactoryMapping(mapping: FactoryMapping): void {
 
 /**
  * Ensures the mapping has entries for all used type+kind combinations.
- * New entries get default zigbee factory values. Existing entries are preserved.
+ * New entries default to base factories from @uhn/blueprint.
+ * Existing entries are preserved (author-editable).
  */
 export function ensureMappingDefaults(
     mapping: FactoryMapping,
     keys: Set<string>,
-    edge: string,
 ): FactoryMapping {
-    const defaultImport = `../factory/zigbee-factory-${edge}`;
     let added = 0;
 
     for (const key of keys) {
         if (!mapping[key]) {
-            const isActionInput = key.startsWith("actionInput.");
             mapping[key] = {
                 factory: defaultFactoryName(key),
-                import: isActionInput ? "@uhn/blueprint" : defaultImport,
+                import: "@uhn/blueprint",
             };
             added++;
         }
@@ -73,16 +71,18 @@ function defaultFactoryName(key: string): string {
 
     switch (uhnType) {
         case "digitalOutput":
-            return `zigbee${capitalize(kind)}`;
+            return "digitalOutput";
         case "digitalInput":
-            return `zigbee${capitalize(kind)}Sensor`;
+            return "digitalInput";
         case "analogInput":
-            return `zigbee${capitalize(kind)}Sensor`;
+            return "analogInput";
         case "analogOutput":
-            return `zigbee${capitalize(kind)}`;
+            return "analogOutput";
         case "actionInput":
             return "actionInput";
+        case "actionOutput":
+            return "actionOutput";
         default:
-            return `zigbee${capitalize(kind)}`;
+            return uhnType;
     }
 }

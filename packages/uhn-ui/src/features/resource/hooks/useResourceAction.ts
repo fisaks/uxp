@@ -192,6 +192,11 @@ export function useResourceAction(
             options?.onLongPress?.();
             return;
         }
+        // ActionOutput: open action panel
+        if (resource.type === "actionOutput") {
+            options?.onLongPress?.();
+            return;
+        }
         // Complex: tappable sends tap command, otherwise open popover
         if (resource.type === "complex") {
             if (resource.emitsTap) {

@@ -24,6 +24,10 @@ function serializeCommand(cmd: SceneAction): RuntimeSceneCommand {
             return { type: "setAnalogOutput", resourceId: cmd.resource.id!, value: cmd.value };
         case "emitSignal":
             return { type: "emitSignal", resourceId: cmd.resource.id!, value: cmd.value };
+        case "emitAction":
+            return { type: "emitAction", resourceId: cmd.resource.id!, action: cmd.action, metadata: cmd.metadata };
+        case "setActionOutput":
+            return { type: "setActionOutput", resourceId: cmd.resource.id!, action: cmd.action };
     }
 }
 

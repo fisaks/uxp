@@ -6,6 +6,7 @@ import { commandTypeDefaultIcon } from "./icon-defaults";
 import type {
     ActionInputResourceBase,
     ActionMetaMap,
+    ActionOutputResourceBase,
     AnalogOutputOption,
     AnalogOutputResourceBase,
     ComplexResourceBase,
@@ -40,7 +41,7 @@ export type ViewStateSource = {
 /* ------------------------------------------------------------------ */
 /* Command                                                             */
 /* ------------------------------------------------------------------ */
-export type ViewCommandType = "tap" | "toggle" | "longPress" | "setAnalog" | "clearTimer" | "action";
+export type ViewCommandType = "tap" | "toggle" | "longPress" | "setAnalog" | "clearTimer" | "action" | "setActionOutput";
 
 export type ViewCommandTarget =
     | {
@@ -85,6 +86,11 @@ export type ViewCommandTarget =
         action: string;
         /** Optional metadata sent with the action command (e.g. simulated action_duration). */
         metadata?: Record<string, unknown>;
+    }
+    | {
+        resource: ActionOutputResourceBase<any>;
+        type: "setActionOutput";
+        action: string;
     };
 
 export type ViewCommand = ViewCommandTarget & {
@@ -279,6 +285,13 @@ export function viewCommand<TActions extends string, TAction extends TActions, T
     action: TAction;
     onDeactivate?: ViewCommandTarget;
 } & ([TMeta[TAction]] extends [never] ? {} : { metadata: TMeta[TAction] })): ViewCommand;
+/** Create a setActionOutput command for write-only transient device effects. */
+export function viewCommand<TActions extends string, TAction extends TActions>(opts: {
+    resource: ActionOutputResourceBase<TActions, any, any, any>;
+    type: "setActionOutput";
+    action: TAction;
+    onDeactivate?: ViewCommandTarget;
+}): ViewCommand;
 export function viewCommand(opts: any): ViewCommand {
     return opts;
 }

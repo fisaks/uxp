@@ -1,7 +1,7 @@
 import mqttService from "./mqtt.service";
 
 type ResourceCmdEdgeCommand = {
-    action: "start" | "clear" | "tap" | "longPress" | "setState" | "action";
+    action: "start" | "clear" | "tap" | "longPress" | "setState" | "action" | "setActionOutput";
     value?: boolean | number | string;
     durationMs?: number;
     mode?: "restart" | "startOnce";

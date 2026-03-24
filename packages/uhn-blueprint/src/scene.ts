@@ -3,6 +3,8 @@
 
 import type { BlueprintIcon } from "./icon";
 import type {
+    ActionInputResourceBase,
+    ActionOutputResourceBase,
     AnalogOutputResourceBase,
     DigitalInputResourceBase,
     DigitalOutputResourceBase,
@@ -20,7 +22,9 @@ import type {
 export type SceneAction =
     | { type: "setDigitalOutput"; resource: DigitalOutputResourceBase; value: boolean }
     | { type: "setAnalogOutput"; resource: AnalogOutputResourceBase | VirtualAnalogOutputResourceBase; value: number }
-    | { type: "emitSignal"; resource: DigitalInputResourceBase | VirtualDigitalInputResourceBase; value: boolean | undefined };
+    | { type: "emitSignal"; resource: DigitalInputResourceBase | VirtualDigitalInputResourceBase; value: boolean | undefined }
+    | { type: "emitAction"; resource: ActionInputResourceBase<any, any>; action: string; metadata?: Record<string, unknown> }
+    | { type: "setActionOutput"; resource: ActionOutputResourceBase<any>; action: string };
 
 /* ------------------------------------------------------------------ */
 /* Blueprint Scene                                                     */

@@ -36,6 +36,7 @@ export function generateFactoryFile(devices: ParsedDevice[], edge: string, mappi
     const allAnalogInputDeviceNames = new Set<string>();
     const allAnalogOutputDeviceNames = new Set<string>();
     const allActionInputDeviceNames = new Set<string>();
+    const allActionOutputDeviceNames = new Set<string>();
 
     for (const device of devices) {
         for (const prop of device.properties) {
@@ -72,6 +73,10 @@ export function generateFactoryFile(devices: ParsedDevice[], edge: string, mappi
                     allActionInputDeviceNames.add(device.friendlyName);
                     break;
                 }
+                case "actionOutput": {
+                    allActionOutputDeviceNames.add(device.friendlyName);
+                    break;
+                }
             }
         }
     }
@@ -95,7 +100,9 @@ export function generateFactoryFile(devices: ParsedDevice[], edge: string, mappi
     if (analogOutputDevices.size > 0) usedTypes.add("AnalogOutputResourceBase");
 
     const imports = [...usedFactories, ...usedTypes].sort();
-    lines.push(`import { ${imports.join(", ")} } from "@uhn/blueprint";`);
+    if (imports.length > 0) {
+        lines.push(`import { ${imports.join(", ")} } from "@uhn/blueprint";`);
+    }
     lines.push(``);
 
     // Device type unions
@@ -106,6 +113,7 @@ export function generateFactoryFile(devices: ParsedDevice[], edge: string, mappi
     lines.push(`export type ZigbeeAnalogInputDevice${edgeSuffix} = ${formatUnion(allAnalogInputDeviceNames)};`);
     lines.push(`export type ZigbeeAnalogOutputDevice${edgeSuffix} = ${formatUnion(allAnalogOutputDeviceNames)};`);
     lines.push(`export type ZigbeeActionInputDevice${edgeSuffix} = ${formatUnion(allActionInputDeviceNames)};`);
+    lines.push(`export type ZigbeeActionOutputDevice${edgeSuffix} = ${formatUnion(allActionOutputDeviceNames)};`);
     lines.push(``);
 
     const edgeConst = `EDGE_${edge.toUpperCase().replace(/[^A-Z0-9]/g, "_")}_ZIGBEE`;
