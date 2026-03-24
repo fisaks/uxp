@@ -1,4 +1,4 @@
-import { RuntimeViewCommandTarget, UhnResourceCommand } from "@uhn/common";
+import { RuntimeActionSideEffect, RuntimeViewCommandTarget, UhnResourceCommand } from "@uhn/common";
 
 type SendCommandFn = (resourceId: string, command: UhnResourceCommand) => Promise<void>;
 
@@ -33,5 +33,29 @@ export async function sendForTarget(
         case "clearTimer":
             await sendCommand(target.resourceId, { type: "clearTimer" });
             break;
+        case "action":
+            if (target.action) {
+                await sendCommand(target.resourceId, {
+                    type: "action",
+                    action: target.action,
+                    ...(target.metadata && { metadata: target.metadata }),
+                });
+            }
+            break;
+    }
+}
+
+/** Send action side effects (fired alongside the primary command). */
+export async function sendSideEffects(
+    sideEffects: RuntimeActionSideEffect[] | undefined,
+    sendCommand: SendCommandFn,
+): Promise<void> {
+    if (!sideEffects?.length) return;
+    for (const se of sideEffects) {
+        await sendCommand(se.resourceId, {
+            type: "action",
+            action: se.action,
+            ...(se.metadata && { metadata: se.metadata }),
+        });
     }
 }

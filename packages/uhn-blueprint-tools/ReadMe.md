@@ -92,6 +92,7 @@ export type AnalogInputDevice = "sauna_temp_1" | ... | ZigbeeAnalogInputDeviceEd
 | numeric (writable) | analogOutput | brightness, color temp |
 | numeric (read-only) | analogInput | temperature, power |
 | enum ON/OFF (writable) | digitalOutput | smart plug state |
+| enum read-only, property `"action"` | actionInput | button press, remote control |
 
 ### What gets skipped
 
@@ -110,6 +111,8 @@ export type AnalogInputDevice = "sauna_temp_1" | ... | ZigbeeAnalogInputDeviceEd
 - Handles non-TS characters in device names
 - Auto-detects primary state for view wiring (writable binary → toggle command)
 - Per-edge factory with typed device unions and edge const
+- Generates per-device action union type and expanded per-action metadata map for `actionInput` resources (in resource file, author-editable)
+- `actionInput` resources use `actionInput()` from `@uhn/blueprint` directly (no generated factory wrapper — overridable via factory mapping)
 
 **Example usage in a blueprint project:**
 

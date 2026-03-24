@@ -3,7 +3,7 @@
 
 import { BlueprintIcon } from "./icon";
 
-export type PhysicalResourceType = "digitalInput" | "digitalOutput" | "analogInput" | "analogOutput";
+export type PhysicalResourceType = "digitalInput" | "digitalOutput" | "analogInput" | "analogOutput" | "actionInput";
 export type LogicalResourceType = "timer" | "complex" | "virtualDigitalInput" | "virtualAnalogOutput";
 export type ResourceType = PhysicalResourceType | LogicalResourceType;
 
@@ -37,7 +37,7 @@ export type LogicalResourceBase<
 };
 
 export function isPhysicalResourceType(type: ResourceType): type is PhysicalResourceType {
-    return type === "digitalInput" || type === "digitalOutput" || type === "analogInput" || type === "analogOutput";
+    return type === "digitalInput" || type === "digitalOutput" || type === "analogInput" || type === "analogOutput" || type === "actionInput";
 }
 
 export function isLogicalResourceType(type: ResourceType): type is LogicalResourceType {
@@ -157,6 +157,29 @@ export type ComplexSubResourceRef = {
     /** Section group header. When set, starts a new visual group in the popover.
      *  Subsequent items without group belong to the same section. */
     group?: string;
+};
+
+// Action Input Resource — transient device events (Zigbee button presses, etc.)
+export type BaseActionInputKind = "button" | "remote";
+export type ActionInputKind = BaseActionInputKind | (string & {});
+
+/** Per-action metadata map. Keys are action names, values are metadata types.
+ *  `never` = no metadata for that action. Import tool generates all as `never`;
+ *  author updates specific actions when metadata is discovered from runtime logs. */
+export type ActionMetaMap<TActions extends string> = { [K in TActions]?: unknown };
+
+export type ActionInputResourceBase<
+    TActions extends string = string,
+    TMeta extends ActionMetaMap<TActions> = { [K in TActions]: never },
+    TActionInputKind extends ActionInputKind = ActionInputKind,
+    TEdge extends string = string,
+    TDevice extends string | number = string,
+    TPin extends number | string = number | string
+> = PhysicalResourceBase<"actionInput", TEdge, TDevice, TPin> & {
+    actionInputKind: TActionInputKind;
+    actions: TActions[];
+    /** Phantom type for per-action metadata — not set at runtime, only used for type inference */
+    _meta?: TMeta;
 };
 
 export type ComplexResourceBase<THost extends string = string> = LogicalResourceBase<"complex", THost> & {

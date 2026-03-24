@@ -45,6 +45,12 @@ export type LongPressCommand = {
     simulateHold?: boolean;
 };
 
+export type ActionCommand = {
+    type: "action";
+    action: string;
+    metadata?: Record<string, unknown>;
+};
+
 export type UhnResourceCommand =
     | ToggleCommand
     | SetCommand
@@ -53,7 +59,8 @@ export type UhnResourceCommand =
     | ClearTimerCommand
     | SetAnalogCommand
     | TapCommand
-    | LongPressCommand;
+    | LongPressCommand
+    | ActionCommand;
 
 export type ToggleCommand = {
     type: "toggle";
@@ -241,6 +248,16 @@ export const UhnResourceCommandPayloadSchema: MessagePayloadSchema<UhnResourceCo
                         holdMs: { type: 'number', minimum: 1 }
                     },
                     required: ['type', 'holdMs'],
+                    additionalProperties: false
+                },
+                {
+                    type: 'object',
+                    properties: {
+                        type: { const: 'action' },
+                        action: { type: 'string', minLength: 1 },
+                        metadata: { type: 'object' }
+                    },
+                    required: ['type', 'action'],
                     additionalProperties: false
                 }
             ]

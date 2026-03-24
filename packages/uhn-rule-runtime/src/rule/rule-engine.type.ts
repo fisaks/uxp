@@ -13,6 +13,8 @@ export type RuleTriggerEvent = {
     thresholdMs?: number;
     prevValue?: ResourceStateValue;
     value?: ResourceStateValue;
+    action?: string;
+    metadata?: unknown;
 };
 
 export type PushPressState = {

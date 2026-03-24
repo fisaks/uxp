@@ -50,9 +50,10 @@ export function ensureMappingDefaults(
 
     for (const key of keys) {
         if (!mapping[key]) {
+            const isActionInput = key.startsWith("actionInput.");
             mapping[key] = {
                 factory: defaultFactoryName(key),
-                import: defaultImport,
+                import: isActionInput ? "@uhn/blueprint" : defaultImport,
             };
             added++;
         }
@@ -79,6 +80,8 @@ function defaultFactoryName(key: string): string {
             return `zigbee${capitalize(kind)}Sensor`;
         case "analogOutput":
             return `zigbee${capitalize(kind)}`;
+        case "actionInput":
+            return "actionInput";
         default:
             return `zigbee${capitalize(kind)}`;
     }

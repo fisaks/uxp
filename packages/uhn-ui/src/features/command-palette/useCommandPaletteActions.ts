@@ -39,6 +39,11 @@ export function useCommandPaletteActions({ onLocationSelect, onAnalogInputNeeded
 
             case "send-command":
                 sendCommand(action.resourceId, action.command);
+                if (item.sideEffects) {
+                    for (const se of item.sideEffects) {
+                        sendCommand(se.resourceId, { type: "action", action: se.action, metadata: se.metadata });
+                    }
+                }
                 break;
 
             case "execute-scene":

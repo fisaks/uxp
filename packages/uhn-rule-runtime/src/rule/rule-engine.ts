@@ -22,7 +22,7 @@ import { createRuleMute } from "./rule-engine-mute";
 import { createRuleStateReader } from "./rule-state-reader";
 import { createRuleTimer } from "./rule-engine-timer";
 import { RuleExecutionControl, RuleTriggerEvent } from "./rule-engine.type";
-import { isLongPressTrigger, isResourceTrigger, isTapTrigger, isThresholdTrigger, isTimerTrigger } from "./rule-engine.utils";
+import { isActionTrigger, isLongPressTrigger, isResourceTrigger, isTapTrigger, isThresholdTrigger, isTimerTrigger } from "./rule-engine.utils";
 import { TriggerEventBus } from "./trigger-event-bus";
 
 /**
@@ -107,6 +107,8 @@ export class RuleEngine {
                     event: triggerEvent.event,
                     timestamp: triggerEvent.timestamp,
                     thresholdMs: triggerEvent.thresholdMs,
+                    action: triggerEvent.action,
+                    metadata: triggerEvent.metadata,
                 };
 
                 const actions = this.tryRunRule(
@@ -158,6 +160,9 @@ export class RuleEngine {
         }
         if (isTapTrigger(trigger) && event.event === "tap") {
             return true;
+        }
+        if (isActionTrigger(trigger) && event.event === "action") {
+            return trigger.action === event.action;
         }
         if (isTimerTrigger(trigger)) {
             return trigger.event === event.event;

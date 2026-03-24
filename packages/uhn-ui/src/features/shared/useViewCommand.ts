@@ -1,13 +1,13 @@
 import { RuntimeInteractionView, UhnResourceCommand } from "@uhn/common";
 import { useCallback, useState } from "react";
-import { sendForTarget } from "./viewCommandHelpers";
+import { sendForTarget, sendSideEffects } from "./viewCommandHelpers";
 
 type SendCommandFn = (resourceId: string, command: UhnResourceCommand) => Promise<void>;
 
 /** Handles click interaction for view tiles.
  *  Maps the view's command target type (tap, toggle, longPress, setAnalog, clearTimer)
  *  to the appropriate resource command. When the view is active and has an onDeactivate
- *  target, that target is used instead. Returns a click handler and pending state. */
+ *  target, that target is used instead. Also fires any action side effects. */
 export function useViewCommand(
     view: RuntimeInteractionView,
     active: boolean,
@@ -19,15 +19,13 @@ export function useViewCommand(
         if (!view.command) return;
         setPending(true);
         try {
-            if (active && view.command.onDeactivate) {
-                await sendForTarget(view.command.onDeactivate, sendCommand, active);
-            } else {
-                await sendForTarget(view.command, sendCommand, active);
-            }
+            const target = active && view.command.onDeactivate ? view.command.onDeactivate : view.command;
+            await sendForTarget(target, sendCommand, active);
+            await sendSideEffects(view.sideEffects, sendCommand);
         } finally {
             setPending(false);
         }
-    }, [view.command, active, sendCommand]);
+    }, [view.command, view.sideEffects, active, sendCommand]);
 
     return { handleClick, pending };
 }

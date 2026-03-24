@@ -2,6 +2,7 @@ import { RuleRuntimeCommand } from "@uhn/common";
 
 import { handleError, handleUnknownCommand } from "../io/handle-error";
 import { RuleRuntimeDependencies } from "../types/rule-runtime.type";
+import { handleActionEvent } from "./action-input.handler";
 import { handleLongPressCommand } from "./longpress-command.handler";
 import { handleMuteCommand } from "./mute-command.handler";
 import { handleStateFullUpdate } from "./state-full-update.handler";
@@ -31,6 +32,9 @@ export function createCommandRouter(deps: RuleRuntimeDependencies) {
                         break;
                     case "longPressCommand":
                         handleLongPressCommand(deps, cmd);
+                        break;
+                    case "actionEvent":
+                        handleActionEvent(deps, cmd);
                         break;
                     default:
                         handleUnknownCommand(cmd);

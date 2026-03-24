@@ -56,6 +56,8 @@ export class CommandsResourceService {
                 return this.handleVirtualDigitalInput(resource as RuntimeVirtualDigitalInputResource, resourceId, command);
             case "virtualAnalogOutput":
                 return this.handleVirtualAnalogOutput(resource as RuntimeVirtualAnalogOutputResource, command);
+            case "actionInput":
+                return this.handleActionInput(resource, resourceId, command);
         }
     }
 
@@ -163,6 +165,26 @@ export class CommandsResourceService {
         setTimeout(() => {
             this.setLogicalResourceState(resource, false, Date.now());
         }, VIRTUAL_PRESS_DURATION_MS);
+    }
+
+    private handleActionInput(resource: RuntimeResource, resourceId: string, command: UhnResourceCommand) {
+        if (command.type !== "action") return;
+        const { action: actionValue, metadata } = command;
+        const timestamp = Date.now();
+
+        // Forward to master runtime (master rules fire)
+        ruleRuntimeProcessService.sendEvent<"actionEvent">({
+            cmd: "actionEvent",
+            payload: { resourceId, action: actionValue, ...(metadata && { metadata }), timestamp },
+        });
+
+        // Forward to edge runtime via MQTT (edge rules fire)
+        if (isPhysicalResource(resource)) {
+            resourceCmdEdgeService.sendCommandToEdge(
+                { id: resourceId, host: resource.edge },
+                { action: "action", value: actionValue, ...(metadata && { metadata }) },
+            );
+        }
     }
 
     private handleVirtualAnalogOutput(resource: RuntimeVirtualAnalogOutputResource, command: UhnResourceCommand) {
@@ -310,6 +332,13 @@ export class CommandsResourceService {
         if (resource.type === "virtualAnalogOutput") {
             if (command.type !== "setAnalog") {
                 throw new AppErrorV2({ statusCode: 400, code: "INVALID_RESOURCE_COMMAND", message: `Invalid command type ${command.type} for virtualAnalogOutput resource` });
+            }
+            return;
+        }
+
+        if (resource.type === "actionInput") {
+            if (command.type !== "action") {
+                throw new AppErrorV2({ statusCode: 400, code: "INVALID_RESOURCE_COMMAND", message: `Invalid command type ${command.type} for actionInput resource` });
             }
             return;
         }

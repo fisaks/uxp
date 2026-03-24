@@ -43,6 +43,22 @@ export function parseExposes(exposes: Z2MExpose[], prefix: string = ""): UHNProp
         const pin = prefix ? `${prefix}.${prop}` : prop;
         const writable = (access & 2) !== 0;
 
+        // Action property: read-only enum named "action" with values → transient event
+        if (expose.type === "enum" && !writable && prop === "action" && expose.values && expose.values.length > 0 && !isOnOffEnum(expose.values)) {
+            properties.push({
+                pin,
+                uhnType: "actionInput",
+                description: expose.description,
+                label: expose.label ?? capitalize(prop.replace(/_/g, " ")),
+                access,
+                category: expose.category,
+                writable: false,
+                isOnOff: false,
+                actionValues: expose.values,
+            });
+            continue;
+        }
+
         const uhnType = mapExposeType(expose.type, writable, expose.values);
         if (!uhnType) continue;
 
@@ -77,7 +93,8 @@ function mapExposeType(z2mType: string, writable: boolean, values?: string[]): U
                 return writable ? "digitalOutput" : "digitalInput";
             }
             if (writable) return "analogOutput";
-            return undefined; // read-only enums — no UHN type mapping yet
+            // Read-only enums — no UHN state type mapping
+            return undefined;
         default:
             return undefined;
     }

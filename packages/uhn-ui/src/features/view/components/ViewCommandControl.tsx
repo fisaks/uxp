@@ -41,18 +41,15 @@ export function useViewCommandSlots(
 
     switch (command.type) {
         case "tap":
+        case "longPress":
+        case "action":
             return {
-                titleAction: <TapControl command={command} sendCommand={sendCommand} active={active} iconColor={resolvedIconColor} Icon={Icon} />,
+                titleAction: <PushButtonControl command={command} sendCommand={sendCommand} active={active} iconColor={resolvedIconColor} Icon={Icon} />,
                 headerContent: null,
             };
         case "toggle":
             return {
                 titleAction: <ToggleControl command={command} sendCommand={sendCommand} active={active} />,
-                headerContent: null,
-            };
-        case "longPress":
-            return {
-                titleAction: <LongPressControl command={command} sendCommand={sendCommand} active={active} iconColor={resolvedIconColor} Icon={Icon} />,
                 headerContent: null,
             };
         case "setAnalog":
@@ -74,7 +71,8 @@ export function useViewCommandSlots(
 /* Type-specific command controls                                      */
 /* ------------------------------------------------------------------ */
 
-const TapControl: React.FC<{
+/** Momentary icon button for tap, longPress, and action commands. */
+const PushButtonControl: React.FC<{
     command: RuntimeViewCommand;
     sendCommand: SendCommandFn;
     active: boolean;
@@ -83,7 +81,7 @@ const TapControl: React.FC<{
 }> = ({ command, sendCommand, active, iconColor, Icon }) => {
     const [pending, setPending] = useState(false);
 
-    const handleTap = useCallback(async () => {
+    const handleClick = useCallback(async () => {
         setPending(true);
         try {
             const target = (active && command.onDeactivate) ? command.onDeactivate : command;
@@ -98,7 +96,7 @@ const TapControl: React.FC<{
     return (
         <IconButton
             size="small"
-            onClick={handleTap}
+            onClick={handleClick}
             disabled={pending}
             sx={{
                 color: active ? iconColor : "action.disabled",
@@ -111,6 +109,7 @@ const TapControl: React.FC<{
         </IconButton>
     );
 };
+
 
 const ToggleControl: React.FC<{
     command: RuntimeViewCommand;
@@ -131,43 +130,6 @@ const ToggleControl: React.FC<{
     );
 };
 
-const LongPressControl: React.FC<{
-    command: RuntimeViewCommand;
-    sendCommand: SendCommandFn;
-    active: boolean;
-    iconColor: string;
-    Icon?: IconComponent;
-}> = ({ command, sendCommand, active, iconColor, Icon }) => {
-    const [pending, setPending] = useState(false);
-
-    const handlePress = useCallback(async () => {
-        setPending(true);
-        try {
-            const target = (active && command.onDeactivate) ? command.onDeactivate : command;
-            await sendForTarget(target, sendCommand, active);
-        } finally {
-            setPending(false);
-        }
-    }, [command, sendCommand, active]);
-
-    const ButtonIcon = Icon ?? TouchAppIcon;
-
-    return (
-        <IconButton
-            size="small"
-            onClick={handlePress}
-            disabled={pending}
-            sx={{
-                color: active ? iconColor : "action.disabled",
-                border: 1,
-                borderColor: active ? iconColor : "divider",
-                p: 0.5,
-            }}
-        >
-            <ButtonIcon sx={{ fontSize: 16 }} />
-        </IconButton>
-    );
-};
 
 const SetAnalogControl: React.FC<{
     command: RuntimeViewCommand;

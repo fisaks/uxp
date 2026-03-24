@@ -1,13 +1,23 @@
 import mqttService from "./mqtt.service";
 
 type ResourceCmdEdgeCommand = {
-    action: "start" | "clear" | "tap" | "longPress" | "setState";
-    value?: boolean | number;
+    action: "start" | "clear" | "tap" | "longPress" | "setState" | "action";
+    value?: boolean | number | string;
     durationMs?: number;
     mode?: "restart" | "startOnce";
     simulateHold?: boolean;
+    metadata?: Record<string, unknown>;
 };
 
+/**
+ * Forwards resource commands from the master to an edge via MQTT.
+ * Publishes to `uhn/{edge}/resource/cmd/{resourceId}` — the edge's
+ * ResourceCmdSubscriber picks these up and routes to the runtime or driver.
+ *
+ * Used by CommandsResourceService for: tap, longPress, timer start/clear,
+ * setState (virtual inputs), and action (actionInput) commands originating
+ * from the UI or master-side rule dispatch.
+ */
 class ResourceCmdEdgeService {
     sendCommandToEdge(
         resource: { id: string; host: string },
@@ -21,6 +31,7 @@ class ResourceCmdEdgeService {
             durationMs: command.durationMs,
             mode: command.mode,
             simulateHold: command.simulateHold,
+            metadata: command.metadata,
             timestamp: Date.now(),
         };
         mqttService.publish(topic, payload, { retain: false, qos: 1 });

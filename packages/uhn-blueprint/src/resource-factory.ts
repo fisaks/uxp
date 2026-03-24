@@ -1,7 +1,7 @@
 // Resource Factory Functions
 // resource-factory.ts
-import { analogInputKindDefaultIcon, analogOutputKindDefaultIcon, inputKindDefaultIcon, logicalTypeDefaultIcon, outputKindDefaultIcon } from "./icon-defaults";
-import { AnalogInputResourceBase, AnalogOutputResourceBase, BaseAnalogInputKind, BaseAnalogOutputKind, BaseInputKind, BaseOutputKind, ComplexResourceBase, DigitalInputResourceBase, DigitalOutputResourceBase, TimerResourceBase, VirtualAnalogOutputResourceBase, VirtualDigitalInputResourceBase } from "./resource";
+import { actionInputKindDefaultIcon, analogInputKindDefaultIcon, analogOutputKindDefaultIcon, inputKindDefaultIcon, logicalTypeDefaultIcon, outputKindDefaultIcon } from "./icon-defaults";
+import { ActionInputResourceBase, AnalogInputResourceBase, AnalogOutputResourceBase, BaseActionInputKind, BaseAnalogInputKind, BaseAnalogOutputKind, BaseInputKind, BaseOutputKind, ComplexResourceBase, DigitalInputResourceBase, DigitalOutputResourceBase, TimerResourceBase, VirtualAnalogOutputResourceBase, VirtualDigitalInputResourceBase } from "./resource";
 
 export function digitalInput<
     TInputKind extends string = string,
@@ -73,4 +73,17 @@ export function virtualAnalogOutput<THost extends string = string>(
     props: Omit<VirtualAnalogOutputResourceBase<THost>, "type">
 ): VirtualAnalogOutputResourceBase<THost> {
     return { ...props, type: "virtualAnalogOutput", icon: props.icon ?? logicalTypeDefaultIcon.virtualAnalogOutput };
+}
+
+export function actionInput<
+    TActions extends string = string,
+    TMeta = unknown,
+    TActionInputKind extends string = string,
+    TEdge extends string = string,
+    TDevice extends string | number = string,
+    TPin extends number | string = number | string
+>(
+    props: Omit<ActionInputResourceBase<TActions, TMeta, TActionInputKind, TEdge, TDevice, TPin>, "type">
+): ActionInputResourceBase<TActions, TMeta, TActionInputKind, TEdge, TDevice, TPin> {
+    return { ...props, type: "actionInput", icon: props.icon ?? actionInputKindDefaultIcon[props.actionInputKind as BaseActionInputKind] ?? "control:button" };
 }

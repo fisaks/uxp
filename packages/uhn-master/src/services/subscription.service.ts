@@ -5,6 +5,7 @@ import mqttService from "./mqtt.service";
 type SubscriptionEventMap = {
     deviceState: [topic: string, payload: unknown];
     devicePinState: [topic: string, payload: unknown];
+    deviceActionEvent: [topic: string, payload: unknown];
     signalState: [topic: string, payload: unknown];
     logicalResourceState: [topic: string, payload: unknown];
     muteEvent: [topic: string, payload: unknown];
@@ -68,6 +69,11 @@ class SubscriptionService extends EventEmitter<SubscriptionEventMap> {
         mqttService.subscribe("uhn/+/device/+/pin/+", (topic, payload) => {
             const parsed = tryParseJson(payload);
             this.emit("devicePinState", topic, parsed);
+        });
+
+        mqttService.subscribe("uhn/+/device/+/action/+", (topic, payload) => {
+            const parsed = tryParseJson(payload);
+            this.emit("deviceActionEvent", topic, parsed);
         });
 
         mqttService.subscribe("uhn/+/resource/signal/+", (topic, payload) => {

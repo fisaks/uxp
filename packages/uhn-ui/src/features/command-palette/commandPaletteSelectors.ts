@@ -1,7 +1,7 @@
 import { createSelector } from "@reduxjs/toolkit";
-import { RuntimeComplexResource, RuntimeInteractionView, RuntimeLocation, RuntimeResource, RuntimeScene, RuntimeViewCommandTarget, UhnResourceCommand } from "@uhn/common";
-import { favoriteApi } from "../favorite/favorite.api";
+import { RuntimeComplexResource, RuntimeLocation, RuntimeResource, RuntimeScene, RuntimeViewCommandTarget, UhnResourceCommand } from "@uhn/common";
 import { LOCATION_FAVORITES } from "../favorite/components/FavoritesSection";
+import { favoriteApi } from "../favorite/favorite.api";
 import { selectAllLocations } from "../location/locationSelectors";
 import { selectResourceById } from "../resource/resourceSelector";
 import { selectRuntimeStateByResourceId } from "../runtime-state/runtimeStateSelector";
@@ -48,6 +48,7 @@ function buildViewActions(
     const cmd = view.command;
     if (!cmd) return [];
 
+    const sideEffects = view.sideEffects;
     const itemName = view.name;
     const icon = view.icon;
     const group: PaletteGroup = "Actions";
@@ -86,6 +87,7 @@ function buildViewActions(
                     resourceId: active ? (deactivateTarget?.resourceId ?? resourceId) : resourceId,
                     command: active ? (deactivateCommand ?? command) : command,
                 },
+                ...(sideEffects?.length && { sideEffects }),
                 activateAction: { resourceId, command },
                 deactivateAction: voiceDeactivateCmd
                     ? { resourceId: voiceDeactivateCmd.resourceId ?? resourceId, command: voiceDeactivateCommand ?? command }
@@ -113,6 +115,7 @@ function buildViewActions(
                     type: "send-command", resourceId,
                     command: { type: "setAnalog", value: active ? min : (defaultOnValue ?? max) },
                 },
+                ...(sideEffects?.length && { sideEffects }),
                 activateAction: { resourceId, command: { type: "setAnalog", value: defaultOnValue ?? max } },
                 deactivateAction: { resourceId, command: { type: "setAnalog", value: min } },
             });
@@ -124,6 +127,7 @@ function buildViewActions(
                 icon, group, active,
                 searchText: buildSearchText(group, locationName, itemName, view.id, desc, "set adjust dim", kw),
                 analogFallback: true,
+                ...(sideEffects?.length && { sideEffects }),
                 action: {
                     type: "open-analog-popup", resourceId,
                     command: { type: "setAnalog", value: 0 },
@@ -142,7 +146,28 @@ function buildViewActions(
                 secondary: locationName,
                 icon, group, active,
                 searchText: buildSearchText(group, locationName, itemName, view.id, desc, "clear reset timer", kw),
+                ...(sideEffects?.length && { sideEffects }),
                 action: { type: "send-command", resourceId: cmd.resourceId, command: { type: "clearTimer" } },
+            }];
+        }
+
+        case "action": {
+            if (!cmd.action) return [];
+            const command: UhnResourceCommand = {
+                type: "action",
+                action: cmd.action,
+                ...(cmd.metadata && { metadata: cmd.metadata }),
+            };
+            return [{
+                id: `action:action:view:${view.id}:${location.id}`,
+                label: active ? `Turn off ${itemName}` : `Turn on ${itemName}`,
+                secondary: locationName,
+                icon, group, active,
+                searchText: buildSearchText(group, locationName, itemName, view.id, desc, "turn on off toggle switch", kw),
+                ...(sideEffects?.length && { sideEffects }),
+                action: { type: "send-command", resourceId: cmd.resourceId, command },
+                activateAction: { resourceId: cmd.resourceId, command },
+                deactivateAction: { resourceId: cmd.resourceId, command },
             }];
         }
     }

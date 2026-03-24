@@ -137,6 +137,8 @@ function serializeTrigger(t: RuleTrigger): RuntimeRuleTriggerInfo {
             return { kind: "longPress", resourceId, thresholdMs: t.thresholdMs };
         case "timer":
             return { kind: "timer", resourceId, event: t.event };
+        case "action":
+            return { kind: "action", resourceId, action: t.action };
     }
 }
 
@@ -154,6 +156,12 @@ function serializeRule(rule: BlueprintRule): RuntimeRuleInfo {
     };
 }
 
+/**
+ * Loads, validates, filters, and indexes blueprint rules from compiled JS files.
+ * Filters rules by runtime mode (edge rules only on matching edge, master rules on master).
+ * Indexes rules by trigger resource ID for fast lookup when the rule engine
+ * receives a trigger event. Serializes rules to RuntimeRuleInfo for IPC/UI.
+ */
 export class RuntimeRulesService {
     private readonly rules: BlueprintRule[];
     private readonly allValidatedRules: BlueprintRule[];

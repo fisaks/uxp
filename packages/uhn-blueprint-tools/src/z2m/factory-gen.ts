@@ -35,6 +35,7 @@ export function generateFactoryFile(devices: ParsedDevice[], edge: string, mappi
     const allInputDeviceNames = new Set<string>();
     const allAnalogInputDeviceNames = new Set<string>();
     const allAnalogOutputDeviceNames = new Set<string>();
+    const allActionInputDeviceNames = new Set<string>();
 
     for (const device of devices) {
         for (const prop of device.properties) {
@@ -65,6 +66,10 @@ export function generateFactoryFile(devices: ParsedDevice[], edge: string, mappi
                     const kind = mapAnalogOutputKind(prop.pin);
                     if (needsZigbeeFactory("analogOutput", kind))
                         addToKindMap(analogOutputDevices, kind, device.friendlyName);
+                    break;
+                }
+                case "actionInput": {
+                    allActionInputDeviceNames.add(device.friendlyName);
                     break;
                 }
             }
@@ -100,6 +105,7 @@ export function generateFactoryFile(devices: ParsedDevice[], edge: string, mappi
     lines.push(`export type ZigbeeDigitalInputDevice${edgeSuffix} = ${formatUnion(allInputDeviceNames)};`);
     lines.push(`export type ZigbeeAnalogInputDevice${edgeSuffix} = ${formatUnion(allAnalogInputDeviceNames)};`);
     lines.push(`export type ZigbeeAnalogOutputDevice${edgeSuffix} = ${formatUnion(allAnalogOutputDeviceNames)};`);
+    lines.push(`export type ZigbeeActionInputDevice${edgeSuffix} = ${formatUnion(allActionInputDeviceNames)};`);
     lines.push(``);
 
     const edgeConst = `EDGE_${edge.toUpperCase().replace(/[^A-Z0-9]/g, "_")}_ZIGBEE`;
@@ -152,6 +158,9 @@ export function generateFactoryFile(devices: ParsedDevice[], edge: string, mappi
         lines.push(`}`);
         lines.push(``);
     }
+
+    // Generate per-device action union types (meta maps go in resource files — author-editable)
+
 
     return lines.join("\n");
 }
@@ -219,4 +228,10 @@ function mapAnalogOutputKind(pin: string): string {
     if (pin === "brightness") return "dimmer";
     if (pin === "color_temp") return "colorTemp";
     return "control";
+}
+
+function inferActionInputKind(device: ParsedDevice): string {
+    const desc = (device.description ?? "").toLowerCase();
+    if (/\b(remote|controller)\b/.test(desc)) return "remote";
+    return "button";
 }

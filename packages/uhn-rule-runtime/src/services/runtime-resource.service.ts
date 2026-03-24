@@ -1,6 +1,6 @@
 // services/runtime-resource.service.ts
-import { ComplexComputeFn, ComplexResourceBase, ComplexSubResourceRef, ResourceBase, ResourceType } from "@uhn/blueprint";
-import { humanizeResourceId, isRuntimeResourceObject, RuntimeComplexResource, RuntimeComplexSubResourceRef, RuntimeResource, RuntimeResourceList } from "@uhn/common";
+import { ActionInputResourceBase, ComplexComputeFn, ComplexResourceBase, ComplexSubResourceRef, ResourceBase, ResourceType } from "@uhn/blueprint";
+import { humanizeResourceId, isRuntimeResourceObject, RuntimeActionInputResource, RuntimeComplexResource, RuntimeComplexSubResourceRef, RuntimeResource, RuntimeResourceList } from "@uhn/common";
 import fs from "fs-extra";
 import path from "path";
 import { runtimeOutput } from "../io/runtime-output";
@@ -79,6 +79,17 @@ async function collectResources(resourcesDir: string): Promise<CollectResult> {
                         } satisfies RuntimeComplexResource;
                         runtimeResource = complexRuntime;
                     }
+                    // Serialize actionInput resource fields
+                    if (runtimeResource.type === "actionInput") {
+                        const actionInput = runtimeResource as unknown as ActionInputResourceBase;
+                        const actionInputRuntime = {
+                            ...runtimeResource,
+                            type: "actionInput",
+                            actionInputKind: actionInput.actionInputKind,
+                            actions: actionInput.actions ?? [],
+                        } satisfies RuntimeActionInputResource;
+                        runtimeResource = actionInputRuntime;
+                    }
                     allResources.push(runtimeResource);
                 } else {
                     console.warn(
@@ -93,6 +104,13 @@ async function collectResources(resourcesDir: string): Promise<CollectResult> {
     return { resources: allResources, complexComputeEntries };
 }
 
+/**
+ * Loads and indexes blueprint resources from compiled JS files on disk.
+ * Serializes blueprint resource objects into RuntimeResource format for IPC
+ * (resource objects → string IDs). Extracts complex compute functions
+ * in-process (not serializable). Provides by-ID lookup for the rule engine,
+ * command handlers, and state reader.
+ */
 export class RuntimeResourceService {
     readonly complexComputeEntries: ComplexComputeEntry[];
     private readonly resources: RuntimeResourceList;

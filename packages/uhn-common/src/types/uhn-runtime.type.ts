@@ -1,5 +1,5 @@
 
-import { AnalogInputResourceBase, AnalogOutputOption, AnalogOutputResourceBase, BlueprintIcon, DigitalInputResourceBase, DigitalOutputResourceBase, LogicalResourceType, PhysicalResourceType, ResourceType, RuntimeRuleAction, StateDisplayAggregation, StateDisplayStyle, ViewActiveCondition, ViewCommandType, ViewStateAggregation } from "@uhn/blueprint";
+import { ActionInputResourceBase, AnalogInputResourceBase, AnalogOutputOption, AnalogOutputResourceBase, BlueprintIcon, DigitalInputResourceBase, DigitalOutputResourceBase, LogicalResourceType, PhysicalResourceType, ResourceType, RuntimeRuleAction, StateDisplayAggregation, StateDisplayStyle, ViewActiveCondition, ViewCommandType, ViewStateAggregation } from "@uhn/blueprint";
 
 // --- Runtime rule serialization (for IPC + overview) ---
 
@@ -8,7 +8,8 @@ export type RuntimeRuleTriggerInfo =
   | { kind: "threshold"; resourceId: string; direction: "above" | "below"; threshold: number; hysteresis?: number }
   | { kind: "tap"; resourceId: string }
   | { kind: "longPress"; resourceId: string; thresholdMs: number }
-  | { kind: "timer"; resourceId: string; event: "activated" | "deactivated" };
+  | { kind: "timer"; resourceId: string; event: "activated" | "deactivated" }
+  | { kind: "action"; resourceId: string; action: string };
 
 export type RuntimeRuleInfo = {
   id: string;
@@ -171,8 +172,14 @@ export type RuntimeVirtualAnalogOutputResource = RuntimeLogicalResource & {
   options?: AnalogOutputOption[];
 };
 
+export type RuntimeActionInputResource = RuntimePhysicalResource & {
+  type: "actionInput";
+  actionInputKind: ActionInputResourceBase["actionInputKind"];
+  actions: string[];
+};
+
 export function isPhysicalResource(r: RuntimeResource): r is RuntimePhysicalResource {
-    return r.type === "digitalInput" || r.type === "digitalOutput" || r.type === "analogInput" || r.type === "analogOutput";
+    return r.type === "digitalInput" || r.type === "digitalOutput" || r.type === "analogInput" || r.type === "analogOutput" || r.type === "actionInput";
 }
 
 export function isLogicalResource(r: RuntimeResource): r is RuntimeLogicalResource {
@@ -233,12 +240,26 @@ export type RuleRuntimeLongPressCommand = {
   };
 };
 
+/** Action event → runtime. Triggers action rules in the runtime.
+ *  Sources: physical button (Z2M transport), UI tap (WebSocket), or edge relay (MQTT). */
+export type RuleRuntimeActionEventCommand = {
+  kind: "event";
+  cmd: "actionEvent";
+  payload: {
+    resourceId: string;
+    action: string;
+    metadata?: Record<string, unknown>;
+    timestamp: number;
+  };
+};
+
 export type RuleRuntimeCommand = RuleRuntimeStateUpdateCommand
   | RuleRuntimeStateFullUpdateCommand
   | RuleRuntimeTimerCommand
   | RuleRuntimeMuteCommand
   | RuleRuntimeTapCommand
-  | RuleRuntimeLongPressCommand;
+  | RuleRuntimeLongPressCommand
+  | RuleRuntimeActionEventCommand;
 
 
 export type RuleRuntimeResourcesLoadedMessage = {
@@ -355,6 +376,10 @@ export type RuleRuntimeCommandMap = {
     request: Omit<RuleRuntimeLongPressCommand, "kind">;
     response: void;
   };
+  actionEvent: {
+    request: Omit<RuleRuntimeActionEventCommand, "kind">;
+    response: void;
+  };
 };
 
 export type FireAndForgetCmdKey = keyof RuleRuntimeCommandMap;
@@ -377,6 +402,8 @@ export type RuntimeViewCommandTarget = {
     unit?: string;
     defaultOnValue?: number;
     options?: AnalogOutputOption[];
+    action?: string;
+    metadata?: Record<string, unknown>;
 };
 
 export type RuntimeViewCommand = RuntimeViewCommandTarget & {
@@ -417,8 +444,15 @@ export type RuntimeInteractionView = {
     stateAggregation?: ViewStateAggregation;
     activeWhen?: ViewActiveCondition;
     command?: RuntimeViewCommand;
+    sideEffects?: RuntimeActionSideEffect[];
     stateDisplay?: RuntimeViewStateDisplay;
     controls?: RuntimeViewControl[];
+};
+
+export type RuntimeActionSideEffect = {
+    resourceId: string;
+    action: string;
+    metadata?: Record<string, unknown>;
 };
 
 // --- Runtime Location types (resourceId/viewId instead of objects) ---

@@ -119,7 +119,13 @@ The home automation system uses an MQTT-based architecture with a master-edge pa
 
 **Single control path — UI must never bypass the rule system.**
 
-All system behavior flows through: `emitSignal(resource) → rule → resource`. This applies to physical buttons, UI interactions, voice commands, and API calls equally. InteractionViews simulate physical interaction (e.g., pressing a button) rather than controlling resources directly. This ensures rules always fire and side effects are never skipped.
+All system behavior flows through: `emitSignal(resource) → rule → resource`. This applies to physical buttons, UI interactions, voice commands, and API calls equally. InteractionViews simulate physical interaction (e.g., pressing a button) rather than controlling resources directly. This ensures rules always fire and side effects are never skipped. Action events from `actionInput` resources (Zigbee button presses, remote control actions) follow the same principle: `action → rule → resource`.
+
+**Resource types include `actionInput` for transient events.** Unlike other physical resources, `actionInput` has no persistent state — it represents one-shot device events (e.g., Zigbee button presses). Actions bypass the P/S/C state model and are consumed by rules via `.onAction()` triggers.
+
+**`viewCommand()` is the standard factory for view commands.** It provides named parameter syntax with type-safe overloads that constrain resource types per command type. Supports toggle, tap, longPress, setAnalog, clearTimer, and action command types.
+
+**`sideEffects` on views handle Zigbee binding coexistence.** When a physical button controls a device via Zigbee binding AND reports to Z2M for rules, the UI view needs both paths: the primary command controls the device directly, and `sideEffects` fires the corresponding action events so rules also execute from the UI. Side effects fire from tile tap, command palette, and voice commands.
 
 **Command palette and UI actions must only target location-assigned items.** If a view, resource, or scene is assigned to a location, it means the blueprint author intentionally exposed it as a user interaction point with proper rule chains backing it. Items that exist only in the technical section are for inspection, not interaction. Generating commands that bypass this (e.g., sending directly to a relay instead of through its view/button) would skip rules and miss side effects.
 

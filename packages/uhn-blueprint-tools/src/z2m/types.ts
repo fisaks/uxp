@@ -29,7 +29,7 @@ export type Z2MDevice = {
 };
 
 // Parsed UHN property from Z2M expose
-export type UHNResourceType = "digitalOutput" | "digitalInput" | "analogOutput" | "analogInput";
+export type UHNResourceType = "digitalOutput" | "digitalInput" | "analogOutput" | "analogInput" | "actionInput";
 
 export type UHNProperty = {
     pin: string;
@@ -45,6 +45,8 @@ export type UHNProperty = {
     writable: boolean;
     isOnOff: boolean;
     presets?: { name: string; value: number }[];
+    /** Action values for actionInput resources (e.g. ["toggle", "brightness_up_click"]) */
+    actionValues?: string[];
 };
 
 export type ParsedDevice = {

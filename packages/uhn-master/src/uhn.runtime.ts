@@ -5,6 +5,7 @@ import { initBlueprintLocationDispatcher } from "./dispatchers/blueprint-locatio
 import { initBlueprintSceneDispatcher } from "./dispatchers/blueprint-scene.dispatcher";
 import { initRuleDispatcher } from "./dispatchers/rule.dispatcher";
 import { initBlueprintViewDispatcher } from "./dispatchers/blueprint-view.dispatcher";
+import { initActionEventDispatcher } from "./dispatchers/action-event.dispatcher";
 import { initMuteEventDispatcher } from "./dispatchers/mute-event.dispatcher";
 import { initRuleActionDispatcher } from "./dispatchers/rule-action.dispatcher";
 import { initStateRuntimeDispatcher } from "./dispatchers/state-runtime.dispatcher";
@@ -77,6 +78,7 @@ const setupWebDispatchers = () => {
     initStateRuntimeDispatcher();
     initRuleActionDispatcher();
     initMuteEventDispatcher();
+    initActionEventDispatcher();
     initUhnHealthDispatcher();
     initUhnSystemDispatcher();
     initRuntimeOverviewDispatcher();

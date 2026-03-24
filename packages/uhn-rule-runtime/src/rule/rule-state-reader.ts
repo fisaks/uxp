@@ -41,6 +41,12 @@ export function createRuleStateReader({ stateService }: { stateService: RuntimeS
                         throw new ResourceStateTypeMismatchError(r.id, r.type, s.value);
                     }
                     return s.value as StateValueByResourceType<T>;
+                case "actionInput":
+                    // actionInput has no persistent state — getState() should not be called.
+                    // Use ctx.cause.action and ctx.cause.metadata instead.
+                    // Throws ResourceStateTypeMismatchError (not ResourceStateNotAvailableError)
+                    // to avoid triggering edge→master resource escalation.
+                    throw new ResourceStateTypeMismatchError(r.id, r.type, s.value);
                 default:
                     assertNever(r.type, `Unsupported resource type "${r.type}" for getState`);
             }

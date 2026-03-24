@@ -74,6 +74,12 @@ The project is organized as a **TypeScript** monorepo with the following package
 - **`uxp-bff-common`**: Shared utilities for UXP remote applications.
 - **`uxp-common`**: Shared utilities and types shared across UXP UI, BFF, and remote applications.
 - **`uxp-ui`**: Frontend for the UXP.
+- **`uhn-blueprint`**: Blueprint type system for UHN device resources, rules, views, scenes, and locations.
+- **`uhn-blueprint-tools`**: CLI tools for blueprint projects (Z2M device import, resource/view generation).
+- **`uhn-common`**: Shared types for UHN (runtime IPC, WebSocket messages, resource state).
+- **`uhn-master`**: UHN Master service — state aggregation, rule runtime, WebSocket API.
+- **`uhn-rule-runtime`**: Rule execution engine — runs in sandboxed Node.js, loaded from compiled blueprints.
+- **`uhn-ui`**: UHN frontend — views, locations, command palette, voice commands.
 - **`uxp-ui-lib`**: Shared UI components for the UXP and its remote applications.
 
 ![Architecture Diagram](out/docs/uxp/uxp.png)

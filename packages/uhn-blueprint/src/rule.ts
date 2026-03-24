@@ -1,5 +1,7 @@
 // packages/uhn-blueprint/src/rule.ts
 import type {
+    ActionInputResourceBase,
+    ActionMetaMap,
     AnalogInputResourceBase,
     AnalogOutputResourceBase,
     ComplexResourceBase,
@@ -48,7 +50,8 @@ export type TriggerEvent =
     | "timerActivated"
     | "timerDeactivated"
     | "thresholdAbove"
-    | "thresholdBelow";
+    | "thresholdBelow"
+    | "action";
 
 export type NumericTriggerOptions = { hysteresis?: number };
 
@@ -80,6 +83,11 @@ export type RuleTrigger =
         kind: "timer";
         resource: TimerResourceBase;
         event: "activated" | "deactivated";
+    }
+    | {
+        kind: "action";
+        resource: ActionInputResourceBase<any, any>;
+        action: string;
     };
 
 export type RuleCause = {
@@ -89,6 +97,9 @@ export type RuleCause = {
     // tap / longPress
     pressedMs?: number;
     thresholdMs?: number;
+    // action (actionInput)
+    action?: string;
+    metadata?: unknown;
 };
 
 export type RuleTimers = {
@@ -149,6 +160,39 @@ export type RuleAction =
  */
 export function ruleActions<T extends RuleAction[]>(actions: T): T {
     return actions;
+}
+
+/**
+ * Type guard that narrows `ctx.cause` based on the triggering resource and action.
+ *
+ * For actionInput resources, narrows `cause.action` to the specific action string
+ * and `cause.metadata` to the per-action metadata type from the resource's `TMeta` map.
+ *
+ * Usage:
+ *   if (isCausedBy(ctx, panel, "arrow_left_release")) {
+ *       ctx.cause.action    // "arrow_left_release"
+ *       ctx.cause.metadata  // { action_duration?: number } (from TMeta)
+ *   }
+ *
+ * For non-action resources, checks that the cause resource matches:
+ *   if (isCausedBy(ctx, someButton)) {
+ *       // ctx.cause.resource is someButton
+ *   }
+ */
+export function isCausedBy<
+    TActions extends string,
+    TAction extends TActions,
+    TMeta extends ActionMetaMap<TActions>,
+>(
+    ctx: RuleContext,
+    resource: ActionInputResourceBase<TActions, TMeta, any, any, any, any>,
+    action: TAction,
+): ctx is RuleContext & { cause: RuleCause & { action: TAction; metadata: TMeta[TAction] } };
+export function isCausedBy(ctx: RuleContext, resource: ResourceBase<ResourceType>): boolean;
+export function isCausedBy(ctx: RuleContext, resource: ResourceBase<ResourceType>, action?: string): boolean {
+    if (ctx.cause.resource.id !== resource.id) return false;
+    if (action !== undefined) return ctx.cause.action === action;
+    return true;
 }
 
 /**
@@ -281,6 +325,8 @@ export type RuleBuilder = {
     onTap(resource: DigitalInputResourceBase<"button"> | ComplexResourceBase | VirtualDigitalInputResourceBase): RuleBuilder;
     onLongPress(resource: DigitalInputResourceBase<"button">, thresholdMs: number): RuleBuilder;
 
+    onAction<TActions extends string>(resource: ActionInputResourceBase<TActions, any>, action: TActions): RuleBuilder;
+
     onTimerActivated(timer: TimerResourceBase): RuleBuilder;
     onTimerDeactivated(timer: TimerResourceBase): RuleBuilder;
 
@@ -382,6 +428,15 @@ export function rule(
                 kind: "longPress",
                 resource: resource,
                 thresholdMs,
+            });
+            return this;
+        },
+
+        onAction(resource, action) {
+            meta.triggers.push({
+                kind: "action",
+                resource: resource,
+                action,
             });
             return this;
         },

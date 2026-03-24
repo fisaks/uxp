@@ -1,5 +1,5 @@
 import { BlueprintIcon } from "@uhn/blueprint";
-import { LocationItemRef, UhnResourceCommand } from "@uhn/common";
+import { LocationItemRef, RuntimeActionSideEffect, UhnResourceCommand } from "@uhn/common";
 
 export type QuickActionId = "expand-all" | "collapse-all" | "refresh" | "scroll-to-top" | "clear-filter";
 
@@ -62,4 +62,6 @@ export type PaletteItem = {
     activateAction?: { resourceId: string; command: UhnResourceCommand };
     /** Action for voice "off" intent (deactivate). */
     deactivateAction?: { resourceId: string; command: UhnResourceCommand };
+    /** Action side effects from the view — fired alongside the primary command. */
+    sideEffects?: RuntimeActionSideEffect[];
 };

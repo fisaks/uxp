@@ -117,4 +117,7 @@ export function isTapTrigger(trigger: RuleTrigger): trigger is Extract<RuleTrigg
 export function isTimerTrigger(trigger: RuleTrigger): trigger is Extract<RuleTrigger, { kind: "timer" }> {
     return trigger.kind === "timer";
 }
+export function isActionTrigger(trigger: RuleTrigger): trigger is Extract<RuleTrigger, { kind: "action" }> {
+    return trigger.kind === "action";
+}
 

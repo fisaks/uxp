@@ -4,6 +4,8 @@
 import type { BlueprintIcon } from "./icon";
 import { commandTypeDefaultIcon } from "./icon-defaults";
 import type {
+    ActionInputResourceBase,
+    ActionMetaMap,
     AnalogOutputOption,
     AnalogOutputResourceBase,
     ComplexResourceBase,
@@ -38,7 +40,7 @@ export type ViewStateSource = {
 /* ------------------------------------------------------------------ */
 /* Command                                                             */
 /* ------------------------------------------------------------------ */
-export type ViewCommandType = "tap" | "toggle" | "longPress" | "setAnalog" | "clearTimer";
+export type ViewCommandType = "tap" | "toggle" | "longPress" | "setAnalog" | "clearTimer" | "action";
 
 export type ViewCommandTarget =
     | {
@@ -76,6 +78,13 @@ export type ViewCommandTarget =
     | {
         resource: TimerResourceBase;
         type: "clearTimer";
+    }
+    | {
+        resource: ActionInputResourceBase<any, any>;
+        type: "action";
+        action: string;
+        /** Optional metadata sent with the action command (e.g. simulated action_duration). */
+        metadata?: Record<string, unknown>;
     };
 
 export type ViewCommand = ViewCommandTarget & {
@@ -170,6 +179,15 @@ export type InteractionView = {
      *  - omitted -> display-only tile */
     command?: ViewCommand;
 
+    /** Action side effects fired alongside the primary command on tap.
+     *  When a physical Zigbee button is bound to a light, the button controls
+     *  the light directly (Zigbee binding) AND reports the press to Z2M, which
+     *  triggers rules for additional behavior (timers, muting, logging, etc.).
+     *  The UI view must replicate both: the primary command controls the device
+     *  (same as the binding does physically), and side effects fire the same
+     *  action events so the rules also execute from the UI. */
+    sideEffects?: ActionSideEffect[];
+
     /** Secondary information shown on the tile */
     stateDisplay?: ViewStateDisplay;
 
@@ -181,6 +199,27 @@ export type InteractionView = {
 };
 
 /* ------------------------------------------------------------------ */
+/* Side Effects                                                        */
+/* ------------------------------------------------------------------ */
+/** An action event fired as a side effect alongside the primary view command. */
+export type ActionSideEffect = {
+    resource: ActionInputResourceBase<any, any>;
+    action: string;
+    metadata?: Record<string, unknown>;
+};
+
+/**
+ * Type-safe helper for building an action side effect.
+ * Action and metadata are constrained by the resource's type parameters.
+ */
+export function actionSideEffect<TActions extends string, TAction extends TActions, TMeta extends ActionMetaMap<TActions>>(opts: {
+    resource: ActionInputResourceBase<TActions, TMeta, any, any, any, any>;
+    action: TAction;
+} & ([TMeta[TAction]] extends [never] ? {} : { metadata: TMeta[TAction] })): ActionSideEffect {
+    return opts as ActionSideEffect;
+}
+
+/* ------------------------------------------------------------------ */
 /* Factory                                                             */
 /* ------------------------------------------------------------------ */
 export function view(props: InteractionView): InteractionView {
@@ -189,4 +228,57 @@ export function view(props: InteractionView): InteractionView {
         ...props,
         icon: props.icon ?? stateFromIcon ?? (props.command ? commandTypeDefaultIcon[props.command.type] : "status:dashboard"),
     };
+}
+
+/* ------------------------------------------------------------------ */
+/* Command factory                                                     */
+/* ------------------------------------------------------------------ */
+
+/** Create a toggle command. */
+export function viewCommand(opts: {
+    resource: DigitalInputResourceBase | VirtualDigitalInputResourceBase | DigitalOutputResourceBase;
+    type: "toggle";
+    onDeactivate?: ViewCommandTarget;
+}): ViewCommand;
+/** Create a tap command. */
+export function viewCommand(opts: {
+    resource: DigitalInputResourceBase | VirtualDigitalInputResourceBase | ComplexResourceBase;
+    type: "tap";
+    onDeactivate?: ViewCommandTarget;
+}): ViewCommand;
+/** Create a clearTimer command. */
+export function viewCommand(opts: {
+    resource: TimerResourceBase;
+    type: "clearTimer";
+    onDeactivate?: ViewCommandTarget;
+}): ViewCommand;
+/** Create a longPress command. */
+export function viewCommand(opts: {
+    resource: DigitalInputResourceBase;
+    type: "longPress";
+    holdMs: number;
+    simulateHold?: boolean;
+    onDeactivate?: ViewCommandTarget;
+}): ViewCommand;
+/** Create a setAnalog command. */
+export function viewCommand(opts: {
+    resource: AnalogOutputResourceBase | VirtualAnalogOutputResourceBase;
+    type: "setAnalog";
+    min?: number;
+    max?: number;
+    step?: number;
+    unit?: string;
+    defaultOnValue?: number;
+    options?: AnalogOutputOption[];
+    onDeactivate?: ViewCommandTarget;
+}): ViewCommand;
+/** Create an action command with per-action type-safe metadata. */
+export function viewCommand<TActions extends string, TAction extends TActions, TMeta extends ActionMetaMap<TActions>>(opts: {
+    resource: ActionInputResourceBase<TActions, TMeta, any, any, any, any>;
+    type: "action";
+    action: TAction;
+    onDeactivate?: ViewCommandTarget;
+} & ([TMeta[TAction]] extends [never] ? {} : { metadata: TMeta[TAction] })): ViewCommand;
+export function viewCommand(opts: any): ViewCommand {
+    return opts;
 }

@@ -18,6 +18,7 @@ export type ResourceEventMap = {
 class BlueprintResourceService extends EventEmitter<ResourceEventMap> {
     private resources: RuntimeResourceList = [];
     private resourceById: Map<string, RuntimeResource> = new Map();
+    private resourceByAddress: Map<string, RuntimeResource> = new Map();
     private rawResources: RuntimeResourceList = [];
     private resourceLoaded = false;
     private validationErrors: ResourceValidationError[] = [];
@@ -56,8 +57,13 @@ class BlueprintResourceService extends EventEmitter<ResourceEventMap> {
         this.resources = validatedResources.resources;
         this.validationErrors = validatedResources.validationErrors;
         this.resourceById.clear();
+        this.resourceByAddress.clear();
         this.resources.forEach(resource => {
             this.resourceById.set(resource.id, resource);
+            const addrKey = makeAddressKey(resource);
+            if (addrKey) {
+                this.resourceByAddress.set(addrKey, resource);
+            }
         });
 
         AppLogger.isDebugLevel() && AppLogger.debug({
@@ -244,6 +250,7 @@ class BlueprintResourceService extends EventEmitter<ResourceEventMap> {
         });
         this.resources = [];
         this.resourceById.clear();
+        this.resourceByAddress.clear();
         this.validationErrors = [];
         this.resourceLoaded = false;
         this.emit("resourcesCleared");
@@ -255,6 +262,10 @@ class BlueprintResourceService extends EventEmitter<ResourceEventMap> {
 
     getResourceById(id: string): RuntimeResource | undefined {
         return this.resourceById.get(id);
+    }
+
+    getResourceByAddress(edge: string, device: string, type: string, pin: string): RuntimeResource | undefined {
+        return this.resourceByAddress.get(`${edge}:${device}:${type}:${pin}`);
     }
 
     findResourcesByIds(ids: string[] | undefined): RuntimeResourceList {

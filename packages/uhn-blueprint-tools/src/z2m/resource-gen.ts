@@ -42,15 +42,42 @@ export function generateResourceFile(device: ParsedDevice, edge: string, mapping
     }
     lines.push("");
 
+    // Generate action union + per-action metadata map for actionInput devices (author-editable)
+    const hasActionInput = device.properties.some(p => p.uhnType === "actionInput" && p.actionValues?.length);
+    if (hasActionInput) {
+        const actionUnionName = `${capitalize(prefix)}Actions`;
+        const metaName = `${capitalize(prefix)}Meta`;
+        const actionValues = device.properties
+            .filter(p => p.uhnType === "actionInput" && p.actionValues?.length)
+            .flatMap(p => p.actionValues!);
+        lines.push(`// Unfiltered from Z2M — Zigbee-bound devices may silently consume some actions.`);
+        lines.push(`type ${actionUnionName} = ${actionValues.map(a => `"${a}"`).join(" | ")};`);
+        lines.push(``);
+        lines.push(`/** Per-action metadata. Change \`never\` to the metadata type for actions`);
+        lines.push(` *  that carry action_* fields (check runtime logs to discover them). */`);
+        lines.push(`type ${metaName} = {`);
+        for (const action of actionValues) {
+            lines.push(`    "${action}": never;`);
+        }
+        lines.push(`};`);
+        lines.push("");
+    }
+
     const exportKeyword = autoExport ? "export " : "";
 
     for (const prop of device.properties) {
         const varName = resourceVarName(prefix, prop.pin);
         const ref = resolveFactory(prop, device, mapping);
-        const props = buildProps(prop, device.friendlyName, edgeConst);
+        const props = buildProps(prop, device, edgeConst);
         const numericPresets = (prop.presets ?? []).filter(p => typeof p.value === "number");
 
-        lines.push(`${exportKeyword}const ${varName} = ${ref.factory}({`);
+        // ActionInput: add generic type parameter for action union
+        let genericSuffix = "";
+        if (prop.uhnType === "actionInput" && prop.actionValues?.length) {
+            genericSuffix = `<${capitalize(prefix)}Actions, ${capitalize(prefix)}Meta>`;
+        }
+
+        lines.push(`${exportKeyword}const ${varName} = ${ref.factory}${genericSuffix}({`);
         for (const p of props) {
             lines.push(`    ${p}`);
         }
@@ -79,6 +106,8 @@ export function getMappingKey(prop: UHNProperty, device: ParsedDevice): string {
             return `analogInput.${mapAnalogInputKind(prop.pin, prop.unit)}`;
         case "analogOutput":
             return `analogOutput.${mapAnalogOutputKind(prop.pin)}`;
+        case "actionInput":
+            return `actionInput.${inferActionInputKind(device)}`;
     }
 }
 
@@ -86,10 +115,13 @@ function resolveFactory(prop: UHNProperty, device: ParsedDevice, mapping: Factor
     const key = getMappingKey(prop, device);
     const ref = mapping[key];
     if (ref) return ref;
+    // actionInput defaults to base actionInput() from @uhn/blueprint (not a generated zigbee factory)
+    if (prop.uhnType === "actionInput") return { factory: "actionInput", import: "@uhn/blueprint" };
     return { factory: key, import: "@uhn/blueprint" };
 }
 
-function buildProps(prop: UHNProperty, deviceName: string, edgeConst: string): string[] {
+function buildProps(prop: UHNProperty, device: ParsedDevice, edgeConst: string): string[] {
+    const deviceName = device.friendlyName;
     const props: string[] = [];
     props.push(`device: "${deviceName}",`);
     props.push(`pin: "${prop.pin}",`);
@@ -107,6 +139,14 @@ function buildProps(prop: UHNProperty, deviceName: string, edgeConst: string): s
         if (prop.unit) props.push(`unit: ${JSON.stringify(prop.unit)},`);
         const precision = suggestDecimalPrecision(prop.pin, prop.unit);
         if (precision !== undefined) props.push(`decimalPrecision: ${precision},`);
+    }
+    if (prop.uhnType === "actionInput" && prop.actionValues?.length) {
+        props.push(`actionInputKind: "${inferActionInputKind(device)}",`);
+        props.push(`actions: [`);
+        for (const action of prop.actionValues) {
+            props.push(`    "${action}",`);
+        }
+        props.push(`],`);
     }
     return props;
 }
@@ -148,6 +188,12 @@ function mapAnalogOutputKind(pin: string): string {
     if (pin === "brightness") return "dimmer";
     if (pin === "color_temp") return "colorTemp";
     return "control";
+}
+
+function inferActionInputKind(device: ParsedDevice): string {
+    const desc = (device.description ?? "").toLowerCase();
+    if (/\b(remote|controller)\b/.test(desc)) return "remote";
+    return "button";
 }
 
 function suggestDecimalPrecision(pin: string, unit?: string): number | undefined {
