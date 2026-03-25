@@ -38,7 +38,17 @@ type ResourceTileProps = {
     linkTo?: string;
 };
 
-export const ResourceTile: React.FC<ResourceTileProps> = ({ resource, state, nameOverride, mode = "details", onRemove, linkTo }) => {
+/**
+ * Wrapped in React.memo for virtualized grid performance — only re-renders when
+ * props change (shallow comparison). Internal useSelector calls (command feedback,
+ * rules) still trigger re-renders when their specific data changes.
+ *
+ * When modifying this component or its children, ensure:
+ * - Props passed from the grid remain reference-stable between renders
+ * - New useSelector calls return stable references (use createSelector)
+ * - Child components that access Redux state don't cause unnecessary re-renders
+ */
+export const ResourceTile: React.FC<ResourceTileProps> = React.memo(({ resource, state, nameOverride, mode = "details", onRemove, linkTo }) => {
     const theme = useTheme();
     const portalContainer = usePortalContainerRef();
     const navigate = useNavigate();
@@ -321,5 +331,4 @@ export const ResourceTile: React.FC<ResourceTileProps> = ({ resource, state, nam
             })}
         </Card>
     );
-};
-    
+});

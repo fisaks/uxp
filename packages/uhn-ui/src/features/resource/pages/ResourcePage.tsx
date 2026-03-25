@@ -2,14 +2,14 @@ import MemoryIcon from "@mui/icons-material/Memory";
 import { Box, Typography } from "@mui/material";
 import { isPhysicalResource, isLogicalResource } from "@uhn/common";
 import { ReloadIconButton } from "@uxp/ui-lib";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useSelector } from "react-redux";
+import { useParams } from "react-router-dom";
 import { useUHNWebSocket } from "../../../app/UHNAppBrowserWebSocketManager";
 import { TechnicalSearchField } from "../../technical/components/TechnicalSearchField";
-import { useDeepLinkHighlight } from "../../technical/hooks/useDeepLinkHighlight";
 import { SearchIndexEntry, useTechnicalSearch } from "../../technical/hooks/useTechnicalSearch";
 import { TileRuntimeResource, TileRuntimeResourceState } from "../resource-ui.type";
-import { ResourceTileGrid } from "../components/ResourceTileGrid";
+import { ResourceTileGrid, ResourceTileGridHandle } from "../components/ResourceTileGrid";
 import { selectResourcesWithState } from "../resourceSelector";
 
 type ResourceWithState = { resource: TileRuntimeResource; state: TileRuntimeResourceState | undefined };
@@ -30,11 +30,18 @@ export const ResourcePage = () => {
     const { sendMessageAsync } = useUHNWebSocket();
     const [loading, setLoading] = useState(false);
     const allItems = useSelector(selectResourcesWithState);
+    const { itemId: highlightedTileId } = useParams<{ itemId: string }>();
+    const gridRef = useRef<ResourceTileGridHandle>(null);
 
-    const { highlightedTileId, highlightedTileRef, scrollToHighlightedTile } = useDeepLinkHighlight();
     const deepLinkLabel = highlightedTileId
         ? allItems.find(i => i.resource.id === highlightedTileId)?.resource.name ?? highlightedTileId
         : undefined;
+
+    const scrollToHighlightedTile = useCallback(() => {
+        if (highlightedTileId) {
+            gridRef.current?.scrollToId(highlightedTileId);
+        }
+    }, [highlightedTileId]);
 
     const searchIndex: SearchIndexEntry<ResourceWithState>[] = useMemo(
         () => allItems.map((item) => ({ item, text: buildSearchText(item) })),
@@ -74,7 +81,11 @@ export const ResourcePage = () => {
             />
             <Box mt={2}>
                 {filteredItems.length > 0 ? (
-                    <ResourceTileGrid items={filteredItems} highlightedTileId={highlightedTileId} highlightedTileRef={highlightedTileRef} />
+                    <ResourceTileGrid
+                        ref={gridRef}
+                        items={filteredItems}
+                        highlightedTileId={highlightedTileId}
+                    />
                 ) : (
                     <Typography color="text.secondary">
                         {searchTerm ? "No resources match your search." : "No resources available."}
