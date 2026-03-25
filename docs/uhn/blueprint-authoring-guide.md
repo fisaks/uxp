@@ -393,6 +393,63 @@ The generated factory provides type-safe device unions per edge. You can redirec
 - The `actionInputKind` is inferred from the device description: `"remote"` for devices described as "remote" or "controller", `"button"` for everything else
 - A warning comment on the action union noting that Zigbee-bound devices may silently consume some actions (the binding handles them before Z2M sees them)
 
+### IHC Project Import Tool
+
+The `ihc-import` command parses an LK IHC controller's project XML and generates blueprint resource files. It supports two modes: downloading the project XML from a live controller via SOAP, or reading from a local XML file.
+
+```bash
+pnpm add -D @uhn/blueprint-tools    # or link locally
+
+# Download project from controller and generate mapping only (first run)
+npx uhn-blueprint-tools ihc-import -H <ip> -P <port> -u <user> -p <pass> -c <controller> -M
+
+# Regenerate from cached XML after editing overrides
+npx uhn-blueprint-tools ihc-import -F .ihc/data/<controller>-project.xml --force -c <controller>
+```
+
+**IHC CLI options:**
+
+| Flag | Long | Description | Default |
+|------|------|-------------|---------|
+| `-F` | `--file <path>` | Path to local IHC project XML file | _(none, downloads via SOAP)_ |
+| `-H` | `--host <ip>` | IHC controller IP address (for SOAP download) | |
+| `-P` | `--port <port>` | IHC controller port | `443` |
+| `-u` | `--username <user>` | IHC username (for SOAP download) | |
+| `-p` | `--password <pass>` | IHC password (for SOAP download) | |
+| `-c` | `--controller <name>` | Controller device name (e.g. `"ihc2"`) | **required** |
+| `-e` | `--edge <name>` | Edge name for generated resources | `edge1` |
+| `-o` | `--output-dir <path>` | Output directory for generated files | `src` |
+| `-f` | `--force` | Regenerate existing files (preserves export state) | `false` |
+| `-x` | `--export` | Auto-export all generated resource consts | `false` |
+| `-M` | `--mapping-only` | Only update factory mapping, skip file generation | `false` |
+
+**Override files in `.ihc/`:**
+
+The import tool reads and writes several files in the `.ihc/` directory at the project root:
+
+| File | Purpose |
+|------|---------|
+| `factory-mapping.json` | Product-level factory overrides — maps IHC product types to blueprint factories. Auto-generated with defaults on first run, author-editable. |
+| `pin-mapping.json` | Per-resource factory and icon overrides. Keyed by hex resource ID. |
+| `name-overrides.json` | Per-resource variable name overrides. Keyed by hex resource ID. |
+| `translation-overrides.json` | Project-specific Swedish/Danish to English translations for location and product names. |
+| `exclude.json` | Exclude specific locations or pins from import by name or ID. |
+| `data/` | Cached project XML (downloaded via SOAP) and parsed JSON. |
+| `import-history.json` | Tracks which locations have been imported and when. |
+
+**Recommended workflow:**
+
+1. Run with `--mapping-only` (`-M`) to download the project and generate the factory mapping without creating files.
+2. Review `.ihc/factory-mapping.json` and redirect IHC product types to your project's own factory functions where appropriate.
+3. Review `.ihc/pin-mapping.json` for per-resource overrides (factory, icon).
+4. Add any translation overrides in `.ihc/translation-overrides.json` for location names the tool does not translate correctly.
+5. Add any exclusions in `.ihc/exclude.json` (e.g. utility locations or controller link modules).
+6. Run again without `--mapping-only` to generate the resource files.
+
+**Generated file structure:** One TypeScript file per location per controller, named `{location}-{controller}.ts` (e.g. `hall-ihc2.ts`), placed in `src/resources/`. Each file contains resource definitions using your project's factory functions.
+
+**Resources are unexported by default.** The author reviews each file and adds `export` to the resources that should be active in the blueprint. Use `--export` (`-x`) to auto-export everything. When using `--force` to regenerate files, previously exported resources retain their export state.
+
 ### Analog Output Options
 
 Analog outputs can define `options` — an array of `{ value, label }` pairs representing discrete named values. When present, the UI renders a select dropdown instead of a slider. This is useful for hardware modes that map to specific numeric values (e.g., effect programs, fan presets).

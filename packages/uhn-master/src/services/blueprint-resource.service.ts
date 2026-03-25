@@ -187,7 +187,7 @@ class BlueprintResourceService extends EventEmitter<ResourceEventMap> {
                                         `Resource pin '${resource.pin}' (type '${resource.type}') not found in '${resource.device}' catalog on edge '${resource.edge}'.`
                                     );
                                 }
-                            } else if (typeof resource.pin === "number") {
+                            } else if (typeof resource.pin === "number" && (catalogDevice.digitalInputs || catalogDevice.digitalOutputs || catalogDevice.analogInputs || catalogDevice.analogOutputs)) {
                                 // Modbus: validate pin against contiguous range
                                 if (resource.type === "digitalInput" && catalogDevice.digitalInputs) {
                                     const { start, count } = catalogDevice.digitalInputs;
@@ -215,6 +215,10 @@ class BlueprintResourceService extends EventEmitter<ResourceEventMap> {
                                         `Resource has invalid pin '${resource.pin}' for device '${resource.device}' on edge '${resource.edge}'.`
                                     );
                                 }
+                            } else if (typeof resource.pin === "number") {
+                                // Device without resource catalog or Modbus ranges
+                                // (e.g. IHC with ResourceMap-driven subscription) — skip validation
+                                validPin = true;
                             } else {
                                 // String pin on device without resources list — invalid
                                 addErr(

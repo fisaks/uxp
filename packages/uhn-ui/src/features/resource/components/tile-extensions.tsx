@@ -10,6 +10,7 @@ import { ActionInputPanel } from "./ActionInputPanel";
 import { ActionOutputPanel } from "./ActionOutputPanel";
 import { ComplexTileValue } from "./ComplexTileValue";
 import { SubResourcePopover } from "../../shared/SubResourcePopover";
+import { formatAnalogValue } from "../../shared/formatAnalogValue";
 
 /* ------------------------------------------------------------------ */
 /* Types                                                               */
@@ -102,7 +103,7 @@ function AnalogTileValue({ ctx, interactive, onInteract }: {
                     }),
                 }}
             >
-                {state.value}{resource.unit ? ` ${resource.unit}` : ""}
+                {formatAnalogValue(state.value, resource.decimalPrecision)}{resource.unit ? ` ${resource.unit}` : ""}
             </Typography>
         </Box>
     );

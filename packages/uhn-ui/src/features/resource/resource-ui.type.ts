@@ -13,6 +13,7 @@ export type TileRuntimeResource = RuntimeResource & {
     max?: number;
     step?: number;
     unit?: string;
+    decimalPrecision?: number;
     defaultOnValue?: number;
     options?: AnalogOutputOption[];
     stateLabel?: string;

@@ -4,6 +4,7 @@ import React from "react";
 import { formatCountdown, useCountdown } from "../resource/hooks/useCountdown";
 import { getBlueprintIcon } from "../view/blueprintIconMap";
 import { TileStateItem } from "./tile.types";
+import { formatAnalogValue } from "./formatAnalogValue";
 
 /** Compact value item for flanking layout — label on top, value below */
 export const ValueItemCompact: React.FC<{ item: TileStateItem; align: "left" | "right" }> = ({ item, align }) => {
@@ -25,7 +26,7 @@ export const ValueItemCompact: React.FC<{ item: TileStateItem; align: "left" | "
         formatted = item.value ? "On" : "Off";
     } else {
         const display = typeof item.value === "number"
-            ? item.value.toFixed(item.decimalPrecision ?? (Number.isInteger(item.value) ? 0 : 1))
+            ? formatAnalogValue(item.value, item.decimalPrecision)
             : item.value;
         formatted = `${display}${item.unit ? ` ${item.unit}` : ""}`;
     }

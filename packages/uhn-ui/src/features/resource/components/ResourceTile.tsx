@@ -106,7 +106,7 @@ export const ResourceTile: React.FC<ResourceTileProps> = ({ resource, state, nam
                             <>
                                 <Typography variant="body2">Edge: {resource.edge}</Typography>
                                 <Typography variant="body2">Device: {resource.device}</Typography>
-                                <Typography variant="body2">Pin: {resource.pin} (0x{resource.pin.toString(16).toUpperCase()})</Typography>
+                                <Typography variant="body2">Pin: {resource.pin}{typeof resource.pin === "number" ? ` (0x${resource.pin.toString(16).toUpperCase()})` : ""}</Typography>
                             </>
                         )}
                         {isLogicalResource(resource) && (

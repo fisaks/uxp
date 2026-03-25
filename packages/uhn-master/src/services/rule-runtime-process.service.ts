@@ -266,7 +266,7 @@ class RuleRuntimeProcessService extends EventEmitter<RuleRuntimeProcessEventMap>
                     'COREPACK_HOME=/uhn-node/.corepack-cache',
                 ],
                 limits: {
-                    memoryBytes: 512 * 1024 * 1024, // 512 MB
+                    memoryBytes: parseInt(process.env.UHN_SANDBOX_MEMORY_MB || "1024", 10) * 1024 * 1024,
                     maxPids: 254
                 },
                 runAsUser: os.userInfo().username,
