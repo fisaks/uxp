@@ -10,7 +10,7 @@ This document describes how remote apps and pages are modeled and composed in UX
 
 ## Remote apps
 
-Remote apps are configured in the database and exposed via the reverse proxy.
+Remote apps are defined in the [platform config](./platform-config.md) and exposed via the reverse proxy.
 
 **Source**
 - [AppEntity](https://github.com/fisaks/uxp/blob/main/packages/uxp-bff/src/db/entities/AppEntity.ts)

@@ -6,6 +6,7 @@ export * from "./navigation/navigation.types";
 export * from "./schema/schemaValidate";
 export * from "./schema/user.schema";
 export * from "./schema/global.schema";
+export * from "./schema/config.schema";
 export * from "./user/user.types";
 export * from "./search/search.types";
 export * from "./utils/axiosUtil";

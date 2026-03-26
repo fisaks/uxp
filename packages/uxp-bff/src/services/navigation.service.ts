@@ -1,10 +1,10 @@
 import { getRequestContext, Token } from "@uxp/bff-common";
 
 
-import { NavigationRoute, NavigationTags, SystemAppMeta, UserRole } from "@uxp/common";
+import { AccessType, NavigationRoute, NavigationTags, SystemAppMeta, UserRole } from "@uxp/common";
 import { QueryRunner } from "typeorm";
 import { AppEntity } from "../db/entities/AppEntity";
-import { AccessType, RouteEntity } from "../db/entities/RouteEntity";
+import { RouteEntity } from "../db/entities/RouteEntity";
 import { TagEntity } from "../db/entities/TagEntity";
 
 

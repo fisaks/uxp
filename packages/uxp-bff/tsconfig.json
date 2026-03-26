@@ -20,6 +20,12 @@
         },
         {
             "path": "../uxp-bff-common"
+        },
+        {
+            "path": "../uxp-config"
+        },
+        {
+            "path": "../uxp-config-dev"
         }
     ]
 }

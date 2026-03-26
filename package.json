@@ -8,7 +8,7 @@
         "prepare": "husky install",
         "build": "pnpm -r build",
         "clean": "pnpm -r clean  && echo 'NOTE!!!!!!! RUN TWICE IF DEVSERVER IS ON TO FULLY REMOVE EVERYTING'",
-        "watch": "pnpm -r --parallel --filter=@uxp/common --filter=@uxp/bff-common --filter=@uxp/ui-lib --filter=@h2c/common  --filter=@demo/common --filter=@uhn/common --filter=@uhn/blueprint --filter=@uhn/rule-runtime watch",
+        "watch": "pnpm -r --parallel --filter=@uxp/common --filter=@uxp/bff-common --filter=@uxp/ui-lib --filter=@uxp/config --filter=@uxp/config-dev --filter=@h2c/common  --filter=@demo/common --filter=@uhn/common --filter=@uhn/blueprint --filter=@uhn/rule-runtime watch",
         "start:app": "pnpm --filter=@uxp/ui start ",
         "start:bff": "pnpm --filter=@uxp/bff dev ",
         "start:h2c-app": "pnpm --filter=@h2c/ui start ",

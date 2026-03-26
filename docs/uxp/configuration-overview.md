@@ -79,3 +79,11 @@ UXP intentionally separates:
 
 This separation allows each concern to evolve independently and keeps
 the system flexible as new apps, pages, and navigation patterns are introduced.
+
+---
+
+## Configuration authoring
+
+Platform configuration is authored as TypeScript using the `@uxp/config` package.
+A type-safe `defineConfig()` factory validates cross-references at compile time.
+Configuration is applied to the database at runtime — see [Platform config](./platform-config.md).

@@ -27,6 +27,15 @@ AppDataSource.initialize()
             "Entities:",
             AppDataSource.entityMetadatas.map((meta: { name: string }) => meta.name)
         );
+
+        if (!IsProd) {
+            try {
+                const { applyDevConfig } = await import("./uxp.dev");
+                await applyDevConfig(AppDataSource);
+            } catch (err) {
+                console.error("Failed to apply dev config:", err);
+            }
+        }
     })
     .catch((err: Error) => console.error("Error during Data Source initialization", err));
 

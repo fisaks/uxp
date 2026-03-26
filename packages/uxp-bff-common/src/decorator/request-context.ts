@@ -35,3 +35,19 @@ export async function runBackgroundTask<T>(dataSource: DataSource, fn: () => Pro
         await queryRunner.release();
     }
 }
+
+export async function runBackgroundTransaction<T>(dataSource: DataSource, fn: () => Promise<T> | T) {
+    const queryRunner = dataSource.createQueryRunner();
+    try {
+        await queryRunner.connect();
+        await queryRunner.startTransaction();
+        const result = await runWithRequestContext({ queryRunner }, fn);
+        await queryRunner.commitTransaction();
+        return result;
+    } catch (err) {
+        if (queryRunner.isTransactionActive) await queryRunner.rollbackTransaction();
+        throw err;
+    } finally {
+        await queryRunner.release();
+    }
+}

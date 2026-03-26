@@ -1,3 +1,5 @@
+export type AccessType = "unauthenticated" | "authenticated" | "role-based";
+
 export type AppConfigData = {
     /**
       * Base path the remote app itself is mounted under.

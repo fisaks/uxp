@@ -17,6 +17,7 @@ export const requiredKeys = [
 export const optionalKeys = [
     "LOG_LEVEL",
     "TZ",
+    "UXP_CONFIG_API_KEY",
 ] as const;
 export type RequiredKeys = (typeof requiredKeys)[number];
 export type OptionalKeys = (typeof optionalKeys)[number];

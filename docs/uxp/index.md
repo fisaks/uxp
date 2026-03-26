@@ -26,6 +26,7 @@ Start with the overview, then jump to the area relevant to your task.
 ## Documents
 
 - [Configuration overview](./configuration-overview.md)
+- [Platform config](./platform-config.md)
 - [Apps and pages](./apps-and-pages.md)
 - [Routing and navigation](./routing-and-navigation.md)
 - [System capabilities](./system_capabilities.md)

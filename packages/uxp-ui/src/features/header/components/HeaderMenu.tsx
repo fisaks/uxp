@@ -56,7 +56,7 @@ const HeaderMenu: React.FC = () => {
                         </IconButton>
                     )}
 
-                    <Typography variant="h6" noWrap title={globalConfig?.siteName}
+                    <Typography variant="h6" noWrap title={globalConfig?.siteName ?? "Unified Experience Platform"}
                         sx={{
                             minWidth: 0,          // REQUIRED for ellipsis in flex
                             maxWidth: "100%",

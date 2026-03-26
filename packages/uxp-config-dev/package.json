@@ -1,0 +1,21 @@
+{
+    "name": "@uxp/config-dev",
+    "description": "UXP platform configuration for dev environment",
+    "version": "1.0.0",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "scripts": {
+        "build": "pnpm tsc --build",
+        "clean": "pnpm rimraf --glob -v dist tsconfig.tsbuildinfo",
+        "watch": "pnpm tsc --watch",
+        "lint": "pnpm eslint .",
+        "lint:fix": "pnpm eslint . --fix",
+        "apply-config": "pnpm build && uxp-config apply"
+    },
+    "dependencies": {
+        "@uxp/config": "workspace:*"
+    }
+}

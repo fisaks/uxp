@@ -1,4 +1,4 @@
-import { RouteConfigData, UserRole } from "@uxp/common";
+import { AccessType, RouteConfigData, UserRole } from "@uxp/common";
 import slugify from "slugify";
 import { BeforeInsert, BeforeUpdate, Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { PageEntity } from "./PageEntity";
@@ -16,7 +16,6 @@ import { RouteTagsEntity } from "./RouteTagsEntity";
  * reference pages, which define what is rendered.
  */
 
-export type AccessType = "unauthenticated" | "authenticated" | "role-based";
 @Entity("routes")
 export class RouteEntity {
     constructor(init?: Partial<RouteEntity>) {
