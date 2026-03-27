@@ -1,0 +1,20 @@
+node_modules
+.git
+.history
+dist
+build_types
+tsconfig.tsbuildinfo
+uploads
+workspaces
+.env.dev
+.env
+mosquitto/data
+mosquitto/log
+*.log
+ mysql.sh
+ out
+ setup-dev-certs.sh
+ shell.sh
+ README.md
+ TODO.md
+  .vscode

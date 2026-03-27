@@ -23,7 +23,8 @@ import {
     UpdateUserRolesResponse,
     WhoAmIResponse,
 } from "@uxp/common";
-import bcrypt from "bcrypt";
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const bcrypt = require("bcryptjs");
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { DateTime } from "luxon";
 import { nanoid } from "nanoid";

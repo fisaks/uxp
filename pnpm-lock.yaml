@@ -867,9 +867,6 @@ importers:
       axios:
         specifier: ^1.7.8
         version: 1.8.4
-      bcrypt:
-        specifier: ^5.1.1
-        version: 5.1.1
       dotenv:
         specifier: ^16.4.5
         version: 16.5.0
@@ -1143,9 +1140,9 @@ importers:
       axios:
         specifier: ^1.7.9
         version: 1.8.4
-      bcrypt:
-        specifier: ^5.1.1
-        version: 5.1.1
+      bcryptjs:
+        specifier: ^2.4.3
+        version: 2.4.3
       commander:
         specifier: ^12.1.0
         version: 12.1.0
@@ -1192,9 +1189,6 @@ importers:
       '@types/ajv':
         specifier: ^0.0.5
         version: 0.0.5
-      '@types/bcrypt':
-        specifier: ^5.0.2
-        version: 5.0.2
       '@types/jsdom':
         specifier: ^21.1.7
         version: 21.1.7
@@ -3666,6 +3660,9 @@ packages:
   bcrypt@5.1.1:
     resolution: {integrity: sha512-AGBHOG5hPYZ5Xl9KXzU5iKq9516yEmvCKDg3ecP5kX2aB6UqTeXZxk2ELnDgDm6BQSMlLt9rDB4LoSMx0rYwww==}
     engines: {node: '>= 10.0.0'}
+
+  bcryptjs@2.4.3:
+    resolution: {integrity: sha512-V/Hy/X9Vt7f3BbPJEi8BdVFMByHi+jNXrYkW3huaybV/kQ0KJg0Y6PkEMbn+zeT+i+SiKZ/HMqJGIIt4LZDqNQ==}
 
   binary-extensions@1.13.1:
     resolution: {integrity: sha512-Un7MIEDdUC5gNpcGDV97op1Ywk748MpHcFTHoYs6qnj1Z3j7I53VG3nwZhKzoBZmbdRNnb6WRdFlwl7tSDuZGw==}
@@ -9861,6 +9858,8 @@ snapshots:
     transitivePeerDependencies:
       - encoding
       - supports-color
+
+  bcryptjs@2.4.3: {}
 
   binary-extensions@1.13.1: {}
 

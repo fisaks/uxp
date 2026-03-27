@@ -31,7 +31,7 @@
         "@uxp/config": "workspace:*",
         "ajv": "^8.17.1",
         "axios": "^1.7.9",
-        "bcrypt": "^5.1.1",
+        "bcryptjs": "^2.4.3",
         "commander": "^12.1.0",
         "dotenv": "^16.4.5",
         "fastify": "^5.1.0",
@@ -48,9 +48,7 @@
         "ws": "^8.18.0"
     },
     "devDependencies": {
-        "@uxp/config-dev": "workspace:*",
         "@types/ajv": "^0.0.5",
-        "@types/bcrypt": "^5.0.2",
         "@types/jsdom": "^21.1.7",
         "@types/jsonwebtoken": "^9.0.7",
         "@types/luxon": "^3.4.2",
@@ -58,7 +56,8 @@
         "@types/node": "^22.10.1",
         "@types/uuid": "^10.0.0",
         "@types/ws": "^8.5.14",
-        "tsx":"^4.21.0",
+        "@uxp/config-dev": "workspace:*",
+        "tsx": "^4.21.0",
         "typescript": "^5.7.2"
     }
 }
