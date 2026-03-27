@@ -60,7 +60,7 @@ function readCliConfig(profileName?: string): ProfileConfig {
 export async function applyConfig(opts: ApplyOptions): Promise<void> {
     const profile = readCliConfig(opts.profile);
 
-    const url = opts.url ?? profile.url ?? "http://localhost:3001";
+    const url = (opts.url ?? profile.url ?? "http://localhost:3001").replace(/\/+$/, "");
     const key = opts.key ?? profile.key;
     const configPackage = opts.configPackage ?? "@uxp/config-dev";
 
@@ -83,16 +83,28 @@ export async function applyConfig(opts: ApplyOptions): Promise<void> {
     const applyUrl = `${url}/api/system/apply-config`;
     console.log(`Applying config to ${applyUrl}...`);
 
+    const requestInit: RequestInit = {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${key}`,
+        },
+        body: JSON.stringify(config),
+        redirect: "manual",
+    };
+
     let response: Response;
     try {
-        response = await fetch(applyUrl, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${key}`,
-            },
-            body: JSON.stringify(config),
-        });
+        response = await fetch(applyUrl, requestInit);
+
+        // Follow redirects manually to preserve POST method
+        if (response.status >= 300 && response.status < 400) {
+            const location = response.headers.get("location");
+            if (location) {
+                console.log(`Redirected to ${location}`);
+                response = await fetch(location, { ...requestInit, redirect: "follow" });
+            }
+        }
     } catch (err: any) {
         throw new Error(`Could not connect to ${url}: ${err?.message ?? err}`);
     }

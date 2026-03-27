@@ -100,7 +100,7 @@ Reads connection details from `~/.uxp/config.json`:
     "defaultProfile": "dev",
     "profiles": {
         "dev": { "url": "http://localhost:3001", "key": "<api-key>" },
-        "prod": { "url": "https://solbacka.ddns.net:3001", "key": "<api-key>" }
+        "prod": { "url": "https://solbacka.ddns.net", "key": "<api-key>" }
     }
 }
 ```
