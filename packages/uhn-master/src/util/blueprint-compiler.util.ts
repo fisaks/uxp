@@ -139,7 +139,8 @@ async function compileBlueprint(options: BlueprintCompileOptions): Promise<Bluep
         "@uhn/blueprint": `file:${blueprintPkgRoot}`,
         "luxon": depVersion("luxon", "^3.5.0"),
         "nanoid": depVersion("nanoid", "^3.3.4"),
-        "uuid": depVersion("uuid", "^11.0.3")
+        "uuid": depVersion("uuid", "^11.0.3"),
+        "typescript": depVersion("typescript", "^5.7.2")
     };
 
     // 3. Generate package.json & tsconfig.json

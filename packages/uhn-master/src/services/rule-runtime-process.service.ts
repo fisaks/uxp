@@ -223,10 +223,15 @@ class RuleRuntimeProcessService extends EventEmitter<RuleRuntimeProcessEventMap>
             return raw;
         }
 
-        return this.wrapWithSandbox(sandboxCmd, raw);
+        const hostUhnRuntimePath = getRuleRuntimePkgRoot();
+        const hostUhnRoot = process.env.UHN_RUNTIME_PATH ?? path.resolve(hostUhnRuntimePath, "../..");
+        const runtimeRelPath = path.relative(hostUhnRoot, hostUhnRuntimePath);
+        const sandboxRuntimePath = `/uhn-runtime/${runtimeRelPath}`;
+
+        return this.wrapWithSandbox(sandboxCmd, sandboxRuntimePath, raw);
     }
 
-    private wrapWithSandbox(sandboxCmd: string, raw: {
+    private wrapWithSandbox(sandboxCmd: string, sandboxRuntimePath: string, raw: {
         cmd: string;
         args: string[];
         opts: SpawnOptions;
@@ -242,7 +247,8 @@ class RuleRuntimeProcessService extends EventEmitter<RuleRuntimeProcessEventMap>
                 ...raw.opts,
                 stdio: ["pipe", "pipe", "pipe"],
                 env: {
-                    ...(raw.opts.env ?? {}),// UHN_RUNTIME_PATH
+                    ...(raw.opts.env ?? {}),
+                    "UHN_RUNTIME_PATH": raw.opts.env?.["UHN_RUNTIME_PATH"] ?? process.env.UHN_RUNTIME_PATH ?? "/app",
                     "UHN_WORKSPACE_PATH": env.UHN_WORKSPACE_PATH ?? "/uhn-workspace",
                     "UHN_SANDBOX_PATH": env.UHN_SANDBOX_PATH ?? "/usr/lib/uhn",
                     "UHN_NODE_PATH": nodePath,
@@ -253,7 +259,7 @@ class RuleRuntimeProcessService extends EventEmitter<RuleRuntimeProcessEventMap>
             sandboxPayload: {
                 command: raw.cmd,
                 args: raw.args,
-                cwd: "/uhn-runtime/packages/uhn-rule-runtime",
+                cwd: sandboxRuntimePath,
                 // COREPACK_HOME: sandbox has HOME=/tmp and loopback-only networking,
                 // so corepack can't find its cache or fetch from npm. We point it
                 // to a pre-populated cache inside the Node installation (/uhn-node
@@ -284,8 +290,9 @@ class RuleRuntimeProcessService extends EventEmitter<RuleRuntimeProcessEventMap>
 
     }> {
         const hostUhnRuntimePath = getRuleRuntimePkgRoot();
-        const hostUhnRoot = path.resolve(hostUhnRuntimePath, "../..");
-        const uhnRuntimePath = useSandbox ? "/uhn-runtime/packages/uhn-rule-runtime" : hostUhnRuntimePath;
+        const hostUhnRoot = process.env.UHN_RUNTIME_PATH ?? path.resolve(hostUhnRuntimePath, "../..");
+        const runtimeRelPath = path.relative(hostUhnRoot, hostUhnRuntimePath);
+        const uhnRuntimePath = useSandbox ? `/uhn-runtime/${runtimeRelPath}` : hostUhnRuntimePath;
 
         const blueprintFolderInUse = useSandbox ? "/uhn-workspace/blueprint/active" : blueprintFolder;
         const tsEntrypoint = path.join(hostUhnRuntimePath, "src", "rule-runtime.ts");

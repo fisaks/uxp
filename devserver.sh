@@ -13,7 +13,7 @@ start_dev_env() {
     fi
     
     
-    docker compose -f docker-compose.yaml -f docker-compose.dev.yaml up -d db-server mqtt dev-https
+    docker compose up -d db-server mqtt dev-https
     
     
     echo "⏳ Waiting for Mosquitto to be ready on localhost:2883..."
@@ -118,7 +118,7 @@ is_db_running() {
 stop_dev_env() {
     echo "Stopping tmux session and Docker Compose..."
     tmux kill-session -t $SESSION_NAME 2>/dev/null || echo "No tmux session found with name $SESSION_NAME"
-    docker compose -f docker-compose.yaml -f docker-compose.dev.yaml down
+    docker compose down
     timeout=30         # Maximum wait time in seconds
     elapsed=0
     while is_db_running; do
