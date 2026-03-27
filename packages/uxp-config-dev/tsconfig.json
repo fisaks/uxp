@@ -7,7 +7,7 @@
         "declarationMap": true,
         "composite": true,
         "strict": true,
-        "target": "ESNext",
+        "target": "ES2021",
         "module": "CommonJS"
     },
     "include": ["src/**/*"],

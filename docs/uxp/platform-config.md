@@ -6,7 +6,7 @@ This document describes how UXP platform configuration (apps, pages, routes, tag
 
 ## Overview
 
-Platform configuration is defined as **TypeScript code** using a type-safe factory system. Configuration is validated at compile time — cross-reference errors (e.g. a route referencing a non-existent page) are caught by `pnpm typecheck`.
+Platform configuration is defined as **TypeScript code** using a type-safe `defineConfig()` function. Configuration is validated at compile time — cross-reference errors (e.g. a route referencing a non-existent page) are caught by `pnpm typecheck`.
 
 Configuration is applied to the database at runtime, either automatically on BFF startup (dev) or via a CLI tool / HTTP endpoint.
 
@@ -14,11 +14,13 @@ Configuration is applied to the database at runtime, either automatically on BFF
 
 ## Packages
 
-| Package | Purpose |
-|---------|---------|
-| `@uxp/config` | Types, `defineConfig()` factory, `basePlatformConfig`, factory functions, CLI tool |
-| `@uxp/config-dev` | Dev environment configuration |
+| Package | Location | Purpose |
+|---------|----------|---------|
+| `@uxp/config` | `uxp/packages/uxp-config` | Types, `defineConfig()`, `basePlatformConfig`, `globalConfig()`, CLI tool |
+| `@uxp/config-dev` | `uxp/packages/uxp-config-dev` | Dev environment configuration (all apps: H2C, demo, UHN) |
+| `@uxp/config-prod` | `uxp-server/uxp-config-prod` | Production configuration (UHN only) |
 
+The prod config lives in the `uxp-server` repo alongside deployment infrastructure, not in the uxp monorepo. It depends on `@uxp/config` via `link:` to the uxp repo.
 
 ---
 
@@ -32,38 +34,35 @@ Configuration is applied to the database at runtime, either automatically on BFF
 - **Routes:** login, register, profile, settings, start-page (`/start`), control-panel, default redirects
 - **Route tags:** auth-root → header-menu, profile routes → profile-icon, control-panel → profile-icon
 
-The `auth-root` route (`/`) is **not** in the base config — each environment defines where `/` points. Dev uses `start-page`
+The `auth-root` route (`/`) is **not** in the base config — each environment defines where `/` points. Dev uses `start-page`, prod uses `unified-home-network`.
 
 ---
 
 ## Environment config
 
-Each environment config spreads `basePlatformConfig` and adds its own apps, pages, routes, and tags:
+Each environment config spreads `basePlatformConfig` and adds its own apps, pages, routes, and tags using plain inline objects:
 
 ```typescript
-import { defineConfig, basePlatformConfig, tag, app, page, pageApp, route, routeTag } from "@uxp/config";
+import { defineConfig, basePlatformConfig, globalConfig } from "@uxp/config";
 
 export default defineConfig({
-    tags: [...basePlatformConfig.tags, tag({ name: "demo-links" })],
-    apps: [app({ name: "H2C", baseUrl: "...", config: { ... } })],
-    pages: [...basePlatformConfig.pages, page({ identifier: "home-2-care", name: "Home 2 Care" })],
+    tags: [...basePlatformConfig.tags, { name: "demo-links" }],
+    apps: [{ name: "H2C", baseUrl: "...", config: { contextPath: "/h2c", mainEntry: "index.html" } }],
+    pages: [...basePlatformConfig.pages, { identifier: "home-2-care", name: "Home 2 Care" }],
     // ...
     routes: [
         ...basePlatformConfig.routes,
-        route({ identifier: "auth-root", routePattern: "/", link: "/", page: "start-page", accessType: "authenticated" }),
+        { identifier: "auth-root", routePattern: "/", link: "/", page: "start-page", accessType: "authenticated" },
         // ...
     ],
     // ...
+    globalConfig: globalConfig({
+        siteName: { value: "UXP Dev", managed: true },
+    }),
 });
 ```
 
-A typo like `page: "logn"` produces a compile error.
-
----
-
-## Factory functions
-
-Factory functions (`tag`, `app`, `page`, `pageApp`, `route`, `routeTag`, `globalConfig`) preserve TypeScript literal types through spreads into `defineConfig()`. They use `const` generic parameters so that cross-references between entities are validated at the type level.
+`defineConfig()` uses `const` generic parameters to infer literal types from the inline objects. This means cross-references are validated at compile time — a typo like `page: "logn"` produces a compile error, and IDE autocomplete suggests valid page/route/tag identifiers.
 
 ---
 
@@ -101,12 +100,25 @@ Reads connection details from `~/.uxp/config.json`:
     "defaultProfile": "dev",
     "profiles": {
         "dev": { "url": "http://localhost:3001", "key": "<api-key>" },
-        "prod": { "url": "https://prod:3001", "key": "<api-key>" }
+        "prod": { "url": "https://solbacka.ddns.net:3001", "key": "<api-key>" }
     }
 }
 ```
 
-Or via `pnpm --filter @uxp/config-dev apply-config`.
+### Dev config
+
+```bash
+pnpm --filter @uxp/config-dev apply-config
+```
+
+### Prod config
+
+```bash
+cd uxp-server/uxp-config-prod
+pnpm apply-config
+```
+
+The prod `apply-config` script builds the config and runs `uxp-config apply --config $PWD/dist/index.js --profile prod`. The `--config` flag uses an absolute path because the config package is outside the uxp monorepo and can't be resolved by name.
 
 ### HTTP endpoint
 

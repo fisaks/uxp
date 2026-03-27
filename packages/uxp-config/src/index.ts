@@ -1,6 +1,6 @@
 export { defineConfig } from "./define-config";
 export { basePlatformConfig } from "./base-config";
-export { tag, app, page, pageApp, route, routeTag, globalConfig } from "./factories";
+export { globalConfig } from "./factories";
 export type { AccessType, UserRole } from "@uxp/common";
 export type {
     WellKnownInternalComponent,
