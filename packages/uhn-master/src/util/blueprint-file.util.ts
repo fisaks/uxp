@@ -183,7 +183,7 @@ async function createSignedBlueprintZip(opts: {
         });
 
         archive.directory(path.join(ActiveBlueprintFolder, "dist"), "dist");
-        //archive.directory(path.join(ActiveBlueprintFolder, "node_modules"), "node_modules");
+        // node_modules not included — edge resolves deps via pre-built /uhn-blueprint-deps
         archive.finalize();
     });
 
