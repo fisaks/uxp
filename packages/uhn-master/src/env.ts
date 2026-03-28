@@ -19,6 +19,8 @@ export const optionalKeys = [
     "TZ",
     "UHN_SANDBOX_PATH",
     "UHN_NODE_PATH",
+    "UHN_MQTT_USER",
+    "UHN_MQTT_PASSWORD",
 ] as const;
 export type RequiredKeys = (typeof requiredKeys)[number];
 export type OptionalKeys = (typeof optionalKeys)[number];

@@ -10,12 +10,12 @@ const SHORT_FLAGS: Record<string, string> = {
     x: "export",
     M: "mapping-only",
     h: "help",
-    // IHC-specific
+    u: "username",
+    p: "password",
+    // IHC-only
     F: "file",
     H: "host",
     P: "port",
-    u: "username",
-    p: "password",
     c: "controller",
 };
 
@@ -74,6 +74,8 @@ Z2M Options:
   -f, --force                Regenerate files for devices in import history with missing files
   -x, --export               Auto-export all generated resource consts
   -M, --mapping-only         Only update factory mapping (no resource/view/factory generation)
+  -u, --username <user>      MQTT username (for broker auth)
+  -p, --password <pass>      MQTT password (for broker auth)
   -h, --help                 Show this help
 
 IHC Options:
@@ -109,6 +111,8 @@ async function main() {
                 force: flags.force === true,
                 autoExport: flags.export === true,
                 mappingOnly: flags["mapping-only"] === true,
+                username: typeof flags.username === "string" ? flags.username : undefined,
+                password: typeof flags.password === "string" ? flags.password : undefined,
             });
         } catch (err: any) {
             console.error(`Error: ${err?.message ?? err}`);

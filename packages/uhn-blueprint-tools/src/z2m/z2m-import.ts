@@ -19,6 +19,8 @@ export type Z2MImportOptions = {
     force?: boolean;
     autoExport?: boolean;
     mappingOnly?: boolean;
+    username?: string;
+    password?: string;
 };
 
 type HistoryEntry = {
@@ -36,7 +38,8 @@ const HISTORY_FILE = "import-history.json";
 export async function z2mImport(opts: Z2MImportOptions): Promise<void> {
     console.log(`Connecting to ${opts.mqttUrl} (topic: ${opts.baseTopic}/bridge/devices)...`);
 
-    const z2mDevices = await readBridgeDevices(opts.mqttUrl, opts.baseTopic);
+    const credentials = opts.username ? { username: opts.username, password: opts.password ?? "" } : undefined;
+    const z2mDevices = await readBridgeDevices(opts.mqttUrl, opts.baseTopic, credentials);
     console.log(`Found ${z2mDevices.length} device(s)\n`);
 
     // Save raw Z2M data per device

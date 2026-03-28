@@ -12,6 +12,7 @@ const mqttService = new MqttService({
         resubscribe: true,
         reconnectPeriod: 5000,
         connectTimeout: 30_000,
+        ...(env.UHN_MQTT_USER ? { username: env.UHN_MQTT_USER, password: env.UHN_MQTT_PASSWORD } : {}),
         will: {
             topic: MASTER_STATUS_TOPIC,
             payload: "offline",

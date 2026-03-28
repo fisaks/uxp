@@ -4,11 +4,16 @@ import type { Z2MDevice } from "./types";
 /**
  * Connects to MQTT, reads the retained bridge/devices message, and disconnects.
  */
-export async function readBridgeDevices(mqttUrl: string, baseTopic: string): Promise<Z2MDevice[]> {
+export async function readBridgeDevices(
+    mqttUrl: string,
+    baseTopic: string,
+    credentials?: { username: string; password: string },
+): Promise<Z2MDevice[]> {
     return new Promise((resolve, reject) => {
         const client = mqtt.connect(mqttUrl, {
             clientId: `z2m-import-${Date.now()}`,
             clean: true,
+            ...credentials,
         });
 
         const timeout = setTimeout(() => {
