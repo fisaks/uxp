@@ -6,7 +6,7 @@ import env from "../../config/env";
 import { ConfigApplyService } from "../../services/config-apply.service";
 
 export class ConfigController {
-    @Route("post", "/system/apply-config", { authenticate: false, schema: ApplyConfigSchema })
+    @Route("post", "/cli/apply-config", { authenticate: false, schema: ApplyConfigSchema })
     @UseQueryRunner({ transactional: true })
     async applyConfigEndpoint(req: FastifyRequest, reply: FastifyReply) {
         const apiKey = env.UXP_CONFIG_API_KEY;

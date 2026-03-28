@@ -123,7 +123,7 @@ The prod `apply-config` script builds the config and runs `uxp-config apply --co
 ### HTTP endpoint
 
 ```
-POST /api/system/apply-config
+POST /api/cli/apply-config
 Authorization: Bearer <UXP_CONFIG_API_KEY>
 Content-Type: application/json
 ```

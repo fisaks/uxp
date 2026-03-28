@@ -80,7 +80,7 @@ export async function applyConfig(opts: ApplyOptions): Promise<void> {
         throw new Error(`Failed to import config package "${configPackage}": ${err?.message ?? err}`);
     }
 
-    const applyUrl = `${url}/api/system/apply-config`;
+    const applyUrl = `${url}/api/cli/apply-config`;
     console.log(`Applying config to ${applyUrl}...`);
 
     const requestInit: RequestInit = {
