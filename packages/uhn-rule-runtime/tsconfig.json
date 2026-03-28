@@ -8,6 +8,8 @@
         "declarationDir": "./build_types",
         "declaration": true, // Generate .d.ts files
         "declarationMap": true, // Generate declaration maps
+        "sourceMap": true,
+        "inlineSources": true,
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true,
         "strict": true

@@ -75,6 +75,7 @@ export const SystemPanel: React.FC<SystemPanelProps> = ({
                 debugPort={runtimeConfig?.debugPort}
                 debugHost={runtimeConfig?.debugHost}
                 showPortInput={scope !== "all"}
+                isEdge={isEdgeScope}
                 busy={busy || edgeOffline}
                 setRunModeRunning={
                     uhnStatus?.state === "running" &&

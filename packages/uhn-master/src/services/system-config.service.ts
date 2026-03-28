@@ -77,6 +77,9 @@ export class SystemConfigService extends EventEmitter<SystemConfigEventMap> {
     async setDebugPort(
         debugPort: number
     ): Promise<SystemConfigEntity> {
+        if (debugPort < 9240 || debugPort > 9250) {
+            throw new AppErrorV2({ statusCode: 400, code: "VALIDATION", message: `Debug port must be in range 9240-9250 (got ${debugPort})` });
+        }
         const config = this.getConfig();
 
         if (config.debugPort === debugPort) {

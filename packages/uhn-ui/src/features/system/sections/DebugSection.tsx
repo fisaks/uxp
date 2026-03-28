@@ -7,6 +7,7 @@ type DebugSectionProps = {
     debugPort?: number;
     debugHost?: string;
     showPortInput: boolean;
+    isEdge: boolean;
     busy: boolean;
     setRunModeRunning: boolean;
     onToggle: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -18,11 +19,14 @@ export const DebugSection: React.FC<DebugSectionProps> = ({
     debugPort,
     debugHost,
     showPortInput,
+    isEdge,
     busy,
     setRunModeRunning,
     onToggle,
     onPortChange,
 }) => {
+    const minPort = isEdge ? 9251 : 9240;
+    const maxPort = isEdge ? 9299 : 9250;
     const portalContainer = usePortalContainerRef();
     const [portValue, setPortValue] = useState(debugPort?.toString() ?? "");
     const [portError, setPortError] = useState(false);
@@ -37,7 +41,7 @@ export const DebugSection: React.FC<DebugSectionProps> = ({
 
     const commitPort = (e: React.SyntheticEvent) => {
         const num = parseInt(portValue, 10);
-        if (isNaN(num) || num < 1024 || num > 65535) {
+        if (isNaN(num) || num < minPort || num > maxPort) {
             setPortError(true);
             return;
         }
@@ -82,10 +86,11 @@ export const DebugSection: React.FC<DebugSectionProps> = ({
                             }}
                             disabled={portDisabled}
                             error={portError}
+                            helperText={portError ? `${minPort}–${maxPort}` : undefined}
                             slotProps={{
                                 htmlInput: {
-                                    min: 1024,
-                                    max: 65535,
+                                    min: minPort,
+                                    max: maxPort,
                                     style: { padding: "2px 4px", fontSize: "0.75rem" }
                                 },
                                 inputLabel: { sx: { fontSize: "0.75rem" } }

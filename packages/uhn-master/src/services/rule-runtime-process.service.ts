@@ -300,7 +300,7 @@ class RuleRuntimeProcessService extends EventEmitter<RuleRuntimeProcessEventMap>
         const isDev = await fileExists(tsEntrypoint)
         const isDebug = runtimeMode === "debug"
 
-        if (isDebug) {
+        if (isDebug && isDev) {
             return {
                 cmd: "pnpm",
                 args: [
@@ -324,6 +324,28 @@ class RuleRuntimeProcessService extends EventEmitter<RuleRuntimeProcessEventMap>
 
             };
 
+        }
+        else if (isDebug) {
+            // Production debug: no tsx available, use node --inspect on compiled JS
+            // eslint-disable-next-line @typescript-eslint/no-var-requires
+            const pkg = require(path.join(hostUhnRuntimePath, "package.json"));
+            return {
+                cmd: "node",
+                args: [
+                    `--inspect=127.0.0.1:${debugPort}`,
+                    `${uhnRuntimePath}/${pkg.main ?? "dist/rule-runtime.js"}`,
+                    blueprintFolderInUse,
+                    "master"
+                ],
+                opts: {
+                    cwd: hostUhnRuntimePath,
+                    env: {
+                        ...(!useSandbox ? process.env : {}),
+                        "UHN_RUNTIME_PATH": hostUhnRoot,
+                    }
+                },
+                mode: "debug",
+            };
         }
         else if (isDev) {
             return {
