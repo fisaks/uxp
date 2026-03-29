@@ -36,6 +36,7 @@ Start with the overview, then jump to the area relevant to your task.
 - [Websocket proxying](./websocket-proxying.md)
 - [Styling model](./styling-model.md)
 - [UXP Browser Contract](./uxp-browser-contract.md)
+- [Deployment guide](./deployment-guide.md)
 
 ---
 
