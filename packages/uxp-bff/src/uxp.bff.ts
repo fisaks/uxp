@@ -12,13 +12,17 @@ import {
     HandlerRegistry,
     IsProd,
     jwtPlugin,
+    registerLocalWebSocketHandlers,
     registerRoutes
 } from "@uxp/bff-common";
 import "@uxp/bff-common/dist/health/health.controller";
 import { ValidateGlobalConfigValue } from "@uxp/common";
 import { DateTime } from "luxon";
 import path from "path";
+import { startUxpRuntime } from "./uxp.runtime";
 import { registerRemoteWebSocketHandler } from "./websocket/registerRemoteWebSocketHandler";
+import { UxpServerWebSocketManager } from "./websocket/UxpServerWebSocketManager";
+
 
 AppDataSource.initialize()
     .then(async () => {
@@ -27,15 +31,7 @@ AppDataSource.initialize()
             "Entities:",
             AppDataSource.entityMetadatas.map((meta: { name: string }) => meta.name)
         );
-
-        if (!IsProd) {
-            try {
-                const { applyDevConfig } = await import("./uxp.dev");
-                await applyDevConfig(AppDataSource);
-            } catch (err) {
-                console.error("Failed to apply dev config:", err);
-            }
-        }
+        await startUxpRuntime();
     })
     .catch((err: Error) => console.error("Error during Data Source initialization", err));
 
@@ -89,7 +85,7 @@ if (!IsProd) {
 }
 
 // Discover and register REST and WebSocket handlers
-HandlerRegistry.discoverHandlers(path.join(__dirname, "./features"));
+HandlerRegistry.discoverHandlers([path.join(__dirname, "./controllers"), path.join(__dirname, "./handlers")]);
 const restHandlers = HandlerRegistry.getRestHandlers();
 const wsHandlers = HandlerRegistry.getWsHandlers();
 
@@ -102,12 +98,12 @@ registerRoutes({
     controllers: Array.from(restHandlers),
 });
 registerRemoteWebSocketHandler({ fastify, dataSource: AppDataSource });
-/*
 registerLocalWebSocketHandlers({
     fastify,
     dataSource: AppDataSource,
     handlers: Array.from(wsHandlers),
-});*/
+    wsManager: UxpServerWebSocketManager.getInstance(),
+});
 
 // Start the server :)
 fastify.listen({ port: port, host: "0.0.0.0" }, (err, address) => {

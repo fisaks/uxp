@@ -1,25 +1,23 @@
-import { GlobalConfigPayload, LatestGlobalConfigResponse, PatchGlobalConfigResponse } from "@uxp/common";
+import { GlobalConfigPayload, FullGlobalConfigResponse, PublicGlobalConfigResponse } from "@uxp/common";
 import axiosInstance from "../../app/axiosInstance";
-import { RootState } from "../../app/uxp.store";
 import { createLoadingAwareThunk } from "../loading/loadingThunk";
 
-export const fetchLatestGlobalSettings = createLoadingAwareThunk("globalSettings/fetchLatest", async () => {
-    const response = await axiosInstance.get<LatestGlobalConfigResponse>("/global-settings/latest");
+/** Public fetch — unauthenticated, returns only siteName */
+export const fetchPublicGlobalSettings = createLoadingAwareThunk("globalSettings/fetchPublic", async () => {
+    const response = await axiosInstance.get<PublicGlobalConfigResponse>("/global-settings/public");
     return response.data;
 });
 
-export type PatchGlobalSettingPayload = Omit<GlobalConfigPayload, "currentVersion">;
+/** Admin fetch — returns full config (notification, healthChecks, etc.) */
+export const fetchFullGlobalSettings = createLoadingAwareThunk("globalSettings/fetchFull", async () => {
+    const response = await axiosInstance.get<FullGlobalConfigResponse>("/global-settings/full");
+    return response.data;
+});
+
 export const patchGlobalSetting = createLoadingAwareThunk(
     "globalSettings/patch",
-    async ({ key, value }: PatchGlobalSettingPayload, { getState }) => {
-        const state = getState() as RootState;
-        const currentVersion = state.globalConfig.version;
-        const response = await axiosInstance.patch<PatchGlobalConfigResponse>("/global-settings", {
-            key,
-            value,
-            currentVersion,
-        });
-        return response.data;
+    async ({ key, value }: GlobalConfigPayload) => {
+        await axiosInstance.patch("/global-settings", { key, value });
     },
     undefined,
     true

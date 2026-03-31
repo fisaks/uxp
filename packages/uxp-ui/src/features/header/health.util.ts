@@ -16,8 +16,9 @@ export function deriveHealthNotice(
 
     const prevWorst = prev ? getWorstItem(prev) : undefined;
 
-    // Always show on first snapshot
+    // First snapshot — only show if not ok
     if (!prevWorst) {
+        if (nextWorst.severity === "ok") return undefined;
         return {
             appId: next.appId,
             severity: nextWorst.severity,
@@ -32,6 +33,9 @@ export function deriveHealthNotice(
         nextWorst.timestamp !== prevWorst.timestamp;
 
     if (!changed) return undefined;
+
+    // Don't show ok unless recovering from warn/error
+    if (nextWorst.severity === "ok" && prevWorst.severity === "ok") return undefined;
 
     return {
         appId: next.appId,

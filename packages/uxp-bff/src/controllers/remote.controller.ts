@@ -1,7 +1,7 @@
 import { AppLogger, Route, UseQueryRunner } from "@uxp/bff-common";
 import { SchemaValidate } from "@uxp/common";
 import { FastifyReply, FastifyRequest } from "fastify";
-import { RemoteAppService } from "../../services/remote-app.service";
+import { RemoteAppService } from "../services/remote-app.service";
 
 
 const GetContentIndexSchema: SchemaValidate<undefined, undefined, { uuid: string }> = {

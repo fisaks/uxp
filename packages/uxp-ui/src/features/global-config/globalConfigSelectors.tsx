@@ -4,3 +4,5 @@ import { RootState } from "../../app/uxp.store";
 export const selectGlobalConfigState = (state: RootState) => state.globalConfig;
 
 export const selectGlobalConfig = createSelector(selectGlobalConfigState, (globalConfig) => globalConfig.config);
+
+export const selectFullGlobalConfig = createSelector(selectGlobalConfigState, (globalConfig) => globalConfig.fullConfig);

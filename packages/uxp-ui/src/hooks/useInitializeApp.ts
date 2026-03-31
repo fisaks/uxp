@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import { fetchLatestGlobalSettings } from "../features/global-config/globalConfigThunk";
+import { fetchPublicGlobalSettings } from "../features/global-config/globalConfigThunk";
 import { fetchNavigation } from "../features/navigation/navigationThunk";
 import { fetchMySettings } from "../features/settings/mySettingThunk";
 import { selectIsLoggedInUser } from "../features/user/userSelectors";
@@ -20,7 +20,7 @@ export const useInitializeApp = () => {
                     const promises = [
                         dispatch(fetchMySettings({})),
                         dispatch(fetchNavigation({})),
-                        dispatch(fetchLatestGlobalSettings({})),
+                        dispatch(fetchPublicGlobalSettings({})),
                     ];
                     await Promise.all(promises);
 

@@ -1,46 +1,36 @@
 import { GlobalConfigData } from "@uxp/common";
 import { DateTime } from "luxon";
-import { BeforeInsert, BeforeUpdate, Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { BeforeInsert, Column, Entity, PrimaryColumn, UpdateDateColumn } from "typeorm";
 
 @Entity("global_config")
 export class GlobalConfigEntity {
-    constructor(init?: Partial<GlobalConfigEntity>) {
+    constructor(init?: Partial<Pick<GlobalConfigEntity, "config" | "updatedBy">>) {
         Object.assign(this, init);
     }
 
-    @PrimaryGeneratedColumn()
+    @PrimaryColumn({ type: "int", default: 1 })
     id!: number;
 
     @Column({ type: "json" })
     config!: GlobalConfigData;
 
     @Column({ type: "varchar", length: 255 })
-    updatedBy!: string; // Username of the person who updated it
+    updatedBy!: string;
 
-    @Column({
+    @UpdateDateColumn({
         type: "timestamp",
-        default: () => "CURRENT_TIMESTAMP",
-        onUpdate: "CURRENT_TIMESTAMP",
         transformer: {
-            // Convert database date (string) to Luxon DateTime
             from: (value: string | null): DateTime | null => (value ? DateTime.fromSQL(value) : null),
-            // Convert Luxon DateTime to SQL-compatible string
             to: (value: DateTime | null): string | null => (value ? value.toSQL() : null),
         },
     })
     updatedAt!: DateTime;
 
-    @BeforeUpdate()
-    preventUpdate() {
-        throw new Error("Updates to GlobalConfig are not allowed.");
-    }
     @BeforeInsert()
-    setUpdatedByAlways() {
+    setDefaults() {
+        this.id = 1;
         if (!this.updatedBy) {
             this.updatedBy = "System";
-        }
-        if (!this.updatedAt) {
-            this.updatedAt = DateTime.now();
         }
     }
 }

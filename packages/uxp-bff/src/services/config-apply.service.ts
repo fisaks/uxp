@@ -123,42 +123,45 @@ async function applyConfig(
         routeOrder: rt.routeOrder ?? null,
     })));
 
-    // Handle global config (per-field managed)
+    // Handle global config (per-field managed, single-row id=1)
     if (config.globalConfig) {
         const gc = config.globalConfig;
         const globalConfigRepo = manager.getRepository(GlobalConfigEntity);
-        const latest = await globalConfigRepo.findOne({
-            where: {},
-            order: { id: "DESC" },
-        });
+        const existing = await globalConfigRepo.findOne({ where: { id: 1 } });
 
         // Build new config: start from existing values (if any), apply managed fields,
         // seed unmanaged fields only if no row exists yet
-        const currentConfig: Record<string, unknown> = latest?.config ? { ...latest.config } : {};
+        const currentConfig: Record<string, unknown> = existing?.config ? JSON.parse(JSON.stringify(existing.config)) : {};
 
         for (const [key, field] of Object.entries(gc)) {
-            if (field.managed || !latest) {
-                currentConfig[key] = field.value;
+            const { value, managed } = field as { value: unknown; managed: boolean };
+            if (managed || getNestedValue(currentConfig, key) === undefined) {
+                setNestedValue(currentConfig, key, value);
             }
         }
 
-        const isDifferent = !latest || JSON.stringify(latest.config) !== JSON.stringify(currentConfig);
+        const isDifferent = !existing || JSON.stringify(existing.config) !== JSON.stringify(currentConfig);
 
         if (isDifferent) {
-            if (latest) {
+            if (existing) {
                 for (const [key, field] of Object.entries(gc)) {
-                    const oldVal = (latest.config as Record<string, unknown>)[key];
-                    if (oldVal !== field.value) {
-                        AppLogger.info({ message: `globalConfig.${key}: "${oldVal}" → "${field.value}"${field.managed ? "" : " (seed)"}` });
+                    const { value, managed } = field as { value: unknown; managed: boolean };
+                    const oldVal = getNestedValue(existing.config as Record<string, unknown>, key);
+                    if (oldVal !== value) {
+                        AppLogger.info({ message: `globalConfig.${key}: "${oldVal}" → "${value}"${managed ? "" : " (seed)"}` });
                     }
                 }
+                await globalConfigRepo.update(1, {
+                    config: currentConfig as GlobalConfigEntity["config"],
+                    updatedBy: "config-apply",
+                });
             } else {
                 AppLogger.info({ message: "globalConfig: initial seed" });
+                await globalConfigRepo.save(new GlobalConfigEntity({
+                    config: currentConfig as GlobalConfigEntity["config"],
+                    updatedBy: "config-apply",
+                }));
             }
-            await globalConfigRepo.save(new GlobalConfigEntity({
-                config: currentConfig as GlobalConfigEntity["config"],
-                updatedBy: "config-apply",
-            }));
         }
     }
 
@@ -170,6 +173,30 @@ async function applyConfig(
         routes: config.routes.length,
         routeTags: config.routeTags.length,
     };
+}
+
+function setNestedValue(obj: Record<string, unknown>, keyPath: string, value: unknown): void {
+    const keys = keyPath.split(".");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let current: any = obj;
+    for (let i = 0; i < keys.length - 1; i++) {
+        if (current[keys[i]] === undefined || current[keys[i]] === null) {
+            current[keys[i]] = {};
+        }
+        current = current[keys[i]];
+    }
+    current[keys[keys.length - 1]] = value;
+}
+
+function getNestedValue(obj: Record<string, unknown>, keyPath: string): unknown {
+    const keys = keyPath.split(".");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let current: any = obj;
+    for (const key of keys) {
+        if (current === undefined || current === null) return undefined;
+        current = current[key];
+    }
+    return current;
 }
 
 export const ConfigApplyService = {

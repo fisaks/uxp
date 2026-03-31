@@ -2,8 +2,8 @@ import { AppLogger, Route, UseQueryRunner } from "@uxp/bff-common";
 import { UserPublic, UserSearchRequest, UserSearchResponse, UserSearchSchema } from "@uxp/common";
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { Brackets, QueryRunner } from "typeorm";
-import { User } from "../../db/entities/User";
-import { UserService } from "../../services/user.service";
+import { User } from "../db/entities/User";
+import { UserService } from "../services/user.service";
 
 export class UserSearchController {
     private fastify: FastifyInstance;

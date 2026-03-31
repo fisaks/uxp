@@ -66,12 +66,10 @@ const wsHandlers = HandlerRegistry.getWsHandlers();
 console.log("restHandlers", restHandlers);
 console.log("wsHandlers", wsHandlers);
 
-const wsManager = UHNAppServerWebSocketManager.getInstance()
-
 registerLocalWebSocketHandlers({
     fastify,
     handlers: Array.from(wsHandlers),
-    wsManager,
+    wsManager: UHNAppServerWebSocketManager.getInstance(),
     dataSource: AppDataSource
 });
 

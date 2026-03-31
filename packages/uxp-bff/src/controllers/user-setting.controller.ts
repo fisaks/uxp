@@ -3,9 +3,9 @@ import { ErrorCodes, UserSettingsPayload, UserSettingsResponse, UserSettingsSche
 
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { QueryRunner } from "typeorm";
-import { User } from "../../db/entities/User";
-import { UserSettings } from "../../db/entities/UserSettings";
-import { UserService } from "../../services/user.service";
+import { User } from "../db/entities/User";
+import { UserSettings } from "../db/entities/UserSettings";
+import { UserService } from "../services/user.service";
 import { sendErrorResponse } from "@uxp/bff-common";
 
 export class UserSettingController {

@@ -1,7 +1,8 @@
 import { Box, Button, Divider, Menu, Typography } from "@mui/material";
 import { SystemAppMeta } from "@uxp/common";
-import React from "react";
+import React, { useCallback, useState } from "react";
 import { useSelector } from "react-redux";
+import axiosInstance from "../../../app/axiosInstance";
 import { selectHealthIndicatorApps } from "../../navigation/navigationSelectors";
 import { selectGlobalHealthLevel, selectHealthSnapshots } from "../healthSelectors";
 import { useUxpNavigate } from "../../navigation/useUxpNavigate";
@@ -12,6 +13,19 @@ export type HealthMenuProps = {
 };
 
 export const HealthMenu: React.FC<HealthMenuProps> = ({ anchorEl, onClose }) => {
+    const [rechecking, setRechecking] = useState<string | null>(null);
+
+    const handleRecheck = useCallback(async (id: string) => {
+        setRechecking(id);
+        try {
+            await axiosInstance.post(`/platform-health/recheck/${id}`);
+        } catch {
+            // silent — the health snapshot will update via WS
+        } finally {
+            setRechecking(null);
+        }
+    }, []);
+
     const healthLevel = useSelector(selectGlobalHealthLevel);
     const healthSnapshots = useSelector(selectHealthSnapshots);
     const healthApps: SystemAppMeta[] = useSelector(selectHealthIndicatorApps)
@@ -44,7 +58,10 @@ export const HealthMenu: React.FC<HealthMenuProps> = ({ anchorEl, onClose }) => 
             {healthSnapshots.map((app) => {
                 const items = app.items;
                 const reporting = items !== undefined;
-                const appName = healthApps.find(a => a.appId === app.appId)?.appName ?? app.appId;
+                const alertItems = items?.filter((i) => i.severity !== "ok");
+                const appName = app.appId === "uxp"
+                    ? "Platform"
+                    : healthApps.find(a => a.appId === app.appId)?.appName ?? app.appId;
 
                 if (!reporting) {
                     return (
@@ -57,7 +74,7 @@ export const HealthMenu: React.FC<HealthMenuProps> = ({ anchorEl, onClose }) => 
                     );
                 }
 
-                if (items.length === 0) {
+                if (!alertItems || alertItems.length === 0) {
                     return (
                         <Box key={app.appId} sx={{ px: 2, py: 1 }}>
                             <Typography variant="subtitle2">{appName}</Typography>
@@ -74,7 +91,7 @@ export const HealthMenu: React.FC<HealthMenuProps> = ({ anchorEl, onClose }) => 
                             <Typography variant="subtitle2">{appName}</Typography>
                         </Box>
 
-                        {items.map((n) => (
+                        {alertItems!.map((n) => (
                             <Box key={n.id} sx={{ px: 2, py: 1 }}>
                                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                                     <Box
@@ -95,8 +112,8 @@ export const HealthMenu: React.FC<HealthMenuProps> = ({ anchorEl, onClose }) => 
                                     </Typography>
                                 </Box>
 
-                                {n.action && (
-                                    <Box sx={{ mt: 1 }}>
+                                <Box sx={{ display: "flex", gap: 1, mt: 1 }}>
+                                    {n.action && (
                                         <Button size="small"
                                             onClick={() => {
                                                 uxpNavigate(n.action!.target);
@@ -104,8 +121,15 @@ export const HealthMenu: React.FC<HealthMenuProps> = ({ anchorEl, onClose }) => 
                                             }}>
                                             {n.action.label}
                                         </Button>
-                                    </Box>
-                                )}
+                                    )}
+                                    {app.appId === "uxp" && (
+                                        <Button size="small"
+                                            disabled={rechecking === n.id}
+                                            onClick={() => handleRecheck(n.id)}>
+                                            {rechecking === n.id ? "Checking..." : "Recheck"}
+                                        </Button>
+                                    )}
+                                </Box>
                             </Box>
                         ))}
                     </Box>

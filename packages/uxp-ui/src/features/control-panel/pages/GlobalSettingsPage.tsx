@@ -1,5 +1,5 @@
 import { Box, IconButton, Tooltip, Typography, useTheme } from "@mui/material";
-import { ApiErrorResponse, ErrorCodes, GlobalConfigData, PatchGlobalConfigResponse, ValidationErrorMessages } from "@uxp/common";
+import { ApiErrorResponse, ErrorCodes, GlobalConfigPayload, GlobalConfigPublic, ValidationErrorMessages } from "@uxp/common";
 import { createDebouncedUpdater, FormFieldErrors, FormFieldLabel, FormFieldRefs, Loading, ValidatedTextField } from "@uxp/ui-lib";
 import { useAppDispatch } from "../../../hooks";
 
@@ -9,20 +9,20 @@ import { useSelector } from "react-redux";
 import { ServerErrorTile } from "../../../components";
 import { selectError } from "../../error/errorSelectors";
 import { selectGlobalConfig } from "../../global-config/globalConfigSelectors";
-import { fetchLatestGlobalSettings, patchGlobalSetting, PatchGlobalSettingPayload } from "../../global-config/globalConfigThunk";
+import { configFieldUpdated } from "../../global-config/globalConfigSlice";
+import { fetchPublicGlobalSettings, patchGlobalSetting } from "../../global-config/globalConfigThunk";
 import { selectIsLoading } from "../../loading/loadingSelectors";
 
-const fieldLabels: FormFieldLabel<GlobalConfigData> = {
+const fieldLabels: FormFieldLabel<GlobalConfigPublic> = {
     siteName: "Site Name",
 };
 
-const fieldErrorMessages: ValidationErrorMessages<GlobalConfigData> = {
+const fieldErrorMessages: ValidationErrorMessages<GlobalConfigPublic> = {
     minLength: {
         siteName: "The site name must be at least 2 characters long.",
     },
 };
 const globalErrorMessages = {
-    patchVersionConflict: "The site name has been updated by another user. Please refresh the page and try again.",
     internalServerError: "There was an error updating the site name. Please try again later.",
 };
 
@@ -30,18 +30,18 @@ const GlobalSettingsPage: React.FC = () => {
     const dispatch = useAppDispatch();
     const theme = useTheme();
     const globalConfig = useSelector(selectGlobalConfig);
-    const [formData, setFormData] = useState<GlobalConfigData>({
+    const [formData, setFormData] = useState<GlobalConfigPublic>({
         siteName: globalConfig?.siteName ?? "",
     });
 
     const isLoading = useSelector(selectIsLoading("globalSettings/patch"));
-    const isLoadingLatest = useSelector(selectIsLoading("globalSettings/fetchLatest"));
-    const loadingLatestError = useSelector(selectError("globalSettings/fetchLatest"));
+    const isLoadingLatest = useSelector(selectIsLoading("globalSettings/fetchPublic"));
+    const loadingLatestError = useSelector(selectError("globalSettings/fetchPublic"));
 
-    const fieldRefs: FormFieldRefs<GlobalConfigData> = {
+    const fieldRefs: FormFieldRefs<GlobalConfigPublic> = {
         siteName: useRef<HTMLInputElement>(null),
     };
-    const [fieldErrors, setFieldErrors] = useState<FormFieldErrors<GlobalConfigData>>({});
+    const [fieldErrors, setFieldErrors] = useState<FormFieldErrors<GlobalConfigPublic>>({});
 
     const updateFieldError = useCallback(
         (key: string, message: string | undefined) => {
@@ -54,13 +54,11 @@ const GlobalSettingsPage: React.FC = () => {
     );
 
     const fieldErrorHandler = useCallback(
-        (error: ApiErrorResponse, payload: PatchGlobalSettingPayload) => {
+        (error: ApiErrorResponse, payload: GlobalConfigPayload) => {
             error.errors.forEach((error) => {
                 if (error.code === ErrorCodes.VALIDATION) {
                     const keyword = error.params?.value as keyof ValidationErrorMessages;
-                    updateFieldError(payload.key, fieldErrorMessages[keyword]?.[payload.key] ?? "Invalid value.");
-                } else if (error.code === ErrorCodes.PATCH_VERSION_CONFLICT) {
-                    updateFieldError(payload.key, globalErrorMessages.patchVersionConflict);
+                    updateFieldError(payload.key, fieldErrorMessages[keyword]?.[payload.key as keyof GlobalConfigPublic] ?? "Invalid value.");
                 } else {
                     updateFieldError(payload.key, globalErrorMessages.internalServerError);
                 }
@@ -70,10 +68,11 @@ const GlobalSettingsPage: React.FC = () => {
     );
 
     const fieldSuccessHandler = useCallback(
-        (result: PatchGlobalConfigResponse, payload: PatchGlobalSettingPayload) => {
+        (_result: unknown, payload: GlobalConfigPayload) => {
             updateFieldError(payload.key, undefined);
+            dispatch(configFieldUpdated(payload));
         },
-        [updateFieldError]
+        [updateFieldError, dispatch]
     );
 
     const debouncedUpdateSiteName = useMemo(
@@ -88,15 +87,15 @@ const GlobalSettingsPage: React.FC = () => {
     );
 
     const handleChange = useCallback(
-        (name: keyof GlobalConfigData, value: string) => {
+        (name: keyof GlobalConfigPublic, value: string) => {
             setFormData((prev) => ({ ...prev, [name]: value }));
             debouncedUpdateSiteName(dispatch, { key: name, value: value });
         },
         [dispatch, debouncedUpdateSiteName, setFormData]
     );
     const reload = useCallback(() => {
-        dispatch(fetchLatestGlobalSettings({}));
-    }, []);
+        dispatch(fetchPublicGlobalSettings({}));
+    }, [dispatch]);
 
     return (
         <Box sx={{ p: 2 }}>
@@ -121,17 +120,17 @@ const GlobalSettingsPage: React.FC = () => {
 
             <form>
                 {Object.keys(formData).map((key) => (
-                    <ValidatedTextField<GlobalConfigData>
+                    <ValidatedTextField<GlobalConfigPublic>
                         key={key}
                         disabled={isLoadingLatest}
-                        name={key as keyof GlobalConfigData}
+                        name={key as keyof GlobalConfigPublic}
                         type="text"
                         loading={isLoading}
-                        label={fieldLabels[key as keyof GlobalConfigData]}
-                        value={formData[key as keyof GlobalConfigData]}
-                        error={fieldErrors[key as keyof GlobalConfigData]}
-                        inputRef={fieldRefs[key as keyof GlobalConfigData]}
-                        onChange={(value) => handleChange(key as keyof GlobalConfigData, value)}
+                        label={fieldLabels[key as keyof GlobalConfigPublic]}
+                        value={formData[key as keyof GlobalConfigPublic]}
+                        error={fieldErrors[key as keyof GlobalConfigPublic]}
+                        inputRef={fieldRefs[key as keyof GlobalConfigPublic]}
+                        onChange={(value) => handleChange(key as keyof GlobalConfigPublic, value)}
                     />
                 ))}
             </form>

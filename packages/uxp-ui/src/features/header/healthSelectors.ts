@@ -17,7 +17,7 @@ export const selectHealthSnapshots = createSelector(
 export const selectHealthItemCount = createSelector(
     selectHealthSnapshots,
     (snapshots) =>
-        snapshots.reduce((sum, snapshot) => sum + snapshot.items.length, 0)
+        snapshots.reduce((sum, snapshot) => sum + snapshot.items.filter((i) => i.severity !== "ok").length, 0)
 );
 
 export const selectGlobalHealthLevel = createSelector(
@@ -28,13 +28,19 @@ export const selectGlobalHealthLevel = createSelector(
             return "unknown";
         }
 
+        // All snapshots have empty items — checks are configured but haven't reported yet
+        const hasAnyItems = snapshots.some((s) => s.items.length > 0);
+        if (!hasAnyItems) {
+            return "unknown";
+        }
+
         let worst: HealthSeverity = "ok";
 
         for (const snapshot of snapshots) {
             for (const item of snapshot.items) {
                 if (severityRank[item.severity] > severityRank[worst]) {
                     worst = item.severity;
-                }   
+                }
             }
         }
 

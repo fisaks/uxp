@@ -1,4 +1,4 @@
-import { AccessType, AppConfigData, PageAppsConfigData, PageConfigData, RouteConfigData, UserRole } from "@uxp/common";
+import { AccessType, AppConfigData, GlobalConfigKey, GlobalConfigPayload, PageAppsConfigData, PageConfigData, RouteConfigData, UserRole } from "@uxp/common";
 
 export type WellKnownInternalComponent =
     | "LoginPage" | "RegisterPage" | "RegistrationThankYouPage"
@@ -50,6 +50,7 @@ export type ManagedField<T> = {
     readonly managed: boolean;
 };
 
+/** Per-field managed config defaults using dotted key paths */
 export type GlobalConfigDefaults = {
-    readonly siteName: ManagedField<string>;
+    readonly [P in GlobalConfigKey]?: ManagedField<Extract<GlobalConfigPayload, { key: P }>["value"]>;
 };

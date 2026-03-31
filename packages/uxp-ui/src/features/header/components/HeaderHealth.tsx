@@ -4,6 +4,7 @@ import { HealthBootstraps } from "./HealthBootstraps";
 import { HealthIndicatorButton } from "./HealthIndicatorButton";
 import { HealthMenu } from "./HealthMenu";
 import { HealthNoticeBubble } from "./HealthNoticeBubble";
+import { UxpHealth } from "./UxpHealth";
 
 
 export const HeaderHealth = () => {
@@ -21,6 +22,7 @@ export const HeaderHealth = () => {
             <HealthIndicatorButton onClick={openMenu} />
             <HealthNoticeBubble />
             <HealthBootstraps />
+            <UxpHealth />
 
             <HealthMenu
                 anchorEl={anchorEl}

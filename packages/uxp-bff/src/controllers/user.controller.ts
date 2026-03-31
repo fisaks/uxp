@@ -29,13 +29,13 @@ import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { DateTime } from "luxon";
 import { nanoid } from "nanoid";
 import { QueryRunner } from "typeorm";
-import { BCRYPT_SALT_ROUNDS, MAX_FAILD_LOGIN } from "../../config/constant";
-import { User } from "../../db/entities/User";
+import { BCRYPT_SALT_ROUNDS, MAX_FAILD_LOGIN } from "../config/constant";
+import { User } from "../db/entities/User";
 
-import { UserService } from "../../services/user.service";
+import { UserService } from "../services/user.service";
 
-import { clearAuthCookies, generateAccessToken, generateRefreshToken, setAuthCookies, verifyRefreshToken } from "../../utils/tokenUtils";
-import { closeAllActiveWebSockets } from "../../websocket/registerRemoteWebSocketHandler";
+import { clearAuthCookies, generateAccessToken, generateRefreshToken, setAuthCookies, verifyRefreshToken } from "../utils/tokenUtils";
+import { closeAllActiveWebSockets } from "../websocket/registerRemoteWebSocketHandler";
 
 export class UserController {
     private fastify: FastifyInstance;

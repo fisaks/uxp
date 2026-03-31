@@ -20,7 +20,8 @@ export type LoadingKey =
     | "user/unlock"
     | "user/updateRoles"
     | "globalSettings/patch"
-    | "globalSettings/fetchLatest"
+    | "globalSettings/fetchPublic"
+    | "globalSettings/fetchFull"
     | "user/tokenVersion";
 
 export const createLoadingAwareThunk = <Returned, ThunkArg>(

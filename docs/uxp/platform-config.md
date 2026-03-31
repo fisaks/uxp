@@ -72,12 +72,21 @@ Global configuration uses per-field `managed` flags:
 
 ```typescript
 globalConfig({
-    siteName: { value: "UXP Dev", managed: true },
+    siteName: { value: "Solbacka", managed: true },
+
+    "notification.email.enabled": { value: true, managed: false },
+    "notification.email.smtp.host": { value: "some.smtp.com", managed: false },
+    // ... other notification and health check fields
+
+    "healthChecks.tlsCert.enabled": { value: true, managed: false },
+    "healthChecks.tlsCert.intervalHours": { value: 12, managed: false },
 })
 ```
 
 - `managed: true` — value is overwritten on every apply
 - `managed: false` — value is only seeded if no global config row exists; subsequent applies preserve UI edits
+
+Global config supports nested dotted keys for notification and health check settings. Sensitive values (e.g. SMTP password) are encrypted at rest. See [Notification and platform health](./notification-and-health.md) for the full config structure.
 
 ---
 

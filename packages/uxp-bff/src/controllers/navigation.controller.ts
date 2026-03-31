@@ -2,7 +2,7 @@ import { Route, UseQueryRunner } from "@uxp/bff-common";
 import { NavigationResponse } from "@uxp/common";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { QueryRunner } from "typeorm";
-import { NavigationService } from "../../services/navigation.service";
+import { NavigationService } from "../services/navigation.service";
 
 export class NavigationController {
 

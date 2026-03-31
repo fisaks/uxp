@@ -2,7 +2,7 @@ import { AppErrorV2, AppLogger, Route, UseQueryRunner } from "@uxp/bff-common";
 import { SchemaValidate } from "@uxp/common";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { QueryRunner } from "typeorm";
-import { RemoteAppService } from "../../services/remote-app.service";
+import { RemoteAppService } from "../services/remote-app.service";
 
 export const GetSystemIndexSchema: SchemaValidate<undefined, undefined, { appIdentifier: string, type: "health" | "system" }> = {
     params: {
