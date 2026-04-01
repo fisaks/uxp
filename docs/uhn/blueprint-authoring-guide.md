@@ -58,6 +58,8 @@ my-blueprint/
     ├── rules/              # Automation rules
     │   ├── kitchen_automation.ts
     │   └── bathroom_ventilation.ts
+    ├── dev-filters/        # Dev filter presets (optional)
+    │   └── toilet.ts
     └── helpers/            # Shared utilities (optional, any name)
         └── calculations.ts
 ```
@@ -166,6 +168,7 @@ uhn-blueprint bupload --no-activate
 | Option | Description |
 |--------|-------------|
 | `--project <path>` | Path to blueprint project root (default: current directory) |
+| `--dev-filter <name>` | Apply a dev filter preset from `src/dev-filters/` (build/bupload only) |
 | `--token <token>` | API token (overrides `~/.uhn/` config) |
 | `--url <url>` | UHN Master URL (overrides `~/.uhn/` config) |
 | `--file <path>` | Path to blueprint zip (default: `dist/blueprint.zip`) |
@@ -1420,6 +1423,10 @@ The resolved target is injected as `.executionTarget("edge1")` or `.executionTar
 
 Complex resources used in `.onTap()` triggers automatically get `emitsTap: true` injected if not already set.
 
+### 5b. Copy Dev Filter (optional)
+
+When `--dev-filter <name>` is passed, the build copies `src/dev-filters/<name>.ts` into the temp directory. The compiled filter is included in the zip and loaded by the runtime at startup to reduce the blueprint to a subset of resources, views, rules, scenes, and locations. See [Dev Filters](#dev-filters).
+
 ### 6. Package
 
 The transformed source is compressed into `dist/blueprint.zip` for upload to UHN Master.
@@ -1522,6 +1529,57 @@ Pre-built functions for complex resources:
 | `computeOnCount` | Count of resources that are on |
 
 You can write custom compute functions using the `ComplexComputeFn` type — see [Complex Resources](#complex-resources) for details.
+
+---
+
+## Dev Filters
+
+Dev filters let you run a subset of your blueprint during development — useful when your dev edge connects to real production devices and you don't want a zillion resources active.
+
+### Creating a Filter
+
+Place filter presets in `src/dev-filters/`. Each file exports a `DevFilter` object with typed references to views, rules, scenes, and extra resources:
+
+```typescript
+// src/dev-filters/toilet.ts
+import type { DevFilter } from "@uhn/blueprint";
+import { viewToiletMilightCeiling } from "../views/toilet";
+import { toiletMilightColorRule, toiletMilightWhiteRule } from "../rules/toilet";
+
+const filter: DevFilter = {
+    name: "toilet",
+    views: [viewToiletMilightCeiling],
+    rules: [toiletMilightColorRule, toiletMilightWhiteRule],
+};
+export default filter;
+```
+
+| Field | Description |
+|-------|-------------|
+| `name` | Required. Display name for log messages |
+| `views` | Views to keep. All resources referenced by these views (stateFrom, command, controls, stateDisplay, sideEffects) are automatically included |
+| `rules` | Rules to keep. Trigger resources and actionHint resources are automatically included |
+| `scenes` | Scenes to keep. Command resources are automatically included |
+| `extraResources` | Additional resources to include that aren't referenced by any view, rule, or scene |
+
+### How Filtering Works
+
+The runtime automatically resolves all resource dependencies:
+
+1. Collects resource IDs from all referenced views, rules, scenes, and extra resources
+2. Expands complex resources — sub-resources and compute dependencies are included transitively
+3. Filters all services in-place (resources, views, rules, scenes)
+4. Rebuilds locations — only items referencing surviving resources/views/scenes are kept; empty locations are dropped
+
+### Usage
+
+```bash
+# Build with a dev filter
+uhn-blueprint build --dev-filter toilet
+
+# Build + upload with a dev filter
+uhn-blueprint bupload --dev-filter toilet
+```
 
 ---
 

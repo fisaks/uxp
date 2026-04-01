@@ -123,9 +123,9 @@ async function collectResources(resourcesDir: string): Promise<CollectResult> {
  * command handlers, and state reader.
  */
 export class RuntimeResourceService {
-    readonly complexComputeEntries: ComplexComputeEntry[];
-    private readonly resources: RuntimeResourceList;
-    private readonly resourceById: Map<string, RuntimeResource>;
+    private _complexComputeEntries: ComplexComputeEntry[];
+    private resources: RuntimeResourceList;
+    private resourceById: Map<string, RuntimeResource>;
 
     private constructor(
         resources: RuntimeResourceList,
@@ -134,7 +134,11 @@ export class RuntimeResourceService {
     ) {
         this.resources = resources;
         this.resourceById = resourceById;
-        this.complexComputeEntries = complexComputeEntries;
+        this._complexComputeEntries = complexComputeEntries;
+    }
+
+    get complexComputeEntries(): readonly ComplexComputeEntry[] {
+        return this._complexComputeEntries;
     }
 
     static async create(resourcesDir: string): Promise<RuntimeResourceService> {
@@ -145,10 +149,18 @@ export class RuntimeResourceService {
             resourceById.set(r.id, r);
         }
         runtimeOutput.log({ level: "info", component: "RuntimeResourceService", message: `Loaded ${resources.length} resources.` });
-        if (complexComputeEntries.length) {
+        if (complexComputeEntries.length > 0) {
             runtimeOutput.log({ level: "info", component: "RuntimeResourceService", message: `Found ${complexComputeEntries.length} complex compute entry/entries.` });
         }
         return new RuntimeResourceService(resources, resourceById, complexComputeEntries);
+    }
+
+    filterByIds(ids: Set<string>): void {
+        this.resources = this.resources.filter(r => ids.has(r.id));
+        this.resourceById = new Map(this.resources.map(r => [r.id, r]));
+        this._complexComputeEntries = this._complexComputeEntries.filter(
+            e => ids.has(e.complexResourceId)
+        );
     }
 
     list(): RuntimeResourceList {

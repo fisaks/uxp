@@ -21,12 +21,12 @@ export async function run(): Promise<void> {
     try {
         switch (command) {
             case "build": {
-                await doBuild(projectRoot);
+                await doBuild(projectRoot, flags);
                 return;
             }
 
             case "bupload": {
-                const builtZip = await doBuild(projectRoot);
+                const builtZip = await doBuild(projectRoot, flags);
                 await doUpload(projectRoot, flags, builtZip);
                 return;
             }
@@ -57,10 +57,14 @@ export async function run(): Promise<void> {
     }
 }
 
-async function doBuild(projectRoot: string): Promise<string> {
-    const zipPath = await buildBlueprint(projectRoot);
+async function doBuild(projectRoot: string, flags: Record<string, string | true>): Promise<string> {
+    const devFilter = typeof flags["dev-filter"] === "string" ? flags["dev-filter"] : undefined;
+    const zipPath = await buildBlueprint(projectRoot, { devFilter });
     console.log("✅ Blueprint built successfully");
     console.log(`📦 ${zipPath}`);
+    if (devFilter) {
+        console.log(`🔬 Dev filter: ${devFilter}`);
+    }
     return zipPath;
 }
 
@@ -108,7 +112,8 @@ Commands:
   bupload   Build + upload in one step.
 
 General options:
-  --project <path>  Path to blueprint project root (default: cwd)
+  --project <path>     Path to blueprint project root (default: cwd)
+  --dev-filter <name>  Apply a dev filter preset from src/dev-filters/ (build/bupload)
 
 Upload options:
   --token <token>   API token (overrides ~/.uhn/ config)

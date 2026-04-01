@@ -142,7 +142,7 @@ async function collectViews(viewsDir: string): Promise<RuntimeInteractionView[]>
  * property serialization (holdMs, min/max, action/metadata, etc.).
  */
 export class RuntimeViewService {
-    private readonly views: RuntimeInteractionView[];
+    private views: RuntimeInteractionView[];
 
     private constructor(views: RuntimeInteractionView[]) {
         this.views = views;
@@ -156,6 +156,10 @@ export class RuntimeViewService {
             message: `Loaded ${views.length} view(s).`,
         });
         return new RuntimeViewService(views);
+    }
+
+    filterByIds(ids: Set<string>): void {
+        this.views = this.views.filter(v => ids.has(v.id));
     }
 
     list(): RuntimeInteractionView[] {

@@ -118,7 +118,7 @@ async function collectLocations(locationsDir: string): Promise<RuntimeLocation[]
 }
 
 export class RuntimeLocationService {
-    private readonly locations: RuntimeLocation[];
+    private locations: RuntimeLocation[];
 
     private constructor(locations: RuntimeLocation[]) {
         this.locations = locations;
@@ -132,6 +132,16 @@ export class RuntimeLocationService {
             message: `Loaded ${locations.length} location(s).`,
         });
         return new RuntimeLocationService(locations);
+    }
+
+    /** Filter location items. keepItems uses composite keys: "kind:refId" (e.g. "view:abc", "resource:xyz"). */
+    filterByLocationItems(keepItems: Set<string>): void {
+        this.locations = this.locations
+            .map(loc => ({
+                ...loc,
+                items: loc.items.filter(item => keepItems.has(`${item.kind}:${item.refId}`)),
+            }))
+            .filter(loc => loc.items.length > 0);
     }
 
     list(): RuntimeLocation[] {

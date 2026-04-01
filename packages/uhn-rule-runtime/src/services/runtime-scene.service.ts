@@ -76,7 +76,7 @@ async function collectScenes(scenesDir: string): Promise<RuntimeScene[]> {
 }
 
 export class RuntimeSceneService {
-    private readonly scenes: RuntimeScene[];
+    private scenes: RuntimeScene[];
 
     private constructor(scenes: RuntimeScene[]) {
         this.scenes = scenes;
@@ -90,6 +90,10 @@ export class RuntimeSceneService {
             message: `Loaded ${scenes.length} scene(s).`,
         });
         return new RuntimeSceneService(scenes);
+    }
+
+    filterByIds(ids: Set<string>): void {
+        this.scenes = this.scenes.filter(s => ids.has(s.id));
     }
 
     list(): RuntimeScene[] {

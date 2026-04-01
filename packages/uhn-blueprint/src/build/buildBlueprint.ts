@@ -8,7 +8,7 @@ import { resolveExecutionTargets } from "./resolveExecutionTargets";
 import { validateBlueprintFactories } from "./validateBlueprintFactories";
 import { validateBlueprintMetadata } from "./validateBlueprintMetadata";
 
-export async function buildBlueprint(projectRoot: string): Promise<string> {
+export async function buildBlueprint(projectRoot: string, options?: { devFilter?: string }): Promise<string> {
     const distDir = path.join(projectRoot, "dist");
     const tempDir = path.join(distDir, "blueprint-tmp");
 
@@ -72,7 +72,9 @@ export async function buildBlueprint(projectRoot: string): Promise<string> {
                 rel === "locations" ||
                 rel.startsWith(`locations${path.sep}`) ||
                 rel === "scenes" ||
-                rel.startsWith(`scenes${path.sep}`)
+                rel.startsWith(`scenes${path.sep}`) ||
+                rel === "dev-filters" ||
+                rel.startsWith(`dev-filters${path.sep}`)
             ) {
                 return false;
             }
@@ -127,6 +129,17 @@ export async function buildBlueprint(projectRoot: string): Promise<string> {
             tsconfigPath: tsconfigPath,
             mode: "scene",
         });
+    }
+
+    // 3e) Copy dev filter preset to temp (if specified)
+    if (options?.devFilter) {
+        const filterSrc = path.join(srcDir, "dev-filters", `${options.devFilter}.ts`);
+        if (!await fs.pathExists(filterSrc)) {
+            throw new Error(`Dev filter preset not found: ${filterSrc}`);
+        }
+        const filterDst = path.join(tmpSrc, "dev-filters", "dev-filter.ts");
+        await fs.ensureDir(path.dirname(filterDst));
+        await fs.copyFile(filterSrc, filterDst);
     }
 
     // 3.5) Resolve and inject execution targets

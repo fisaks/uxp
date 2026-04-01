@@ -9,3 +9,4 @@ export * from "./location";
 export * from "./scene";
 export * from "./icon";
 export * from "./resource-milight-factory";
+export * from "./dev-filter";

@@ -7,6 +7,7 @@ import { ResourceEventEmitter } from "./rule/resource-event.emitter";
 import { RuleEngine } from "./rule/rule-engine";
 import { TriggerEventBus } from "./rule/trigger-event-bus";
 import { ComplexComputeService } from "./services/complex-compute.service";
+import { loadAndApplyDevFilter } from "./dev-filter";
 import { RuntimeMuteService } from "./services/runtime-mute.service";
 import { RuntimeResourceService } from "./services/runtime-resource.service";
 import { RuntimeRulesService } from "./services/runtime-rules.service";
@@ -28,11 +29,12 @@ if (!runMode || RuntimeModes.indexOf(runMode) === -1) {
     console.error(`ERROR: Invalid run mode. Expected one of ${RuntimeModes.join(", ")}`);
     process.exit(1);
 }
-const resourcesDir = path.join(path.resolve(blueprintDir), "dist", "resources");
-const rulesDir = path.join(path.resolve(blueprintDir), "dist", "rules");
-const viewsDir = path.join(path.resolve(blueprintDir), "dist", "views");
-const locationsDir = path.join(path.resolve(blueprintDir), "dist", "locations");
-const scenesDir = path.join(path.resolve(blueprintDir), "dist", "scenes");
+const blueprintRoot = path.resolve(blueprintDir);
+const resourcesDir = path.join(blueprintRoot, "dist", "resources");
+const rulesDir = path.join(blueprintRoot, "dist", "rules");
+const viewsDir = path.join(blueprintRoot, "dist", "views");
+const locationsDir = path.join(blueprintRoot, "dist", "locations");
+const scenesDir = path.join(blueprintRoot, "dist", "scenes");
 
 async function main() {
     const [resourceService, rulesService, viewService, locationService, sceneService] = await Promise.all([
@@ -42,6 +44,10 @@ async function main() {
         RuntimeLocationService.create(locationsDir),
         RuntimeSceneService.create(scenesDir),
     ]);
+
+    // Dev filter: if dist/dev-filters/dev-filter.js exists, reduce to a subset of resources/views/rules/scenes/locations
+    await loadAndApplyDevFilter(blueprintRoot, { resourceService, rulesService, viewService, locationService, sceneService });
+
     const stateService = new RuntimeStateService();
     const triggerEventBus = new TriggerEventBus();
     const timerService = new RuntimeTimerService(stateService);

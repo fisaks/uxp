@@ -19,7 +19,7 @@ export class ComplexComputeService {
     private readonly dependencyMap = new Map<string, ComplexComputeEntry[]>();
 
     constructor(
-        private readonly entries: ComplexComputeEntry[],
+        private readonly entries: readonly ComplexComputeEntry[],
         private readonly stateService: RuntimeStateService
     ) {
         // Build reverse index: dependency resourceId → entries

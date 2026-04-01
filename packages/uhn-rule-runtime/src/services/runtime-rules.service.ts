@@ -163,9 +163,9 @@ function serializeRule(rule: BlueprintRule): RuntimeRuleInfo {
  * receives a trigger event. Serializes rules to RuntimeRuleInfo for IPC/UI.
  */
 export class RuntimeRulesService {
-    private readonly rules: BlueprintRule[];
+    private rules: BlueprintRule[];
     private readonly allValidatedRules: BlueprintRule[];
-    private readonly byResourceId: Map<string, BlueprintRule[]>;
+    private byResourceId: Map<string, BlueprintRule[]>;
 
     private constructor(rules: BlueprintRule[], allValidatedRules: BlueprintRule[], byResourceId: Map<string, BlueprintRule[]>) {
         this.rules = rules;
@@ -188,6 +188,11 @@ export class RuntimeRulesService {
             message: `Indexed rules for ${byResourceId.size} unique resource ID(s): [${Array.from(byResourceId.keys()).join(", ")}]`,
         });
         return new RuntimeRulesService(rules, validated, byResourceId);
+    }
+
+    filterByIds(ids: Set<string>): void {
+        this.rules = this.rules.filter(r => ids.has(r.id));
+        this.byResourceId = indexRules(this.rules);
     }
 
     list(): BlueprintRule[] {
