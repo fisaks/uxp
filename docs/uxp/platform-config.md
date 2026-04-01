@@ -72,7 +72,7 @@ Global configuration uses per-field `managed` flags:
 
 ```typescript
 globalConfig({
-    siteName: { value: "Solbacka", managed: true },
+    siteName: { value: "My Home", managed: true },
 
     "notification.email.enabled": { value: true, managed: false },
     "notification.email.smtp.host": { value: "some.smtp.com", managed: false },
@@ -109,7 +109,7 @@ Reads connection details from `~/.uxp/config.json`:
     "defaultProfile": "dev",
     "profiles": {
         "dev": { "url": "http://localhost:3001", "key": "<api-key>" },
-        "prod": { "url": "https://solbacka.ddns.net", "key": "<api-key>" }
+        "prod": { "url": "https://my-server.example.com", "key": "<api-key>" }
     }
 }
 ```
