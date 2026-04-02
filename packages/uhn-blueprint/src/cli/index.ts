@@ -10,7 +10,7 @@ import { uploadBlueprint } from "./uploadBlueprint";
  *
  * Commands:
  *   uhn-blueprint build
- *   uhn-blueprint upload [--token <t>] [--url <u>] [--file <f>] [--no-activate]
+ *   uhn-blueprint upload [--env <e>] [--token <t>] [--url <u>] [--file <f>] [--no-activate]
  */
 export async function run(): Promise<void> {
     const { command, flags } = parseArgs(process.argv);
@@ -70,12 +70,13 @@ async function doBuild(projectRoot: string, flags: Record<string, string | true>
 
 async function doUpload(projectRoot: string, flags: Record<string, string | true>, zipPath: string): Promise<void> {
     const identifier = readBlueprintIdentifier(projectRoot);
+    const env = typeof flags.env === "string" ? flags.env : undefined;
 
     let token = typeof flags.token === "string" ? flags.token : undefined;
     let url = typeof flags.url === "string" ? flags.url : undefined;
 
     if (!token || !url) {
-        const config = readConfig(identifier);
+        const config = readConfig(identifier, env);
         token = token ?? config.token;
         url = url ?? config.url;
     }
@@ -116,6 +117,7 @@ General options:
   --dev-filter <name>  Apply a dev filter preset from src/dev-filters/ (build/bupload)
 
 Upload options:
+  --env <name>      Environment name (reads ~/.uhn/<identifier>.<env>.json)
   --token <token>   API token (overrides ~/.uhn/ config)
   --url <url>       UHN master URL (overrides ~/.uhn/ config)
   --file <path>     Path to blueprint zip (default: dist/blueprint.zip)
@@ -132,5 +134,10 @@ Configuration:
     }
 
   Download this file from the UHN admin UI when creating an API token.
+
+  For multiple environments, use --env to select a config file:
+    ~/.uhn/my-blueprint.json       (default, no --env)
+    ~/.uhn/my-blueprint.dev.json   (--env dev)
+    ~/.uhn/my-blueprint.prod.json  (--env prod)
 `);
 }

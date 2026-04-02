@@ -141,6 +141,18 @@ The config file contains:
 | `identifier` | Blueprint identifier (must match `blueprint.json`) |
 | `token` | API token (64-character hex string) |
 
+#### Multiple Environments
+
+To upload to different servers (e.g. production and development), create separate config files with an environment suffix:
+
+```
+~/.uhn/my-home.json       # default (no --env flag)
+~/.uhn/my-home.dev.json   # used with --env dev
+~/.uhn/my-home.prod.json  # used with --env prod
+```
+
+Each file has the same structure but points to a different server URL with its own API token. Rename the downloaded `.uhn` config file to include the environment suffix (e.g. `my-home.dev.json`). All config files must have `600` permissions.
+
 ### 3. Upload
 
 Three CLI commands are available:
@@ -169,6 +181,7 @@ uhn-blueprint bupload --no-activate
 |--------|-------------|
 | `--project <path>` | Path to blueprint project root (default: current directory) |
 | `--dev-filter <name>` | Apply a dev filter preset from `src/dev-filters/` (build/bupload only) |
+| `--env <name>` | Environment name — reads `~/.uhn/<identifier>.<env>.json` instead of the default config |
 | `--token <token>` | API token (overrides `~/.uhn/` config) |
 | `--url <url>` | UHN Master URL (overrides `~/.uhn/` config) |
 | `--file <path>` | Path to blueprint zip (default: `dist/blueprint.zip`) |

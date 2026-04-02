@@ -10,7 +10,7 @@ export type UhnConfig = {
 
 const UHN_DIR = path.join(os.homedir(), ".uhn");
 
-export function readConfig(identifier: string): UhnConfig {
+export function readConfig(identifier: string, env?: string): UhnConfig {
     const dirStat = safeStat(UHN_DIR);
     if (!dirStat) {
         throw new Error(
@@ -31,11 +31,12 @@ export function readConfig(identifier: string): UhnConfig {
         );
     }
 
-    const filePath = path.join(UHN_DIR, `${identifier}.json`);
+    const fileName = env ? `${identifier}.${env}.json` : `${identifier}.json`;
+    const filePath = path.join(UHN_DIR, fileName);
     const fileStat = safeStat(filePath);
     if (!fileStat) {
         throw new Error(
-            `No config found for blueprint "${identifier}".\n` +
+            `No config found at ~/.uhn/${fileName}.\n` +
             `Download the .uhn file from the UHN admin UI and place it in ~/.uhn/`
         );
     }
@@ -43,18 +44,18 @@ export function readConfig(identifier: string): UhnConfig {
     const fileMode = fileStat.mode & 0o777;
     if (fileMode !== 0o600) {
         throw new Error(
-            `~/.uhn/${identifier}.json permissions must be 600 (current: ${fileMode.toString(8)}).\n` +
-            `Run: chmod 600 ~/.uhn/${identifier}.json`
+            `~/.uhn/${fileName} permissions must be 600 (current: ${fileMode.toString(8)}).\n` +
+            `Run: chmod 600 ~/.uhn/${fileName}`
         );
     }
 
     const data = fs.readJsonSync(filePath);
 
     if (!data.url || typeof data.url !== "string") {
-        throw new Error(`~/.uhn/${identifier}.json is missing a valid "url" field.`);
+        throw new Error(`~/.uhn/${fileName} is missing a valid "url" field.`);
     }
     if (!data.token || typeof data.token !== "string") {
-        throw new Error(`~/.uhn/${identifier}.json is missing a valid "token" field.`);
+        throw new Error(`~/.uhn/${fileName} is missing a valid "token" field.`);
     }
 
     return {
