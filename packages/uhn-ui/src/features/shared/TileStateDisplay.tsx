@@ -7,6 +7,7 @@ import type { HeroFontSize } from "@uhn/blueprint";
 import { DisplayItemIconState, DisplayItemValueState } from "./tile.types";
 import { formatAnalogValue } from "./formatAnalogValue";
 
+
 /* ------------------------------------------------------------------ */
 /* DisplayValue rendering (left / right / hero slots)                  */
 /* ------------------------------------------------------------------ */
@@ -48,7 +49,7 @@ export const ValueItemCompact: React.FC<{ item: DisplayItemValueState; align: "l
                     <Typography
                         variant="caption"
                         noWrap
-                        sx={{ fontFamily: "monospace", fontSize: "0.8rem", fontWeight: 600, color: "text.secondary", lineHeight: 1.3 }}
+                        sx={{ fontSize: "0.8rem", fontWeight: 600, color: "text.secondary", lineHeight: 1.3 }}
                     >
                         {formatted}
                     </Typography>
@@ -71,7 +72,7 @@ export const ValueItemCompact: React.FC<{ item: DisplayItemValueState; align: "l
             <Typography
                 variant="caption"
                 noWrap
-                sx={{ fontFamily: "monospace", fontSize: "0.8rem", fontWeight: 600, color: "text.secondary", lineHeight: 1.3 }}
+                sx={{ fontSize: "0.8rem", fontWeight: 600, color: "text.secondary", lineHeight: 1.3 }}
             >
                 {formatted}
             </Typography>
@@ -204,7 +205,6 @@ const HeroValue: React.FC<{ item: DisplayItemValueState; fontSize: string }> = (
         <Typography
             variant="body1"
             sx={{
-                fontFamily: "monospace",
                 fontSize,
                 fontWeight: 700,
                 color: "text.primary",
