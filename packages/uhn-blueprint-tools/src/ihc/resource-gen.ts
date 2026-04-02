@@ -308,6 +308,7 @@ export function generateResourceFile(
 
     // Header comment
     lines.push(`// ${group.name} — IHC controller: ${controller}`);
+    lines.push(`// Add // @keep to any property line to preserve it across re-imports`);
     lines.push("");
 
     const exportKeyword = autoExport ? "export " : "";

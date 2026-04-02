@@ -92,10 +92,12 @@ export async function ihcImport(opts: IHCImportOptions): Promise<void> {
             continue;
         }
 
-        // Before overwriting, collect previously exported pins from the existing file
-        const exportedPins = fs.existsSync(resourcePath)
-            ? collectExportedPins(fs.readFileSync(resourcePath, "utf-8"))
-            : new Set<string>();
+        // Before overwriting, collect user customizations from the existing file
+        const existingContent = fs.existsSync(resourcePath)
+            ? fs.readFileSync(resourcePath, "utf-8")
+            : "";
+        const exportedPins = existingContent ? collectExportedPins(existingContent) : new Set<string>();
+        const keptOverrides = existingContent ? collectKeptOverrides(existingContent) : new Map<string, string[]>();
 
         let content = generateResourceFile(group, opts.controller, opts.edge, mapping, pinOverrides, opts.autoExport, excludes.pinsSet);
         if (!content) {
@@ -106,6 +108,11 @@ export async function ihcImport(opts: IHCImportOptions): Promise<void> {
         // Re-apply exports for pins that were previously exported
         if (exportedPins.size > 0) {
             content = reapplyExports(content, exportedPins);
+        }
+
+        // Re-apply user overrides (lines marked with // @keep)
+        if (keptOverrides.size > 0) {
+            content = reapplyKeptOverrides(content, keptOverrides);
         }
 
         fs.writeFileSync(resourcePath, content);
@@ -187,6 +194,74 @@ function reapplyExports(content: string, exportedPins: Set<string>): string {
                 return "export " + full;
             }
             return match;
+        },
+    );
+}
+
+/**
+ * Collects user-preserved lines (those marked with `// @keep`) from each resource block.
+ * Returns a map of hex pin → array of raw property lines (with the marker stripped).
+ */
+function collectKeptOverrides(content: string): Map<string, string[]> {
+    const overrides = new Map<string, string[]>();
+    const re = /(?:export )?const \w+ = \w+\(\{([^}]*)\}/g;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(content)) !== null) {
+        const body = m[1];
+        const pinMatch = body.match(/pin:\s*(0x[A-F0-9]+)/);
+        if (!pinMatch) continue;
+
+        const keptLines = body
+            .split("\n")
+            .filter(line => line.includes("//@keep") || line.includes("// @keep"))
+            .map(line => line.trimEnd());
+
+        if (keptLines.length > 0) {
+            overrides.set(pinMatch[1], keptLines);
+        }
+    }
+    return overrides;
+}
+
+/**
+ * Re-applies `// @keep` lines into freshly generated resource blocks.
+ * For each pin with kept overrides:
+ *  - Remove generated lines whose property key is overridden by a kept line
+ *  - Append kept lines before the closing `})`
+ */
+function reapplyKeptOverrides(content: string, overrides: Map<string, string[]>): string {
+    return content.replace(
+        /(?:export )?const \w+ = \w+\(\{[^}]*\}\)/g,
+        (block) => {
+            const pinMatch = block.match(/pin:\s*(0x[A-F0-9]+)/);
+            if (!pinMatch) return block;
+            const keptLines = overrides.get(pinMatch[1]);
+            if (!keptLines) return block;
+
+            // Extract property keys from kept lines
+            const keptKeys = new Set<string>();
+            for (const line of keptLines) {
+                const keyMatch = line.match(/^\s+(\w+):/);
+                if (keyMatch) keptKeys.add(keyMatch[1]);
+            }
+
+            // Remove generated lines whose key is overridden by a kept line
+            const lines = block.split("\n");
+            const filtered = lines.filter(line => {
+                const keyMatch = line.match(/^\s+(\w+):/);
+                return !keyMatch || !keptKeys.has(keyMatch[1]);
+            });
+
+            // Insert kept lines before closing })
+            let closingIdx = -1;
+            for (let i = filtered.length - 1; i >= 0; i--) {
+                if (filtered[i].trim().startsWith("})")) { closingIdx = i; break; }
+            }
+            if (closingIdx >= 0) {
+                filtered.splice(closingIdx, 0, ...keptLines);
+            }
+
+            return filtered.join("\n");
         },
     );
 }

@@ -435,7 +435,7 @@ npx uhn-blueprint-tools ihc-import -F .ihc/data/<controller>-project.xml --force
 | `-c` | `--controller <name>` | Controller device name (e.g. `"ihc2"`) | **required** |
 | `-e` | `--edge <name>` | Edge name for generated resources | `edge1` |
 | `-o` | `--output-dir <path>` | Output directory for generated files | `src` |
-| `-f` | `--force` | Regenerate existing files (preserves export state) | `false` |
+| `-f` | `--force` | Regenerate existing files (preserves export state and `// @keep` lines) | `false` |
 | `-x` | `--export` | Auto-export all generated resource consts | `false` |
 | `-M` | `--mapping-only` | Only update factory mapping, skip file generation | `false` |
 
@@ -465,6 +465,22 @@ The import tool reads and writes several files in the `.ihc/` directory at the p
 **Generated file structure:** One TypeScript file per location per controller, named `{location}-{controller}.ts` (e.g. `hall-ihc2.ts`), placed in `src/resources/`. Each file contains resource definitions using your project's factory functions.
 
 **Resources are unexported by default.** The author reviews each file and adds `export` to the resources that should be active in the blueprint. Use `--export` (`-x`) to auto-export everything. When using `--force` to regenerate files, previously exported resources retain their export state.
+
+**Preserving custom overrides with `// @keep`:** When you manually add or change a property on a generated resource, add `// @keep` (or `//@keep`) at the end of the line. The import tool preserves these lines across `--force` re-imports, removing any auto-generated version of the same property. This works for any property — `name`, `keywords`, `icon`, `description`, etc.
+
+```typescript
+export const livingRoomLightCeilingDiningTable = outputLight({
+    edge: "edge1",
+    device: "ihc1",
+    pin: 0x7B2A5B,
+    description: "Light — I taket ovanför matbord",
+    name: "Dining Table Light", // @keep
+    icon: "lighting:pendant", // @keep
+    keywords: ["matbord", "tak"], // @keep
+});
+```
+
+On re-import with `--force`, the three `// @keep` lines are preserved. The auto-generated `icon:` is replaced by the kept version. Lines without `// @keep` are regenerated fresh from IHC project data.
 
 ### Analog Output Options
 
