@@ -92,7 +92,6 @@ export const SceneTile: React.FC<SceneTileProps> = ({ scene, nameOverride }) => 
                     icon={<IconComponent sx={{ fontSize: 40, color: iconColor, transition: "color 0.2s" }} />}
                     displayName={displayName}
                     subtitle={scene.description}
-                    stateValues={[]}
                     pt={3.5}
                 />
             </CardActionArea>

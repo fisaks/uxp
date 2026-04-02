@@ -1,5 +1,5 @@
 
-import { ActionInputResourceBase, ActionOutputResourceBase, AnalogInputResourceBase, AnalogOutputOption, AnalogOutputResourceBase, BlueprintIcon, DigitalInputResourceBase, DigitalOutputResourceBase, LogicalResourceType, PhysicalResourceType, ResourceType, RuntimeRuleAction, StateDisplayAggregation, StateDisplayStyle, ViewActiveCondition, ViewCommandType, ViewStateAggregation } from "@uhn/blueprint";
+import { ActionInputResourceBase, ActionOutputResourceBase, AnalogInputResourceBase, AnalogOutputOption, AnalogOutputResourceBase, BlueprintIcon, DigitalInputResourceBase, DigitalOutputResourceBase, HeroFontSize, LogicalResourceType, PhysicalResourceType, ResourceType, RuntimeRuleAction, ValueColorRule, ValueIconRule, ViewActiveCondition, ViewCommandType, ViewStateAggregation } from "@uhn/blueprint";
 
 // --- Runtime rule serialization (for IPC + overview) ---
 
@@ -420,21 +420,34 @@ export type RuntimeViewCommand = RuntimeViewCommandTarget & {
     onDeactivate?: RuntimeViewCommandTarget;
 };
 
-type RuntimeStateDisplayItemBase = {
+/** Runtime version of DisplayValue — resource object resolved to string ID. */
+export type RuntimeDisplayValue = {
     resourceId: string;
     label?: string;
+    icon?: BlueprintIcon;
     unit?: string;
 };
 
-export type RuntimeStateDisplayItem = RuntimeStateDisplayItemBase & (
-    | { style?: "value" }
-    | { style: "indicator"; icon: BlueprintIcon }
-    | { style: "flash"; icon: BlueprintIcon }
-);
+/** Runtime version of DisplayIcon — resource object resolved to string ID. */
+export type RuntimeDisplayIcon = {
+    resourceId: string;
+    icon: BlueprintIcon;
+    tooltip?: string | "value";
+    showWhen?: "active" | "always";
+    colorMap?: ValueColorRule[];
+    iconMap?: ValueIconRule[];
+};
 
+/** Slot-keyed runtime state display — mirrors ViewStateDisplay with string IDs. */
 export type RuntimeViewStateDisplay = {
-    items: RuntimeStateDisplayItem[];
-    aggregation?: StateDisplayAggregation;
+    topLeft?: RuntimeDisplayIcon[];
+    topCenter?: RuntimeDisplayIcon[];
+    topRight?: RuntimeDisplayIcon[];
+    left?: RuntimeDisplayValue[];
+    right?: RuntimeDisplayValue[];
+    badge?: RuntimeDisplayIcon[];
+    hero?: RuntimeDisplayValue[];
+    heroSize?: HeroFontSize;
 };
 
 export type RuntimeViewControl = {

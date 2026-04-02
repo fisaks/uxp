@@ -53,14 +53,46 @@ export function generateViewFile(device: ParsedDevice, resourceFileName: string)
     }
 
     if (displayProps.length > 0) {
-        lines.push(`    stateDisplay: {`);
-        lines.push(`        items: [`);
-        for (const p of displayProps) {
-            const varName = resourceVarName(prefix, p.pin);
-            lines.push(`            { resource: ${varName}, label: ${JSON.stringify(p.label)} },`);
+        // Split display props into slots based on device type and property semantics
+        const heroProps = !primaryState ? displayProps.filter(p => p.pin !== "battery") : [];
+        const batteryProp = displayProps.find(p => p.pin === "battery");
+        const flankingProps = primaryState ? displayProps : [];
+
+        const hasSlots = heroProps.length > 0 || batteryProp || flankingProps.length > 0;
+        if (hasSlots) {
+            lines.push(`    stateDisplay: {`);
+            if (heroProps.length > 0) {
+                lines.push(`        hero: [`);
+                for (const p of heroProps) {
+                    lines.push(`            { resource: ${resourceVarName(prefix, p.pin)}, label: ${JSON.stringify(p.label)} },`);
+                }
+                lines.push(`        ],`);
+            }
+            if (batteryProp && !primaryState) {
+                lines.push(`        topRight: [`);
+                lines.push(`            { resource: ${resourceVarName(prefix, batteryProp.pin)}, icon: "energy:battery", tooltip: "value" },`);
+                lines.push(`        ],`);
+            }
+            if (flankingProps.length > 0) {
+                const left = flankingProps.slice(0, 1);
+                const right = flankingProps.slice(1);
+                if (left.length > 0) {
+                    lines.push(`        left: [`);
+                    for (const p of left) {
+                        lines.push(`            { resource: ${resourceVarName(prefix, p.pin)}, label: ${JSON.stringify(p.label)} },`);
+                    }
+                    lines.push(`        ],`);
+                }
+                if (right.length > 0) {
+                    lines.push(`        right: [`);
+                    for (const p of right) {
+                        lines.push(`            { resource: ${resourceVarName(prefix, p.pin)}, label: ${JSON.stringify(p.label)} },`);
+                    }
+                    lines.push(`        ],`);
+                }
+            }
+            lines.push(`    },`);
         }
-        lines.push(`        ],`);
-        lines.push(`    },`);
     }
 
     const icon = selectIcon(device, primaryState);

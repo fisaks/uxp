@@ -1,6 +1,8 @@
 import AcUnitIcon from "@mui/icons-material/AcUnit";
 import AirIcon from "@mui/icons-material/Air";
 import BalconyIcon from "@mui/icons-material/Balcony";
+import Battery20Icon from "@mui/icons-material/Battery20";
+import Battery50Icon from "@mui/icons-material/Battery50";
 import BatteryChargingFullIcon from "@mui/icons-material/BatteryChargingFull";
 import BatteryFullIcon from "@mui/icons-material/BatteryFull";
 import BedIcon from "@mui/icons-material/Bed";
@@ -294,6 +296,8 @@ export const blueprintIconMap: Record<BlueprintIcon, BlueprintIconEntry> = {
     "device:charger": icon(ChargingStationIcon, undefined, color("#78909C", "#B0BEC5")),
     // Energy
     "energy:battery": icon(BatteryFullIcon, undefined, color("#F57C00", "#FFB74D")),
+    "energy:battery-half": icon(Battery50Icon, undefined, color("#F57C00", "#FFB74D")),
+    "energy:battery-low": icon(Battery20Icon, undefined, color("#F57C00", "#FFB74D")),
     "energy:charging": icon(BatteryChargingFullIcon, undefined, color("#F57C00", "#FFB74D")),
     "energy:solar": icon(SolarPowerIcon, undefined, color("#F9A825", "#FFD54F")),
     "energy:meter": icon(ElectricMeterIcon, undefined, color("#F57C00", "#FFB74D")),

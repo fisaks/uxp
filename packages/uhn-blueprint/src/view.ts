@@ -103,31 +103,65 @@ export type ViewCommand = ViewCommandTarget & {
 /* ------------------------------------------------------------------ */
 /* State Display                                                       */
 /* ------------------------------------------------------------------ */
-export type StateDisplayStyle = "value" | "indicator" | "flash";
 
-type StateDisplayItemBase = {
+/** Theme palette color tokens available for value-driven coloring. */
+export type ThemePaletteColor = "success" | "warning" | "error" | "info" | "primary" | "secondary";
+
+/** Rule for mapping a resource value to a theme palette color token.
+ *  Rules are evaluated top-down — first match wins. */
+export type ValueColorRule =
+    | { above: number; color: ThemePaletteColor }
+    | { below: number; color: ThemePaletteColor }
+    | { equals: boolean | number; color: ThemePaletteColor };
+
+/** Rule for mapping a resource value to an alternative icon.
+ *  Rules are evaluated top-down — first match wins. */
+export type ValueIconRule =
+    | { above: number; icon: BlueprintIcon }
+    | { below: number; icon: BlueprintIcon }
+    | { equals: boolean | number; icon: BlueprintIcon };
+
+/** Font size preset for hero values. Default: `"default"` (1.5rem). */
+export type HeroFontSize = "tiny" | "small" | "default" | "large" | "x-large";
+
+/** A value display item for `left`, `right`, or `hero` slots.
+ *  Shows a formatted resource value with optional label and unit. */
+export type DisplayValue = {
     resource: ResourceBase<ResourceType>;
+    /** Text label (shown above value in flanking slots, omitted in hero). */
     label?: string;
+    /** Icon shown instead of label text — label becomes tooltip. */
+    icon?: BlueprintIcon;
+    /** Unit suffix. Falls back to the resource's own unit if omitted. */
     unit?: string;
 };
 
-export type StateDisplayItem = StateDisplayItemBase & (
-    | { style?: "value" }
-    | { style: "indicator"; icon: BlueprintIcon }
-    | { style: "flash"; icon: BlueprintIcon }
-);
+/** An icon display item for `topLeft`, `topCenter`, `topRight`, or `badge` slots.
+ *  Shows an icon with optional tooltip, visibility control, and value-driven color/icon. */
+export type DisplayIcon = {
+    resource: ResourceBase<ResourceType>;
+    icon: BlueprintIcon;
+    /** Tooltip text, or `"value"` to show the formatted resource value. */
+    tooltip?: string | "value";
+    /** When to show this icon. Default: `"always"`. */
+    showWhen?: "active" | "always";
+    /** Value-driven color — first matching rule wins. Color is a theme palette token (e.g. `"success"`, `"warning"`, `"error"`). */
+    colorMap?: ValueColorRule[];
+    /** Value-driven icon override — first matching rule wins. */
+    iconMap?: ValueIconRule[];
+};
 
-export type StateDisplayAggregation =
-    | "sum" | "average" | "max" | "min" | "countActive";
-
+/** Slot-keyed state display configuration for InteractionView tiles. */
 export type ViewStateDisplay = {
-    items: StateDisplayItem[];
-    /** Controls how multiple "value"-style items are combined.
-     *  Only applies to "value" items — "indicator" and "flash" items
-     *  are always rendered individually regardless of this setting.
-     *  - aggregation set -> combine all "value" items into one number
-     *  - aggregation unset -> carousel through "value" items */
-    aggregation?: StateDisplayAggregation;
+    topLeft?: DisplayIcon[];
+    topCenter?: DisplayIcon[];
+    topRight?: DisplayIcon[];
+    left?: DisplayValue[];
+    right?: DisplayValue[];
+    badge?: DisplayIcon[];
+    hero?: DisplayValue[];
+    /** Font size for hero slot values. Default: `"default"` (1.5rem). */
+    heroSize?: HeroFontSize;
 };
 
 /* ------------------------------------------------------------------ */

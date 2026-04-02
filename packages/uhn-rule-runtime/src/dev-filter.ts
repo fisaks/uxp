@@ -78,7 +78,12 @@ function collectResourceIdsFromFilter(filter: DevFilter, ids: Set<string>): void
         add(v.command?.resource.id);
         add(v.command?.onDeactivate?.resource.id);
         for (const c of v.controls ?? []) add(c.resource.id);
-        for (const item of v.stateDisplay?.items ?? []) add(item.resource.id);
+        if (v.stateDisplay) {
+            const sd = v.stateDisplay;
+            for (const arr of [sd.topLeft, sd.topCenter, sd.topRight, sd.badge, sd.left, sd.right, sd.hero]) {
+                for (const item of arr ?? []) add(item.resource.id);
+            }
+        }
         for (const se of v.sideEffects ?? []) add(se.resource.id);
     }
 

@@ -11,7 +11,7 @@ import { TileInfoPopover } from "../../shared/TileInfoPopover";
 import { TilePendingIndicator } from "../../shared/TilePendingIndicator";
 import { TechnicalDeepLink } from "../../shared/TechnicalDeepLink";
 import { stopPropagation } from "../../shared/tileEventHelpers";
-import { TileStateItem } from "../../shared/tile.types";
+import { DisplayItemsState } from "../../shared/tile.types";
 import { useViewAnalogState } from "../../shared/useViewAnalogState";
 import { useViewCommand } from "../../shared/useViewCommand";
 import { useViewIconColors } from "../../shared/useViewIconColors";
@@ -21,11 +21,11 @@ import { useViewCommandSlots } from "./ViewCommandControl";
 type ViewTileProps = {
     view: RuntimeInteractionView;
     active: boolean;
-    stateDisplayValues: TileStateItem[];
+    stateDisplay: DisplayItemsState;
     nameOverride?: string;
 };
 
-export const ViewTile: React.FC<ViewTileProps> = ({ view, active, stateDisplayValues, nameOverride }) => {
+export const ViewTile: React.FC<ViewTileProps> = ({ view, active, stateDisplay, nameOverride }) => {
     const theme = useTheme();
     const sendCommand = useSendViewCommand();
     const hasCommand = !!view.command;
@@ -71,9 +71,10 @@ export const ViewTile: React.FC<ViewTileProps> = ({ view, active, stateDisplayVa
         <TileContent
             icon={iconElement}
             onIconClick={hasPopover ? openControls : undefined}
-            stateValues={stateDisplayValues}
+            stateDisplay={stateDisplay}
             displayName={displayName}
             hasAnalog={showAnalog}
+            showHero={!showAnalog}
             pt={3.5}
         />
     );

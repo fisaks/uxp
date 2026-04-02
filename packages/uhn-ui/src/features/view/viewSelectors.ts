@@ -1,8 +1,8 @@
 import { createSelector } from "@reduxjs/toolkit";
-import { ViewActiveCondition } from "@uhn/blueprint";
-import { ResourceStateDetails, ResourceStateValue, RuntimeAnalogInputResource, RuntimeAnalogOutputResource, RuntimeInteractionView, RuntimeResource } from "@uhn/common";
+import { BlueprintIcon, ThemePaletteColor, ValueColorRule, ValueIconRule, ViewActiveCondition } from "@uhn/blueprint";
+import { ResourceStateDetails, ResourceStateValue, RuntimeAnalogInputResource, RuntimeAnalogOutputResource, RuntimeDisplayIcon, RuntimeDisplayValue, RuntimeInteractionView, RuntimeResource } from "@uhn/common";
 import { RootState } from "../../app/store";
-import { TileStateItem } from "../shared/tile.types";
+import { DisplayItemIconState, DisplayItemValueState, DisplayItemsState, EMPTY_DISPLAY_ITEMS_STATE } from "../shared/tile.types";
 
 type AnalogResource = RuntimeAnalogInputResource | RuntimeAnalogOutputResource;
 
@@ -28,7 +28,7 @@ function evaluateActiveCondition(value: ResourceStateValue | undefined, conditio
 }
 
 /** Determines if a resource value is "active" — uses activeWhen if provided, otherwise boolean truthiness or non-zero. */
-function isResourceActive(value: ResourceStateValue | undefined, activeWhen?: ViewActiveCondition): boolean {
+export function isResourceActive(value: ResourceStateValue | undefined, activeWhen?: ViewActiveCondition): boolean {
     if (value == null) return false;
     if (activeWhen) return evaluateActiveCondition(value, activeWhen);
     if (typeof value === "boolean") return value;
@@ -79,43 +79,123 @@ function computeViewActive(view: RuntimeInteractionView, stateMap: StateMap): bo
 }
 
 /* ------------------------------------------------------------------ */
-/* State display values                                                */
+/* Value/icon map evaluation                                           */
 /* ------------------------------------------------------------------ */
 
+/** Evaluates a colorMap — returns the first matching theme palette token (e.g. "success"). */
+function evaluateColorMap(value: ResourceStateValue | undefined, rules: ValueColorRule[]): ThemePaletteColor | undefined {
+    if (value == null) return undefined;
+    for (const rule of rules) {
+        if ("above" in rule && typeof value === "number" && value > rule.above) return rule.color;
+        if ("below" in rule && typeof value === "number" && value < rule.below) return rule.color;
+        if ("equals" in rule) {
+            if (typeof rule.equals === "boolean") {
+                // Boolean match: true = truthy/non-zero, false = falsy/zero
+                const truthy = typeof value === "boolean" ? value : value !== 0;
+                if (truthy === rule.equals) return rule.color;
+            } else {
+                // Exact numeric match
+                if (value === rule.equals) return rule.color;
+            }
+        }
+    }
+    return undefined;
+}
+
+/** Evaluates an iconMap — returns the first matching icon override. */
+function evaluateIconMap(value: ResourceStateValue | undefined, rules: ValueIconRule[]): BlueprintIcon | undefined {
+    if (value == null) return undefined;
+    for (const rule of rules) {
+        if ("above" in rule && typeof value === "number" && value > rule.above) return rule.icon;
+        if ("below" in rule && typeof value === "number" && value < rule.below) return rule.icon;
+        if ("equals" in rule) {
+            if (typeof rule.equals === "boolean") {
+                const truthy = typeof value === "boolean" ? value : value !== 0;
+                if (truthy === rule.equals) return rule.icon;
+            } else {
+                if (value === rule.equals) return rule.icon;
+            }
+        }
+    }
+    return undefined;
+}
+
+/* ------------------------------------------------------------------ */
+/* State display computation                                           */
+/* ------------------------------------------------------------------ */
 
 type ResourceMap = Record<string, RuntimeResource>;
 
-/** Builds display values for stateDisplay items — resolves resource state, type, and active flag for each item. */
+function computeDisplayValue(item: RuntimeDisplayValue, stateMap: StateMap, resourceMap: ResourceMap): DisplayItemValueState {
+    const stateEntry = stateMap[item.resourceId];
+    const resource = resourceMap[item.resourceId];
+    const value = stateEntry?.value;
+    const min = resource && "min" in resource ? (resource as any).min as number | undefined : undefined;
+    const active = isResourceActive(value, min != null ? { above: min } : undefined);
+    const analog = resource && isAnalogResource(resource) ? resource : undefined;
+    return {
+        resourceId: item.resourceId,
+        resourceType: resource?.type,
+        label: item.label,
+        icon: item.icon,
+        unit: item.unit ?? analog?.unit,
+        decimalPrecision: analog?.decimalPrecision,
+        value,
+        active,
+        timestamp: stateEntry?.timestamp ?? 0,
+        details: stateEntry?.details,
+    };
+}
+
+function computeDisplayIcon(item: RuntimeDisplayIcon, stateMap: StateMap, resourceMap: ResourceMap): DisplayItemIconState {
+    const stateEntry = stateMap[item.resourceId];
+    const value = stateEntry?.value;
+    const active = isResourceActive(value);
+    const visible = item.showWhen === "active" ? active : true;
+    const color = item.colorMap ? evaluateColorMap(value, item.colorMap) : undefined;
+    const resolvedIcon = item.iconMap ? (evaluateIconMap(value, item.iconMap) ?? item.icon) : item.icon;
+
+    // Resolve tooltip: "value" → formatted value + unit from resource
+    let tooltip = item.tooltip;
+    if (tooltip === "value" && value != null) {
+        const resource = resourceMap[item.resourceId];
+        const analog = resource && isAnalogResource(resource) ? resource : undefined;
+        const unit = analog?.unit;
+        const formatted = typeof value === "number" && analog?.decimalPrecision != null
+            ? value.toFixed(analog.decimalPrecision)
+            : String(value);
+        tooltip = unit ? `${formatted} ${unit}` : formatted;
+    }
+
+    return {
+        resourceId: item.resourceId,
+        icon: resolvedIcon,
+        tooltip,
+        visible,
+        color,
+        value,
+        active,
+    };
+}
+
+/** Builds the full DisplayItemsState from runtime view config + live state. */
 function computeStateDisplay(
     view: RuntimeInteractionView,
     stateMap: StateMap,
     resourceMap: ResourceMap,
-): TileStateItem[] {
-    if (!view.stateDisplay) return [];
-    return view.stateDisplay.items.map(item => {
-        const stateEntry = stateMap[item.resourceId];
-        const resource = resourceMap[item.resourceId];
-        const value = stateEntry?.value;
-        const min = resource && "min" in resource ? (resource as any).min as number | undefined : undefined;
-        const active = isResourceActive(value, min != null ? { above: min } : undefined);
-        // Resolve unit and decimalPrecision from resource (analog types only)
-        const analog = resource && isAnalogResource(resource) ? resource : undefined;
-        const resourceUnit = analog?.unit;
-        const resourceDecimals = analog?.decimalPrecision;
-        return {
-            resourceId: item.resourceId,
-            resourceType: resource?.type,
-            label: item.label,
-            unit: item.unit ?? resourceUnit,
-            decimalPrecision: resourceDecimals,
-            style: item.style ?? "value",
-            ...("icon" in item && { icon: item.icon }),
-            value,
-            active,
-            timestamp: stateEntry?.timestamp ?? 0,
-            details: stateEntry?.details,
-        };
-    });
+): DisplayItemsState {
+    if (!view.stateDisplay) return EMPTY_DISPLAY_ITEMS_STATE;
+    const sd = view.stateDisplay;
+    return {
+        topLeft: (sd.topLeft ?? []).map(i => computeDisplayIcon(i, stateMap, resourceMap)),
+        topCenter: (sd.topCenter ?? []).map(i => computeDisplayIcon(i, stateMap, resourceMap)),
+        topRight: (sd.topRight ?? []).map(i => computeDisplayIcon(i, stateMap, resourceMap)),
+        left: (sd.left ?? []).map(i => computeDisplayValue(i, stateMap, resourceMap)),
+        right: (sd.right ?? []).map(i => computeDisplayValue(i, stateMap, resourceMap)),
+        badge: (sd.badge ?? []).map(i => computeDisplayIcon(i, stateMap, resourceMap)),
+        hero: (sd.hero ?? []).map(i => computeDisplayValue(i, stateMap, resourceMap)),
+        heroSize: sd.heroSize,
+    };
 }
 
 /* ------------------------------------------------------------------ */
@@ -144,7 +224,7 @@ export const selectViewsLoaded = createSelector(
 export type ViewWithState = {
     view: RuntimeInteractionView;
     active: boolean;
-    stateDisplayValues: TileStateItem[];
+    stateDisplay: DisplayItemsState;
 };
 
 /** Combines views with their computed state for rendering.
@@ -155,8 +235,8 @@ export const selectViewsWithState = createSelector(
         return views.allIds.map(id => {
             const view = views.byId[id];
             const active = computeViewActive(view, runtimeState.byResourceId);
-            const stateDisplayValues = computeStateDisplay(view, runtimeState.byResourceId, resourceById);
-            return { view, active, stateDisplayValues };
+            const stateDisplay = computeStateDisplay(view, runtimeState.byResourceId, resourceById);
+            return { view, active, stateDisplay };
         });
     }
 );

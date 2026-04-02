@@ -41,7 +41,7 @@ export type BlueprintIcon =
     | "device:coffee" | "device:microwave" | "device:fridge" | "device:washer"
     | "device:iron" | "device:blender" | "device:charger"
     // Energy
-    | "energy:battery" | "energy:charging" | "energy:solar" | "energy:meter"
+    | "energy:battery" | "energy:battery-half" | "energy:battery-low" | "energy:charging" | "energy:solar" | "energy:meter"
     // Weather
     | "weather:sun"
     // Garden

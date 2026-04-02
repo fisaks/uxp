@@ -1,5 +1,5 @@
-import { ActionSideEffect, InteractionView, StateDisplayItem, ViewCommand } from "@uhn/blueprint";
-import { humanizeViewId, RuntimeActionSideEffect, RuntimeInteractionView, RuntimeStateDisplayItem, RuntimeViewCommand } from "@uhn/common";
+import { ActionSideEffect, DisplayIcon, DisplayValue, InteractionView, ViewCommand, ViewStateDisplay } from "@uhn/blueprint";
+import { humanizeViewId, RuntimeActionSideEffect, RuntimeDisplayIcon, RuntimeDisplayValue, RuntimeInteractionView, RuntimeViewCommand, RuntimeViewStateDisplay } from "@uhn/common";
 import fs from "fs-extra";
 import path from "path";
 import { runtimeOutput } from "../io/runtime-output";
@@ -16,16 +16,37 @@ function isInteractionViewObject(obj: unknown): obj is InteractionView {
     );
 }
 
-function serializeStateDisplayItem(item: StateDisplayItem): RuntimeStateDisplayItem {
-    const base = {
+function serializeDisplayValue(item: DisplayValue): RuntimeDisplayValue {
+    return {
         resourceId: item.resource.id!,
-        ...(item.label && { label: item.label }),
-        ...(item.unit && { unit: item.unit }),
+        label: item.label,
+        icon: item.icon,
+        unit: item.unit,
     };
-    if (item.style === "indicator" || item.style === "flash") {
-        return { ...base, style: item.style, icon: item.icon };
-    }
-    return { ...base, ...(item.style && { style: item.style }) };
+}
+
+function serializeDisplayIcon(item: DisplayIcon): RuntimeDisplayIcon {
+    return {
+        resourceId: item.resource.id!,
+        icon: item.icon,
+        tooltip: item.tooltip,
+        showWhen: item.showWhen,
+        colorMap: item.colorMap,
+        iconMap: item.iconMap,
+    };
+}
+
+function serializeStateDisplay(sd: ViewStateDisplay): RuntimeViewStateDisplay {
+    return {
+        topLeft: sd.topLeft?.map(serializeDisplayIcon),
+        topCenter: sd.topCenter?.map(serializeDisplayIcon),
+        topRight: sd.topRight?.map(serializeDisplayIcon),
+        left: sd.left?.map(serializeDisplayValue),
+        right: sd.right?.map(serializeDisplayValue),
+        badge: sd.badge?.map(serializeDisplayIcon),
+        hero: sd.hero?.map(serializeDisplayValue),
+        heroSize: sd.heroSize,
+    };
 }
 
 function serializeSideEffect(se: ActionSideEffect): RuntimeActionSideEffect {
@@ -85,12 +106,7 @@ function serializeView(v: InteractionView): RuntimeInteractionView {
         ...(v.activeWhen && { activeWhen: v.activeWhen }),
         ...(v.command && { command: serializeCommand(v.command) }),
         ...(v.sideEffects?.length && { sideEffects: v.sideEffects.map(serializeSideEffect) }),
-        ...(v.stateDisplay && {
-            stateDisplay: {
-                items: v.stateDisplay.items.map(serializeStateDisplayItem),
-                ...(v.stateDisplay.aggregation && { aggregation: v.stateDisplay.aggregation }),
-            },
-        }),
+        ...(v.stateDisplay && { stateDisplay: serializeStateDisplay(v.stateDisplay) }),
         ...(v.controls && v.controls.length > 0 && {
             controls: v.controls.map(c => ({
                 resourceId: c.resource.id!,

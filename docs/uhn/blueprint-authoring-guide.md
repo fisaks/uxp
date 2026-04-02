@@ -675,11 +675,13 @@ export const viewKitchenCeilingLight = view({
     // Command: what happens when the tile is tapped
     command: { resource: kitchenPanelButton, type: "tap" },
 
-    // Secondary info displayed on the tile
+    // Secondary info displayed on the tile (slot-based layout)
     stateDisplay: {
-        items: [
-            { resource: kitchenTimer, label: "Timer", style: "value" },
-            { resource: kitchenPir, style: "flash", icon: "sensor:motion" },
+        left: [
+            { resource: kitchenTimer, label: "Timer" },
+        ],
+        badge: [
+            { resource: kitchenPir, icon: "sensor:motion", showWhen: "active" },
         ],
     },
 
@@ -790,13 +792,99 @@ When neither the command nor the resource has `options`, the UI renders the stan
 
 ### State Display
 
-Secondary information shown on the tile alongside the main icon:
+Secondary information shown on the tile, organized by **slots** — named positions on the tile layout:
 
-| Style | Description |
+```
+┌──────────────────────────────────┐
+│ [topLeft] [topCenter] [topRight] │  ← DisplayIcon[] arrays
+│                                  │
+│   [left]    [ICON]    [right]    │  ← DisplayValue[] arrays
+│             [badge]              │  ← DisplayIcon[] (row below icon)
+│                                  │
+│          Display Name            │
+│            [hero]                │  ← DisplayValue[], large font, carousel if >1
+└──────────────────────────────────┘
+```
+
+**DisplayValue** (for `left`, `right`, `hero` slots):
+
+| Field | Description |
 |-------|-------------|
-| `"value"` | Text value (e.g., timer countdown, temperature) |
-| `"indicator"` | Small icon that lights up when active |
-| `"flash"` | Icon that flashes briefly on activation |
+| `resource` | The resource to read value from |
+| `label` | Text label shown above value in flanking slots (omitted in hero) |
+| `icon` | Icon shown instead of label text — label becomes tooltip |
+| `unit` | Unit suffix (falls back to resource's own unit if omitted) |
+
+**DisplayIcon** (for `topLeft`, `topCenter`, `topRight`, `badge` slots):
+
+| Field | Description |
+|-------|-------------|
+| `resource` | The resource to read state from |
+| `icon` | The default icon to display (used when no `iconMap` rule matches) |
+| `tooltip` | Tooltip text, or `"value"` to show the formatted resource value + unit |
+| `showWhen` | `"active"` (only visible when resource is active) or `"always"` (default) |
+| `colorMap` | Value-driven color rules — first match wins (see below) |
+| `iconMap` | Value-driven icon override rules — first match wins (see below) |
+
+**`heroSize`** — Optional field on `stateDisplay` controlling hero font size. Values: `"tiny"` (1rem), `"small"` (1.25rem), `"default"` (1.5rem), `"large"` (1.75rem), `"x-large"` (2rem). Omit for `"default"`.
+
+**Hero behavior:**
+- Renders value + unit only (no label, no icon), in large centered font
+- When multiple items are in the `hero` slot, they auto-rotate as a carousel with dot indicators — tapping advances to the next item
+- Hero is NOT rendered when the tile has an inline analog control (from `setAnalog` command or `controls` with `inline: true`)
+
+**colorMap and iconMap rules:**
+
+Both use the same rule format, evaluated top-down — first matching rule wins:
+- `{ above: number }` — matches when value > threshold
+- `{ below: number }` — matches when value < threshold
+- `{ equals: boolean }` — matches truthy (`true`) or falsy/zero (`false`)
+- `{ equals: number }` — exact numeric match
+
+`colorMap` colors are `ThemePaletteColor` literals: `"success"`, `"warning"`, `"error"`, `"info"`, `"primary"`, `"secondary"`.
+
+`iconMap` icons override the base `icon` when a rule matches. When no rule matches, the base `icon` is used.
+
+**Examples:**
+
+```typescript
+// Sensor tile with hero carousel and battery icon with color/icon rules
+stateDisplay: {
+    hero: [
+        { resource: temperature, label: "Temperature" },
+        { resource: humidity, label: "Humidity" },
+    ],
+    heroSize: "x-large",
+    topRight: [
+        {
+            resource: battery,
+            icon: "energy:battery",
+            tooltip: "value",
+            colorMap: [
+                { below: 20, color: "error" },
+                { below: 50, color: "warning" },
+                { above: 49, color: "success" },
+            ],
+            iconMap: [
+                { below: 20, icon: "energy:battery-low" },
+                { below: 50, icon: "energy:battery-half" },
+            ],
+        },
+    ],
+}
+
+// Interactive tile with flanking values and motion badge
+stateDisplay: {
+    left: [{ resource: timer, label: "Timer" }],
+    right: [{ resource: power, label: "Power" }],
+    badge: [{ resource: pir, icon: "sensor:motion", showWhen: "active" }],
+}
+
+// Flanking value with icon instead of label (renders icon + value inline)
+stateDisplay: {
+    left: [{ resource: power, icon: "power:energy", label: "Power" }],
+}
+```
 
 Omit `command` for a display-only tile (no interaction, just shows state).
 

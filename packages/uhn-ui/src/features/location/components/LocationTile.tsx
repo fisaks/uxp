@@ -17,7 +17,7 @@ import { useViewCommand } from "../../shared/useViewCommand";
 import { useViewIconColors } from "../../shared/useViewIconColors";
 import { useSendViewCommand } from "../../view/hooks/useSendViewCommand";
 import { useViewCommandSlots } from "../../view/components/ViewCommandControl";
-import { TileStateItem } from "../../shared/tile.types";
+import { DisplayItemValueState, DisplayItemsState, EMPTY_DISPLAY_ITEMS_STATE } from "../../shared/tile.types";
 import { TileAnalogSection } from "../../shared/TileAnalogSection";
 import { TuneOverlayIcon } from "../../shared/TuneOverlayIcon";
 import { TileContent } from "../../shared/TileContent";
@@ -33,7 +33,7 @@ type LocationTileViewProps = {
     kind: "view";
     view: RuntimeInteractionView;
     active: boolean;
-    stateDisplayValues: TileStateItem[];
+    stateDisplay: DisplayItemsState;
     nameOverride?: string;
 };
 
@@ -66,7 +66,7 @@ export const LocationTile: React.FC<LocationTileProps> = (props) => {
 /* View variant                                                        */
 /* ------------------------------------------------------------------ */
 
-const LocationTileView: React.FC<LocationTileViewProps> = ({ view, active, stateDisplayValues, nameOverride }) => {
+const LocationTileView: React.FC<LocationTileViewProps> = ({ view, active, stateDisplay, nameOverride }) => {
     const theme = useTheme();
     const sendCommand = useSendViewCommand();
     const hasCommand = !!view.command;
@@ -113,9 +113,10 @@ const LocationTileView: React.FC<LocationTileViewProps> = ({ view, active, state
         <TileContent
             icon={iconElement}
             onIconClick={hasPopover ? openControls : undefined}
-            stateValues={stateDisplayValues}
+            stateDisplay={stateDisplay}
             displayName={displayName}
             hasAnalog={showAnalog}
+            showHero={!showAnalog}
         />
     );
 
@@ -243,12 +244,12 @@ const LocationTileResource: React.FC<LocationTileResourceProps> = ({ resource, s
 
     const displayName = nameOverride ?? resource.name;
 
-    // Build flanking state values — only resource types that show a text value
-    const resourceStateValues = useMemo((): TileStateItem[] => {
-        if (!isReadOnly && !isTimer && !isComplex) return [];
-        if (state?.value === undefined) return [];
+    // Build a minimal DisplayItemsState with the resource value in the left slot
+    const resourceStateDisplay = useMemo((): DisplayItemsState => {
+        if (!isReadOnly && !isTimer && !isComplex) return EMPTY_DISPLAY_ITEMS_STATE;
+        if (state?.value === undefined) return EMPTY_DISPLAY_ITEMS_STATE;
         // Complex boolean resources show state via icon color, not text
-        if (isComplex && typeof state.value === "boolean") return [];
+        if (isComplex && typeof state.value === "boolean") return EMPTY_DISPLAY_ITEMS_STATE;
 
         // Derive label from resource type/kind
         let label: string | undefined;
@@ -260,17 +261,18 @@ const LocationTileResource: React.FC<LocationTileResourceProps> = ({ resource, s
             label = resource.stateLabel;
         }
 
-        return [{
+        const item: DisplayItemValueState = {
             resourceId: resource.id,
             resourceType: resource.type,
             label,
             unit: resource.unit,
-            style: "value" as const,
             value: state?.value,
             active,
             timestamp: state?.timestamp ?? 0,
             details: state?.details,
-        }];
+        };
+
+        return { ...EMPTY_DISPLAY_ITEMS_STATE, left: [item] };
     }, [resource.id, resource.type, resource.unit, resource.analogInputKind, resource.stateLabel, isReadOnly, isTimer, isComplex, state?.value, state?.timestamp, state?.details, active]);
 
     const tileContent = (
@@ -286,7 +288,7 @@ const LocationTileResource: React.FC<LocationTileResourceProps> = ({ resource, s
                 openComplexPanel();
             } : undefined}
             displayName={displayName}
-            stateValues={resourceStateValues}
+            stateDisplay={resourceStateDisplay}
             hasAnalog={isAnalog}
         />
     );
@@ -325,7 +327,7 @@ const LocationTileResource: React.FC<LocationTileResourceProps> = ({ resource, s
                 <TileContent
                     icon={<MainIcon sx={{ fontSize: 40, color: iconColor, transition: "color 0.2s" }} />}
                     displayName={displayName}
-                    stateValues={resourceStateValues}
+                    stateDisplay={resourceStateDisplay}
                 />
             ) : (
                 <CardActionArea
@@ -412,7 +414,6 @@ const LocationTileScene: React.FC<LocationTileSceneProps> = ({ scene, nameOverri
                     icon={<IconComponent sx={{ fontSize: 40, color: iconColor, transition: "color 0.2s" }} />}
                     displayName={displayName}
                     subtitle={scene.description}
-                    stateValues={[]}
                 />
             </CardActionArea>
 
