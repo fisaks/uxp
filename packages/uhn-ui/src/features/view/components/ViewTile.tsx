@@ -103,7 +103,7 @@ export const ViewTile: React.FC<ViewTileProps> = ({ view, active, stateDisplay, 
                     iconColor={iconColor}
                     state={inlineAnalogState}
                     sendCommand={inlineAnalogSendCommand}
-                    disabled={!active}
+                    disabled={!active && !view.alwaysEnableControls}
                 />
             ) : null}
         </Box>
@@ -151,6 +151,8 @@ export const ViewTile: React.FC<ViewTileProps> = ({ view, active, stateDisplay, 
                     </Box>
                 )}
                 {view.stateAggregation && <Typography variant="body2">Aggregation: {view.stateAggregation}</Typography>}
+                {view.activeWhen && <Typography variant="body2">Active when: {JSON.stringify(view.activeWhen)}</Typography>}
+                {view.alwaysEnableControls && <Typography variant="body2">Always enable controls: yes</Typography>}
                 {view.controls && view.controls.length > 0 && (
                     <Box sx={{ mt: 0.5 }}>
                         <Typography variant="body2">Controls ({view.controls.length}):</Typography>
@@ -201,7 +203,7 @@ export const ViewTile: React.FC<ViewTileProps> = ({ view, active, stateDisplay, 
                     onClose={closeControls}
                     titleAction={commandSlots.titleAction}
                     headerContent={commandSlots.headerContent}
-                    disabled={!active}
+                    disabled={!active && !view.alwaysEnableControls}
                 />
             )}
         </Card>

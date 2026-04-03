@@ -959,6 +959,20 @@ Each control entry:
 
 Controls use direct resource commands (press/release, setAnalog) — they interact with the physical resource directly. The view's command in the popover header uses the same view command path as tapping the tile (goes through ResourceCmdSubscriber).
 
+**Always-enabled controls:** By default, controls are disabled when the view is inactive (all `stateFrom` values are 0/false). Set `alwaysEnableControls: true` on the view to keep controls interactive regardless of active state. Useful for group controllers where you need to adjust individual members even when all are off:
+
+```typescript
+export const viewSpotGroup = view({
+    stateFrom: [{ resource: spotGroup }],
+    command: viewCommand({ resource: spotGroup, type: "setAnalog", defaultOnValue: 50 }),
+    controls: [
+        { resource: dimmer1, label: "Bookshelf" },
+        { resource: dimmer2, label: "Sofa" },
+    ],
+    alwaysEnableControls: true,
+});
+```
+
 ### Side Effects
 
 `sideEffects` on a view fires additional action events alongside the primary command. This exists for **Zigbee binding coexistence**: when a physical button controls a device directly via Zigbee binding AND also reports to Z2M for rules, the UI view must replicate both paths — the primary command controls the device (same as the binding does physically), and side effects fire the same action events so the rules also execute from the UI.
@@ -1208,6 +1222,15 @@ The `run` callback receives a context object:
     ctx.mute.resource(someSensor, minutes(5));
     ctx.mute.clearMute(someRule, "manualOverride");
 
+    // Repeating interval (e.g. ramp a dimmer while button is held)
+    ctx.interval.start("ramp-id", { intervalMs: 200 }, (ictx) => {
+        const current = ictx.runtime.getState(dimmer) as number;
+        if (current >= 100) { ictx.stop(); return []; }
+        return [ruleAction({ type: "setAnalogOutput", resource: dimmer, value: current + 5 })];
+    });
+    ctx.interval.stop("ramp-id");           // Stop from any rule
+    ctx.interval.isRunning("ramp-id");      // boolean
+
     return [...];
 });
 ```
@@ -1232,6 +1255,9 @@ ruleAction({ type: "emitAction", resource: panel, action: "toggle" })
 // Send a transient command to an actionOutput device (e.g. light effect)
 ruleAction({ type: "setActionOutput", resource: wardrobeEffect, action: "blink" })
 
+// Set a virtual resource's state silently (updates UI, does not trigger rules)
+ruleAction({ type: "setVirtualState", resource: groupIndicator, value: 80 })
+
 // Activate a scene (expands to individual commands at runtime)
 ruleAction({ type: "activateScene", scene: eveningScene })
 ```
@@ -1239,6 +1265,8 @@ ruleAction({ type: "activateScene", scene: eveningScene })
 **`emitAction`** triggers the target resource's `onAction` rules, enabling rule chaining (e.g. PIR detects motion → emitAction simulates a button press → button's rules fire). The action string and metadata are type-checked against the resource's action union. A depth counter prevents infinite loops — the runtime rejects an `emitAction` that targets the same resource+action as the triggering cause, and the host drops events exceeding depth 10.
 
 **`setActionOutput`** sends a write-only command directly to the device driver, bypassing the state model and rule engine. It is a terminal command — no depth tracking, no rule chaining. The action string is type-checked against the resource's action union.
+
+**`setVirtualState`** updates a virtual resource's state value and propagates it to the UI, but does **not** trigger any rule events (`onChanged`, `onActivated`, etc.). Only works on `virtualAnalogOutput` and `virtualDigitalInput` resources. Use this when a rule needs to update a display value (e.g. a computed group indicator) without causing other rules to fire on that change. The state flows through MQTT to the master and UI like a normal state update — the "silent" flag only suppresses rule triggers.
 
 ### Scheduling
 
@@ -1349,6 +1377,149 @@ export const highHumidityFan = rule({ description: "Start fan on high humidity" 
         ];
     });
 ```
+
+**Dimmer ramp on button hold:**
+
+```typescript
+// Long press starts a repeating interval that ramps the dimmer.
+// Uses params to track the value between ticks — avoids reading state which
+// may not have updated yet if the device is slow to confirm (e.g. IHC SOAP).
+export const startDimmerRamp = rule({ description: "Hold to ramp dimmer" })
+    .onLongPress(wallButton, 500)
+    .run((ctx) => {
+        const current = ctx.runtime.getState(dimmer) as number;
+        ctx.interval.start("dimmer-ramp", {
+            intervalMs: 200,
+            fireImmediately: true,
+            initialParams: { level: current },
+        }, (ictx) => {
+            const level = ictx.params!.level as number;
+            if (level >= 100) { ictx.stop(); return []; }
+            const next = Math.min(level + 5, 100);
+            ictx.setNextParams({ level: next });
+            return [ruleAction({ type: "setAnalogOutput", resource: dimmer, value: next })];
+        });
+        return [];
+    });
+
+// Button release stops the ramp
+export const stopDimmerRamp = rule({ description: "Release stops ramp" })
+    .onDeactivated(wallButton)
+    .run((ctx) => {
+        ctx.interval.stop("dimmer-ramp");
+        return [];
+    });
+```
+
+Interval IDs are global — any rule can stop any interval by ID. The callback receives an `IntervalCallbackContext` with:
+- `ictx.runtime` — read current state of any resource
+- `ictx.logger` — logging (tagged with `interval:{id}`)
+- `ictx.stop()` — stop the interval from within the callback
+- `ictx.setNextInterval(ms)` — change the delay before the next tick (minimum 50ms)
+- `ictx.setNextParams(params)` — pass state to the next tick via `ictx.params`
+- `ictx.params` — params from the previous tick's `setNextParams()`, or `initialParams` from options
+- `ictx.iteration` — zero-based tick counter
+
+Options: `intervalMs` (minimum 50ms), `maxIterations` (default 500 — safety net), `initialParams` (seed value for `ictx.params`), `fireImmediately` (default false — first tick fires after `intervalMs`; set to true to fire the first tick immediately). Starting with an existing ID stops the old interval first. Actions are dispatched asynchronously each tick — the rule's `run()` returns immediately.
+
+**Confirmation-aware ramp for slow devices (IHC SOAP):**
+
+The params-based ramp above sends commands as fast as the interval ticks, which can build up a queue for slow devices like IHC SOAP controllers. On release, queued commands continue executing and the dimmer overshoots.
+
+The fix: read confirmed state each tick and only send the next step when the device has confirmed the previous one. A `wait` flag adds one tick delay after confirmation for the physical dimmer to settle:
+
+```typescript
+function confirmationAwareRamp(dimmer: AnalogOutputResourceBase) {
+    return (ictx: IntervalCallbackContext) => {
+        const target = ictx.params!.level as number;
+        const wait = ictx.params!.wait as boolean | undefined;
+        const confirmed = ictx.runtime.getState(dimmer) as number;
+        if (confirmed < target) return [];                                    // wait for device confirmation
+        if (wait) { ictx.setNextParams({ level: target, wait: false }); return []; } // settle delay
+        if (confirmed >= 100) { ictx.stop(); return []; }
+        const next = confirmed === 0 ? 20 : Math.min(confirmed + 10, 100);
+        ictx.setNextParams({ level: next, wait: true });
+        return [ruleAction({ type: "setAnalogOutput", resource: dimmer, value: next })];
+    };
+}
+```
+
+Use a fast tick (200ms) with high `maxIterations` — most ticks are no-ops waiting for confirmation. The effective ramp speed adapts to the device. No command queue buildup, release is instant.
+
+**Reusable interval callback with `initialParams`:**
+
+```typescript
+function rampCallback(ictx: IntervalCallbackContext) {
+    const step = ictx.params!.step as number;
+    const resource = ictx.params!.resource as AnalogOutputResourceBase;
+    const current = ictx.runtime.getState(resource) as number;
+    if (current >= 100) { ictx.stop(); return []; }
+    return [ruleAction({ type: "setAnalogOutput", resource, value: current + step })];
+}
+
+// Different rules reuse the same callback with different params
+ctx.interval.start("ramp-a", { intervalMs: 200, initialParams: { step: 5, resource: dimmerA } }, rampCallback);
+ctx.interval.start("ramp-b", { intervalMs: 100, initialParams: { step: 1, resource: dimmerB } }, rampCallback);
+```
+
+**Debounce with interval:**
+
+Since there's no built-in debounce primitive, you can use `ctx.interval` with `maxIterations: 1` and same-ID-replaces to debounce rapid triggers. Each trigger restarts the timer; the callback fires once after the triggers settle:
+
+```typescript
+.run((ctx) => {
+    ctx.interval.start("my-debounce", { intervalMs: 300, maxIterations: 1 }, (ictx) => {
+        // Fires once, 300ms after the last trigger
+        const value = ictx.runtime.getState(someResource) as number;
+        return [ruleAction({ type: "setVirtualState", resource: display, value })];
+    });
+    return [];
+});
+```
+
+**Group control with `setVirtualState`:**
+
+A single virtual resource can serve as both the display and command target for a group of dimmers. The key: a sync rule uses `setVirtualState` to update the group's display value (max of members) without triggering the fan-out rule, while the UI slider uses normal `setAnalogOutput` which does trigger it.
+
+```typescript
+// Resource: one virtual analog for both display and commands
+const spotGroup = virtualAnalog({ host: "edge1", min: 0, max: 100, step: 1, unit: "%" });
+
+// View: stateFrom and command both use the same resource
+const viewSpotGroup = view({
+    stateFrom: [{ resource: spotGroup }],
+    command: viewCommand({ resource: spotGroup, type: "setAnalog", defaultOnValue: 50 }),
+    controls: [
+        { resource: dimmer1, label: "Bookshelf" },
+        { resource: dimmer2, label: "Sofa" },
+    ],
+    alwaysEnableControls: true,
+});
+
+// Sync: update group display to max of all dimmers (silent — no fan-out triggered)
+export const groupSync = rule({ description: "Sync group to max" })
+    .onChanged(dimmer1).onChanged(dimmer2)
+    .run((ctx) => {
+        const max = Math.max(
+            ctx.runtime.getState(dimmer1) as number,
+            ctx.runtime.getState(dimmer2) as number,
+        );
+        return [ruleAction({ type: "setVirtualState", resource: spotGroup, value: max })];
+    });
+
+// Fan-out: UI slider sets all dimmers (triggers because UI uses setAnalogOutput)
+export const groupFanOut = rule({ description: "Group slider sets all dimmers" })
+    .onChanged(spotGroup)
+    .run((ctx) => {
+        const value = ctx.runtime.getState(spotGroup) as number;
+        return [
+            ruleAction({ type: "setAnalogOutput", resource: dimmer1, value }),
+            ruleAction({ type: "setAnalogOutput", resource: dimmer2, value }),
+        ];
+    });
+```
+
+The pattern works because `setVirtualState` updates the resource's state (so the tile shows the correct value) but does not fire `onChanged` (so the fan-out rule only runs from UI interaction, not from the sync).
 
 ---
 

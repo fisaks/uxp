@@ -58,6 +58,9 @@ function handleActionEvent(actions: RuntimeRuleAction[]) {
             case "setActionOutput":
                 handleSetActionOutputAction(act);
                 break;
+            case "setVirtualState":
+                handleSetVirtualStateAction(act);
+                break;
             case "activateScene":
                 // Scene activation is expanded in the rule engine before reaching IPC.
                 // If it somehow arrives here, log a warning and ignore.
@@ -176,6 +179,31 @@ function handleEmitActionAction(action: Extract<RuntimeRuleAction, { type: "emit
             depth: action.depth,
         },
     );
+}
+
+function handleSetVirtualStateAction(action: Extract<RuntimeRuleAction, { type: "setVirtualState" }>) {
+    const resource = blueprintResourceService.getResourceById(action.resourceId);
+    if (!resource || (resource.type !== "virtualAnalogOutput" && resource.type !== "virtualDigitalInput")) {
+        AppLogger.warn({ message: `setVirtualState received for non-virtual resource: ${action.resourceId}` });
+        return;
+    }
+    const host = (resource as RuntimeVirtualAnalogOutputResource).host;
+    const timestamp = Date.now();
+    if (host === "master") {
+        ruleRuntimeProcessService.sendEvent<"stateUpdate">({
+            cmd: "stateUpdate",
+            payload: { resourceId: resource.id, value: action.value, timestamp, silent: true },
+        });
+        logicalResourceStateService.handleLocalState({
+            resourceId: resource.id, value: action.value, timestamp,
+        }, true);
+    } else {
+        // Forward to edge — edge handles the silent flag
+        resourceCmdEdgeService.sendCommandToEdge(
+            { id: resource.id, host },
+            { action: "setState", value: action.value, silent: true },
+        );
+    }
 }
 
 function handleSetActionOutputAction(action: Extract<RuntimeRuleAction, { type: "setActionOutput" }>) {

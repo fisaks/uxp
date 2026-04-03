@@ -3,12 +3,15 @@ import { runtimeOutput } from "../io/runtime-output";
 import { RuleRuntimeDependencies } from "../types/rule-runtime.type";
 
 export async function handleStateUpdate({ stateService }: RuleRuntimeDependencies, cmd: RuleRuntimeStateUpdateCommand) {
-    const { resourceId, timestamp, value } = cmd.payload;
-    stateService.update(resourceId, value, timestamp);
+    const { resourceId, timestamp, value, silent } = cmd.payload;
+    if (silent) {
+        stateService.updateSilent(resourceId, value, timestamp);
+    } else {
+        stateService.update(resourceId, value, timestamp);
+    }
     runtimeOutput.log({
         component: "handleStateUpdate",
         level: "info",
-        message: `Updated state for resource ${resourceId} to value ${JSON.stringify(value)} at timestamp ${timestamp}`
+        message: `Updated state for resource ${resourceId} to value ${JSON.stringify(value)} at timestamp ${timestamp}${silent ? " (silent)" : ""}`
     });
-
 }

@@ -9,6 +9,8 @@ type ResourceCmdEdgeCommand = {
     metadata?: Record<string, unknown>;
     /** Loop prevention depth counter for emitAction relay. */
     depth?: number;
+    /** When true, setState updates the value without triggering rules on the edge. */
+    silent?: boolean;
 };
 
 /**
@@ -36,6 +38,7 @@ class ResourceCmdEdgeService {
             metadata: command.metadata,
             timestamp: Date.now(),
             depth: command.depth,
+            silent: command.silent,
         };
         mqttService.publish(topic, payload, { retain: false, qos: 1 });
     }

@@ -14,6 +14,7 @@ import { RuntimeRulesService } from "./services/runtime-rules.service";
 import { RuntimeStateService } from "./services/runtime-state.service";
 import { RuntimeMode, RuntimeModes } from "./types/rule-runtime.type";
 import { RuntimeTimerService } from "./services/runtime-timer.service";
+import { RuntimeIntervalService } from "./services/runtime-interval.service";
 import { RuntimeLocationService } from "./services/runtime-location.service";
 import { RuntimeSceneService } from "./services/runtime-scene.service";
 import { RuntimeViewService } from "./services/runtime-view.service";
@@ -52,9 +53,10 @@ async function main() {
     const triggerEventBus = new TriggerEventBus();
     const timerService = new RuntimeTimerService(stateService);
     const muteService = new RuntimeMuteService();
+    const intervalService = new RuntimeIntervalService(stateService, runMode, edgeName);
 
     // Instances register listeners in constructors; keep references to prevent accidental GC/lint removal.
-    const ruleEngine = new RuleEngine(triggerEventBus, rulesService, stateService, timerService, muteService, runMode, edgeName);
+    const ruleEngine = new RuleEngine(triggerEventBus, rulesService, stateService, timerService, muteService, intervalService, runMode, edgeName);
 
     const router = createCommandRouter({
         runMode: runMode,

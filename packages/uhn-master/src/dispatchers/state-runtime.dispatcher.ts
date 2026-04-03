@@ -40,12 +40,12 @@ function clearStatesFromRuleRuntime() {
         });
     }
 }
-function sendStateUpdateToRuleRuntime(resourceId: string, value: ResourceStateValue | undefined, timestamp: number) {
+function sendStateUpdateToRuleRuntime(resourceId: string, value: ResourceStateValue | undefined, timestamp: number, silent?: boolean) {
     if (!ruleRuntimeProcessService.canSendCommands()) {
         return;
     }
     try {
-        ruleRuntimeProcessService.sendEvent({ cmd: "stateUpdate", payload: { resourceId, value, timestamp } });
+        ruleRuntimeProcessService.sendEvent({ cmd: "stateUpdate", payload: { resourceId, value, timestamp, silent } });
     } catch (error) {
         AppLogger.error({
             message: `[RuleRuntimeStateService] Failed to send state update for resource ${resourceId} to rule runtime:`,
@@ -59,8 +59,8 @@ export function initStateRuntimeDispatcher(): void {
     initialized = true;
     const ws = UHNAppServerWebSocketManager.getInstance();
 
-    stateRuntimeService.on("runtimeStateChanged", (resourceId, stateValue, timestamp, details) => {
-        sendStateUpdateToRuleRuntime(resourceId, stateValue, timestamp);
+    stateRuntimeService.on("runtimeStateChanged", (resourceId, stateValue, timestamp, details, silent) => {
+        sendStateUpdateToRuleRuntime(resourceId, stateValue, timestamp, silent);
         ws.broadcastRuntimeStateMessage({
             state: { resourceId, value: stateValue, timestamp, ...(details && { details }) }
         });

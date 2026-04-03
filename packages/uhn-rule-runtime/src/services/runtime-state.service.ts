@@ -22,11 +22,16 @@ export class RuntimeStateService extends EventEmitter<RuntimeStateServiceEventMa
 
         if (prev?.value === next.value) return;
 
-        this.emit("stateChanged", {
-            resourceId,
-            prev,
-            next,
-        });
+        this.emit("stateChanged", { resourceId, prev, next });
+    }
+
+    /** Update state without emitting stateChanged — rules are not triggered.
+     *  Used by setVirtualState to replicate display values to the runtime
+     *  without causing rule cascades. */
+    updateSilent(resourceId: string, value: ResourceStateValue | undefined, timestamp: number) {
+        const prev = this.state.get(resourceId);
+        if (prev && prev.timestamp > timestamp) return;
+        this.state.set(resourceId, { value, timestamp });
     }
 
     replaceAll(fullState: Map<string, ResourceState>) {

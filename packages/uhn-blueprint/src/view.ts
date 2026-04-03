@@ -236,6 +236,11 @@ export type InteractionView = {
      *  appears on the tile icon and clicking it opens a popover with all
      *  controls. The view's command is also shown at the top of the popover. */
     controls?: ViewControl[];
+
+    /** When true, controls popover and inline controls remain enabled even when
+     *  the view is inactive (stateFrom evaluates to false/0). Useful for group
+     *  controllers where you need to adjust members even when all are off. */
+    alwaysEnableControls?: boolean;
 };
 
 /* ------------------------------------------------------------------ */

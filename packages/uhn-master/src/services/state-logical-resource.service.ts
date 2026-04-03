@@ -18,6 +18,8 @@ type LogicalResourceMQTTPayload = {
     value: ResourceStateValue;
     timestamp: number;
     details?: ResourceStateDetails;
+    /** When true, state update should not trigger rule events. */
+    silent?: boolean;
 };
 
 function isLogicalResourceStatePayload(payload: unknown): payload is LogicalResourceMQTTPayload {
@@ -33,7 +35,7 @@ function isLogicalResourceStatePayload(payload: unknown): payload is LogicalReso
 }
 
 export type LogicalResourceStateEventMap = {
-    stateChanged: [resourceId: string, value: ResourceStateValue, timestamp: number, details?: ResourceStateDetails];
+    logicalStateChanged: [resourceId: string, value: ResourceStateValue, timestamp: number, details?: ResourceStateDetails, silent?: boolean];
 };
 
 class LogicalResourceStateService extends EventEmitter<LogicalResourceStateEventMap> {
@@ -81,11 +83,11 @@ class LogicalResourceStateService extends EventEmitter<LogicalResourceStateEvent
                 ...(payload.details && { details: payload.details }),
             });
 
-            this.emit("stateChanged", resourceId, payload.value, payload.timestamp, payload.details);
+            this.emit("logicalStateChanged", resourceId, payload.value, payload.timestamp, payload.details, payload.silent);
         }
     }
 
-    handleLocalState(payload: RuleRuntimeLogicalResourceStateChangedMessage["payload"]) {
+    handleLocalState(payload: RuleRuntimeLogicalResourceStateChangedMessage["payload"], silent?: boolean) {
         const resourceId = payload.resourceId;
         const timestamp = payload.timestamp;
         const prev = this.stateByResourceId.get(resourceId);
@@ -97,7 +99,7 @@ class LogicalResourceStateService extends EventEmitter<LogicalResourceStateEvent
             timestamp,
             ...(payload.details && { details: payload.details }),
         });
-        this.emit("stateChanged", resourceId, payload.value, timestamp, payload.details);
+        this.emit("logicalStateChanged", resourceId, payload.value, timestamp, payload.details, silent);
     }
 
     clearAll() {

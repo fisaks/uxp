@@ -1,5 +1,5 @@
 import { ActionSideEffect, DisplayIcon, DisplayValue, InteractionView, ViewCommand, ViewStateDisplay } from "@uhn/blueprint";
-import { humanizeViewId, RuntimeActionSideEffect, RuntimeDisplayIcon, RuntimeDisplayValue, RuntimeInteractionView, RuntimeViewCommand, RuntimeViewStateDisplay } from "@uhn/common";
+import { humanizeViewId, RuntimeActionSideEffect, RuntimeDisplayIcon, RuntimeDisplayValue, RuntimeInteractionView, RuntimeViewCommand, RuntimeViewCommandTarget, RuntimeViewStateDisplay } from "@uhn/common";
 import fs from "fs-extra";
 import path from "path";
 import { runtimeOutput } from "../io/runtime-output";
@@ -57,36 +57,30 @@ function serializeSideEffect(se: ActionSideEffect): RuntimeActionSideEffect {
     };
 }
 
+/** Serialize a ViewCommandTarget → RuntimeViewCommandTarget (shared by command and onDeactivate) */
+function serializeCommandTarget(target: ViewCommand): RuntimeViewCommandTarget {
+    const t = target as any;
+    return {
+        resourceId: target.resource.id!,
+        type: target.type,
+        holdMs: t.holdMs,
+        simulateHold: t.simulateHold,
+        min: t.min,
+        max: t.max,
+        step: t.step,
+        unit: t.unit,
+        defaultOnValue: t.defaultOnValue,
+        options: t.options?.map((o: { value: number; label: string }) => ({ value: o.value, label: o.label })),
+        action: t.action,
+        metadata: t.metadata,
+    };
+}
+
 /** Serialize a single ViewCommand → RuntimeViewCommand */
 function serializeCommand(cmd: ViewCommand): RuntimeViewCommand {
     return {
-        resourceId: cmd.resource.id!,
-        type: cmd.type,
-        ...("holdMs" in cmd && cmd.holdMs != null && { holdMs: cmd.holdMs }),
-        ...("simulateHold" in cmd && cmd.simulateHold != null && { simulateHold: cmd.simulateHold }),
-        ...("min" in cmd && cmd.min != null && { min: cmd.min }),
-        ...("max" in cmd && cmd.max != null && { max: cmd.max }),
-        ...("step" in cmd && cmd.step != null && { step: cmd.step }),
-        ...("unit" in cmd && cmd.unit != null && { unit: cmd.unit }),
-        ...("defaultOnValue" in cmd && cmd.defaultOnValue != null && { defaultOnValue: cmd.defaultOnValue }),
-        ...("options" in cmd && cmd.options && cmd.options.length > 0 && { options: cmd.options.map((o: { value: number; label: string }) => ({ value: o.value, label: o.label })) }),
-        ...("action" in cmd && cmd.action != null && { action: cmd.action }),
-        ...("metadata" in cmd && cmd.metadata != null && { metadata: cmd.metadata }),
-        ...(cmd.onDeactivate && {
-            onDeactivate: {
-                resourceId: cmd.onDeactivate.resource.id!,
-                type: cmd.onDeactivate.type,
-                ...("holdMs" in cmd.onDeactivate && cmd.onDeactivate.holdMs != null && { holdMs: cmd.onDeactivate.holdMs }),
-                ...("min" in cmd.onDeactivate && cmd.onDeactivate.min != null && { min: cmd.onDeactivate.min }),
-                ...("max" in cmd.onDeactivate && cmd.onDeactivate.max != null && { max: cmd.onDeactivate.max }),
-                ...("step" in cmd.onDeactivate && cmd.onDeactivate.step != null && { step: cmd.onDeactivate.step }),
-                ...("unit" in cmd.onDeactivate && cmd.onDeactivate.unit != null && { unit: cmd.onDeactivate.unit }),
-                ...("defaultOnValue" in cmd.onDeactivate && cmd.onDeactivate.defaultOnValue != null && { defaultOnValue: cmd.onDeactivate.defaultOnValue }),
-                ...("options" in cmd.onDeactivate && cmd.onDeactivate.options && cmd.onDeactivate.options.length > 0 && { options: cmd.onDeactivate.options.map((o: { value: number; label: string }) => ({ value: o.value, label: o.label })) }),
-                ...("action" in cmd.onDeactivate && cmd.onDeactivate.action != null && { action: cmd.onDeactivate.action }),
-                ...("metadata" in cmd.onDeactivate && cmd.onDeactivate.metadata != null && { metadata: cmd.onDeactivate.metadata }),
-            },
-        }),
+        ...serializeCommandTarget(cmd),
+        ...(cmd.onDeactivate && { onDeactivate: serializeCommandTarget(cmd.onDeactivate as ViewCommand) }),
     };
 }
 
@@ -100,21 +94,20 @@ function serializeView(v: InteractionView): RuntimeInteractionView {
         icon: v.icon,
         stateFrom: v.stateFrom.map(s => ({
             resourceId: s.resource.id!,
-            ...(s.activeWhen && { activeWhen: s.activeWhen }),
+            activeWhen: s.activeWhen,
         })),
-        ...(v.stateAggregation && { stateAggregation: v.stateAggregation }),
-        ...(v.activeWhen && { activeWhen: v.activeWhen }),
-        ...(v.command && { command: serializeCommand(v.command) }),
-        ...(v.sideEffects?.length && { sideEffects: v.sideEffects.map(serializeSideEffect) }),
-        ...(v.stateDisplay && { stateDisplay: serializeStateDisplay(v.stateDisplay) }),
-        ...(v.controls && v.controls.length > 0 && {
-            controls: v.controls.map(c => ({
-                resourceId: c.resource.id!,
-                ...(c.label && { label: c.label }),
-                ...(c.group && { group: c.group }),
-                ...(c.inline && { inline: true }),
-            })),
-        }),
+        stateAggregation: v.stateAggregation,
+        activeWhen: v.activeWhen,
+        command: v.command ? serializeCommand(v.command) : undefined,
+        sideEffects: v.sideEffects?.map(serializeSideEffect),
+        stateDisplay: v.stateDisplay ? serializeStateDisplay(v.stateDisplay) : undefined,
+        controls: v.controls?.map(c => ({
+            resourceId: c.resource.id!,
+            label: c.label,
+            group: c.group,
+            inline: c.inline,
+        })),
+        alwaysEnableControls: v.alwaysEnableControls,
     };
 }
 

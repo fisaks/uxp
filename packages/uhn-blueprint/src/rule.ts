@@ -156,6 +156,11 @@ export type RuleAction =
         action: string;
     }
     | {
+        type: "setVirtualState";
+        resource: VirtualAnalogOutputResourceBase | VirtualDigitalInputResourceBase;
+        value: AnalogStateValue | DigitalStateValue;
+    }
+    | {
         type: "activateScene";
         scene: BlueprintScene;
     };
@@ -214,6 +219,9 @@ export function ruleAction<TActions extends string, TAction extends TActions, TM
 export function ruleAction<TActions extends string, TAction extends TActions>(
     opts: { type: "setActionOutput"; resource: ActionOutputResourceBase<TActions, any, any, any>; action: TAction }
 ): RuleAction;
+/** Set a virtual resource's state silently (updates UI, does not trigger rules). */
+export function ruleAction(opts: { type: "setVirtualState"; resource: VirtualAnalogOutputResourceBase; value: AnalogStateValue }): RuleAction;
+export function ruleAction(opts: { type: "setVirtualState"; resource: VirtualDigitalInputResourceBase; value: DigitalStateValue }): RuleAction;
 export function ruleAction(opts: { type: "activateScene"; scene: BlueprintScene }): RuleAction;
 export function ruleAction(opts: any): RuleAction {
     return opts;
@@ -280,9 +288,47 @@ export type RuntimeRuleAction =
         action: string;
     }
     | {
+        type: "setVirtualState";
+        resourceId: string;
+        value: AnalogStateValue | DigitalStateValue;
+    }
+    | {
         type: "activateScene";
         sceneId: string;
     };
+
+// --------- Context ---------
+
+// --------- Interval ---------
+
+export type IntervalCallbackContext = {
+    runtime: StateReader;
+    logger: RuleLogger;
+    /** Stop the interval from within the callback. */
+    stop(): void;
+    /** Change the delay before the next tick. Minimum 50ms. */
+    setNextInterval(ms: number): void;
+    /** Set params that will be available as `params` on the next tick. */
+    setNextParams(params: Record<string, unknown>): void;
+    /** Params set by the previous tick via `setNextParams()`, or the initial value. */
+    params: Record<string, unknown> | undefined;
+    /** Zero-based iteration counter. */
+    iteration: number;
+};
+
+export type IntervalOptions = {
+    intervalMs: number;
+    maxIterations?: number;
+    initialParams?: Record<string, unknown>;
+    /** Fire the first tick immediately instead of waiting for `intervalMs`. Default: false. */
+    fireImmediately?: boolean;
+};
+
+export type IntervalController = {
+    start(id: string, options: IntervalOptions, callback: (ctx: IntervalCallbackContext) => RuleAction[]): void;
+    stop(id: string): void;
+    isRunning(id: string): boolean;
+};
 
 // --------- Context ---------
 
@@ -292,6 +338,7 @@ export type RuleContext = {
     timers: RuleTimers;
     logger: RuleLogger;
     mute: MuteController;
+    interval: IntervalController;
 };
 /**
  * Controller to mute rule or resource triggers for a duration.

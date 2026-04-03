@@ -19,7 +19,7 @@ import { stateSignalService } from "./state-signal.service";
  */
 export type StateRuntimeEventMap = {
     runtimeStateReset: [];
-    runtimeStateChanged: [resourceId: string, value: ResourceStateValue | undefined, timestamp: number, details?: ResourceStateDetails];
+    runtimeStateChanged: [resourceId: string, value: ResourceStateValue | undefined, timestamp: number, details?: ResourceStateDetails, silent?: boolean];
     runtimeStatesChanged: [RuntimeResourceState[]];
 
 };
@@ -107,9 +107,9 @@ class StateRuntimeService extends EventEmitter<StateRuntimeEventMap> {
             }
         );
         logicalResourceStateService.on(
-            "stateChanged",
-            (resourceId, value, timestamp, details) => {
-                this.handleLogicalResourceState(resourceId, value, timestamp, details);
+            "logicalStateChanged",
+            (resourceId, value, timestamp, details, silent) => {
+                this.handleLogicalResourceState(resourceId, value, timestamp, details, silent);
             }
         );
         devicePinStateService.on(
@@ -217,7 +217,7 @@ class StateRuntimeService extends EventEmitter<StateRuntimeEventMap> {
         if (computed === undefined) {
             if (prev) {
                 this.stateByResourceId.delete(resourceId);
-                this.emitRuntimeStateChangedIfEnabled(resourceId, undefined, timestamp);
+                this.emitStateChange(resourceId, undefined, timestamp);
             }
             return;
         }
@@ -248,7 +248,7 @@ class StateRuntimeService extends EventEmitter<StateRuntimeEventMap> {
             });
 
         if (!prev || prev.computed !== computed) {
-            this.emitRuntimeStateChangedIfEnabled(resourceId, computed, timestamp);
+            this.emitStateChange(resourceId, computed, timestamp);
         }
 
     }
@@ -264,7 +264,8 @@ class StateRuntimeService extends EventEmitter<StateRuntimeEventMap> {
         resourceId: string,
         value: ResourceStateValue,
         timestamp: number,
-        details?: ResourceStateDetails
+        details?: ResourceStateDetails,
+        silent?: boolean,
     ) {
         if (!this.logicalResourceIds.has(resourceId)) return;
 
@@ -278,7 +279,7 @@ class StateRuntimeService extends EventEmitter<StateRuntimeEventMap> {
         });
 
         if (!prev || prev.computed !== value || prev.details?.stopAt !== details?.stopAt) {
-            this.emitRuntimeStateChangedIfEnabled(resourceId, value, timestamp, details);
+            this.emitStateChange(resourceId, value, timestamp, details, silent);
         }
     }
 
@@ -508,13 +509,15 @@ class StateRuntimeService extends EventEmitter<StateRuntimeEventMap> {
         // Always emit — stale/duplicate timestamps are rejected at the top of this method.
         // Same-value updates with a new timestamp (e.g. Mi-Light gatekeeper reconfirm,
         // Modbus heartbeat) must reach the UI so optimistic local state can snap back.
-        this.emitRuntimeStateChangedIfEnabled(resourceId, computed, timestamp);
+        this.emitStateChange(resourceId, computed, timestamp);
 
     }
 
-    private emitRuntimeStateChangedIfEnabled(resourceId: string, computed: ResourceStateValue | undefined, timestamp: number, details?: ResourceStateDetails) {
+    /** Emit runtimeStateChanged if not suppressed during initial state replay.
+     *  Consumers: state-runtime.dispatcher → rule runtime state update + UI WebSocket broadcast. */
+    private emitStateChange(resourceId: string, computed: ResourceStateValue | undefined, timestamp: number, details?: ResourceStateDetails, silent?: boolean) {
         if (this.emitStateChanges) {
-            this.emit("runtimeStateChanged", resourceId, computed, timestamp, details);
+            this.emit("runtimeStateChanged", resourceId, computed, timestamp, details, silent);
         }
     }
     private isStaleMessage(prevSignalTimestamp: number | undefined, timestamp: number) {

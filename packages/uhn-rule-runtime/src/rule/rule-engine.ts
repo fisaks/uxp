@@ -8,7 +8,6 @@ import type {
     RuntimeRuleAction
 } from "@uhn/blueprint";
 import { ResourceError, ResourceStateNotAvailableError } from "@uhn/common";
-import { assertNever } from "@uxp/common";
 import { runtimeOutput } from "../io/runtime-output";
 import type { RuntimeRulesService } from "../services/runtime-rules.service";
 import type { RuntimeStateService } from "../services/runtime-state.service";
@@ -17,11 +16,13 @@ import { RuntimeMode } from "../types/rule-runtime.type";
 import { createResourceErrorData } from "./rule-engine-error";
 import { ruleLogger } from "./rule-engine-logging";
 import { RuntimeMuteService } from "../services/runtime-mute.service";
+import { RuntimeIntervalService } from "../services/runtime-interval.service";
 import { createRuleMute } from "./rule-engine-mute";
 import { createRuleStateReader } from "./rule-state-reader";
 import { createRuleTimer } from "./rule-engine-timer";
 import { RuleExecutionControl, RuleTriggerEvent } from "./rule-engine.type";
 import { isActionTrigger, isLongPressTrigger, isResourceTrigger, isTapTrigger, isThresholdTrigger, isTimerTrigger } from "./rule-engine.utils";
+import { expandSceneActions, filterReachableActions, toRuntimeAction } from "./rule-action.utils";
 import { TriggerEventBus } from "./trigger-event-bus";
 
 /**
@@ -54,6 +55,7 @@ export class RuleEngine {
         private readonly stateService: RuntimeStateService,
         private readonly timerService: RuntimeTimerService,
         private readonly muteService: RuntimeMuteService,
+        private readonly intervalService: RuntimeIntervalService,
         mode: RuntimeMode,
         edgeName?: string,
     ) {
@@ -311,6 +313,7 @@ export class RuleEngine {
                 runtime: this.stateReader,
                 timers: ruleTimer,
                 mute: ruleMute,
+                interval: this.intervalService,
                 logger,
             });
         } catch (error) {
@@ -336,92 +339,30 @@ export class RuleEngine {
         ruleControl.lastRunAt = eventTime;
         this.ruleExecutionControl.set(ruleCandidate.id, ruleControl);
 
-        // Expand activateScene actions into individual scene commands.
-        // emitAction passes through (not a scene action).
-        const expandedActions = actions.flatMap(action =>
-            action.type === "activateScene" ? action.scene.commands : [action]
-        ) as Exclude<RuleAction, { type: "activateScene" }>[];
+        const reachableActions = filterReachableActions(
+            expandSceneActions(actions),
+            this.mode,
+            this.edgeName,
+            "RuleEngine",
+        );
 
-        const reachableActions = this.filterReachableActions(expandedActions);
+        const runtimeActions = reachableActions.map(action => {
+            // Early loop prevention: drop emitAction targeting the same resource+action as the cause
+            if (action.type === "emitAction" && runCause.event === "action"
+                && runCause.resource.id === action.resource.id && runCause.action === action.action) {
+                runtimeOutput.log({
+                    level: "warn",
+                    component: "RuleEngine",
+                    message: `emitAction targets same resource+action as cause — dropping to prevent loop (resource: ${action.resource.id}, action: ${action.action})`,
+                });
+                return undefined;
+            }
+            const depth = action.type === "emitAction" ? (runCause.depth ?? 0) + 1 : 0;
+            return toRuntimeAction(action, "RuleEngine", depth);
+        }).filter((a): a is RuntimeRuleAction => a !== undefined);
 
-        const runtimeActions = reachableActions.map(a => this.toRuntimeAction(a, runCause)).filter((a): a is RuntimeRuleAction => a !== undefined);
         const timerActions = ruleTimer.drainPendingActions();
         const muteActions = ruleMute.drainPendingActions();
         return [...runtimeActions, ...timerActions, ...muteActions];
-    }
-
-    /**
-     * Filter out actions targeting resources unreachable from this runtime.
-     * Edge runtimes can only dispatch to resources on the same edge;
-     * master can reach all targets so no filtering is needed.
-     */
-    private filterReachableActions(actions: Exclude<RuleAction, { type: "activateScene" }>[]): Exclude<RuleAction, { type: "activateScene" }>[] {
-        if (this.mode === "master") return actions;
-
-        return actions.filter(action => {
-            const target = this.getActionResourceTarget(action);
-            if (target && target !== this.edgeName) {
-                runtimeOutput.log({
-                    level: "error",
-                    component: "RuleEngine",
-                    message: `Action targets resource "${action.resource.id}" on "${target}" but this runtime runs on edge "${this.edgeName}" — skipping`,
-                });
-                return false;
-            }
-            return true;
-        });
-    }
-
-    /** Extract the execution target (edge or host) from an action's resource. */
-    private getActionResourceTarget(action: Exclude<RuleAction, { type: "activateScene" }>): string | undefined {
-        switch (action.type) {
-            case "setDigitalOutput":
-                return action.resource.edge;
-            case "setAnalogOutput":
-                return "edge" in action.resource ? action.resource.edge : action.resource.host;
-            case "emitSignal":
-                return "edge" in action.resource ? action.resource.edge : action.resource.host;
-            case "emitAction":
-                return action.resource.edge;
-            case "setActionOutput":
-                return action.resource.edge;
-        }
-    }
-
-    private toRuntimeAction(action: Exclude<RuleAction, { type: "activateScene" }>, cause: RuleCause): RuntimeRuleAction | undefined {
-        if (!action.resource.id) {
-            runtimeOutput.log({ level: "error", component: "RuleEngine", message: `Action resource is missing id: ${JSON.stringify(action)}` });
-            return undefined;
-        }
-
-        switch (action.type) {
-            case "setDigitalOutput":
-                return { type: "setDigitalOutput", resourceId: action.resource.id, value: action.value };
-            case "setAnalogOutput":
-                return { type: "setAnalogOutput", resourceId: action.resource.id, value: action.value };
-            case "emitSignal":
-                return { type: "emitSignal", resourceId: action.resource.id, value: action.value };
-            case "emitAction":
-                // Early loop prevention: drop if emitting back to the same resource+action that caused this rule to fire
-                if (cause.event === "action" && cause.resource.id === action.resource.id && cause.action === action.action) {
-                    runtimeOutput.log({
-                        level: "warn",
-                        component: "RuleEngine",
-                        message: `emitAction targets same resource+action as cause — dropping to prevent loop (resource: ${action.resource.id}, action: ${action.action})`,
-                    });
-                    return undefined;
-                }
-                return {
-                    type: "emitAction",
-                    resourceId: action.resource.id,
-                    action: action.action,
-                    metadata: action.metadata,
-                    depth: (cause.depth ?? 0) + 1,
-                };
-            case "setActionOutput":
-                return { type: "setActionOutput", resourceId: action.resource.id, action: action.action };
-            default:
-                assertNever(action, "Unsupported RuleAction type in RuleEngine.toRuntimeAction");
-        }
     }
 }

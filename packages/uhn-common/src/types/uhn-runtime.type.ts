@@ -63,6 +63,8 @@ export type RuntimeResourceState = {
   value: ResourceStateValue | undefined;
   timestamp: number;
   details?: ResourceStateDetails;
+  /** When true, the state update does not trigger rule events (onChanged, etc.). */
+  silent?: boolean;
 };
 
 export type ResourceErrorCode =
@@ -470,6 +472,7 @@ export type RuntimeInteractionView = {
     sideEffects?: RuntimeActionSideEffect[];
     stateDisplay?: RuntimeViewStateDisplay;
     controls?: RuntimeViewControl[];
+    alwaysEnableControls?: boolean;
 };
 
 export type RuntimeActionSideEffect = {
