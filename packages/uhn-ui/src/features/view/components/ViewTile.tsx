@@ -22,10 +22,9 @@ type ViewTileProps = {
     view: RuntimeInteractionView;
     active: boolean;
     stateDisplay: DisplayItemsState;
-    nameOverride?: string;
 };
 
-export const ViewTile: React.FC<ViewTileProps> = ({ view, active, stateDisplay, nameOverride }) => {
+export const ViewTile: React.FC<ViewTileProps> = ({ view, active, stateDisplay }) => {
     const theme = useTheme();
     const sendCommand = useSendViewCommand();
     const hasCommand = !!view.command;
@@ -35,7 +34,8 @@ export const ViewTile: React.FC<ViewTileProps> = ({ view, active, stateDisplay, 
 
     const { IconComponent, iconColor, surfaceColor } = useViewIconColors(view.icon, active, theme);
 
-    const displayName = nameOverride ?? view.name ?? view.id;
+    const displayName = (view.nameMap ? (active ? view.nameMap.active : view.nameMap.inactive) : undefined)
+        ?? view.name ?? view.id;
 
     const {
         analogSendCommand, analogState,

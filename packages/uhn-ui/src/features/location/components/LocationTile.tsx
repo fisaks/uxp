@@ -34,6 +34,7 @@ type LocationTileViewProps = {
     view: RuntimeInteractionView;
     active: boolean;
     stateDisplay: DisplayItemsState;
+    /** Location-level name override — takes priority over nameMap and view name. */
     nameOverride?: string;
 };
 
@@ -41,12 +42,14 @@ type LocationTileResourceProps = {
     kind: "resource";
     resource: TileRuntimeResource;
     state?: TileRuntimeResourceState;
+    /** Location-level name override — takes priority over resource name. */
     nameOverride?: string;
 };
 
 type LocationTileSceneProps = {
     kind: "scene";
     scene: RuntimeScene;
+    /** Location-level name override — takes priority over scene name. */
     nameOverride?: string;
 };
 
@@ -77,7 +80,8 @@ const LocationTileView: React.FC<LocationTileViewProps> = ({ view, active, state
     // Icon resolution
     const { IconComponent, iconColor, surfaceColor } = useViewIconColors(view.icon, active, theme);
 
-    const displayName = nameOverride ?? view.name ?? view.id;
+    const displayName = (view.nameMap ? (active ? view.nameMap.active : view.nameMap.inactive) : undefined)
+        ?? nameOverride ?? view.name ?? view.id;
 
     const {
         analogSendCommand, analogState,

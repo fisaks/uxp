@@ -730,14 +730,34 @@ stateFrom: [{ resource: ceilingLight }]
 // Analog resource with threshold — active when value > 0
 stateFrom: [{ resource: dimmer, activeWhen: { above: 0 } }]
 
+// Inverted digital — active when value is false (e.g. door contact: closed=true, open=false)
+stateFrom: [{ resource: doorContact, activeWhen: { equals: false } }]
+
 // Multiple resources with aggregation
 stateFrom: [{ resource: light1 }, { resource: light2 }],
 stateAggregation: "any",   // active if ANY source is active (default)
 ```
 
+`activeWhen` conditions: `{ above: number }`, `{ below: number }`, `{ equals: number | boolean }`. For digital resources, `{ equals: false }` inverts the active state.
+
 Aggregation options:
 - Digital: `"any"` (default), `"all"`
 - Numeric: `"sum"`, `"average"`, `"max"`, `"min"`
+
+### Conditional Name
+
+`nameMap` shows a different tile name based on active/inactive state:
+
+```typescript
+export const viewFrontDoor = view({
+    stateFrom: [{ resource: doorContact, activeWhen: { equals: false } }],
+    nameMap: { active: "Front Door Open", inactive: "Front Door Closed" },
+    icon: "opening:door",
+    name: "Front Door",  // fallback / search name
+});
+```
+
+When `nameMap` is set, the tile displays `active` or `inactive` name based on the computed active state. The `name` field is still used as the fallback and for search/command palette.
 
 ### Commands
 

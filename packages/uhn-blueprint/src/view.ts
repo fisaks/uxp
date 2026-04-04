@@ -25,7 +25,7 @@ import type {
 export type ViewActiveCondition =
     | { above: number }
     | { below: number }
-    | { equals: number };
+    | { equals: number | boolean };
 
 export type ViewStateSource = {
     resource: ResourceBase<ResourceType>;
@@ -200,6 +200,8 @@ export type ViewControl = {
 export type InteractionView = {
     id?: string;
     name?: string;
+    /** State-dependent display name. When set, overrides `name` based on active state. */
+    nameMap?: { active: string; inactive: string };
     description?: string;
     /** Alternative search terms (e.g. ["main light", "overhead"] for a ceiling light). */
     keywords?: string[];

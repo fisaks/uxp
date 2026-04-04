@@ -297,7 +297,7 @@ export const blueprintIconMap: Record<BlueprintIcon, BlueprintIconEntry> = {
     "device:washer": icon(LocalLaundryServiceIcon, undefined, color("#78909C", "#B0BEC5")),
     "device:iron": icon(IronIcon, undefined, color("#78909C", "#B0BEC5")),
     "device:blender": icon(BlenderIcon, undefined, color("#78909C", "#B0BEC5")),
-    "device:charger": icon(ChargingStationIcon, undefined, color("#78909C", "#B0BEC5")),
+    "device:charger": icon(ChargingStationIcon, undefined, color("#00ACC1", "#4DD0E1")),
     // Energy
     "energy:battery": icon(BatteryFullIcon, undefined, color("#F57C00", "#FFB74D")),
     "energy:battery-half": icon(Battery50Icon, undefined, color("#F57C00", "#FFB74D")),

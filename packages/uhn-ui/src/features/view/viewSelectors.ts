@@ -17,13 +17,14 @@ type StateMap = Record<string, RuntimeStateEntry>;
 /* Active condition evaluation                                         */
 /* ------------------------------------------------------------------ */
 
-/** Checks a numeric value against an activeWhen condition ({above}, {below}, {equals}). */
+/** Checks a value against an activeWhen condition ({above}, {below}, {equals}).
+ *  `equals` supports both number and boolean — e.g. { equals: false } inverts a digital resource. */
 function evaluateActiveCondition(value: ResourceStateValue | undefined, condition: ViewActiveCondition): boolean {
     if (value == null) return false;
+    if ("equals" in condition) return value === condition.equals;
     if (typeof value === "boolean") return value;
     if ("above" in condition) return value > condition.above;
     if ("below" in condition) return value < condition.below;
-    if ("equals" in condition) return value === condition.equals;
     return false;
 }
 
