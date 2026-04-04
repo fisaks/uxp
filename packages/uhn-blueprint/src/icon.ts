@@ -4,7 +4,7 @@
  *  Add new entries as needed: one line here + one line in UI icon map. */
 export type BlueprintIcon =
     // Lighting
-    | "lighting:bulb" | "lighting:ceiling" | "lighting:flashlight" | "lighting:indicator" | "lighting:spot"
+    | "lighting:bulb" | "lighting:ceiling" | "lighting:flashlight" | "lighting:indicator" | "lighting:spot" | "lighting:starlight" | "lighting:mirror"
     // Power
     | "power:socket" | "power:plug" | "power:switch" | "power:energy" | "power:current"
     // Sensor

@@ -1,4 +1,6 @@
 import AcUnitIcon from "@mui/icons-material/AcUnit";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import CropPortraitIcon from "@mui/icons-material/CropPortrait";
 import AirIcon from "@mui/icons-material/Air";
 import BalconyIcon from "@mui/icons-material/Balcony";
 import Battery20Icon from "@mui/icons-material/Battery20";
@@ -172,6 +174,8 @@ export const blueprintIconMap: Record<BlueprintIcon, BlueprintIconEntry> = {
     "lighting:flashlight": icon(FlashlightOnIcon, FlashlightOffIcon, color("#FFB300", "#FFD54F")),
     "lighting:indicator": icon(FluorescentIcon, FluorescentOutlinedIcon, color("#FFC107", "#FFE082")),
     "lighting:spot": icon(TungstenIcon, undefined, color("#FFB300", "#FFD54F")),
+    "lighting:starlight": icon(AutoAwesomeIcon, undefined, color("#FFB300", "#FFD54F")),
+    "lighting:mirror": icon(CropPortraitIcon, undefined, color("#FFB300", "#FFD54F")),
     // Power
     "power:socket": icon(PowerIcon, PowerOutlinedIcon, color("#00ACC1", "#4DD0E1")),
     "power:plug": icon(OutletIcon, undefined, color("#00ACC1", "#4DD0E1")),
