@@ -384,11 +384,11 @@ const ActionOutputControl: React.FC<{
                     disabled={disabled || pending === action}
                     onClick={() => handleClick(action)}
                     sx={{
-                        fontSize: "0.65rem",
+                        fontSize: { xs: "0.75rem", sm: "0.65rem" },
                         textTransform: "none",
                         minWidth: 0,
-                        px: 1,
-                        py: 0.25,
+                        px: { xs: 1.5, sm: 1 },
+                        py: { xs: 0.5, sm: 0.25 },
                         borderColor: iconColor,
                         color: iconColor,
                         "&:hover": { borderColor: iconColor, bgcolor: `${iconColor}14` },

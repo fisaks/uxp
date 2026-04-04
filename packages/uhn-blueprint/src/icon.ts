@@ -6,7 +6,7 @@ export type BlueprintIcon =
     // Lighting
     | "lighting:bulb" | "lighting:ceiling" | "lighting:flashlight" | "lighting:indicator" | "lighting:spot" | "lighting:starlight" | "lighting:mirror"
     // Power
-    | "power:socket" | "power:plug" | "power:switch" | "power:energy" | "power:current"
+    | "power:socket" | "power:plug" | "power:switch" | "power:off" | "power:energy" | "power:current"
     // Sensor
     | "sensor:motion" | "sensor:pir" | "sensor:temperature" | "sensor:humidity" | "sensor:light" | "sensor:dark"
     | "sensor:co2" | "sensor:air" | "sensor:air-quality" | "sensor:dust" | "sensor:cold"

@@ -435,7 +435,7 @@ export type RuntimeDisplayIcon = {
     resourceId: string;
     icon: BlueprintIcon;
     tooltip?: string | "value";
-    showWhen?: "active" | "always";
+    showWhen?: "active" | "inactive" | "always";
     colorMap?: ValueColorRule[];
     iconMap?: ValueIconRule[];
 };

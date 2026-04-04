@@ -152,7 +152,7 @@ function computeDisplayIcon(item: RuntimeDisplayIcon, stateMap: StateMap, resour
     const stateEntry = stateMap[item.resourceId];
     const value = stateEntry?.value;
     const active = isResourceActive(value);
-    const visible = item.showWhen === "active" ? active : true;
+    const visible = item.showWhen === "active" ? active : item.showWhen === "inactive" ? !active : true;
     const color = item.colorMap ? evaluateColorMap(value, item.colorMap) : undefined;
     const resolvedIcon = item.iconMap ? (evaluateIconMap(value, item.iconMap) ?? item.icon) : item.icon;
 

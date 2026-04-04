@@ -1,6 +1,7 @@
 import AcUnitIcon from "@mui/icons-material/AcUnit";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
+import PowerOffIcon from "@mui/icons-material/PowerOff";
 import CropPortraitIcon from "@mui/icons-material/CropPortrait";
 import AirIcon from "@mui/icons-material/Air";
 import BalconyIcon from "@mui/icons-material/Balcony";
@@ -181,6 +182,7 @@ export const blueprintIconMap: Record<BlueprintIcon, BlueprintIconEntry> = {
     "power:socket": icon(PowerIcon, PowerOutlinedIcon, color("#00ACC1", "#4DD0E1")),
     "power:plug": icon(OutletIcon, undefined, color("#00ACC1", "#4DD0E1")),
     "power:switch": icon(PowerSettingsNewIcon, undefined, color("#00ACC1", "#4DD0E1")),
+    "power:off": icon(PowerOffIcon, undefined, color("#EF5350", "#EF9A9A")),
     "power:energy": icon(ElectricBoltIcon, undefined, color("#F57C00", "#FFB74D", "#EF6C00", "#FFB74D")),
     "power:current": icon(BoltIcon, undefined, color("#2979FF", "#82B1FF")),
     // Sensor

@@ -144,7 +144,7 @@ export type DisplayIcon = {
     /** Tooltip text, or `"value"` to show the formatted resource value. */
     tooltip?: string | "value";
     /** When to show this icon. Default: `"always"`. */
-    showWhen?: "active" | "always";
+    showWhen?: "active" | "inactive" | "always";
     /** Value-driven color — first matching rule wins. Color is a theme palette token (e.g. `"success"`, `"warning"`, `"error"`). */
     colorMap?: ValueColorRule[];
     /** Value-driven icon override — first matching rule wins. */
