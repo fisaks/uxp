@@ -1,5 +1,6 @@
 import AcUnitIcon from "@mui/icons-material/AcUnit";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
+import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
 import CropPortraitIcon from "@mui/icons-material/CropPortrait";
 import AirIcon from "@mui/icons-material/Air";
 import BalconyIcon from "@mui/icons-material/Balcony";
@@ -222,6 +223,7 @@ export const blueprintIconMap: Record<BlueprintIcon, BlueprintIconEntry> = {
     "control:curtain": icon(CurtainsIcon, CurtainsClosedIcon, color("#795548", "#A1887F")),
     "control:volume": icon(VolumeUpIcon, VolumeOffIcon, color("#5C6BC0", "#9FA8DA")),
     "control:mode": icon(FormatListBulletedIcon, undefined, color("#6A1B9A", "#AB47BC", "#4A148C", "#AB47BC")),
+    "control:effect": icon(AutoFixHighIcon, undefined, color("#6A1B9A", "#AB47BC")),
     // Climate
     "climate:heater": icon(FireplaceIcon, undefined, color("#E64A19", "#FF8A65")),
     "climate:ac": icon(AcUnitIcon, undefined, color("#29B6F6", "#81D4FA")),

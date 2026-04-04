@@ -1,4 +1,4 @@
-import { Box, CardActionArea, Popover, Slider, Typography, useMediaQuery } from "@mui/material";
+import { Box, Button, CardActionArea, Popover, Slider, Typography, useMediaQuery } from "@mui/material";
 import { alpha, useTheme } from "@mui/material/styles";
 import { usePortalContainerRef } from "@uxp/ui-lib";
 import React, { useCallback, useMemo, useRef, useState } from "react";
@@ -181,16 +181,19 @@ const SubResourceRow: React.FC<{
     disabled?: boolean;
 }> = ({ resource, state, label, disabled }) => {
     const theme = useTheme();
-    const iconColor = getResourceIconColor(theme, resource, state);
-    const MainIcon = getResourceIcon(resource, state);
-    const active = isResourceActive(resource, state);
+    const forceActive = resource.type === "actionOutput"; // actionOutput has no state — always show active
+    const effectiveState = forceActive ? { value: true as const, timestamp: 0 } : state;
+    const iconColor = getResourceIconColor(theme, resource, effectiveState);
+    const MainIcon = getResourceIcon(resource, effectiveState);
+    const active = forceActive || isResourceActive(resource, state);
     const sendCommand = useSendResourceCommand(resource.id);
     const pressCommittedAtRef = useRef<number | null>(null);
 
-    const t = resource.type;
-    const isDigital = t === "digitalOutput" || t === "digitalInput" || t === "virtualDigitalInput";
+    const { type } = resource;
+    const isDigital = type === "digitalOutput" || type === "digitalInput" || type === "virtualDigitalInput";
     const isPush = isDigital && resource.inputType === "push";
-    const isAnalog = t === "analogOutput" || t === "virtualAnalogOutput";
+    const isAnalog = type === "analogOutput" || type === "virtualAnalogOutput";
+    const isActionOutput = type === "actionOutput";
 
     const handleTileClick = useCallback(() => {
         if (disabled || !isDigital || isPush) return;
@@ -233,7 +236,12 @@ const SubResourceRow: React.FC<{
                     <AnalogOutputControl resource={resource} state={state} iconColor={iconColor} disabled={disabled} />
                 </Box>
             )}
-            {!isDigital && !isAnalog && state?.value !== undefined && (
+            {isActionOutput && resource.actions && (
+                <Box sx={{ width: "100%" }}>
+                    <ActionOutputControl actions={resource.actions} sendCommand={sendCommand} iconColor={iconColor} disabled={disabled} />
+                </Box>
+            )}
+            {!isDigital && !isAnalog && !isActionOutput && state?.value !== undefined && (
                 <ReadOnlyValue resource={resource} state={state} iconColor={iconColor} />
             )}
         </>
@@ -345,6 +353,51 @@ const AnalogOutputControl: React.FC<{
                     borderRadius: 4,
                 }}
             />
+        </Box>
+    );
+};
+
+const ActionOutputControl: React.FC<{
+    actions: string[];
+    sendCommand: (command: { type: "setActionOutput"; action: string }) => Promise<void>;
+    iconColor: string;
+    disabled?: boolean;
+}> = ({ actions, sendCommand, iconColor, disabled }) => {
+    const [pending, setPending] = useState<string | null>(null);
+
+    const handleClick = useCallback(async (action: string) => {
+        setPending(action);
+        try {
+            await sendCommand({ type: "setActionOutput", action });
+        } finally {
+            setPending(null);
+        }
+    }, [sendCommand]);
+
+    return (
+        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, justifyContent: "center" }}>
+            {actions.map(action => (
+                <Button
+                    key={action}
+                    size="small"
+                    variant="outlined"
+                    disabled={disabled || pending === action}
+                    onClick={() => handleClick(action)}
+                    sx={{
+                        fontSize: "0.65rem",
+                        textTransform: "none",
+                        minWidth: 0,
+                        px: 1,
+                        py: 0.25,
+                        borderColor: iconColor,
+                        color: iconColor,
+                        "&:hover": { borderColor: iconColor, bgcolor: `${iconColor}14` },
+                        "&:active": { transform: "scale(0.93)", bgcolor: `${iconColor}22` },
+                    }}
+                >
+                    {action.replace(/_/g, " ")}
+                </Button>
+            ))}
         </Box>
     );
 };

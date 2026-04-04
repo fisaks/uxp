@@ -16,7 +16,7 @@ export type BlueprintIcon =
     // Control
     | "control:button" | "control:dimmer" | "control:valve" | "control:timer" | "control:schedule"
     | "control:toggle" | "control:speed" | "control:relay" | "control:pump" | "control:lock"
-    | "control:blind" | "control:shade" | "control:curtain" | "control:volume" | "control:mode"
+    | "control:blind" | "control:shade" | "control:curtain" | "control:volume" | "control:mode" | "control:effect"
     // Climate
     | "climate:heater" | "climate:ac" | "climate:fan" | "climate:heat-pump" | "climate:fireplace"
     // Opening
