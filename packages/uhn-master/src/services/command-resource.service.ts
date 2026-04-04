@@ -156,17 +156,14 @@ export class CommandsResourceService {
     }
 
     private handleComplex(resource: RuntimeLogicalResource) {
-        // Synthetic state pulse (activated/deactivated) + explicit tapCommand,
-        // same pattern as handleVirtualDigitalInput tap.
+        // Complex resources own their state via computeFn — do NOT inject synthetic
+        // state (true→false). It would overwrite the computed value. Only send tapCommand.
+        // onActivated/onDeactivated fire naturally from compute transitions.
         const timestamp = Date.now();
-        this.setLogicalResourceState(resource, true, timestamp);
         this.sendLogicalCommand(resource,
             { cmd: "tapCommand", payload: { resourceId: resource.id, timestamp } },
             { action: "tap" },
         );
-        setTimeout(() => {
-            this.setLogicalResourceState(resource, false, Date.now());
-        }, VIRTUAL_PRESS_DURATION_MS);
     }
 
     private handleActionInput(resource: RuntimeResource, resourceId: string, command: UhnResourceCommand) {
