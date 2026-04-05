@@ -1,7 +1,11 @@
 import AcUnitIcon from "@mui/icons-material/AcUnit";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
+import PauseIcon from "@mui/icons-material/Pause";
+import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import PowerOffIcon from "@mui/icons-material/PowerOff";
+import SatelliteAltIcon from "@mui/icons-material/SatelliteAlt";
+import SelfImprovementIcon from "@mui/icons-material/SelfImprovement";
 import CropPortraitIcon from "@mui/icons-material/CropPortrait";
 import AirIcon from "@mui/icons-material/Air";
 import BalconyIcon from "@mui/icons-material/Balcony";
@@ -226,6 +230,8 @@ export const blueprintIconMap: Record<BlueprintIcon, BlueprintIconEntry> = {
     "control:volume": icon(VolumeUpIcon, VolumeOffIcon, color("#5C6BC0", "#9FA8DA")),
     "control:mode": icon(FormatListBulletedIcon, undefined, color("#6A1B9A", "#AB47BC", "#4A148C", "#AB47BC")),
     "control:effect": icon(AutoFixHighIcon, undefined, color("#6A1B9A", "#AB47BC")),
+    "control:play": icon(PlayArrowIcon, undefined, color("#43A047", "#81C784")),
+    "control:pause": icon(PauseIcon, undefined, color("#F57C00", "#FFB74D")),
     // Climate
     "climate:heater": icon(FireplaceIcon, undefined, color("#E64A19", "#FF8A65")),
     "climate:ac": icon(AcUnitIcon, undefined, color("#29B6F6", "#81D4FA")),
@@ -281,6 +287,7 @@ export const blueprintIconMap: Record<BlueprintIcon, BlueprintIconEntry> = {
     "scene:romantic": icon(FavoriteIcon, undefined, color("#7B1FA2", "#CE93D8")),
     "scene:focus": icon(CenterFocusStrongIcon, undefined, color("#7B1FA2", "#CE93D8")),
     "scene:welcome": icon(WavingHandIcon, undefined, color("#7B1FA2", "#CE93D8")),
+    "scene:chill": icon(SelfImprovementIcon, undefined, color("#7B1FA2", "#CE93D8")),
     // Device
     "device:router": icon(RouterIcon, undefined, color("#78909C", "#B0BEC5")),
     "device:wifi": icon(WifiIcon, WifiOffIcon, color("#78909C", "#B0BEC5")),
@@ -288,6 +295,7 @@ export const blueprintIconMap: Record<BlueprintIcon, BlueprintIconEntry> = {
     "device:controller": icon(DeveloperBoardIcon, undefined, color("#78909C", "#B0BEC5")),
     "device:gateway": icon(LanIcon, undefined, color("#78909C", "#B0BEC5")),
     "device:chip": icon(MemoryIcon, undefined, color("#78909C", "#B0BEC5")),
+    "device:satellite": icon(SatelliteAltIcon, undefined, color("#78909C", "#B0BEC5")),
     "device:tv": icon(TvIcon, undefined, color("#78909C", "#B0BEC5")),
     "device:speaker": icon(SpeakerIcon, undefined, color("#78909C", "#B0BEC5")),
     "device:microphone": icon(MicIcon, MicOffIcon, color("#78909C", "#B0BEC5")),

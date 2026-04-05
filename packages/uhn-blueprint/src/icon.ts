@@ -17,6 +17,7 @@ export type BlueprintIcon =
     | "control:button" | "control:dimmer" | "control:valve" | "control:timer" | "control:schedule"
     | "control:toggle" | "control:speed" | "control:relay" | "control:pump" | "control:lock"
     | "control:blind" | "control:shade" | "control:curtain" | "control:volume" | "control:mode" | "control:effect"
+    | "control:play" | "control:pause"
     // Climate
     | "climate:heater" | "climate:ac" | "climate:fan" | "climate:heat-pump" | "climate:fireplace"
     // Opening
@@ -33,9 +34,9 @@ export type BlueprintIcon =
     // Scene
     | "scene:default" | "scene:night" | "scene:away" | "scene:eco" | "scene:dining" | "scene:tv"
     | "scene:party" | "scene:morning" | "scene:sleep"
-    | "scene:cleaning" | "scene:movie" | "scene:romantic" | "scene:focus" | "scene:welcome"
+    | "scene:cleaning" | "scene:movie" | "scene:romantic" | "scene:focus" | "scene:welcome" | "scene:chill"
     // Device
-    | "device:router" | "device:wifi" | "device:signal" | "device:controller" | "device:gateway" | "device:chip"
+    | "device:router" | "device:wifi" | "device:signal" | "device:controller" | "device:gateway" | "device:chip" | "device:satellite"
     | "device:tv" | "device:speaker" | "device:microphone"
     | "device:computer" | "device:laptop" | "device:gaming" | "device:printer"
     | "device:coffee" | "device:microwave" | "device:fridge" | "device:washer"

@@ -871,7 +871,7 @@ Secondary information shown on the tile, organized by **slots** — named positi
 | `resource` | The resource to read state from |
 | `icon` | The default icon to display (used when no `iconMap` rule matches) |
 | `tooltip` | Tooltip text, or `"value"` to show the formatted resource value + unit |
-| `showWhen` | `"active"` (only visible when resource is active) or `"always"` (default) |
+| `showWhen` | `"active"` (visible when resource is active), `"inactive"` (visible when resource is inactive), or `"always"` (default) |
 | `colorMap` | Value-driven color rules — first match wins (see below) |
 | `iconMap` | Value-driven icon override rules — first match wins (see below) |
 
@@ -1551,16 +1551,16 @@ Icons use a scoped `"category:name"` format. Each resource type, view command, s
 
 | Category | Examples |
 |----------|---------|
-| `lighting` | `bulb`, `ceiling`, `flashlight`, `indicator`, `spot` |
-| `power` | `socket`, `plug`, `switch`, `energy`, `current` |
+| `lighting` | `bulb`, `ceiling`, `flashlight`, `indicator`, `spot`, `starlight`, `mirror` |
+| `power` | `socket`, `plug`, `switch`, `off`, `energy`, `current` |
 | `sensor` | `motion`, `pir`, `temperature`, `humidity`, `light`, `dark`, `co2`, `leak`, `smoke`, `fire`, `alarm`, `pressure`, `sound`, `gas`, `voltage` |
-| `control` | `button`, `dimmer`, `valve`, `timer`, `schedule`, `toggle`, `speed`, `relay`, `pump`, `lock`, `blind`, `shade`, `curtain` |
+| `control` | `button`, `dimmer`, `valve`, `timer`, `schedule`, `toggle`, `speed`, `relay`, `pump`, `lock`, `blind`, `shade`, `curtain`, `effect`, `play`, `pause` |
 | `climate` | `heater`, `ac`, `fan`, `heat-pump`, `fireplace` |
 | `media` | `speaker`, `microphone`, `volume`, `tv` |
 | `opening` | `door`, `window`, `gate` |
 | `room` | `kitchen`, `bathroom`, `bedroom`, `living`, `hallway`, `garage`, `outdoor`, `toilet`, `sauna`, `office`, `laundry`, `terrace`, `basement`, `storage`, and more |
-| `scene` | `default`, `night`, `away`, `eco`, `dining`, `tv`, `party`, `morning`, `sleep`, `movie`, `romantic`, `focus`, `welcome` |
-| `device` | `router`, `wifi`, `signal`, `controller`, `gateway`, `chip` |
+| `scene` | `default`, `night`, `away`, `eco`, `dining`, `tv`, `party`, `morning`, `sleep`, `movie`, `romantic`, `focus`, `welcome`, `chill` |
+| `device` | `router`, `wifi`, `signal`, `controller`, `gateway`, `chip`, `satellite` |
 | `energy` | `battery`, `charging`, `solar`, `meter` |
 | `garden` | `grass`, `sprinkler`, `tree`, `water` |
 | `vehicle` | `ev`, `charger` |
