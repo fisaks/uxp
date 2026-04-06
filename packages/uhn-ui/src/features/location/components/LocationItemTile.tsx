@@ -44,7 +44,7 @@ const ResolvedTile: React.FC<ResolvedTileProps> = ({ item, viewsById, resourceBy
         const vws = viewsById[item.refId];
         if (!vws) return <StaleTile />;
         return <LocationTile kind="view" view={vws.view} active={vws.active}
-            stateDisplay={vws.stateDisplay} nameOverride={item.name} />;
+            stateDisplay={vws.stateDisplay} resolvedName={vws.resolvedName} nameOverride={item.name} />;
     }
     if (item.kind === "resource") {
         const resource = resourceById[item.refId];

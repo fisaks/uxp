@@ -36,6 +36,33 @@ export function isResourceActive(value: ResourceStateValue | undefined, activeWh
     return value !== 0;
 }
 
+/** Resolve the display name from a view's nameMap.
+ *  1. All active resources in nameMap.resources → joined names (e.g. "Porch & Terrace")
+ *  2. nameMap.active → generic active name
+ *  3. nameMap.inactive → when everything is off
+ *  Returns undefined if no nameMap or no match. */
+export function resolveNameMap(
+    nameMap: RuntimeInteractionView["nameMap"],
+    active: boolean,
+    stateMap: StateMap,
+): string | undefined {
+    if (!nameMap) return undefined;
+    if (active && nameMap.resources) {
+        const activeNames: string[] = [];
+        for (const entry of nameMap.resources) {
+            const value = stateMap[entry.resourceId]?.value;
+            if (value != null && value !== false && value !== 0) {
+                activeNames.push(entry.name);
+            }
+        }
+        if (activeNames.length > 0) {
+            const joined = activeNames.join(" & ");
+            return nameMap.active ? `${nameMap.active}: ${joined}` : joined;
+        }
+    }
+    return active ? nameMap.active : nameMap.inactive;
+}
+
 /* ------------------------------------------------------------------ */
 /* State aggregation                                                   */
 /* ------------------------------------------------------------------ */
@@ -226,6 +253,8 @@ export type ViewWithState = {
     view: RuntimeInteractionView;
     active: boolean;
     stateDisplay: DisplayItemsState;
+    /** Resolved display name from nameMap (if set). undefined = use view.name */
+    resolvedName: string | undefined;
 };
 
 /** Combines views with their computed state for rendering.
@@ -237,7 +266,8 @@ export const selectViewsWithState = createSelector(
             const view = views.byId[id];
             const active = computeViewActive(view, runtimeState.byResourceId);
             const stateDisplay = computeStateDisplay(view, runtimeState.byResourceId, resourceById);
-            return { view, active, stateDisplay };
+            const resolvedName = resolveNameMap(view.nameMap, active, runtimeState.byResourceId);
+            return { view, active, stateDisplay, resolvedName };
         });
     }
 );

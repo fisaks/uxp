@@ -251,7 +251,8 @@ export const UhnResourceCommandPayloadSchema: MessagePayloadSchema<UhnResourceCo
                     type: 'object',
                     properties: {
                         type: { const: 'longPress' },
-                        holdMs: { type: 'number', minimum: 1 }
+                        holdMs: { type: 'number', minimum: 1 },
+                        simulateHold: { type: 'boolean' }
                     },
                     required: ['type', 'holdMs'],
                     additionalProperties: false

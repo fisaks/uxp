@@ -13,7 +13,7 @@ type ViewTileGridProps = {
 export const ViewTileGrid: React.FC<ViewTileGridProps> = ({ items, highlightedTileId, highlightedTileRef }) => {
     return (
         <Grid2 container spacing={2} sx={{ width: "100%", margin: 0 }}>
-            {items.map(({ view, active, stateDisplay }) => (
+            {items.map(({ view, active, stateDisplay, resolvedName }) => (
                 <Grid2 key={view.id} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}
                     ref={highlightedTileId ? highlightedTileRef(view.id) : undefined}
                     sx={{
@@ -25,7 +25,7 @@ export const ViewTileGrid: React.FC<ViewTileGridProps> = ({ items, highlightedTi
                             },
                         }),
                     }}>
-                    <ViewTile view={view} active={active} stateDisplay={stateDisplay} />
+                    <ViewTile view={view} active={active} stateDisplay={stateDisplay} resolvedName={resolvedName} />
                 </Grid2>
             ))}
         </Grid2>

@@ -759,6 +759,36 @@ export const viewFrontDoor = view({
 
 When `nameMap` is set, the tile displays `active` or `inactive` name based on the computed active state. The `name` field is still used as the fallback and for search/command palette.
 
+#### Per-Resource Names
+
+For views that aggregate multiple sensors, `nameMap.resources` shows which specific resource(s) are active:
+
+```typescript
+export const viewOutdoorMotion = view({
+    stateFrom: [
+        { resource: pirPorch },
+        { resource: pirGarage },
+        { resource: pirDriveway },
+    ],
+    icon: "sensor:motion",
+    name: "Outdoor Motion",
+    nameMap: {
+        inactive: "No Motion",
+        active: "Motion",
+        resources: [
+            { resource: pirPorch, name: "Porch" },
+            { resource: pirGarage, name: "Garage" },
+            { resource: pirDriveway, name: "Driveway" },
+        ],
+    },
+});
+```
+
+Resolution order:
+1. All active resources in `resources` → joined with " & ", prefixed by `active` if defined (e.g. "Motion: Porch & Garage")
+2. `active` → generic active name (when no resource match)
+3. `inactive` → when everything is off
+
 ### Commands
 
 The `command` property defines the tile's click behavior:

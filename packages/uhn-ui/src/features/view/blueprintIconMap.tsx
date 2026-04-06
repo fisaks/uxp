@@ -158,6 +158,7 @@ export type BlueprintIconEntry = {
     inactive?: React.ComponentType<SvgIconProps>;
     colors?: {
         active: { light: string; dark: string };
+        inactive?: { light: string; dark: string };
         surface: { light: string; dark: string };
     };
 };
@@ -171,6 +172,12 @@ const icon = (
 const color = (activeLight: string, activeDark: string, surfaceLight?: string, surfaceDark?: string): BlueprintIconEntry["colors"] => ({
     active: { light: activeLight, dark: activeDark },
     surface: { light: surfaceLight ?? activeLight, dark: surfaceDark ?? activeDark },
+});
+
+const colorWithInactive = (activeLight: string, activeDark: string, inactiveLight: string, inactiveDark: string): BlueprintIconEntry["colors"] => ({
+    active: { light: activeLight, dark: activeDark },
+    inactive: { light: inactiveLight, dark: inactiveDark },
+    surface: { light: activeLight, dark: activeDark },
 });
 
 export const blueprintIconMap: Record<BlueprintIcon, BlueprintIconEntry> = {
@@ -195,7 +202,7 @@ export const blueprintIconMap: Record<BlueprintIcon, BlueprintIconEntry> = {
     "sensor:temperature": icon(ThermostatIcon, undefined, color("#E65100", "#FF9E40")),
     "sensor:humidity": icon(OpacityIcon, undefined, color("#1E88E5", "#42A5F5", "#1565C0", "#42A5F5")),
     "sensor:light": icon(WbSunnyIcon, DarkModeIcon, color("#F9A825", "#FFD54F", "#F57F17", "#FFD54F")),
-    "sensor:dark": icon(DarkModeIcon, WbSunnyIcon, color("#5C6BC0", "#9FA8DA", "#3F51B5", "#9FA8DA")),
+    "sensor:dark": icon(DarkModeIcon, WbSunnyIcon, colorWithInactive("#5C6BC0", "#9FA8DA", "#FFA726", "#FFD54F")),
     "sensor:co2": icon(Co2Icon, undefined, color("#689F38", "#AED581")),
     "sensor:air": icon(AirIcon, undefined, color("#78909C", "#B0BEC5")),
     "sensor:air-quality": icon(CloudIcon, undefined, color("#689F38", "#AED581")),

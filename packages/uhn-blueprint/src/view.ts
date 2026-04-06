@@ -200,8 +200,16 @@ export type ViewControl = {
 export type InteractionView = {
     id?: string;
     name?: string;
-    /** State-dependent display name. When set, overrides `name` based on active state. */
-    nameMap?: { active: string; inactive: string };
+    /** State-dependent display name. Resolution order:
+     *  1. First active resource in `resources` → its name
+     *  2. `active` → generic active name
+     *  3. `inactive` → when everything is off
+     *  4. Falls back to `name` */
+    nameMap?: {
+        active?: string;
+        inactive?: string;
+        resources?: { resource: ResourceBase<ResourceType>; name: string }[];
+    };
     description?: string;
     /** Alternative search terms (e.g. ["main light", "overhead"] for a ceiling light). */
     keywords?: string[];

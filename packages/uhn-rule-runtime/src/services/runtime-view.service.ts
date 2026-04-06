@@ -89,7 +89,11 @@ function serializeView(v: InteractionView): RuntimeInteractionView {
     return {
         id: v.id!,  // ID injected by normalizeBlueprint
         name: v.name ?? humanizeViewId(v.id!),
-        nameMap: v.nameMap,
+        nameMap: v.nameMap ? {
+            active: v.nameMap.active,
+            inactive: v.nameMap.inactive,
+            resources: v.nameMap.resources?.map(r => ({ resourceId: r.resource.id!, name: r.name })),
+        } : undefined,
         description: v.description,
         keywords: v.keywords,
         icon: v.icon,

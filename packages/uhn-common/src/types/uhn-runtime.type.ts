@@ -462,7 +462,11 @@ export type RuntimeViewControl = {
 export type RuntimeInteractionView = {
     id: string;
     name: string;
-    nameMap?: { active: string; inactive: string };
+    nameMap?: {
+        active?: string;
+        inactive?: string;
+        resources?: { resourceId: string; name: string }[];
+    };
     description?: string;
     keywords?: string[];
     icon?: BlueprintIcon;

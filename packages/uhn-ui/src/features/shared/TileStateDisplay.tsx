@@ -209,6 +209,7 @@ const HeroValue: React.FC<{ item: DisplayItemValueState; fontSize: string }> = (
                 fontWeight: 700,
                 color: "text.primary",
                 lineHeight: 1.2,
+                whiteSpace: "nowrap",
             }}
         >
             {formatted}

@@ -34,6 +34,7 @@ type LocationTileViewProps = {
     view: RuntimeInteractionView;
     active: boolean;
     stateDisplay: DisplayItemsState;
+    resolvedName?: string;
     /** Location-level name override — takes priority over nameMap and view name. */
     nameOverride?: string;
 };
@@ -69,7 +70,7 @@ export const LocationTile: React.FC<LocationTileProps> = (props) => {
 /* View variant                                                        */
 /* ------------------------------------------------------------------ */
 
-const LocationTileView: React.FC<LocationTileViewProps> = ({ view, active, stateDisplay, nameOverride }) => {
+const LocationTileView: React.FC<LocationTileViewProps> = ({ view, active, stateDisplay, resolvedName, nameOverride }) => {
     const theme = useTheme();
     const sendCommand = useSendViewCommand();
     const hasCommand = !!view.command;
@@ -80,8 +81,7 @@ const LocationTileView: React.FC<LocationTileViewProps> = ({ view, active, state
     // Icon resolution
     const { IconComponent, iconColor, surfaceColor } = useViewIconColors(view.icon, active, theme);
 
-    const displayName = (view.nameMap ? (active ? view.nameMap.active : view.nameMap.inactive) : undefined)
-        ?? nameOverride ?? view.name ?? view.id;
+    const displayName = resolvedName ?? nameOverride ?? view.name ?? view.id;
 
     const {
         analogSendCommand, analogState,
