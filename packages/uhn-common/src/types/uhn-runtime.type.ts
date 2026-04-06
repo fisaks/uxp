@@ -465,7 +465,7 @@ export type RuntimeInteractionView = {
     nameMap?: {
         active?: string;
         inactive?: string;
-        resources?: { resourceId: string; name: string }[];
+        resources?: { resourceId: string; name: string; activeWhen?: ViewActiveCondition }[];
     };
     description?: string;
     keywords?: string[];

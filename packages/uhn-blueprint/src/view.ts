@@ -208,7 +208,7 @@ export type InteractionView = {
     nameMap?: {
         active?: string;
         inactive?: string;
-        resources?: { resource: ResourceBase<ResourceType>; name: string }[];
+        resources?: { resource: ResourceBase<ResourceType>; name: string; activeWhen?: ViewActiveCondition }[];
     };
     description?: string;
     /** Alternative search terms (e.g. ["main light", "overhead"] for a ceiling light). */

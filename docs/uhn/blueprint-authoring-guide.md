@@ -784,10 +784,35 @@ export const viewOutdoorMotion = view({
 });
 ```
 
+Each resource entry can optionally include `activeWhen` to match on a specific condition instead of the default truthy check. This is useful for inverted sensors (e.g. alarm PIRs where `false` = motion):
+
+```typescript
+// Inverted alarm PIRs — false = motion detected
+export const viewAlarmMotion = view({
+    stateFrom: [
+        { resource: alarmPirStorage, activeWhen: { equals: false } },
+        { resource: alarmPirLivingRoom, activeWhen: { equals: false } },
+    ],
+    nameMap: {
+        inactive: "No Motion",
+        active: "Motion",
+        resources: [
+            { resource: alarmPirStorage, name: "Storage", activeWhen: { equals: false } },
+            { resource: alarmPirLivingRoom, name: "Living Room", activeWhen: { equals: false } },
+        ],
+    },
+    // ...
+});
+```
+
 Resolution order:
-1. All active resources in `resources` → joined with " & ", prefixed by `active` if defined (e.g. "Motion: Porch & Garage")
+1. All matching resources in `resources` → joined with " & ", prefixed by `active` if defined (e.g. "Motion: Storage & Living Room")
 2. `active` → generic active name (when no resource match)
 3. `inactive` → when everything is off
+
+Matching rules for resource entries:
+- With `activeWhen`: evaluates the condition (works regardless of view active state)
+- Without `activeWhen`: checks for truthy value (only when view is active)
 
 ### Commands
 

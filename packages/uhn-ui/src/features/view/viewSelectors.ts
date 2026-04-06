@@ -47,11 +47,14 @@ export function resolveNameMap(
     stateMap: StateMap,
 ): string | undefined {
     if (!nameMap) return undefined;
-    if (active && nameMap.resources) {
+    if (nameMap.resources) {
         const activeNames: string[] = [];
         for (const entry of nameMap.resources) {
             const value = stateMap[entry.resourceId]?.value;
-            if (value != null && value !== false && value !== 0) {
+            const isMatch = entry.activeWhen
+                ? evaluateActiveCondition(value, entry.activeWhen)
+                : active && (value != null && value !== false && value !== 0);
+            if (isMatch) {
                 activeNames.push(entry.name);
             }
         }

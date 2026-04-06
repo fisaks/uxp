@@ -92,7 +92,7 @@ function serializeView(v: InteractionView): RuntimeInteractionView {
         nameMap: v.nameMap ? {
             active: v.nameMap.active,
             inactive: v.nameMap.inactive,
-            resources: v.nameMap.resources?.map(r => ({ resourceId: r.resource.id!, name: r.name })),
+            resources: v.nameMap.resources?.map(r => ({ resourceId: r.resource.id!, name: r.name, activeWhen: r.activeWhen })),
         } : undefined,
         description: v.description,
         keywords: v.keywords,
