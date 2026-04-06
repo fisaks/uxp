@@ -31,7 +31,7 @@ export const ViewTile: React.FC<ViewTileProps> = ({ view, active, stateDisplay, 
     const hasCommand = !!view.command;
     const isAnalog = view.command?.type === "setAnalog";
 
-    const { handleClick, pending } = useViewCommand(view, active, sendCommand);
+    const { handleClick, pending, confirmText } = useViewCommand(view, active, sendCommand);
 
     const { IconComponent, iconColor, surfaceColor } = useViewIconColors(view.icon, active, theme);
 
@@ -71,8 +71,8 @@ export const ViewTile: React.FC<ViewTileProps> = ({ view, active, stateDisplay, 
         <TileContent
             icon={iconElement}
             onIconClick={hasPopover ? openControls : undefined}
-            stateDisplay={stateDisplay}
-            displayName={displayName}
+            stateDisplay={confirmText ? undefined : stateDisplay}
+            displayName={confirmText ?? displayName}
             hasAnalog={showAnalog}
             showHero={!showAnalog}
             pt={3.5}
@@ -120,10 +120,14 @@ export const ViewTile: React.FC<ViewTileProps> = ({ view, active, stateDisplay, 
                 display: "flex",
                 flexDirection: "column",
                 backgroundColor: surfaceColor,
-                transition: "background-color 0.3s, box-shadow 0.2s",
+                transition: "background-color 0.3s, box-shadow 0.2s, border-color 0.2s",
                 "&:hover": hasCommand ? {
                     boxShadow: 4,
                 } : undefined,
+                ...(confirmText && {
+                    borderColor: "warning.main",
+                    borderWidth: 2,
+                }),
             }}
         >
             {/* Info icon — top-left */}

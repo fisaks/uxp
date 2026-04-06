@@ -202,13 +202,16 @@ export class RuleEngine {
         triggerIdx: number
     ): boolean {
         if (event.event !== "changed") return false;
-        if (typeof event.prevValue !== "number" || typeof event.value !== "number") return false;
+        if (typeof event.value !== "number") return false;
 
         const key = `${ruleId}:${triggerIdx}`;
         const entry = this.hysteresisState.get(key) as (HysteresisEntry & { kind: "threshold" }) | undefined;
         const waitingFor = entry?.waitingFor ?? trigger.direction;
 
-        const prev = event.prevValue;
+        // On initial load, prevValue is undefined — treat as opposite extreme so
+        // the threshold fires if the current value already satisfies the condition.
+        const prev = typeof event.prevValue === "number" ? event.prevValue
+            : (trigger.direction === "above" ? -Infinity : Infinity);
         const next = event.value;
         const hysteresis = trigger.hysteresis ?? 0;
 

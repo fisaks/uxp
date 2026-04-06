@@ -76,7 +76,7 @@ const LocationTileView: React.FC<LocationTileViewProps> = ({ view, active, state
     const hasCommand = !!view.command;
     const isAnalog = view.command?.type === "setAnalog";
 
-    const { handleClick, pending } = useViewCommand(view, active, sendCommand);
+    const { handleClick, pending, confirmText } = useViewCommand(view, active, sendCommand);
 
     // Icon resolution
     const { IconComponent, iconColor, surfaceColor } = useViewIconColors(view.icon, active, theme);
@@ -117,8 +117,8 @@ const LocationTileView: React.FC<LocationTileViewProps> = ({ view, active, state
         <TileContent
             icon={iconElement}
             onIconClick={hasPopover ? openControls : undefined}
-            stateDisplay={stateDisplay}
-            displayName={displayName}
+            stateDisplay={confirmText ? undefined : stateDisplay}
+            displayName={confirmText ?? displayName}
             hasAnalog={showAnalog}
             showHero={!showAnalog}
         />
@@ -164,8 +164,12 @@ const LocationTileView: React.FC<LocationTileViewProps> = ({ view, active, state
                 display: "flex",
                 flexDirection: "column",
                 backgroundColor: surfaceColor,
-                transition: "background-color 0.3s, box-shadow 0.2s",
+                transition: "background-color 0.3s, box-shadow 0.2s, border-color 0.2s",
                 "&:hover": hasCommand ? { boxShadow: 4 } : undefined,
+                ...(confirmText && {
+                    borderColor: "warning.main",
+                    borderWidth: 2,
+                }),
             }}
         >
             {hasCommand ? (

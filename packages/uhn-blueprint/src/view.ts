@@ -251,6 +251,15 @@ export type InteractionView = {
      *  the view is inactive (stateFrom evaluates to false/0). Useful for group
      *  controllers where you need to adjust members even when all are off. */
     alwaysEnableControls?: boolean;
+    /** Require double-tap to execute the command. First tap shows confirmation
+     *  text on the tile, second tap within ~3s executes.
+     *  - `true` or `string` — always confirm (for stateless views)
+     *  - `{ activate, deactivate }` — confirm only in specified direction(s)
+     *  Pass `true` for default "Confirm?" text, or a string for custom text. */
+    confirm?: boolean | string | {
+        activate?: boolean | string;
+        deactivate?: boolean | string;
+    };
 };
 
 /* ------------------------------------------------------------------ */

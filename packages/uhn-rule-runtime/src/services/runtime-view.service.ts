@@ -113,6 +113,7 @@ function serializeView(v: InteractionView): RuntimeInteractionView {
             inline: c.inline,
         })),
         alwaysEnableControls: v.alwaysEnableControls,
+        confirm: v.confirm,
     };
 }
 

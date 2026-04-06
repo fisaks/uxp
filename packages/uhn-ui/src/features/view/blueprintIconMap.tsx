@@ -279,6 +279,11 @@ export const blueprintIconMap: Record<BlueprintIcon, BlueprintIconEntry> = {
     // Structure
     "structure:home": icon(CottageIcon, undefined, color("#546E7A", "#90A4AE")),
     "structure:floor": icon(LayersIcon, undefined, color("#546E7A", "#90A4AE")),
+    // Mode
+    "mode:away": icon(LockIcon, CottageIcon, colorWithInactive("#42A5F5", "#64B5F6", "#66BB6A", "#81C784")),
+    "mode:home": icon(CottageIcon, LockIcon, colorWithInactive("#66BB6A", "#81C784", "#42A5F5", "#64B5F6")),
+    "mode:poweron": icon(PowerIcon, PowerOffIcon, colorWithInactive("#66BB6A", "#81C784", "#EF5350", "#EF9A9A")),
+    "mode:poweroff": icon(PowerOffIcon, PowerIcon, colorWithInactive("#EF5350", "#EF9A9A", "#66BB6A", "#81C784")),
     // Scene
     "scene:default": icon(TheaterComedyIcon, undefined, color("#7B1FA2", "#CE93D8")),
     "scene:night": icon(DarkModeIcon, undefined, color("#7B1FA2", "#CE93D8")),

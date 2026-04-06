@@ -37,6 +37,13 @@ export class RuntimeStateService extends EventEmitter<RuntimeStateServiceEventMa
     replaceAll(fullState: Map<string, ResourceState>) {
         this.state = fullState;
         this.emit("stateReset");
+
+        // Emit stateChanged for every resource so state-based triggers
+        // (onChanged, onActivated, onAbove, etc.) fire on initial load.
+        // prev is undefined since this is the first state the runtime sees.
+        for (const [resourceId, next] of fullState) {
+            this.emit("stateChanged", { resourceId, prev: undefined, next });
+        }
     }
 
     get(resourceId: string): ResourceState | undefined {

@@ -478,6 +478,10 @@ export type RuntimeInteractionView = {
     stateDisplay?: RuntimeViewStateDisplay;
     controls?: RuntimeViewControl[];
     alwaysEnableControls?: boolean;
+    confirm?: boolean | string | {
+        activate?: boolean | string;
+        deactivate?: boolean | string;
+    };
 };
 
 export type RuntimeActionSideEffect = {

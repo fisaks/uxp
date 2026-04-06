@@ -797,7 +797,7 @@ The `command` property defines the tile's click behavior:
 |------|-------------|---------|
 | `"tap"` | Send tap event | Button press simulation |
 | `"toggle"` | Flip digital state | Light on/off |
-| `"longPress"` | Send long-press with duration | `{ type: "longPress", holdMs: 1000 }` |
+| `"longPress"` | Send long-press with duration | `{ type: "longPress", holdMs: 1000 }`. Add `simulateHold: true` for IHC buttons where the controller detects long press from held state. |
 | `"setAnalog"` | Inline slider or select control | `{ type: "setAnalog", min: 0, max: 100, step: 5, unit: "%" }` |
 | `"clearTimer"` | Stop a running timer | Timer reset |
 | `"action"` | Fire an action event | `{ type: "action", action: "toggle" }` |
@@ -818,6 +818,12 @@ viewCommand({ resource: kitchenPanelButton, type: "tap" })
 
 // Long press — resource must be digitalInput
 viewCommand({ resource: kitchenPanelButton, type: "longPress", holdMs: 1500 })
+
+// Long press with simulateHold — for IHC buttons where the controller's internal
+// program detects long press from held state. Sends HandleSignal(true), waits
+// holdMs + 100ms buffer, then HandleSignal(false). Without simulateHold, a
+// longPressCommand is forwarded directly to the rule runtime instead.
+viewCommand({ resource: carportButton, type: "longPress", holdMs: 2100, simulateHold: true })
 
 // Set analog — resource must be analogOutput or virtualAnalogOutput
 viewCommand({ resource: kitchenDimmer, type: "setAnalog", min: 0, max: 100, step: 5, unit: "%" })
@@ -966,6 +972,55 @@ stateDisplay: {
 ```
 
 Omit `command` for a display-only tile (no interaction, just shows state).
+
+### Command Confirmation
+
+Views with potentially destructive commands (e.g. "turn off all lights") can require a double-tap to execute. The first tap shows confirmation text on the tile with a warning border. A second tap within 3 seconds executes the command. The confirmation resets after timeout or if the view's active state changes.
+
+```typescript
+// Always confirm — stateless views (no stateFrom)
+export const viewGoodnight = view({
+    stateFrom: [],
+    command: viewCommand({ resource: goodnightButton, type: "tap" }),
+    confirm: "Turn off all lights?",  // or true for default "Confirm?"
+    // ...
+});
+
+// Directional — only confirm when deactivating
+export const viewChristmasLights = view({
+    stateFrom: [{ resource: christmasRelay }],
+    command: viewCommand({ resource: christmasRelay, type: "toggle" }),
+    confirm: { deactivate: "Turn off christmas lights?" },
+    // ...
+});
+
+// Directional — only confirm when activating
+export const viewPartyMode = view({
+    stateFrom: [{ resource: partyRelay }],
+    command: viewCommand({ resource: partyRelay, type: "toggle" }),
+    confirm: { activate: "Enable party mode?" },
+    // ...
+});
+
+// Both directions with different text
+export const viewAlarm = view({
+    stateFrom: [{ resource: alarmRelay }],
+    command: viewCommand({ resource: alarmRelay, type: "toggle" }),
+    confirm: {
+        activate: "Arm alarm system?",
+        deactivate: "Disarm alarm system?",
+    },
+    // ...
+});
+```
+
+| Value | Behavior |
+|-------|----------|
+| `true` | Always confirm, shows "Confirm?" |
+| `"custom text"` | Always confirm, shows custom text |
+| `{ activate: true \| string }` | Confirm only off → on |
+| `{ deactivate: true \| string }` | Confirm only on → off |
+| `{ activate, deactivate }` | Confirm both directions |
 
 ### Controls
 
@@ -1596,6 +1651,16 @@ Icons use a scoped `"category:name"` format. Each resource type, view command, s
 | `vehicle` | `ev`, `charger` |
 | `status` | `dashboard`, `device`, `warning`, `error`, `ok`, `notification`, `favorite` |
 | `structure` | `home`, `floor` |
+| `mode` | `away`, `home` |
+
+### Mode Icons
+
+Mode icons show different icons and colors for active vs inactive state — useful for views where both states are meaningful (not just on/off):
+
+| Icon | Active | Inactive |
+|------|--------|----------|
+| `mode:away` | Lock (blue) | Cottage (green) |
+| `mode:home` | Cottage (green) | Lock (blue) |
 
 ### Default Icon Assignment
 

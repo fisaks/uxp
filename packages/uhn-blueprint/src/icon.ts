@@ -31,6 +31,9 @@ export type BlueprintIcon =
     | "room:office" | "room:pool" | "room:staircase" | "room:basement" | "room:storage"
     // Structure
     | "structure:home" | "structure:floor"
+    // Mode
+    | "mode:away" | "mode:home"
+    | "mode:poweron" | "mode:poweroff"
     // Scene
     | "scene:default" | "scene:night" | "scene:away" | "scene:eco" | "scene:dining" | "scene:tv"
     | "scene:party" | "scene:morning" | "scene:sleep"
