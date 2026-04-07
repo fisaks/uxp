@@ -52,7 +52,7 @@ export const ViewTile: React.FC<ViewTileProps> = ({ view, active, stateDisplay, 
     const hasPopover = (view.controls?.length ?? 0) > 0 && !singleInlineOnly;
 
     const [controlsAnchor, setControlsAnchor] = useState<HTMLElement | null>(null);
-    const tileRef = useRef<HTMLButtonElement>(null);
+    const tileRef = useRef<HTMLElement>(null);
 
     const openControls = useCallback((e: React.MouseEvent) => {
         e.stopPropagation();
@@ -176,7 +176,7 @@ export const ViewTile: React.FC<ViewTileProps> = ({ view, active, stateDisplay, 
             <TileDescriptionPopover description={view.description} />
 
             {hasCommand ? (
-                <CardActionArea ref={tileRef} onClick={handleClick} disabled={pending} sx={{
+                <CardActionArea ref={tileRef as React.RefObject<HTMLButtonElement>} onClick={handleClick} disabled={pending} sx={{
                     flex: 1,
                     display: "flex",
                     flexDirection: "column",
@@ -190,7 +190,7 @@ export const ViewTile: React.FC<ViewTileProps> = ({ view, active, stateDisplay, 
                     {analogSection}
                 </CardActionArea>
             ) : (
-                <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
+                <Box ref={tileRef} sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
                     {content}
                     {analogSection}
                 </Box>

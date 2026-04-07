@@ -98,7 +98,7 @@ const LocationTileView: React.FC<LocationTileViewProps> = ({ view, active, state
     const hasPopover = (view.controls?.length ?? 0) > 0 && !singleInlineOnly;
 
     const [controlsAnchor, setControlsAnchor] = useState<HTMLElement | null>(null);
-    const tileRef = useRef<HTMLButtonElement>(null);
+    const tileRef = useRef<HTMLElement>(null);
 
     const openControls = useCallback((e: React.MouseEvent) => {
         e.stopPropagation();
@@ -173,7 +173,7 @@ const LocationTileView: React.FC<LocationTileViewProps> = ({ view, active, state
             }}
         >
             {hasCommand ? (
-                <CardActionArea ref={tileRef} onClick={handleClick} disabled={pending} sx={{
+                <CardActionArea ref={tileRef as React.RefObject<HTMLButtonElement>} onClick={handleClick} disabled={pending} sx={{
                     flex: 1,
                     display: "flex",
                     flexDirection: "column",
@@ -187,7 +187,7 @@ const LocationTileView: React.FC<LocationTileViewProps> = ({ view, active, state
                     {analogSection}
                 </CardActionArea>
             ) : (
-                <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
+                <Box ref={tileRef} sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
                     {tileContent}
                     {analogSection}
                 </Box>
