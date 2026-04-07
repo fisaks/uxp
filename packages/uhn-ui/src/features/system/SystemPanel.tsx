@@ -1,6 +1,8 @@
 import { Box, Divider } from "@mui/material";
 import { UhnSystemCommand, UhnSystemSnapshot, UhnSystemStatus } from "@uhn/common";
+import { selectCurrentUser } from "@uxp/ui-lib";
 import React, { useRef, useState } from "react";
+import { useSelector } from "react-redux";
 import { useUHNSystemWebSocket } from "../../app/UHNSystemBrowserWebSocketManager";
 import { ExecutionStatusPopover } from "./components/ExecutionStatusPopover";
 import { useExecutionPopover } from "./hooks/useExecutionPopover";
@@ -26,6 +28,8 @@ export const SystemPanel: React.FC<SystemPanelProps> = ({
     connectionError,
 }) => {
     const { sendMessage } = useUHNSystemWebSocket();
+    const user = useSelector(selectCurrentUser);
+    const isAdmin = user?.roles.includes("admin");
     const popover = useExecutionPopover(uhnStatus);
     const infoAnchorRef = useRef<HTMLButtonElement>(null);
     const busy = uhnStatus?.state === "running";
@@ -68,61 +72,70 @@ export const SystemPanel: React.FC<SystemPanelProps> = ({
                 onScopeChange={setScope}
             />
 
-            <Divider sx={{ my: 1 }} />
+            {isAdmin && (
+                <>
+                    <Divider sx={{ my: 1 }} />
 
-            <DebugSection
-                runMode={runtimeConfig?.runMode}
-                debugPort={runtimeConfig?.debugPort}
-                debugHost={runtimeConfig?.debugHost}
-                showPortInput={scope !== "all"}
-                isEdge={isEdgeScope}
-                busy={busy || edgeOffline}
-                setRunModeRunning={
-                    uhnStatus?.state === "running" &&
-                    uhnStatus.command === "setRunMode"
-                }
-                onToggle={e =>
-                    sendSystemCommand(e, {
-                        command: "setRunMode",
-                        target,
-                        payload: {
-                            runtimeMode:
-                                runtimeConfig?.runMode === "debug"
-                                    ? "normal"
-                                    : "debug"
+                    <DebugSection
+                        runMode={runtimeConfig?.runMode}
+                        debugPort={runtimeConfig?.debugPort}
+                        debugHost={runtimeConfig?.debugHost}
+                        showPortInput={scope !== "all"}
+                        isEdge={isEdgeScope}
+                        busy={busy || edgeOffline}
+                        setRunModeRunning={
+                            uhnStatus?.state === "running" &&
+                            uhnStatus.command === "setRunMode"
                         }
-                    })
-                }
-                onPortChange={(port, e) =>
-                    sendSystemCommand(e, {
-                        command: "setDebugPort",
-                        target: target!,
-                        payload: { debugPort: port }
-                    })
-                }
-            />
+                        onToggle={e =>
+                            sendSystemCommand(e, {
+                                command: "setRunMode",
+                                target,
+                                payload: {
+                                    runtimeMode:
+                                        runtimeConfig?.runMode === "debug"
+                                            ? "normal"
+                                            : "debug"
+                                }
+                            })
+                        }
+                        onPortChange={(port, e) =>
+                            sendSystemCommand(e, {
+                                command: "setDebugPort",
+                                target: target!,
+                                payload: { debugPort: port }
+                            })
+                        }
+                    />
+                </>
+            )}
 
             <Divider sx={{ my: 2 }} />
 
             <RuntimeSection
                 runtimeConfig={runtimeConfig}
                 busy={busy || edgeOffline}
+                isAdmin={isAdmin}
                 onStart={e => sendSystemCommand(e, { command: "startRuntime", target, payload: {} })}
                 onStop={e => sendSystemCommand(e, { command: "stopRuntime", target, payload: {} })}
                 onRestart={e => sendSystemCommand(e, { command: "restartRuntime", target, payload: {} })}
             />
 
-            <Divider sx={{ my: 2 }} />
+            {isAdmin && (
+                <>
+                    <Divider sx={{ my: 2 }} />
 
-            <LoggingSection
-                logLevel={runtimeConfig?.logLevel}
-                busy={busy || edgeOffline}
-                onSetLevel={(level, e) =>
-                    sendSystemCommand(e, { command: "setLogLevel", target, payload: { logLevel: level } })
-                }
-            />
+                    <LoggingSection
+                        logLevel={runtimeConfig?.logLevel}
+                        busy={busy || edgeOffline}
+                        onSetLevel={(level, e) =>
+                            sendSystemCommand(e, { command: "setLogLevel", target, payload: { logLevel: level } })
+                        }
+                    />
+                </>
+            )}
 
-            {!isEdgeScope && (
+            {isAdmin && !isEdgeScope && (
                 <>
                     <Divider sx={{ my: 2 }} />
 

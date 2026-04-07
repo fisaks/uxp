@@ -27,7 +27,7 @@ import { useSelector } from "react-redux";
 import { useFetchFavoritesQuery } from "../favorite/favorite.api";
 import { getBlueprintIcon } from "../view/blueprintIconMap";
 import { selectCommandPaletteItems } from "./commandPaletteSelectors";
-import { navigationItems, quickActionItems } from "./commandPaletteNavigationItems";
+import { adminNavigationItems, navigationItems, quickActionItems } from "./commandPaletteNavigationItems";
 import { useCommandPaletteFilter } from "./useCommandPaletteFilter";
 import { useCommandPaletteActions } from "./useCommandPaletteActions";
 import { AnalogSliderPopup } from "./AnalogSliderPopup";
@@ -104,10 +104,10 @@ export const CommandPaletteAutocomplete: React.FC<CommandPaletteAutocompleteProp
     // Favorites for empty query
     const { data: favorites } = useFetchFavoritesQuery();
 
-    // Combine all items with navigation (admin only) and quick actions (all users)
+    // Combine all items with navigation and quick actions
     const allItems = useMemo(() => {
-        const items = [...allPaletteItems, ...quickActionItems];
-        if (isAdmin) items.push(...navigationItems);
+        const items = [...allPaletteItems, ...quickActionItems, ...navigationItems];
+        if (isAdmin) items.push(...adminNavigationItems);
         return items;
     }, [allPaletteItems, isAdmin]);
 

@@ -9,6 +9,9 @@ import MovieIcon from "@mui/icons-material/Movie";
 import ViewQuiltIcon from "@mui/icons-material/ViewQuilt";
 import SettingsIcon from "@mui/icons-material/Settings";
 import { Box, Card, CardActionArea, CardContent, Grid2, Typography } from "@mui/material";
+import { selectCurrentUser } from "@uxp/ui-lib";
+import { useMemo } from "react";
+import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 
 type TechnicalCardItem = {
@@ -16,6 +19,7 @@ type TechnicalCardItem = {
     description: string;
     icon: React.ReactNode;
     to: string;
+    adminOnly?: boolean;
 };
 
 const technicalItems: TechnicalCardItem[] = [
@@ -24,12 +28,14 @@ const technicalItems: TechnicalCardItem[] = [
         description: "View and manage uploaded blueprints",
         icon: <DescriptionIcon sx={{ fontSize: 40 }} />,
         to: "/technical/blueprints",
+        adminOnly: true,
     },
     {
         title: "Upload Blueprint",
         description: "Upload a new blueprint .zip file",
         icon: <CloudUploadIcon sx={{ fontSize: 40 }} />,
         to: "/technical/blueprints/upload",
+        adminOnly: true,
     },
     {
         title: "Icons",
@@ -42,6 +48,7 @@ const technicalItems: TechnicalCardItem[] = [
         description: "Create and manage API access tokens",
         icon: <KeyIcon sx={{ fontSize: 40 }} />,
         to: "/technical/api-tokens",
+        adminOnly: true,
     },
     {
         title: "Resources",
@@ -72,10 +79,19 @@ const technicalItems: TechnicalCardItem[] = [
         description: "MQTT/WebSocket message trace viewer",
         icon: <HubIcon sx={{ fontSize: 40 }} />,
         to: "/technical/topic-trace",
+        adminOnly: true,
     },
 ];
 
 export const TechnicalPage: React.FC = () => {
+    const user = useSelector(selectCurrentUser);
+    const isAdmin = user?.roles.includes("admin");
+
+    const visibleItems = useMemo(
+        () => technicalItems.filter((item) => !item.adminOnly || isAdmin),
+        [isAdmin],
+    );
+
     return (
         <Box sx={{ maxWidth: 1200, mx: "auto" }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -84,7 +100,7 @@ export const TechnicalPage: React.FC = () => {
             </Box>
             <Box mt={2}>
                 <Grid2 container spacing={2} sx={{ width: "100%", margin: 0 }}>
-                    {technicalItems.map((item) => (
+                    {visibleItems.map((item) => (
                         <Grid2 key={item.to} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
                             <Card
                                 variant="outlined"

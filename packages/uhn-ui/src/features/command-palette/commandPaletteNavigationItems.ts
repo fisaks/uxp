@@ -1,6 +1,6 @@
 import { PaletteItem } from "./commandPalette.types";
 
-/** Admin-only navigation and system items. */
+/** Navigation items available to all users. */
 export const navigationItems: PaletteItem[] = [
     {
         id: "nav:home",
@@ -45,6 +45,24 @@ export const navigationItems: PaletteItem[] = [
         action: { type: "navigate", to: "/technical/rules" },
     },
     {
+        id: "nav:icon-preview",
+        label: "Go to Icon Preview page",
+        group: "Navigation",
+        searchText: "navigation navigate locate open page go to icon preview icons",
+        action: { type: "navigate", to: "/technical/blueprints/icons" },
+    },
+    {
+        id: "nav:system-panel",
+        label: "Open System Panel",
+        group: "Navigation",
+        searchText: "navigation navigate locate open page system panel settings runtime debug health status connection",
+        action: { type: "open-system-panel" },
+    },
+];
+
+/** Admin-only navigation items. */
+export const adminNavigationItems: PaletteItem[] = [
+    {
         id: "nav:blueprints",
         label: "Go to Blueprints page",
         group: "Navigation",
@@ -59,13 +77,6 @@ export const navigationItems: PaletteItem[] = [
         action: { type: "navigate", to: "/technical/blueprints/upload" },
     },
     {
-        id: "nav:icon-preview",
-        label: "Go to Icon Preview page",
-        group: "Navigation",
-        searchText: "navigation navigate locate open page go to icon preview icons",
-        action: { type: "navigate", to: "/technical/blueprints/icons" },
-    },
-    {
         id: "nav:api-tokens",
         label: "Go to API Tokens page",
         group: "Navigation",
@@ -78,13 +89,6 @@ export const navigationItems: PaletteItem[] = [
         group: "Navigation",
         searchText: "navigation navigate locate open page go to topic trace mqtt",
         action: { type: "navigate", to: "/technical/topic-trace" },
-    },
-    {
-        id: "nav:system-panel",
-        label: "Open System Panel",
-        group: "Navigation",
-        searchText: "navigation navigate locate open page system panel settings runtime debug health status connection",
-        action: { type: "open-system-panel" },
     },
 ];
 

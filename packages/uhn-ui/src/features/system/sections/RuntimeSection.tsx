@@ -5,6 +5,7 @@ import React from "react";
 type RuntimeSectionProps = {
     runtimeConfig?: UhnRuntimeConfig;
     busy: boolean;
+    isAdmin?: boolean;
     onStart: (e: React.MouseEvent) => void;
     onStop: (e: React.MouseEvent) => void;
     onRestart: (e: React.MouseEvent) => void;
@@ -29,6 +30,7 @@ const statusLabel = (status?: string): string => {
 export const RuntimeSection: React.FC<RuntimeSectionProps> = ({
     runtimeConfig,
     busy,
+    isAdmin,
     onStart,
     onStop,
     onRestart,
@@ -61,9 +63,11 @@ export const RuntimeSection: React.FC<RuntimeSectionProps> = ({
                             <Button variant="contained" onClick={onRestart} disabled={busy}>
                                 Restart runtime
                             </Button>
-                            <Button variant="outlined" onClick={onStop} disabled={busy}>
-                                Stop runtime
-                            </Button>
+                            {isAdmin && (
+                                <Button variant="outlined" onClick={onStop} disabled={busy}>
+                                    Stop runtime
+                                </Button>
+                            )}
                         </>
                     ) : (
                         <Button variant="contained" onClick={onStart} disabled={busy}>
