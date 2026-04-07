@@ -49,7 +49,7 @@ export type BaseOutputKind = "relay" | "socket" | "light" | "indicator";
 export type InputKind = BaseInputKind | (string & {});
 export type OutputKind = BaseOutputKind | (string & {});
 
-export type BaseAnalogInputKind = "temperature" | "humidity" | "power" | "current" | "voltage" | "battery" | "energy";
+export type BaseAnalogInputKind = "temperature" | "humidity" | "power" | "current" | "voltage" | "battery" | "energy" | "linkquality";
 export type BaseAnalogOutputKind = "dimmer" | "valve" | "pwm" | "colorTemp";
 export type AnalogInputKind = BaseAnalogInputKind | (string & {});
 export type AnalogOutputKind = BaseAnalogOutputKind | (string & {});

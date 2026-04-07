@@ -39,7 +39,8 @@ export type BlueprintIcon =
     | "scene:party" | "scene:morning" | "scene:sleep"
     | "scene:cleaning" | "scene:movie" | "scene:romantic" | "scene:focus" | "scene:welcome" | "scene:chill"
     // Device
-    | "device:router" | "device:wifi" | "device:signal" | "device:controller" | "device:gateway" | "device:chip" | "device:satellite"
+    | "device:router" | "device:wifi" | "device:signal" | "device:signal-strength" | "device:signal-low" | "device:signal-medium"
+    | "device:controller" | "device:gateway" | "device:chip" | "device:satellite"
     | "device:tv" | "device:speaker" | "device:microphone"
     | "device:computer" | "device:laptop" | "device:gaming" | "device:printer"
     | "device:coffee" | "device:microwave" | "device:fridge" | "device:washer"

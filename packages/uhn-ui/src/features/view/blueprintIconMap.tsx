@@ -145,6 +145,9 @@ import WbSunnyIcon from "@mui/icons-material/WbSunny";
 import WbTwilightIcon from "@mui/icons-material/WbTwilight";
 import WcIcon from "@mui/icons-material/Wc";
 import WeekendIcon from "@mui/icons-material/Weekend";
+import SignalCellularAltIcon from "@mui/icons-material/SignalCellularAlt";
+import SignalCellularAlt1BarIcon from "@mui/icons-material/SignalCellularAlt1Bar";
+import SignalCellularAlt2BarIcon from "@mui/icons-material/SignalCellularAlt2Bar";
 import WifiIcon from "@mui/icons-material/Wifi";
 import WifiOffIcon from "@mui/icons-material/WifiOff";
 import WindowIcon from "@mui/icons-material/Window";
@@ -304,6 +307,9 @@ export const blueprintIconMap: Record<BlueprintIcon, BlueprintIconEntry> = {
     "device:router": icon(RouterIcon, undefined, color("#78909C", "#B0BEC5")),
     "device:wifi": icon(WifiIcon, WifiOffIcon, color("#78909C", "#B0BEC5")),
     "device:signal": icon(WifiIcon, undefined, color("#78909C", "#B0BEC5")),
+    "device:signal-strength": icon(SignalCellularAltIcon, undefined, color("#78909C", "#B0BEC5")),
+    "device:signal-low": icon(SignalCellularAlt1BarIcon, undefined, color("#78909C", "#B0BEC5")),
+    "device:signal-medium": icon(SignalCellularAlt2BarIcon, undefined, color("#78909C", "#B0BEC5")),
     "device:controller": icon(DeveloperBoardIcon, undefined, color("#78909C", "#B0BEC5")),
     "device:gateway": icon(LanIcon, undefined, color("#78909C", "#B0BEC5")),
     "device:chip": icon(MemoryIcon, undefined, color("#78909C", "#B0BEC5")),

@@ -26,6 +26,7 @@ export const analogInputKindDefaultIcon: Record<BaseAnalogInputKind, BlueprintIc
     voltage: "sensor:voltage",
     battery: "energy:battery",
     energy: "energy:meter",
+    linkquality: "device:signal-strength",
 };
 
 export const analogOutputKindDefaultIcon: Record<BaseAnalogOutputKind, BlueprintIcon> = {

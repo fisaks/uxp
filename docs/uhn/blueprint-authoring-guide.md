@@ -931,7 +931,7 @@ Secondary information shown on the tile, organized by **slots** — named positi
 |-------|-------------|
 | `resource` | The resource to read state from |
 | `icon` | The default icon to display (used when no `iconMap` rule matches) |
-| `tooltip` | Tooltip text, or `"value"` to show the formatted resource value + unit |
+| `tooltip` | Tooltip text, or `"value"` to show the formatted resource value + unit (e.g. `unit: "/ 255"` renders as `"116 / 255"` — useful for showing the range) |
 | `showWhen` | `"active"` (visible when resource is active), `"inactive"` (visible when resource is inactive), or `"always"` (default) |
 | `colorMap` | Value-driven color rules — first match wins (see below) |
 | `iconMap` | Value-driven icon override rules — first match wins (see below) |
@@ -978,6 +978,27 @@ stateDisplay: {
             iconMap: [
                 { below: 20, icon: "energy:battery-low" },
                 { below: 50, icon: "energy:battery-half" },
+            ],
+        },
+    ],
+}
+
+// Zigbee signal strength (linkquality 0–255) with color-coded icon
+stateDisplay: {
+    topRight: [
+        {
+            resource: linkquality,
+            icon: "device:signal-strength",
+            tooltip: "value",
+            showWhen: "always",
+            colorMap: [
+                { below: 50, color: "error" },
+                { below: 120, color: "warning" },
+                { above: 119, color: "success" },
+            ],
+            iconMap: [
+                { below: 50, icon: "device:signal-low" },
+                { below: 120, icon: "device:signal-medium" },
             ],
         },
     ],
@@ -1670,7 +1691,7 @@ Icons use a scoped `"category:name"` format. Each resource type, view command, s
 | `opening` | `door`, `window`, `gate` |
 | `room` | `kitchen`, `bathroom`, `bedroom`, `living`, `hallway`, `garage`, `outdoor`, `toilet`, `sauna`, `office`, `laundry`, `terrace`, `basement`, `storage`, and more |
 | `scene` | `default`, `night`, `away`, `eco`, `dining`, `tv`, `party`, `morning`, `sleep`, `movie`, `romantic`, `focus`, `welcome`, `chill` |
-| `device` | `router`, `wifi`, `signal`, `controller`, `gateway`, `chip`, `satellite` |
+| `device` | `router`, `wifi`, `signal`, `signal-strength`, `signal-low`, `signal-medium`, `controller`, `gateway`, `chip`, `satellite` |
 | `energy` | `battery`, `charging`, `solar`, `meter` |
 | `garden` | `grass`, `sprinkler`, `tree`, `water` |
 | `vehicle` | `ev`, `charger` |
@@ -1716,6 +1737,10 @@ Icons are auto-assigned based on resource kind/type. You only need `icon` when o
 | `humidity` | `sensor:humidity` |
 | `power` | `power:energy` |
 | `current` | `power:current` |
+| `voltage` | `sensor:voltage` |
+| `battery` | `energy:battery` |
+| `energy` | `energy:meter` |
+| `linkquality` | `device:signal-strength` |
 
 **Analog outputs** (`analogOutputKind`):
 
