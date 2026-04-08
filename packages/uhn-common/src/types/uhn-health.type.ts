@@ -6,7 +6,8 @@ export type UhnHealthId =
     | "uhn:resources"
     | `uhn:edge:${string}:status`
     | `uhn:edge:${string}:runtime`
-    | `uhn:edge:${string}:blueprint`;
+    | `uhn:edge:${string}:blueprint`
+    | `uhn:edge:${string}:device:${string}`;
 
 export type UhnHealthItem = HealthItem<UhnHealthId>;
 export type UhnHealthSnapshot = HealthSnapshot<"uhn", UhnHealthId>;

@@ -1249,6 +1249,8 @@ availability: { from: someState, poweredBy: someSwitch, graceSeconds: 30 }
 
 The `from` resource can be any resource on the target device — the `pin` is irrelevant since availability is a device-level concept. The platform extracts the `edge` and `device` fields from the resource to match against MQTT availability topics (`uhn/{edge}/device/{device}/availability`).
 
+**Health notifications:** Infrastructure adapters (IHC controllers, Z2M bridges) also trigger UHN health alerts in the header when they go offline. This is automatic — the edge publishes a retained `adapters` topic listing configured adapters, and the master cross-references availability events against this list. Individual Zigbee device failures only show on view tiles, not as health alerts (since mains switching would make them noisy).
+
 ### Side Effects
 
 `sideEffects` on a view fires additional action events alongside the primary command. This exists for **Zigbee binding coexistence**: when a physical button controls a device directly via Zigbee binding AND also reports to Z2M for rules, the UI view must replicate both paths — the primary command controls the device (same as the binding does physically), and side effects fire the same action events so the rules also execute from the UI.

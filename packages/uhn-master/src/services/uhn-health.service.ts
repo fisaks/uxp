@@ -4,6 +4,7 @@ import { parseMqttTopic } from "../util/mqtt-topic.util";
 import { blueprintResourceService } from "./blueprint-resource.service";
 import { blueprintRuntimeSupervisorService } from "./blueprint-runtime-supervisor.service";
 import { blueprintService } from "./blueprint.service";
+import { deviceAvailabilityService } from "./device-availability.service";
 import { edgeBlueprintSyncService } from "./edge-blueprint-sync.service";
 import { edgeIdentityService } from "./edge-identity.service";
 import { subscriptionService } from "./subscription.service";
@@ -217,6 +218,32 @@ class UhnHealthService extends EventEmitter<UhnHealthEventMap> {
         });
         blueprintService.on("blueprintCompileFailed", () => {
             this.setSuppressByPrefix("uhn:edge:", ":blueprint");
+        });
+
+        // ── Device availability (infrastructure adapters only) ──
+        deviceAvailabilityService.on("availabilityChanged", (entry) => {
+            if (!deviceAvailabilityService.isAdapter(entry.edge, entry.device)) return;
+
+            const deviceId: UhnHealthId = `uhn:edge:${entry.edge}:device:${entry.device}`;
+            if (entry.available) {
+                this.remove(deviceId);
+            } else {
+                this.upsert({
+                    id: deviceId,
+                    message: `${entry.device} on edge '${entry.edge}' is offline`,
+                    severity: "error",
+                    action: { label: "Open System Panel", target: { type: "hash", identifier: "system-panel", subPath: "uhn" } },
+                });
+            }
+        });
+
+        // Suppress device health items when the edge itself is offline
+        edgeIdentityService.on("edgeStatusChanged", (edgeId, status) => {
+            if (status === "offline") {
+                this.setSuppressByPrefix(`uhn:edge:${edgeId}:device:`, "");
+            } else {
+                this.clearSuppressByPrefix(`uhn:edge:${edgeId}:device:`, "");
+            }
         });
     }
 

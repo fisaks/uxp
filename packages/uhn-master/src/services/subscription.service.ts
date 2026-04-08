@@ -19,6 +19,7 @@ type SubscriptionEventMap = {
     edgeBlueprintActivated: [topic: string, payload: unknown];
     edgeSystemConfig: [topic: string, payload: unknown];
     deviceAvailability: [topic: string, payload: string | null];
+    edgeAdapters: [topic: string, payload: unknown];
 };
 
 function tryParseJson(payload: unknown): unknown {
@@ -139,6 +140,11 @@ class SubscriptionService extends EventEmitter<SubscriptionEventMap> {
             if (topic === "uhn/master/blueprint/activated") return;
             const parsed = tryParseJson(payload);
             this.emit("edgeBlueprintActivated", topic, parsed);
+        });
+
+        mqttService.subscribe("uhn/+/adapters", (topic, payload) => {
+            const parsed = tryParseJson(payload);
+            this.emit("edgeAdapters", topic, parsed);
         });
 
         mqttService.subscribe("uhn/+/device/+/availability", (topic, payload) => {

@@ -4,12 +4,30 @@ import { EventEmitter } from "events";
 import { parseMqttTopic } from "../util/mqtt-topic.util";
 import { subscriptionService } from "./subscription.service";
 
+type AdapterInfo = { name: string; type: string };
+
+type AdaptersPayload = { adapters: AdapterInfo[] };
+
+function isAdapterInfo(obj: unknown): obj is AdapterInfo {
+    return typeof obj === "object" && obj !== null
+        && typeof (obj as AdapterInfo).name === "string"
+        && typeof (obj as AdapterInfo).type === "string";
+}
+
+function isAdaptersPayload(obj: unknown): obj is AdaptersPayload {
+    return typeof obj === "object" && obj !== null
+        && Array.isArray((obj as AdaptersPayload).adapters)
+        && (obj as AdaptersPayload).adapters.every(isAdapterInfo);
+}
+
 type DeviceAvailabilityEventMap = {
     availabilityChanged: [entry: DeviceAvailabilityEntry];
 };
 
 class DeviceAvailabilityServiceImpl extends EventEmitter<DeviceAvailabilityEventMap> {
     private cache = new Map<string, DeviceAvailabilityEntry>();
+    // Known infrastructure adapters per edge: "edge:adapterName" → type
+    private adapters = new Map<string, string>();
 
     constructor() {
         super();
@@ -20,6 +38,31 @@ class DeviceAvailabilityServiceImpl extends EventEmitter<DeviceAvailabilityEvent
         subscriptionService.on("deviceAvailability", (topic, payload) => {
             this.handleAvailabilityMessage(topic, payload);
         });
+
+        subscriptionService.on("edgeAdapters", (topic, payload) => {
+            this.handleAdaptersMessage(topic, payload);
+        });
+    }
+
+    private handleAdaptersMessage(topic: string, payload: unknown) {
+        const parsed = parseMqttTopic(topic);
+        if (!parsed) return;
+
+        const { edge } = parsed;
+        if (!isAdaptersPayload(payload)) return;
+
+        // Clear old adapters for this edge and replace
+        for (const key of this.adapters.keys()) {
+            if (key.startsWith(`${edge}:`)) {
+                this.adapters.delete(key);
+            }
+        }
+
+        for (const adapter of payload.adapters) {
+            this.adapters.set(`${edge}:${adapter.name}`, adapter.type);
+        }
+
+        AppLogger.info({ message: `[DeviceAvailability] Adapters updated for edge '${edge}'`, object: { count: payload.adapters.length, adapters: payload.adapters.map(a => a.name) } });
     }
 
     private handleAvailabilityMessage(topic: string, payload: string | null) {
@@ -58,6 +101,11 @@ class DeviceAvailabilityServiceImpl extends EventEmitter<DeviceAvailabilityEvent
 
     getDeviceAvailability(edge: string, device: string): boolean | undefined {
         return this.cache.get(`${edge}:${device}`)?.available;
+    }
+
+    /** Returns true if the device is a known infrastructure adapter (IHC controller, Z2M bridge, etc.) */
+    isAdapter(edge: string, device: string): boolean {
+        return this.adapters.has(`${edge}:${device}`);
     }
 }
 
