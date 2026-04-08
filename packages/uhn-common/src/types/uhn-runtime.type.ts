@@ -459,6 +459,12 @@ export type RuntimeViewControl = {
     inline?: boolean;
 };
 
+export type RuntimeViewAvailability = {
+    fromResourceId: string;
+    poweredByResourceId?: string;
+    graceSeconds: number;
+};
+
 export type RuntimeInteractionView = {
     id: string;
     name: string;
@@ -478,6 +484,7 @@ export type RuntimeInteractionView = {
     stateDisplay?: RuntimeViewStateDisplay;
     controls?: RuntimeViewControl[];
     alwaysEnableControls?: boolean;
+    availability?: RuntimeViewAvailability;
     confirm?: boolean | string | {
         activate?: boolean | string;
         deactivate?: boolean | string;

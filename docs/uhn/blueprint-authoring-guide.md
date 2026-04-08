@@ -692,6 +692,26 @@ export const locationKitchen = location({
 
 Views (InteractionViews) are **not resources**. They don't own state, don't participate in rules, and don't contain automation logic. They act as a **virtual finger interacting with the real system** — tapping a view tile simulates a button press, and the rule system reacts exactly as if the physical device had been used.
 
+### View Property Reference
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `stateFrom` | `ViewStateSource[]` | Resources that drive the tile's active/inactive state |
+| `stateAggregation` | `"any"` \| `"all"` \| `"sum"` \| `"average"` \| `"max"` \| `"min"` | How to combine multiple stateFrom sources. Default: `"any"` |
+| `activeWhen` | `{ above, below, equals }` | When numeric aggregation result is considered "active" |
+| `command` | `ViewCommand` | Interaction on tap — `tap`, `toggle`, `longPress`, `setAnalog`, `clearTimer`, `action`. Omit for display-only tiles |
+| `sideEffects` | `ActionSideEffect[]` | Additional action events fired alongside the primary command |
+| `stateDisplay` | `ViewStateDisplay` | Slot-based icons and values on the tile (`topLeft`, `topRight`, `left`, `right`, `hero`, `badge`) |
+| `controls` | `ViewControl[]` | Popup with additional resource controls (brightness, color temp, etc.) |
+| `alwaysEnableControls` | `boolean` | Keep controls enabled even when the view is inactive |
+| `availability` | `{ from, poweredBy?, graceSeconds? }` | Device offline warning indicator. See [Device Availability](#device-availability) |
+| `confirm` | `boolean` \| `string` \| `{ activate?, deactivate? }` | Double-tap confirmation before executing command |
+| `nameMap` | `{ active?, inactive?, resources? }` | State-dependent display name |
+| `name` | `string` | Display name (falls back to humanized view ID) |
+| `description` | `string` | Shown in description popover on tile |
+| `keywords` | `string[]` | Alternative search terms for command palette / voice |
+| `icon` | `BlueprintIcon` | Tile icon (falls back to stateFrom resource icon or command type default) |
+
 **Why views exist:** Consider a typical setup with a PIR sensor, a timer, a push button, and a light. The PIR starts the timer and turns on the light. The light turns off when the timer reaches zero. The push button toggles the light and mutes the PIR for a while. All of this is just rules — it doesn't need to be reflected in the UI structure. But in the UI you want **one tile** that captures this whole setup: tapping it controls the light through the push button, the tile's active/inactive state comes from the light, and you also want to see the timer counting down and an indicator that flashes when the PIR activates. A view brings these multiple resources together into a single coherent UI tile without duplicating any automation logic.
 
 ```typescript
@@ -1019,6 +1039,80 @@ stateDisplay: {
 
 Omit `command` for a display-only tile (no interaction, just shows state).
 
+**Helper functions for common display icons:** The linkquality and mains-off icon patterns are verbose and repeated across many views. Extract them into helper functions in a shared utils file:
+
+```typescript
+// utils/display-icons.ts
+import { DisplayIcon } from "@uhn/blueprint";
+
+export function linkQualityIcon(resource: DisplayIcon["resource"]): DisplayIcon {
+    return {
+        resource,
+        icon: "device:signal-strength",
+        tooltip: "value",
+        showWhen: "always",
+        colorMap: [
+            { below: 50, color: "error" },
+            { below: 120, color: "warning" },
+            { above: 119, color: "success" },
+        ],
+        iconMap: [
+            { below: 50, icon: "device:signal-low" },
+            { below: 120, icon: "device:signal-medium" },
+        ],
+    };
+}
+
+export function mainsOffIcon(resource: DisplayIcon["resource"]): DisplayIcon {
+    return {
+        resource,
+        icon: "power:off",
+        showWhen: "inactive",
+        colorMap: [{ equals: false, color: "error" }],
+    };
+}
+```
+
+**Complete example — Zigbee light with IHC mains control:**
+
+This view combines most view features: state aggregation with a mains switch, toggle command, inline brightness slider with effect control in the popup, signal strength and mains-off display icons, device availability with grace period, and always-enabled controls.
+
+```typescript
+import { view, viewCommand } from "@uhn/blueprint";
+import { linkQualityIcon, mainsOffIcon } from "../utils/display-icons";
+
+export const viewWorkTableLight = view({
+    // Active only when both the Zigbee light AND the IHC mains switch are on
+    stateFrom: [{ resource: workTableLightState }, { resource: workTableMainSwitch }],
+    stateAggregation: "all",
+
+    // Toggle the Zigbee light directly
+    command: viewCommand({ resource: workTableLightState, type: "toggle" }),
+
+    // Show mains-off warning (topLeft) and signal strength (topRight)
+    stateDisplay: {
+        topLeft: [mainsOffIcon(workTableMainSwitch)],
+        topRight: [linkQualityIcon(workTableLinkquality)],
+    },
+
+    // Brightness slider inline on tile, effect picker in popup
+    controls: [
+        { resource: workTableBrightness, label: "Brightness", inline: true },
+        { resource: workTableEffect, label: "Effect" },
+    ],
+
+    // Yellow warning when mains is on but Zigbee device is offline
+    availability: { from: workTableLightState, poweredBy: workTableMainSwitch },
+
+    // Keep brightness slider usable even when light is off
+    alwaysEnableControls: true,
+
+    icon: "lighting:bulb",
+    name: "Work Table Light",
+    keywords: ["desk", "led strip", "lighting"],
+});
+```
+
 ### Command Confirmation
 
 Views with potentially destructive commands (e.g. "turn off all lights") can require a double-tap to execute. The first tap shows confirmation text on the tile with a warning border. A second tap within 3 seconds executes the command. The confirmation resets after timeout or if the view's active state changes.
@@ -1123,6 +1217,37 @@ export const viewSpotGroup = view({
     alwaysEnableControls: true,
 });
 ```
+
+### Device Availability
+
+`availability` adds an offline warning indicator to a view tile when the backing device (Zigbee or IHC controller) is unavailable. Opt-in per view — only views with `availability` show the indicator.
+
+The `from` property references any physical resource on the device to monitor. The platform resolves the device's `edge:device` pair from the resource at runtime.
+
+```typescript
+// Battery sensor — red warning when device is offline (nothing works)
+availability: { from: outdoorTemperatureTemperature }
+
+// Mains-powered Zigbee light — yellow warning when mains is on but device offline
+// (IHC mains control still works, Zigbee features like brightness are unavailable)
+availability: { from: laundryLightWorkTableState, poweredBy: laundryRoomLightMainSwitchWorkTable }
+
+// Custom grace period (default: 10 seconds after poweredBy turns on)
+availability: { from: someState, poweredBy: someSwitch, graceSeconds: 30 }
+```
+
+**Behavior by scenario:**
+
+| Scenario | Indicator |
+|----------|-----------|
+| No `availability` on view | None |
+| Device online | None |
+| No `poweredBy`, device offline | Red warning — device is dead |
+| `poweredBy` is off | None — offline is expected |
+| `poweredBy` turns on, within grace period | None — device is booting |
+| `poweredBy` on, grace expired, device offline | Yellow warning — mains works, device features unavailable |
+
+The `from` resource can be any resource on the target device — the `pin` is irrelevant since availability is a device-level concept. The platform extracts the `edge` and `device` fields from the resource to match against MQTT availability topics (`uhn/{edge}/device/{device}/availability`).
 
 ### Side Effects
 

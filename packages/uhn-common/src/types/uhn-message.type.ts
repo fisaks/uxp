@@ -15,7 +15,8 @@ export type UhnSubscriptionPattern =
     | 'view/*'
     | 'location/*'
     | 'scene/*'
-    | 'rule/*';
+    | 'rule/*'
+    | 'availability/*';
 
 
 export type UhnSubscribePayload = {
@@ -137,6 +138,26 @@ export type UhnResourcePayloadResponseMap = {
     "uhn:scenes": UhnScenesResponse
     "uhn:rules": UhnRulesResponse
 }
+export type DeviceAvailabilityEntry = {
+    edge: string;
+    device: string;
+    available: boolean;
+    updatedAt: number;
+};
+
+export type UhnAvailabilitySnapshotResponse = {
+    entries: DeviceAvailabilityEntry[];
+};
+
+export type UhnAvailabilityChangeResponse = {
+    entry: DeviceAvailabilityEntry;
+};
+
+export type UhnAvailabilityPayloadResponseMap = {
+    "uhn:availability:snapshot": UhnAvailabilitySnapshotResponse;
+    "uhn:availability:change": UhnAvailabilityChangeResponse;
+};
+
 export type UhnHealthPayloadResponseMap = {
     "uhn:health:snapshot": UhnHealthSnapshot
 }
@@ -150,7 +171,7 @@ export const UhnSubscribePayloadSchema: MessagePayloadSchema<UhnSubscribePayload
         patterns: {
             type: 'array', items: {
                 type: 'string',
-                pattern: '^((state|resource)/.*|health/\\*|system/\\*|runtime/\\*|view/\\*|location/\\*|scene/\\*|rule/\\*)$',
+                pattern: '^((state|resource)/.*|health/\\*|system/\\*|runtime/\\*|view/\\*|location/\\*|scene/\\*|rule/\\*|availability/\\*)$',
                 minLength: 1,
                 maxLength: 256
             },

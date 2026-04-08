@@ -8,6 +8,7 @@ import { blueprintSceneService } from "./blueprint-scene.service";
 import { blueprintViewService } from "./blueprint-view.service";
 import { runtimeOverviewService } from "./runtime-overview.service";
 import { stateRuntimeService } from "./state-runtime.service";
+import { deviceAvailabilityService } from "./device-availability.service";
 import { uhnHealthService } from "./uhn-health.service";
 import { uhnSystemSnapshotService } from "./uhn-system-snapshot.service";
 
@@ -38,6 +39,7 @@ export class UhnMessageService {
         const shouldSendLocations = patterns.some(p => p === 'location/*');
         const shouldSendScenes = patterns.some(p => p === 'scene/*');
         const shouldSendRules = patterns.some(p => p === 'rule/*');
+        const shouldSendAvailability = patterns.some(p => p === 'availability/*');
 
         if (shouldSendResources) {
             await this.sendResourcesMessage(socket, patterns);
@@ -66,6 +68,9 @@ export class UhnMessageService {
         }
         if (shouldSendRules) {
             this.sendRulesMessage(socket);
+        }
+        if (shouldSendAvailability) {
+            this.sendAvailabilityMessage(socket);
         }
 
     }
@@ -191,6 +196,15 @@ export class UhnMessageService {
             action: "uhn:rules",
             success: true,
             payload: { rules },
+        });
+    }
+
+    sendAvailabilityMessage(socket: WebSocket) {
+        const entries = deviceAvailabilityService.getSnapshot();
+        this.wsManager.sendMessage(socket, {
+            action: "uhn:availability:snapshot",
+            success: true,
+            payload: { entries },
         });
     }
 

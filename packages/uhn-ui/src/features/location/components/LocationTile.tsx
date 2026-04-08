@@ -23,6 +23,8 @@ import { TuneOverlayIcon } from "../../shared/TuneOverlayIcon";
 import { TileContent } from "../../shared/TileContent";
 import { useSceneIconColors } from "../../shared/useSceneIconColors";
 import { useSceneCommand } from "../../shared/useSceneCommand";
+import { AvailabilityIndicator } from "../../device-availability/AvailabilityIndicator";
+import { useViewAvailability } from "../../device-availability/useViewAvailability";
 import { TechnicalLinkButton } from "./TechnicalLinkButton";
 
 /* ------------------------------------------------------------------ */
@@ -92,6 +94,7 @@ const LocationTileView: React.FC<LocationTileViewProps> = ({ view, active, state
     const showAnalog = isAnalog || hasInlineAnalog;
 
     const commandSlots = useViewCommandSlots(view.command, active, sendCommand, IconComponent, iconColor);
+    const availabilityStatus = useViewAvailability(view.availability);
 
     // Controls popover: show when there are controls beyond a single inline-only one
     const singleInlineOnly = view.controls?.length === 1 && view.controls[0].inline;
@@ -198,6 +201,7 @@ const LocationTileView: React.FC<LocationTileViewProps> = ({ view, active, state
             ) : (
                 <TechnicalLinkButton to={`/technical/views/${view.id}`} />
             )}
+            <AvailabilityIndicator status={availabilityStatus} />
 
             {/* Controls popover */}
             {hasPopover && view.controls && (

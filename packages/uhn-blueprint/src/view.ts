@@ -251,6 +251,17 @@ export type InteractionView = {
      *  the view is inactive (stateFrom evaluates to false/0). Useful for group
      *  controllers where you need to adjust members even when all are off. */
     alwaysEnableControls?: boolean;
+    /** Device availability monitoring. Shows an offline warning indicator on the tile
+     *  when the device behind `from` is unavailable.
+     *  - Without `poweredBy`: red warning (device is offline, nothing works)
+     *  - With `poweredBy`: yellow warning only when mains is on but device is offline
+     *    (mains control still works, device-specific features unavailable)
+     *  - `graceSeconds`: delay after poweredBy turns on before showing warning (default 10) */
+    availability?: {
+        from: ResourceBase<ResourceType>;
+        poweredBy?: ResourceBase<ResourceType>;
+        graceSeconds?: number;
+    };
     /** Require double-tap to execute the command. First tap shows confirmation
      *  text on the tile, second tap within ~3s executes.
      *  - `true` or `string` — always confirm (for stateless views)

@@ -1,4 +1,4 @@
-import { getMatchingResourcesForPattern, getMatchingStateForPattern, RuntimeOverviewPayload, TopicMessagePayload, UHNAppActionPayloadRequestMap, UHNAppActionPayloadResponseMap, UHNAppResponseMessage, UhnFullStateResponse, UhnHealthSnapshot, UhnLocationsResponse, UhnResourcesResponse, UhnRulesResponse, UhnScenesResponse, UhnStateResponse, UhnSubscriptionPattern, UhnSystemSnapshot, UhnSystemStatus, UhnViewsResponse } from "@uhn/common";
+import { DeviceAvailabilityEntry, getMatchingResourcesForPattern, getMatchingStateForPattern, RuntimeOverviewPayload, TopicMessagePayload, UHNAppActionPayloadRequestMap, UHNAppActionPayloadResponseMap, UHNAppResponseMessage, UhnAvailabilitySnapshotResponse, UhnFullStateResponse, UhnHealthSnapshot, UhnLocationsResponse, UhnResourcesResponse, UhnRulesResponse, UhnScenesResponse, UhnStateResponse, UhnSubscriptionPattern, UhnSystemSnapshot, UhnSystemStatus, UhnViewsResponse } from "@uhn/common";
 import { ServerWebSocketManager, topicMatches } from "@uxp/bff-common";
 
 import { WebSocket } from "ws";
@@ -180,6 +180,22 @@ export class UHNAppServerWebSocketManager extends ServerWebSocketManager<UHNAppA
             action: "uhn:rules",
             success: true,
             payload: payload,
+        });
+    }
+
+    public broadcastAvailabilitySnapshotMessage(payload: UhnAvailabilitySnapshotResponse) {
+        this.broadcastToTopic("uhn:availability/*", {
+            action: "uhn:availability:snapshot",
+            success: true,
+            payload: payload,
+        });
+    }
+
+    public broadcastAvailabilityChangeMessage(entry: DeviceAvailabilityEntry) {
+        this.broadcastToTopic("uhn:availability/*", {
+            action: "uhn:availability:change",
+            success: true,
+            payload: { entry },
         });
     }
 

@@ -10,6 +10,7 @@ import { initMuteEventDispatcher } from "./dispatchers/mute-event.dispatcher";
 import { initRuleActionDispatcher } from "./dispatchers/rule-action.dispatcher";
 import { initStateRuntimeDispatcher } from "./dispatchers/state-runtime.dispatcher";
 import { initTopicTraceDispatcher } from "./dispatchers/topic-trace.dispatcher";
+import { initDeviceAvailabilityDispatcher } from "./dispatchers/device-availability.dispatcher";
 import { initUhnHealthDispatcher } from "./dispatchers/uhn-health.dispatcher";
 import { blueprintService } from "./services/blueprint.service";
 const { AppDataSource } = require("./db/typeorm.config");
@@ -40,6 +41,7 @@ import "./services/edge-identity.service";
 import "./services/runtime-overview.service";
 import { systemConfigService } from "./services/system-config.service";
 import "./services/uhn-health.service";
+import "./services/device-availability.service";
 import "./services/system-command-edge.service";
 
 export async function startUhnRuntime() {
@@ -80,6 +82,7 @@ const setupWebDispatchers = () => {
     initMuteEventDispatcher();
     initActionEventDispatcher();
     initUhnHealthDispatcher();
+    initDeviceAvailabilityDispatcher();
     initUhnSystemDispatcher();
     initRuntimeOverviewDispatcher();
     initRuleDispatcher();

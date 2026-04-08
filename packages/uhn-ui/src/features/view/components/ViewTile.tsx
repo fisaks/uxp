@@ -15,6 +15,8 @@ import { DisplayItemsState } from "../../shared/tile.types";
 import { useViewAnalogState } from "../../shared/useViewAnalogState";
 import { useViewCommand } from "../../shared/useViewCommand";
 import { useViewIconColors } from "../../shared/useViewIconColors";
+import { AvailabilityIndicator } from "../../device-availability/AvailabilityIndicator";
+import { useViewAvailability } from "../../device-availability/useViewAvailability";
 import { useSendViewCommand } from "../hooks/useSendViewCommand";
 import { useViewCommandSlots } from "./ViewCommandControl";
 
@@ -46,6 +48,7 @@ export const ViewTile: React.FC<ViewTileProps> = ({ view, active, stateDisplay, 
     const showAnalog = isAnalog || hasInlineAnalog;
 
     const commandSlots = useViewCommandSlots(view.command, active, sendCommand, IconComponent, iconColor);
+    const availabilityStatus = useViewAvailability(view.availability);
 
     // Controls popover: show when there are controls beyond a single inline-only one
     const singleInlineOnly = view.controls?.length === 1 && view.controls[0].inline;
@@ -197,6 +200,7 @@ export const ViewTile: React.FC<ViewTileProps> = ({ view, active, stateDisplay, 
             )}
 
             <TilePendingIndicator pending={pending} />
+            <AvailabilityIndicator status={availabilityStatus} />
 
             {/* Controls popover */}
             {hasPopover && view.controls && (

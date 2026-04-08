@@ -79,7 +79,7 @@ export const TileContent: React.FC<TileContentProps> = ({ icon, onIconClick, sta
                 justifyContent: "center",
                 width: "100%",
                 mb: 0.5,
-                ...(hasTopRow && { mt: 1.5 }),
+                ...(hasTopRow && !hasAnalog && { mt: 1.5 }),
             }}>
                 <FlankingColumn items={left} align="right" />
                 <Box

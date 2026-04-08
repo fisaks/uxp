@@ -113,6 +113,11 @@ function serializeView(v: InteractionView): RuntimeInteractionView {
             inline: c.inline,
         })),
         alwaysEnableControls: v.alwaysEnableControls,
+        availability: v.availability ? {
+            fromResourceId: v.availability.from.id!,
+            poweredByResourceId: v.availability.poweredBy?.id,
+            graceSeconds: v.availability.graceSeconds ?? 10,
+        } : undefined,
         confirm: v.confirm,
     };
 }
