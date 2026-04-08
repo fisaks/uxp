@@ -10,6 +10,7 @@ import { selectCurrentUser } from "../user/userSelectors";
 import { selectMySetting } from "./mySettingSelector";
 import { updateMySettings } from "./mySettingThunk";
 import Snowfall from "../theme/Snowfall";
+import GodzillaStrike from "../theme/GodzillaStrike";
 
 type SettingsDataProps = {
     staleData: UserSettingsPayload;
@@ -33,6 +34,7 @@ const settingsData = [
                     <FormControlLabel value="tatooine" control={<Radio />} label="Tatooine" />
                     <FormControlLabel value="sunset" control={<Radio />} label="Sunset" />
                     <FormControlLabel value="windsOfWinter" control={<Radio />} label="Winds Of Winter" />
+                    <FormControlLabel value="godzilla" control={<Radio />} label="Godzilla" />
 
                 </RadioGroup>
             );
@@ -48,6 +50,7 @@ const MySettingsPage: React.FC = () => {
     const [staleData, setStaleData] = useState<UserSettingsPayload>({ theme: mySetting?.theme });
     const dispatch = useAppDispatch();
     const snow = useMemo(() => <Snowfall />, []);
+    const godzilla = useMemo(() => <GodzillaStrike />, []);
     const update = () => {
         dispatch(updateMySettings(staleData));
     };
@@ -85,6 +88,7 @@ const MySettingsPage: React.FC = () => {
                 Update Settings
             </LoadingButton>
             {mySetting?.theme === "windsOfWinter" && snow}
+            {mySetting?.theme === "godzilla" && godzilla}
         </CenteredBox>
     );
 };

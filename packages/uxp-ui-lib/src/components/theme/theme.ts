@@ -570,6 +570,105 @@ export const windsOfWinterTheme = createTheme(
 );
 
 
+// Godzilla theme
+export const godzillaTheme = createTheme(
+  deepmerge(baseTheme, {
+    palette: {
+      mode: "dark",
+      primary: { main: "#39ff14" }, // Radioactive green
+      secondary: { main: "#76ff57" }, // Lighter radioactive green
+      background: {
+        default: "#0a0e0a", // Deep dark with green tint
+        paper: "#141e14",
+      },
+      text: {
+        primary: "#d0f0c0", // Pale green
+        secondary: "#8aab7a", // Muted sage green
+      },
+      action: {
+        disabled: "rgba(208,240,192,0.35)",
+        disabledBackground: "rgba(57,255,20,0.08)",
+        hover: "rgba(57,255,20,0.12)",
+        selected: "rgba(57,255,20,0.20)",
+      },
+      error: { main: "#ff3d00" }, // Destruction orange-red
+      warning: { main: "#ffab00" }, // Fire glow
+      info: { main: "#7ecf7e" }, // Muted green info
+      success: {
+        main: "#39ff14",
+        light: "#76ff57",
+        dark: "#1bb000",
+      },
+    },
+    typography: {
+      h1: { color: "#39ff14", fontWeight: 700 },
+      h2: { color: "#76ff57", fontWeight: 600 },
+      body1: { color: "#d0f0c0" },
+      body2: { color: "#8aab7a" },
+    },
+    components: {
+      MuiAppBar: {
+        styleOverrides: {
+          root: {
+            background: "linear-gradient(to right, #0a0e0a, #1a2e1a)",
+            color: "#39ff14",
+            borderBottom: "2px solid #39ff1480",
+          },
+        },
+      },
+      MuiDrawer: {
+        styleOverrides: {
+          paper: {
+            backgroundColor: "#0f170f",
+            color: "#d0f0c0",
+          },
+        },
+      },
+      MuiListItem: {
+        styleOverrides: {
+          root: {
+            "&:hover": {
+              backgroundColor: "#39ff1420",
+              color: "#39ff14",
+            },
+            "&.Mui-focusVisible": {
+              backgroundColor: "#39ff1440",
+              color: "#76ff57",
+            },
+          },
+        },
+      },
+      MuiButton: {
+        styleOverrides: {
+          root: {
+            textTransform: "uppercase",
+            borderRadius: 4,
+            fontWeight: 600,
+            letterSpacing: "0.05em",
+          },
+        },
+      },
+      MuiIconButton: {
+        styleOverrides: {
+          root: ({ theme }: { theme: Theme }) => ({
+            color: theme.palette.text.primary,
+            "&.Mui-disabled": {
+              color: theme.palette.action.disabled,
+            },
+          }),
+        },
+      },
+      MuiPaper: {
+        styleOverrides: {
+          root: {
+            backgroundColor: "#141e14",
+          },
+        },
+      },
+    },
+  })
+);
+
 // Default theme
 export const defaultTheme = createTheme(
   deepmerge(baseTheme, {

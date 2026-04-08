@@ -1,0 +1,200 @@
+/* GodzillaStrike.module.css */
+
+/*
+ * Full atomic breath sequence in one animation (~12s total):
+ *   0–12%   → beam grows from bottom to top (height 0 → full screen)
+ *   12–83%  → holds, breathing — beam fills viewport
+ *   83–100% → bottom edge sweeps upward, beam exits off the top
+ */
+@keyframes beamBreath {
+    /* ── Extend phase: bottom stays at 0, height grows ── */
+    0% {
+        bottom: 0;
+        height: 0;
+        opacity: 0;
+    }
+    2% {
+        opacity: 0.85;
+    }
+    12% {
+        bottom: 0;
+        height: calc(100vh + 40px);
+        opacity: 1;
+    }
+    /* ── Hold phase: full beam, living ── */
+    80% {
+        bottom: 0;
+        height: calc(100vh + 40px);
+        opacity: 0.9;
+    }
+    /* ── Exit phase: bottom rises, beam slides off the top ── */
+    83% {
+        opacity: 0.9;
+    }
+    98% {
+        opacity: 0.5;
+    }
+    100% {
+        bottom: calc(100vh + 40px);
+        height: calc(100vh + 40px);
+        opacity: 0;
+    }
+}
+
+/* Gentle sway while breathing */
+@keyframes beamWobble {
+    0%, 100% { transform: translateX(-50%); }
+    25% { transform: translateX(calc(-50% - 4px)); }
+    50% { transform: translateX(calc(-50% + 3px)); }
+    75% { transform: translateX(calc(-50% - 2px)); }
+}
+
+/* Subtle intensity pulse */
+@keyframes beamPulse {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(1.15); }
+}
+
+/* ── Particle: energy orbs floating upward along the beam ── */
+@keyframes particleRise {
+    0% {
+        bottom: 0;
+        opacity: 0;
+        transform: translateX(0) scale(0.5);
+    }
+    8% {
+        opacity: 1;
+        transform: translateX(calc(var(--drift) * 0.3)) scale(1);
+    }
+    50% {
+        transform: translateX(var(--drift)) scale(1.2);
+    }
+    90% {
+        opacity: 0.8;
+        transform: translateX(calc(var(--drift) * 0.5)) scale(0.8);
+    }
+    100% {
+        bottom: 100vh;
+        opacity: 0;
+        transform: translateX(0) scale(0.3);
+    }
+}
+
+/* ── Flash: ambient glow pulsing from the bottom ── */
+@keyframes flashPulse {
+    0%, 100% { opacity: 0.15; }
+    30% { opacity: 0.3; }
+    50% { opacity: 0.1; }
+    70% { opacity: 0.35; }
+}
+
+/* ── Charging: glow builds up during the roar ── */
+@keyframes chargeUp {
+    0% {
+        opacity: 0;
+        height: 10vh;
+    }
+    40% {
+        opacity: 0.2;
+        height: 25vh;
+    }
+    80% {
+        opacity: 0.4;
+        height: 35vh;
+    }
+    100% {
+        opacity: 0.5;
+        height: 40vh;
+    }
+}
+
+/* ── Glow fades out when breath ends ── */
+@keyframes flashFadeOut {
+    0% { opacity: 0.35; }
+    100% { opacity: 0; }
+}
+
+/* ── Single atomic breath beam ── */
+.beam {
+    position: fixed;
+    left: 50%;
+    bottom: 0;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 0;
+    z-index: 10000;
+    pointer-events: none;
+    user-select: none;
+    border-radius: 50px 50px 0 0;
+    background: radial-gradient(
+        ellipse at center,
+        rgba(255, 255, 255, 0.8) 0%,
+        rgba(100, 180, 255, 0.7) 15%,
+        rgba(50, 140, 255, 0.5) 30%,
+        rgba(30, 200, 220, 0.3) 50%,
+        rgba(30, 200, 220, 0.1) 70%,
+        transparent 100%
+    );
+    animation:
+        beamBreath 12s ease-in-out forwards,
+        beamWobble 2.5s ease-in-out infinite,
+        beamPulse 3s ease-in-out infinite;
+    filter:
+        blur(3px)
+        drop-shadow(0 0 20px rgba(80, 160, 255, 0.9))
+        drop-shadow(0 0 50px rgba(50, 140, 255, 0.6))
+        drop-shadow(0 0 100px rgba(30, 200, 220, 0.3));
+}
+
+/* ── Particle element ── */
+.particle {
+    --drift: 0px;
+    position: fixed;
+    bottom: 0;
+    z-index: 10001;
+    pointer-events: none;
+    user-select: none;
+    border-radius: 50%;
+    background: radial-gradient(
+        circle,
+        rgba(255, 255, 255, 0.9) 0%,
+        rgba(100, 180, 255, 0.7) 40%,
+        rgba(50, 200, 220, 0.4) 70%,
+        transparent 100%
+    );
+    animation: particleRise linear infinite;
+}
+
+.particleGlow {
+    filter:
+        drop-shadow(0 0 6px rgba(80, 160, 255, 0.9))
+        drop-shadow(0 0 14px rgba(50, 200, 220, 0.6));
+}
+
+/* ── Flash: bottom ambient glow ── */
+.flash {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100vw;
+    height: 40vh;
+    background: radial-gradient(
+        ellipse 80% 60% at center bottom,
+        rgba(50, 140, 255, 0.25) 0%,
+        rgba(30, 200, 220, 0.15) 30%,
+        transparent 100%
+    );
+    z-index: 9998;
+    pointer-events: none;
+    animation: flashPulse 4s ease-in-out infinite;
+}
+
+/* During roar: slow charge-up glow replaces the pulse */
+.flashCharging {
+    animation: chargeUp 2.5s ease-in forwards;
+}
+
+/* After breath ends: glow fades away */
+.flashEnding {
+    animation: flashFadeOut 2s ease-out forwards;
+}

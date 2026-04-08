@@ -1,4 +1,4 @@
-import { defaultTheme, draculaTheme, getUxpWindow, rebelAllianceTheme, starWarsDarkSideTheme, sunsetTheme, tatooineTheme, windsOfWinterTheme } from "@uxp/ui-lib";
+import { defaultTheme, draculaTheme, getUxpWindow, godzillaTheme, rebelAllianceTheme, starWarsDarkSideTheme, sunsetTheme, tatooineTheme, windsOfWinterTheme } from "@uxp/ui-lib";
 
 import React, { useEffect } from "react";
 import { useSelector } from "react-redux";
@@ -17,6 +17,7 @@ export const useUxpTheme = () => {
             if (t === "sunset") return sunsetTheme;
             if (t === "tatooine") return tatooineTheme;
             if (t === "windsOfWinter") return windsOfWinterTheme;
+            if (t === "godzilla") return godzillaTheme;
             return defaultTheme
         },
         [mySettings?.theme]
