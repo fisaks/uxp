@@ -1,0 +1,209 @@
+/* DarkSideEffect.module.css */
+
+/* ══════════════════════════════════════════
+   LIGHTSABER — extends from bottom center
+   ══════════════════════════════════════════ */
+@keyframes saberExtend {
+    0% { height: 0; opacity: 0; }
+    5% { opacity: 1; }
+    20% { height: 70vh; }
+    75% { height: 70vh; opacity: 1; }
+    90% { opacity: 0.5; }
+    100% { height: 0; opacity: 0; }
+}
+
+@keyframes saberPulse {
+    0%, 100% { filter: drop-shadow(0 0 15px rgba(255, 0, 0, 0.8)) drop-shadow(0 0 40px rgba(255, 0, 0, 0.4)); }
+    50% { filter: drop-shadow(0 0 25px rgba(255, 0, 0, 1)) drop-shadow(0 0 60px rgba(255, 0, 0, 0.6)); }
+}
+
+.saber {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 8px;
+    height: 0;
+    z-index: 10000;
+    pointer-events: none;
+    border-radius: 4px 4px 0 0;
+    background: linear-gradient(to top, rgba(200, 0, 0, 0.6), rgba(255, 50, 50, 0.9), rgba(255, 255, 255, 0.95));
+    animation:
+        saberExtend 6s ease-in-out forwards,
+        saberPulse 1s ease-in-out infinite;
+}
+
+/* Saber hilt at bottom */
+.saberHilt {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 16px;
+    height: 40px;
+    z-index: 10001;
+    pointer-events: none;
+    border-radius: 3px;
+    background: linear-gradient(to bottom, #444, #222, #444);
+    border: 1px solid #555;
+}
+
+/* ══════════════════════════════════════════
+   VADER HELMET — silhouette from darkness
+   ══════════════════════════════════════════ */
+@keyframes vaderAppear {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+    15% { opacity: 0.7; transform: translate(-50%, -50%) scale(1); }
+    70% { opacity: 0.6; }
+    90% { opacity: 0.2; }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(1.05); }
+}
+
+@keyframes eyeGlow {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+}
+
+.vaderHelmet {
+    position: fixed;
+    left: 50%;
+    top: 45%;
+    transform: translate(-50%, -50%);
+    z-index: 10000;
+    pointer-events: none;
+    user-select: none;
+    animation: vaderAppear 8s ease-in-out forwards;
+    filter: drop-shadow(0 0 30px rgba(255, 0, 0, 0.3));
+}
+
+.vaderEye {
+    animation: eyeGlow 2s ease-in-out infinite;
+}
+
+/* ══════════════════════════════════════════
+   DARTH MAUL — red/black face, yellow eyes
+   ══════════════════════════════════════════ */
+@keyframes maulAppear {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.7); }
+    10% { opacity: 0.8; transform: translate(-50%, -50%) scale(1); }
+    65% { opacity: 0.7; }
+    85% { opacity: 0.3; }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(1.05); }
+}
+
+.maulFace {
+    position: fixed;
+    left: 50%;
+    top: 45%;
+    transform: translate(-50%, -50%);
+    z-index: 10000;
+    pointer-events: none;
+    user-select: none;
+    animation: maulAppear 7s ease-in-out forwards;
+    filter: drop-shadow(0 0 20px rgba(255, 60, 60, 0.4));
+}
+
+/* ══════════════════════════════════════════
+   SITH LIGHTNING — purple bolts
+   ══════════════════════════════════════════ */
+@keyframes lightningFlash {
+    0% { opacity: 0; }
+    5% { opacity: 0.9; }
+    10% { opacity: 0.2; }
+    15% { opacity: 1; }
+    20% { opacity: 0; }
+    25% { opacity: 0.8; }
+    30% { opacity: 0.1; }
+    35% { opacity: 0.9; }
+    50% { opacity: 0; }
+    55% { opacity: 0.7; }
+    60% { opacity: 0; }
+    100% { opacity: 0; }
+}
+
+.sithLightning {
+    position: fixed;
+    z-index: 10000;
+    pointer-events: none;
+    user-select: none;
+    animation: lightningFlash 3s ease-in-out forwards;
+    filter:
+        drop-shadow(0 0 10px rgba(100, 60, 255, 0.9))
+        drop-shadow(0 0 30px rgba(150, 100, 255, 0.5));
+}
+
+/* ══════════════════════════════════════════
+   TIE FIGHTER — streak across screen
+   ══════════════════════════════════════════ */
+@keyframes tieFlyby {
+    0% { left: -100px; top: 20%; opacity: 0; transform: scale(0.3); }
+    10% { opacity: 0.8; }
+    50% { left: 50%; top: 45%; transform: scale(1); opacity: 1; }
+    90% { opacity: 0.5; }
+    100% { left: calc(100% + 100px); top: 70%; opacity: 0; transform: scale(0.3); }
+}
+
+.tieFighter {
+    position: fixed;
+    z-index: 10000;
+    pointer-events: none;
+    user-select: none;
+    animation: tieFlyby 2.5s ease-in-out forwards;
+    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.5));
+}
+
+/* ══════════════════════════════════════════
+   FORCE CHOKE — vignette closing in
+   ══════════════════════════════════════════ */
+@keyframes chokeVignette {
+    0% {
+        box-shadow: inset 0 0 80px 30px rgba(0, 0, 0, 0);
+    }
+    30% {
+        box-shadow: inset 0 0 200px 100px rgba(0, 0, 0, 0.7);
+    }
+    50% {
+        box-shadow: inset 0 0 250px 130px rgba(0, 0, 0, 0.85);
+    }
+    70% {
+        box-shadow: inset 0 0 200px 100px rgba(0, 0, 0, 0.7);
+    }
+    100% {
+        box-shadow: inset 0 0 80px 30px rgba(0, 0, 0, 0);
+    }
+}
+
+.forceChoke {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 10000;
+    pointer-events: none;
+    animation: chokeVignette 5s ease-in-out forwards;
+}
+
+/* ══════════════════════════════════════════
+   AMBIENT — subtle dark red glow
+   ══════════════════════════════════════════ */
+@keyframes darkPulse {
+    0%, 100% { opacity: 0.03; }
+    50% { opacity: 0.06; }
+}
+
+.darkAmbient {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 9996;
+    pointer-events: none;
+    background: radial-gradient(
+        ellipse at 50% 100%,
+        rgba(255, 0, 0, 0.08) 0%,
+        transparent 60%
+    );
+    animation: darkPulse 6s ease-in-out infinite;
+}
