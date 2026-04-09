@@ -68,7 +68,7 @@ export type ProfilePayload = {
     email: string;
 };
 
-export type ThemeKeys = "dracula" | "light" | "starWarsDarkSide" | "sunset" | "rebelAlliance" | "tatooine" | "windsOfWinter" | "godzilla";
+export type ThemeKeys = "dracula" | "light" | "starWarsDarkSide" | "sunset" | "rebelAlliance" | "tatooine" | "windsOfWinter" | "godzilla" | "wizard" | "witcher";
 export type UserSettingsData = {
     theme?: ThemeKeys;
 };

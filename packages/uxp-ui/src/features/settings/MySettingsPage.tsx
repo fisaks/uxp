@@ -11,6 +11,8 @@ import { selectMySetting } from "./mySettingSelector";
 import { updateMySettings } from "./mySettingThunk";
 import Snowfall from "../theme/Snowfall";
 import GodzillaStrike from "../theme/GodzillaStrike";
+import WizardSpell from "../theme/WizardSpell";
+import WitcherIgni from "../theme/WitcherIgni";
 
 type SettingsDataProps = {
     staleData: UserSettingsPayload;
@@ -35,6 +37,8 @@ const settingsData = [
                     <FormControlLabel value="sunset" control={<Radio />} label="Sunset" />
                     <FormControlLabel value="windsOfWinter" control={<Radio />} label="Winds Of Winter" />
                     <FormControlLabel value="godzilla" control={<Radio />} label="Godzilla" />
+                    <FormControlLabel value="wizard" control={<Radio />} label="Wizard" />
+                    <FormControlLabel value="witcher" control={<Radio />} label="The Witcher" />
 
                 </RadioGroup>
             );
@@ -51,6 +55,8 @@ const MySettingsPage: React.FC = () => {
     const dispatch = useAppDispatch();
     const snow = useMemo(() => <Snowfall />, []);
     const godzilla = useMemo(() => <GodzillaStrike />, []);
+    const wizard = useMemo(() => <WizardSpell />, []);
+    const witcher = useMemo(() => <WitcherIgni />, []);
     const update = () => {
         dispatch(updateMySettings(staleData));
     };
@@ -89,6 +95,8 @@ const MySettingsPage: React.FC = () => {
             </LoadingButton>
             {mySetting?.theme === "windsOfWinter" && snow}
             {mySetting?.theme === "godzilla" && godzilla}
+            {mySetting?.theme === "wizard" && wizard}
+            {mySetting?.theme === "witcher" && witcher}
         </CenteredBox>
     );
 };

@@ -187,31 +187,36 @@ function generateParticles() {
 
 const GodzillaStrike: React.FC = () => {
     const [cycle, setCycle] = useState(0);
-    const [phase, setPhase] = useState<"glow" | "breath" | "ending" | "idle">("glow");
+    const [phase, setPhase] = useState<"glow" | "breath" | "ending" | "idle">("idle");
     const particles = useMemo(generateParticles, []);
 
     useEffect(() => {
         const timers: ReturnType<typeof setTimeout>[] = [];
+        const DELAY = 1.5; // seconds before the roar starts
+        const offset = DELAY * 1000;
 
-        playGodzillaRoar();
+        timers.push(setTimeout(() => {
+            setPhase("glow");
+            playGodzillaRoar();
+        }, offset));
 
         timers.push(setTimeout(() => {
             setPhase("breath");
-        }, ROAR_DURATION * 1000));
+        }, offset + ROAR_DURATION * 1000));
 
         timers.push(setTimeout(() => {
             setPhase("ending");
-        }, ROAR_DURATION * 1000 + BEAM_DURATION * 0.8 * 1000));
+        }, offset + ROAR_DURATION * 1000 + BEAM_DURATION * 0.8 * 1000));
 
         timers.push(setTimeout(() => {
             setPhase("idle");
-        }, ROAR_DURATION * 1000 + BEAM_DURATION * 1000 + 500));
+        }, offset + ROAR_DURATION * 1000 + BEAM_DURATION * 1000 + 500));
 
         // After a pause, restart the whole cycle
         timers.push(setTimeout(() => {
             setPhase("glow");
             setCycle(c => c + 1);
-        }, ROAR_DURATION * 1000 + BEAM_DURATION * 1000 + PAUSE_DURATION * 1000));
+        }, offset + ROAR_DURATION * 1000 + BEAM_DURATION * 1000 + PAUSE_DURATION * 1000));
 
         return () => timers.forEach(clearTimeout);
     }, [cycle]);

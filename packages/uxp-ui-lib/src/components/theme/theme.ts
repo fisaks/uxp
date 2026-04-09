@@ -669,6 +669,204 @@ export const godzillaTheme = createTheme(
   })
 );
 
+// Wizard theme
+export const wizardTheme = createTheme(
+  deepmerge(baseTheme, {
+    palette: {
+      mode: "dark",
+      primary: { main: "#b388ff" }, // Arcane purple
+      secondary: { main: "#64ffda" }, // Mystic teal
+      background: {
+        default: "#0d0a1a", // Deep midnight
+        paper: "#1a1430",
+      },
+      text: {
+        primary: "#e0d8f0", // Pale lavender
+        secondary: "#9087a8",
+      },
+      action: {
+        disabled: "rgba(224,216,240,0.35)",
+        disabledBackground: "rgba(179,136,255,0.08)",
+        hover: "rgba(179,136,255,0.12)",
+        selected: "rgba(179,136,255,0.20)",
+      },
+      error: { main: "#ff5252" },
+      warning: { main: "#ffd740" }, // Golden spell
+      info: { main: "#82b1ff" },
+      success: {
+        main: "#64ffda",
+        light: "#9fffeb",
+        dark: "#2ec4a7",
+      },
+    },
+    typography: {
+      h1: { color: "#b388ff", fontWeight: 700 },
+      h2: { color: "#ce9cff", fontWeight: 600 },
+      body1: { color: "#e0d8f0" },
+      body2: { color: "#9087a8" },
+    },
+    components: {
+      MuiAppBar: {
+        styleOverrides: {
+          root: {
+            background: "linear-gradient(to right, #0d0a1a, #1a1430, #0d0a1a)",
+            color: "#b388ff",
+            borderBottom: "1px solid #b388ff40",
+          },
+        },
+      },
+      MuiDrawer: {
+        styleOverrides: {
+          paper: {
+            backgroundColor: "#110e20",
+            color: "#e0d8f0",
+          },
+        },
+      },
+      MuiListItem: {
+        styleOverrides: {
+          root: {
+            "&:hover": {
+              backgroundColor: "#b388ff20",
+              color: "#b388ff",
+            },
+            "&.Mui-focusVisible": {
+              backgroundColor: "#b388ff40",
+              color: "#64ffda",
+            },
+          },
+        },
+      },
+      MuiButton: {
+        styleOverrides: {
+          root: {
+            textTransform: "uppercase",
+            borderRadius: 4,
+            fontWeight: 600,
+            letterSpacing: "0.05em",
+          },
+        },
+      },
+      MuiIconButton: {
+        styleOverrides: {
+          root: ({ theme }: { theme: Theme }) => ({
+            color: theme.palette.text.primary,
+            "&.Mui-disabled": {
+              color: theme.palette.action.disabled,
+            },
+          }),
+        },
+      },
+      MuiPaper: {
+        styleOverrides: {
+          root: {
+            backgroundColor: "#1a1430",
+          },
+        },
+      },
+    },
+  })
+);
+
+// Witcher theme
+export const witcherTheme = createTheme(
+  deepmerge(baseTheme, {
+    palette: {
+      mode: "dark",
+      primary: { main: "#d4a04a" }, // Amber potion glow
+      secondary: { main: "#c0392b" }, // Blood red
+      background: {
+        default: "#121010", // Charred dark
+        paper: "#1e1a18", // Dark leather
+      },
+      text: {
+        primary: "#d5cec4", // Parchment
+        secondary: "#8c8278", // Worn leather
+      },
+      action: {
+        disabled: "rgba(213,206,196,0.35)",
+        disabledBackground: "rgba(212,160,74,0.08)",
+        hover: "rgba(212,160,74,0.12)",
+        selected: "rgba(212,160,74,0.20)",
+      },
+      error: { main: "#c0392b" }, // Blood
+      warning: { main: "#e67e22" }, // Igni flame
+      info: { main: "#7f8c8d" }, // Silver sword
+      success: {
+        main: "#6b9a5b", // Swallow potion green
+        light: "#8fb87f",
+        dark: "#4d7340",
+      },
+    },
+    typography: {
+      h1: { color: "#d4a04a", fontWeight: 700 },
+      h2: { color: "#c9a96e", fontWeight: 600 },
+      body1: { color: "#d5cec4" },
+      body2: { color: "#8c8278" },
+    },
+    components: {
+      MuiAppBar: {
+        styleOverrides: {
+          root: {
+            background: "linear-gradient(to right, #121010, #1e1a18, #121010)",
+            color: "#d4a04a",
+            borderBottom: "1px solid #d4a04a30",
+          },
+        },
+      },
+      MuiDrawer: {
+        styleOverrides: {
+          paper: {
+            backgroundColor: "#161312",
+            color: "#d5cec4",
+          },
+        },
+      },
+      MuiListItem: {
+        styleOverrides: {
+          root: {
+            "&:hover": {
+              backgroundColor: "#d4a04a20",
+              color: "#d4a04a",
+            },
+            "&.Mui-focusVisible": {
+              backgroundColor: "#d4a04a40",
+              color: "#e67e22",
+            },
+          },
+        },
+      },
+      MuiButton: {
+        styleOverrides: {
+          root: {
+            textTransform: "uppercase",
+            borderRadius: 2,
+            fontWeight: 600,
+            letterSpacing: "0.08em",
+          },
+        },
+      },
+      MuiIconButton: {
+        styleOverrides: {
+          root: ({ theme }: { theme: Theme }) => ({
+            color: theme.palette.text.primary,
+            "&.Mui-disabled": {
+              color: theme.palette.action.disabled,
+            },
+          }),
+        },
+      },
+      MuiPaper: {
+        styleOverrides: {
+          root: {
+            backgroundColor: "#1e1a18",
+          },
+        },
+      },
+    },
+  })
+);
+
 // Default theme
 export const defaultTheme = createTheme(
   deepmerge(baseTheme, {
