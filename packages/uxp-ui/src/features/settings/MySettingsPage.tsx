@@ -14,6 +14,7 @@ import GodzillaStrike from "../theme/GodzillaStrike";
 import WizardSpell from "../theme/WizardSpell";
 import WitcherIgni from "../theme/WitcherIgni";
 import DarkSideEffect from "../theme/DarkSideEffect";
+import RebelAllianceEffect from "../theme/RebelAllianceEffect";
 
 type SettingsDataProps = {
     staleData: UserSettingsPayload;
@@ -141,6 +142,7 @@ const MySettingsPage: React.FC = () => {
     const dispatch = useAppDispatch();
     const snow = useMemo(() => <Snowfall />, []);
     const darkSide = useMemo(() => <DarkSideEffect />, []);
+    const rebelAlliance = useMemo(() => <RebelAllianceEffect />, []);
     const godzilla = useMemo(() => <GodzillaStrike />, []);
     const wizard = useMemo(() => <WizardSpell />, []);
     const witcher = useMemo(() => <WitcherIgni />, []);
@@ -183,6 +185,7 @@ const MySettingsPage: React.FC = () => {
                 Update Settings
             </LoadingButton>
             {mySetting?.theme === "starWarsDarkSide" && darkSide}
+            {mySetting?.theme === "rebelAlliance" && rebelAlliance}
             {mySetting?.theme === "windsOfWinter" && snow}
             {mySetting?.theme === "godzilla" && godzilla}
             {mySetting?.theme === "wizard" && wizard}

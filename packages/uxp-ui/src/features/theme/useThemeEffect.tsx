@@ -7,9 +7,11 @@ import GodzillaStrike from "./GodzillaStrike";
 import WizardSpell from "./WizardSpell";
 import WitcherIgni from "./WitcherIgni";
 import DarkSideEffect from "./DarkSideEffect";
+import RebelAllianceEffect from "./RebelAllianceEffect";
 
 const EFFECT_COMPONENTS: Record<string, React.FC<{ silent?: boolean }>> = {
     starWarsDarkSide: DarkSideEffect,
+    rebelAlliance: RebelAllianceEffect,
     windsOfWinter: Snowfall,
     godzilla: GodzillaStrike,
     wizard: WizardSpell,

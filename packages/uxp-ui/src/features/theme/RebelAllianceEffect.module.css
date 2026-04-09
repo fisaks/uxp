@@ -1,0 +1,306 @@
+/* RebelAllianceEffect.module.css */
+
+/* ══════════════════════════════════════════
+   STARFIELD — slow drifting background stars
+   ══════════════════════════════════════════ */
+@keyframes starDrift {
+    0% {
+        transform: translateY(0);
+        opacity: 0;
+    }
+    5% { opacity: var(--star-brightness); }
+    95% { opacity: var(--star-brightness); }
+    100% {
+        transform: translateY(100vh);
+        opacity: 0;
+    }
+}
+
+@keyframes starTwinkle {
+    0%, 100% { opacity: var(--star-brightness); }
+    50% { opacity: calc(var(--star-brightness) * 0.5); }
+}
+
+.star {
+    --star-brightness: 0.6;
+    position: fixed;
+    z-index: 9996;
+    pointer-events: none;
+    border-radius: 50%;
+    background: white;
+    animation:
+        starDrift linear infinite,
+        starTwinkle ease-in-out infinite;
+}
+
+/* ══════════════════════════════════════════
+   X-WING — flyby across screen
+   ══════════════════════════════════════════ */
+@keyframes xwingFlyby {
+    0% { left: -120px; opacity: 0; transform: scale(var(--ship-scale)) rotate(90deg); }
+    8% { opacity: 1; }
+    50% { opacity: 1; }
+    92% { opacity: 0.5; }
+    100% { left: calc(100% + 120px); opacity: 0; transform: scale(var(--ship-scale)) rotate(90deg); }
+}
+
+.xwing {
+    --ship-scale: 1;
+    position: fixed;
+    left: -120px;
+    z-index: 10000;
+    pointer-events: none;
+    user-select: none;
+    animation: xwingFlyby ease-in-out forwards;
+    filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.4));
+}
+
+/* ══════════════════════════════════════════
+   MILLENNIUM FALCON — big flyby from below
+   ══════════════════════════════════════════ */
+@keyframes falconFlyby {
+    0% {
+        left: -200px;
+        top: calc(100% + 50px);
+        opacity: 0;
+        transform: scale(0.4) rotate(-15deg);
+    }
+    15% { opacity: 1; }
+    40% {
+        left: 40%;
+        top: 40%;
+        transform: scale(1) rotate(-5deg);
+    }
+    60% {
+        left: 55%;
+        top: 35%;
+        transform: scale(1.1) rotate(5deg);
+    }
+    85% { opacity: 0.6; }
+    100% {
+        left: calc(100% + 200px);
+        top: -100px;
+        opacity: 0;
+        transform: scale(0.5) rotate(10deg);
+    }
+}
+
+.falcon {
+    position: fixed;
+    z-index: 10000;
+    pointer-events: none;
+    user-select: none;
+    animation: falconFlyby 4s ease-in-out forwards;
+    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.3));
+    /* Flip so cockpit faces forward (direction of travel) */
+    &>img { transform: scaleX(-1); }
+}
+
+/* ══════════════════════════════════════════
+   REBEL LOGO — fades in glowing orange
+   ══════════════════════════════════════════ */
+@keyframes logoAppear {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+    15% { opacity: 0.7; transform: translate(-50%, -50%) scale(1); }
+    70% { opacity: 0.6; }
+    90% { opacity: 0.2; }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(1.1); }
+}
+
+@keyframes logoPulse {
+    0%, 100% { filter: drop-shadow(0 0 15px rgba(245, 124, 0, 0.6)) drop-shadow(0 0 40px rgba(245, 124, 0, 0.3)); }
+    50% { filter: drop-shadow(0 0 25px rgba(245, 124, 0, 0.9)) drop-shadow(0 0 60px rgba(245, 124, 0, 0.5)); }
+}
+
+.rebelLogo {
+    position: fixed;
+    left: 50%;
+    top: 45%;
+    transform: translate(-50%, -50%);
+    z-index: 10000;
+    pointer-events: none;
+    user-select: none;
+    animation:
+        logoAppear 7s ease-in-out forwards,
+        logoPulse 2s ease-in-out infinite;
+}
+
+/* ══════════════════════════════════════════
+   HYPERSPACE — stars stretch into lines
+   ══════════════════════════════════════════ */
+@keyframes hyperStretch {
+    0% {
+        height: 2px;
+        opacity: 0;
+    }
+    10% { opacity: 1; height: 2px; }
+    40% { height: 40vh; opacity: 1; }
+    50% { height: 50vh; opacity: 1; }
+    55% { opacity: 0; }
+    100% { height: 50vh; opacity: 0; }
+}
+
+.hyperLine {
+    position: fixed;
+    z-index: 10000;
+    pointer-events: none;
+    width: 2px;
+    background: linear-gradient(to bottom, transparent, rgba(180, 210, 255, 0.9), white, rgba(180, 210, 255, 0.9), transparent);
+    border-radius: 1px;
+    animation: hyperStretch 2.5s ease-in forwards;
+}
+
+/* Flash at the end of hyperspace */
+@keyframes hyperFlash {
+    0% { opacity: 0; }
+    50% { opacity: 0; }
+    55% { opacity: 0.5; }
+    65% { opacity: 0; }
+    100% { opacity: 0; }
+}
+
+.hyperFlash {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 10001;
+    pointer-events: none;
+    background: white;
+    animation: hyperFlash 2.5s ease-in-out forwards;
+}
+
+/* ══════════════════════════════════════════
+   JEDI LIGHTSABER — blue or green
+   ══════════════════════════════════════════ */
+@keyframes jediSaberExtend {
+    0% { height: 0; opacity: 0; }
+    5% { opacity: 1; }
+    20% { height: 70vh; }
+    75% { height: 70vh; opacity: 1; }
+    90% { opacity: 0.5; }
+    100% { height: 0; opacity: 0; }
+}
+
+.jediSaber {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 8px;
+    height: 0;
+    z-index: 10000;
+    pointer-events: none;
+    border-radius: 4px 4px 0 0;
+    animation: jediSaberExtend 5s ease-in-out forwards;
+}
+
+.jediSaberBlue {
+    background: linear-gradient(to top, rgba(0, 100, 200, 0.6), rgba(50, 150, 255, 0.9), rgba(200, 230, 255, 0.95));
+    filter:
+        drop-shadow(0 0 15px rgba(50, 150, 255, 0.8))
+        drop-shadow(0 0 40px rgba(50, 150, 255, 0.4));
+}
+
+.jediSaberGreen {
+    background: linear-gradient(to top, rgba(0, 150, 50, 0.6), rgba(50, 220, 80, 0.9), rgba(200, 255, 210, 0.95));
+    filter:
+        drop-shadow(0 0 15px rgba(50, 220, 80, 0.8))
+        drop-shadow(0 0 40px rgba(50, 220, 80, 0.4));
+}
+
+.saberHilt {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 14px;
+    height: 36px;
+    z-index: 10001;
+    pointer-events: none;
+    border-radius: 3px;
+    background: linear-gradient(to bottom, #888, #555, #888);
+    border: 1px solid #999;
+}
+
+/* ══════════════════════════════════════════
+   THE FORCE — blue glow radiating outward
+   ══════════════════════════════════════════ */
+@keyframes forceGlow {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
+    20% { opacity: 0.4; transform: translate(-50%, -50%) scale(1); }
+    50% { opacity: 0.3; transform: translate(-50%, -50%) scale(1.5); }
+    80% { opacity: 0.15; transform: translate(-50%, -50%) scale(2); }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(2.5); }
+}
+
+@keyframes forceParticle {
+    0% {
+        opacity: 0;
+        transform: translate(0, 0) scale(0.5);
+    }
+    20% { opacity: 0.8; }
+    100% {
+        opacity: 0;
+        transform: translate(var(--fx), var(--fy)) scale(0);
+    }
+}
+
+.forceGlow {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    width: 300px;
+    height: 300px;
+    z-index: 10000;
+    pointer-events: none;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(100, 180, 255, 0.4) 0%, rgba(50, 120, 200, 0.2) 40%, transparent 70%);
+    animation: forceGlow 6s ease-out forwards;
+}
+
+.forceParticle {
+    --fx: 0px;
+    --fy: 0px;
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    z-index: 10001;
+    pointer-events: none;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(180, 220, 255, 0.9) 0%, rgba(100, 180, 255, 0.5) 50%, transparent 100%);
+    animation: forceParticle 3s ease-out forwards;
+}
+
+/* ══════════════════════════════════════════
+   R2-D2 — small silhouette
+   ══════════════════════════════════════════ */
+@keyframes r2Appear {
+    0% { opacity: 0; transform: translate(-50%, 0) scale(0.8); }
+    15% { opacity: 0.7; transform: translate(-50%, 0) scale(1); }
+    60% { opacity: 0.6; }
+    85% { opacity: 0.2; }
+    100% { opacity: 0; }
+}
+
+@keyframes r2Wobble {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(3deg); }
+    75% { transform: rotate(-3deg); }
+}
+
+.r2d2 {
+    position: fixed;
+    bottom: 5%;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10000;
+    pointer-events: none;
+    user-select: none;
+    animation: r2Appear 5s ease-in-out forwards;
+}
+
+.r2d2Inner {
+    animation: r2Wobble 1s ease-in-out infinite;
+}
