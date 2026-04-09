@@ -198,3 +198,281 @@
 .flashEnding {
     animation: flashFadeOut 2s ease-out forwards;
 }
+
+/* ══════════════════════════════════════════
+   MINI-EVENTS
+   ══════════════════════════════════════════ */
+
+/* ── Dorsal fins: row of glowing spines rising from bottom ── */
+@keyframes finsGlow {
+    0% { opacity: 0; transform: translateY(20px); }
+    15% { opacity: 0.8; transform: translateY(0); }
+    50% { opacity: 1; }
+    85% { opacity: 0.6; }
+    100% { opacity: 0; transform: translateY(-10px); }
+}
+
+@keyframes finPulse {
+    0%, 100% { filter: drop-shadow(0 0 8px rgba(50, 140, 255, 0.6)); }
+    50% { filter: drop-shadow(0 0 20px rgba(80, 180, 255, 1)) drop-shadow(0 0 40px rgba(50, 140, 255, 0.5)); }
+}
+
+.dorsalFin {
+    position: fixed;
+    bottom: 0;
+    z-index: 9999;
+    pointer-events: none;
+    animation:
+        finsGlow 5s ease-in-out forwards,
+        finPulse 0.8s ease-in-out infinite;
+}
+
+/* ── Nuclear pulse: shockwave expanding from center ── */
+@keyframes nuclearPulse {
+    0% {
+        width: 0;
+        height: 0;
+        opacity: 0;
+        border-width: 4px;
+    }
+    10% { opacity: 0.8; }
+    50% { opacity: 0.5; border-width: 2px; }
+    100% {
+        width: 200vw;
+        height: 200vw;
+        opacity: 0;
+        border-width: 1px;
+    }
+}
+
+.nuclearPulse {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    border: 4px solid rgba(80, 180, 255, 0.8);
+    background: radial-gradient(circle, rgba(50, 140, 255, 0.15) 0%, transparent 60%);
+    z-index: 10000;
+    pointer-events: none;
+    animation: nuclearPulse 3s ease-out forwards;
+}
+
+/* ── EMP pulse: screen flickers and distorts ── */
+@keyframes empFlicker {
+    0% { opacity: 0; }
+    3% { opacity: 0.7; background: rgba(80, 180, 255, 0.15); }
+    6% { opacity: 0; }
+    9% { opacity: 0.5; background: rgba(255, 255, 255, 0.1); }
+    12% { opacity: 0; }
+    18% { opacity: 0.8; background: rgba(80, 180, 255, 0.1); }
+    20% { opacity: 0; }
+    25% { opacity: 0.3; background: rgba(255, 255, 255, 0.05); }
+    28% { opacity: 0; }
+    35% { opacity: 0.6; background: rgba(80, 180, 255, 0.08); }
+    37% { opacity: 0; }
+    50% { opacity: 0.2; background: rgba(80, 180, 255, 0.05); }
+    53% { opacity: 0; }
+    70% { opacity: 0.1; }
+    100% { opacity: 0; }
+}
+
+@keyframes empScanline {
+    0% { top: -5px; }
+    100% { top: 100vh; }
+}
+
+.empOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 10002;
+    pointer-events: none;
+    animation: empFlicker 3s ease-in-out forwards;
+}
+
+/* Scanline that sweeps down during EMP */
+.empOverlay::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: -5px;
+    width: 100%;
+    height: 3px;
+    background: rgba(80, 180, 255, 0.4);
+    box-shadow: 0 0 10px rgba(80, 180, 255, 0.6), 0 0 30px rgba(50, 140, 255, 0.3);
+    animation: empScanline 1.5s ease-in-out;
+    animation-iteration-count: 2;
+}
+
+/* ── Stomp: screen shake ── */
+@keyframes stompShake {
+    0%, 100% { transform: translate(0, 0); }
+    10% { transform: translate(-8px, 4px); }
+    20% { transform: translate(10px, -6px); }
+    30% { transform: translate(-6px, 8px); }
+    40% { transform: translate(8px, -4px); }
+    50% { transform: translate(-10px, 6px); }
+    60% { transform: translate(6px, -8px); }
+    70% { transform: translate(-4px, 3px); }
+    80% { transform: translate(5px, -2px); }
+    90% { transform: translate(-2px, 1px); }
+}
+
+.stompOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 10002;
+    pointer-events: none;
+    animation: stompShake 0.6s ease-out;
+    animation-iteration-count: 2;
+}
+
+/* Dust cloud from bottom on stomp */
+@keyframes dustRise {
+    0% { bottom: -20px; opacity: 0; }
+    20% { opacity: 0.3; }
+    100% { bottom: 30vh; opacity: 0; }
+}
+
+.stompDust {
+    position: fixed;
+    left: 0;
+    bottom: -20px;
+    width: 100vw;
+    height: 15vh;
+    z-index: 9999;
+    pointer-events: none;
+    background: radial-gradient(ellipse at center bottom, rgba(120, 100, 80, 0.3) 0%, transparent 70%);
+    filter: blur(10px);
+    animation: dustRise 2s ease-out forwards;
+}
+
+/* ── Smoke/dust clouds billowing across ── */
+@keyframes smokeDrift {
+    0% {
+        left: -80%;
+        opacity: 0;
+    }
+    10% { opacity: var(--smoke-opacity, 0.25); }
+    50% { opacity: var(--smoke-opacity, 0.2); }
+    90% { opacity: 0.05; }
+    100% {
+        left: 110%;
+        opacity: 0;
+    }
+}
+
+.smokeCloud {
+    --smoke-opacity: 0.25;
+    position: fixed;
+    left: -80%;
+    width: 90vw;
+    z-index: 9999;
+    pointer-events: none;
+    border-radius: 50%;
+    background: radial-gradient(
+        ellipse,
+        rgba(60, 55, 50, 0.4) 0%,
+        rgba(80, 75, 65, 0.25) 30%,
+        rgba(100, 90, 80, 0.1) 60%,
+        transparent 80%
+    );
+    filter: blur(15px);
+    animation: smokeDrift ease-in-out forwards;
+}
+
+/* ── Rodan: shadow swooping across ── */
+@keyframes rodanSwoop {
+    0% { left: -200px; top: 10%; opacity: 0; transform: scale(0.5) rotate(-10deg); }
+    15% { opacity: 0.6; }
+    50% { left: 50%; top: 30%; transform: scale(1) rotate(5deg); opacity: 0.7; }
+    85% { opacity: 0.4; }
+    100% { left: calc(100% + 200px); top: 15%; opacity: 0; transform: scale(0.6) rotate(-5deg); }
+}
+
+.rodan {
+    position: fixed;
+    z-index: 10000;
+    pointer-events: none;
+    user-select: none;
+    animation: rodanSwoop 3s ease-in-out forwards;
+    filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.5));
+}
+
+/* ── Tsunami: dark water wall rising from bottom ── */
+@keyframes tsunamiRise {
+    0% {
+        height: 0;
+        opacity: 0;
+    }
+    10% {
+        opacity: 0.7;
+    }
+    35% {
+        height: 45vh;
+        opacity: 0.8;
+    }
+    50% {
+        height: 50vh;
+        opacity: 0.7;
+    }
+    75% {
+        height: 35vh;
+        opacity: 0.5;
+    }
+    100% {
+        height: 0;
+        opacity: 0;
+    }
+}
+
+@keyframes tsunamiSurface {
+    0%, 100% { transform: translateY(0); }
+    25% { transform: translateY(-8px); }
+    50% { transform: translateY(4px); }
+    75% { transform: translateY(-5px); }
+}
+
+.tsunamiWave {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100vw;
+    height: 0;
+    z-index: 10000;
+    pointer-events: none;
+    background: linear-gradient(
+        to top,
+        rgba(5, 15, 30, 0.85) 0%,
+        rgba(10, 30, 60, 0.7) 30%,
+        rgba(15, 50, 80, 0.5) 60%,
+        rgba(20, 70, 100, 0.3) 80%,
+        transparent 100%
+    );
+    animation:
+        tsunamiRise 6s ease-in-out forwards,
+        tsunamiSurface 1.5s ease-in-out infinite;
+}
+
+/* Foam/spray at the top edge */
+.tsunamiWave::before {
+    content: "";
+    position: absolute;
+    top: -8px;
+    left: 0;
+    width: 100%;
+    height: 12px;
+    background: linear-gradient(
+        to top,
+        rgba(150, 200, 220, 0.3),
+        rgba(200, 230, 240, 0.15),
+        transparent
+    );
+    filter: blur(3px);
+}
