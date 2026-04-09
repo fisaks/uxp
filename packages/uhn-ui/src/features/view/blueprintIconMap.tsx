@@ -1,6 +1,8 @@
 import AcUnitIcon from "@mui/icons-material/AcUnit";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
+import MovieFilterIcon from "@mui/icons-material/MovieFilter";
+import StopCircleIcon from "@mui/icons-material/StopCircle";
 import PauseIcon from "@mui/icons-material/Pause";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import PowerOffIcon from "@mui/icons-material/PowerOff";
@@ -240,6 +242,8 @@ export const blueprintIconMap: Record<BlueprintIcon, BlueprintIconEntry> = {
     "control:volume": icon(VolumeUpIcon, VolumeOffIcon, color("#5C6BC0", "#9FA8DA")),
     "control:mode": icon(FormatListBulletedIcon, undefined, color("#6A1B9A", "#AB47BC", "#4A148C", "#AB47BC")),
     "control:effect": icon(AutoFixHighIcon, undefined, color("#6A1B9A", "#AB47BC")),
+    "theme:effect": icon(MovieFilterIcon, undefined, color("#7B1FA2", "#CE93D8")),
+    "theme:stop": icon(StopCircleIcon, undefined, color("#EF5350", "#EF9A9A")),
     "control:play": icon(PlayArrowIcon, undefined, color("#43A047", "#81C784")),
     "control:pause": icon(PauseIcon, undefined, color("#F57C00", "#FFB74D")),
     // Climate

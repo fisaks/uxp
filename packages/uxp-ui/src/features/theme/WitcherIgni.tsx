@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState, useCallback } from "react";
 import * as styles from "./WitcherIgni.module.css";
 
 const EMBER_COUNT = 25;
-const CYCLE_INTERVAL = 26; // seconds between full cycles
+const CYCLE_INTERVAL = 30; // seconds between full cycles
 
 /**
  * Synthesizes: cat eye open rumble → medallion hum → sword draw → Igni fire whoosh.
@@ -30,7 +30,7 @@ function playWitcherSound() {
     eyeRumble.stop(now + 2);
 
     // ── Medallion: eerie vibrating hum ──
-    const medStart = now + 3;
+    const medStart = now + 4;
     const med1 = ctx.createOscillator();
     med1.type = "sine";
     med1.frequency.value = 220;
@@ -62,7 +62,7 @@ function playWitcherSound() {
     med2.stop(medStart + 2);
 
     // ── Sword draw: metallic scrape ──
-    const swordStart = now + 6;
+    const swordStart = now + 7.5;
 
     const scrapeBuffer = ctx.createBuffer(1, ctx.sampleRate * 0.7, ctx.sampleRate);
     const scrapeData = scrapeBuffer.getChannelData(0);
@@ -112,7 +112,7 @@ function playWitcherSound() {
     ping.stop(swordStart + 0.7);
 
     // ── Igni cast: fire whoosh ──
-    const igniStart = now + 8.3;
+    const igniStart = now + 13;
 
     const whooshBuffer = ctx.createBuffer(1, ctx.sampleRate * 1.5, ctx.sampleRate);
     const whooshData = whooshBuffer.getChannelData(0);
@@ -175,7 +175,7 @@ function playWitcherSound() {
     fireRumble.start(igniStart);
     fireRumble.stop(igniStart + 1.3);
 
-    setTimeout(() => ctx.close(), 11000);
+    setTimeout(() => ctx.close(), 16000);
 }
 
 function generateEmbers() {
@@ -246,9 +246,11 @@ const CatEyeSvg: React.FC<{ size: number }> = ({ size }) => (
             );
         })}
 
-        {/* Vertical slit pupil — the signature Witcher look */}
-        <ellipse cx="150" cy="67" rx="6" ry="38" fill="#0a0600" />
-        <ellipse cx="150" cy="67" rx="4" ry="35" fill="#000000" />
+        {/* Pupil — starts round, CSS scaleX contracts it into vertical slit */}
+        <g style={{ transformOrigin: "150px 67px" }} className="witcherPupil">
+            <ellipse cx="150" cy="67" rx="6" ry="38" fill="#0a0600" />
+            <ellipse cx="150" cy="67" rx="4" ry="35" fill="#000000" />
+        </g>
 
         {/* Light reflection */}
         <ellipse cx="138" cy="52" rx="5" ry="7" fill="rgba(255,255,255,0.25)" />
@@ -318,18 +320,12 @@ const SwordSvg: React.FC<{ length: number }> = ({ length }) => (
     </svg>
 );
 
-/** Igni fire sign */
+/** Igni — fire sign (triangle + flame) — orange */
 const IgniSignSvg: React.FC<{ size: number }> = ({ size }) => (
     <svg width={size} height={size} viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
         <circle cx="100" cy="100" r="90" stroke="rgba(230, 126, 34, 0.8)" strokeWidth="3" fill="none" />
         <circle cx="100" cy="100" r="85" stroke="rgba(192, 57, 43, 0.4)" strokeWidth="1" fill="none" />
-        <polygon
-            points="100,25 170,155 30,155"
-            stroke="rgba(230, 126, 34, 0.9)"
-            strokeWidth="3"
-            fill="rgba(230, 126, 34, 0.08)"
-            strokeLinejoin="round"
-        />
+        <polygon points="100,25 170,155 30,155" stroke="rgba(230, 126, 34, 0.9)" strokeWidth="3" fill="rgba(230, 126, 34, 0.08)" strokeLinejoin="round" />
         <path d="M100 45 Q90 90 100 110 Q110 90 100 45" stroke="rgba(255, 180, 50, 0.7)" strokeWidth="2" fill="rgba(255, 180, 50, 0.1)" />
         <path d="M80 120 Q85 100 95 105 Q88 115 80 120" stroke="rgba(230, 126, 34, 0.5)" strokeWidth="1.5" fill="none" />
         <path d="M120 120 Q115 100 105 105 Q112 115 120 120" stroke="rgba(230, 126, 34, 0.5)" strokeWidth="1.5" fill="none" />
@@ -340,29 +336,108 @@ const IgniSignSvg: React.FC<{ size: number }> = ({ size }) => (
     </svg>
 );
 
+/** Aard — telekinetic blast (wave lines pushing outward) — blue */
+const AardSignSvg: React.FC<{ size: number }> = ({ size }) => (
+    <svg width={size} height={size} viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="100" cy="100" r="90" stroke="rgba(100, 180, 230, 0.8)" strokeWidth="3" fill="none" />
+        <circle cx="100" cy="100" r="85" stroke="rgba(70, 140, 200, 0.4)" strokeWidth="1" fill="none" />
+        {/* Outward wave arcs */}
+        <path d="M70 100 Q100 60 130 100" stroke="rgba(100, 180, 230, 0.9)" strokeWidth="3" fill="none" />
+        <path d="M55 100 Q100 45 145 100" stroke="rgba(100, 180, 230, 0.6)" strokeWidth="2.5" fill="none" />
+        <path d="M40 100 Q100 30 160 100" stroke="rgba(100, 180, 230, 0.4)" strokeWidth="2" fill="none" />
+        {/* Central force point */}
+        <circle cx="100" cy="110" r="8" fill="rgba(100, 180, 230, 0.3)" />
+        <circle cx="100" cy="110" r="4" fill="rgba(180, 220, 255, 0.6)" />
+        <line x1="100" y1="8" x2="100" y2="18" stroke="rgba(100, 180, 230, 0.6)" strokeWidth="2" />
+        <line x1="100" y1="182" x2="100" y2="192" stroke="rgba(100, 180, 230, 0.6)" strokeWidth="2" />
+        <line x1="8" y1="100" x2="18" y2="100" stroke="rgba(100, 180, 230, 0.6)" strokeWidth="2" />
+        <line x1="182" y1="100" x2="192" y2="100" stroke="rgba(100, 180, 230, 0.6)" strokeWidth="2" />
+    </svg>
+);
+
+/** Yrden — magic trap (hexagram / star inside circle) — purple */
+const YrdenSignSvg: React.FC<{ size: number }> = ({ size }) => (
+    <svg width={size} height={size} viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="100" cy="100" r="90" stroke="rgba(160, 100, 220, 0.8)" strokeWidth="3" fill="none" />
+        <circle cx="100" cy="100" r="85" stroke="rgba(120, 70, 180, 0.4)" strokeWidth="1" fill="none" />
+        {/* Hexagram — two overlapping triangles */}
+        <polygon points="100,30 155,145 45,145" stroke="rgba(160, 100, 220, 0.9)" strokeWidth="2.5" fill="rgba(160, 100, 220, 0.05)" strokeLinejoin="round" />
+        <polygon points="100,170 45,55 155,55" stroke="rgba(160, 100, 220, 0.7)" strokeWidth="2.5" fill="rgba(160, 100, 220, 0.05)" strokeLinejoin="round" />
+        {/* Inner circle */}
+        <circle cx="100" cy="100" r="35" stroke="rgba(160, 100, 220, 0.5)" strokeWidth="1.5" fill="none" />
+        <circle cx="100" cy="100" r="5" fill="rgba(200, 150, 255, 0.5)" />
+        <line x1="100" y1="8" x2="100" y2="18" stroke="rgba(160, 100, 220, 0.6)" strokeWidth="2" />
+        <line x1="100" y1="182" x2="100" y2="192" stroke="rgba(160, 100, 220, 0.6)" strokeWidth="2" />
+        <line x1="8" y1="100" x2="18" y2="100" stroke="rgba(160, 100, 220, 0.6)" strokeWidth="2" />
+        <line x1="182" y1="100" x2="192" y2="100" stroke="rgba(160, 100, 220, 0.6)" strokeWidth="2" />
+    </svg>
+);
+
+/** Quen — protective shield (nested circles / dome) — golden */
+const QuenSignSvg: React.FC<{ size: number }> = ({ size }) => (
+    <svg width={size} height={size} viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="100" cy="100" r="90" stroke="rgba(212, 175, 55, 0.8)" strokeWidth="3" fill="none" />
+        <circle cx="100" cy="100" r="85" stroke="rgba(180, 140, 40, 0.4)" strokeWidth="1" fill="none" />
+        {/* Shield dome arcs */}
+        <path d="M40 120 Q40 40 100 30 Q160 40 160 120" stroke="rgba(212, 175, 55, 0.9)" strokeWidth="3" fill="rgba(212, 175, 55, 0.05)" />
+        <path d="M55 120 Q55 55 100 45 Q145 55 145 120" stroke="rgba(212, 175, 55, 0.6)" strokeWidth="2" fill="none" />
+        <path d="M70 120 Q70 70 100 60 Q130 70 130 120" stroke="rgba(212, 175, 55, 0.4)" strokeWidth="1.5" fill="none" />
+        {/* Base line */}
+        <line x1="35" y1="120" x2="165" y2="120" stroke="rgba(212, 175, 55, 0.5)" strokeWidth="2" />
+        {/* Center glow */}
+        <circle cx="100" cy="90" r="6" fill="rgba(255, 220, 100, 0.4)" />
+        <line x1="100" y1="8" x2="100" y2="18" stroke="rgba(212, 175, 55, 0.6)" strokeWidth="2" />
+        <line x1="100" y1="182" x2="100" y2="192" stroke="rgba(212, 175, 55, 0.6)" strokeWidth="2" />
+        <line x1="8" y1="100" x2="18" y2="100" stroke="rgba(212, 175, 55, 0.6)" strokeWidth="2" />
+        <line x1="182" y1="100" x2="192" y2="100" stroke="rgba(212, 175, 55, 0.6)" strokeWidth="2" />
+    </svg>
+);
+
+/** Axii — mind control (spiral / swirl) — green */
+const AxiiSignSvg: React.FC<{ size: number }> = ({ size }) => (
+    <svg width={size} height={size} viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="100" cy="100" r="90" stroke="rgba(80, 200, 120, 0.8)" strokeWidth="3" fill="none" />
+        <circle cx="100" cy="100" r="85" stroke="rgba(50, 160, 90, 0.4)" strokeWidth="1" fill="none" />
+        {/* Spiral */}
+        <path d="M100 60 Q140 60 140 100 Q140 140 100 140 Q60 140 60 100 Q60 75 85 70" stroke="rgba(80, 200, 120, 0.9)" strokeWidth="3" fill="none" />
+        <path d="M100 75 Q125 75 125 100 Q125 125 100 125 Q75 125 75 100 Q75 85 92 82" stroke="rgba(80, 200, 120, 0.6)" strokeWidth="2" fill="none" />
+        {/* Center eye */}
+        <circle cx="100" cy="100" r="8" fill="rgba(80, 200, 120, 0.2)" />
+        <circle cx="100" cy="100" r="4" fill="rgba(150, 255, 180, 0.5)" />
+        <line x1="100" y1="8" x2="100" y2="18" stroke="rgba(80, 200, 120, 0.6)" strokeWidth="2" />
+        <line x1="100" y1="182" x2="100" y2="192" stroke="rgba(80, 200, 120, 0.6)" strokeWidth="2" />
+        <line x1="8" y1="100" x2="18" y2="100" stroke="rgba(80, 200, 120, 0.6)" strokeWidth="2" />
+        <line x1="182" y1="100" x2="192" y2="100" stroke="rgba(80, 200, 120, 0.6)" strokeWidth="2" />
+    </svg>
+);
+
+const ALL_SIGNS = [IgniSignSvg, AardSignSvg, YrdenSignSvg, QuenSignSvg, AxiiSignSvg];
+
 const WitcherIgni: React.FC<{ silent?: boolean }> = ({ silent }) => {
     const [cycle, setCycle] = useState(0);
     const [phase, setPhase] = useState<"eye" | "medallion" | "sword" | "igni" | "idle">("eye");
     const [showSwords, setShowSwords] = useState(false);
     const [showIgni, setShowIgni] = useState(false);
+    const [SignComponent, setSignComponent] = useState<React.FC<{ size: number }>>(() => IgniSignSvg);
     const embers = useMemo(generateEmbers, []);
 
     const cast = useCallback(() => {
         setPhase("eye");
         setShowSwords(false);
         setShowIgni(false);
+        setSignComponent(() => ALL_SIGNS[Math.floor(Math.random() * ALL_SIGNS.length)]);
         if (!silent) playWitcherSound();
 
         // Medallion after eye opens
-        setTimeout(() => setPhase("medallion"), 3000);
+        setTimeout(() => setPhase("medallion"), 4000);
         // Swords start
-        setTimeout(() => { setPhase("sword"); setShowSwords(true); }, 6000);
-        // Igni fades in while swords still retreating
-        setTimeout(() => { setShowIgni(true); setPhase("igni"); }, 8300);
-        // Swords finish their exit animation and disappear
-        setTimeout(() => setShowSwords(false), 9500);
+        setTimeout(() => { setPhase("sword"); setShowSwords(true); }, 7500);
+        // Igni fades in while swords retreating (~75% of 7.5s sword animation)
+        setTimeout(() => { setShowIgni(true); setPhase("igni"); }, 13000);
+        // Swords finish exit animation
+        setTimeout(() => setShowSwords(false), 15000);
         // Idle
-        setTimeout(() => { setShowIgni(false); setPhase("idle"); }, 20000);
+        setTimeout(() => { setShowIgni(false); setPhase("idle"); }, 24000);
     }, []);
 
     useEffect(() => {
@@ -410,8 +485,8 @@ const WitcherIgni: React.FC<{ silent?: boolean }> = ({ silent }) => {
                     <div key={`swordR-${cycle}`} className={styles.swordRight}>
                         <SwordSvg length={400} />
                     </div>
-                    {/* Sparks on each clash (timed to 27%, 38%, 50% of 3.5s) */}
-                    {[0.95, 1.33, 1.75].map((delay, i) => (
+                    {/* Sparks on clashes — round 1, round 2, round 3, finishing blow */}
+                    {[1.05, 1.5, 2.0, 2.5, 3.5, 4.0, 4.5, 4.8].map((delay, i) => (
                         <div
                             key={`spark-${cycle}-${i}`}
                             className={styles.clashSpark}
@@ -426,7 +501,7 @@ const WitcherIgni: React.FC<{ silent?: boolean }> = ({ silent }) => {
                 <>
                     <div key={`igni-${cycle}`} className={styles.igniSign}>
                         <div className={styles.igniSignInner}>
-                            <IgniSignSvg size={160} />
+                            <SignComponent size={160} />
                         </div>
                     </div>
                     {embers.map((e, i) => (

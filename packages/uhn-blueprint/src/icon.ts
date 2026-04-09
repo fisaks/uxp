@@ -57,4 +57,6 @@ export type BlueprintIcon =
     | "color:brightness" | "color:temperature" | "color:hue" | "color:saturation"
     // Status
     | "status:dashboard" | "status:device" | "status:warning" | "status:error" | "status:ok" | "status:notification" | "status:favorite"
+    // Theme
+    | "theme:effect" | "theme:stop"
     ;

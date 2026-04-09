@@ -69,8 +69,20 @@ export type ProfilePayload = {
 };
 
 export type ThemeKeys = "dracula" | "light" | "starWarsDarkSide" | "sunset" | "rebelAlliance" | "tatooine" | "windsOfWinter" | "godzilla" | "wizard" | "witcher";
+
+export type ThemeEffectMode = "full" | "silent";
+export type ThemeEffectSettings = {
+    autoTrigger: boolean;
+    mode: ThemeEffectMode;
+    /** Base interval in minutes between auto-triggers (randomized 0.5x–1.5x) */
+    frequency: number;
+    /** How long an auto-triggered effect plays in seconds. 0 = use default (one cycle) */
+    duration: number;
+};
+
 export type UserSettingsData = {
     theme?: ThemeKeys;
+    themeEffect?: ThemeEffectSettings;
 };
 
 export type UserSettingsResponse = UserSettingsData;

@@ -8,20 +8,24 @@
         clip-path: inset(48% 0 48% 0);
         opacity: 0;
     }
-    10% {
+    8% {
         opacity: 1;
         clip-path: inset(48% 0 48% 0);
     }
-    50% {
+    30% {
         clip-path: inset(10% 0 10% 0);
     }
-    70% {
+    45% {
         clip-path: inset(0% 0 0% 0);
         opacity: 1;
     }
-    85% {
-        opacity: 0.8;
+    /* Hold fully open */
+    75% {
         clip-path: inset(0% 0 0% 0);
+        opacity: 1;
+    }
+    90% {
+        opacity: 0.5;
     }
     100% {
         opacity: 0;
@@ -37,7 +41,19 @@
     z-index: 10000;
     pointer-events: none;
     user-select: none;
-    animation: eyeOpen 3s ease-in-out forwards;
+    animation: eyeOpen 4s ease-in-out forwards;
+}
+
+/* Pupil contraction: round → vertical slit */
+@keyframes pupilContract {
+    0% { transform: scaleX(3.5) scaleY(0.6); }
+    30% { transform: scaleX(3.5) scaleY(0.6); }
+    80% { transform: scaleX(1) scaleY(1); }
+    100% { transform: scaleX(1) scaleY(1); }
+}
+
+.catEye :global(.witcherPupil) {
+    animation: pupilContract 3s ease-in-out forwards;
     filter:
         drop-shadow(0 0 15px rgba(212, 160, 74, 0.6))
         drop-shadow(0 0 40px rgba(191, 96, 0, 0.3));
@@ -51,12 +67,17 @@
         opacity: 0;
         transform: translate(-50%, -50%) scale(0.7);
     }
-    20% {
+    15% {
         opacity: 1;
         transform: translate(-50%, -50%) scale(1);
     }
-    80% {
+    /* Hold visible — vibrating */
+    75% {
         opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+    90% {
+        opacity: 0.5;
     }
     100% {
         opacity: 0;
@@ -85,7 +106,7 @@
     z-index: 10000;
     pointer-events: none;
     user-select: none;
-    animation: medallionAppear 3s ease-in-out forwards;
+    animation: medallionAppear 3.5s ease-in-out forwards;
     filter:
         drop-shadow(0 0 10px rgba(212, 160, 74, 0.5))
         drop-shadow(0 0 30px rgba(212, 160, 74, 0.2));
@@ -99,126 +120,86 @@
    3. SWORDS — two blades clash in the middle
    ══════════════════════════════════════════ */
 
-/* Left sword — Geralt's silver sword */
+/* Left sword — Geralt — 3 fight rounds */
 @keyframes swordLeft {
-    0% {
-        left: -500px;
-        opacity: 0;
-        transform: translateY(-50%) rotate(0deg);
-    }
-    12% { opacity: 1; }
-    /* Arrive at center-left */
-    22% {
-        left: calc(50% - 90px);
-        transform: translateY(-50%) rotate(0deg);
-    }
-    /* Clash 1: slash right */
-    27% {
-        left: calc(50% - 120px);
-        transform: translateY(-50%) rotate(30deg);
-    }
-    /* Recoil from clash */
-    32% {
-        left: calc(50% - 120px);
-        transform: translateY(-50%) rotate(-25deg);
-    }
-    /* Clash 2: hard cross slash */
-    38% {
-        left: calc(50% - 100px);
-        transform: translateY(-50%) rotate(35deg);
-    }
-    /* Pushed back */
-    43% {
-        left: calc(50% - 190px);
-        transform: translateY(-50%) rotate(-20deg);
-    }
-    /* Clash 3: overhead strike */
-    50% {
-        left: calc(50% - 90px);
-        transform: translateY(-50%) rotate(45deg);
-    }
-    /* Both recoil */
-    56% {
-        left: calc(50% - 230px);
-        transform: translateY(-50%) rotate(-15deg);
-    }
-    /* Guard stance */
-    65% {
-        left: calc(50% - 90px);
-        transform: translateY(-50%) rotate(5deg);
-    }
-    72% {
-        left: calc(50% - 90px);
-        opacity: 1;
-        transform: translateY(-50%) rotate(0deg);
-    }
+    0% { left: -500px; opacity: 0; transform: translateY(-50%) rotate(0deg); }
+    6% { opacity: 1; }
+    /* Arrive */
+    11% { left: calc(50% - 90px); transform: translateY(-50%) rotate(0deg); }
+
+    /* ── Round 1 ── */
+    14% { left: calc(50% - 120px); transform: translateY(-50%) rotate(30deg); }
+    17% { left: calc(50% - 120px); transform: translateY(-50%) rotate(-25deg); }
+    20% { left: calc(50% - 100px); transform: translateY(-50%) rotate(35deg); }
+    23% { left: calc(50% - 150px); transform: translateY(-50%) rotate(-15deg); }
+
+    /* ── Round 2 — faster ── */
+    27% { left: calc(50% - 90px); transform: translateY(-50%) rotate(40deg); }
+    30% { left: calc(50% - 140px); transform: translateY(-50%) rotate(-30deg); }
+    33% { left: calc(50% - 80px); transform: translateY(-50%) rotate(25deg); }
+    36% { left: calc(50% - 130px); transform: translateY(-50%) rotate(-20deg); }
+
+    /* ── Circling ── */
+    40% { left: calc(50% - 110px); transform: translateY(-50%) rotate(5deg); }
+    43% { left: calc(50% - 100px); transform: translateY(-50%) rotate(-5deg); }
+
+    /* ── Round 3 — final flurry ── */
+    47% { left: calc(50% - 80px); transform: translateY(-50%) rotate(45deg); }
+    50% { left: calc(50% - 150px); transform: translateY(-50%) rotate(-35deg); }
+    53% { left: calc(50% - 70px); transform: translateY(-50%) rotate(40deg); }
+    56% { left: calc(50% - 90px); transform: translateY(-50%) rotate(50deg); }
+    59% { left: calc(50% - 160px); transform: translateY(-50%) rotate(-20deg); }
+
+    /* ── Finishing blow ── */
+    64% { left: calc(50% - 70px); transform: translateY(-50%) rotate(55deg); }
+    68% { left: calc(50% - 100px); transform: translateY(-50%) rotate(10deg); }
+
+    /* Guard */
+    75% { left: calc(50% - 90px); opacity: 1; transform: translateY(-50%) rotate(0deg); }
+
     /* Exit left */
-    100% {
-        left: -500px;
-        opacity: 0;
-        transform: translateY(-50%) rotate(0deg);
-    }
+    100% { left: -500px; opacity: 0; transform: translateY(-50%) rotate(0deg); }
 }
 
-/* Right sword — enemy, mirrored */
+/* Right sword — enemy — 3 fight rounds, mirrored */
 @keyframes swordRight {
-    0% {
-        right: -500px;
-        opacity: 0;
-        transform: translateY(-50%) scaleX(-1) rotate(0deg);
-    }
-    12% { opacity: 1; }
-    /* Arrive at center-right */
-    22% {
-        right: calc(50% - 90px);
-        transform: translateY(-50%) scaleX(-1) rotate(0deg);
-    }
-    /* Clash 1: meet Geralt's slash */
-    27% {
-        right: calc(50% - 120px);
-        transform: translateY(-50%) scaleX(-1) rotate(25deg);
-    }
-    /* Push forward */
-    32% {
-        right: calc(50% - 200px);
-        transform: translateY(-50%) scaleX(-1) rotate(-30deg);
-    }
-    /* Clash 2: counter */
-    38% {
-        right: calc(50% - 100px);
-        transform: translateY(-50%) scaleX(-1) rotate(30deg);
-    }
-    /* Counter-slash */
-    43% {
-        right: calc(50% - 190px);
-        transform: translateY(-50%) scaleX(-1) rotate(-25deg);
-    }
-    /* Clash 3: block overhead */
-    50% {
-        right: calc(50% - 90px);
-        transform: translateY(-50%) scaleX(-1) rotate(40deg);
-    }
-    /* Stagger back */
-    56% {
-        right: calc(50% - 190px);
-        transform: translateY(-50%) scaleX(-1) rotate(-10deg);
-    }
-    /* Defeated stance — Geralt wins */
-    65% {
-        right: calc(50% - 200px);
-        transform: translateY(-50%) scaleX(-1) rotate(-25deg);
-    }
-    72% {
-        right: calc(50% - 200px);
-        opacity: 0.6;
-        transform: translateY(-50%) scaleX(-1) rotate(-30deg);
-    }
-    /* Exit right */
-    100% {
-        right: -500px;
-        opacity: 0;
-        transform: translateY(-50%) scaleX(-1) rotate(-30deg);
-    }
+    0% { right: -500px; opacity: 0; transform: translateY(-50%) scaleX(-1) rotate(0deg); }
+    6% { opacity: 1; }
+    /* Arrive */
+    11% { right: calc(50% - 90px); transform: translateY(-50%) scaleX(-1) rotate(0deg); }
+
+    /* ── Round 1 ── */
+    14% { right: calc(50% - 120px); transform: translateY(-50%) scaleX(-1) rotate(25deg); }
+    17% { right: calc(50% - 130px); transform: translateY(-50%) scaleX(-1) rotate(-30deg); }
+    20% { right: calc(50% - 100px); transform: translateY(-50%) scaleX(-1) rotate(30deg); }
+    23% { right: calc(50% - 140px); transform: translateY(-50%) scaleX(-1) rotate(-20deg); }
+
+    /* ── Round 2 ── */
+    27% { right: calc(50% - 90px); transform: translateY(-50%) scaleX(-1) rotate(35deg); }
+    30% { right: calc(50% - 130px); transform: translateY(-50%) scaleX(-1) rotate(-25deg); }
+    33% { right: calc(50% - 90px); transform: translateY(-50%) scaleX(-1) rotate(30deg); }
+    36% { right: calc(50% - 120px); transform: translateY(-50%) scaleX(-1) rotate(-25deg); }
+
+    /* ── Circling ── */
+    40% { right: calc(50% - 100px); transform: translateY(-50%) scaleX(-1) rotate(-5deg); }
+    43% { right: calc(50% - 110px); transform: translateY(-50%) scaleX(-1) rotate(5deg); }
+
+    /* ── Round 3 ── */
+    47% { right: calc(50% - 80px); transform: translateY(-50%) scaleX(-1) rotate(40deg); }
+    50% { right: calc(50% - 140px); transform: translateY(-50%) scaleX(-1) rotate(-30deg); }
+    53% { right: calc(50% - 80px); transform: translateY(-50%) scaleX(-1) rotate(35deg); }
+    56% { right: calc(50% - 90px); transform: translateY(-50%) scaleX(-1) rotate(30deg); }
+    59% { right: calc(50% - 150px); transform: translateY(-50%) scaleX(-1) rotate(-15deg); }
+
+    /* ── Defeated — staggering ── */
+    64% { right: calc(50% - 170px); transform: translateY(-50%) scaleX(-1) rotate(-25deg); }
+    68% { right: calc(50% - 190px); transform: translateY(-50%) scaleX(-1) rotate(-35deg); }
+
+    /* Falling */
+    75% { right: calc(50% - 200px); opacity: 0.5; transform: translateY(-50%) scaleX(-1) rotate(-30deg); }
+
+    /* Exit */
+    100% { right: -500px; opacity: 0; transform: translateY(-50%) scaleX(-1) rotate(-30deg); }
 }
 
 /* Spark flash on clash */
@@ -236,7 +217,7 @@
     z-index: 10000;
     pointer-events: none;
     user-select: none;
-    animation: swordLeft 3.5s ease-in-out forwards;
+    animation: swordLeft 7.5s ease-in-out forwards;
     filter:
         drop-shadow(0 0 8px rgba(255, 255, 255, 0.5))
         drop-shadow(0 0 25px rgba(200, 200, 210, 0.3));
@@ -250,7 +231,7 @@
     z-index: 10000;
     pointer-events: none;
     user-select: none;
-    animation: swordRight 3.5s ease-in-out forwards;
+    animation: swordRight 7.5s ease-in-out forwards;
     filter:
         drop-shadow(0 0 8px rgba(255, 255, 255, 0.4))
         drop-shadow(0 0 20px rgba(180, 180, 190, 0.3));

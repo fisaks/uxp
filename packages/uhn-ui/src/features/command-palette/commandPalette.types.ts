@@ -15,7 +15,7 @@ export type PaletteAction =
     | { type: "quick-action"; action: QuickActionId }
     | { type: "expand-location"; locationId: string }
     | { type: "collapse-location"; locationId: string }
-    | { type: "trigger-theme-effect"; mode: "full" | "ambient" }
+    | { type: "trigger-theme-effect"; mode: "full" | "silent" }
     | { type: "stop-theme-effect" };
 
 export type PaletteGroup = "Filter" | "Locations" | "Items" | "Actions" | "Quick Actions" | "Navigation";

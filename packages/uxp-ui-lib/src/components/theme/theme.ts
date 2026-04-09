@@ -895,6 +895,8 @@ export type ThemeEffectMeta = {
   name: string;
   /** Search keywords for matching in command palette / voice */
   keywords: string[];
+  /** Single-cycle duration in milliseconds — used for auto-stop on auto-triggered effects */
+  durationMs: number;
 };
 
 /**
@@ -902,16 +904,16 @@ export type ThemeEffectMeta = {
  * Themes not listed here have no activatable effect.
  */
 export const THEME_EFFECTS: Partial<Record<string, ThemeEffectMeta>> = {
-  windsOfWinter: { name: "Unleash Winter", keywords: ["winter", "blizzard", "snow", "storm", "frost", "white walker"] },
-  godzilla: { name: "Godzilla Roar", keywords: ["godzilla", "roar", "atomic", "breath", "kaiju"] },
-  wizard: { name: "Cast Spell", keywords: ["wizard", "spell", "magic", "cast", "enchant"] },
-  witcher: { name: "Cast Igni", keywords: ["witcher", "igni", "geralt", "sign", "sword"] },
+  windsOfWinter: { name: "Winter Is Coming", keywords: ["winter", "blizzard", "snow", "storm", "frost", "white walker"], durationMs: 120_000 },
+  godzilla: { name: "Godzilla Roar", keywords: ["godzilla", "roar", "atomic", "breath", "kaiju"], durationMs: 17_000 },
+  wizard: { name: "Cast Spell", keywords: ["wizard", "spell", "magic", "cast", "enchant"], durationMs: 10_000 },
+  witcher: { name: "Cast Igni", keywords: ["witcher", "igni", "geralt", "sign", "sword"], durationMs: 26_000 },
 };
 
-/** Event dispatched to trigger the current theme's effect. Detail: { mode: "full" | "ambient" } */
+/** Event dispatched to trigger the current theme's effect. Detail: { mode: "full" | "silent" } */
 export const UXP_THEME_EFFECT_EVENT = "uxpThemeEffect";
 
-export type ThemeEffectMode = "full" | "ambient";
+export type ThemeEffectMode = "full" | "silent";
 
 /** Event name dispatched to stop the currently running theme effect. */
 export const UXP_THEME_EFFECT_STOP_EVENT = "uxpThemeEffectStop";

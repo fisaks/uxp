@@ -135,6 +135,16 @@ export const UserSettingsSchema: SchemaValidate<Required<UserSettingsPayload>> =
         properties: {
             //theme: { type: "string", enum: ["dracula", "light"] },
             theme: { type: "string", enum: ["dracula", "light", "starWarsDarkSide", "tatooine", "rebelAlliance", "sunset","windsOfWinter","godzilla","wizard","witcher"] },
+            themeEffect: {
+                type: "object",
+                properties: {
+                    autoTrigger: { type: "boolean" },
+                    mode: { type: "string", enum: ["full", "silent"] },
+                    frequency: { type: "number", enum: [5, 10, 15, 30, 60] },
+                    duration: { type: "number", minimum: 0, maximum: 300 },
+                },
+                required: ["autoTrigger", "mode", "frequency"],
+            },
         },
         required: [],
     },

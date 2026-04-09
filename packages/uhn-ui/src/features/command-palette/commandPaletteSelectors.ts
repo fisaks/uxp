@@ -439,20 +439,23 @@ export const selectCommandPaletteItems = createSelector(
             items.push({
                 id: "action:theme-effect",
                 label: themeEffect.name,
+                icon: "theme:effect",
                 group: "Actions",
                 searchText: `actions theme effect ${effectKeywords}`,
                 action: { type: "trigger-theme-effect", mode: "full" },
             });
             items.push({
-                id: "action:theme-effect-ambient",
-                label: `${themeEffect.name} (ambient)`,
+                id: "action:theme-effect-silent",
+                label: `${themeEffect.name} (silent)`,
+                icon: "theme:effect",
                 group: "Actions",
-                searchText: `actions theme effect ambient silent quiet ${effectKeywords}`,
-                action: { type: "trigger-theme-effect", mode: "ambient" },
+                searchText: `actions theme effect silent muted quiet ${effectKeywords}`,
+                action: { type: "trigger-theme-effect", mode: "silent" },
             });
             items.push({
                 id: "action:theme-effect-stop",
                 label: "Stop Effect",
+                icon: "theme:stop",
                 group: "Actions",
                 searchText: `actions stop effect theme cancel dismiss ${effectKeywords}`,
                 action: { type: "stop-theme-effect" },
