@@ -14,7 +14,8 @@ export type VoiceIntent =
     | { type: "set"; value: number }
     | { type: "set-open" }
     | { type: "execute" }
-    | { type: "locate" };
+    | { type: "locate" }
+    | { type: "theme-effect" };
 
 export type VoiceCommandMatch = PaletteItem & {
     confirmLabel: string;
@@ -37,6 +38,8 @@ export type BareCommand =
 const TOGGLE_WORDS = new Set(["toggle", "switch", "flip"]);
 const EXECUTE_WORDS = new Set(["activate", "run"]);
 const COMMAND_PREFIXES = new Set(["set", "turn"]);
+const THEME_EFFECT_WORDS = new Set(["cast", "summon", "unleash"]);
+const STOP_EFFECT_WORDS = new Set(["stop", "cancel", "dismiss"]);
 const ON_WORDS = new Set(["on"]);
 const OFF_WORDS = new Set(["off"]);
 
@@ -131,7 +134,15 @@ export function parseVoiceIntent(transcript: string): ParseResult {
         return { intent: { type: "set-open" }, searchQuery: rest.join(" ") };
     }
 
-    // 2. Toggle words: "toggle", "switch", "flip"
+    // 2. Theme effect: "cast igni", "summon godzilla", "stop effect"
+    if (THEME_EFFECT_WORDS.has(first)) {
+        return { intent: { type: "theme-effect" }, searchQuery: tokens.slice(1).join(" ") };
+    }
+    if (STOP_EFFECT_WORDS.has(first) && tokens.some(t => t === "effect")) {
+        return { intent: { type: "theme-effect" }, searchQuery: "stop effect" };
+    }
+
+    // 3. Toggle words: "toggle", "switch", "flip"
     if (TOGGLE_WORDS.has(first)) {
         return { intent: { type: "toggle" }, searchQuery: tokens.slice(1).join(" ") };
     }
@@ -185,6 +196,9 @@ function filterItems(items: PaletteItem[], query: string, intent: VoiceIntent): 
 
         // "execute" intent targets scenes only
         if (intent.type === "execute" && item.action.type !== "execute-scene") return false;
+
+        // "theme-effect" intent targets only theme effect actions
+        if (intent.type === "theme-effect" && item.action.type !== "trigger-theme-effect" && item.action.type !== "stop-theme-effect") return false;
 
         // "set-open" targets analog popup items only
         if (analogOnly && !item.analogFallback) return false;
@@ -270,6 +284,10 @@ function resolveVoiceAction(item: PaletteItem, intent: VoiceIntent): VoiceComman
 
         case "execute": {
             // Scenes — use existing action
+            return { ...item, confirmLabel: item.label };
+        }
+
+        case "theme-effect": {
             return { ...item, confirmLabel: item.label };
         }
 
@@ -418,23 +436,33 @@ export function useVoiceCommandResolver(
 
         const { intent, searchQuery } = parseVoiceIntent(transcript);
 
-        const matched = filterItems(allItems, searchQuery, intent);
+        let matched = filterItems(allItems, searchQuery, intent);
+
+        // If locate intent found nothing, try as theme-effect (allows "winter is coming", "godzilla roar" etc.)
+        let effectiveIntent = intent;
+        if (intent.type === "locate" && matched.length === 0 && searchQuery) {
+            const themeMatched = filterItems(allItems, searchQuery, { type: "theme-effect" });
+            if (themeMatched.length > 0) {
+                matched = themeMatched;
+                effectiveIntent = { type: "theme-effect" };
+            }
+        }
 
         // For "set" intent, prefer analogFallback items (they have the min/max info)
         let candidates = matched;
-        if (intent.type === "set") {
+        if (effectiveIntent.type === "set") {
             const analogItems = matched.filter(item => item.analogFallback);
             if (analogItems.length > 0) candidates = analogItems;
         }
 
         // For on/off/toggle intents, prefer toggle entries over analogFallback
-        if (intent.type === "on" || intent.type === "off" || intent.type === "toggle") {
+        if (effectiveIntent.type === "on" || effectiveIntent.type === "off" || effectiveIntent.type === "toggle") {
             const toggleItems = matched.filter(item => !item.analogFallback);
             if (toggleItems.length > 0) candidates = toggleItems;
         }
 
-        const resolvedItems = candidates.map(item => resolveVoiceAction(item, intent));
+        const resolvedItems = candidates.map(item => resolveVoiceAction(item, effectiveIntent));
 
-        return { resolvedItems, intent };
+        return { resolvedItems, intent: effectiveIntent };
     }, [transcript, allItems]);
 }
