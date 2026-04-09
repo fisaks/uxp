@@ -141,13 +141,13 @@ function generateStarBurst(): ShootingStar[] {
     });
 }
 
-const WizardSpell: React.FC = () => {
+const WizardSpell: React.FC<{ silent?: boolean }> = ({ silent }) => {
     const fireflies = useMemo(generateFireflies, []);
     const [stars, setStars] = useState<ShootingStar[]>([]);
     const [burstOrigin, setBurstOrigin] = useState<{ x: number; y: number } | null>(null);
 
     const castSpell = useCallback(() => {
-        playSpellSound();
+        if (!silent) playSpellSound();
         const burst = generateStarBurst();
         setBurstOrigin({ x: burst[0].x, y: burst[0].y });
         // Stars appear slightly after the sound starts

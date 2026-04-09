@@ -1,5 +1,6 @@
 import { createSelector } from "@reduxjs/toolkit";
 import { RuntimeComplexResource, RuntimeLocation, RuntimeResource, RuntimeScene, RuntimeViewCommandTarget, UhnResourceCommand } from "@uhn/common";
+import { getUxpWindow } from "@uxp/ui-lib";
 import { LOCATION_FAVORITES } from "../favorite/components/FavoritesSection";
 import { favoriteApi } from "../favorite/favorite.api";
 import { selectAllLocations } from "../location/locationSelectors";
@@ -429,6 +430,33 @@ export const selectCommandPaletteItems = createSelector(
                     items.push(...buildSceneActions(scene, location, locationName));
                 }
             }
+        }
+
+        // Theme effect actions — only if current theme has an effect
+        const themeEffect = getUxpWindow()?.themeEffect;
+        if (themeEffect) {
+            const effectKeywords = `${themeEffect.name.toLowerCase()} ${themeEffect.keywords.join(" ")}`;
+            items.push({
+                id: "action:theme-effect",
+                label: themeEffect.name,
+                group: "Actions",
+                searchText: `actions theme effect ${effectKeywords}`,
+                action: { type: "trigger-theme-effect", mode: "full" },
+            });
+            items.push({
+                id: "action:theme-effect-ambient",
+                label: `${themeEffect.name} (ambient)`,
+                group: "Actions",
+                searchText: `actions theme effect ambient silent quiet ${effectKeywords}`,
+                action: { type: "trigger-theme-effect", mode: "ambient" },
+            });
+            items.push({
+                id: "action:theme-effect-stop",
+                label: "Stop Effect",
+                group: "Actions",
+                searchText: `actions stop effect theme cancel dismiss ${effectKeywords}`,
+                action: { type: "stop-theme-effect" },
+            });
         }
 
         return items;

@@ -1,6 +1,7 @@
 // packages/uxp-common/src/uxp-window.ts
 import type { Theme } from "@mui/material";
 import { HealthSnapshot, UserPublic } from "@uxp/common";
+import { ThemeEffectMeta } from "../../components/theme/theme";
 
 
 export type UxpWindowApi = {
@@ -8,6 +9,8 @@ export type UxpWindowApi = {
     defaultTheme: string;
     updateTheme: (mode: Theme) => void;
     getUser: () => UserPublic | undefined;
+    /** Current theme's effect metadata, or undefined if no effect available */
+    themeEffect?: ThemeEffectMeta;
     signal: {
         health: (snapshot: HealthSnapshot) => void;
     };

@@ -1,7 +1,7 @@
 import { FormControlLabel, Paper, Radio, RadioGroup, Typography } from "@mui/material";
 
 import { ThemeKeys, UserSettingsPayload } from "@uxp/common";
-import { CenteredBox, LoadingButton } from "@uxp/ui-lib";
+import { CenteredBox, LoadingButton, THEME_EFFECTS } from "@uxp/ui-lib";
 import React, { useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import { useAppDispatch } from "../../hooks";
@@ -93,6 +93,13 @@ const MySettingsPage: React.FC = () => {
             >
                 Update Settings
             </LoadingButton>
+            {mySetting?.theme && THEME_EFFECTS[mySetting.theme] && (
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+                    This theme has a visual effect. Trigger it from the command palette
+                    with &quot;{THEME_EFFECTS[mySetting.theme]!.name}&quot;. Stop with Escape, double-click/tap,
+                    or &quot;Stop Effect&quot; in the palette. An ambient (silent) version is also available.
+                </Typography>
+            )}
             {mySetting?.theme === "windsOfWinter" && snow}
             {mySetting?.theme === "godzilla" && godzilla}
             {mySetting?.theme === "wizard" && wizard}

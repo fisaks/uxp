@@ -185,7 +185,7 @@ function generateParticles() {
     }));
 }
 
-const GodzillaStrike: React.FC = () => {
+const GodzillaStrike: React.FC<{ silent?: boolean }> = ({ silent }) => {
     const [cycle, setCycle] = useState(0);
     const [phase, setPhase] = useState<"glow" | "breath" | "ending" | "idle">("idle");
     const particles = useMemo(generateParticles, []);
@@ -197,7 +197,7 @@ const GodzillaStrike: React.FC = () => {
 
         timers.push(setTimeout(() => {
             setPhase("glow");
-            playGodzillaRoar();
+            if (!silent) playGodzillaRoar();
         }, offset));
 
         timers.push(setTimeout(() => {

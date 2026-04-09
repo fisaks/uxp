@@ -340,7 +340,7 @@ const IgniSignSvg: React.FC<{ size: number }> = ({ size }) => (
     </svg>
 );
 
-const WitcherIgni: React.FC = () => {
+const WitcherIgni: React.FC<{ silent?: boolean }> = ({ silent }) => {
     const [cycle, setCycle] = useState(0);
     const [phase, setPhase] = useState<"eye" | "medallion" | "sword" | "igni" | "idle">("eye");
     const [showSwords, setShowSwords] = useState(false);
@@ -351,7 +351,7 @@ const WitcherIgni: React.FC = () => {
         setPhase("eye");
         setShowSwords(false);
         setShowIgni(false);
-        playWitcherSound();
+        if (!silent) playWitcherSound();
 
         // Medallion after eye opens
         setTimeout(() => setPhase("medallion"), 3000);

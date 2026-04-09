@@ -309,14 +309,25 @@ function playWindGust() {
    ══════════════════════════════════════════ */
 
 function generateSnowflakes() {
-    return [...Array(SNOWFLAKE_COUNT)].map(() => ({
-        left: Math.random() * 100,
-        size: 3 + Math.random() * 6,
-        duration: 5 + Math.random() * 7,
-        delay: Math.random() * -12,
-        wind: (80 + Math.random() * 180) + "px",
-        opacity: 0.5 + Math.random() * 0.5,
-    }));
+    return [...Array(SNOWFLAKE_COUNT)].map(() => {
+        // ~70% drift right, ~30% drift left — covers the whole screen
+        const driftRight = Math.random() > 0.3;
+        const wind = driftRight
+            ? (60 + Math.random() * 160)
+            : -(40 + Math.random() * 120);
+        // Flakes that drift right can start further left, flakes drifting left start further right
+        const left = driftRight
+            ? -10 + Math.random() * 90
+            : 20 + Math.random() * 100;
+        return {
+            left,
+            size: 3 + Math.random() * 6,
+            duration: 5 + Math.random() * 7,
+            delay: Math.random() * -12,
+            wind: wind + "px",
+            opacity: 0.5 + Math.random() * 0.5,
+        };
+    });
 }
 
 /* ══════════════════════════════════════════
@@ -344,7 +355,7 @@ function generateEyePairs() {
     }));
 }
 
-const Snowfall: React.FC = () => {
+const Snowfall: React.FC<{ silent?: boolean }> = ({ silent }) => {
     const snowflakes = useMemo(generateSnowflakes, []);
     const gustFlakes = useMemo(generateGustFlakes, []);
     const [activeEvent, setActiveEvent] = useState<{ type: WinterEvent; key: number } | null>(null);
@@ -363,9 +374,10 @@ const Snowfall: React.FC = () => {
 
     // Start/stop ambient wind loop
     useEffect(() => {
+        if (silent) return;
         windRef.current = createWindLoop();
         return () => { windRef.current?.stop(); };
-    }, []);
+    }, [silent]);
 
     // Shuffled queue — all events play once in random order, then reshuffle
     useEffect(() => {
@@ -399,19 +411,19 @@ const Snowfall: React.FC = () => {
 
             setActiveEvent({ type: event, key });
 
-            if (event === "howl") {
+            if (event === "howl" && !silent) {
                 playWolfHowl();
                 setTimeout(() => playWolfHowl(), 1800);
                 if (duration > 10000) setTimeout(() => playWolfHowl(), 3500);
                 if (duration > 13000) setTimeout(() => playWolfHowl(), 6000);
             }
-            if (event === "ice_crack") {
+            if (event === "ice_crack" && !silent) {
                 playIceCrack();
                 if (duration > 7000) setTimeout(() => playIceCrack(), 3500);
             }
             if (event === "eyes") setEyePairs(generateEyePairs());
             if (event === "gust") {
-                playWindGust();
+                if (!silent) playWindGust();
                 const fullEnd = Math.round(duration * 0.7);
                 const calmEnd = Math.round(duration * 0.95);
                 setGustPhase("full");

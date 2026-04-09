@@ -1,4 +1,4 @@
-import { defaultTheme, draculaTheme, getUxpWindow, godzillaTheme, rebelAllianceTheme, starWarsDarkSideTheme, sunsetTheme, tatooineTheme, windsOfWinterTheme, witcherTheme, wizardTheme } from "@uxp/ui-lib";
+import { defaultTheme, draculaTheme, getUxpWindow, godzillaTheme, rebelAllianceTheme, starWarsDarkSideTheme, sunsetTheme, tatooineTheme, THEME_EFFECTS, windsOfWinterTheme, witcherTheme, wizardTheme } from "@uxp/ui-lib";
 
 import React, { useEffect } from "react";
 import { useSelector } from "react-redux";
@@ -7,26 +7,31 @@ import { selectMySetting } from "../settings/mySettingSelector";
 const DEFAULT_TEHME = "dracula";
 export const useUxpTheme = () => {
     const mySettings = useSelector(selectMySetting());
+    const themeKey = mySettings?.theme ?? DEFAULT_TEHME;
 
     const theme = React.useMemo(
         () => {
-            const t = mySettings?.theme ?? DEFAULT_TEHME;
-            if (t === "dracula") return draculaTheme
-            if (t === "starWarsDarkSide") return starWarsDarkSideTheme;
-            if (t === "rebelAlliance") return rebelAllianceTheme;
-            if (t === "sunset") return sunsetTheme;
-            if (t === "tatooine") return tatooineTheme;
-            if (t === "windsOfWinter") return windsOfWinterTheme;
-            if (t === "godzilla") return godzillaTheme;
-            if (t === "wizard") return wizardTheme;
-            if (t === "witcher") return witcherTheme;
+            if (themeKey === "dracula") return draculaTheme
+            if (themeKey === "starWarsDarkSide") return starWarsDarkSideTheme;
+            if (themeKey === "rebelAlliance") return rebelAllianceTheme;
+            if (themeKey === "sunset") return sunsetTheme;
+            if (themeKey === "tatooine") return tatooineTheme;
+            if (themeKey === "windsOfWinter") return windsOfWinterTheme;
+            if (themeKey === "godzilla") return godzillaTheme;
+            if (themeKey === "wizard") return wizardTheme;
+            if (themeKey === "witcher") return witcherTheme;
             return defaultTheme
         },
-        [mySettings?.theme]
+        [themeKey]
     );
+
     useEffect(() => {
-        getUxpWindow()?.updateTheme?.(theme);
-    }, [theme]);
+        const uxp = getUxpWindow();
+        if (uxp) {
+            uxp.updateTheme?.(theme);
+            uxp.themeEffect = THEME_EFFECTS[themeKey];
+        }
+    }, [theme, themeKey]);
 
     return theme;
 };

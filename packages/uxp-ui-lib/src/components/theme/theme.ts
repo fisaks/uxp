@@ -881,3 +881,37 @@ export const defaultTheme = createTheme(
     },
   })
 );
+
+/* ══════════════════════════════════════════
+ *  Theme effect metadata
+ *
+ *  Exposes whether a theme has an activatable effect,
+ *  its display name (e.g. "Cast Igni"), and optional
+ *  keywords for command palette / voice search.
+ * ══════════════════════════════════════════ */
+
+export type ThemeEffectMeta = {
+  /** Display name shown in command palette, e.g. "Cast Igni" */
+  name: string;
+  /** Search keywords for matching in command palette / voice */
+  keywords: string[];
+};
+
+/**
+ * Map of theme keys that have effects → their metadata.
+ * Themes not listed here have no activatable effect.
+ */
+export const THEME_EFFECTS: Partial<Record<string, ThemeEffectMeta>> = {
+  windsOfWinter: { name: "Unleash Winter", keywords: ["winter", "blizzard", "snow", "storm", "frost", "white walker"] },
+  godzilla: { name: "Godzilla Roar", keywords: ["godzilla", "roar", "atomic", "breath", "kaiju"] },
+  wizard: { name: "Cast Spell", keywords: ["wizard", "spell", "magic", "cast", "enchant"] },
+  witcher: { name: "Cast Igni", keywords: ["witcher", "igni", "geralt", "sign", "sword"] },
+};
+
+/** Event dispatched to trigger the current theme's effect. Detail: { mode: "full" | "ambient" } */
+export const UXP_THEME_EFFECT_EVENT = "uxpThemeEffect";
+
+export type ThemeEffectMode = "full" | "ambient";
+
+/** Event name dispatched to stop the currently running theme effect. */
+export const UXP_THEME_EFFECT_STOP_EVENT = "uxpThemeEffectStop";
