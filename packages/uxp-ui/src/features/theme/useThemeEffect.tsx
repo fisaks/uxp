@@ -12,7 +12,7 @@ import RebelAllianceEffect from "./RebelAllianceEffect";
 import SunsetEffect from "./SunsetEffect";
 import TatooineEffect from "./TatooineEffect";
 
-const EFFECT_COMPONENTS: Record<string, React.FC<{ silent?: boolean }>> = {
+export const EFFECT_COMPONENTS: Record<string, React.FC<{ silent?: boolean }>> = {
     dracula: DraculaEffect,
     starWarsDarkSide: DarkSideEffect,
     rebelAlliance: RebelAllianceEffect,

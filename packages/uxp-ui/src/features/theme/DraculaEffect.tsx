@@ -8,54 +8,6 @@ const ALL_EVENTS: DraculaEvent[] = ["bats", "blood", "midnight"];
    SOUNDS
    ══════════════════════════════════════════ */
 
-/** Clock ticking loop — grandfather clock */
-function createClockTicking(): { stop: () => void } {
-    const ctx = new AudioContext();
-    const master = ctx.createGain();
-    master.gain.value = 0.1;
-    master.connect(ctx.destination);
-
-    let stopped = false;
-
-    function tick(time: number) {
-        if (stopped) return;
-
-        // Tick — short high click
-        const tickOsc = ctx.createOscillator();
-        tickOsc.type = "sine";
-        tickOsc.frequency.value = 800;
-        const tickGain = ctx.createGain();
-        tickGain.gain.setValueAtTime(0.15, time);
-        tickGain.gain.exponentialRampToValueAtTime(0.001, time + 0.03);
-        tickOsc.connect(tickGain).connect(master);
-        tickOsc.start(time);
-        tickOsc.stop(time + 0.03);
-
-        // Tock — slightly lower, 0.5s later
-        const tockOsc = ctx.createOscillator();
-        tockOsc.type = "sine";
-        tockOsc.frequency.value = 600;
-        const tockGain = ctx.createGain();
-        tockGain.gain.setValueAtTime(0.12, time + 0.5);
-        tockGain.gain.exponentialRampToValueAtTime(0.001, time + 0.53);
-        tockOsc.connect(tockGain).connect(master);
-        tockOsc.start(time + 0.5);
-        tockOsc.stop(time + 0.53);
-
-        // Schedule next tick-tock
-        setTimeout(() => tick(ctx.currentTime), 1000);
-    }
-
-    tick(ctx.currentTime + 0.5);
-
-    return {
-        stop: () => {
-            stopped = true;
-            master.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.5);
-            setTimeout(() => ctx.close(), 1000);
-        },
-    };
-}
 
 /** Midnight clock — ticking that accelerates, then 3 deep bell tolls */
 function playMidnightClock() {
@@ -188,48 +140,6 @@ function playCoffinCreak() {
     setTimeout(() => ctx.close(), (dur + 1) * 1000);
 }
 
-/** Thunder crack for lightning flash */
-function playThunderCrack() {
-    const ctx = new AudioContext();
-    const now = ctx.currentTime;
-    const master = ctx.createGain();
-    master.gain.setValueAtTime(0.15, now);
-    master.connect(ctx.destination);
-
-    // Sharp crack
-    const crackBuf = ctx.createBuffer(1, ctx.sampleRate * 0.1, ctx.sampleRate);
-    const cd = crackBuf.getChannelData(0);
-    for (let i = 0; i < cd.length; i++) cd[i] = Math.random() * 2 - 1;
-    const crack = ctx.createBufferSource();
-    crack.buffer = crackBuf;
-    const crackHP = ctx.createBiquadFilter();
-    crackHP.type = "highpass";
-    crackHP.frequency.value = 1500;
-    const crackGain = ctx.createGain();
-    crackGain.gain.setValueAtTime(0.4, now);
-    crackGain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
-    crack.connect(crackHP).connect(crackGain).connect(master);
-    crack.start(now);
-    crack.stop(now + 0.1);
-
-    // Rolling rumble
-    const rumbleBuf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
-    const rd = rumbleBuf.getChannelData(0);
-    for (let i = 0; i < rd.length; i++) rd[i] = Math.random() * 2 - 1;
-    const rumble = ctx.createBufferSource();
-    rumble.buffer = rumbleBuf;
-    const rumbleLP = ctx.createBiquadFilter();
-    rumbleLP.type = "lowpass";
-    rumbleLP.frequency.value = 200;
-    const rumbleGain = ctx.createGain();
-    rumbleGain.gain.setValueAtTime(0.15, now + 0.1);
-    rumbleGain.gain.exponentialRampToValueAtTime(0.001, now + 2);
-    rumble.connect(rumbleLP).connect(rumbleGain).connect(master);
-    rumble.start(now + 0.05);
-    rumble.stop(now + 2);
-
-    setTimeout(() => ctx.close(), 3000);
-}
 
 /* ══════════════════════════════════════════
    SVGs

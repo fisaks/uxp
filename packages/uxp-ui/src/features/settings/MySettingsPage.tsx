@@ -9,15 +9,7 @@ import { selectIsLoading, selectIsProcessed } from "../loading/loadingSelectors"
 import { selectCurrentUser } from "../user/userSelectors";
 import { selectMySetting } from "./mySettingSelector";
 import { updateMySettings } from "./mySettingThunk";
-import DraculaEffect from "../theme/DraculaEffect";
-import Snowfall from "../theme/Snowfall";
-import GodzillaStrike from "../theme/GodzillaStrike";
-import WizardSpell from "../theme/WizardSpell";
-import WitcherIgni from "../theme/WitcherIgni";
-import DarkSideEffect from "../theme/DarkSideEffect";
-import SunsetEffect from "../theme/SunsetEffect";
-import TatooineEffect from "../theme/TatooineEffect";
-import RebelAllianceEffect from "../theme/RebelAllianceEffect";
+import { EFFECT_COMPONENTS } from "../theme/useThemeEffect";
 
 type SettingsDataProps = {
     staleData: UserSettingsPayload;
@@ -143,15 +135,8 @@ const MySettingsPage: React.FC = () => {
         themeEffect: mySetting?.themeEffect ?? { autoTrigger: false, mode: "silent", frequency: 15, duration: 0 },
     });
     const dispatch = useAppDispatch();
-    const dracula = useMemo(() => <DraculaEffect />, []);
-    const snow = useMemo(() => <Snowfall />, []);
-    const sunset = useMemo(() => <SunsetEffect />, []);
-    const tatooine = useMemo(() => <TatooineEffect />, []);
-    const darkSide = useMemo(() => <DarkSideEffect />, []);
-    const rebelAlliance = useMemo(() => <RebelAllianceEffect />, []);
-    const godzilla = useMemo(() => <GodzillaStrike />, []);
-    const wizard = useMemo(() => <WizardSpell />, []);
-    const witcher = useMemo(() => <WitcherIgni />, []);
+    const EffectPreview = mySetting?.theme ? EFFECT_COMPONENTS[mySetting.theme] : undefined;
+    const effectPreview = useMemo(() => EffectPreview ? <EffectPreview /> : null, [EffectPreview]);
     const update = () => {
         dispatch(updateMySettings(staleData));
     };
@@ -190,15 +175,7 @@ const MySettingsPage: React.FC = () => {
             >
                 Update Settings
             </LoadingButton>
-            {mySetting?.theme === "sunset" && sunset}
-            {mySetting?.theme === "tatooine" && tatooine}
-            {mySetting?.theme === "dracula" && dracula}
-            {mySetting?.theme === "starWarsDarkSide" && darkSide}
-            {mySetting?.theme === "rebelAlliance" && rebelAlliance}
-            {mySetting?.theme === "windsOfWinter" && snow}
-            {mySetting?.theme === "godzilla" && godzilla}
-            {mySetting?.theme === "wizard" && wizard}
-            {mySetting?.theme === "witcher" && witcher}
+            {effectPreview}
         </CenteredBox>
     );
 };

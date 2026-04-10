@@ -109,28 +109,3 @@
         drop-shadow(0 0 30px rgba(80, 30, 120, 0.2));
 }
 
-/* ══════════════════════════════════════════
-   LIGHTNING FLASH — brief purple flash
-   ══════════════════════════════════════════ */
-@keyframes purpleFlash {
-    0% { opacity: 0; }
-    4% { opacity: 1; }
-    8% { opacity: 0; }
-    12% { opacity: 0.7; }
-    16% { opacity: 0; }
-    22% { opacity: 0.4; }
-    28% { opacity: 0; }
-    100% { opacity: 0; }
-}
-
-.lightningFlash {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    z-index: 10002;
-    pointer-events: none;
-    background: rgba(140, 80, 200, 0.3);
-    animation: purpleFlash 2.5s ease-in-out forwards;
-}
