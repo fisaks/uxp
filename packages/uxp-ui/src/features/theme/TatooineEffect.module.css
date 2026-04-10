@@ -1,0 +1,306 @@
+/* TatooineEffect.module.css */
+
+/* ══════════════════════════════════════════
+   ALWAYS-ON: Heat shimmer + sand particles
+   ══════════════════════════════════════════ */
+@keyframes heatShimmer {
+    0%, 100% { transform: scaleY(1); }
+    50% { transform: scaleY(1.003); }
+}
+
+.heatShimmer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100vw;
+    height: 30vh;
+    z-index: 9996;
+    pointer-events: none;
+    background: linear-gradient(to top, rgba(210, 180, 140, 0.04), transparent);
+    animation: heatShimmer 3s ease-in-out infinite;
+}
+
+@keyframes sandDrift {
+    0% {
+        transform: translate(0, -10px);
+        opacity: 0;
+    }
+    5% { opacity: var(--sand-opacity); }
+    95% { opacity: var(--sand-opacity); }
+    100% {
+        transform: translate(var(--sand-wind), 100vh);
+        opacity: 0;
+    }
+}
+
+.sandParticle {
+    --sand-opacity: 0.4;
+    --sand-wind: 40px;
+    position: fixed;
+    top: -10px;
+    z-index: 9997;
+    pointer-events: none;
+    border-radius: 50%;
+    background: rgba(210, 180, 130, 0.6);
+    animation: sandDrift linear infinite;
+}
+
+/* ══════════════════════════════════════════
+   TWIN SUNS — two suns on the horizon
+   ══════════════════════════════════════════ */
+@keyframes sunRise {
+    0% { bottom: -80px; opacity: 0; }
+    15% { opacity: 0.8; }
+    40% { bottom: 45vh; opacity: 1; }
+    70% { bottom: 47vh; opacity: 0.9; }
+    85% { opacity: 0.6; }
+    100% { bottom: 45vh; opacity: 0; }
+}
+
+@keyframes sunGlow {
+    0%, 100% { filter: drop-shadow(0 0 20px var(--sun-color)) drop-shadow(0 0 50px var(--sun-color)); }
+    50% { filter: drop-shadow(0 0 30px var(--sun-color)) drop-shadow(0 0 70px var(--sun-color)); }
+}
+
+.twinSun {
+    --sun-color: rgba(255, 180, 50, 0.5);
+    position: fixed;
+    z-index: 9998;
+    pointer-events: none;
+    border-radius: 50%;
+    animation:
+        sunRise 15s ease-in-out forwards,
+        sunGlow 3s ease-in-out infinite;
+}
+
+/* Horizon glow beneath the suns */
+@keyframes horizonGlow {
+    0% { opacity: 0; }
+    20% { opacity: 0.3; }
+    50% { opacity: 0.4; }
+    80% { opacity: 0.2; }
+    100% { opacity: 0; }
+}
+
+.horizonGlow {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100vw;
+    height: 25vh;
+    z-index: 9997;
+    pointer-events: none;
+    background: linear-gradient(to top, rgba(255, 150, 50, 0.2), rgba(255, 200, 100, 0.1), transparent);
+    animation: horizonGlow 15s ease-in-out forwards;
+}
+
+/* ══════════════════════════════════════════
+   SANDSTORM — heavy particles + visibility drop
+   ══════════════════════════════════════════ */
+@keyframes stormOverlay {
+    0% { opacity: 0; }
+    10% { opacity: 0.4; }
+    40% { opacity: 0.5; }
+    60% { opacity: 0.45; }
+    80% { opacity: 0.25; }
+    90% { opacity: 0.1; }
+    100% { opacity: 0; }
+}
+
+.stormOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 10000;
+    pointer-events: none;
+    background: rgba(170, 140, 90, 0.35);
+    animation: stormOverlay 15s ease-in-out forwards;
+}
+
+@keyframes stormParticle {
+    0% {
+        left: -30px;
+        opacity: 0;
+    }
+    5% { opacity: 0.7; }
+    100% {
+        left: calc(100% + 30px);
+        opacity: 0.3;
+        transform: translateY(var(--storm-drop));
+    }
+}
+
+.stormParticle {
+    --storm-drop: 50px;
+    position: fixed;
+    left: -30px;
+    z-index: 10001;
+    pointer-events: none;
+    border-radius: 50%;
+    background: rgba(200, 170, 120, 0.8);
+    animation: stormParticle linear forwards;
+}
+
+/* ══════════════════════════════════════════
+   SARLACC PIT — circular maw from bottom
+   ══════════════════════════════════════════ */
+@keyframes sarlaccOpen {
+    0% { width: 0; height: 0; opacity: 0; }
+    15% { opacity: 0.7; }
+    40% { width: 250px; height: 150px; opacity: 0.8; }
+    70% { width: 260px; height: 155px; opacity: 0.7; }
+    90% { opacity: 0.3; }
+    100% { width: 200px; height: 120px; opacity: 0; }
+}
+
+.sarlaccPit {
+    position: fixed;
+    bottom: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10000;
+    pointer-events: none;
+    border-radius: 50%;
+    background: radial-gradient(
+        ellipse,
+        rgba(20, 10, 5, 0.9) 0%,
+        rgba(60, 40, 20, 0.7) 30%,
+        rgba(100, 70, 40, 0.4) 60%,
+        rgba(150, 120, 80, 0.2) 80%,
+        transparent 100%
+    );
+    border: 2px solid rgba(100, 70, 40, 0.4);
+    animation: sarlaccOpen 7s ease-in-out forwards;
+}
+
+/* Tentacles around the pit — emerge after pit opens, retract before it closes */
+@keyframes tentacleEmerge {
+    0% { height: 0; opacity: 0; }
+    /* Start emerging early while pit is still opening */
+    10% { height: 0; opacity: 0; }
+    30% { height: var(--tent-height); opacity: 0.7; }
+    65% { height: var(--tent-height); opacity: 0.6; }
+    /* Retract before pit closes */
+    80% { height: 5px; opacity: 0.3; }
+    100% { height: 0; opacity: 0; }
+}
+
+@keyframes tentacleWave {
+    0%, 100% { transform: rotate(var(--tent-angle)) scaleY(1); }
+    50% { transform: rotate(var(--tent-angle)) scaleY(1.2); }
+}
+
+.tentacle {
+    --tent-angle: 0deg;
+    --tent-height: 40px;
+    position: fixed;
+    bottom: 20px;
+    z-index: 10001;
+    pointer-events: none;
+    width: 3px;
+    height: 0;
+    border-radius: 2px;
+    background: linear-gradient(to top, rgba(80, 60, 30, 0.8), rgba(100, 75, 40, 0.6), rgba(120, 90, 50, 0.3), transparent);
+    transform-origin: bottom center;
+    animation:
+        tentacleEmerge 7s ease-in-out forwards,
+        tentacleWave 1.5s ease-in-out infinite;
+}
+
+/* ══════════════════════════════════════════
+   MOISTURE VAPORATORS — silhouettes from bottom
+   ══════════════════════════════════════════ */
+@keyframes vaporatorAppear {
+    0% { opacity: 0; transform: scale(var(--vap-scale, 1)) translateY(20px); }
+    15% { opacity: 0.7; transform: scale(var(--vap-scale, 1)) translateY(0); }
+    70% { opacity: 0.6; }
+    90% { opacity: 0.2; }
+    100% { opacity: 0; }
+}
+
+.vaporator {
+    position: fixed;
+    z-index: 9999;
+    pointer-events: none;
+    user-select: none;
+    animation: vaporatorAppear 8s ease-in-out forwards;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+/* ══════════════════════════════════════════
+   JAWA EYES — pairs of yellow eyes in darkness
+   ══════════════════════════════════════════ */
+@keyframes jawaAppear {
+    0% { opacity: 0; }
+    15% { opacity: 0.9; }
+    70% { opacity: 0.8; }
+    90% { opacity: 0.3; }
+    100% { opacity: 0; }
+}
+
+@keyframes jawaFlicker {
+    0%, 100% { opacity: 0.8; }
+    30% { opacity: 1; }
+    60% { opacity: 0.6; }
+    80% { opacity: 0.9; }
+}
+
+.jawaEyes {
+    position: fixed;
+    z-index: 10000;
+    pointer-events: none;
+    user-select: none;
+    display: flex;
+    gap: 10px;
+    animation: jawaAppear 5s ease-in-out forwards;
+}
+
+.jawaEye {
+    width: 8px;
+    height: 6px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 200, 0, 1) 0%, rgba(255, 160, 0, 0.8) 50%, transparent 100%);
+    box-shadow: 0 0 6px rgba(255, 180, 0, 0.8), 0 0 12px rgba(255, 150, 0, 0.4);
+    animation: jawaFlicker 1s ease-in-out infinite;
+}
+
+/* ══════════════════════════════════════════
+   SHOOTING STARS / METEORITES
+   ══════════════════════════════════════════ */
+@keyframes meteorStreak {
+    0% {
+        clip-path: inset(0 100% 0 0);
+        opacity: 0;
+    }
+    5% { opacity: 1; }
+    30% {
+        clip-path: inset(0 0 0 0);
+        opacity: 1;
+    }
+    80% {
+        clip-path: inset(0 0 0 80%);
+        opacity: 0.5;
+    }
+    100% {
+        clip-path: inset(0 0 0 100%);
+        opacity: 0;
+    }
+}
+
+.meteor {
+    position: fixed;
+    z-index: 10000;
+    pointer-events: none;
+    border-radius: 1px;
+    background: linear-gradient(
+        to right,
+        transparent 0%,
+        rgba(255, 240, 200, 0.3) 20%,
+        rgba(255, 230, 180, 0.7) 60%,
+        rgba(255, 255, 255, 0.95) 100%
+    );
+    box-shadow: 0 0 6px rgba(255, 230, 180, 0.7), 0 0 15px rgba(255, 200, 130, 0.4);
+    animation: meteorStreak ease-out forwards;
+}
