@@ -1,0 +1,250 @@
+/* SunsetEffect.module.css */
+
+/* ══════════════════════════════════════════
+   ALWAYS-ON: Warm golden ambient glow
+   ══════════════════════════════════════════ */
+@keyframes warmPulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 0.8; }
+}
+
+.warmAmbient {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100vw;
+    height: 50vh;
+    z-index: 9996;
+    pointer-events: none;
+    background: radial-gradient(
+        ellipse 90% 70% at center bottom,
+        rgba(255, 120, 40, 0.15) 0%,
+        rgba(255, 80, 20, 0.08) 30%,
+        rgba(200, 60, 20, 0.04) 60%,
+        transparent 100%
+    );
+    animation: warmPulse 6s ease-in-out infinite;
+}
+
+/* ══════════════════════════════════════════
+   SUN SETTING — large sun sinking with sky gradient
+   ══════════════════════════════════════════ */
+@keyframes sunSet {
+    0% { bottom: 35vh; opacity: 0; }
+    10% { opacity: 0.9; }
+    40% { bottom: 25vh; opacity: 1; }
+    70% { bottom: 10vh; opacity: 0.8; }
+    90% { bottom: 2vh; opacity: 0.5; }
+    100% { bottom: -40px; opacity: 0; }
+}
+
+@keyframes sunGlow {
+    0%, 100% { filter: drop-shadow(0 0 30px rgba(255, 150, 50, 0.6)) drop-shadow(0 0 60px rgba(255, 100, 30, 0.3)); }
+    50% { filter: drop-shadow(0 0 40px rgba(255, 150, 50, 0.8)) drop-shadow(0 0 80px rgba(255, 100, 30, 0.4)); }
+}
+
+.settingSun {
+    position: fixed;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9998;
+    pointer-events: none;
+    border-radius: 50%;
+    animation:
+        sunSet 14s ease-in-out forwards,
+        sunGlow 3s ease-in-out infinite;
+}
+
+@keyframes skyGradient {
+    0% { opacity: 0; }
+    10% { opacity: 0.4; }
+    50% { opacity: 0.5; }
+    80% { opacity: 0.3; }
+    100% { opacity: 0; }
+}
+
+.skyGlow {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100vw;
+    height: 60vh;
+    z-index: 9997;
+    pointer-events: none;
+    background: linear-gradient(
+        to top,
+        rgba(255, 100, 50, 0.2) 0%,
+        rgba(255, 150, 80, 0.15) 20%,
+        rgba(200, 100, 150, 0.1) 50%,
+        rgba(100, 50, 150, 0.05) 80%,
+        transparent 100%
+    );
+    animation: skyGradient 14s ease-in-out forwards;
+}
+
+/* ══════════════════════════════════════════
+   PALM TREES — silhouettes swaying
+   ══════════════════════════════════════════ */
+@keyframes palmAppear {
+    0% { opacity: 0; }
+    15% { opacity: 0.6; }
+    70% { opacity: 0.5; }
+    90% { opacity: 0.2; }
+    100% { opacity: 0; }
+}
+
+@keyframes palmSway {
+    0%, 100% { transform: rotate(var(--palm-base)) scaleX(var(--palm-flip)); }
+    30% { transform: rotate(calc(var(--palm-base) + 3deg)) scaleX(var(--palm-flip)); }
+    70% { transform: rotate(calc(var(--palm-base) - 2deg)) scaleX(var(--palm-flip)); }
+}
+
+.palmTree {
+    --palm-base: 0deg;
+    --palm-flip: 1;
+    position: fixed;
+    bottom: 0;
+    z-index: 9999;
+    pointer-events: none;
+    transform-origin: bottom center;
+    animation:
+        palmAppear 10s ease-in-out forwards,
+        palmSway 4s ease-in-out infinite;
+}
+
+/* ══════════════════════════════════════════
+   OCEAN WAVES — gentle waves at bottom
+   ══════════════════════════════════════════ */
+@keyframes waveRoll {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(-30px); }
+}
+
+@keyframes waveAppear {
+    0% { opacity: 0; }
+    15% { opacity: 0.4; }
+    70% { opacity: 0.35; }
+    100% { opacity: 0; }
+}
+
+.wave {
+    position: fixed;
+    bottom: 0;
+    left: -5%;
+    width: 110%;
+    z-index: 9998;
+    pointer-events: none;
+    border-radius: 50% 50% 0 0;
+    animation:
+        waveAppear 8s ease-in-out forwards,
+        waveRoll 4s ease-in-out infinite;
+}
+
+/* ══════════════════════════════════════════
+   SEAGULLS — silhouettes flying across
+   ══════════════════════════════════════════ */
+@keyframes seagullFly {
+    0% { left: -60px; opacity: 0; }
+    8% { opacity: 0.7; }
+    50% { opacity: 0.6; }
+    92% { opacity: 0.3; }
+    100% { left: calc(100% + 60px); opacity: 0; }
+}
+
+@keyframes wingFlap {
+    0%, 100% { transform: scaleY(1); }
+    50% { transform: scaleY(0.7); }
+}
+
+.seagull {
+    position: fixed;
+    left: -60px;
+    z-index: 10000;
+    pointer-events: none;
+    user-select: none;
+    animation: seagullFly ease-in-out forwards;
+}
+
+.seagullInner {
+    animation: wingFlap 0.6s ease-in-out infinite;
+}
+
+/* ══════════════════════════════════════════
+   LENS FLARE — cinematic warm light sweep
+   ══════════════════════════════════════════ */
+@keyframes flareSweep {
+    0% {
+        left: -20%;
+        top: 20%;
+        opacity: 0;
+    }
+    15% { opacity: 0.5; }
+    50% {
+        left: 60%;
+        top: 35%;
+        opacity: 0.6;
+    }
+    85% { opacity: 0.3; }
+    100% {
+        left: 110%;
+        top: 45%;
+        opacity: 0;
+    }
+}
+
+.lensFlare {
+    position: fixed;
+    width: 200px;
+    height: 200px;
+    z-index: 10000;
+    pointer-events: none;
+    border-radius: 50%;
+    background: radial-gradient(
+        circle,
+        rgba(255, 220, 100, 0.5) 0%,
+        rgba(255, 180, 50, 0.3) 30%,
+        rgba(255, 130, 30, 0.1) 60%,
+        transparent 100%
+    );
+    filter:
+        blur(5px)
+        drop-shadow(0 0 30px rgba(255, 180, 80, 0.4))
+        drop-shadow(0 0 60px rgba(255, 130, 50, 0.2));
+    animation: flareSweep 6s ease-in-out forwards;
+}
+
+@keyframes streakSweep {
+    0% {
+        left: -30%;
+        opacity: 0;
+    }
+    20% { opacity: 0.4; }
+    50% {
+        left: 50%;
+        opacity: 0.5;
+    }
+    80% { opacity: 0.2; }
+    100% {
+        left: 120%;
+        opacity: 0;
+    }
+}
+
+.flareStreak {
+    position: fixed;
+    top: 30%;
+    height: 2px;
+    width: 40vw;
+    z-index: 10001;
+    pointer-events: none;
+    background: linear-gradient(
+        to right,
+        transparent,
+        rgba(255, 220, 150, 0.2),
+        rgba(255, 200, 100, 0.5),
+        rgba(255, 220, 150, 0.2),
+        transparent
+    );
+    filter: blur(1px);
+    animation: streakSweep 6s ease-in-out forwards;
+}
