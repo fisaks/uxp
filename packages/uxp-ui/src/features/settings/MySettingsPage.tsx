@@ -9,6 +9,7 @@ import { selectIsLoading, selectIsProcessed } from "../loading/loadingSelectors"
 import { selectCurrentUser } from "../user/userSelectors";
 import { selectMySetting } from "./mySettingSelector";
 import { updateMySettings } from "./mySettingThunk";
+import DraculaEffect from "../theme/DraculaEffect";
 import Snowfall from "../theme/Snowfall";
 import GodzillaStrike from "../theme/GodzillaStrike";
 import WizardSpell from "../theme/WizardSpell";
@@ -142,6 +143,7 @@ const MySettingsPage: React.FC = () => {
         themeEffect: mySetting?.themeEffect ?? { autoTrigger: false, mode: "silent", frequency: 15, duration: 0 },
     });
     const dispatch = useAppDispatch();
+    const dracula = useMemo(() => <DraculaEffect />, []);
     const snow = useMemo(() => <Snowfall />, []);
     const sunset = useMemo(() => <SunsetEffect />, []);
     const tatooine = useMemo(() => <TatooineEffect />, []);
@@ -190,6 +192,7 @@ const MySettingsPage: React.FC = () => {
             </LoadingButton>
             {mySetting?.theme === "sunset" && sunset}
             {mySetting?.theme === "tatooine" && tatooine}
+            {mySetting?.theme === "dracula" && dracula}
             {mySetting?.theme === "starWarsDarkSide" && darkSide}
             {mySetting?.theme === "rebelAlliance" && rebelAlliance}
             {mySetting?.theme === "windsOfWinter" && snow}

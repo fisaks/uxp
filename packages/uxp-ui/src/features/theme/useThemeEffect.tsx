@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { UXP_THEME_EFFECT_EVENT, UXP_THEME_EFFECT_STOP_EVENT, THEME_EFFECTS, ThemeEffectMode } from "@uxp/ui-lib";
 import { selectMySetting } from "../settings/mySettingSelector";
+import DraculaEffect from "./DraculaEffect";
 import Snowfall from "./Snowfall";
 import GodzillaStrike from "./GodzillaStrike";
 import WizardSpell from "./WizardSpell";
@@ -12,6 +13,7 @@ import SunsetEffect from "./SunsetEffect";
 import TatooineEffect from "./TatooineEffect";
 
 const EFFECT_COMPONENTS: Record<string, React.FC<{ silent?: boolean }>> = {
+    dracula: DraculaEffect,
     starWarsDarkSide: DarkSideEffect,
     rebelAlliance: RebelAllianceEffect,
     sunset: SunsetEffect,
