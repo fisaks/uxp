@@ -906,9 +906,9 @@ export type ThemeEffectMeta = {
 export const THEME_EFFECTS: Partial<Record<string, ThemeEffectMeta>> = {
   starWarsDarkSide: { name: "Join the Dark Side", keywords: ["dark side", "vader", "sith", "maul", "lightsaber", "force", "star wars"], durationMs: 60_000 },
   rebelAlliance: { name: "May the Force Be With You", keywords: ["rebel", "alliance", "jedi", "force", "x-wing", "falcon", "star wars", "r2"], durationMs: 50_000 },
-  dracula: { name: "Rise from the Coffin", keywords: ["dracula", "vampire", "bats", "blood", "coffin", "thunder"], durationMs: 30_000 },
+  dracula: { name: "Rise from the Coffin", keywords: ["dracula", "vampire", "bats", "blood", "coffin", "thunder"], durationMs: 45_000 },
   sunset: { name: "Golden Hour", keywords: ["sunset", "beach", "ocean", "palm", "seagull", "lantern", "golden"], durationMs: 50_000 },
-  tatooine: { name: "Tatooine Sunset", keywords: ["tatooine", "desert", "suns", "jawa", "sarlacc", "krayt", "sand", "star wars"], durationMs: 50_000 },
+  tatooine: { name: "Tatooine Sunset", keywords: ["tatooine", "desert", "suns", "jawa", "sarlacc", "krayt", "sand", "star wars"], durationMs: 80_000 },
   windsOfWinter: { name: "Winter Is Coming", keywords: ["winter", "blizzard", "snow", "storm", "frost", "white walker"], durationMs: 120_000 },
   godzilla: { name: "Godzilla Roar", keywords: ["godzilla", "roar", "atomic", "breath", "kaiju"], durationMs: 90_000 },
   wizard: { name: "Cast Spell", keywords: ["wizard", "spell", "magic", "cast", "enchant"], durationMs: 10_000 },
@@ -916,9 +916,9 @@ export const THEME_EFFECTS: Partial<Record<string, ThemeEffectMeta>> = {
 };
 
 /** Event dispatched to trigger the current theme's effect. Detail: { mode: "full" | "silent" } */
-export const UXP_THEME_EFFECT_EVENT = "uxpThemeEffect";
+export const UXP_THEME_EFFECT_TRIGGER = "uxp:theme:effect:trigger";
 
 export type ThemeEffectMode = "full" | "silent";
 
-/** Event name dispatched to stop the currently running theme effect. */
-export const UXP_THEME_EFFECT_STOP_EVENT = "uxpThemeEffectStop";
+/** Event dispatched to stop the currently running theme effect. */
+export const UXP_THEME_EFFECT_STOP = "uxp:theme:effect:stop";

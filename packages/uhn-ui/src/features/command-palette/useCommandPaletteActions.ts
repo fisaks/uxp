@@ -1,5 +1,5 @@
 import { assertNever } from "@uxp/common";
-import { getUxpWindow, UXP_THEME_EFFECT_EVENT, UXP_THEME_EFFECT_STOP_EVENT } from "@uxp/ui-lib";
+import { getUxpWindow, UXP_THEME_EFFECT_TRIGGER, UXP_THEME_EFFECT_STOP } from "@uxp/ui-lib";
 import { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSendSceneCommand } from "../scene/hooks/useSendSceneCommand";
@@ -87,11 +87,11 @@ export function useCommandPaletteActions({ onLocationSelect, onAnalogInputNeeded
                 break;
 
             case "trigger-theme-effect":
-                window.dispatchEvent(new CustomEvent(UXP_THEME_EFFECT_EVENT, { detail: { mode: action.mode } }));
+                window.dispatchEvent(new CustomEvent(UXP_THEME_EFFECT_TRIGGER, { detail: { mode: action.mode } }));
                 break;
 
             case "stop-theme-effect":
-                window.dispatchEvent(new CustomEvent(UXP_THEME_EFFECT_STOP_EVENT));
+                window.dispatchEvent(new CustomEvent(UXP_THEME_EFFECT_STOP));
                 break;
 
             case "filter-grid":

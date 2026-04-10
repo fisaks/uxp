@@ -421,3 +421,10 @@ registry:
 Binding to `127.0.0.1` keeps it off the network. Push images from a dev machine via an SSH tunnel (`ssh -L 5000:localhost:5000 user@server`), then reference them as `localhost:5000/my-image:latest` in the compose file.
 
 **web-remote nginx config is mounted at runtime** — not baked into the image. This allows updating routing (adding new apps) without rebuilding the image.
+
+**Volume-mounted configs require container restarts.** Services like
+`uhn-edge1`, `uhn-master`, and `uxp-bff` read their config at startup
+from volume-mounted files. `docker compose up -d` only recreates
+containers whose image changed — it does not restart containers that
+only had config file changes on the host. The deploy script should
+explicitly restart these services after syncing config files.

@@ -91,6 +91,38 @@ Remote apps must:
 
 Remote apps must **never** call `updateTheme` themselves.
 
+### Theme Effect (read-only)
+
+```ts
+window.uxp.themeEffect?: ThemeEffectMeta
+```
+
+Set by UXP when the active theme has a visual effect. `undefined` for
+themes without effects. Remote apps can read this to know whether an
+effect is available and its display name/keywords.
+
+```ts
+type ThemeEffectMeta = {
+    name: string;        // e.g. "Cast Igni"
+    keywords: string[];  // search terms
+    durationMs: number;  // single-cycle duration
+};
+```
+
+Remote apps can trigger/stop the effect via window events:
+
+```ts
+// Trigger (mode: "full" | "silent")
+window.dispatchEvent(
+  new CustomEvent("uxp:theme:effect:trigger", { detail: { mode: "full" } })
+);
+
+// Stop
+window.dispatchEvent(new CustomEvent("uxp:theme:effect:stop"));
+```
+
+See [Theme Effects](theme-effects.md) for full documentation.
+
 ------------------------------------------------------------------------
 
 ## Remote → UXP Signals
@@ -234,6 +266,7 @@ Example:
     defaultTheme: "dracula",
     updateTheme: () => {},
     getUser: () => undefined,
+    themeEffect: undefined,
     signal: { health: () => {} },
     navigation: {
       requestBaseNavigation: () => {},
@@ -249,11 +282,13 @@ When loaded inside UXP, this script is removed.
 
 ## Summary
 
-| Direction      | Context     | API |
-|----------------|-------------|-----|
-| UXP → Remote   | User        | `getUser()` + `uxpUserChange` |
-| UXP → Remote   | Theme       | `updateTheme()` + `uxpThemeChange` |
-| UXP → Remote   | Navigation  | `updateRemoteSubRoute()` |
-| Remote → UXP   | Health      | `signal.health(snapshot)` |
-| Remote → UXP   | Navigation  | `requestBaseNavigation()` |
+| Direction      | Context      | API |
+|----------------|--------------|-----|
+| UXP → Remote   | User         | `getUser()` + `uxpUserChange` |
+| UXP → Remote   | Theme        | `updateTheme()` + `uxpThemeChange` |
+| UXP → Remote   | Theme Effect | `themeEffect` (read-only) |
+| UXP → Remote   | Navigation   | `updateRemoteSubRoute()` |
+| Remote → UXP   | Health       | `signal.health(snapshot)` |
+| Remote → UXP   | Navigation   | `requestBaseNavigation()` |
+| Remote → UXP   | Theme Effect | `uxp:theme:effect:trigger` / `uxp:theme:effect:stop` events |
 

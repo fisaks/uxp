@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
-import { UXP_THEME_EFFECT_EVENT, UXP_THEME_EFFECT_STOP_EVENT, THEME_EFFECTS, ThemeEffectMode } from "@uxp/ui-lib";
+import { UXP_THEME_EFFECT_TRIGGER, UXP_THEME_EFFECT_STOP, THEME_EFFECTS, ThemeEffectMode } from "@uxp/ui-lib";
 import { selectMySetting } from "../settings/mySettingSelector";
 import DraculaEffect from "./DraculaEffect";
 import Snowfall from "./Snowfall";
@@ -61,11 +61,11 @@ export function useThemeEffect(): React.ReactNode {
 
     // Listen for trigger and stop events
     useEffect(() => {
-        window.addEventListener(UXP_THEME_EFFECT_EVENT, handleTrigger);
-        window.addEventListener(UXP_THEME_EFFECT_STOP_EVENT, dismiss);
+        window.addEventListener(UXP_THEME_EFFECT_TRIGGER, handleTrigger);
+        window.addEventListener(UXP_THEME_EFFECT_STOP, dismiss);
         return () => {
-            window.removeEventListener(UXP_THEME_EFFECT_EVENT, handleTrigger);
-            window.removeEventListener(UXP_THEME_EFFECT_STOP_EVENT, dismiss);
+            window.removeEventListener(UXP_THEME_EFFECT_TRIGGER, handleTrigger);
+            window.removeEventListener(UXP_THEME_EFFECT_STOP, dismiss);
         };
     }, [handleTrigger, dismiss]);
 
