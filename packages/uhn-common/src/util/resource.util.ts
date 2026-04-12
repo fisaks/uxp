@@ -92,6 +92,14 @@ export function humanizeSceneId(sceneId: string): string {
     return humanizeResourceId(id);
 }
 
+export function humanizeScheduleId(scheduleId: string): string {
+    // Strip "Schedule" suffix or "schedule" prefix (case-sensitive camelCase patterns)
+    let id = scheduleId;
+    if (id.endsWith("Schedule")) id = id.slice(0, -8);
+    if (id.startsWith("schedule")) id = id.charAt(8).toLowerCase() + id.slice(9);
+    return humanizeResourceId(id);
+}
+
 export function isRuntimeResourceObject(obj: unknown): obj is RuntimeResource {
     return (
         typeof obj === "object" &&

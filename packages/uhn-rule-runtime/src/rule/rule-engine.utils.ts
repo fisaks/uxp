@@ -120,4 +120,13 @@ export function isTimerTrigger(trigger: RuleTrigger): trigger is Extract<RuleTri
 export function isActionTrigger(trigger: RuleTrigger): trigger is Extract<RuleTrigger, { kind: "action" }> {
     return trigger.kind === "action";
 }
+export function isScheduleTrigger(trigger: RuleTrigger): trigger is Extract<RuleTrigger, { kind: "schedule" }> {
+    return trigger.kind === "schedule";
+}
+
+/** Any trigger that references a resource (all except schedule). */
+export type ResourceRuleTrigger = Exclude<RuleTrigger, { kind: "schedule" }>;
+export function isResourceBasedTrigger(trigger: RuleTrigger): trigger is ResourceRuleTrigger {
+    return trigger.kind !== "schedule";
+}
 

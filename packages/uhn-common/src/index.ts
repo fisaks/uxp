@@ -5,6 +5,7 @@ export * from "./schemas/blueprint.schema";
 export * from "./types/file.type";
 export * from "./types/uhn-health.type";
 export * from "./types/uhn-runtime.type";
+export * from "./types/uhn-schedule.type";
 export * from "./types/uhn-message.type";
 export * from "./types/uhn-system.type";
 export * from "./util/data.util";

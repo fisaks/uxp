@@ -1,6 +1,10 @@
-import { RuntimeResource, RuntimeRuleInfo } from "@uhn/common";
+import { isResourceTriggerInfo, RuntimeResource, RuntimeResourceTriggerInfo, RuntimeRuleInfo } from "@uhn/common";
 import { useCallback, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+
+/** Filter to triggers that reference a resource (excludes schedule triggers). */
+const resourceTriggers = (triggers: RuntimeRuleInfo["triggers"]): RuntimeResourceTriggerInfo[] =>
+    triggers.filter(isResourceTriggerInfo);
 
 type RulePageState = {
     selectedRuleIds?: string[];
@@ -49,7 +53,7 @@ export function useRulePageState({ allRules, resourceById, highlightedTileId }: 
     const ruleResourceIds = useMemo(() => {
         const set = new Set<string>();
         for (const rule of selectedRules) {
-            for (const trigger of rule.triggers) {
+            for (const trigger of resourceTriggers(rule.triggers)) {
                 set.add(trigger.resourceId);
             }
             if (rule.actionHintResourceIds) {
@@ -70,7 +74,7 @@ export function useRulePageState({ allRules, resourceById, highlightedTileId }: 
     const displayedResourceIdSet = useMemo(() => {
         const seen = new Set<string>();
         for (const rule of selectedRules) {
-            for (const trigger of rule.triggers) {
+            for (const trigger of resourceTriggers(rule.triggers)) {
                 seen.add(trigger.resourceId);
             }
             if (rule.actionHintResourceIds) {
@@ -95,7 +99,7 @@ export function useRulePageState({ allRules, resourceById, highlightedTileId }: 
         const added: string[] = [];
         // Add trigger resources first, then action hints (in rule order), then extras
         for (const rule of selectedRules) {
-            for (const trigger of rule.triggers) {
+            for (const trigger of resourceTriggers(rule.triggers)) {
                 if (!keptSet.has(trigger.resourceId) && displayedResourceIdSet.has(trigger.resourceId)) {
                     keptSet.add(trigger.resourceId);
                     added.push(trigger.resourceId);
@@ -135,7 +139,7 @@ export function useRulePageState({ allRules, resourceById, highlightedTileId }: 
             const rule = allRules.find(r => r.id === ruleId);
             if (rule) {
                 const ruleIds = new Set([
-                    ...rule.triggers.map(t => t.resourceId),
+                    ...resourceTriggers(rule.triggers).map(t => t.resourceId),
                     ...(rule.actionHintResourceIds ?? []),
                 ]);
                 newRemoved = newRemoved.filter(id => !ruleIds.has(id));

@@ -1,6 +1,6 @@
 //services/rule-runtime-process.service.ts
 
-import { FireAndForgetCmdKey, isRuleRuntimeEventObject, RuleRuntimeActionMessage, RuleRuntimeCommand, RuleRuntimeCommandMap, RuleRuntimeLocationsLoadedMessage, RuleRuntimeLogicalResourceStateChangedMessage, RuleRuntimeLogMessage, RuleRuntimeResourcesLoadedMessage, RuleRuntimeRulesLoadedMessage, RuleRuntimeScenesLoadedMessage, RuleRuntimeViewsLoadedMessage } from "@uhn/common";
+import { FireAndForgetCmdKey, isRuleRuntimeEventObject, RuleRuntimeActionMessage, RuleRuntimeCommand, RuleRuntimeCommandMap, RuleRuntimeLocationsLoadedMessage, RuleRuntimeLogicalResourceStateChangedMessage, RuleRuntimeLogMessage, RuleRuntimeResourcesLoadedMessage, RuleRuntimeRulesLoadedMessage, RuleRuntimeSchedulesLoadedMessage, RuleRuntimeScenesLoadedMessage, RuleRuntimeViewsLoadedMessage } from "@uhn/common";
 import { AppErrorV2, AppLogger, fileExists, pathExists, readFile, removeFile, writeFile } from "@uxp/bff-common";
 import { assertNever } from "@uxp/common";
 import { ChildProcess, spawn, SpawnOptions } from "child_process";
@@ -34,6 +34,7 @@ type RuleRuntimeProcessEventMap = {
     onViewsLoaded: [response: RuleRuntimeViewsLoadedMessage];
     onLocationsLoaded: [response: RuleRuntimeLocationsLoadedMessage];
     onScenesLoaded: [response: RuleRuntimeScenesLoadedMessage];
+    onSchedulesLoaded: [response: RuleRuntimeSchedulesLoadedMessage];
     exit: [code: number | null, signal: NodeJS.Signals | null];
 };
 
@@ -438,6 +439,9 @@ class RuleRuntimeProcessService extends EventEmitter<RuleRuntimeProcessEventMap>
                             continue;
                         case "scenesLoaded":
                             this.emit("onScenesLoaded", resp);
+                            continue;
+                        case "schedulesLoaded":
+                            this.emit("onSchedulesLoaded", resp);
                             continue;
                         case "logicalResourceStateChanged":
                             this.emit("onLogicalResourceStateChanged", resp);

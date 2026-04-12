@@ -1,6 +1,7 @@
 // services/rule-engine.ts
 import type {
     BlueprintRule,
+    ResourceRuleCause,
     RuleAction,
     RuleCause,
     RuleTrigger,
@@ -20,8 +21,8 @@ import { RuntimeIntervalService } from "../services/runtime-interval.service";
 import { createRuleMute } from "./rule-engine-mute";
 import { createRuleStateReader } from "./rule-state-reader";
 import { createRuleTimer } from "./rule-engine-timer";
-import { RuleExecutionControl, RuleTriggerEvent } from "./rule-engine.type";
-import { isActionTrigger, isLongPressTrigger, isResourceTrigger, isTapTrigger, isThresholdTrigger, isTimerTrigger } from "./rule-engine.utils";
+import { RuleExecutionControl, RuleTriggerEvent, ScheduleTriggerEvent } from "./rule-engine.type";
+import { isActionTrigger, isLongPressTrigger, isResourceTrigger, isScheduleTrigger, isTapTrigger, isThresholdTrigger, isTimerTrigger } from "./rule-engine.utils";
 import { expandSceneActions, filterReachableActions, toRuntimeAction } from "./rule-action.utils";
 import { TriggerEventBus } from "./trigger-event-bus";
 
@@ -64,11 +65,25 @@ export class RuleEngine {
         this.stateReader = createRuleStateReader({ stateService: this.stateService });
         // Subscribe to state changes
         triggerEventBus.on((event) => {
-            this.handleTriggerEvent(event);
+            this.handleResourceTriggerEvent(event);
         });
     }
 
-    private handleTriggerEvent(triggerEvent: RuleTriggerEvent) {
+    /**
+     * Handle a schedule-fired event. Matches rules with onSchedule() triggers
+     * for the given scheduleId and executes them.
+     * Phase 3 will implement the full matching logic.
+     */
+    handleScheduleTriggerEvent(event: ScheduleTriggerEvent) {
+        runtimeOutput.log({
+            level: "info",
+            component: "RuleEngine",
+            message: `Schedule event received: "${event.schedule.id}" (firedAt: ${event.firedAt}) — schedule trigger execution not yet implemented`,
+        });
+        // TODO Phase 3: look up rules by schedule.id, execute matching rules
+    }
+
+    private handleResourceTriggerEvent(triggerEvent: RuleTriggerEvent) {
         const resourceId = triggerEvent.resource.id;
         if (!resourceId) return;
 
@@ -98,14 +113,14 @@ export class RuleEngine {
                     runtimeOutput.log({
                         level: "trace",
                         component: "RuleEngine",
-                        message: `Trigger[${triggerIdx}] of rule "${ruleCandidate.id}" did not match event "${triggerEvent.event}" for resource "${resourceId}" (trigger kind: ${triggerCandidate.kind}, trigger resourceId: ${triggerCandidate.resource?.id})`,
+                        message: `Trigger[${triggerIdx}] of rule "${ruleCandidate.id}" did not match event "${triggerEvent.event}" for resource "${resourceId}" (trigger kind: ${triggerCandidate.kind}, trigger resourceId: ${"resource" in triggerCandidate ? triggerCandidate.resource?.id : "N/A"})`,
                     });
                     continue;
                 }
 
-                const triggerCause: RuleCause = {
+                const triggerCause: ResourceRuleCause = {
                     resource: triggerEvent.resource,
-                    event: triggerEvent.event,
+                    event: triggerEvent.event as ResourceRuleCause["event"],
                     timestamp: triggerEvent.timestamp,
                     thresholdMs: triggerEvent.thresholdMs,
                     action: triggerEvent.action,
@@ -142,6 +157,9 @@ export class RuleEngine {
         ruleId: string,
         triggerIdx: number
     ): boolean {
+        // Schedule triggers are matched in handleScheduleTriggerEvent, not here
+        if (isScheduleTrigger(trigger)) return false;
+
         if (trigger.resource.id !== event.resource.id) return false;
 
         if (isThresholdTrigger(trigger)) {
@@ -360,7 +378,7 @@ export class RuleEngine {
                 });
                 return undefined;
             }
-            const depth = action.type === "emitAction" ? (runCause.depth ?? 0) + 1 : 0;
+            const depth = action.type === "emitAction" ? (("depth" in runCause ? runCause.depth : 0) ?? 0) + 1 : 0;
             return toRuntimeAction(action, "RuleEngine", depth);
         }).filter((a): a is RuntimeRuleAction => a !== undefined);
 

@@ -1,5 +1,5 @@
 import { createSelector } from "@reduxjs/toolkit";
-import { RuntimeRuleInfo } from "@uhn/common";
+import { isResourceTriggerInfo, RuntimeRuleInfo } from "@uhn/common";
 import { RootState } from "../../app/store";
 
 const selectRuleState = (state: RootState) => state.rules;
@@ -15,7 +15,9 @@ export const selectRulesByResourceId = createSelector(
         const map: Record<string, RuntimeRuleInfo[]> = {};
         for (const rule of rules) {
             for (const trigger of rule.triggers) {
-                (map[trigger.resourceId] ??= []).push(rule);
+                if (isResourceTriggerInfo(trigger)) {
+                    (map[trigger.resourceId] ??= []).push(rule);
+                }
             }
         }
         return map;

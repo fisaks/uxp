@@ -16,5 +16,7 @@ export function triggerEventLabel(trigger: RuntimeRuleTriggerInfo): string {
             return `timer ${trigger.event}`;
         case "action":
             return `action "${trigger.action}"`;
+        case "schedule":
+            return `schedule "${trigger.scheduleId}"`;
     }
 }

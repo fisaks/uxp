@@ -17,6 +17,7 @@ import { RuntimeTimerService } from "./services/runtime-timer.service";
 import { RuntimeIntervalService } from "./services/runtime-interval.service";
 import { RuntimeLocationService } from "./services/runtime-location.service";
 import { RuntimeSceneService } from "./services/runtime-scene.service";
+import { RuntimeScheduleService } from "./services/runtime-schedule.service";
 import { RuntimeViewService } from "./services/runtime-view.service";
 
 const blueprintDir = process.argv[2];
@@ -36,14 +37,16 @@ const rulesDir = path.join(blueprintRoot, "dist", "rules");
 const viewsDir = path.join(blueprintRoot, "dist", "views");
 const locationsDir = path.join(blueprintRoot, "dist", "locations");
 const scenesDir = path.join(blueprintRoot, "dist", "scenes");
+const schedulesDir = path.join(blueprintRoot, "dist", "schedules");
 
 async function main() {
-    const [resourceService, rulesService, viewService, locationService, sceneService] = await Promise.all([
+    const [resourceService, rulesService, viewService, locationService, sceneService, scheduleService] = await Promise.all([
         RuntimeResourceService.create(resourcesDir),
         RuntimeRulesService.create(rulesDir, runMode, edgeName),
         RuntimeViewService.create(viewsDir),
         RuntimeLocationService.create(locationsDir),
         RuntimeSceneService.create(scenesDir),
+        RuntimeScheduleService.create(schedulesDir),
     ]);
 
     // Dev filter: if dist/dev-filters/dev-filter.js exists, reduce to a subset of resources/views/rules/scenes/locations
@@ -67,6 +70,8 @@ async function main() {
         timerService,
         muteService,
         triggerEventBus,
+        ruleEngine,
+        scheduleService,
     });
     const resourceEventEmitter = new ResourceEventEmitter(stateService, triggerEventBus, resourceService);
     const inputGestureEmitter = new InputGestureEmitter(stateService, rulesService, triggerEventBus, resourceService);
@@ -103,6 +108,11 @@ async function main() {
         kind: "event",
         cmd: "scenesLoaded",
         scenes: sceneService.list(),
+    });
+    runtimeOutput.send({
+        kind: "event",
+        cmd: "schedulesLoaded",
+        schedules: scheduleService.list(),
     });
     runtimeOutput.send({ kind: "event", cmd: "ready" });
 }

@@ -4,6 +4,7 @@ import { handleError, handleUnknownCommand } from "../io/handle-error";
 import { RuleRuntimeDependencies } from "../types/rule-runtime.type";
 import { handleActionEvent } from "./action-input.handler";
 import { handleLongPressCommand } from "./longpress-command.handler";
+import { handleScheduleEvent } from "./schedule-event.handler";
 import { handleMuteCommand } from "./mute-command.handler";
 import { handleStateFullUpdate } from "./state-full-update.handler";
 import { handleStateUpdate } from "./state-update.handler";
@@ -35,6 +36,9 @@ export function createCommandRouter(deps: RuleRuntimeDependencies) {
                         break;
                     case "actionEvent":
                         handleActionEvent(deps, cmd);
+                        break;
+                    case "scheduleEvent":
+                        handleScheduleEvent(deps, cmd);
                         break;
                     default:
                         handleUnknownCommand(cmd);

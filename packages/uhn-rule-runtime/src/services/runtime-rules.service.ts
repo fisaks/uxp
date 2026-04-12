@@ -4,6 +4,7 @@ import { RuntimeRuleInfo, RuntimeRuleTriggerInfo } from "@uhn/common";
 import fs from "fs-extra";
 import path from "path";
 import { runtimeOutput } from "../io/runtime-output";
+import { isScheduleTrigger } from "../rule/rule-engine.utils";
 import { RuntimeMode } from "../types/rule-runtime.type";
 
 
@@ -51,7 +52,8 @@ function indexRules(rules: BlueprintRule[]): Map<string, BlueprintRule[]> {
 
     for (const rule of rules) {
         for (const t of rule.triggers) {
-
+            // Schedule triggers are indexed separately (by scheduleId, not resourceId)
+            if (isScheduleTrigger(t)) continue;
 
             const resourceId = t.resource?.id;
             if (!resourceId) {
@@ -125,6 +127,9 @@ function validateRules(rules: BlueprintRule[]): BlueprintRule[] {
     return out;
 }
 function serializeTrigger(t: RuleTrigger): RuntimeRuleTriggerInfo {
+    if (isScheduleTrigger(t)) {
+        return { kind: "schedule", scheduleId: t.schedule?.id ?? "unknown" };
+    }
     const resourceId = t.resource?.id ?? "unknown";
     switch (t.kind) {
         case "resource":

@@ -255,6 +255,28 @@ export function collectSceneFactories(sf: SourceFile): Set<string> {
 }
 
 /**
+ * Detect schedule() factory identifiers imported from "@uhn/blueprint".
+ * Supports aliasing: import { schedule as mySched } from "@uhn/blueprint"
+ */
+const SCHEDULE_FACTORY_NAMES = new Set(["schedule"]);
+
+export function collectScheduleFactories(sf: SourceFile): Set<string> {
+    const schedules = new Set<string>();
+
+    for (const imp of sf.getImportDeclarations()) {
+        if (imp.getModuleSpecifierValue() !== "@uhn/blueprint") continue;
+
+        for (const n of imp.getNamedImports()) {
+            if (SCHEDULE_FACTORY_NAMES.has(n.getName())) {
+                schedules.add(n.getAliasNode()?.getText() ?? n.getName());
+            }
+        }
+    }
+
+    return schedules;
+}
+
+/**
  * Detect rule() factory identifiers imported from "@uhn/blueprint".
  * Supports aliasing: import { rule as myRule } from "@uhn/blueprint"
  */

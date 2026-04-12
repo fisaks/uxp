@@ -1,6 +1,5 @@
 
-import { ActionInputResourceBase, ActionOutputResourceBase, AnalogInputResourceBase, AnalogOutputOption, AnalogOutputResourceBase, BlueprintIcon, DigitalInputResourceBase, DigitalOutputResourceBase, HeroFontSize, LogicalResourceType, PhysicalResourceType, ResourceType, RuntimeRuleAction, ValueColorRule, ValueIconRule, ViewActiveCondition, ViewCommandType, ViewStateAggregation } from "@uhn/blueprint";
-
+import { ActionInputResourceBase, ActionOutputResourceBase, AnalogInputResourceBase, AnalogOutputOption, AnalogOutputResourceBase, BlueprintIcon, DigitalInputResourceBase, DigitalOutputResourceBase, HeroFontSize, LogicalResourceType, PhysicalResourceType, ResourceType, RuntimeRuleAction, ValueColorRule, ValueIconRule, ViewActiveCondition, ViewCommandType, ViewStateAggregation , ScheduleWhen} from "@uhn/blueprint";
 // --- Runtime rule serialization (for IPC + overview) ---
 
 export type RuntimeRuleTriggerInfo =
@@ -9,7 +8,19 @@ export type RuntimeRuleTriggerInfo =
   | { kind: "tap"; resourceId: string }
   | { kind: "longPress"; resourceId: string; thresholdMs: number }
   | { kind: "timer"; resourceId: string; event: "activated" | "deactivated" }
-  | { kind: "action"; resourceId: string; action: string };
+  | { kind: "action"; resourceId: string; action: string }
+  | { kind: "schedule"; scheduleId: string };
+
+/** Trigger info variants that reference a resource (all except schedule). */
+export type RuntimeResourceTriggerInfo = Exclude<RuntimeRuleTriggerInfo, { kind: "schedule" }>;
+
+export function isResourceTriggerInfo(t: RuntimeRuleTriggerInfo): t is RuntimeResourceTriggerInfo {
+    return t.kind !== "schedule";
+}
+
+export function isScheduleTriggerInfo(t: RuntimeRuleTriggerInfo): t is Extract<RuntimeRuleTriggerInfo, { kind: "schedule" }> {
+    return t.kind === "schedule";
+}
 
 export type RuntimeRuleInfo = {
   id: string;
@@ -269,7 +280,8 @@ export type RuleRuntimeCommand = RuleRuntimeStateUpdateCommand
   | RuleRuntimeMuteCommand
   | RuleRuntimeTapCommand
   | RuleRuntimeLongPressCommand
-  | RuleRuntimeActionEventCommand;
+  | RuleRuntimeActionEventCommand
+  | RuleRuntimeScheduleEventCommand;
 
 
 export type RuleRuntimeResourcesLoadedMessage = {
@@ -352,6 +364,33 @@ export type RuleRuntimeScenesLoadedMessage = {
   scenes: RuntimeScene[];
 };
 
+// --- Runtime Schedule types ---
+
+export type RuntimeSchedule = {
+    id: string;
+    name: string;
+    description?: string;
+    keywords?: string[];
+    when: ScheduleWhen[];
+    missedGraceMs: number;
+};
+
+export type RuleRuntimeSchedulesLoadedMessage = {
+  kind: "event";
+  cmd: "schedulesLoaded";
+  schedules: RuntimeSchedule[];
+};
+
+/** IPC command: schedule event → rule runtime. */
+export type RuleRuntimeScheduleEventCommand = {
+  kind: "event";
+  cmd: "scheduleEvent";
+  payload: {
+    scheduleId: string;
+    firedAt: string;
+  };
+};
+
 export type RuleRuntimeResponse = RuleRuntimeReadyMessage
   | RuleRuntimeActionMessage
   | RuleRuntimeResourceMissingMessage
@@ -361,7 +400,8 @@ export type RuleRuntimeResponse = RuleRuntimeReadyMessage
   | RuleRuntimeResourcesLoadedMessage
   | RuleRuntimeViewsLoadedMessage
   | RuleRuntimeLocationsLoadedMessage
-  | RuleRuntimeScenesLoadedMessage;
+  | RuleRuntimeScenesLoadedMessage
+  | RuleRuntimeSchedulesLoadedMessage;
 
 export type RuleRuntimeCommandMap = {
   stateUpdate: {
@@ -390,6 +430,10 @@ export type RuleRuntimeCommandMap = {
   };
   actionEvent: {
     request: Omit<RuleRuntimeActionEventCommand, "kind">;
+    response: void;
+  };
+  scheduleEvent: {
+    request: Omit<RuleRuntimeScheduleEventCommand, "kind">;
     response: void;
   };
 };

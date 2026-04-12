@@ -27,6 +27,8 @@ export async function buildBlueprint(projectRoot: string, options?: { devFilter?
     const locationsTmp = path.join(tmpSrc, "locations");
     const scenesSrc = path.join(srcDir, "scenes");
     const scenesTmp = path.join(tmpSrc, "scenes");
+    const schedulesSrc = path.join(srcDir, "schedules");
+    const schedulesTmp = path.join(tmpSrc, "schedules");
     const factorySrc = path.join(srcDir, "factory");
     const factoryTmp = path.join(tmpSrc, "factory");
     const tsconfigPath = path.join(projectRoot, "tsconfig.json");
@@ -52,7 +54,7 @@ export async function buildBlueprint(projectRoot: string, options?: { devFilter?
         tsconfigPath: tsconfigPath,
         factoryPath: factorySrc,
     });
-    // 2) Copy source to temp folder (excluding resources and rules)
+    // 2) Copy source to temp folder (excluding entity directories that get normalized separately)
     await fs.copy(srcDir, tmpSrc, {
         filter: p => {
             const rel = path.relative(srcDir, p);
@@ -61,7 +63,7 @@ export async function buildBlueprint(projectRoot: string, options?: { devFilter?
                 return false;
             }
 
-            // skip resources, rules, views, and locations completely
+            // skip entity directories — they are normalized separately in step 3
             if (
                 rel === "resources" ||
                 rel.startsWith(`resources${path.sep}`) ||
@@ -73,6 +75,8 @@ export async function buildBlueprint(projectRoot: string, options?: { devFilter?
                 rel.startsWith(`locations${path.sep}`) ||
                 rel === "scenes" ||
                 rel.startsWith(`scenes${path.sep}`) ||
+                rel === "schedules" ||
+                rel.startsWith(`schedules${path.sep}`) ||
                 rel === "dev-filters" ||
                 rel.startsWith(`dev-filters${path.sep}`)
             ) {
@@ -85,7 +89,7 @@ export async function buildBlueprint(projectRoot: string, options?: { devFilter?
     if (!await fs.pathExists(factoryTmp)) {
         throw new Error(`Factory folder was not copied to temp: ${factoryTmp}`);
     }
-    // 3) Normalize resources and rules into temp folder
+    // 3) Normalize all entity types into temp folder
     await normalizeBlueprint({
         sourceDir: resourcesSrc,
         targetDir: resourcesTmp,
@@ -131,7 +135,17 @@ export async function buildBlueprint(projectRoot: string, options?: { devFilter?
         });
     }
 
-    // 3e) Copy dev filter preset to temp (if specified)
+    // 3e) Normalize schedules (optional — build succeeds without src/schedules/)
+    if (await fs.pathExists(schedulesSrc)) {
+        await normalizeBlueprint({
+            sourceDir: schedulesSrc,
+            targetDir: schedulesTmp,
+            tsconfigPath: tsconfigPath,
+            mode: "schedule",
+        });
+    }
+
+    // 3f) Copy dev filter preset to temp (if specified)
     if (options?.devFilter) {
         const filterSrc = path.join(srcDir, "dev-filters", `${options.devFilter}.ts`);
         if (!await fs.pathExists(filterSrc)) {

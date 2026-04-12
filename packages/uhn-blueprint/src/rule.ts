@@ -15,6 +15,7 @@ import type {
     VirtualDigitalInputResourceBase,
 } from "./resource";
 import type { BlueprintScene } from "./scene";
+import type { BlueprintSchedule } from "./schedule";
 
 // --------- Runtime state value ---------
 export type StateValue = boolean | number;
@@ -54,7 +55,8 @@ export type TriggerEvent =
     | "timerDeactivated"
     | "thresholdAbove"
     | "thresholdBelow"
-    | "action";
+    | "action"
+    | "schedule";
 
 export type NumericTriggerOptions = { hysteresis?: number };
 
@@ -91,11 +93,15 @@ export type RuleTrigger =
         kind: "action";
         resource: ActionInputResourceBase<any, any>;
         action: string;
+    }
+    | {
+        kind: "schedule";
+        schedule: BlueprintSchedule;
     };
 
-export type RuleCause = {
+export type ResourceRuleCause = {
     resource: ResourceBase<ResourceType>;
-    event: TriggerEvent;
+    event: Exclude<TriggerEvent, "schedule">;
     timestamp: number;
     // tap / longPress
     pressedMs?: number;
@@ -106,6 +112,14 @@ export type RuleCause = {
     /** Depth counter for loop prevention. 0 for physical/UI events, incremented for rule-emitted actions. */
     depth?: number;
 };
+
+export type ScheduleRuleCause = {
+    event: "schedule";
+    timestamp: number;
+    schedule: BlueprintSchedule;
+};
+
+export type RuleCause = ResourceRuleCause | ScheduleRuleCause;
 
 export type RuleTimers = {
     start(
@@ -194,9 +208,22 @@ export function isCausedBy<
 ): ctx is RuleContext & { cause: RuleCause & { action: TAction; metadata: TMeta[TAction] } };
 export function isCausedBy(ctx: RuleContext, resource: ResourceBase<ResourceType>): boolean;
 export function isCausedBy(ctx: RuleContext, resource: ResourceBase<ResourceType>, action?: string): boolean {
+    if (ctx.cause.event === "schedule") return false;
     if (ctx.cause.resource.id !== resource.id) return false;
     if (action !== undefined) return ctx.cause.action === action;
     return true;
+}
+
+/**
+ * Type guard that narrows `ctx.cause` to a schedule cause.
+ *
+ * Usage:
+ *   if (isCausedBySchedule(ctx, morningRoutine)) {
+ *       // ctx.cause.scheduleId === morningRoutine.id
+ *   }
+ */
+export function isCausedBySchedule(ctx: RuleContext, schedule: BlueprintSchedule): ctx is RuleContext & { cause: ScheduleRuleCause } {
+    return ctx.cause.event === "schedule" && ctx.cause.schedule === schedule;
 }
 
 /**
@@ -413,6 +440,8 @@ export type RuleBuilder = {
     onTimerActivated(timer: TimerResourceBase): RuleBuilder;
     onTimerDeactivated(timer: TimerResourceBase): RuleBuilder;
 
+    onSchedule(schedule: BlueprintSchedule): RuleBuilder;
+
     priority(n: number): RuleBuilder;
     /** Hint listing resources this rule's actions typically affect.
      *  Shown in the UI alongside trigger resources for testing. */
@@ -538,6 +567,14 @@ export function rule(
                 kind: "timer",
                 resource: timer,
                 event: "deactivated",
+            });
+            return this;
+        },
+
+        onSchedule(schedule) {
+            meta.triggers.push({
+                kind: "schedule",
+                schedule,
             });
             return this;
         },

@@ -3,6 +3,7 @@ import type { RuntimeComplexResource, RuntimeResourceList } from "@uhn/common";
 import fs from "fs-extra";
 import path from "path";
 import { runtimeOutput } from "./io/runtime-output";
+import { isResourceBasedTrigger } from "./rule/rule-engine.utils";
 import type { RuntimeLocationService } from "./services/runtime-location.service";
 import type { RuntimeResourceService } from "./services/runtime-resource.service";
 import type { RuntimeRulesService } from "./services/runtime-rules.service";
@@ -88,7 +89,9 @@ function collectResourceIdsFromFilter(filter: DevFilter, ids: Set<string>): void
     }
 
     for (const r of filter.rules ?? []) {
-        for (const t of r.triggers) add(t.resource?.id);
+        for (const t of r.triggers) {
+            if (isResourceBasedTrigger(t)) add(t.resource.id);
+        }
         for (const ah of r.actionHints ?? []) add(ah.id);
     }
 

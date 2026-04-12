@@ -2,7 +2,7 @@
 import fs from "fs-extra";
 import path from "path";
 import { Node, Project } from "ts-morph";
-import { collectLocationFactories, collectNamedImportsFromPaths, collectRuleFactories, collectSceneFactories, collectViewFactories, extractIdValue, getRootCallExpression, isValidIdentifier, unwrapExpression } from "./blueprintAstUtils";
+import { collectLocationFactories, collectNamedImportsFromPaths, collectRuleFactories, collectSceneFactories, collectScheduleFactories, collectViewFactories, extractIdValue, getRootCallExpression, isValidIdentifier, unwrapExpression } from "./blueprintAstUtils";
 
 type NormalizeError = {
     file: string;
@@ -11,7 +11,7 @@ type NormalizeError = {
     message: string;
 };
 
-type NormalizeMode = "resource" | "rule" | "view" | "location" | "scene";
+type NormalizeMode = "resource" | "rule" | "view" | "location" | "scene" | "schedule";
 
 /**
  * Blueprint normalization pass.
@@ -19,23 +19,25 @@ type NormalizeMode = "resource" | "rule" | "view" | "location" | "scene";
  * This file statically rewrites a blueprint’s TypeScript source to enforce
  * consistent, machine-friendly rule and resource definitions.
  *
- * The normalizer operates in "resource", "rule", or "view" mode and:
+ * The normalizer operates in "resource", "rule", "view", "location",
+ * "scene", or "schedule" mode and:
  *
  * - Copies the source blueprint into a target directory for safe mutation
- * - Detects top-level rule/resource factory calls
+ * - Detects top-level factory calls for the given entity type
  * - Auto-exports top-level entities if they are not already exported
- * - Ensures every rule/resource has a stable string `id`
+ *   (except resources, which must be explicitly exported)
+ * - Ensures every entity has a stable string `id`
  *   - Injects a default id based on the export name when possible
  *   - Validates id format and reports precise errors
  * - Detects duplicate ids across the blueprint
  *
  * In resource mode, direct object-literal resources are also supported.
  * In rule mode, normalization always targets the root rule(...) call.
- * In view mode, normalization targets view(...) calls (single call, not chained).
+ * In view/location/scene mode, normalization targets single factory calls.
+ * In schedule mode, normalization targets chained schedule() builder calls.
  *
- * The result is a normalized blueprint where all rules, resources, and views
- * are explicitly exported, uniquely identified, and safe to load
- * deterministically at runtime.
+ * The result is a normalized blueprint where all entities are explicitly
+ * exported, uniquely identified, and safe to load deterministically at runtime.
  *
  * Any unrecoverable issue (invalid shape, missing id, duplicates) causes
  * normalization to fail with a detailed, user-facing error report.
@@ -81,6 +83,8 @@ export async function normalizeBlueprint(opts: {
             mode === "location" ? collectLocationFactories(sf) : new Set<string>();
         const sceneFactories =
             mode === "scene" ? collectSceneFactories(sf) : new Set<string>();
+        const scheduleFactories =
+            mode === "schedule" ? collectScheduleFactories(sf) : new Set<string>();
 
         const isEntityCall = (init: Node): boolean => {
             if (!Node.isCallExpression(init)) return false;
@@ -102,6 +106,13 @@ export async function normalizeBlueprint(opts: {
                 // scene() is a single call (like view/location)
                 const expr = init.getExpression();
                 return Node.isIdentifier(expr) && sceneFactories.has(expr.getText());
+            }
+            if (mode === "schedule") {
+                // schedule() uses chained builder: schedule().cron(...).at(...)
+                const root = getRootCallExpression(init);
+                if (!root) return false;
+                const rootExpr = root.getExpression();
+                return Node.isIdentifier(rootExpr) && scheduleFactories.has(rootExpr.getText());
             }
             // rule mode
             const root = getRootCallExpression(init);

@@ -3,7 +3,7 @@ import DeselectIcon from "@mui/icons-material/Deselect";
 import ListAltIcon from "@mui/icons-material/ListAlt";
 import SearchIcon from "@mui/icons-material/Search";
 import { Autocomplete, Badge, Box, IconButton, InputAdornment, Paper, TextField, Typography } from "@mui/material";
-import { RuntimeResource, RuntimeRuleInfo, isLogicalResource, isPhysicalResource } from "@uhn/common";
+import { isResourceTriggerInfo, RuntimeResource, RuntimeRuleInfo, isLogicalResource, isPhysicalResource } from "@uhn/common";
 import { ReloadIconButton, TooltipIconButton, usePortalContainerRef } from "@uxp/ui-lib";
 import { useEffect, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
@@ -25,7 +25,7 @@ type RuleGroup = { target: string; rules: RuntimeRuleInfo[] };
 /** Builds a lowercase search string for a rule. Kept in the page (not the slice)
  *  because it joins data from two slices (rules + resources) and is cheap derived data. */
 const buildSearchText = (rule: RuntimeRuleInfo, resourceById: Record<string, RuntimeResource>): string => {
-    const triggerResources = rule.triggers.map(t => resourceById[t.resourceId]).filter(Boolean);
+    const triggerResources = rule.triggers.filter(isResourceTriggerInfo).map(t => resourceById[t.resourceId]).filter(Boolean);
     const actionHintResources = (rule.actionHintResourceIds ?? []).map(id => resourceById[id]).filter(Boolean);
     const triggerKinds = rule.triggers.map(t => t.kind);
     const triggerEvents = rule.triggers
@@ -34,7 +34,7 @@ const buildSearchText = (rule: RuntimeRuleInfo, resourceById: Record<string, Run
     return [
         rule.id, rule.name, rule.description,
         rule.executionTarget ?? "master",
-        ...rule.triggers.map(t => t.resourceId),
+        ...rule.triggers.filter(isResourceTriggerInfo).map(t => t.resourceId),
         ...triggerResources.flatMap(r => [r.name, isPhysicalResource(r) ? r.edge : isLogicalResource(r) ? r.host : undefined]),
         ...(rule.actionHintResourceIds ?? []),
         ...actionHintResources.flatMap(r => [r.name, isPhysicalResource(r) ? r.edge : isLogicalResource(r) ? r.host : undefined]),

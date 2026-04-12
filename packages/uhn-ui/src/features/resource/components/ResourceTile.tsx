@@ -6,7 +6,7 @@ import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import { Box, Card, CardActionArea, IconButton, Tooltip, Typography, alpha } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { usePortalContainerRef } from "@uxp/ui-lib";
-import { isLogicalResource, isPhysicalResource } from "@uhn/common";
+import { isLogicalResource, isPhysicalResource, isResourceTriggerInfo } from "@uhn/common";
 import React, { useCallback, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -138,7 +138,7 @@ export const ResourceTile: React.FC<ResourceTileProps> = React.memo(({ resource,
                             <Box sx={{ mt: 1 }}>
                                 <Typography variant="subtitle2">Triggered by ({triggeringRules.length})</Typography>
                                 {triggeringRules.map(rule => {
-                                    const trigger = rule.triggers.find(t => t.resourceId === resource.id);
+                                    const trigger = rule.triggers.find(t => isResourceTriggerInfo(t) && t.resourceId === resource.id);
                                     return (
                                         <Typography key={rule.id} variant="body2" sx={{ fontFamily: "monospace", fontSize: "0.75rem" }}>
                                             <TechnicalDeepLink to={`/technical/rules/${rule.id}`}>
