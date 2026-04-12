@@ -3,6 +3,7 @@ import { AppLogger, runBackgroundTask } from "@uxp/bff-common";
 import { initBlueprintResourceDispatcher } from "./dispatchers/blueprint-resource.dispatcher";
 import { initBlueprintLocationDispatcher } from "./dispatchers/blueprint-location.dispatcher";
 import { initBlueprintSceneDispatcher } from "./dispatchers/blueprint-scene.dispatcher";
+import { initBlueprintScheduleDispatcher } from "./dispatchers/blueprint-schedule.dispatcher";
 import { initRuleDispatcher } from "./dispatchers/rule.dispatcher";
 import { initBlueprintViewDispatcher } from "./dispatchers/blueprint-view.dispatcher";
 import { initActionEventDispatcher } from "./dispatchers/action-event.dispatcher";
@@ -24,6 +25,7 @@ import { initUhnSystemDispatcher } from "./dispatchers/uhn-system.dispatcher";
 import "./services/blueprint-resource.service";
 import "./services/blueprint-location.service";
 import "./services/blueprint-scene.service";
+import "./services/blueprint-schedule.service";
 import "./services/blueprint-view.service";
 import "./services/blueprint-runtime-supervisor.service";
 import "./services/blueprint.service";
@@ -42,6 +44,7 @@ import "./services/runtime-overview.service";
 import { systemConfigService } from "./services/system-config.service";
 import "./services/uhn-health.service";
 import "./services/device-availability.service";
+import "./services/schedule-fire.service";
 import "./services/system-command-edge.service";
 
 export async function startUhnRuntime() {
@@ -77,6 +80,7 @@ const setupWebDispatchers = () => {
     initBlueprintViewDispatcher();
     initBlueprintLocationDispatcher();
     initBlueprintSceneDispatcher();
+    initBlueprintScheduleDispatcher();
     initStateRuntimeDispatcher();
     initRuleActionDispatcher();
     initMuteEventDispatcher();

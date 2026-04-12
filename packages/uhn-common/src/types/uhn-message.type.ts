@@ -1,7 +1,7 @@
 
 import { MessagePayloadSchema } from "@uxp/common";
 import { UhnHealthSnapshot } from "./uhn-health.type";
-import { RuntimeInteractionView, RuntimeLocation, RuntimeOverviewPayload, RuntimeResource, RuntimeResourceState, RuntimeRuleInfo, RuntimeScene } from "./uhn-runtime.type";
+import { RuntimeInteractionView, RuntimeLocation, RuntimeOverviewPayload, RuntimeResource, RuntimeResourceState, RuntimeRuleInfo, RuntimeScene, RuntimeSchedule } from "./uhn-runtime.type";
 
 
 export type UhnSubscriptionPattern =
@@ -128,6 +128,10 @@ export type UhnRulesResponse = {
     rules: RuntimeRuleInfo[];
 }
 
+export type UhnSchedulesResponse = {
+    schedules: RuntimeSchedule[];
+}
+
 export type UhnResourcePayloadResponseMap = {
     "uhn:resources": UhnResourcesResponse
     "uhn:state": UhnStateResponse
@@ -137,6 +141,7 @@ export type UhnResourcePayloadResponseMap = {
     "uhn:locations": UhnLocationsResponse
     "uhn:scenes": UhnScenesResponse
     "uhn:rules": UhnRulesResponse
+    "uhn:schedules": UhnSchedulesResponse
 }
 export type DeviceAvailabilityEntry = {
     edge: string;

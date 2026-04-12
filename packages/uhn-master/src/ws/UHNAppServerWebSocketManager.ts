@@ -1,4 +1,4 @@
-import { DeviceAvailabilityEntry, getMatchingResourcesForPattern, getMatchingStateForPattern, RuntimeOverviewPayload, TopicMessagePayload, UHNAppActionPayloadRequestMap, UHNAppActionPayloadResponseMap, UHNAppResponseMessage, UhnAvailabilitySnapshotResponse, UhnFullStateResponse, UhnHealthSnapshot, UhnLocationsResponse, UhnResourcesResponse, UhnRulesResponse, UhnScenesResponse, UhnStateResponse, UhnSubscriptionPattern, UhnSystemSnapshot, UhnSystemStatus, UhnViewsResponse } from "@uhn/common";
+import { DeviceAvailabilityEntry, getMatchingResourcesForPattern, getMatchingStateForPattern, RuntimeOverviewPayload, TopicMessagePayload, UHNAppActionPayloadRequestMap, UHNAppActionPayloadResponseMap, UHNAppResponseMessage, UhnAvailabilitySnapshotResponse, UhnFullStateResponse, UhnHealthSnapshot, UhnLocationsResponse, UhnResourcesResponse, UhnRulesResponse, UhnScenesResponse, UhnSchedulesResponse, UhnStateResponse, UhnSubscriptionPattern, UhnSystemSnapshot, UhnSystemStatus, UhnViewsResponse } from "@uhn/common";
 import { ServerWebSocketManager, topicMatches } from "@uxp/bff-common";
 
 import { WebSocket } from "ws";
@@ -170,6 +170,14 @@ export class UHNAppServerWebSocketManager extends ServerWebSocketManager<UHNAppA
     public broadcastScenesMessage(payload: UhnScenesResponse) {
         this.broadcastToTopic("uhn:scene/*", {
             action: "uhn:scenes",
+            success: true,
+            payload: payload,
+        });
+    }
+
+    public broadcastSchedulesMessage(payload: UhnSchedulesResponse) {
+        this.broadcastToTopic("uhn:schedule/*", {
+            action: "uhn:schedules",
             success: true,
             payload: payload,
         });
