@@ -1,7 +1,9 @@
 
+import type { ScheduleWhen } from "@uhn/blueprint";
 import { MessagePayloadSchema } from "@uxp/common";
 import { UhnHealthSnapshot } from "./uhn-health.type";
 import { RuntimeInteractionView, RuntimeLocation, RuntimeOverviewPayload, RuntimeResource, RuntimeResourceState, RuntimeRuleInfo, RuntimeScene, RuntimeSchedule } from "./uhn-runtime.type";
+import type { ScheduleMuteInfo, StoredScheduleAction, UserScheduleInfo } from "./uhn-schedule.type";
 
 
 export type UhnSubscriptionPattern =
@@ -16,6 +18,7 @@ export type UhnSubscriptionPattern =
     | 'location/*'
     | 'scene/*'
     | 'rule/*'
+    | 'schedule/*'
     | 'availability/*';
 
 
@@ -92,9 +95,35 @@ export type UhnSubscribePayloadRequestMap = {
 export type UhnSceneActivatePayload = {
     sceneId: string;
 }
+export type UhnScheduleCreatePayload = {
+    name: string;
+    when: ScheduleWhen[];
+    actions: StoredScheduleAction[];
+    missedGraceMs?: number;
+}
+export type UhnScheduleUpdatePayload = {
+    id: number;
+} & Partial<UhnScheduleCreatePayload>;
+
+export type UhnScheduleDeletePayload = {
+    id: number;
+}
+export type UhnScheduleMutePayload = {
+    scheduleId: string;
+    /** Duration in ms, or null for indefinite. */
+    durationMs: number | null;
+}
+export type UhnScheduleUnmutePayload = {
+    scheduleId: string;
+}
 export type UhnResourcePayloadRequestMap = {
     "uhn:resource:command": UhnResourceCommandPayload
     "uhn:scene:activate": UhnSceneActivatePayload
+    "uhn:schedule:create": UhnScheduleCreatePayload
+    "uhn:schedule:update": UhnScheduleUpdatePayload
+    "uhn:schedule:delete": UhnScheduleDeletePayload
+    "uhn:schedule:mute": UhnScheduleMutePayload
+    "uhn:schedule:unmute": UhnScheduleUnmutePayload
 }
 
 export type UhnResourcesResponse = {
@@ -129,7 +158,12 @@ export type UhnRulesResponse = {
 }
 
 export type UhnSchedulesResponse = {
+    /** Blueprint-defined schedules. */
     schedules: RuntimeSchedule[];
+    /** User-created schedules. */
+    userSchedules: UserScheduleInfo[];
+    /** Mute state for all schedules (blueprint + user). */
+    mutes: ScheduleMuteInfo[];
 }
 
 export type UhnResourcePayloadResponseMap = {
@@ -176,7 +210,7 @@ export const UhnSubscribePayloadSchema: MessagePayloadSchema<UhnSubscribePayload
         patterns: {
             type: 'array', items: {
                 type: 'string',
-                pattern: '^((state|resource)/.*|health/\\*|system/\\*|runtime/\\*|view/\\*|location/\\*|scene/\\*|rule/\\*|availability/\\*)$',
+                pattern: '^((state|resource)/.*|health/\\*|system/\\*|runtime/\\*|view/\\*|location/\\*|scene/\\*|rule/\\*|schedule/\\*|availability/\\*)$',
                 minLength: 1,
                 maxLength: 256
             },
@@ -308,3 +342,4 @@ export const UhnResourceCommandPayloadSchema: MessagePayloadSchema<UhnResourceCo
     required: ['resourceId', 'command'],
     additionalProperties: false
 }
+

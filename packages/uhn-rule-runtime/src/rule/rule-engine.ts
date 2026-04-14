@@ -5,6 +5,7 @@ import type {
     RuleAction,
     RuleCause,
     RuleTrigger,
+    ScheduleRuleCause,
     StateReader,
     RuntimeRuleAction
 } from "@uhn/blueprint";
@@ -70,17 +71,46 @@ export class RuleEngine {
     }
 
     /**
-     * Handle a schedule-fired event. Matches rules with onSchedule() triggers
-     * for the given scheduleId and executes them.
-     * Phase 3 will implement the full matching logic.
+     * Handle a schedule-fired event. Looks up rules with onSchedule() triggers
+     * matching the fired schedule and executes them through the shared tryRunRule path.
      */
     handleScheduleTriggerEvent(event: ScheduleTriggerEvent) {
-        runtimeOutput.log({
-            level: "info",
-            component: "RuleEngine",
-            message: `Schedule event received: "${event.schedule.id}" (firedAt: ${event.firedAt}) — schedule trigger execution not yet implemented`,
-        });
-        // TODO Phase 3: look up rules by schedule.id, execute matching rules
+        const scheduleId = event.schedule.id;
+        if (!scheduleId) return;
+
+        const rules = this.rulesService.getRulesForSchedule(scheduleId);
+        if (!rules.length) {
+            runtimeOutput.log({
+                level: "debug",
+                component: "RuleEngine",
+                message: `No rules indexed for schedule "${scheduleId}"`,
+            });
+            return;
+        }
+
+        const cause: ScheduleRuleCause = {
+            event: "schedule",
+            timestamp: Date.now(),
+            schedule: event.schedule,
+        };
+
+        for (const ruleCandidate of rules) {
+            const actions = this.tryRunRule(ruleCandidate, cause, cause.timestamp);
+
+            if (actions.length) {
+                runtimeOutput.send({
+                    kind: "event",
+                    cmd: "actions",
+                    actions,
+                });
+            } else {
+                runtimeOutput.log({
+                    level: "debug",
+                    component: "RuleEngine",
+                    message: `Rule "${ruleCandidate.id}" matched schedule "${scheduleId}" but produced 0 actions`,
+                });
+            }
+        }
     }
 
     private handleResourceTriggerEvent(triggerEvent: RuleTriggerEvent) {

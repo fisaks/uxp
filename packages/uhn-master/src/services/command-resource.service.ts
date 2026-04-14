@@ -17,7 +17,7 @@ const PRESS_DURATION_MS = 50;
 const LONG_PRESS_BUFFER_MS = 100;
 
 /**
- * Handles resource commands from the UI and from scene activation.
+ * Handles resource commands from the UI, scene activation, and schedule execution.
  *
  * Entry points:
  *   - `uhn:resource:command` WebSocket message
@@ -26,6 +26,9 @@ const LONG_PRESS_BUFFER_MS = 100;
  *   - `uhn:scene:activate` WebSocket message
  *       → CommandSceneService.activateScene()
  *       → executeResourceCommand(resourceId, command) per scene command
+ *   - User schedule fires
+ *       → ScheduleExecutionService.executeStoredActions()
+ *       → executeResourceCommand(resourceId, command) per stored action
  *
  * Validates the command against the resource type, then dispatches
  * to per-type handlers that either route to the edge (physical resources)

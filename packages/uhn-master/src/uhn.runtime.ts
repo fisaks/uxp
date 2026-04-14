@@ -44,7 +44,9 @@ import "./services/runtime-overview.service";
 import { systemConfigService } from "./services/system-config.service";
 import "./services/uhn-health.service";
 import "./services/device-availability.service";
-import "./services/schedule-fire.service";
+import "./services/schedule-timer.service";
+import "./services/schedule-execution.service";
+import "./services/schedule-orchestrator.service";
 import "./services/system-command-edge.service";
 
 export async function startUhnRuntime() {

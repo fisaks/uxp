@@ -5,7 +5,10 @@ import { UHNAppServerWebSocketManager } from "../ws/UHNAppServerWebSocketManager
 import { blueprintLocationService } from "./blueprint-location.service";
 import { blueprintResourceService } from "./blueprint-resource.service";
 import { blueprintSceneService } from "./blueprint-scene.service";
+import { blueprintScheduleService } from "./blueprint-schedule.service";
 import { blueprintViewService } from "./blueprint-view.service";
+import { scheduleMuteService } from "./schedule-mute.service";
+import { userScheduleService } from "./user-schedule.service";
 import { runtimeOverviewService } from "./runtime-overview.service";
 import { stateRuntimeService } from "./state-runtime.service";
 import { deviceAvailabilityService } from "./device-availability.service";
@@ -39,6 +42,7 @@ export class UhnMessageService {
         const shouldSendLocations = patterns.some(p => p === 'location/*');
         const shouldSendScenes = patterns.some(p => p === 'scene/*');
         const shouldSendRules = patterns.some(p => p === 'rule/*');
+        const shouldSendSchedules = patterns.some(p => p === 'schedule/*');
         const shouldSendAvailability = patterns.some(p => p === 'availability/*');
 
         if (shouldSendResources) {
@@ -68,6 +72,9 @@ export class UhnMessageService {
         }
         if (shouldSendRules) {
             this.sendRulesMessage(socket);
+        }
+        if (shouldSendSchedules) {
+            await this.sendSchedulesMessage(socket);
         }
         if (shouldSendAvailability) {
             this.sendAvailabilityMessage(socket);
@@ -196,6 +203,17 @@ export class UhnMessageService {
             action: "uhn:rules",
             success: true,
             payload: { rules },
+        });
+    }
+
+    async sendSchedulesMessage(socket: WebSocket) {
+        const schedules = blueprintScheduleService.getAllSchedules();
+        const userSchedules = await userScheduleService.listForActiveBlueprint();
+        const mutes = await scheduleMuteService.listMutesForActiveBlueprint();
+        this.wsManager.sendMessage(socket, {
+            action: "uhn:schedules",
+            success: true,
+            payload: { schedules, userSchedules, mutes },
         });
     }
 

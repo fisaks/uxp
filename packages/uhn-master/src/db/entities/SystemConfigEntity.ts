@@ -12,7 +12,7 @@ import {
 @Entity({ name: "system_config" })
 export class SystemConfigEntity {
 
-    constructor(init?: Partial<Pick<SystemConfigEntity,  "runtimeMode" | "logLevel" | "debugPort">>) {
+    constructor(init?: Partial<Pick<SystemConfigEntity,  "runtimeMode" | "logLevel" | "debugPort" | "latitude" | "longitude">>) {
         Object.assign(this, init);
     }
     /**
@@ -36,6 +36,12 @@ export class SystemConfigEntity {
 
     @Column({ type: "int", default: 9250 })
     debugPort!: number;
+
+    @Column({ type: "decimal", precision: 10, scale: 7, nullable: true })
+    latitude!: number | null;
+
+    @Column({ type: "decimal", precision: 10, scale: 7, nullable: true })
+    longitude!: number | null;
 
     @UpdateDateColumn({
         type: "timestamp",

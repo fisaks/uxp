@@ -46,14 +46,28 @@ async function collectRules(rulesDir: string): Promise<BlueprintRule[]> {
     return rules;
 }
 
-function indexRules(rules: BlueprintRule[]): Map<string, BlueprintRule[]> {
+type RuleIndex = {
+    byResourceId: Map<string, BlueprintRule[]>;
+    byScheduleId: Map<string, BlueprintRule[]>;
+};
+
+function indexRules(rules: BlueprintRule[]): RuleIndex {
     const byResourceId = new Map<string, Set<BlueprintRule>>();
-    // const timers = new Set<BlueprintRule>();
+    const byScheduleId = new Map<string, Set<BlueprintRule>>();
 
     for (const rule of rules) {
         for (const t of rule.triggers) {
-            // Schedule triggers are indexed separately (by scheduleId, not resourceId)
-            if (isScheduleTrigger(t)) continue;
+            if (isScheduleTrigger(t)) {
+                const scheduleId = t.schedule?.id;
+                if (!scheduleId) continue;
+                let set = byScheduleId.get(scheduleId);
+                if (!set) {
+                    set = new Set();
+                    byScheduleId.set(scheduleId, set);
+                }
+                set.add(rule);
+                continue;
+            }
 
             const resourceId = t.resource?.id;
             if (!resourceId) {
@@ -71,20 +85,24 @@ function indexRules(rules: BlueprintRule[]): Map<string, BlueprintRule[]> {
                 byResourceId.set(resourceId, set);
             }
 
-            set.add(rule); // ← dedupe guaranteed
+            set.add(rule);
         }
     }
 
-    // Convert Sets → sorted arrays
-    const byResourceIdFinal = new Map<string, BlueprintRule[]>();
-    for (const [resourceId, set] of byResourceId.entries()) {
-        const list = Array.from(set);
-        list.sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0));
-        byResourceIdFinal.set(resourceId, list);
-    }
+    const sortByPriority = (map: Map<string, Set<BlueprintRule>>): Map<string, BlueprintRule[]> => {
+        const result = new Map<string, BlueprintRule[]>();
+        for (const [key, set] of map.entries()) {
+            const list = Array.from(set);
+            list.sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0));
+            result.set(key, list);
+        }
+        return result;
+    };
 
-    return byResourceIdFinal;
-
+    return {
+        byResourceId: sortByPriority(byResourceId),
+        byScheduleId: sortByPriority(byScheduleId),
+    };
 }
 
 
@@ -170,12 +188,12 @@ function serializeRule(rule: BlueprintRule): RuntimeRuleInfo {
 export class RuntimeRulesService {
     private rules: BlueprintRule[];
     private readonly allValidatedRules: BlueprintRule[];
-    private byResourceId: Map<string, BlueprintRule[]>;
+    private index: RuleIndex;
 
-    private constructor(rules: BlueprintRule[], allValidatedRules: BlueprintRule[], byResourceId: Map<string, BlueprintRule[]>) {
+    private constructor(rules: BlueprintRule[], allValidatedRules: BlueprintRule[], index: RuleIndex) {
         this.rules = rules;
         this.allValidatedRules = allValidatedRules;
-        this.byResourceId = byResourceId;
+        this.index = index;
     }
 
     static async create(rulesDir: string, mode: RuntimeMode, edgeName?: string): Promise<RuntimeRulesService> {
@@ -187,17 +205,18 @@ export class RuntimeRulesService {
             level: "info", component: "RuntimeRulesService",
             message: `Loaded ${rules.length} of ${validated.length} rules for mode "${modeLabel}".`,
         });
-        const byResourceId = indexRules(rules);
+        const index = indexRules(rules);
         runtimeOutput.log({
             level: "info", component: "RuntimeRulesService",
-            message: `Indexed rules for ${byResourceId.size} unique resource ID(s): [${Array.from(byResourceId.keys()).join(", ")}]`,
+            message: `Indexed rules for ${index.byResourceId.size} resource ID(s), ${index.byScheduleId.size} schedule ID(s).`,
         });
-        return new RuntimeRulesService(rules, validated, byResourceId);
+        return new RuntimeRulesService(rules, validated, index);
     }
 
+    /** Reduce to a subset of rules by ID. Used by dev-filter to restrict which rules are active during development. */
     filterByIds(ids: Set<string>): void {
         this.rules = this.rules.filter(r => ids.has(r.id));
-        this.byResourceId = indexRules(this.rules);
+        this.index = indexRules(this.rules);
     }
 
     list(): BlueprintRule[] {
@@ -205,7 +224,11 @@ export class RuntimeRulesService {
     }
 
     getRulesForResource(resourceId: string): BlueprintRule[] {
-        return this.byResourceId.get(resourceId) ?? [];
+        return this.index.byResourceId.get(resourceId) ?? [];
+    }
+
+    getRulesForSchedule(scheduleId: string): BlueprintRule[] {
+        return this.index.byScheduleId.get(scheduleId) ?? [];
     }
 
     serializeRules(): RuntimeRuleInfo[] {

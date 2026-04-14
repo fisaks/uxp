@@ -3,6 +3,7 @@ import { AppErrorV2, AppLogger } from "@uxp/bff-common";
 import EventEmitter from "events";
 import { SystemConfigEntity } from "../db/entities/SystemConfigEntity";
 import { SystemConfigRepository } from "../repositories/system-config.repository";
+import { scheduleTimerService } from "./schedule-timer.service";
 
 type SystemConfigEventMap = {
     configChanged: [update: SystemConfigUpdate];
@@ -37,6 +38,7 @@ export class SystemConfigService extends EventEmitter<SystemConfigEventMap> {
             });
         }
         AppLogger.setLogLevel(this.config.logLevel);
+        this.syncLocationToScheduleService(this.config);
         this.emit("configChanged", { runtimeMode: this.config.runtimeMode, logLevel: this.config.logLevel, debugPort: this.config.debugPort });
     }
 
@@ -118,6 +120,35 @@ export class SystemConfigService extends EventEmitter<SystemConfigEventMap> {
         this.emit("configChanged", { runtimeMode: config.runtimeMode, logLevel, debugPort: config.debugPort });
 
         return this.getConfig();
+    }
+    async setLocation(
+        latitude: number | null,
+        longitude: number | null
+    ): Promise<SystemConfigEntity> {
+        const config = this.getConfig();
+
+        config.latitude = latitude;
+        config.longitude = longitude;
+        this.config = await SystemConfigRepository.save(config);
+
+        AppLogger.info({
+            message: "Location updated",
+            object: { latitude, longitude },
+        });
+        this.syncLocationToScheduleService(this.config);
+
+        return this.getConfig();
+    }
+
+    private syncLocationToScheduleService(config: SystemConfigEntity) {
+        if (config.latitude != null && config.longitude != null) {
+            scheduleTimerService.setLocation({
+                latitude: Number(config.latitude),
+                longitude: Number(config.longitude),
+            });
+        } else {
+            scheduleTimerService.setLocation(undefined);
+        }
     }
 }
 
