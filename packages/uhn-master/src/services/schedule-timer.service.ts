@@ -5,7 +5,7 @@
 // No DB access, no MQTT, no action execution — just timing.
 
 import { ScheduleWhen, SunEvent } from "@uhn/blueprint";
-import { RuntimeSchedule } from "@uhn/common";
+import { RuntimePhase, RuntimeSchedule } from "@uhn/common";
 import { AppLogger } from "@uxp/bff-common";
 import { CronExpressionParser } from "cron-parser";
 import { DateTime } from "luxon";
@@ -16,7 +16,7 @@ const LOG_TAG = "[ScheduleTimerService]";
 
 type ScheduleTimer = {
     scheduleId: string;
-    when: ScheduleWhen;
+    phase: RuntimePhase;
     timeout: NodeJS.Timeout;
     nextFireTime: DateTime;
 };
@@ -27,8 +27,8 @@ type GeoLocation = {
 };
 
 export type ScheduleTimerEventMap = {
-    /** Emitted when a scheduled timer fires. */
-    fired: [schedule: RuntimeSchedule, when: ScheduleWhen];
+    /** Emitted when a schedule phase timer fires. */
+    fired: [schedule: RuntimeSchedule, phase: RuntimePhase];
 };
 
 /**
@@ -143,7 +143,7 @@ export class ScheduleTimerService extends EventEmitter<ScheduleTimerEventMap> {
             if (!this.sunTimes) return undefined;
             const eventTime = this.sunTimes[when.event];
             if (!eventTime) return undefined;
-            const fireTime = eventTime.plus({ minutes: when.offsetMinutes });
+            const fireTime = eventTime.plus({ minutes: when.offsetMinutes ?? 0 });
             return fireTime < now ? fireTime : undefined;
         }
 
@@ -169,18 +169,18 @@ export class ScheduleTimerService extends EventEmitter<ScheduleTimerEventMap> {
         const now = DateTime.now();
         const entries: ScheduleTimer[] = [];
 
-        for (const when of schedule.when) {
-            const nextFire = this.calculateNextFire(when, now);
+        for (const phase of schedule.phases) {
+            const nextFire = this.calculateNextFire(phase.when, now);
             if (!nextFire) continue;
 
             const delayMs = nextFire.diff(now).as("milliseconds");
             if (delayMs <= 0) continue;
 
             const timeout = setTimeout(() => {
-                this.onTimerFired(schedule, when);
+                this.onTimerFired(schedule, phase);
             }, delayMs);
 
-            entries.push({ scheduleId: schedule.id, when, timeout, nextFireTime: nextFire });
+            entries.push({ scheduleId: schedule.id, phase, timeout, nextFireTime: nextFire });
         }
 
         if (entries.length > 0) {
@@ -193,7 +193,7 @@ export class ScheduleTimerService extends EventEmitter<ScheduleTimerEventMap> {
             case "cron":
                 return this.nextCronFire(when.expression, now);
             case "sun":
-                return this.nextSunFire(when.event, when.offsetMinutes, now);
+                return this.nextSunFire(when.event, when.offsetMinutes ?? 0, now);
             case "date":
                 return this.nextDateFire(when.month, when.day, when.time, now);
         }
@@ -233,29 +233,29 @@ export class ScheduleTimerService extends EventEmitter<ScheduleTimerEventMap> {
         return candidate;
     }
 
-    private onTimerFired(schedule: RuntimeSchedule, when: ScheduleWhen) {
-        this.removeFiredTimer(schedule.id, when);
-        this.scheduleNextForWhen(schedule, when);
-        this.emit("fired", schedule, when);
+    private onTimerFired(schedule: RuntimeSchedule, phase: RuntimePhase) {
+        this.removeFiredTimer(schedule.id, phase);
+        this.scheduleNextForPhase(schedule, phase);
+        this.emit("fired", schedule, phase);
     }
 
     /** Schedule the next occurrence for a single when trigger, appending to existing timers.
      *  For sun triggers this is effectively a no-op after firing (today's time already passed,
      *  nextSunFire returns undefined) — midnight recalculation handles the next day. */
-    private scheduleNextForWhen(schedule: RuntimeSchedule, when: ScheduleWhen) {
+    private scheduleNextForPhase(schedule: RuntimeSchedule, phase: RuntimePhase) {
         const now = DateTime.now();
-        const nextFire = this.calculateNextFire(when, now);
+        const nextFire = this.calculateNextFire(phase.when, now);
         if (!nextFire) return;
 
         const delayMs = nextFire.diff(now).as("milliseconds");
         if (delayMs <= 0) return;
 
         const timeout = setTimeout(() => {
-            this.onTimerFired(schedule, when);
+            this.onTimerFired(schedule, phase);
         }, delayMs);
 
         const existing = this.timers.get(schedule.id) ?? [];
-        existing.push({ scheduleId: schedule.id, when, timeout, nextFireTime: nextFire });
+        existing.push({ scheduleId: schedule.id, phase, timeout, nextFireTime: nextFire });
         this.timers.set(schedule.id, existing);
     }
 
@@ -285,7 +285,7 @@ export class ScheduleTimerService extends EventEmitter<ScheduleTimerEventMap> {
             this.recalculateSunTimes();
 
             for (const schedule of this.registeredSchedules) {
-                if (schedule.when.some(w => w.kind === "sun")) {
+                if (schedule.phases.some(p => p.when.kind === "sun")) {
                     this.clearSunTimersForSchedule(schedule.id);
                     this.scheduleSunTriggers(schedule);
                 }
@@ -299,19 +299,19 @@ export class ScheduleTimerService extends EventEmitter<ScheduleTimerEventMap> {
         const now = DateTime.now();
         const existing = this.timers.get(schedule.id) ?? [];
 
-        for (const when of schedule.when) {
-            if (when.kind !== "sun") continue;
-            const nextFire = this.nextSunFire(when.event, when.offsetMinutes, now);
+        for (const phase of schedule.phases) {
+            if (phase.when.kind !== "sun") continue;
+            const nextFire = this.nextSunFire(phase.when.event, phase.when.offsetMinutes ?? 0, now);
             if (!nextFire) continue;
 
             const delayMs = nextFire.diff(now).as("milliseconds");
             if (delayMs <= 0) continue;
 
             const timeout = setTimeout(() => {
-                this.onTimerFired(schedule, when);
+                this.onTimerFired(schedule, phase);
             }, delayMs);
 
-            existing.push({ scheduleId: schedule.id, when, timeout, nextFireTime: nextFire });
+            existing.push({ scheduleId: schedule.id, phase, timeout, nextFireTime: nextFire });
         }
 
         if (existing.length > 0) {
@@ -321,10 +321,10 @@ export class ScheduleTimerService extends EventEmitter<ScheduleTimerEventMap> {
 
     // ---- Timer management ----
 
-    private removeFiredTimer(scheduleId: string, when: ScheduleWhen) {
+    private removeFiredTimer(scheduleId: string, phase: RuntimePhase) {
         const timers = this.timers.get(scheduleId);
         if (!timers) return;
-        const idx = timers.findIndex(t => t.when === when);
+        const idx = timers.findIndex(t => t.phase.id === phase.id);
         if (idx !== -1) timers.splice(idx, 1);
         if (timers.length === 0) this.timers.delete(scheduleId);
     }
@@ -342,7 +342,7 @@ export class ScheduleTimerService extends EventEmitter<ScheduleTimerEventMap> {
         if (!timers) return;
         const kept: ScheduleTimer[] = [];
         for (const t of timers) {
-            if (t.when.kind === "sun") {
+            if (t.phase.when.kind === "sun") {
                 clearTimeout(t.timeout);
             } else {
                 kept.push(t);

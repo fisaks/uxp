@@ -3,7 +3,7 @@ import type { ScheduleWhen } from "@uhn/blueprint";
 import { MessagePayloadSchema } from "@uxp/common";
 import { UhnHealthSnapshot } from "./uhn-health.type";
 import { RuntimeInteractionView, RuntimeLocation, RuntimeOverviewPayload, RuntimeResource, RuntimeResourceState, RuntimeRuleInfo, RuntimeScene, RuntimeSchedule } from "./uhn-runtime.type";
-import type { ScheduleMuteInfo, StoredScheduleAction, UserScheduleInfo } from "./uhn-schedule.type";
+import type { ScheduleMuteInfo, StoredScheduleAction, UserScheduleInfo, UserScheduleSlot } from "./uhn-schedule.type";
 
 
 export type UhnSubscriptionPattern =
@@ -97,8 +97,7 @@ export type UhnSceneActivatePayload = {
 }
 export type UhnScheduleCreatePayload = {
     name: string;
-    when: ScheduleWhen[];
-    actions: StoredScheduleAction[];
+    slots: UserScheduleSlot[];
     missedGraceMs?: number;
 }
 export type UhnScheduleUpdatePayload = {

@@ -1,17 +1,14 @@
-// cron.ts — Fluent cron expression builder
-// Returns string[] (one or more cron expressions).
+// cron.ts — Fluent cron expression builder.
+// Returns a single cron expression string.
 //
 // Usage:
-//   cron.weekdays().at("07:00")                          // ["0 7 * * 1-5"]
-//   cron.daily().at("07:00").at("19:00")                 // ["0 7 * * *", "0 19 * * *"]
-//   cron.days("mon", "wed").at("18:30")                  // ["30 18 * * 1,3"]
-//   cron.month("dec").day(24).at("15:00")                // ["0 15 24 12 *"]
-//   cron.day(24).month("dec").at("15:00")                // ["0 15 24 12 *"]
-//   cron.months("jun", "jul", "aug").day(1).at("08:00")  // ["0 8 1 6,7,8 *"]
-//   cron.day(1).at("00:00")                              // ["0 0 1 * *"]
-//   cron.month("dec").at("08:00")                        // ["0 8 * 12 *"]
-//   cron.every(30).minutes()                             // ["*/30 * * * *"]
-//   cron.every(2).hours()                                // ["0 */2 * * *"]
+//   cron.weekdays().at("07:00")                          // "0 7 * * 1-5"
+//   cron.daily().at("23:00")                             // "0 23 * * *"
+//   cron.days("mon", "wed").at("18:30")                  // "30 18 * * 1,3"
+//   cron.month("dec").day(24).at("15:00")                // "0 15 24 12 *"
+//   cron.day(1).month("dec").at("15:00")                 // "0 15 1 12 *"
+//   cron.every(30).minutes()                             // "*/30 * * * *"
+//   cron.every(2).hours()                                // "0 */2 * * *"
 
 type DayName = "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";
 type MonthName = "jan" | "feb" | "mar" | "apr" | "may" | "jun" | "jul" | "aug" | "sep" | "oct" | "nov" | "dec";
@@ -46,25 +43,20 @@ type CronFields = {
     dayOfWeek: string;
 };
 
+/** Builder that requires .at() to produce the final cron string. */
 type CronAtBuilder = {
-    /** Add a time to fire at (HH:mm). Can chain multiple .at() calls. */
-    at(time: string): CronAtBuilder;
-    /** Returns the built cron expression(s). Called automatically via valueOf/toString. */
-    build(): string[];
+    /** Set the time (HH:mm) and return the cron expression string. */
+    at(time: string): string;
 };
 
-/** Builder that can still accept month and/or day-of-month before .at(). */
+/** Builder that can accept month and/or day-of-month before .at(). */
 type CronCalendarBuilder = CronAtBuilder & {
-    /** Restrict to specific month(s) (1-12 or name). */
+    /** Restrict to specific month (1-12 or name). */
     month(m: MonthInput): CronCalendarBuilder;
+    /** Restrict to multiple months (1-12 or names). */
     months(...m: MonthInput[]): CronCalendarBuilder;
     /** Restrict to a specific day of the month (1-31). */
     day(d: number): CronCalendarBuilder;
-};
-
-type CronIntervalBuilder = {
-    minutes(): string[];
-    hours(): string[];
 };
 
 /* ------------------------------------------------------------------ */
@@ -83,86 +75,33 @@ function parseTime(time: string): { minute: number; hour: number } {
     return { hour, minute };
 }
 
-function buildExpressions(fields: CronFields, times: Array<{ minute: number; hour: number }>): string[] {
-    if (times.length === 0) {
-        throw new Error("Cron builder: at least one .at() call is required.");
-    }
-    return times.map(({ minute, hour }) =>
-        `${minute} ${hour} ${fields.dayOfMonth} ${fields.month} ${fields.dayOfWeek}`
-    );
+function createAtBuilder(fields: CronFields): CronAtBuilder {
+    return {
+        at(time: string): string {
+            const { minute, hour } = parseTime(time);
+            return `${minute} ${hour} ${fields.dayOfMonth} ${fields.month} ${fields.dayOfWeek}`;
+        },
+    };
 }
 
 function createCalendarBuilder(fields: CronFields): CronCalendarBuilder {
-    const times: Array<{ minute: number; hour: number }> = [];
-
-    const builder: CronCalendarBuilder = {
-        at(time: string) {
-            times.push(parseTime(time));
-            return builder;
+    return {
+        at(time: string): string {
+            const { minute, hour } = parseTime(time);
+            return `${minute} ${hour} ${fields.dayOfMonth} ${fields.month} ${fields.dayOfWeek}`;
         },
         month(m: MonthInput) {
-            fields = { ...fields, month: String(resolveMonth(m)) };
-            return builder;
+            return createCalendarBuilder({ ...fields, month: String(resolveMonth(m)) });
         },
         months(...months: MonthInput[]) {
             if (months.length === 0) throw new Error("months() requires at least one month.");
-            fields = { ...fields, month: months.map(resolveMonth).join(",") };
-            return builder;
+            return createCalendarBuilder({ ...fields, month: months.map(resolveMonth).join(",") });
         },
         day(d: number) {
             if (d < 1 || d > 31) throw new Error(`Invalid day of month ${d}. Must be 1-31.`);
-            fields = { ...fields, dayOfMonth: String(d) };
-            return builder;
-        },
-        build() {
-            return buildExpressions(fields, times);
+            return createCalendarBuilder({ ...fields, dayOfMonth: String(d) });
         },
     };
-
-    // Make it behave as string[] when used in contexts that coerce
-    return new Proxy(builder, {
-        get(target, prop) {
-            if (prop === Symbol.toPrimitive || prop === "toString" || prop === "valueOf") {
-                return () => target.build();
-            }
-            if (prop === Symbol.iterator) {
-                return () => target.build()[Symbol.iterator]();
-            }
-            if (prop === "length") {
-                return target.build().length;
-            }
-            return (target as any)[prop];
-        },
-    }) as CronCalendarBuilder;
-}
-
-function createAtOnlyBuilder(fields: CronFields): CronAtBuilder {
-    const times: Array<{ minute: number; hour: number }> = [];
-
-    const builder: CronAtBuilder = {
-        at(time: string) {
-            times.push(parseTime(time));
-            return builder;
-        },
-        build() {
-            return buildExpressions(fields, times);
-        },
-    };
-
-    return new Proxy(builder, {
-        get(target, prop) {
-            if (prop === Symbol.toPrimitive || prop === "toString" || prop === "valueOf") {
-                return () => target.build();
-            }
-            if (prop === Symbol.iterator) {
-                return () => target.build()[Symbol.iterator]();
-            }
-            if (prop === "length") {
-                return target.build().length;
-            }
-            return (target as any)[prop];
-        },
-    }) as CronAtBuilder;
 }
 
 /* ------------------------------------------------------------------ */
@@ -172,17 +111,17 @@ function createAtOnlyBuilder(fields: CronFields): CronAtBuilder {
 export const cron = {
     /** Every day. */
     daily(): CronAtBuilder {
-        return createAtOnlyBuilder({ dayOfMonth: "*", month: "*", dayOfWeek: "*" });
+        return createAtBuilder({ dayOfMonth: "*", month: "*", dayOfWeek: "*" });
     },
 
     /** Monday through Friday. */
     weekdays(): CronAtBuilder {
-        return createAtOnlyBuilder({ dayOfMonth: "*", month: "*", dayOfWeek: "1-5" });
+        return createAtBuilder({ dayOfMonth: "*", month: "*", dayOfWeek: "1-5" });
     },
 
     /** Saturday and Sunday. */
     weekends(): CronAtBuilder {
-        return createAtOnlyBuilder({ dayOfMonth: "*", month: "*", dayOfWeek: "0,6" });
+        return createAtBuilder({ dayOfMonth: "*", month: "*", dayOfWeek: "0,6" });
     },
 
     /** Specific days of the week. */
@@ -193,7 +132,7 @@ export const cron = {
             if (n === undefined) throw new Error(`Unknown day "${d}". Use: mon, tue, wed, thu, fri, sat, sun.`);
             return n;
         });
-        return createAtOnlyBuilder({ dayOfMonth: "*", month: "*", dayOfWeek: nums.join(",") });
+        return createAtBuilder({ dayOfMonth: "*", month: "*", dayOfWeek: nums.join(",") });
     },
 
     /** Specific month (1-12 or name). Chain with .day() and/or .at(). */
@@ -214,14 +153,14 @@ export const cron = {
     },
 
     /** Recurring interval: cron.every(N).minutes() or cron.every(N).hours(). */
-    every(n: number): CronIntervalBuilder {
+    every(n: number) {
         if (n < 1) throw new Error("Interval must be >= 1.");
         return {
-            minutes(): string[] {
-                return [`*/${n} * * * *`];
+            minutes(): string {
+                return `*/${n} * * * *`;
             },
-            hours(): string[] {
-                return [`0 */${n} * * *`];
+            hours(): string {
+                return `0 */${n} * * *`;
             },
         };
     },

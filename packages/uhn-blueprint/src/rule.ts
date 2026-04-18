@@ -15,7 +15,7 @@ import type {
     VirtualDigitalInputResourceBase,
 } from "./resource";
 import type { BlueprintScene } from "./scene";
-import type { BlueprintSchedule } from "./schedule";
+import type { BlueprintPhase } from "./schedule";
 
 // --------- Runtime state value ---------
 export type StateValue = boolean | number;
@@ -96,7 +96,7 @@ export type RuleTrigger =
     }
     | {
         kind: "schedule";
-        schedule: BlueprintSchedule;
+        phase: BlueprintPhase;
     };
 
 export type ResourceRuleCause = {
@@ -116,7 +116,7 @@ export type ResourceRuleCause = {
 export type ScheduleRuleCause = {
     event: "schedule";
     timestamp: number;
-    schedule: BlueprintSchedule;
+    phase: BlueprintPhase;
 };
 
 export type RuleCause = ResourceRuleCause | ScheduleRuleCause;
@@ -215,15 +215,15 @@ export function isCausedBy(ctx: RuleContext, resource: ResourceBase<ResourceType
 }
 
 /**
- * Type guard that narrows `ctx.cause` to a schedule cause.
+ * Type guard that narrows `ctx.cause` to a schedule phase cause.
  *
  * Usage:
- *   if (isCausedBySchedule(ctx, morningRoutine)) {
- *       // ctx.cause.scheduleId === morningRoutine.id
+ *   if (isCausedBySchedulePhase(ctx, engineHeater.phases.on)) {
+ *       // ctx.cause.phase === engineHeater.phases.on
  *   }
  */
-export function isCausedBySchedule(ctx: RuleContext, schedule: BlueprintSchedule): ctx is RuleContext & { cause: ScheduleRuleCause } {
-    return ctx.cause.event === "schedule" && ctx.cause.schedule === schedule;
+export function isCausedBySchedulePhase(ctx: RuleContext, phase: BlueprintPhase): ctx is RuleContext & { cause: ScheduleRuleCause } {
+    return ctx.cause.event === "schedule" && ctx.cause.phase === phase;
 }
 
 /**
@@ -440,7 +440,7 @@ export type RuleBuilder = {
     onTimerActivated(timer: TimerResourceBase): RuleBuilder;
     onTimerDeactivated(timer: TimerResourceBase): RuleBuilder;
 
-    onSchedule(schedule: BlueprintSchedule): RuleBuilder;
+    onSchedulePhase(phase: BlueprintPhase): RuleBuilder;
 
     priority(n: number): RuleBuilder;
     /** Hint listing resources this rule's actions typically affect.
@@ -571,10 +571,10 @@ export function rule(
             return this;
         },
 
-        onSchedule(schedule) {
+        onSchedulePhase(phase) {
             meta.triggers.push({
                 kind: "schedule",
-                schedule,
+                phase,
             });
             return this;
         },

@@ -75,15 +75,14 @@ export class RuleEngine {
      * matching the fired schedule and executes them through the shared tryRunRule path.
      */
     handleScheduleTriggerEvent(event: ScheduleTriggerEvent) {
-        const scheduleId = event.schedule.id;
-        if (!scheduleId) return;
+        const schedulePhaseId = `${event.phase.scheduleId}.${event.phase.id}`;
 
-        const rules = this.rulesService.getRulesForSchedule(scheduleId);
+        const rules = this.rulesService.getRulesForPhase(schedulePhaseId);
         if (!rules.length) {
             runtimeOutput.log({
                 level: "debug",
                 component: "RuleEngine",
-                message: `No rules indexed for schedule "${scheduleId}"`,
+                message: `No rules indexed for phase "${schedulePhaseId}"`,
             });
             return;
         }
@@ -91,7 +90,7 @@ export class RuleEngine {
         const cause: ScheduleRuleCause = {
             event: "schedule",
             timestamp: Date.now(),
-            schedule: event.schedule,
+            phase: event.phase,
         };
 
         for (const ruleCandidate of rules) {
@@ -107,7 +106,7 @@ export class RuleEngine {
                 runtimeOutput.log({
                     level: "debug",
                     component: "RuleEngine",
-                    message: `Rule "${ruleCandidate.id}" matched schedule "${scheduleId}" but produced 0 actions`,
+                    message: `Rule "${ruleCandidate.id}" matched phase "${schedulePhaseId}" but produced 0 actions`,
                 });
             }
         }

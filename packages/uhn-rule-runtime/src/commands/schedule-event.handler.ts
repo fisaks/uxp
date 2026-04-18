@@ -4,29 +4,29 @@ import { RuleRuntimeDependencies } from "../types/rule-runtime.type";
 
 /**
  * Handles an incoming scheduleEvent IPC command.
- * Resolves scheduleId → BlueprintSchedule, then passes to the rule engine
- * for matching against rules with onSchedule() triggers.
+ * Resolves phaseId → BlueprintPhase, then passes to the rule engine
+ * for matching against rules with onPhase() triggers.
  *
  * Source: ScheduleService (master) broadcasts via MQTT, host relays to runtime via IPC.
  */
 export function handleScheduleEvent({ ruleEngine, scheduleService }: RuleRuntimeDependencies, cmd: RuleRuntimeScheduleEventCommand) {
-    const { scheduleId, firedAt } = cmd.payload;
+    const { scheduleId, phaseId, firedAt } = cmd.payload;
 
-    const schedule = scheduleService.getById(scheduleId);
-    if (!schedule) {
+    const phase = scheduleService.getPhase(scheduleId, phaseId);
+    if (!phase) {
         runtimeOutput.log({
             component: "handleScheduleEvent",
             level: "warn",
-            message: `Schedule "${scheduleId}" not found — ignoring event`,
+            message: `Phase "${scheduleId}.${phaseId}" not found — ignoring event`,
         });
         return;
     }
 
-    ruleEngine.handleScheduleTriggerEvent({ schedule, firedAt });
+    ruleEngine.handleScheduleTriggerEvent({ phase, firedAt });
 
     runtimeOutput.log({
         component: "handleScheduleEvent",
         level: "info",
-        message: `Schedule event "${scheduleId}" dispatched to rule engine (firedAt: ${firedAt})`,
+        message: `Phase event "${scheduleId}.${phaseId}" dispatched to rule engine (firedAt: ${firedAt})`,
     });
 }

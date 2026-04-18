@@ -16,8 +16,7 @@ function toUserScheduleInfo(entity: UserScheduleEntity): UserScheduleInfo {
         blueprintIdentifier: entity.blueprintIdentifier,
         scheduleId: entity.scheduleId,
         name: entity.name,
-        when: entity.when,
-        actions: entity.actions,
+        slots: entity.slots,
         missedGraceMs: entity.missedGraceMs,
         createdBy: entity.createdBy,
         createdAt: entity.createdAt?.toISO() ?? "",
@@ -45,8 +44,7 @@ class UserScheduleService {
             blueprintIdentifier: blueprintId,
             scheduleId: generateScheduleId(),
             name: payload.name,
-            when: payload.when,
-            actions: payload.actions,
+            slots: payload.slots,
             missedGraceMs: payload.missedGraceMs ?? 900_000, // default 15min
             createdBy: username,
         });
@@ -60,8 +58,7 @@ class UserScheduleService {
         const entity = await this.findOwnedOrThrow(id);
 
         if (payload.name !== undefined) entity.name = payload.name;
-        if (payload.when !== undefined) entity.when = payload.when;
-        if (payload.actions !== undefined) entity.actions = payload.actions;
+        if (payload.slots !== undefined) entity.slots = payload.slots;
         if (payload.missedGraceMs !== undefined) entity.missedGraceMs = payload.missedGraceMs;
 
         const saved = await UserScheduleRepository.save(entity);

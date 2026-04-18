@@ -1,5 +1,4 @@
-import type { ScheduleWhen } from "@uhn/blueprint";
-import type { StoredScheduleAction } from "@uhn/common";
+import type { UserScheduleSlot } from "@uhn/common";
 import { DateTime } from "luxon";
 import {
     Column,
@@ -37,10 +36,7 @@ export class UserScheduleEntity {
     name!: string;
 
     @Column({ type: "json", nullable: false })
-    when!: ScheduleWhen[];
-
-    @Column({ type: "json", nullable: false })
-    actions!: StoredScheduleAction[];
+    slots!: UserScheduleSlot[];
 
     @Column({ type: "int", nullable: false, default: 900000 })
     missedGraceMs!: number;

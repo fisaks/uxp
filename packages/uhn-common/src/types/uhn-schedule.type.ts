@@ -1,8 +1,9 @@
 import type { ScheduleWhen } from "@uhn/blueprint";
 
-/** MQTT payload published by ScheduleService when a schedule fires. */
+/** MQTT payload published by ScheduleService when a schedule phase fires. */
 export type ScheduleFiredPayload = {
     scheduleId: string;
+    phaseId: string;
     firedAt: string; // ISO date
 };
 
@@ -14,14 +15,19 @@ export type StoredScheduleAction =
     | { type: "setActionOutput"; resourceId: string; action: string }
     | { type: "activateScene"; sceneId: string };
 
+/** A slot in a user schedule — one time trigger paired with its actions. */
+export type UserScheduleSlot = {
+    when: ScheduleWhen;
+    actions: StoredScheduleAction[];
+};
+
 /** User-created schedule as returned by the API. */
 export type UserScheduleInfo = {
     id: number;
     blueprintIdentifier: string;
     scheduleId: string;
     name: string;
-    when: ScheduleWhen[];
-    actions: StoredScheduleAction[];
+    slots: UserScheduleSlot[];
     missedGraceMs: number;
     createdBy: string;
     createdAt: string;

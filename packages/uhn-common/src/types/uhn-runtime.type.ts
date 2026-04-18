@@ -9,7 +9,7 @@ export type RuntimeRuleTriggerInfo =
   | { kind: "longPress"; resourceId: string; thresholdMs: number }
   | { kind: "timer"; resourceId: string; event: "activated" | "deactivated" }
   | { kind: "action"; resourceId: string; action: string }
-  | { kind: "schedule"; scheduleId: string };
+  | { kind: "schedule"; phaseId: string; scheduleId: string };
 
 /** Trigger info variants that reference a resource (all except schedule). */
 export type RuntimeResourceTriggerInfo = Exclude<RuntimeRuleTriggerInfo, { kind: "schedule" }>;
@@ -366,12 +366,19 @@ export type RuleRuntimeScenesLoadedMessage = {
 
 // --- Runtime Schedule types ---
 
+export type RuntimePhase = {
+    id: string;
+    name: string;
+    scheduleId: string;
+    when: ScheduleWhen;
+};
+
 export type RuntimeSchedule = {
     id: string;
     name: string;
     description?: string;
     keywords?: string[];
-    when: ScheduleWhen[];
+    phases: RuntimePhase[];
     missedGraceMs: number;
 };
 
@@ -381,12 +388,13 @@ export type RuleRuntimeSchedulesLoadedMessage = {
   schedules: RuntimeSchedule[];
 };
 
-/** IPC command: schedule event → rule runtime. */
+/** IPC command: schedule phase event → rule runtime. */
 export type RuleRuntimeScheduleEventCommand = {
   kind: "event";
   cmd: "scheduleEvent";
   payload: {
     scheduleId: string;
+    phaseId: string;
     firedAt: string;
   };
 };

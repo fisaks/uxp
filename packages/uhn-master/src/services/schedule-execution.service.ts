@@ -6,7 +6,7 @@
 //   - User schedules: executes stored actions sequentially via CommandsResourceService
 
 import { ScheduleWhen } from "@uhn/blueprint";
-import { RuntimeSchedule, StoredScheduleAction } from "@uhn/common";
+import { RuntimePhase, RuntimeSchedule, StoredScheduleAction } from "@uhn/common";
 import { AppLogger, runBackgroundTask } from "@uxp/bff-common";
 import { DateTime } from "luxon";
 import { CommandsResourceService } from "./command-resource.service";
@@ -32,8 +32,8 @@ class ScheduleExecutionService {
     private resourceCommandService = new CommandsResourceService();
 
     constructor() {
-        scheduleTimerService.on("fired", (schedule, when) => {
-            this.onScheduleFired(schedule, when);
+        scheduleTimerService.on("fired", (schedule, phase) => {
+            this.onPhaseFired(schedule, phase);
         });
     }
 
@@ -58,48 +58,49 @@ class ScheduleExecutionService {
         this.userScheduleActions = new Map();
     }
 
-    /** Execute a schedule fire directly (for missed-grace catch-up). Checks mute. */
-    async executeIfNotMuted(schedule: RuntimeSchedule, when: ScheduleWhen) {
+    /** Execute a schedule phase fire directly (for missed-grace catch-up). Checks mute. */
+    async executeIfNotMuted(schedule: RuntimeSchedule, phase: RuntimePhase) {
         if (await scheduleMuteService.isMuted(schedule.id)) {
             AppLogger.info({ message: `${LOG_TAG} Schedule "${schedule.id}" is muted — skipping.` });
             return;
         }
-        this.execute(schedule, when);
+        this.execute(schedule, phase);
     }
 
     // ---- Internal ----
 
-    private onScheduleFired(schedule: RuntimeSchedule, when: ScheduleWhen) {
+    private onPhaseFired(schedule: RuntimeSchedule, phase: RuntimePhase) {
         // Mute check requires DB access — run in background task
         runBackgroundTask(AppDataSource, async () => {
-            await this.executeIfNotMuted(schedule, when);
+            await this.executeIfNotMuted(schedule, phase);
         }).catch(err => {
             AppLogger.error({ message: `${LOG_TAG} Error handling fire for "${schedule.id}": ${err}` });
         });
     }
 
-    private execute(schedule: RuntimeSchedule, when: ScheduleWhen) {
+    private execute(schedule: RuntimeSchedule, phase: RuntimePhase) {
         AppLogger.info({
-            message: `${LOG_TAG} Executing schedule "${schedule.id}" (${describeWhen(when)}).`,
+            message: `${LOG_TAG} Executing schedule "${schedule.id}" phase "${phase.id}" (${describeWhen(phase.when)}).`,
         });
 
-        const storedActions = this.userScheduleActions.get(schedule.id);
+        const storedActions = this.userScheduleActions.get(phase.id);
         if (storedActions) {
-            this.executeStoredActions(schedule.id, storedActions);
+            this.executeStoredActions(phase.id, storedActions);
         } else {
-            this.publishScheduleEvent(schedule);
+            this.publishPhaseEvent(schedule, phase);
         }
     }
 
-    private publishScheduleEvent(schedule: RuntimeSchedule) {
+    private publishPhaseEvent(schedule: RuntimeSchedule, phase: RuntimePhase) {
         const firedAt = DateTime.now().toISO()!;
-        const payload = JSON.stringify({ scheduleId: schedule.id, firedAt });
-        mqttService.publish(SCHEDULE_FIRED_TOPIC, payload, { retain: false, qos: 1 });
+        const eventPayload = { scheduleId: schedule.id, phaseId: phase.id, firedAt };
+
+        mqttService.publish(SCHEDULE_FIRED_TOPIC, JSON.stringify(eventPayload), { retain: false, qos: 1 });
 
         try {
             ruleRuntimeProcessService.sendEvent<"scheduleEvent">({
                 cmd: "scheduleEvent",
-                payload: { scheduleId: schedule.id, firedAt },
+                payload: eventPayload,
             });
         } catch (err) {
             AppLogger.error({

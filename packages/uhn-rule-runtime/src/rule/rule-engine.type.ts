@@ -1,4 +1,4 @@
-import type { BlueprintSchedule, ResourceBase, ResourceType, TriggerEvent } from "@uhn/blueprint";
+import type { BlueprintPhase, ResourceBase, ResourceType, TriggerEvent } from "@uhn/blueprint";
 import type { ResourceStateValue } from "@uhn/common";
 
 export type RuleExecutionControl = {
@@ -19,10 +19,10 @@ export type RuleTriggerEvent = {
     depth?: number;
 };
 
-/** Trigger event emitted when a schedule fires. Flows through a separate path in the rule engine.
- *  The schedule object is resolved from scheduleId by the command handler before reaching the engine. */
+/** Trigger event emitted when a schedule phase fires.
+ *  The phase object is resolved from phaseId by the command handler before reaching the engine. */
 export type ScheduleTriggerEvent = {
-    schedule: BlueprintSchedule;
+    phase: BlueprintPhase;
     firedAt: string;
 };
 

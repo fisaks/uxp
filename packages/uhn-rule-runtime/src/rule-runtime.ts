@@ -40,13 +40,15 @@ const scenesDir = path.join(blueprintRoot, "dist", "scenes");
 const schedulesDir = path.join(blueprintRoot, "dist", "schedules");
 
 async function main() {
-    const [resourceService, rulesService, viewService, locationService, sceneService, scheduleService] = await Promise.all([
+    // Schedules must load before rules — scheduleId is set on phase objects during loading,
+    // and rules reference those same objects for indexing by schedulePhaseId.
+    const scheduleService = await RuntimeScheduleService.create(schedulesDir);
+    const [resourceService, rulesService, viewService, locationService, sceneService] = await Promise.all([
         RuntimeResourceService.create(resourcesDir),
         RuntimeRulesService.create(rulesDir, runMode, edgeName),
         RuntimeViewService.create(viewsDir),
         RuntimeLocationService.create(locationsDir),
         RuntimeSceneService.create(scenesDir),
-        RuntimeScheduleService.create(schedulesDir),
     ]);
 
     // Dev filter: if dist/dev-filters/dev-filter.js exists, reduce to a subset of resources/views/rules/scenes/locations

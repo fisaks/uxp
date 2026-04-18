@@ -91,16 +91,24 @@ const storedScheduleActionSchema: JSONSchemaType<StoredScheduleAction> = {
     ]
 } as const;
 
+const slotSchema = {
+    type: 'object',
+    required: ['when', 'actions'],
+    properties: {
+        when: scheduleWhenSchema,
+        actions: { type: 'array', items: storedScheduleActionSchema, minItems: 1 },
+    },
+    additionalProperties: false,
+} as const;
+
 export const UhnScheduleCreatePayloadSchema: MessagePayloadSchema<UhnScheduleCreatePayload> = {
     type: 'object',
     properties: {
         name: { type: 'string', minLength: 1, maxLength: 128 },
-        when: { type: "array", items: scheduleWhenSchema, minItems: 1 },
-
-        actions: { type: 'array', items: storedScheduleActionSchema, minItems: 1 },
+        slots: { type: 'array', items: slotSchema, minItems: 1 },
         missedGraceMs: { type: 'number', minimum: 0, nullable: true },
     },
-    required: ['name', 'when', 'actions'],
+    required: ['name', 'slots'],
     additionalProperties: false
 };
 
@@ -109,8 +117,7 @@ export const UhnScheduleUpdatePayloadSchema: MessagePayloadSchema<UhnScheduleUpd
     properties: {
         id: { type: 'number' },
         name: { type: 'string', minLength: 1, maxLength: 128, nullable: true },
-        when: { type: 'array', items: scheduleWhenSchema, minItems: 1, nullable: true },
-        actions: { type: 'array', items: storedScheduleActionSchema, minItems: 1, nullable: true },
+        slots: { type: 'array', items: slotSchema, minItems: 1, nullable: true },
         missedGraceMs: { type: 'number', minimum: 0, nullable: true },
     },
     required: ['id'],

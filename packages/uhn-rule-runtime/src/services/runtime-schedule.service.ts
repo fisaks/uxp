@@ -1,5 +1,5 @@
-import type { BlueprintSchedule } from "@uhn/blueprint";
-import { humanizeScheduleId, RuntimeSchedule } from "@uhn/common";
+import type { BlueprintPhase, BlueprintSchedule } from "@uhn/blueprint";
+import { humanizeScheduleId, RuntimePhase, RuntimeSchedule } from "@uhn/common";
 import fs from "fs-extra";
 import path from "path";
 import { runtimeOutput } from "../io/runtime-output";
@@ -10,10 +10,20 @@ function isScheduleObject(obj: unknown): obj is BlueprintSchedule {
         obj !== null &&
         "id" in obj &&
         typeof (obj as any).id === "string" &&
-        "when" in obj &&
-        Array.isArray((obj as any).when) &&
+        "phases" in obj &&
+        typeof (obj as any).phases === "object" &&
         "missedGraceMs" in obj
     );
+}
+
+function serializePhase(phase: BlueprintPhase, scheduleId: string): RuntimePhase {
+    if (!phase.id) throw new Error(`Phase missing id in schedule "${scheduleId}"`);
+    return {
+        id: phase.id,
+        name: phase.name,
+        scheduleId,
+        when: phase.when,
+    };
 }
 
 function serializeSchedule(schedule: BlueprintSchedule): RuntimeSchedule {
@@ -22,7 +32,7 @@ function serializeSchedule(schedule: BlueprintSchedule): RuntimeSchedule {
         name: schedule.name ?? humanizeScheduleId(schedule.id!),
         description: schedule.description,
         keywords: schedule.keywords,
-        when: schedule.when,
+        phases: Object.values(schedule.phases).map(phase => serializePhase(phase, schedule.id!)),
         missedGraceMs: schedule.missedGraceMs,
     };
 }
@@ -61,11 +71,18 @@ async function collectSchedules(schedulesDir: string): Promise<BlueprintSchedule
 
 export class RuntimeScheduleService {
     private schedules: BlueprintSchedule[];
-    private byId: Map<string, BlueprintSchedule>;
+    /** Resolve phaseId → BlueprintPhase (flattened from all schedules). */
+    private phaseById: Map<string, BlueprintPhase>;
 
     private constructor(schedules: BlueprintSchedule[]) {
         this.schedules = schedules;
-        this.byId = new Map(schedules.map(s => [s.id!, s]));
+        this.phaseById = new Map();
+        for (const s of schedules) {
+            for (const phase of Object.values(s.phases)) {
+                phase.scheduleId = s.id;
+                this.phaseById.set(`${s.id}.${phase.id}`, phase);
+            }
+        }
     }
 
     static async create(schedulesDir: string): Promise<RuntimeScheduleService> {
@@ -73,14 +90,14 @@ export class RuntimeScheduleService {
         runtimeOutput.log({
             level: "info",
             component: "RuntimeScheduleService",
-            message: `Loaded ${schedules.length} schedule(s).`,
+            message: `Loaded ${schedules.length} schedule(s) with ${schedules.reduce((n, s) => n + Object.keys(s.phases).length, 0)} phase(s).`,
         });
         return new RuntimeScheduleService(schedules);
     }
 
-    /** Resolve a scheduleId to the full BlueprintSchedule object. */
-    getById(scheduleId: string): BlueprintSchedule | undefined {
-        return this.byId.get(scheduleId);
+    /** Resolve a phase by composite key (scheduleId.phaseId). */
+    getPhase(scheduleId: string, phaseId: string): BlueprintPhase | undefined {
+        return this.phaseById.get(`${scheduleId}.${phaseId}`);
     }
 
     /** Serialized list for IPC transport. */

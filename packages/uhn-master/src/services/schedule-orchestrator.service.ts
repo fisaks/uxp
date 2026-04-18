@@ -14,12 +14,18 @@ const { AppDataSource } = require("../db/typeorm.config");
 
 const LOG_TAG = "[ScheduleOrchestratorService]";
 
-/** Adapts a UserScheduleInfo to RuntimeSchedule for the timer service. */
+/** Adapts a UserScheduleInfo to RuntimeSchedule for the timer service.
+ *  Each slot becomes a phase with a synthetic ID. */
 function userScheduleToRuntime(us: UserScheduleInfo): RuntimeSchedule {
     return {
         id: us.scheduleId,
         name: us.name,
-        when: us.when,
+        phases: us.slots.map((slot, i) => ({
+            id: `${us.scheduleId}_slot_${i}`,
+            name: `Slot ${i + 1}`,
+            scheduleId: us.scheduleId,
+            when: slot.when,
+        })),
         missedGraceMs: us.missedGraceMs,
     };
 }
@@ -44,8 +50,11 @@ class ScheduleOrchestratorService {
 
     /** Add or update a user schedule's timers and stored actions. */
     upsertUserSchedule(info: UserScheduleInfo) {
-        scheduleExecutionService.setUserActions(info.scheduleId, info.actions);
-        scheduleTimerService.upsertSchedules([userScheduleToRuntime(info)]);
+        const schedule = userScheduleToRuntime(info);
+        schedule.phases.forEach((phase, i) => {
+            scheduleExecutionService.setUserActions(phase.id, info.slots[i].actions);
+        });
+        scheduleTimerService.upsertSchedules([schedule]);
     }
 
     /** Remove a user schedule's timers and stored actions. */
@@ -89,8 +98,11 @@ class ScheduleOrchestratorService {
         const runtimeSchedules: RuntimeSchedule[] = [];
 
         for (const us of userSchedules) {
-            actionsMap.set(us.scheduleId, us.actions);
-            runtimeSchedules.push(userScheduleToRuntime(us));
+            const schedule = userScheduleToRuntime(us);
+            schedule.phases.forEach((phase, i) => {
+                actionsMap.set(phase.id, us.slots[i].actions);
+            });
+            runtimeSchedules.push(schedule);
         }
 
         scheduleExecutionService.replaceAllUserActions(actionsMap);
@@ -103,8 +115,8 @@ class ScheduleOrchestratorService {
         const now = Date.now();
         const lastFired = this.lastFiredAt.get(schedule.id);
 
-        for (const when of schedule.when) {
-            const prevFire = scheduleTimerService.calculatePreviousFire(when);
+        for (const phase of schedule.phases) {
+            const prevFire = scheduleTimerService.calculatePreviousFire(phase.when);
             if (!prevFire) continue;
 
             const prevFireMs = prevFire.toMillis();
@@ -116,9 +128,9 @@ class ScheduleOrchestratorService {
 
                 runBackgroundTask(AppDataSource, async () => {
                     AppLogger.info({
-                        message: `${LOG_TAG} Schedule "${schedule.id}" missed by ${Math.round(missedBy / 1000)}s (grace: ${schedule.missedGraceMs / 1000}s) — executing.`,
+                        message: `${LOG_TAG} Schedule "${schedule.id}" phase "${phase.id}" missed by ${Math.round(missedBy / 1000)}s (grace: ${schedule.missedGraceMs / 1000}s) — executing.`,
                     });
-                    await scheduleExecutionService.executeIfNotMuted(schedule, when);
+                    await scheduleExecutionService.executeIfNotMuted(schedule, phase);
                 }).catch(err => {
                     AppLogger.error({ message: `${LOG_TAG} Error in checkMissed for "${schedule.id}": ${err}` });
                 });

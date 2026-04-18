@@ -48,22 +48,21 @@ async function collectRules(rulesDir: string): Promise<BlueprintRule[]> {
 
 type RuleIndex = {
     byResourceId: Map<string, BlueprintRule[]>;
-    byScheduleId: Map<string, BlueprintRule[]>;
+    bySchedulePhase: Map<string, BlueprintRule[]>;
 };
 
 function indexRules(rules: BlueprintRule[]): RuleIndex {
     const byResourceId = new Map<string, Set<BlueprintRule>>();
-    const byScheduleId = new Map<string, Set<BlueprintRule>>();
+    const bySchedulePhase = new Map<string, Set<BlueprintRule>>();
 
     for (const rule of rules) {
         for (const t of rule.triggers) {
             if (isScheduleTrigger(t)) {
-                const scheduleId = t.schedule?.id;
-                if (!scheduleId) continue;
-                let set = byScheduleId.get(scheduleId);
+                const schedulePhaseId = `${t.phase.scheduleId}.${t.phase.id}`;
+                let set = bySchedulePhase.get(schedulePhaseId);
                 if (!set) {
                     set = new Set();
-                    byScheduleId.set(scheduleId, set);
+                    bySchedulePhase.set(schedulePhaseId, set);
                 }
                 set.add(rule);
                 continue;
@@ -101,7 +100,7 @@ function indexRules(rules: BlueprintRule[]): RuleIndex {
 
     return {
         byResourceId: sortByPriority(byResourceId),
-        byScheduleId: sortByPriority(byScheduleId),
+        bySchedulePhase: sortByPriority(bySchedulePhase),
     };
 }
 
@@ -146,7 +145,7 @@ function validateRules(rules: BlueprintRule[]): BlueprintRule[] {
 }
 function serializeTrigger(t: RuleTrigger): RuntimeRuleTriggerInfo {
     if (isScheduleTrigger(t)) {
-        return { kind: "schedule", scheduleId: t.schedule?.id ?? "unknown" };
+        return { kind: "schedule", phaseId: t.phase?.id ?? "unknown", scheduleId: t.phase?.scheduleId ?? "unknown" };
     }
     const resourceId = t.resource?.id ?? "unknown";
     switch (t.kind) {
@@ -208,7 +207,7 @@ export class RuntimeRulesService {
         const index = indexRules(rules);
         runtimeOutput.log({
             level: "info", component: "RuntimeRulesService",
-            message: `Indexed rules for ${index.byResourceId.size} resource ID(s), ${index.byScheduleId.size} schedule ID(s).`,
+            message: `Indexed rules for ${index.byResourceId.size} resource ID(s), ${index.bySchedulePhase.size} schedule ID(s).`,
         });
         return new RuntimeRulesService(rules, validated, index);
     }
@@ -227,8 +226,8 @@ export class RuntimeRulesService {
         return this.index.byResourceId.get(resourceId) ?? [];
     }
 
-    getRulesForSchedule(scheduleId: string): BlueprintRule[] {
-        return this.index.byScheduleId.get(scheduleId) ?? [];
+    getRulesForPhase(schedulePhaseId: string): BlueprintRule[] {
+        return this.index.bySchedulePhase.get(schedulePhaseId) ?? [];
     }
 
     serializeRules(): RuntimeRuleInfo[] {
