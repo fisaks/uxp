@@ -1,19 +1,25 @@
-import type { BlueprintPhase, BlueprintSchedule } from "@uhn/blueprint";
+import type { BlueprintPhase, BlueprintSchedule, ScheduleBuilder } from "@uhn/blueprint";
 import { humanizeScheduleId, RuntimePhase, RuntimeSchedule } from "@uhn/common";
 import fs from "fs-extra";
 import path from "path";
 import { runtimeOutput } from "../io/runtime-output";
 
-function isScheduleObject(obj: unknown): obj is BlueprintSchedule {
-    return (
-        typeof obj === "object" &&
-        obj !== null &&
-        "id" in obj &&
-        typeof (obj as any).id === "string" &&
-        "phases" in obj &&
-        typeof (obj as any).phases === "object" &&
-        "missedGraceMs" in obj
-    );
+type ScheduleExport = BlueprintSchedule | ScheduleBuilder;
+
+/** Type guard: check if an export is a schedule (either a built BlueprintSchedule or a ScheduleBuilder). */
+function isScheduleObject(obj: unknown): obj is ScheduleExport {
+    if (typeof obj !== "object" || obj === null) return false;
+    if ("phases" in obj && "missedGraceMs" in obj) return true;
+    if ("build" in obj && typeof (obj as Record<string, unknown>).build === "function" && "phases" in obj) return true;
+    return false;
+}
+
+/** Resolve to BlueprintSchedule — calls .build() if it's a ScheduleBuilder. */
+function resolveSchedule(obj: ScheduleExport): BlueprintSchedule {
+    if ("build" in obj && typeof obj.build === "function") {
+        return obj.build();
+    }
+    return obj as BlueprintSchedule;
 }
 
 function serializePhase(phase: BlueprintPhase, scheduleId: string): RuntimePhase {
@@ -54,7 +60,7 @@ async function collectSchedules(schedulesDir: string): Promise<BlueprintSchedule
             const mod = require(fullPath);
             for (const [exportName, obj] of Object.entries(mod)) {
                 if (isScheduleObject(obj)) {
-                    schedules.push(obj);
+                    schedules.push(resolveSchedule(obj));
                 } else {
                     runtimeOutput.log({
                         level: "warn",

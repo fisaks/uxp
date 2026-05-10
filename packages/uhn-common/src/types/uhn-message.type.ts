@@ -100,9 +100,7 @@ export type UhnScheduleCreatePayload = {
     slots: UserScheduleSlot[];
     missedGraceMs?: number;
 }
-export type UhnScheduleUpdatePayload = {
-    id: number;
-} & Partial<UhnScheduleCreatePayload>;
+export type UhnScheduleUpdatePayload = Partial<UhnScheduleCreatePayload>;
 
 export type UhnScheduleDeletePayload = {
     id: number;
@@ -110,7 +108,7 @@ export type UhnScheduleDeletePayload = {
 export type UhnScheduleMutePayload = {
     scheduleId: string;
     /** Duration in ms, or null for indefinite. */
-    durationMs: number | null;
+    durationMs?: number | null;
 }
 export type UhnScheduleUnmutePayload = {
     scheduleId: string;
@@ -118,11 +116,6 @@ export type UhnScheduleUnmutePayload = {
 export type UhnResourcePayloadRequestMap = {
     "uhn:resource:command": UhnResourceCommandPayload
     "uhn:scene:activate": UhnSceneActivatePayload
-    "uhn:schedule:create": UhnScheduleCreatePayload
-    "uhn:schedule:update": UhnScheduleUpdatePayload
-    "uhn:schedule:delete": UhnScheduleDeletePayload
-    "uhn:schedule:mute": UhnScheduleMutePayload
-    "uhn:schedule:unmute": UhnScheduleUnmutePayload
 }
 
 export type UhnResourcesResponse = {

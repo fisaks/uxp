@@ -10,11 +10,14 @@ import { RuntimePhase, RuntimeSchedule, StoredScheduleAction } from "@uhn/common
 import { AppLogger, runBackgroundTask } from "@uxp/bff-common";
 import { DateTime } from "luxon";
 import { CommandsResourceService } from "./command-resource.service";
+
 import { commandSceneService } from "./command-scene.service";
 import mqttService from "./mqtt.service";
 import { ruleRuntimeProcessService } from "./rule-runtime-process.service";
+import { userScheduleService } from "./user-schedule.service";
 import { scheduleMuteService } from "./schedule-mute.service";
 import { scheduleTimerService } from "./schedule-timer.service";
+import { broadcastAllSchedules } from "../dispatchers/blueprint-schedule.dispatcher";
 const { AppDataSource } = require("../db/typeorm.config");
 
 const LOG_TAG = "[ScheduleExecutionService]";
@@ -58,13 +61,15 @@ class ScheduleExecutionService {
         this.userScheduleActions = new Map();
     }
 
-    /** Execute a schedule phase fire directly (for missed-grace catch-up). Checks mute. */
-    async executeIfNotMuted(schedule: RuntimeSchedule, phase: RuntimePhase) {
+    /** Execute a schedule phase fire directly (for missed-grace catch-up). Checks mute.
+     *  When `missed` is true, tap/longPress actions are skipped — they are not idempotent
+     *  and catching up a press could undo user actions taken in the meantime. */
+    async executeIfNotMuted(schedule: RuntimeSchedule, phase: RuntimePhase, missed = false) {
         if (await scheduleMuteService.isMuted(schedule.id)) {
             AppLogger.info({ message: `${LOG_TAG} Schedule "${schedule.id}" is muted — skipping.` });
             return;
         }
-        this.execute(schedule, phase);
+        await this.execute(schedule, phase, missed);
     }
 
     // ---- Internal ----
@@ -78,14 +83,33 @@ class ScheduleExecutionService {
         });
     }
 
-    private execute(schedule: RuntimeSchedule, phase: RuntimePhase) {
+    private async execute(schedule: RuntimeSchedule, phase: RuntimePhase, missed = false) {
         AppLogger.info({
-            message: `${LOG_TAG} Executing schedule "${schedule.id}" phase "${phase.id}" (${describeWhen(phase.when)}).`,
+            message: `${LOG_TAG} ${missed ? "(missed) " : ""}Executing schedule "${schedule.id}" phase "${phase.id}" (${describeWhen(phase.when)}).`,
         });
 
         const storedActions = this.userScheduleActions.get(phase.id);
         if (storedActions) {
-            this.executeStoredActions(phase.id, storedActions);
+            // Filter out non-idempotent tap/longPress actions on missed-grace catch-up
+            const actions = missed ? storedActions.filter(a => a.type !== "tap" && a.type !== "longPress") : storedActions;
+            if (actions.length === 0) {
+                AppLogger.info({ message: `${LOG_TAG} All actions for "${phase.id}" are tap/longPress — skipping missed catch-up.` });
+                return;
+            }
+            this.executeStoredActions(phase.id, actions);
+
+            // Mark one-time date slots as fired and broadcast update
+            if (phase.when.kind === "date" && phase.slotIndex != null) {
+                try {
+                    const updated = await userScheduleService.markSlotFired(schedule.id, phase.slotIndex);
+                    if (updated) {
+                        AppLogger.info({ message: `${LOG_TAG} Slot marked as fired, broadcasting update` });
+                        await broadcastAllSchedules();
+                    }
+                } catch (err) {
+                    AppLogger.error({ message: `${LOG_TAG} Failed to mark slot as fired: ${err}` });
+                }
+            }
         } else {
             this.publishPhaseEvent(schedule, phase);
         }
@@ -137,6 +161,12 @@ class ScheduleExecutionService {
                 return this.resourceCommandService.executeResourceCommand(action.resourceId, { type: "setAnalog", value: action.value });
             case "emitSignal":
                 return this.resourceCommandService.executeResourceCommand(action.resourceId, { type: "set", value: action.value });
+            case "tap":
+                return this.resourceCommandService.executeResourceCommand(action.resourceId, { type: "tap" });
+            case "longPress":
+                return this.resourceCommandService.executeResourceCommand(action.resourceId, {
+                    type: "longPress", holdMs: action.holdMs, simulateHold: action.simulateHold,
+                });
             case "setActionOutput":
                 return this.resourceCommandService.executeResourceCommand(action.resourceId, { type: "setActionOutput", action: action.action });
             case "activateScene":
@@ -149,7 +179,7 @@ function describeWhen(when: ScheduleWhen): string {
     switch (when.kind) {
         case "cron": return `cron: ${when.expression}`;
         case "sun": return `sun: ${when.event}${when.offsetMinutes ? ` ${when.offsetMinutes > 0 ? "+" : ""}${when.offsetMinutes}min` : ""}`;
-        case "date": return `date: ${when.month}/${when.day} ${when.time}`;
+        case "date": return `date: ${when.year ? `${when.year}-` : ""}${when.month}/${when.day} ${when.time}`;
     }
 }
 

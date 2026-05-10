@@ -19,4 +19,4 @@ export * from "./types/user-location-item-order.type";
 export * from "./schemas/user-location-item-order.schema";
 export * from "./types/user-location-section-order.type";
 export * from "./schemas/user-location-section-order.schema";
-export * from "./schemas/uhn-schedule.schema";
+export * from "./schemas/schedule-rest.schema";

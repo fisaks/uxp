@@ -24,7 +24,17 @@ class ScheduleMuteService {
     async listMutesForActiveBlueprint(): Promise<ScheduleMuteInfo[]> {
         const blueprintId = await this.getActiveBlueprintId();
         const entities = await ScheduleMuteRepository.findByBlueprint(blueprintId);
-        return entities.map(toScheduleMuteInfo);
+        const now = DateTime.now();
+        const active: ScheduleMuteInfo[] = [];
+        for (const entity of entities) {
+            if (entity.mutedUntil && entity.mutedUntil < now) {
+                // Expired — clean up
+                await ScheduleMuteRepository.remove(entity);
+                continue;
+            }
+            active.push(toScheduleMuteInfo(entity));
+        }
+        return active;
     }
 
     async isMuted(scheduleId: string): Promise<boolean> {
@@ -33,14 +43,14 @@ class ScheduleMuteService {
         if (!entity) return false;
 
         // Check if timed mute has expired
-        if (entity.mutedUntil && DateTime.fromJSDate(entity.mutedUntil as unknown as Date) < DateTime.now()) {
+        if (entity.mutedUntil && entity.mutedUntil < DateTime.now()) {
             await ScheduleMuteRepository.remove(entity);
             return false;
         }
         return true;
     }
 
-    async mute(scheduleId: string, durationMs: number | null, username: string): Promise<ScheduleMuteInfo> {
+    async mute(scheduleId: string, durationMs: number | null | undefined, username: string): Promise<ScheduleMuteInfo> {
         const blueprintId = await this.getActiveBlueprintId();
         let entity = await ScheduleMuteRepository.findByScheduleId(blueprintId, scheduleId);
 

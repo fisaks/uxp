@@ -14,6 +14,7 @@ import { ScenePage } from "./features/scene/pages/ScenePage";
 import { TechnicalPageWrapper } from "./features/technical/components/TechnicalPageWrapper";
 import { TechnicalPage } from "./features/technical/pages/TechnicalPage";
 import { TopicTracePage } from "./features/topic-trace/pages/TopicTracePage";
+import { SchedulePage } from "./features/schedule/pages/SchedulePage";
 import { ViewPage } from "./features/view/pages/ViewPage";
 
 export const UHNBody = () => {
@@ -69,6 +70,12 @@ export const UHNBody = () => {
                 } />
                 <Route path="/technical/rules/:itemId" element={
                     <TechnicalPageWrapper><RulePage /></TechnicalPageWrapper>
+                } />
+                <Route path="/technical/schedules" element={
+                    <TechnicalPageWrapper><SchedulePage /></TechnicalPageWrapper>
+                } />
+                <Route path="/technical/schedules/:itemId" element={
+                    <TechnicalPageWrapper><SchedulePage /></TechnicalPageWrapper>
                 } />
 
                 <Route path="*" element={<LocationPage />} />

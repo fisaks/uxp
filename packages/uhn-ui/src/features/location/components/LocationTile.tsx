@@ -26,6 +26,8 @@ import { useSceneCommand } from "../../shared/useSceneCommand";
 import { AvailabilityIndicator } from "../../device-availability/AvailabilityIndicator";
 import { useViewAvailability } from "../../device-availability/useViewAvailability";
 import { TechnicalLinkButton } from "./TechnicalLinkButton";
+import { TileContextMenu } from "./TileContextMenu";
+import { ScheduleCreatorDialog } from "../../schedule/components/ScheduleCreatorDialog";
 
 /* ------------------------------------------------------------------ */
 /* Props                                                               */
@@ -74,6 +76,9 @@ export const LocationTile: React.FC<LocationTileProps> = (props) => {
 
 const LocationTileView: React.FC<LocationTileViewProps> = ({ view, active, stateDisplay, resolvedName, nameOverride }) => {
     const theme = useTheme();
+    const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
+    const openScheduleDialog = useCallback(() => setScheduleDialogOpen(true), []);
+    const closeScheduleDialog = useCallback(() => setScheduleDialogOpen(false), []);
     const sendCommand = useSendViewCommand();
     const hasCommand = !!view.command;
     const isAnalog = view.command?.type === "setAnalog";
@@ -175,6 +180,8 @@ const LocationTileView: React.FC<LocationTileViewProps> = ({ view, active, state
                 }),
             }}
         >
+            <TileContextMenu onSchedule={view.command ? openScheduleDialog : undefined} />
+
             {hasCommand ? (
                 <CardActionArea ref={tileRef as React.RefObject<HTMLButtonElement>} onClick={handleClick} disabled={pending} sx={{
                     flex: 1,
@@ -215,6 +222,15 @@ const LocationTileView: React.FC<LocationTileViewProps> = ({ view, active, state
                     disabled={!active && !view.alwaysEnableControls}
                 />
             )}
+
+            {/* Schedule creator dialog */}
+            {scheduleDialogOpen && (
+                <ScheduleCreatorDialog
+                    open={scheduleDialogOpen}
+                    onClose={closeScheduleDialog}
+                    primaryTarget={{ kind: "view", viewId: view.id }}
+                />
+            )}
         </Card>
     );
 };
@@ -225,6 +241,10 @@ const LocationTileView: React.FC<LocationTileViewProps> = ({ view, active, state
 
 const LocationTileResource: React.FC<LocationTileResourceProps> = ({ resource, state, nameOverride }) => {
     const theme = useTheme();
+    const isReadOnlyResource = resource.type === "analogInput";
+    const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
+    const openScheduleDialog = useCallback(() => setScheduleDialogOpen(true), []);
+    const closeScheduleDialog = useCallback(() => setScheduleDialogOpen(false), []);
     const commandFb = useSelector(selectResourceCommandFeedbackById(resource.id));
     const sendResourceCommand = useSendResourceCommand(resource.id);
     const tileActionAreaRef = useRef<HTMLButtonElement>(null);
@@ -335,6 +355,8 @@ const LocationTileResource: React.FC<LocationTileResourceProps> = ({ resource, s
                 "&:hover": (!hasErrors && !isReadOnly) ? { boxShadow: 4 } : undefined,
             }}
         >
+            {!isReadOnlyResource && <TileContextMenu onSchedule={openScheduleDialog} />}
+
             {isReadOnly ? (
                 <TileContent
                     icon={<MainIcon sx={{ fontSize: 40, color: iconColor, transition: "color 0.2s" }} />}
@@ -378,6 +400,14 @@ const LocationTileResource: React.FC<LocationTileResourceProps> = ({ resource, s
             ) : (
                 <TechnicalLinkButton to={`/technical/resources/${resource.id}`} />
             )}
+
+            {scheduleDialogOpen && (
+                <ScheduleCreatorDialog
+                    open={scheduleDialogOpen}
+                    onClose={closeScheduleDialog}
+                    primaryTarget={{ kind: "resource", resourceId: resource.id }}
+                />
+            )}
         </Card>
     );
 };
@@ -389,6 +419,9 @@ const LocationTileResource: React.FC<LocationTileResourceProps> = ({ resource, s
 const LocationTileScene: React.FC<LocationTileSceneProps> = ({ scene, nameOverride }) => {
     const theme = useTheme();
     const { handleClick, pending } = useSceneCommand(scene.id);
+    const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
+    const openScheduleDialog = useCallback(() => setScheduleDialogOpen(true), []);
+    const closeScheduleDialog = useCallback(() => setScheduleDialogOpen(false), []);
 
     const displayName = nameOverride ?? scene.name ?? scene.id;
     const { IconComponent, iconColor, surfaceColor } = useSceneIconColors(scene.icon, pending, theme);
@@ -408,6 +441,7 @@ const LocationTileScene: React.FC<LocationTileSceneProps> = ({ scene, nameOverri
                 "&:hover": { boxShadow: 4 },
             }}
         >
+            <TileContextMenu onSchedule={openScheduleDialog} />
             <CardActionArea
                 onClick={handleClick}
                 disabled={pending}
@@ -433,6 +467,14 @@ const LocationTileScene: React.FC<LocationTileSceneProps> = ({ scene, nameOverri
                 <CircularProgress size={16} thickness={5} sx={{ position: "absolute", bottom: 11, right: 11 }} />
             ) : (
                 <TechnicalLinkButton to={`/technical/scenes/${scene.id}`} />
+            )}
+
+            {scheduleDialogOpen && (
+                <ScheduleCreatorDialog
+                    open={scheduleDialogOpen}
+                    onClose={closeScheduleDialog}
+                    primaryTarget={{ kind: "scene", sceneId: scene.id }}
+                />
             )}
         </Card>
     );

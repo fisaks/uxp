@@ -371,6 +371,8 @@ export type RuntimePhase = {
     name: string;
     scheduleId: string;
     when: ScheduleWhen;
+    /** Slot index for user schedule phases. Used by markSlotFired. */
+    slotIndex?: number;
 };
 
 export type RuntimeSchedule = {

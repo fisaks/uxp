@@ -1,5 +1,5 @@
 import { UHNAppRequestMessage, UhnSubscribePayloadSchema } from "@uhn/common";
-import { AppLogger, WebSocketAction, WebSocketDetails } from "@uxp/bff-common";
+import { AppLogger, UseQueryRunner, WebSocketAction, WebSocketDetails } from "@uxp/bff-common";
 import { UhnMessageService } from "../services/uhn-message.service";
 
 export class UhnMessageHandler {
@@ -11,6 +11,7 @@ export class UhnMessageHandler {
     }
 
     @WebSocketAction("uhn:subscribe", { authenticate: true, schema: UhnSubscribePayloadSchema })
+    @UseQueryRunner({ transactional: false })
     public async subscribeToPatterns(
         wsDetails: WebSocketDetails,
         message: UHNAppRequestMessage<"uhn:subscribe">

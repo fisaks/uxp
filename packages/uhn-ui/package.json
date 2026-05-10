@@ -26,6 +26,7 @@
         "@mui/lab": "6.0.0-beta.22",
         "@mui/material": "^6.1.8",
         "@mui/utils": "^6.1.10",
+        "@mui/x-date-pickers": "^7.23.6",
         "@reduxjs/toolkit": "^2.3.0",
         "@uhn/common": "workspace:*",
         "@uxp/common": "workspace:*",

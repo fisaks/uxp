@@ -68,7 +68,9 @@ export const RuleTile: React.FC<RuleTileProps> = ({ rule, selected, onSelect }) 
                         {rule.triggers.map((trigger, i) => (
                             <Typography key={i} variant="body2" sx={{ fontFamily: "monospace", fontSize: "0.75rem" }}>
                                 {trigger.kind === "schedule" ? (
-                                    <>schedule:{trigger.scheduleId}</>
+                                    <TechnicalDeepLink to={`/technical/schedules/${trigger.scheduleId}`}>
+                                        schedule:{trigger.scheduleId}
+                                    </TechnicalDeepLink>
                                 ) : (
                                     <TechnicalDeepLink to={`/technical/resources/${trigger.resourceId}`}>
                                         {triggerEventLabel(trigger)}:{trigger.resourceId}

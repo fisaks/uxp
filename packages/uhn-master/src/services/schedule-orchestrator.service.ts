@@ -22,9 +22,10 @@ function userScheduleToRuntime(us: UserScheduleInfo): RuntimeSchedule {
         name: us.name,
         phases: us.slots.map((slot, i) => ({
             id: `${us.scheduleId}_slot_${i}`,
-            name: `Slot ${i + 1}`,
+            name: slot.name,
             scheduleId: us.scheduleId,
             when: slot.when,
+            slotIndex: i,
         })),
         missedGraceMs: us.missedGraceMs,
     };
@@ -130,7 +131,7 @@ class ScheduleOrchestratorService {
                     AppLogger.info({
                         message: `${LOG_TAG} Schedule "${schedule.id}" phase "${phase.id}" missed by ${Math.round(missedBy / 1000)}s (grace: ${schedule.missedGraceMs / 1000}s) — executing.`,
                     });
-                    await scheduleExecutionService.executeIfNotMuted(schedule, phase);
+                    await scheduleExecutionService.executeIfNotMuted(schedule, phase, true);
                 }).catch(err => {
                     AppLogger.error({ message: `${LOG_TAG} Error in checkMissed for "${schedule.id}": ${err}` });
                 });

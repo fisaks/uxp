@@ -14,6 +14,7 @@ import locationsReducer from "../features/location/locationSlice";
 import rulesReducer from "../features/rule/ruleSlice";
 import runtimeOverviewReducer from "../features/runtime-overview/runtimeOverviewSlice";
 import scenesReducer from "../features/scene/sceneSlice";
+import schedulesReducer from "../features/schedule/scheduleSlice";
 import deviceAvailabilityReducer from "../features/device-availability/deviceAvailabilitySlice";
 import viewsReducer from "../features/view/viewSlice";
 
@@ -41,6 +42,7 @@ export const createStore = () => {
             views: viewsReducer,
             locations: locationsReducer,
             scenes: scenesReducer,
+            schedules: schedulesReducer,
             rules: rulesReducer,
             runtimeOverview: runtimeOverviewReducer,
             deviceAvailability: deviceAvailabilityReducer,

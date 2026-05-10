@@ -14,6 +14,7 @@ import { initTopicTraceDispatcher } from "./dispatchers/topic-trace.dispatcher";
 import { initDeviceAvailabilityDispatcher } from "./dispatchers/device-availability.dispatcher";
 import { initUhnHealthDispatcher } from "./dispatchers/uhn-health.dispatcher";
 import { blueprintService } from "./services/blueprint.service";
+import { userScheduleService } from "./services/user-schedule.service";
 const { AppDataSource } = require("./db/typeorm.config");
 
 /* ============================================================================
@@ -72,6 +73,8 @@ async function runStartupBackgroundTasks() {
             error,
         });
     }
+
+    userScheduleService.startCleanupSchedule();
 }
 
 const setupWebDispatchers = () => {

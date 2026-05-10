@@ -1,3 +1,4 @@
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import AccountTreeIcon from "@mui/icons-material/AccountTree";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import DescriptionIcon from "@mui/icons-material/Description";
@@ -73,6 +74,12 @@ const technicalItems: TechnicalCardItem[] = [
         description: "View all rules, triggers, and execution targets",
         icon: <AccountTreeIcon sx={{ fontSize: 40 }} />,
         to: "/technical/rules",
+    },
+    {
+        title: "Schedules",
+        description: "Time-based automation schedules and mute control",
+        icon: <AccessTimeIcon sx={{ fontSize: 40 }} />,
+        to: "/technical/schedules",
     },
     {
         title: "Topic Trace",

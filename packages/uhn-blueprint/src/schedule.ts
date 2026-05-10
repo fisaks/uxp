@@ -36,7 +36,7 @@ export type SunEvent =
 export type ScheduleWhen =
     | { kind: "cron"; expression: string }
     | { kind: "sun"; event: SunEvent; offsetMinutes?: number }
-    | { kind: "date"; month: number; day: number; time: string };
+    | { kind: "date"; month: number; day: number; time: string; year?: number };
 
 export type BlueprintPhase = {
     /** Machine-safe identifier, generated from name (camelCase, no spaces). */

@@ -9,6 +9,10 @@ function getRepo() {
     return queryRunner.manager.getRepository(UserScheduleEntity);
 }
 
+async function findAll(): Promise<UserScheduleEntity[]> {
+    return getRepo().find();
+}
+
 async function findByBlueprint(blueprintIdentifier: string): Promise<UserScheduleEntity[]> {
     return getRepo().find({
         where: { blueprintIdentifier },
@@ -35,6 +39,7 @@ async function remove(entity: UserScheduleEntity): Promise<UserScheduleEntity> {
 }
 
 export const UserScheduleRepository = {
+    findAll,
     findByBlueprint,
     findById,
     findByScheduleId,

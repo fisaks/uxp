@@ -14,6 +14,11 @@ import { formatSunTimesLog, getSunTimes, SunTimes } from "../util/sun.util";
 
 const LOG_TAG = "[ScheduleTimerService]";
 
+/** Max safe setTimeout delay — 2^31 - 1 ms (~24.8 days). Larger values overflow to 1ms.
+ *  Timers with longer delays are skipped — the midnight recalculation will pick them up
+ *  when they're within range. */
+const MAX_TIMEOUT_MS = 2_147_483_647;
+
 type ScheduleTimer = {
     scheduleId: string;
     phase: RuntimePhase;
@@ -151,12 +156,17 @@ export class ScheduleTimerService extends EventEmitter<ScheduleTimerEventMap> {
             const [hourStr, minuteStr] = when.time.split(":");
             const hour = parseInt(hourStr, 10);
             const minute = parseInt(minuteStr, 10);
-            const candidate = DateTime.fromObject({ year: now.year, month: when.month, day: when.day, hour, minute });
+            // One-time (year set): use exact year. Yearly recurring: use current year.
+            const candidate = DateTime.fromObject({ year: when.year ?? now.year, month: when.month, day: when.day, hour, minute });
+            // If the candidate is in the past, it's the most recent fire — return it for missed-grace check.
             if (candidate < now) return candidate;
-            if (now.month === 1 && now.day === 1) {
+            // Edge case for yearly recurring: on Jan 1, this year's date is in the future,
+            // but last year's occurrence may have been missed (e.g. server was down over new year).
+            if (!when.year && now.month === 1 && now.day === 1) {
                 const lastYear = candidate.set({ year: now.year - 1 });
                 if (lastYear < now) return lastYear;
             }
+            // Date is in the future — no previous fire.
             return undefined;
         }
 
@@ -174,7 +184,7 @@ export class ScheduleTimerService extends EventEmitter<ScheduleTimerEventMap> {
             if (!nextFire) continue;
 
             const delayMs = nextFire.diff(now).as("milliseconds");
-            if (delayMs <= 0) continue;
+            if (delayMs <= 0 || delayMs > MAX_TIMEOUT_MS) continue;
 
             const timeout = setTimeout(() => {
                 this.onTimerFired(schedule, phase);
@@ -195,7 +205,7 @@ export class ScheduleTimerService extends EventEmitter<ScheduleTimerEventMap> {
             case "sun":
                 return this.nextSunFire(when.event, when.offsetMinutes ?? 0, now);
             case "date":
-                return this.nextDateFire(when.month, when.day, when.time, now);
+                return this.nextDateFire(when.month, when.day, when.time, now, when.year);
         }
     }
 
@@ -222,13 +232,16 @@ export class ScheduleTimerService extends EventEmitter<ScheduleTimerEventMap> {
         return fireTime;
     }
 
-    private nextDateFire(month: number, day: number, time: string, now: DateTime): DateTime | undefined {
+    private nextDateFire(month: number, day: number, time: string, now: DateTime, year?: number): DateTime | undefined {
         const [hourStr, minuteStr] = time.split(":");
         const hour = parseInt(hourStr, 10);
         const minute = parseInt(minuteStr, 10);
-        let candidate = DateTime.fromObject({ year: now.year, month, day, hour, minute });
+        const candidate = DateTime.fromObject({ year: year ?? now.year, month, day, hour, minute });
         if (candidate <= now) {
-            candidate = candidate.set({ year: now.year + 1 });
+            // One-time (year specified): already passed, no next fire
+            if (year) return undefined;
+            // Yearly recurring: schedule for next year
+            return candidate.set({ year: now.year + 1 });
         }
         return candidate;
     }
@@ -248,7 +261,7 @@ export class ScheduleTimerService extends EventEmitter<ScheduleTimerEventMap> {
         if (!nextFire) return;
 
         const delayMs = nextFire.diff(now).as("milliseconds");
-        if (delayMs <= 0) return;
+        if (delayMs <= 0 || delayMs > MAX_TIMEOUT_MS) return;
 
         const timeout = setTimeout(() => {
             this.onTimerFired(schedule, phase);
@@ -305,7 +318,7 @@ export class ScheduleTimerService extends EventEmitter<ScheduleTimerEventMap> {
             if (!nextFire) continue;
 
             const delayMs = nextFire.diff(now).as("milliseconds");
-            if (delayMs <= 0) continue;
+            if (delayMs <= 0 || delayMs > MAX_TIMEOUT_MS) continue;
 
             const timeout = setTimeout(() => {
                 this.onTimerFired(schedule, phase);
