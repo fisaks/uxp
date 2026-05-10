@@ -20,7 +20,7 @@ Edge servers (Go)             Execute physical device control
 
 ## Entity Types
 
-A blueprint defines five entity types:
+A blueprint defines six entity types:
 
 | Entity | Purpose | Directory | Required |
 |--------|---------|-----------|----------|
@@ -28,6 +28,7 @@ A blueprint defines five entity types:
 | **Views** | Interactive UI tiles | `src/views/` | No |
 | **Scenes** | Preset command groups | `src/scenes/` | No |
 | **Locations** | Room/area UI groupings | `src/locations/` | No |
+| **Schedules** | Time-based phase triggers | `src/schedules/` | No |
 | **Rules** | Automation logic | `src/rules/` | Yes |
 
 Plus a project-level `src/factory/` directory for type-safe factory wrappers.
@@ -55,6 +56,8 @@ my-blueprint/
     │   └── kitchen.ts
     ├── locations/          # Room groupings (optional)
     │   └── kitchen.ts
+    ├── schedules/          # Time-based schedules (optional)
+    │   └── carport.ts
     ├── rules/              # Automation rules
     │   ├── kitchen_automation.ts
     │   └── bathroom_ventilation.ts
@@ -1372,6 +1375,131 @@ items: [
 
 ---
 
+## Schedules
+
+Schedules define time-based triggers with named phases. Each phase fires at a specific time (cron, sun event, or fixed date). Rules react to phase fires via `onSchedulePhase()`.
+
+Blueprint schedules define **when** something should happen. The **what** is defined in rules that listen to schedule phases. This separation keeps schedules reusable — the same schedule can trigger different rules.
+
+### Defining a Schedule
+
+```typescript
+import { schedule, cron } from "@uhn/blueprint";
+import { minutes } from "@uhn/blueprint";
+
+export const scheduleCarportEngineHeater = schedule({ name: "Carport Engine Heater" })
+    .phase("on", cron.weekdays().at("06:00"))
+    .phase("off", cron.weekdays().at("08:00"))
+    .missedGrace(minutes(60));
+```
+
+- **`schedule()`** creates a builder with an optional `name`, `description`, and `keywords`
+- **`.phase(name, when)`** adds a named phase with a time trigger
+- **`.missedGrace(ms)`** sets the grace window — if the system was down when a phase should have fired, it will still fire if the missed time is within this window (default: 15 minutes)
+- **`.noGrace()`** shorthand for `.missedGrace(0)` — never catch up missed phases
+
+Phase names become typed properties on the schedule object: `scheduleCarportEngineHeater.phases.on` and `scheduleCarportEngineHeater.phases.off`.
+
+### Time Triggers
+
+Phases support three kinds of time triggers:
+
+**Cron expressions** — via the `cron` builder or raw strings:
+
+```typescript
+.phase("morning", cron.weekdays().at("07:00"))          // Mon-Fri at 07:00
+.phase("evening", cron.daily().at("22:00"))              // Every day at 22:00
+.phase("weekend", cron.weekends().at("09:00"))           // Sat-Sun at 09:00
+.phase("monthly", cron.day(1).at("08:00"))               // 1st of every month
+.phase("xmas", cron.month("dec").day(24).at("15:00"))    // Dec 24 at 15:00
+.phase("custom", cron.days("mon", "wed", "fri").at("18:00"))
+```
+
+**Sun events** — relative to solar position (requires location configured in system settings):
+
+```typescript
+.phase("dusk", { kind: "sun", event: "dusk" })
+.phase("beforeSunset", { kind: "sun", event: "sunset", offsetMinutes: -15 })
+```
+
+Available sun events: `dawn`, `sunrise`, `goldenHourEnd`, `solarNoon`, `goldenHour`, `sunset`, `dusk`, `night`.
+
+**Fixed dates** — yearly recurring or one-time:
+
+```typescript
+// Yearly recurring (no year)
+.phase("summer", { kind: "date", month: 6, day: 1, time: "08:00" })
+// One-time (with year) — used by user-created schedules
+.phase("once", { kind: "date", month: 6, day: 1, time: "08:00", year: 2026 })
+```
+
+### Using Schedules in Rules
+
+Rules listen to schedule phases via `onSchedulePhase()`:
+
+```typescript
+import { rule, ruleAction } from "@uhn/blueprint";
+import { scheduleCarportEngineHeater } from "../schedules/carport";
+import { engineHeaterRelay } from "../resources/carport";
+
+export const heaterOn = rule({ description: "Turn on engine heater" })
+    .onSchedulePhase(scheduleCarportEngineHeater.phases.on)
+    .run(() => [
+        ruleAction({ type: "setDigitalOutput", resource: engineHeaterRelay, value: true }),
+    ]);
+
+export const heaterOff = rule({ description: "Turn off engine heater" })
+    .onSchedulePhase(scheduleCarportEngineHeater.phases.off)
+    .run(() => [
+        ruleAction({ type: "setDigitalOutput", resource: engineHeaterRelay, value: false }),
+    ]);
+```
+
+A single rule can listen to multiple phases and use `isCausedBySchedulePhase()` to distinguish them:
+
+```typescript
+import { rule, ruleAction, isCausedBySchedulePhase } from "@uhn/blueprint";
+
+export const heaterControl = rule({ description: "Engine heater schedule" })
+    .onSchedulePhase(scheduleCarportEngineHeater.phases.on)
+    .onSchedulePhase(scheduleCarportEngineHeater.phases.off)
+    .run((ctx) => {
+        const turnOn = isCausedBySchedulePhase(ctx, scheduleCarportEngineHeater.phases.on);
+        return [ruleAction({ type: "setDigitalOutput", resource: engineHeaterRelay, value: turnOn })];
+    });
+```
+
+### Missed Grace
+
+When the system restarts after being down, it checks whether any schedule phases should have fired during the downtime. If the missed time is within the grace window, the phase fires immediately on startup.
+
+- Default: 15 minutes
+- `.missedGrace(0)` or `.noGrace()`: never catch up — skip missed phases entirely
+- Non-idempotent actions (`tap`, `longPress`) are automatically skipped during missed-grace catch-up to avoid unintended state changes
+
+### User Schedules
+
+In addition to blueprint-defined schedules, users can create schedules through the UI. User schedules have **slots** instead of phases — each slot pairs a time trigger with stored actions (turn on/off, press, set value, activate scene). They don't trigger rules; instead, they execute actions directly.
+
+User schedules are managed via the Schedule page in the technical UI. One-time schedules (with a specific date) are automatically cleaned up 7 days after all slots have fired.
+
+### Dev Filters
+
+Include schedules in dev filter presets:
+
+```typescript
+import { defineDevFilter } from "@uhn/blueprint";
+
+export default defineDevFilter({
+    name: "carport",
+    resources: [...],
+    rules: [...],
+    schedules: [scheduleCarportEngineHeater],
+});
+```
+
+---
+
 ## Rules
 
 Rules define automation logic that reacts to resource events and produces actions.
@@ -1470,6 +1598,30 @@ export const panelActions = rule({ description: "Handle panel button actions" })
 .onTimerDeactivated(timer)   // Timer expired
 ```
 
+**Schedule phases:**
+
+```typescript
+.onSchedulePhase(engineHeater.phases.on)   // Schedule phase fired
+```
+
+`onSchedulePhase` triggers when a blueprint schedule's named phase fires. The phase is passed as a typed object reference — the compiler verifies the schedule and phase exist. See [Schedules](#schedules) for how to define schedules.
+
+Inside the `run()` callback, use `isCausedBySchedulePhase()` to narrow the cause when a rule has multiple schedule triggers:
+
+```typescript
+import { rule, ruleAction, isCausedBySchedulePhase } from "@uhn/blueprint";
+
+export const heaterControl = rule({ description: "Engine heater schedule" })
+    .onSchedulePhase(engineHeater.phases.on)
+    .onSchedulePhase(engineHeater.phases.off)
+    .run((ctx) => {
+        if (isCausedBySchedulePhase(ctx, engineHeater.phases.on)) {
+            return [ruleAction({ type: "setDigitalOutput", resource: heaterRelay, value: true })];
+        }
+        return [ruleAction({ type: "setDigitalOutput", resource: heaterRelay, value: false })];
+    });
+```
+
 ### Rule Context
 
 The `run` callback receives a context object:
@@ -1546,7 +1698,7 @@ ruleAction({ type: "activateScene", scene: eveningScene })
 
 **`setVirtualState`** updates a virtual resource's state value and propagates it to the UI, but does **not** trigger any rule events (`onChanged`, `onActivated`, etc.). Only works on `virtualAnalogOutput` and `virtualDigitalInput` resources. Use this when a rule needs to update a display value (e.g. a computed group indicator) without causing other rules to fire on that change. The state flows through MQTT to the master and UI like a normal state update — the "silent" flag only suppresses rule triggers.
 
-### Scheduling
+### Timing Controls
 
 ```typescript
 rule({ description: "..." })

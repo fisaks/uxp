@@ -8,6 +8,7 @@ This document describes the architectural model for UHN and the relationships be
 - InteractionViews
 - Scenes
 - Locations
+- Schedules
 
 The architecture is designed around a single core principle:
 
@@ -98,11 +99,12 @@ Rules should model **real-world system behavior**.
 
 Examples:
 
-button press → toggle relay  
-sensor change → trigger action  
+button press → toggle relay
+sensor change → trigger action
 timer expiration → perform task
+schedule phase fires → turn on heater
 
-Rules define how the **system reacts to signals and state changes**.
+Rules define how the **system reacts to signals, state changes, and schedule events**.
 
 ---
 
@@ -241,7 +243,29 @@ Objects may appear in **multiple locations**.
 
 ---
 
-# 6. Blueprint Responsibility
+# 6. Schedules
+
+Schedules represent **time-based triggers** with named phases.
+
+Each phase has a when (cron, sun event, or date) and fires at the specified time.
+
+Schedules define **when**, rules define **what happens**.
+
+Two kinds:
+
+- **Blueprint schedules** — defined in code with typed phases, trigger rules via `onSchedulePhase()`
+- **User schedules** — created through the UI with stored actions (no rule involvement)
+
+Blueprint schedules follow the same principle as all other automation:
+actions flow through the rule system.
+
+User schedules are the exception — they execute stored actions directly
+(tap, on/off, set value, activate scene) without rules. This is intentional:
+user schedules are a convenience feature for simple timed actions.
+
+---
+
+# 7. Blueprint Responsibility
 
 The blueprint author fully defines what appears in locations.
 
@@ -266,7 +290,7 @@ This ensures deterministic behavior.
 
 ---
 
-# 7. Complex Resources
+# 8. Complex Resources
 
 Complex resources remain a type of LogicalResource.
 
@@ -279,7 +303,7 @@ total energy = sum of phases
 
 ---
 
-# 8. System Control Path
+# 9. System Control Path
 
 All system behavior must flow through the same path.
 
@@ -308,7 +332,7 @@ InteractionViews therefore **simulate physical interaction instead of bypassing 
 
 ---
 
-# 9. Mental Model
+# 10. Mental Model
 
 A helpful way to understand the architecture:
 
@@ -317,20 +341,22 @@ A helpful way to understand the architecture:
 | Resource | real system primitive |
 | InteractionView | a human-facing object |
 | Scene | a system situation |
+| Schedule | a time-based trigger |
 | Rule | automation logic |
 | Location | spatial grouping |
 
 Examples:
 
-Resource → relay  
-InteractionView → ceiling light  
-Scene → movie night  
-Rule → button toggles light  
+Resource → relay
+InteractionView → ceiling light
+Scene → movie night
+Schedule → engine heater weekday timer
+Rule → button toggles light
 Location → kitchen
 
 ---
 
-# 10. Final Architecture Model
+# 11. Final Architecture Model
 
 BaseResource
  ├ PhysicalResource
@@ -348,6 +374,11 @@ InteractionView (interaction abstraction)
 Scene
  └ actions on resources
 
+Schedule
+ └ named phases with time triggers
+    └ blueprint schedules → trigger rules
+    └ user schedules → execute stored actions directly
+
 Location
  └ entries
     ├ resourceRef
@@ -355,16 +386,17 @@ Location
     └ sceneRef
 
 Rules
- └ operate only on resources
+ └ operate on resources and schedule phases
 
 ---
 
-# 11. Design Principles
+# 12. Design Principles
 
 1. Automation logic belongs in Rules.
 2. Resources represent the real system.
 3. InteractionViews simulate human interaction.
 4. Scenes represent system state presets.
-5. Locations group objects for the UI.
-6. Blueprint authors define UI structure explicitly.
-7. The UI must never bypass the rule system.
+5. Schedules represent time-based triggers.
+6. Locations group objects for the UI.
+7. Blueprint authors define UI structure explicitly.
+8. The UI must never bypass the rule system.

@@ -390,6 +390,8 @@ The technical section includes an icon page (`/technical/icons`) that lists all 
 | `/technical/scenes/:itemId` | ScenePage | Scene detail (pre-selected item) |
 | `/technical/rules` | RulePage | Rule inspector |
 | `/technical/rules/:itemId` | RulePage | Rule detail (pre-selected item) |
+| `/technical/schedules` | SchedulePage | Schedule inspector |
+| `/technical/schedules/:itemId` | SchedulePage | Schedule detail (pre-selected item) |
 | `/technical/blueprints` | BlueprintListPage | Blueprint management |
 | `/technical/blueprints/upload` | UploadBlueprintPage | Blueprint upload |
 | `/technical/blueprints/icons` | IconPreviewPage | Icon reference (all icons with domain and name) |

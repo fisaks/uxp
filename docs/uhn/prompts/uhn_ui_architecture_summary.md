@@ -230,8 +230,10 @@ System configuration pages.
 Sections:
 
 - Resources
-- Scenes
 - Views
+- Scenes
+- Rules
+- Schedules
 
 Example resource:
 
