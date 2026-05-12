@@ -222,7 +222,7 @@ export const ScheduleDetailPopover: React.FC<ScheduleDetailPopoverProps> = ({ da
                 </Show>
                 <Show when={data.createdAt}>
                     <Typography variant="caption" color="text.secondary">Created</Typography>
-                    <Typography variant="caption">{formatDateTime(data.createdAt!)}</Typography>
+                    <Typography variant="caption">{data.createdAt && formatDateTime(data.createdAt)}</Typography>
                 </Show>
             </Box>
 
