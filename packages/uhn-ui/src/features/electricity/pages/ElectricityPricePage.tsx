@@ -232,7 +232,7 @@ export const ElectricityPricePage: React.FC = () => {
                     tooltip={fullWidth ? "Limit width" : "Full width"}
                     tooltipPortal={portalContainer}
                     onClick={() => setFullWidth((v) => !v)}
-                    sx={{ color: "primary.main" }}
+                    sx={{ color: "primary.main", display: { xs: "none", lg: "inline-flex" } }}
                 >
                     {fullWidth ? <WidthNormalIcon /> : <WidthFullIcon />}
                 </TooltipIconButton>
@@ -335,6 +335,7 @@ export const ElectricityPricePage: React.FC = () => {
                                 {
                                     data: chartXData,
                                     scaleType: "time",
+                                    domainLimit: "strict",
                                     valueFormatter: (value: Date) => formatTime(value.toISOString()),
                                 },
                             ]}
