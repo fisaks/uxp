@@ -34,13 +34,13 @@ function toUserScheduleInfo(entity: UserScheduleEntity): UserScheduleInfo {
 class UserScheduleService {
 
     async listForActiveBlueprint(): Promise<UserScheduleInfo[]> {
-        const blueprintId = await this.getActiveBlueprintId();
+        const blueprintId = this.getActiveBlueprintId();
         const entities = await UserScheduleRepository.findByBlueprint(blueprintId);
         return entities.map(toUserScheduleInfo);
     }
 
     async create(payload: UhnScheduleCreatePayload, username: string): Promise<UserScheduleInfo> {
-        const blueprintId = await this.getActiveBlueprintId();
+        const blueprintId = this.getActiveBlueprintId();
 
         const entity = new UserScheduleEntity({
             blueprintIdentifier: blueprintId,
@@ -78,7 +78,7 @@ class UserScheduleService {
 
     /** Mark a slot as fired (for one-time date slots). Returns updated info for broadcasting. */
     async markSlotFired(scheduleId: string, slotIndex: number): Promise<UserScheduleInfo | undefined> {
-        const blueprintId = await this.getActiveBlueprintId();
+        const blueprintId = this.getActiveBlueprintId();
         const entity = await UserScheduleRepository.findByScheduleId(blueprintId, scheduleId);
         if (!entity || slotIndex >= entity.slots.length) return undefined;
 
@@ -154,12 +154,12 @@ class UserScheduleService {
         scheduleNext();
     }
 
-    private async getActiveBlueprintId(): Promise<string> {
-        const active = await blueprintService.getActiveBlueprint();
-        if (!active) {
+    private getActiveBlueprintId(): string {
+        const identifier = blueprintService.getRunningBlueprintIdentifier();
+        if (!identifier) {
             throw new AppErrorV2({ statusCode: 400, code: "VALIDATION", message: "No blueprint is currently active" });
         }
-        return active.identifier;
+        return identifier;
     }
 
     private async findOwnedOrThrow(id: number): Promise<UserScheduleEntity> {
@@ -168,7 +168,7 @@ class UserScheduleService {
             throw new AppErrorV2({ statusCode: 404, code: "NOT_FOUND", message: `User schedule with id ${id} not found` });
         }
         // Verify it belongs to the active blueprint
-        const blueprintId = await this.getActiveBlueprintId();
+        const blueprintId = this.getActiveBlueprintId();
         if (entity.blueprintIdentifier !== blueprintId) {
             throw new AppErrorV2({ statusCode: 404, code: "NOT_FOUND", message: `User schedule with id ${id} not found for active blueprint` });
         }

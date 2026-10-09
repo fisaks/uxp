@@ -28,6 +28,17 @@ type BlueprintEventMap = {
 };
 
 class BlueprintService extends EventEmitter<BlueprintEventMap> {
+    /**
+     * Identifier of the blueprint whose runtime is running, kept in memory.
+     * Activation runs in an uncommitted transaction, so listeners reacting to the
+     * runtime starting (on other DB connections) can't rely on the DB's active flag.
+     */
+    private runningBlueprintIdentifier: string | undefined;
+
+    getRunningBlueprintIdentifier(): string | undefined {
+        return this.runningBlueprintIdentifier;
+    }
+
 
     private async processUpload(request: FastifyRequest, uploadedBy: string, requiredIdentifier?: string) {
         const upload = await BlueprintFileUtil.handleAndValidateUpload(request);
@@ -101,6 +112,7 @@ class BlueprintService extends EventEmitter<BlueprintEventMap> {
 
         await BlueprintFileUtil.removeActiveBlueprint();
 
+        this.runningBlueprintIdentifier = undefined;
         toDeactivate.active = false;
         toDeactivate.status = 'idle';
         const deactivatedAt = DateTime.now();
@@ -209,6 +221,7 @@ class BlueprintService extends EventEmitter<BlueprintEventMap> {
         await BlueprintActivationRepository.save(activation);
 
         // Start runtime
+        this.runningBlueprintIdentifier = toActivate.identifier;
         await blueprintRuntimeSupervisorService.start();
 
         await this.publishActiveBlueprint();
@@ -272,6 +285,7 @@ class BlueprintService extends EventEmitter<BlueprintEventMap> {
                 message: `Starting blueprint runtime for ${active.identifier} v${active.version}`,
             });
 
+            this.runningBlueprintIdentifier = active.identifier;
             try {
                 await blueprintRuntimeSupervisorService.start();
 

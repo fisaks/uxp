@@ -1,4 +1,4 @@
-import { runBackgroundTask } from "@uxp/bff-common";
+import { AppLogger, runBackgroundTask } from "@uxp/bff-common";
 import { blueprintScheduleService } from "../services/blueprint-schedule.service";
 import { scheduleMuteService } from "../services/schedule-mute.service";
 import { userScheduleService } from "../services/user-schedule.service";
@@ -12,7 +12,9 @@ export function initBlueprintScheduleDispatcher(): void {
     initialized = true;
 
     blueprintScheduleService.on("schedulesReloaded", () => {
-        broadcastAllSchedules();
+        broadcastAllSchedules().catch(err => {
+            AppLogger.error({ message: `[BlueprintScheduleDispatcher] Failed to broadcast schedules: ${err}` });
+        });
     });
     blueprintScheduleService.on("schedulesCleared", () => {
         UHNAppServerWebSocketManager.getInstance().broadcastSchedulesMessage({

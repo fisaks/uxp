@@ -22,7 +22,7 @@ function toScheduleMuteInfo(entity: ScheduleMuteEntity): ScheduleMuteInfo {
 class ScheduleMuteService {
 
     async listMutesForActiveBlueprint(): Promise<ScheduleMuteInfo[]> {
-        const blueprintId = await this.getActiveBlueprintId();
+        const blueprintId = this.getActiveBlueprintId();
         const entities = await ScheduleMuteRepository.findByBlueprint(blueprintId);
         const now = DateTime.now();
         const active: ScheduleMuteInfo[] = [];
@@ -38,7 +38,7 @@ class ScheduleMuteService {
     }
 
     async isMuted(scheduleId: string): Promise<boolean> {
-        const blueprintId = await this.getActiveBlueprintId();
+        const blueprintId = this.getActiveBlueprintId();
         const entity = await ScheduleMuteRepository.findByScheduleId(blueprintId, scheduleId);
         if (!entity) return false;
 
@@ -51,7 +51,7 @@ class ScheduleMuteService {
     }
 
     async mute(scheduleId: string, durationMs: number | null | undefined, username: string): Promise<ScheduleMuteInfo> {
-        const blueprintId = await this.getActiveBlueprintId();
+        const blueprintId = this.getActiveBlueprintId();
         let entity = await ScheduleMuteRepository.findByScheduleId(blueprintId, scheduleId);
 
         if (entity) {
@@ -72,7 +72,7 @@ class ScheduleMuteService {
     }
 
     async unmute(scheduleId: string): Promise<void> {
-        const blueprintId = await this.getActiveBlueprintId();
+        const blueprintId = this.getActiveBlueprintId();
         const entity = await ScheduleMuteRepository.findByScheduleId(blueprintId, scheduleId);
         if (!entity) {
             throw new AppErrorV2({ statusCode: 404, code: "NOT_FOUND", message: `No mute found for schedule "${scheduleId}"` });
@@ -82,12 +82,12 @@ class ScheduleMuteService {
         AppLogger.info({ message: `${LOG_TAG} Unmuted schedule "${scheduleId}"` });
     }
 
-    private async getActiveBlueprintId(): Promise<string> {
-        const active = await blueprintService.getActiveBlueprint();
-        if (!active) {
+    private getActiveBlueprintId(): string {
+        const identifier = blueprintService.getRunningBlueprintIdentifier();
+        if (!identifier) {
             throw new AppErrorV2({ statusCode: 400, code: "VALIDATION", message: "No blueprint is currently active" });
         }
-        return active.identifier;
+        return identifier;
     }
 }
 
