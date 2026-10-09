@@ -20,3 +20,4 @@ export * from "./schemas/user-location-item-order.schema";
 export * from "./types/user-location-section-order.type";
 export * from "./schemas/user-location-section-order.schema";
 export * from "./schemas/schedule-rest.schema";
+export * from "./types/uhn-electricity.type";

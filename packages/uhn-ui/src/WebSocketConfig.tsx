@@ -17,6 +17,7 @@ import { runtimeOverviewLoaded } from "./features/runtime-overview/runtimeOvervi
 import { scenesLoaded } from "./features/scene/sceneSlice";
 import { schedulesLoaded } from "./features/schedule/scheduleSlice";
 import { availabilityChangeReceived, availabilitySnapshotReceived } from "./features/device-availability/deviceAvailabilitySlice";
+import { electricityPricesReceived } from "./features/electricity/electricitySlice";
 import { viewsLoaded } from "./features/view/viewSlice";
 
 
@@ -75,6 +76,9 @@ export const WebSocketConfig: React.FC<WebSocketConfigProps> = ({ children }) =>
         "uhn:availability:change": (message) => {
             if (message.payload) dispatch(availabilityChangeReceived(message.payload.entry));
         },
+        "uhn:electricity:prices": (message) => {
+            if (message.payload) dispatch(electricityPricesReceived(message.payload));
+        },
         "uhn:subscribed": (message) => {
             console.log("Subscribed to UHN patterns", message.payload);
         },
@@ -95,7 +99,7 @@ export const WebSocketConfig: React.FC<WebSocketConfigProps> = ({ children }) =>
         console.log("WebSocket Reconnect", details);
         setReconnectDetails(details);
         if (details.connected) {
-            ws.sendMessage({ action: "uhn:subscribe", payload: { patterns: ["resource/*", "state/*", "health/*", "view/*", "location/*", "scene/*", "rule/*", "schedule/*", "runtime/*", "availability/*"] } });
+            ws.sendMessage({ action: "uhn:subscribe", payload: { patterns: ["resource/*", "state/*", "health/*", "view/*", "location/*", "scene/*", "rule/*", "schedule/*", "runtime/*", "availability/*", "electricity/*"] } });
             connected.current = true;
         } else {
             connected.current = false;
@@ -107,7 +111,7 @@ export const WebSocketConfig: React.FC<WebSocketConfigProps> = ({ children }) =>
         // Delay subscription slightly to allow the underlying WebSocket connection/handshake
         // to fully settle before sending subscribe messages, avoiding intermittent race conditions.
         setTimeout(() => {
-            ws.sendMessage({ action: "uhn:subscribe", payload: { patterns: ["resource/*", "state/*", "health/*", "view/*", "location/*", "scene/*", "rule/*", "schedule/*", "runtime/*", "availability/*"] } });
+            ws.sendMessage({ action: "uhn:subscribe", payload: { patterns: ["resource/*", "state/*", "health/*", "view/*", "location/*", "scene/*", "rule/*", "schedule/*", "runtime/*", "availability/*", "electricity/*"] } });
             connected.current = true;
         }, 500);
 

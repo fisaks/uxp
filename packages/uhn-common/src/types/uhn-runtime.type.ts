@@ -1,5 +1,6 @@
 
 import { ActionInputResourceBase, ActionOutputResourceBase, AnalogInputResourceBase, AnalogOutputOption, AnalogOutputResourceBase, BlueprintIcon, DigitalInputResourceBase, DigitalOutputResourceBase, HeroFontSize, LogicalResourceType, PhysicalResourceType, ResourceType, RuntimeRuleAction, ValueColorRule, ValueIconRule, ViewActiveCondition, ViewCommandType, ViewStateAggregation , ScheduleWhen} from "@uhn/blueprint";
+import { RuleRuntimeElectricityPriceCommand } from "./uhn-electricity.type";
 // --- Runtime rule serialization (for IPC + overview) ---
 
 export type RuntimeRuleTriggerInfo =
@@ -281,7 +282,8 @@ export type RuleRuntimeCommand = RuleRuntimeStateUpdateCommand
   | RuleRuntimeTapCommand
   | RuleRuntimeLongPressCommand
   | RuleRuntimeActionEventCommand
-  | RuleRuntimeScheduleEventCommand;
+  | RuleRuntimeScheduleEventCommand
+  | RuleRuntimeElectricityPriceCommand;
 
 
 export type RuleRuntimeResourcesLoadedMessage = {
@@ -444,6 +446,10 @@ export type RuleRuntimeCommandMap = {
   };
   scheduleEvent: {
     request: Omit<RuleRuntimeScheduleEventCommand, "kind">;
+    response: void;
+  };
+  electricityPriceUpdate: {
+    request: Omit<RuleRuntimeElectricityPriceCommand, "kind">;
     response: void;
   };
 };

@@ -15,6 +15,7 @@ import { TechnicalPageWrapper } from "./features/technical/components/TechnicalP
 import { TechnicalPage } from "./features/technical/pages/TechnicalPage";
 import { TopicTracePage } from "./features/topic-trace/pages/TopicTracePage";
 import { SchedulePage } from "./features/schedule/pages/SchedulePage";
+import { ElectricityPricePage } from "./features/electricity/pages/ElectricityPricePage";
 import { ViewPage } from "./features/view/pages/ViewPage";
 
 export const UHNBody = () => {
@@ -76,6 +77,9 @@ export const UHNBody = () => {
                 } />
                 <Route path="/technical/schedules/:itemId" element={
                     <TechnicalPageWrapper><SchedulePage /></TechnicalPageWrapper>
+                } />
+                <Route path="/technical/electricity" element={
+                    <TechnicalPageWrapper><ElectricityPricePage /></TechnicalPageWrapper>
                 } />
 
                 <Route path="*" element={<LocationPage />} />

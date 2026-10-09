@@ -40,6 +40,9 @@ export function createCommandRouter(deps: RuleRuntimeDependencies) {
                     case "scheduleEvent":
                         handleScheduleEvent(deps, cmd);
                         break;
+                    case "electricityPriceUpdate":
+                        // TODO: Phase 2 — feed prices to ctx.electricity and onPriceChanged triggers
+                        break;
                     default:
                         handleUnknownCommand(cmd);
                 }

@@ -1,4 +1,4 @@
-import { DeviceAvailabilityEntry, getMatchingResourcesForPattern, getMatchingStateForPattern, RuntimeOverviewPayload, TopicMessagePayload, UHNAppActionPayloadRequestMap, UHNAppActionPayloadResponseMap, UHNAppResponseMessage, UhnAvailabilitySnapshotResponse, UhnFullStateResponse, UhnHealthSnapshot, UhnLocationsResponse, UhnResourcesResponse, UhnRulesResponse, UhnScenesResponse, UhnSchedulesResponse, UhnStateResponse, UhnSubscriptionPattern, UhnSystemSnapshot, UhnSystemStatus, UhnViewsResponse } from "@uhn/common";
+import { DeviceAvailabilityEntry, ElectricityPriceSnapshot, getMatchingResourcesForPattern, getMatchingStateForPattern, RuntimeOverviewPayload, TopicMessagePayload, UHNAppActionPayloadRequestMap, UHNAppActionPayloadResponseMap, UHNAppResponseMessage, UhnAvailabilitySnapshotResponse, UhnFullStateResponse, UhnHealthSnapshot, UhnLocationsResponse, UhnResourcesResponse, UhnRulesResponse, UhnScenesResponse, UhnSchedulesResponse, UhnStateResponse, UhnSubscriptionPattern, UhnSystemSnapshot, UhnSystemStatus, UhnViewsResponse } from "@uhn/common";
 import { ServerWebSocketManager, topicMatches } from "@uxp/bff-common";
 
 import { WebSocket } from "ws";
@@ -204,6 +204,14 @@ export class UHNAppServerWebSocketManager extends ServerWebSocketManager<UHNAppA
             action: "uhn:availability:change",
             success: true,
             payload: { entry },
+        });
+    }
+
+    public broadcastElectricityPricesMessage(snapshot: ElectricityPriceSnapshot) {
+        this.broadcastToTopic("uhn:electricity/*", {
+            action: "uhn:electricity:prices",
+            success: true,
+            payload: { snapshot },
         });
     }
 

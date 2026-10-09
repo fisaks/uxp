@@ -16,6 +16,7 @@ import runtimeOverviewReducer from "../features/runtime-overview/runtimeOverview
 import scenesReducer from "../features/scene/sceneSlice";
 import schedulesReducer from "../features/schedule/scheduleSlice";
 import deviceAvailabilityReducer from "../features/device-availability/deviceAvailabilitySlice";
+import electricityReducer from "../features/electricity/electricitySlice";
 import viewsReducer from "../features/view/viewSlice";
 
 import { useDispatch } from "react-redux";
@@ -46,6 +47,7 @@ export const createStore = () => {
             rules: rulesReducer,
             runtimeOverview: runtimeOverviewReducer,
             deviceAvailability: deviceAvailabilityReducer,
+            electricity: electricityReducer,
 
         },
         devTools: process.env.NODE_ENV === "development",

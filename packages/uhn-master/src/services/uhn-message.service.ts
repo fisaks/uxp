@@ -12,6 +12,7 @@ import { userScheduleService } from "./user-schedule.service";
 import { runtimeOverviewService } from "./runtime-overview.service";
 import { stateRuntimeService } from "./state-runtime.service";
 import { deviceAvailabilityService } from "./device-availability.service";
+import { electricityPriceService } from "./electricity-price.service";
 import { uhnHealthService } from "./uhn-health.service";
 import { uhnSystemSnapshotService } from "./uhn-system-snapshot.service";
 
@@ -44,6 +45,7 @@ export class UhnMessageService {
         const shouldSendRules = patterns.some(p => p === 'rule/*');
         const shouldSendSchedules = patterns.some(p => p === 'schedule/*');
         const shouldSendAvailability = patterns.some(p => p === 'availability/*');
+        const shouldSendElectricity = patterns.some(p => p === 'electricity/*');
 
         if (shouldSendResources) {
             await this.sendResourcesMessage(socket, patterns);
@@ -78,6 +80,9 @@ export class UhnMessageService {
         }
         if (shouldSendAvailability) {
             this.sendAvailabilityMessage(socket);
+        }
+        if (shouldSendElectricity) {
+            this.sendElectricityPricesMessage(socket);
         }
 
     }
@@ -223,6 +228,15 @@ export class UhnMessageService {
             action: "uhn:availability:snapshot",
             success: true,
             payload: { entries },
+        });
+    }
+
+    sendElectricityPricesMessage(socket: WebSocket) {
+        const snapshot = electricityPriceService.getSnapshot();
+        this.wsManager.sendMessage(socket, {
+            action: "uhn:electricity:prices",
+            success: true,
+            payload: { snapshot },
         });
     }
 

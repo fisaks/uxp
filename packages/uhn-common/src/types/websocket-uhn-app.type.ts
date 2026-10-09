@@ -1,11 +1,13 @@
 import { UxpActionPayloadResponseMap, WebSocketAction, WebSocketMessage, WebSocketResponse } from "@uxp/common";
+import { UhnElectricityPayloadRequestMap, UhnElectricityPayloadResponseMap } from "./uhn-electricity.type";
 import { UhnAvailabilityPayloadResponseMap, UhnHealthPayloadResponseMap, UhnResourcePayloadRequestMap, UhnResourcePayloadResponseMap, UhnRuntimePayloadResponseMap, UhnSubscribePayloadRequestMap, UhnSubscribePayloadResponseMap } from "./uhn-message.type";
 import { TopicActionPayloadRequestMap, TopicActionPayloadResponseMap } from "./uhn-topics.type";
 import { UhnSystemPayloadRequestMap, UhnSystemPayloadResponseMap } from "./uhn-system.type";
 
 // Request maps
 export type UHNAppActionPayloadRequestMap = TopicActionPayloadRequestMap &
-    UhnSubscribePayloadRequestMap & UhnResourcePayloadRequestMap & UhnSystemPayloadRequestMap;
+    UhnSubscribePayloadRequestMap & UhnResourcePayloadRequestMap & UhnSystemPayloadRequestMap &
+    UhnElectricityPayloadRequestMap;
 
 export type UHNHealthActionPayloadRequestMap = UhnSubscribePayloadRequestMap;
 
@@ -19,6 +21,7 @@ export type UHNAppActionPayloadResponseMap = TopicActionPayloadResponseMap &
     UhnAvailabilityPayloadResponseMap &
     UhnSystemPayloadResponseMap &
     UhnRuntimePayloadResponseMap &
+    UhnElectricityPayloadResponseMap &
     UxpActionPayloadResponseMap;
 
 export type UHNHealthActionPayloadResponseMap = UhnSubscribePayloadResponseMap &

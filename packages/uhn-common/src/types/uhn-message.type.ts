@@ -19,7 +19,8 @@ export type UhnSubscriptionPattern =
     | 'scene/*'
     | 'rule/*'
     | 'schedule/*'
-    | 'availability/*';
+    | 'availability/*'
+    | 'electricity/*';
 
 
 export type UhnSubscribePayload = {
@@ -202,7 +203,7 @@ export const UhnSubscribePayloadSchema: MessagePayloadSchema<UhnSubscribePayload
         patterns: {
             type: 'array', items: {
                 type: 'string',
-                pattern: '^((state|resource)/.*|health/\\*|system/\\*|runtime/\\*|view/\\*|location/\\*|scene/\\*|rule/\\*|schedule/\\*|availability/\\*)$',
+                pattern: '^((state|resource)/.*|health/\\*|system/\\*|runtime/\\*|view/\\*|location/\\*|scene/\\*|rule/\\*|schedule/\\*|availability/\\*|electricity/\\*)$',
                 minLength: 1,
                 maxLength: 256
             },

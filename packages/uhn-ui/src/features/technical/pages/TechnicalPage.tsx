@@ -1,5 +1,6 @@
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import AccountTreeIcon from "@mui/icons-material/AccountTree";
+import BoltIcon from "@mui/icons-material/Bolt";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import DescriptionIcon from "@mui/icons-material/Description";
 import HubIcon from "@mui/icons-material/Hub";
@@ -87,6 +88,12 @@ const technicalItems: TechnicalCardItem[] = [
         icon: <HubIcon sx={{ fontSize: 40 }} />,
         to: "/technical/topic-trace",
         adminOnly: true,
+    },
+    {
+        title: "Electricity Price",
+        description: "Finnish spot electricity prices (15/60 min)",
+        icon: <BoltIcon sx={{ fontSize: 40 }} />,
+        to: "/technical/electricity",
     },
 ];
 
