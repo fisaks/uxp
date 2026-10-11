@@ -14,6 +14,7 @@ import type {
     VirtualAnalogOutputResourceBase,
     VirtualDigitalInputResourceBase,
 } from "./resource";
+import type { ElectricityQueries } from "./electricity";
 import type { BlueprintScene } from "./scene";
 import type { BlueprintPhase } from "./schedule";
 
@@ -60,6 +61,13 @@ export type TriggerEvent =
 
 export type NumericTriggerOptions = { hysteresis?: number };
 
+export type PriceTriggerOptions = {
+    /** Re-arm distance (snt/kWh), like the hysteresis of `onAbove`/`onBelow`. */
+    hysteresis?: number;
+    /** Which price the limit is compared with: the current 15-min slot (default) or the average of the current hour. */
+    basis?: "slot" | "hour";
+};
+
 export type RuleTrigger =
     | {
         kind: "resource";
@@ -97,6 +105,16 @@ export type RuleTrigger =
     | {
         kind: "schedule";
         phase: BlueprintPhase;
+    }
+    | {
+        kind: "priceChanged";
+    }
+    | {
+        kind: "priceThreshold";
+        direction: "above" | "below";
+        threshold: number;
+        hysteresis?: number;
+        basis?: "slot" | "hour";
     };
 
 export type ResourceRuleCause = {
@@ -119,7 +137,16 @@ export type ScheduleRuleCause = {
     phase: BlueprintPhase;
 };
 
-export type RuleCause = ResourceRuleCause | ScheduleRuleCause;
+export type ElectricityRuleCause = {
+    event: "priceChanged" | "priceAbove" | "priceBelow";
+    timestamp: number;
+    /** Price of the current slot (snt/kWh). `undefined` only for "priceChanged" when the received data no longer covers the current slot. */
+    price: number | undefined;
+    /** True for the first evaluation after the runtime starts, which runs when the first price snapshot arrives. */
+    startup: boolean;
+};
+
+export type RuleCause = ResourceRuleCause | ScheduleRuleCause | ElectricityRuleCause;
 
 export type RuleTimers = {
     start(
@@ -208,7 +235,7 @@ export function isCausedBy<
 ): ctx is RuleContext & { cause: RuleCause & { action: TAction; metadata: TMeta[TAction] } };
 export function isCausedBy(ctx: RuleContext, resource: ResourceBase<ResourceType>): boolean;
 export function isCausedBy(ctx: RuleContext, resource: ResourceBase<ResourceType>, action?: string): boolean {
-    if (ctx.cause.event === "schedule") return false;
+    if (!("resource" in ctx.cause)) return false;
     if (ctx.cause.resource.id !== resource.id) return false;
     if (action !== undefined) return ctx.cause.action === action;
     return true;
@@ -224,6 +251,19 @@ export function isCausedBy(ctx: RuleContext, resource: ResourceBase<ResourceType
  */
 export function isCausedBySchedulePhase(ctx: RuleContext, phase: BlueprintPhase): ctx is RuleContext & { cause: ScheduleRuleCause } {
     return ctx.cause.event === "schedule" && ctx.cause.phase === phase;
+}
+
+/**
+ * Type guard that narrows `ctx.cause` to an electricity price cause
+ * (from `onPriceChanged`, `onPriceAbove` or `onPriceBelow`).
+ *
+ * Usage:
+ *   if (isCausedByPrice(ctx)) {
+ *       ctx.cause.price   // current slot price in snt/kWh (undefined without data)
+ *   }
+ */
+export function isCausedByPrice(ctx: RuleContext): ctx is RuleContext & { cause: ElectricityRuleCause } {
+    return ctx.cause.event === "priceChanged" || ctx.cause.event === "priceAbove" || ctx.cause.event === "priceBelow";
 }
 
 /**
@@ -366,6 +406,8 @@ export type RuleContext = {
     logger: RuleLogger;
     mute: MuteController;
     interval: IntervalController;
+    /** Electricity spot price queries (prices incl. VAT, 15-min slots, Helsinki time). */
+    electricity: ElectricityQueries;
 };
 /**
  * Controller to mute rule or resource triggers for a duration.
@@ -441,6 +483,21 @@ export type RuleBuilder = {
     onTimerDeactivated(timer: TimerResourceBase): RuleBuilder;
 
     onSchedulePhase(phase: BlueprintPhase): RuleBuilder;
+
+    /**
+     * Fires at every 15-minute price slot boundary (also when the price is unchanged), starting with one
+     * evaluation when the runtime receives its first price snapshot after starting. Nothing fires before that.
+     * Once data has arrived, it keeps firing even if the data later goes stale (`ctx.cause.price` is then
+     * `undefined`), so rules can fall back. New price data arriving does not fire it.
+     */
+    onPriceChanged(): RuleBuilder;
+    /**
+     * Fires when the electricity price crosses above `threshold` (snt/kWh incl. VAT). Checked at slot boundaries
+     * and once when the runtime receives its first price snapshot after starting (fires then if the price is already above). Never fires without a price.
+     */
+    onPriceAbove(threshold: number, opts?: PriceTriggerOptions): RuleBuilder;
+    /** Fires when the electricity price crosses below `threshold`. Same semantics as {@link onPriceAbove}. */
+    onPriceBelow(threshold: number, opts?: PriceTriggerOptions): RuleBuilder;
 
     priority(n: number): RuleBuilder;
     /** Hint listing resources this rule's actions typically affect.
@@ -575,6 +632,33 @@ export function rule(
             meta.triggers.push({
                 kind: "schedule",
                 phase,
+            });
+            return this;
+        },
+
+        onPriceChanged() {
+            meta.triggers.push({ kind: "priceChanged" });
+            return this;
+        },
+
+        onPriceAbove(threshold, opts) {
+            meta.triggers.push({
+                kind: "priceThreshold",
+                direction: "above",
+                threshold,
+                ...(opts?.hysteresis !== undefined && { hysteresis: opts.hysteresis }),
+                ...(opts?.basis !== undefined && { basis: opts.basis }),
+            });
+            return this;
+        },
+
+        onPriceBelow(threshold, opts) {
+            meta.triggers.push({
+                kind: "priceThreshold",
+                direction: "below",
+                threshold,
+                ...(opts?.hysteresis !== undefined && { hysteresis: opts.hysteresis }),
+                ...(opts?.basis !== undefined && { basis: opts.basis }),
             });
             return this;
         },

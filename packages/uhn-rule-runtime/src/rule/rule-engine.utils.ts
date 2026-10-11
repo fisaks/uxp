@@ -124,9 +124,20 @@ export function isScheduleTrigger(trigger: RuleTrigger): trigger is Extract<Rule
     return trigger.kind === "schedule";
 }
 
-/** Any trigger that references a resource (all except schedule). */
-export type ResourceRuleTrigger = Exclude<RuleTrigger, { kind: "schedule" }>;
+export function isPriceChangedTrigger(trigger: RuleTrigger): trigger is Extract<RuleTrigger, { kind: "priceChanged" }> {
+    return trigger.kind === "priceChanged";
+}
+export function isPriceThresholdTrigger(trigger: RuleTrigger): trigger is Extract<RuleTrigger, { kind: "priceThreshold" }> {
+    return trigger.kind === "priceThreshold";
+}
+/** Electricity price triggers (no resource reference). */
+export function isPriceTrigger(trigger: RuleTrigger): trigger is Extract<RuleTrigger, { kind: "priceChanged" | "priceThreshold" }> {
+    return trigger.kind === "priceChanged" || trigger.kind === "priceThreshold";
+}
+
+/** Any trigger that references a resource (all except schedule and price triggers). */
+export type ResourceRuleTrigger = Exclude<RuleTrigger, { kind: "schedule" | "priceChanged" | "priceThreshold" }>;
 export function isResourceBasedTrigger(trigger: RuleTrigger): trigger is ResourceRuleTrigger {
-    return trigger.kind !== "schedule";
+    return "resource" in trigger;
 }
 

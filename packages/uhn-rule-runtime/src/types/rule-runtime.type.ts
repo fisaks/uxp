@@ -5,6 +5,7 @@ import { RuntimeRulesService } from "../services/runtime-rules.service";
 import { RuntimeStateService } from "../services/runtime-state.service";
 import { RuntimeTimerService } from "../services/runtime-timer.service";
 import type { RuleEngine } from "../rule/rule-engine";
+import type { RuntimeElectricityService } from "../services/runtime-electricity.service";
 import type { RuntimeScheduleService } from "../services/runtime-schedule.service";
 import type { TriggerEventBus } from "../rule/trigger-event-bus";
 
@@ -22,6 +23,7 @@ export type RuleRuntimeDependencies = {
     triggerEventBus: TriggerEventBus;
     ruleEngine: RuleEngine;
     scheduleService: RuntimeScheduleService;
+    electricityService: RuntimeElectricityService;
 };
 
 export type RuntimeStateChange = {

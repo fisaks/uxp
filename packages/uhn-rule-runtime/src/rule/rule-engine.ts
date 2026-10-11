@@ -1,6 +1,8 @@
 // services/rule-engine.ts
 import type {
     BlueprintRule,
+    ElectricityQueries,
+    ElectricityRuleCause,
     ResourceRuleCause,
     RuleAction,
     RuleCause,
@@ -19,11 +21,13 @@ import { createResourceErrorData } from "./rule-engine-error";
 import { ruleLogger } from "./rule-engine-logging";
 import { RuntimeMuteService } from "../services/runtime-mute.service";
 import { RuntimeIntervalService } from "../services/runtime-interval.service";
+import type { RuntimeElectricityService } from "../services/runtime-electricity.service";
+import { createElectricityQueries } from "./electricity-queries";
 import { createRuleMute } from "./rule-engine-mute";
 import { createRuleStateReader } from "./rule-state-reader";
 import { createRuleTimer } from "./rule-engine-timer";
 import { RuleExecutionControl, RuleTriggerEvent, ScheduleTriggerEvent } from "./rule-engine.type";
-import { isActionTrigger, isLongPressTrigger, isResourceTrigger, isScheduleTrigger, isTapTrigger, isThresholdTrigger, isTimerTrigger } from "./rule-engine.utils";
+import { isActionTrigger, isLongPressTrigger, isPriceChangedTrigger, isPriceThresholdTrigger, isPriceTrigger, isResourceTrigger, isScheduleTrigger, isTapTrigger, isThresholdTrigger, isTimerTrigger } from "./rule-engine.utils";
 import { expandSceneActions, filterReachableActions, toRuntimeAction } from "./rule-action.utils";
 import { TriggerEventBus } from "./trigger-event-bus";
 
@@ -49,6 +53,7 @@ export class RuleEngine {
     private readonly ruleExecutionControl = new Map<string, RuleExecutionControl>();
     private readonly hysteresisState = new Map<string, HysteresisEntry>();
     private readonly stateReader: StateReader;
+    private readonly electricityQueries: ElectricityQueries;
     private readonly mode: RuntimeMode;
     private readonly edgeName?: string;
     constructor(
@@ -58,12 +63,14 @@ export class RuleEngine {
         private readonly timerService: RuntimeTimerService,
         private readonly muteService: RuntimeMuteService,
         private readonly intervalService: RuntimeIntervalService,
+        private readonly electricityService: RuntimeElectricityService,
         mode: RuntimeMode,
         edgeName?: string,
     ) {
         this.mode = mode;
         this.edgeName = edgeName;
         this.stateReader = createRuleStateReader({ stateService: this.stateService });
+        this.electricityQueries = createElectricityQueries(electricityService);
         // Subscribe to state changes
         triggerEventBus.on((event) => {
             this.handleResourceTriggerEvent(event);
@@ -108,6 +115,65 @@ export class RuleEngine {
                     component: "RuleEngine",
                     message: `Rule "${ruleCandidate.id}" matched phase "${schedulePhaseId}" but produced 0 actions`,
                 });
+            }
+        }
+    }
+
+    /**
+     * Evaluate electricity price triggers. Called at every 15-minute slot boundary and once at startup.
+     * - onPriceChanged fires every time (price may be undefined without data).
+     * - onPriceAbove/onPriceBelow fire on a threshold crossing (same hysteresis state machine as
+     *   onAbove/onBelow) and never without a price.
+     *
+     * Threshold triggers keep only their armed state (see evaluateThresholdTrigger). A previous price is not needed:
+     * while armed, the price has necessarily been on the other side of the limit since the trigger last fired
+     * (or since startup), so "armed and the price is at the limit or past it" is exactly a crossing. This holds
+     * because every evaluation reaches the state machine; nothing skips events the way a muted resource does.
+     * So the price counts as coming from the opposite extreme every time: onPriceAbove(x) fires when armed and the
+     * price is >= x, onPriceBelow(x) when armed and the price is <= x. At startup the trigger is armed, so it
+     * fires if the price is already past the limit; if it does not satisfy the condition yet (below x for
+     * onPriceAbove, above x for onPriceBelow) nothing fires. After a crossing the trigger waits for the price to
+     * pass the hysteresis band before it is armed again. An evaluation without a price (stale data) changes
+     * nothing.
+     */
+    evaluatePriceTriggers(startup: boolean) {
+        const now = Date.now();
+        const slotPrice = this.electricityService.currentPrice(now);
+        const hourPrice = this.electricityService.hourAverage(now);
+
+        for (const ruleCandidate of this.rulesService.getPriceRules()) {
+            for (let triggerIdx = 0; triggerIdx < ruleCandidate.triggers.length; triggerIdx++) {
+                const trigger = ruleCandidate.triggers[triggerIdx];
+                if (!isPriceTrigger(trigger)) continue;
+
+                let event: ElectricityRuleCause["event"] | undefined;
+                if (isPriceChangedTrigger(trigger)) {
+                    event = "priceChanged";
+                } else if (isPriceThresholdTrigger(trigger)) {
+                    const value = trigger.basis === "hour" ? hourPrice : slotPrice;
+                    if (value === undefined) continue;
+                    if (this.evaluateThresholdTrigger(trigger, undefined, value, `${ruleCandidate.id}:${triggerIdx}`)) {
+                        event = trigger.direction === "above" ? "priceAbove" : "priceBelow";
+                    }
+                }
+                if (!event) continue;
+
+                const cause: ElectricityRuleCause = { event, timestamp: now, price: slotPrice, startup };
+                const actions = this.tryRunRule(ruleCandidate, cause, now);
+
+                if (actions.length) {
+                    runtimeOutput.send({
+                        kind: "event",
+                        cmd: "actions",
+                        actions,
+                    });
+                } else {
+                    runtimeOutput.log({
+                        level: "debug",
+                        component: "RuleEngine",
+                        message: `Rule "${ruleCandidate.id}" matched price event "${event}" but produced 0 actions`,
+                    });
+                }
             }
         }
     }
@@ -186,13 +252,13 @@ export class RuleEngine {
         ruleId: string,
         triggerIdx: number
     ): boolean {
-        // Schedule triggers are matched in handleScheduleTriggerEvent, not here
-        if (isScheduleTrigger(trigger)) return false;
+        // Schedule triggers are matched in handleScheduleTriggerEvent, price triggers in evaluatePriceTriggers
+        if (isScheduleTrigger(trigger) || isPriceTrigger(trigger)) return false;
 
         if (trigger.resource.id !== event.resource.id) return false;
 
         if (isThresholdTrigger(trigger)) {
-            return this.matchThresholdTrigger(trigger, event, ruleId, triggerIdx);
+            return this.matchResourceThresholdTrigger(trigger, event, ruleId, triggerIdx);
         }
 
         if (isResourceTrigger(trigger)) {
@@ -242,7 +308,7 @@ export class RuleEngine {
      * threshold, so the trigger re-arms as soon as the value moves
      * away from the threshold in the opposite direction.
      */
-    private matchThresholdTrigger(
+    private matchResourceThresholdTrigger(
         trigger: Extract<RuleTrigger, { kind: "threshold" }>,
         event: RuleTriggerEvent,
         ruleId: string,
@@ -251,15 +317,27 @@ export class RuleEngine {
         if (event.event !== "changed") return false;
         if (typeof event.value !== "number") return false;
 
-        const key = `${ruleId}:${triggerIdx}`;
+        const prevValue = typeof event.prevValue === "number" ? event.prevValue : undefined;
+        return this.evaluateThresholdTrigger(trigger, prevValue, event.value, `${ruleId}:${triggerIdx}`);
+    }
+
+    /**
+     * Shared threshold + hysteresis state machine for resource thresholds and price thresholds.
+     * Returns true when the trigger should fire, and updates the trigger's armed state (`hysteresisState[key]`)
+     * as a side effect: call it exactly once per evaluation of the trigger.
+     */
+    private evaluateThresholdTrigger(
+        trigger: { direction: "above" | "below"; threshold: number; hysteresis?: number },
+        prevValue: number | undefined,
+        next: number,
+        key: string
+    ): boolean {
         const entry = this.hysteresisState.get(key) as (HysteresisEntry & { kind: "threshold" }) | undefined;
         const waitingFor = entry?.waitingFor ?? trigger.direction;
 
         // On initial load, prevValue is undefined — treat as opposite extreme so
         // the threshold fires if the current value already satisfies the condition.
-        const prev = typeof event.prevValue === "number" ? event.prevValue
-            : (trigger.direction === "above" ? -Infinity : Infinity);
-        const next = event.value;
+        const prev = prevValue ?? (trigger.direction === "above" ? -Infinity : Infinity);
         const hysteresis = trigger.hysteresis ?? 0;
 
         if (waitingFor === trigger.direction) {
@@ -364,6 +442,7 @@ export class RuleEngine {
                 timers: ruleTimer,
                 mute: ruleMute,
                 interval: this.intervalService,
+                electricity: this.electricityQueries,
                 logger,
             });
         } catch (error) {

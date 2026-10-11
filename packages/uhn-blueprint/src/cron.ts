@@ -10,6 +10,8 @@
 //   cron.every(30).minutes()                             // "*/30 * * * *"
 //   cron.every(2).hours()                                // "0 */2 * * *"
 
+import { parseClockTime } from "./clock-time";
+
 type DayName = "mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun";
 type MonthName = "jan" | "feb" | "mar" | "apr" | "may" | "jun" | "jul" | "aug" | "sep" | "oct" | "nov" | "dec";
 type MonthInput = number | MonthName;
@@ -63,22 +65,10 @@ type CronCalendarBuilder = CronAtBuilder & {
 /* Internal builders                                                   */
 /* ------------------------------------------------------------------ */
 
-function parseTime(time: string): { minute: number; hour: number } {
-    const match = time.match(/^(\d{1,2}):(\d{2})$/);
-    if (!match) {
-        throw new Error(`Invalid time format "${time}". Expected HH:mm (e.g. "07:00", "18:30").`);
-    }
-    const hour = parseInt(match[1], 10);
-    const minute = parseInt(match[2], 10);
-    if (hour < 0 || hour > 23) throw new Error(`Invalid hour ${hour} in time "${time}".`);
-    if (minute < 0 || minute > 59) throw new Error(`Invalid minute ${minute} in time "${time}".`);
-    return { hour, minute };
-}
-
 function createAtBuilder(fields: CronFields): CronAtBuilder {
     return {
         at(time: string): string {
-            const { minute, hour } = parseTime(time);
+            const { minute, hour } = parseClockTime(time);
             return `${minute} ${hour} ${fields.dayOfMonth} ${fields.month} ${fields.dayOfWeek}`;
         },
     };
@@ -87,7 +77,7 @@ function createAtBuilder(fields: CronFields): CronAtBuilder {
 function createCalendarBuilder(fields: CronFields): CronCalendarBuilder {
     return {
         at(time: string): string {
-            const { minute, hour } = parseTime(time);
+            const { minute, hour } = parseClockTime(time);
             return `${minute} ${hour} ${fields.dayOfMonth} ${fields.month} ${fields.dayOfWeek}`;
         },
         month(m: MonthInput) {

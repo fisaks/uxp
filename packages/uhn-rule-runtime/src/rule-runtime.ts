@@ -14,6 +14,7 @@ import { RuntimeRulesService } from "./services/runtime-rules.service";
 import { RuntimeStateService } from "./services/runtime-state.service";
 import { RuntimeMode, RuntimeModes } from "./types/rule-runtime.type";
 import { RuntimeTimerService } from "./services/runtime-timer.service";
+import { RuntimeElectricityService, startPriceSlotClock } from "./services/runtime-electricity.service";
 import { RuntimeIntervalService } from "./services/runtime-interval.service";
 import { RuntimeLocationService } from "./services/runtime-location.service";
 import { RuntimeSceneService } from "./services/runtime-scene.service";
@@ -59,9 +60,10 @@ async function main() {
     const timerService = new RuntimeTimerService(stateService);
     const muteService = new RuntimeMuteService();
     const intervalService = new RuntimeIntervalService(stateService, runMode, edgeName);
+    const electricityService = new RuntimeElectricityService();
 
     // Instances register listeners in constructors; keep references to prevent accidental GC/lint removal.
-    const ruleEngine = new RuleEngine(triggerEventBus, rulesService, stateService, timerService, muteService, intervalService, runMode, edgeName);
+    const ruleEngine = new RuleEngine(triggerEventBus, rulesService, stateService, timerService, muteService, intervalService, electricityService, runMode, edgeName);
 
     const router = createCommandRouter({
         runMode: runMode,
@@ -74,6 +76,7 @@ async function main() {
         triggerEventBus,
         ruleEngine,
         scheduleService,
+        electricityService,
     });
     const resourceEventEmitter = new ResourceEventEmitter(stateService, triggerEventBus, resourceService);
     const inputGestureEmitter = new InputGestureEmitter(stateService, rulesService, triggerEventBus, resourceService);
@@ -117,6 +120,20 @@ async function main() {
         schedules: scheduleService.list(),
     });
     runtimeOutput.send({ kind: "event", cmd: "ready" });
+
+    // Price triggers: nothing runs until the first price snapshot has arrived from the host. Then the price
+    // triggers are evaluated once (startup) and again at every 15-minute price slot boundary.
+    if (rulesService.getPriceRules().length > 0) {
+        electricityService.onFirstSnapshot(() => {
+            runtimeOutput.log({
+                level: "info",
+                component: "RuleRuntime",
+                message: "First price snapshot received: evaluating price triggers and starting the 15-minute slot clock",
+            });
+            ruleEngine.evaluatePriceTriggers(true);
+            startPriceSlotClock(() => ruleEngine.evaluatePriceTriggers(false));
+        });
+    }
 }
 
 main();

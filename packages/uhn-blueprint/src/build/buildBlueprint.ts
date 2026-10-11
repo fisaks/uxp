@@ -7,6 +7,7 @@ import { resolveEmitsTap } from "./resolveEmitsTap";
 import { resolveExecutionTargets } from "./resolveExecutionTargets";
 import { validateBlueprintFactories } from "./validateBlueprintFactories";
 import { validateBlueprintMetadata } from "./validateBlueprintMetadata";
+import { validateClockTimes } from "./validateClockTimes";
 
 export async function buildBlueprint(projectRoot: string, options?: { devFilter?: string }): Promise<string> {
     const distDir = path.join(projectRoot, "dist");
@@ -54,6 +55,7 @@ export async function buildBlueprint(projectRoot: string, options?: { devFilter?
         tsconfigPath: tsconfigPath,
         factoryPath: factorySrc,
     });
+    validateClockTimes({ srcRoot: srcDir, tsconfigPath });
     // 2) Copy source to temp folder (excluding entity directories that get normalized separately)
     await fs.copy(srcDir, tmpSrc, {
         filter: p => {

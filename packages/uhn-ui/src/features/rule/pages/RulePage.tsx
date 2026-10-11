@@ -3,13 +3,14 @@ import DeselectIcon from "@mui/icons-material/Deselect";
 import ListAltIcon from "@mui/icons-material/ListAlt";
 import SearchIcon from "@mui/icons-material/Search";
 import { Autocomplete, Badge, Box, IconButton, InputAdornment, Paper, TextField, Typography } from "@mui/material";
-import { isResourceTriggerInfo, RuntimeResource, RuntimeRuleInfo, isLogicalResource, isPhysicalResource } from "@uhn/common";
+import { isPriceTriggerInfo, isResourceTriggerInfo, RuntimeResource, RuntimeRuleInfo, isLogicalResource, isPhysicalResource } from "@uhn/common";
 import { ReloadIconButton, TooltipIconButton, usePortalContainerRef } from "@uxp/ui-lib";
 import { useEffect, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import { useUHNWebSocket } from "../../../app/UHNAppBrowserWebSocketManager";
 import { selectAllResources, selectResourceById } from "../../resource/resourceSelector";
 import { selectRuntimeStatusById } from "../../runtime-overview/runtimeOverviewSelectors";
+import { triggerEventLabel } from "../../shared/triggerEventLabel";
 import { TechnicalSearchField } from "../../technical/components/TechnicalSearchField";
 import { useDeepLinkHighlight } from "../../technical/hooks/useDeepLinkHighlight";
 import { useSearchHistory } from "../../technical/hooks/useSearchHistory";
@@ -40,6 +41,8 @@ const buildSearchText = (rule: RuntimeRuleInfo, resourceById: Record<string, Run
         ...actionHintResources.flatMap(r => [r.name, isPhysicalResource(r) ? r.edge : isLogicalResource(r) ? r.host : undefined]),
         ...triggerKinds,
         ...triggerEvents,
+        // Price triggers have no resource: make them findable by their label ("price above 15") and by "electricity"
+        ...rule.triggers.filter(isPriceTriggerInfo).flatMap(t => [triggerEventLabel(t), "electricity"]),
     ].filter(Boolean).join(" ").toLowerCase();
 };
 
@@ -116,6 +119,14 @@ export const RulePage = () => {
     const { commit: commitSearchTerm } = useSearchHistory("uhn-rule-search-history");
 
     const groups = useMemo(() => groupFilteredRules(filteredItems), [filteredItems]);
+
+    // Price triggers of the selected rules (they have no resource, so they are not part of orderedResourceIds)
+    const priceTriggerLabels = useMemo(() => {
+        const labels = allRules
+            .filter(r => selectedRuleIds.has(r.id))
+            .flatMap(r => r.triggers.filter(isPriceTriggerInfo).map(triggerEventLabel));
+        return Array.from(new Set(labels));
+    }, [allRules, selectedRuleIds]);
 
     const refetch = async () => {
         setLoading(true);
@@ -246,6 +257,7 @@ export const RulePage = () => {
                     <Paper variant="outlined" sx={{ borderRadius: 3, mt: 5.6 }}>
                         <RuleDetailPanel
                             resourceIds={orderedResourceIds}
+                            priceTriggerLabels={priceTriggerLabels}
                             hasSelection={selectedRuleIds.size > 0}
                             onRemoveResource={handleRemoveResource}
                             onRemoveAll={handleRemoveAllResources}
@@ -262,6 +274,7 @@ export const RulePage = () => {
                 container={portalContainer.current}
                 resourceAutocomplete={resourceAutocomplete}
                 resourceIds={orderedResourceIds}
+                priceTriggerLabels={priceTriggerLabels}
                 hasSelection={selectedRuleIds.size > 0}
                 onRemoveResource={handleRemoveResource}
                 onRemoveAll={handleRemoveAllResources}

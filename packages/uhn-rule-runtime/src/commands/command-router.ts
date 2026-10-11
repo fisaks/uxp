@@ -3,6 +3,7 @@ import { RuleRuntimeCommand } from "@uhn/common";
 import { handleError, handleUnknownCommand } from "../io/handle-error";
 import { RuleRuntimeDependencies } from "../types/rule-runtime.type";
 import { handleActionEvent } from "./action-input.handler";
+import { handleElectricityPriceUpdate } from "./electricity-price.handler";
 import { handleLongPressCommand } from "./longpress-command.handler";
 import { handleScheduleEvent } from "./schedule-event.handler";
 import { handleMuteCommand } from "./mute-command.handler";
@@ -41,7 +42,7 @@ export function createCommandRouter(deps: RuleRuntimeDependencies) {
                         handleScheduleEvent(deps, cmd);
                         break;
                     case "electricityPriceUpdate":
-                        // TODO: Phase 2 — feed prices to ctx.electricity and onPriceChanged triggers
+                        handleElectricityPriceUpdate(deps.electricityService, cmd);
                         break;
                     default:
                         handleUnknownCommand(cmd);

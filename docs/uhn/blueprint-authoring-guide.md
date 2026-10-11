@@ -1622,6 +1622,19 @@ export const heaterControl = rule({ description: "Engine heater schedule" })
     });
 ```
 
+**Electricity price:**
+
+```typescript
+.onPriceChanged()                              // Every 15-minute price slot boundary, and once when the first prices arrive after startup
+.onPriceAbove(15, { hysteresis: 1 })           // Price crosses above 15 snt/kWh
+.onPriceBelow(5)                               // Price crosses below 5 snt/kWh
+.onPriceAbove(10, { basis: "hour" })           // Compare the average of the current hour instead of the 15-min slot
+```
+
+Price triggers have no resource argument. `onPriceChanged` fires at **every** slot boundary — also when the price is unchanged — so a rule can re-evaluate "is now a cheap hour?" each time. After the runtime starts (a restart or blueprint upload) nothing fires until the first price snapshot arrives. Then it fires once straight away and continues at every slot boundary. If the data later goes stale, for example because the price service cannot fetch for days, it keeps firing with `ctx.cause.price` as `undefined`, so a rule can fall back. New price data arriving does not fire it; the rule sees it at the next slot.
+
+`onPriceAbove` / `onPriceBelow` work like `onAbove` / `onBelow`, including hysteresis, and fire at startup if the price is already past the limit. They never fire without a price. See [Electricity Prices](#electricity-prices).
+
 ### Rule Context
 
 The `run` callback receives a context object:
@@ -1660,6 +1673,11 @@ The `run` callback receives a context object:
     });
     ctx.interval.stop("ramp-id");           // Stop from any rule
     ctx.interval.isRunning("ramp-id");      // boolean
+
+    // Electricity prices (snt/kWh incl. VAT) — see "Electricity Prices"
+    ctx.electricity.currentPrice();                                          // number | undefined
+    ctx.electricity.average({ next: hours(2) });                             // number | undefined
+    ctx.electricity.isAmongCheapest(hours(3), { between: ["22:00", "07:00"] });  // boolean
 
     return [...];
 });
@@ -1953,6 +1971,179 @@ The pattern works because `setVirtualState` updates the resource's state (so the
 
 ---
 
+## Electricity Prices
+
+Rules can react to the Finnish electricity spot price and query it. The master fetches the prices; every rule runtime (master and edge) receives them, so price rules work wherever the rule runs. On an edge, the data is the last snapshot the master published — use `lastUpdated()` / `hasPrices()` if a rule must not act on stale data.
+
+**The data:**
+
+- Spot price in **snt/kWh including VAT**, exactly as published. No transfer fees or margin are added.
+- **15-minute slots.** Selections and averages work on slots, so `hours(3)` means 12 slots.
+- Tomorrow's prices are published around 14:00 Finnish time. Before that, windows reaching into tomorrow are not fully known.
+- All times (`between`, `"today"`, `"tomorrow"`) are in **Europe/Helsinki**.
+
+### Triggers
+
+See [Triggers](#triggers) for `onPriceChanged`, `onPriceAbove` and `onPriceBelow`. Inside `run()`, `isCausedByPrice(ctx)` narrows `ctx.cause`:
+
+```typescript
+import { isCausedByPrice } from "@uhn/blueprint";
+
+if (isCausedByPrice(ctx)) {
+    ctx.cause.event;     // "priceChanged" | "priceAbove" | "priceBelow"
+    ctx.cause.price;     // current slot price, undefined if the received data no longer covers now
+    ctx.cause.startup;   // true for the first evaluation after the runtime starts, run when the first snapshot arrives
+}
+```
+
+### When a price limit fires
+
+`onPriceAbove(x)` and `onPriceBelow(x)` fire **once per crossing**, not at every slot while the price stays past the limit. After firing, the trigger waits for the price to cross back over the limit (plus the hysteresis) before it can fire again. With `onPriceBelow(5)`:
+
+| Prices, one per slot | Fires at |
+|----------------------|----------|
+| 4, 4.5, 4.9, 4.8 | 4 (once) |
+| 6, 4, 4.5, 4.9, 4.8 | 4 (once) |
+| 4, 4.5, 5.1, 4.9 | 4, then 4.9 (twice, the price went above 5 in between) |
+
+Reaching the limit exactly counts: `onPriceBelow(5)` fires at 5.0 and `onPriceAbove(15)` at 15.0. Re-arming needs the price strictly past the limit plus the hysteresis. At startup the trigger is armed, so it fires if the price is already past the limit. To act at every slot instead, use `onPriceChanged()` and read `ctx.electricity.currentPrice()`.
+
+### Windows
+
+Queries take a window describing a period of time:
+
+| Window | Meaning |
+|--------|---------|
+| `"today"` / `"tomorrow"` | The Helsinki calendar day |
+| `{ next: hours(2) }` | From the start of the current slot, for the given duration |
+| `{ between: ["22:00", "07:00"] }` | Daily "HH:mm" range: the occurrence containing now, otherwise the next one. An end earlier than the start crosses midnight. |
+| `{ from: date1, to: date2 }` | Explicit time range |
+
+A slot belongs to a window if its **start** lies inside it (start included, end excluded). `{ between: ["22:00", "07:09"] }` includes the 07:00 slot because it starts before 07:09; `["22:00", "07:00"]` ends with the 06:45 slot. Any minute is allowed in `between`; the build validates the `HH:mm` format of literals.
+
+Use a **fixed window** (`between`, `today`) for selecting cheapest/most expensive slots. With a rolling window like `{ next: hours(12) }` the selection shifts as time passes, so the rule would end up choosing more hours than intended.
+
+### Queries
+
+```typescript
+// Current and lookup
+ctx.electricity.currentPrice()              // price of the current slot
+ctx.electricity.priceAt(date)               // price of the slot containing `date`
+ctx.electricity.prices(window)              // known slots: { start, end, price }[]
+
+// Aggregates (undefined unless the whole window is known)
+ctx.electricity.average(window)
+ctx.electricity.min(window)                 // cheapest slot (earliest on ties)
+ctx.electricity.max(window)                 // most expensive slot
+ctx.electricity.rank(window)                // 0 = current price is the cheapest of the window, 1 = the most expensive
+
+// Selection: slots adding up to a duration, always in 15-minute slots
+ctx.electricity.isAmongCheapest(hours(3), window, { consecutive: true })
+ctx.electricity.isAmongMostExpensive(hours(3), window)
+ctx.electricity.cheapest(hours(3), window)          // PriceSlot[] sorted by start
+ctx.electricity.mostExpensive(hours(3), window)
+
+// Blocks: the cheapest / most expensive unbroken stretch, with start, end and average
+ctx.electricity.cheapestBlock(hours(1), window)                          // { start, end, average, slots } | undefined
+ctx.electricity.cheapestBlock(hours(2), window, { alignToHour: true })   // only blocks starting on the hour
+ctx.electricity.mostExpensiveBlock(hours(1), "tomorrow")
+
+// Data state
+ctx.electricity.hasPrices(window)           // true when every slot of the window is known
+ctx.electricity.lastUpdated()               // when the master last fetched prices
+```
+
+**`min` / `max` vs blocks:** `min` and `max` return a single 15-minute slot. To ask about the cheapest *hour* (or two hours), use `cheapestBlock` / `mostExpensiveBlock`: they return the block with its `start`, `end` and `average`. A block is one unbroken run of slots, so `cheapestBlock(hours(1), ...)` can start at 14:15. Pass `{ alignToHour: true }` to only consider clock hours (14:00–15:00), which is usually what people mean and what the UI's 60-minute view shows. A block that does not fit in the window (longer than it, or no block starting on the hour) gives `undefined`, as does a window that is not fully known.
+
+`consecutive: true` picks one unbroken block with the lowest (highest) total; the default picks the individual cheapest slots, which may be scattered — fine for devices that tolerate switching, such as heaters with thermal mass.
+
+**Missing data:** aggregates return `undefined` and selections return `false` / `[]` unless the *whole* window is known — a partial average would look valid but isn't. Check `hasPrices(window)` and fall back, or use a shorter window. Threshold triggers do not fire without a price; `onPriceChanged` does once data has been received, with `ctx.cause.price === undefined`. A runtime that has not received any price data yet does not fire price triggers at all.
+
+### Patterns
+
+**Garden lights off when the price is high, on again when it drops:**
+
+```typescript
+export const gardenLightsPriceOff = rule({ description: "Garden lights off above 15 snt" })
+    .onPriceAbove(15, { hysteresis: 1 })
+    .run(() => [ruleAction({ type: "setDigitalOutput", resource: gardenLights, value: false })]);
+
+export const gardenLightsPriceOn = rule({ description: "Garden lights on below 15 snt" })
+    .onPriceBelow(15)
+    .run(() => [ruleAction({ type: "setDigitalOutput", resource: gardenLights, value: true })]);
+
+// A rule that turns the lights on (e.g. at dusk) should check the price too
+export const gardenLightsDusk = rule({ description: "Garden lights at dusk" })
+    .onSchedulePhase(scheduleGarden.phases.dusk)
+    .run((ctx) => {
+        const price = ctx.electricity.currentPrice();
+        if (price !== undefined && price > 15) return [];
+        return [ruleAction({ type: "setDigitalOutput", resource: gardenLights, value: true })];
+    });
+```
+
+**Water heater: the cheapest 3 hours overnight:**
+
+A load that stores heat can run whenever it is cheapest during a long window. The slots may be scattered, so the heater switches on and off with the price.
+
+```typescript
+export const waterHeaterByPrice = rule({ description: "Water heater in the cheapest 3h overnight" })
+    .onPriceChanged()
+    .run((ctx) => {
+        const window: PriceWindow = { between: ["22:00", "07:00"] };
+        const on = ctx.electricity.isAmongCheapest(hours(3), window);   // false without prices
+        return [ruleAction({ type: "setDigitalOutput", resource: waterHeaterRelay, value: on })];
+    });
+```
+
+**EV charger: 4 hours before departure, in one unbroken block:**
+
+The car must be charged by 07:00 but it doesn't matter when. `consecutive: true` picks one block of 4 hours, so the charger switches on once and off once instead of following scattered cheap slots.
+
+```typescript
+export const evChargerByPrice = rule({ description: "EV charging in the cheapest 4h block before 07:00" })
+    .onPriceChanged()
+    .run((ctx) => {
+        const window: PriceWindow = { between: ["18:00", "07:00"] };
+        // false without prices: the charger stays off until the whole window is known
+        const on = ctx.electricity.isAmongCheapest(hours(4), window, { consecutive: true });
+        return [ruleAction({ type: "setDigitalOutput", resource: evChargerRelay, value: on })];
+    });
+```
+
+The window runs into tomorrow morning, whose prices are published around 14:00. Until then the window is not fully known and the charger stays off, so the car is not charged in the daytime; from 14:00 the evening window is known. Do not use "no prices: charge anyway" as a fallback here: after 07:00 the window moves to the next night, which is unknown until 14:00, and the charger would run through the morning.
+
+Because these rules re-evaluate every slot and keep no state, they survive restarts and pick up new prices automatically.
+
+**Dishwasher: run in the cheapest clock hour tonight:**
+
+```typescript
+export const dishwasherByPrice = rule({ description: "Dishwasher in the cheapest hour 20:00-07:00" })
+    .onPriceChanged()
+    .run((ctx) => {
+        const hour = ctx.electricity.cheapestBlock(hours(1), { between: ["20:00", "07:00"] }, { alignToHour: true });
+        // undefined without prices: do nothing and let the user start it manually
+        const on = hour !== undefined && ctx.cause.timestamp >= hour.start.getTime() && ctx.cause.timestamp < hour.end.getTime();
+        return [ruleAction({ type: "setDigitalOutput", resource: dishwasherSocket, value: on })];
+    });
+```
+
+**A shorter timer when the coming hours are expensive:**
+
+```typescript
+export const pirStartsTimer = rule({ description: "PIR starts auto-off timer" })
+    .onActivated(pirSensor)
+    .actionHints(autoOffTimer)
+    .run((ctx) => {
+        const avg = ctx.electricity.average({ next: hours(2) });
+        const duration = avg !== undefined && avg > 15 ? minutes(30) : hours(2);
+        ctx.timers.start(autoOffTimer, duration, "restart");
+        return [];
+    });
+```
+
+---
+
 ## Icons
 
 Icons use a scoped `"category:name"` format. Each resource type, view command, scene, and location has a sensible default — you only need to specify `icon` when overriding.
@@ -2124,6 +2315,8 @@ Runs the TypeScript compiler on the original source to catch type errors before 
 ### 2. Validate
 
 Checks that each entity factory is only used in its own directory. `rule()` calls are only allowed in `src/rules/`, `view()` in `src/views/`, `scene()` in `src/scenes/`, `location()` in `src/locations/`, and resource factories in `src/resources/`. The `src/factory/` directory may use resource factories (for building wrappers) but not rule, view, scene, or location factories. Files outside entity directories (helpers, utilities) cannot use any entity factory — they can only contain plain functions and constants.
+
+Also validates `"HH:mm"` string literals — `between: ["22:00", "07:00"]` in electricity windows and the argument of `cron....at("06:00")` — and fails the build with file and line for an invalid format, hour or minute. Only literals can be checked at build time; times built in code are validated when the rule runs.
 
 ### 3. Copy and Normalize
 

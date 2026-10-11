@@ -18,5 +18,9 @@ export function triggerEventLabel(trigger: RuntimeRuleTriggerInfo): string {
             return `action "${trigger.action}"`;
         case "schedule":
             return `schedule "${trigger.scheduleId}"`;
+        case "priceChanged":
+            return "price changed";
+        case "priceThreshold":
+            return `price ${trigger.direction} ${trigger.threshold}${trigger.basis === "hour" ? " (hour avg)" : ""}`;
     }
 }

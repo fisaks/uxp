@@ -10,13 +10,19 @@ export type RuntimeRuleTriggerInfo =
   | { kind: "longPress"; resourceId: string; thresholdMs: number }
   | { kind: "timer"; resourceId: string; event: "activated" | "deactivated" }
   | { kind: "action"; resourceId: string; action: string }
-  | { kind: "schedule"; phaseId: string; scheduleId: string };
+  | { kind: "schedule"; phaseId: string; scheduleId: string }
+  | { kind: "priceChanged" }
+  | { kind: "priceThreshold"; direction: "above" | "below"; threshold: number; hysteresis?: number; basis?: "slot" | "hour" };
 
-/** Trigger info variants that reference a resource (all except schedule). */
-export type RuntimeResourceTriggerInfo = Exclude<RuntimeRuleTriggerInfo, { kind: "schedule" }>;
+/** Trigger info variants that reference a resource (all except schedule and price triggers). */
+export type RuntimeResourceTriggerInfo = Exclude<RuntimeRuleTriggerInfo, { kind: "schedule" | "priceChanged" | "priceThreshold" }>;
 
 export function isResourceTriggerInfo(t: RuntimeRuleTriggerInfo): t is RuntimeResourceTriggerInfo {
-    return t.kind !== "schedule";
+    return "resourceId" in t;
+}
+
+export function isPriceTriggerInfo(t: RuntimeRuleTriggerInfo): t is Extract<RuntimeRuleTriggerInfo, { kind: "priceChanged" | "priceThreshold" }> {
+    return t.kind === "priceChanged" || t.kind === "priceThreshold";
 }
 
 export function isScheduleTriggerInfo(t: RuntimeRuleTriggerInfo): t is Extract<RuntimeRuleTriggerInfo, { kind: "schedule" }> {

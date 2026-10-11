@@ -1,6 +1,6 @@
 import AccountTreeIcon from "@mui/icons-material/AccountTree";
 import { Box, Card, CardActionArea, Chip, Typography } from "@mui/material";
-import { RuntimeRuleInfo, RuntimeStatus } from "@uhn/common";
+import { isPriceTriggerInfo, RuntimeRuleInfo, RuntimeStatus } from "@uhn/common";
 import React from "react";
 import { useSelector } from "react-redux";
 import { selectRuntimeStatusById } from "../../runtime-overview/runtimeOverviewSelectors";
@@ -70,6 +70,10 @@ export const RuleTile: React.FC<RuleTileProps> = ({ rule, selected, onSelect }) 
                                 {trigger.kind === "schedule" ? (
                                     <TechnicalDeepLink to={`/technical/schedules/${trigger.scheduleId}`}>
                                         schedule:{trigger.scheduleId}
+                                    </TechnicalDeepLink>
+                                ) : isPriceTriggerInfo(trigger) ? (
+                                    <TechnicalDeepLink to="/technical/electricity">
+                                        {triggerEventLabel(trigger)}
                                     </TechnicalDeepLink>
                                 ) : (
                                     <TechnicalDeepLink to={`/technical/resources/${trigger.resourceId}`}>

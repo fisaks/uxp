@@ -11,9 +11,12 @@ import { useSelector } from "react-redux";
 import { ResourceTile } from "../../resource/components/ResourceTile";
 import { TileRuntimeResource, TileRuntimeResourceState } from "../../resource/resource-ui.type";
 import { selectRuntimeStateByResourceId } from "../../runtime-state/runtimeStateSelector";
+import { TechnicalDeepLink } from "../../shared/TechnicalDeepLink";
 
 type RuleDetailPanelProps = {
     resourceIds: string[];
+    /** Labels of the selected rules' electricity price triggers (they have no resource tile). */
+    priceTriggerLabels: string[];
     hasSelection: boolean;
     onRemoveResource: (id: string) => void;
     onRemoveAll: () => void;
@@ -86,7 +89,7 @@ const SortableResourceTile: React.FC<SortableResourceTileProps> = ({ resourceId,
     );
 };
 
-export const RuleDetailPanel: React.FC<RuleDetailPanelProps> = ({ resourceIds, hasSelection, onRemoveResource, onRemoveAll, onReorder, resourceById }) => {
+export const RuleDetailPanel: React.FC<RuleDetailPanelProps> = ({ resourceIds, priceTriggerLabels, hasSelection, onRemoveResource, onRemoveAll, onReorder, resourceById }) => {
     const portalContainer = usePortalContainerRef();
     const stateById = useSelector(selectRuntimeStateByResourceId);
 
@@ -116,6 +119,16 @@ export const RuleDetailPanel: React.FC<RuleDetailPanelProps> = ({ resourceIds, h
 
     return (
         <Box sx={{ p: 2 }}>
+            {priceTriggerLabels.length > 0 && (
+                <Box sx={{ mb: 2 }}>
+                    <Typography variant="subtitle2">Price triggers</Typography>
+                    {priceTriggerLabels.map(label => (
+                        <Typography key={label} variant="body2" sx={{ fontFamily: "monospace", fontSize: "0.75rem" }}>
+                            <TechnicalDeepLink to="/technical/electricity">{label}</TechnicalDeepLink>
+                        </Typography>
+                    ))}
+                </Box>
+            )}
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                 <Typography variant="subtitle2">
                     Resources ({resourceIds.length})

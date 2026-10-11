@@ -4,7 +4,7 @@ import { RuntimeRuleInfo, RuntimeRuleTriggerInfo } from "@uhn/common";
 import fs from "fs-extra";
 import path from "path";
 import { runtimeOutput } from "../io/runtime-output";
-import { isScheduleTrigger } from "../rule/rule-engine.utils";
+import { isPriceTrigger, isScheduleTrigger } from "../rule/rule-engine.utils";
 import { RuntimeMode } from "../types/rule-runtime.type";
 
 
@@ -49,14 +49,25 @@ async function collectRules(rulesDir: string): Promise<BlueprintRule[]> {
 type RuleIndex = {
     byResourceId: Map<string, BlueprintRule[]>;
     bySchedulePhase: Map<string, BlueprintRule[]>;
+    /**
+     * Rules with at least one electricity price trigger, sorted by priority. A plain list instead of a lookup:
+     * price events have no source key (resource id, phase id), every price rule is evaluated at each slot boundary.
+     */
+    priceRules: BlueprintRule[];
 };
 
 function indexRules(rules: BlueprintRule[]): RuleIndex {
     const byResourceId = new Map<string, Set<BlueprintRule>>();
     const bySchedulePhase = new Map<string, Set<BlueprintRule>>();
+    const priceRules = new Set<BlueprintRule>();
 
     for (const rule of rules) {
         for (const t of rule.triggers) {
+            if (isPriceTrigger(t)) {
+                priceRules.add(rule);
+                continue;
+            }
+
             if (isScheduleTrigger(t)) {
                 const schedulePhaseId = `${t.phase.scheduleId}.${t.phase.id}`;
                 let set = bySchedulePhase.get(schedulePhaseId);
@@ -101,6 +112,7 @@ function indexRules(rules: BlueprintRule[]): RuleIndex {
     return {
         byResourceId: sortByPriority(byResourceId),
         bySchedulePhase: sortByPriority(bySchedulePhase),
+        priceRules: Array.from(priceRules).sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0)),
     };
 }
 
@@ -146,6 +158,18 @@ function validateRules(rules: BlueprintRule[]): BlueprintRule[] {
 function serializeTrigger(t: RuleTrigger): RuntimeRuleTriggerInfo {
     if (isScheduleTrigger(t)) {
         return { kind: "schedule", phaseId: t.phase?.id ?? "unknown", scheduleId: t.phase?.scheduleId ?? "unknown" };
+    }
+    if (t.kind === "priceChanged") {
+        return { kind: "priceChanged" };
+    }
+    if (t.kind === "priceThreshold") {
+        return {
+            kind: "priceThreshold",
+            direction: t.direction,
+            threshold: t.threshold,
+            ...(t.hysteresis !== undefined && { hysteresis: t.hysteresis }),
+            ...(t.basis !== undefined && { basis: t.basis }),
+        };
     }
     const resourceId = t.resource?.id ?? "unknown";
     switch (t.kind) {
@@ -207,7 +231,7 @@ export class RuntimeRulesService {
         const index = indexRules(rules);
         runtimeOutput.log({
             level: "info", component: "RuntimeRulesService",
-            message: `Indexed rules for ${index.byResourceId.size} resource ID(s), ${index.bySchedulePhase.size} schedule ID(s).`,
+            message: `Indexed rules for ${index.byResourceId.size} resource ID(s), ${index.bySchedulePhase.size} schedule ID(s), ${index.priceRules.length} price rule(s).`,
         });
         return new RuntimeRulesService(rules, validated, index);
     }
@@ -224,6 +248,10 @@ export class RuntimeRulesService {
 
     getRulesForResource(resourceId: string): BlueprintRule[] {
         return this.index.byResourceId.get(resourceId) ?? [];
+    }
+
+    getPriceRules(): BlueprintRule[] {
+        return this.index.priceRules;
     }
 
     getRulesForPhase(schedulePhaseId: string): BlueprintRule[] {
