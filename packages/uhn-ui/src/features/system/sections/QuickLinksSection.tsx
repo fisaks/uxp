@@ -9,6 +9,8 @@ const links = [
     { label: "Blueprints", target: "/technical/blueprints", adminOnly: true },
     { label: "Upload Blueprint", target: "/technical/blueprints/upload", adminOnly: true },
     { label: "Resources", target: "/technical/resources" },
+    { label: "Schedules", target: "/technical/schedules" },
+    { label: "Electricity Price", target: "/technical/electricity" },
 ];
 
 export const QuickLinksSection: React.FC = () => {

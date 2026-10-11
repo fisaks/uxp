@@ -15,10 +15,12 @@ const routeLabels: Record<string, string> = {
     "/technical/views": "Views",
     "/technical/scenes": "Scenes",
     "/technical/rules": "Rules",
+    "/technical/schedules": "Schedules",
+    "/technical/electricity": "Electricity Price",
 };
 
 /** Sections that support deep linking via /:itemId suffix. */
-const deepLinkSections = ["/technical/resources", "/technical/views", "/technical/scenes", "/technical/rules"];
+const deepLinkSections = ["/technical/resources", "/technical/views", "/technical/scenes", "/technical/rules", "/technical/schedules"];
 
 type DeepLinkInfo = { section: string; itemId: string } | null;
 

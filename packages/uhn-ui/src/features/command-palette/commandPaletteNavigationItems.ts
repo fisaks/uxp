@@ -45,6 +45,20 @@ export const navigationItems: PaletteItem[] = [
         action: { type: "navigate", to: "/technical/rules" },
     },
     {
+        id: "nav:schedules",
+        label: "Go to Schedules page",
+        group: "Navigation",
+        searchText: "navigation navigate locate open page go to schedules schedule timers times",
+        action: { type: "navigate", to: "/technical/schedules" },
+    },
+    {
+        id: "nav:electricity",
+        label: "Go to Electricity Price page",
+        group: "Navigation",
+        searchText: "navigation navigate locate open page go to electricity price prices spot energy power",
+        action: { type: "navigate", to: "/technical/electricity" },
+    },
+    {
         id: "nav:icon-preview",
         label: "Go to Icon Preview page",
         group: "Navigation",
