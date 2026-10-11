@@ -6,7 +6,7 @@ import { DisplayItemIconState, DisplayItemValueState, DisplayItemsState, EMPTY_D
 
 type AnalogResource = RuntimeAnalogInputResource | RuntimeAnalogOutputResource;
 
-function isAnalogResource(r: RuntimeResource): r is AnalogResource {
+export function isAnalogResource(r: RuntimeResource): r is AnalogResource {
     return r.type === "analogInput" || r.type === "analogOutput";
 }
 

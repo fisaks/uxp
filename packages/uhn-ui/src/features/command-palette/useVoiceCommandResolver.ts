@@ -1,5 +1,4 @@
 import { useMemo } from "react";
-import { ElectricityPriceQuery } from "../electricity/priceQueries";
 import { exactTokenMatch, searchTokens } from "../shared/fuzzyMatch";
 import { parseSpokenNumber } from "../shared/parseSpokenNumber";
 import { PaletteItem } from "./commandPalette.types";
@@ -46,7 +45,9 @@ const THEME_EFFECT_WORDS = new Set(["cast", "summon", "unleash"]);
 /** Question openers ("what is the electricity price", "how much does electricity cost", "tell me ..."). */
 const QUERY_WORDS = new Set(["what", "whats", "what's", "how", "when", "tell"]);
 /** Filler words dropped after a question opener. */
-const QUERY_FILLER_WORDS = new Set(["much", "does", "do", "me", "cost"]);
+const QUERY_FILLER_WORDS = new Set(["much", "does", "do", "me", "cost", "status", "state", "reading"]);
+/** Trailing state words in "is the kitchen light on" / "is the door open" — dropped when the full phrase finds nothing. */
+const QUERY_STATE_WORDS = new Set(["on", "off", "open", "closed"]);
 const STOP_EFFECT_WORDS = new Set(["stop", "cancel", "dismiss"]);
 const ON_WORDS = new Set(["on"]);
 const OFF_WORDS = new Set(["off"]);
@@ -106,6 +107,14 @@ export function parseVoiceIntent(transcript: string): ParseResult {
     if (tokens.length === 0) return { intent: { type: "locate" }, searchQuery: "" };
 
     const first = tokens[0];
+
+    // "is"/"are" are stop words (dropped from tokens), so check the raw first word. Without this,
+    // "is the kitchen light on" would be read as the command "kitchen light on".
+    const rawFirst = transcript.trim().toLowerCase().split(/\s+/)[0];
+    if (rawFirst === "is" || rawFirst === "are") {
+        const rest = rawFirst === "are" ? tokens.slice(1) : tokens;
+        return { intent: { type: "query" }, searchQuery: rest.filter(t => !QUERY_FILLER_WORDS.has(t)).join(" ") };
+    }
 
     // 1. Command prefix: "set" or "turn"
     if (COMMAND_PREFIXES.has(first) && tokens.length >= 2) {
@@ -193,19 +202,28 @@ export function parseVoiceIntent(transcript: string): ParseResult {
 /* Item filtering (exact match only — no fuzzy for voice)               */
 /* ------------------------------------------------------------------ */
 
+/** Items a question can be answered for: price answers and located views/resources (not scenes or locations). */
+function isQueryTarget(item: PaletteItem): boolean {
+    if (item.action.type === "answer-electricity-price") return true;
+    return item.group === "Items" && item.action.type === "scroll-to-item" && item.action.itemRef.kind !== "scene";
+}
+
 function filterItems(items: PaletteItem[], query: string, intent: VoiceIntent): PaletteItem[] {
     if (!query) return [];
 
     const queryTokens = searchTokens(query);
     if (queryTokens.length === 0) return [];
 
-    const actionsOnly = intent.type !== "locate";
+    const isQuery = intent.type === "query";
+    const actionsOnly = intent.type !== "locate" && !isQuery;
     const analogOnly = intent.type === "set-open";
 
     return items.filter(item => {
-        // Group filter
-        if (actionsOnly && item.group !== "Actions") return false;
-        if (!actionsOnly && item.group === "Actions") return false;
+        // Group filter ("query" has its own target check below)
+        if (!isQuery) {
+            if (actionsOnly && item.group !== "Actions") return false;
+            if (!actionsOnly && item.group === "Actions") return false;
+        }
 
         // "execute" intent targets scenes only
         if (intent.type === "execute" && item.action.type !== "execute-scene") return false;
@@ -213,8 +231,8 @@ function filterItems(items: PaletteItem[], query: string, intent: VoiceIntent): 
         // "theme-effect" intent targets only theme effect actions
         if (intent.type === "theme-effect" && item.action.type !== "trigger-theme-effect" && item.action.type !== "stop-theme-effect") return false;
 
-        // "query" targets answer items only
-        if (intent.type === "query" && item.action.type !== "answer-electricity-price") return false;
+        // "query" targets answer items and view/resource items (their status is read out)
+        if (isQuery && !isQueryTarget(item)) return false;
 
         // "set-open" targets analog popup items only
         if (analogOnly && !item.analogFallback) return false;
@@ -447,7 +465,7 @@ export function resolveHighlightedAction(
 export function useVoiceCommandResolver(
     transcript: string,
     allItems: PaletteItem[],
-    answerElectricityPrice: (query: ElectricityPriceQuery) => string,
+    getAnswer: (item: PaletteItem, queryTokens: string[]) => string | undefined,
 ): { resolvedItems: VoiceCommandMatch[]; intent: VoiceIntent | null } {
     return useMemo(() => {
         if (!transcript.trim()) return { resolvedItems: [], intent: null };
@@ -470,6 +488,16 @@ export function useVoiceCommandResolver(
             }
         }
 
+        // "is the kitchen light on": when the full phrase finds nothing, drop the trailing state word
+        let effectiveQuery = searchQuery;
+        if (effectiveIntent.type === "query" && matched.length === 0) {
+            const queryTokens = searchTokens(searchQuery);
+            if (queryTokens.length > 1 && QUERY_STATE_WORDS.has(queryTokens[queryTokens.length - 1])) {
+                effectiveQuery = queryTokens.slice(0, -1).join(" ");
+                matched = filterItems(allItems, effectiveQuery, effectiveIntent);
+            }
+        }
+
         // For "set" intent, prefer analogFallback items (they have the min/max info)
         let candidates = matched;
         if (effectiveIntent.type === "set") {
@@ -483,11 +511,20 @@ export function useVoiceCommandResolver(
             if (toggleItems.length > 0) candidates = toggleItems;
         }
 
-        const resolvedItems = candidates.map((item): VoiceCommandMatch =>
-            item.action.type === "answer-electricity-price"
-                ? { ...item, confirmLabel: answerElectricityPrice(item.action.query), isAnswer: true }
-                : resolveVoiceAction(item, effectiveIntent));
+        if (effectiveIntent.type === "query") {
+            // Price answers are specific phrases, so they beat a device that happens to match the same words.
+            const queryTokens = searchTokens(effectiveQuery);
+            const answered = [...candidates]
+                .sort((a, b) => Number(b.action.type === "answer-electricity-price") - Number(a.action.type === "answer-electricity-price"))
+                .flatMap((item): VoiceCommandMatch[] => {
+                    const answer = getAnswer(item, queryTokens);
+                    return answer ? [{ ...item, confirmLabel: answer, isAnswer: true }] : [];
+                });
+            return { resolvedItems: answered, intent: effectiveIntent };
+        }
+
+        const resolvedItems = candidates.map(item => resolveVoiceAction(item, effectiveIntent));
 
         return { resolvedItems, intent: effectiveIntent };
-    }, [transcript, allItems, answerElectricityPrice]);
+    }, [transcript, allItems, getAnswer]);
 }

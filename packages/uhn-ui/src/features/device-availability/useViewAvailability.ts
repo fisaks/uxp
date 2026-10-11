@@ -9,7 +9,7 @@ const DEFAULT_GRACE_SECONDS = 10;
 
 export type AvailabilityStatus = "ok" | "offline-error" | "offline-warning" | null;
 
-function toDeviceKey(resource: RuntimeResource | undefined): string | undefined {
+export function toDeviceKey(resource: RuntimeResource | undefined): string | undefined {
     if (resource && isPhysicalResource(resource)) {
         return `${resource.edge}:${resource.device}`;
     }

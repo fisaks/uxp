@@ -26,11 +26,16 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useSelector } from "react-redux";
 import { selectElectricitySnapshot } from "../electricity/electricitySlice";
 import { answerElectricityPriceQuery, ElectricityPriceQuery } from "../electricity/priceQueries";
+import { selectDeviceAvailabilityMap } from "../device-availability/deviceAvailabilitySelectors";
 import { useFetchFavoritesQuery } from "../favorite/favorite.api";
+import { selectResourceById } from "../resource/resourceSelector";
+import { selectRuntimeStateByResourceId } from "../runtime-state/runtimeStateSelector";
+import { selectViewsWithStateById } from "../view/viewSelectors";
 import { getBlueprintIcon } from "../view/blueprintIconMap";
 import { selectCommandPaletteItems } from "./commandPaletteSelectors";
 import { adminNavigationItems, navigationItems, quickActionItems } from "./commandPaletteNavigationItems";
 import { electricityQueryItems } from "./electricityQueryItems";
+import { answerResourceStatus, answerViewStatus, StatusAnswerContext } from "./statusAnswer";
 import { useCommandPaletteFilter } from "./useCommandPaletteFilter";
 import { useCommandPaletteActions } from "./useCommandPaletteActions";
 import { AnalogSliderPopup } from "./AnalogSliderPopup";
@@ -176,6 +181,27 @@ export const CommandPaletteAutocomplete: React.FC<CommandPaletteAutocompleteProp
         (query: ElectricityPriceQuery) => answerElectricityPriceQuery(query, electricitySnapshot.prices, Date.now()),
         [electricitySnapshot.prices],
     );
+    // Voice questions about a located view or resource ("what is the outdoor temperature") are answered from the tile's own state.
+    const viewsWithStateById = useSelector(selectViewsWithStateById);
+    const resourceById = useSelector(selectResourceById);
+    const stateByResourceId = useSelector(selectRuntimeStateByResourceId);
+    const availabilityByKey = useSelector(selectDeviceAvailabilityMap);
+    const getAnswer = useCallback((item: PaletteItem, queryTokens: string[]): string | undefined => {
+        const action = item.action;
+        if (action.type === "answer-electricity-price") return answerElectricityPrice(action.query);
+        if (action.type !== "scroll-to-item") return undefined;
+        const statusContext: StatusAnswerContext = { resourceById, stateByResourceId, availabilityByKey };
+        const { kind, refId } = action.itemRef;
+        if (kind === "view") {
+            const vws = viewsWithStateById[refId];
+            return vws ? answerViewStatus(vws, statusContext, queryTokens) : undefined;
+        }
+        if (kind === "resource") {
+            const resource = resourceById[refId];
+            return resource ? answerResourceStatus(resource, statusContext) : undefined;
+        }
+        return undefined;
+    }, [answerElectricityPrice, viewsWithStateById, resourceById, stateByResourceId, availabilityByKey]);
     const [answerText, setAnswerText] = useState("");
     const answerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const handleAnswerElectricityPrice = useCallback((query: ElectricityPriceQuery) => {
@@ -242,6 +268,16 @@ export const CommandPaletteAutocomplete: React.FC<CommandPaletteAutocompleteProp
         }, 1000);
     }, [clearHighlightCountdown]);
 
+    // The item last located by voice, so its command window can restart once its status has been read out.
+    const locatedItemRef = useRef<{ kind: string; refId: string; locationId: string; name: string } | null>(null);
+    const handleItemAnnounced = useCallback(() => {
+        const located = locatedItemRef.current;
+        if (!located) return;
+        setVoiceHighlighted(located.kind, located.refId, located.name);
+        handleHighlightItem(`${located.kind}:${located.refId}`, located.locationId);
+    }, [setVoiceHighlighted, handleHighlightItem]);
+    const getStatusAnswer = useCallback((item: VoiceCommandMatch) => getAnswer(item, []), [getAnswer]);
+
     // Voice command flow: listen → confirm/cancel → execute top match.
     // Uses a single SpeechRecognition — results are redirected to the analog
     // popup via analogValueVoiceControlRef when it's open with voice enabled.
@@ -250,6 +286,8 @@ export const CommandPaletteAutocomplete: React.FC<CommandPaletteAutocompleteProp
         userName: user ? `${user.firstName} ${user.lastName}`.trim() : undefined,
         analogValueVoiceControlRef,
         voiceMatchedCmdRef,
+        getStatusAnswer,
+        onItemAnnounced: handleItemAnnounced,
         onConfirm: () => {
             const resolved = voiceMatchedCmdRef.current;
             if (resolved && !resolved.isNoOp) {
@@ -258,6 +296,7 @@ export const CommandPaletteAutocomplete: React.FC<CommandPaletteAutocompleteProp
                 if (resolved.action.type === "scroll-to-item") {
                     console.debug("[voice] setting highlight:", resolved.action.itemRef.kind, resolved.action.itemRef.refId);
                     setVoiceHighlighted(resolved.action.itemRef.kind, resolved.action.itemRef.refId, resolved.label);
+                    locatedItemRef.current = { kind: resolved.action.itemRef.kind, refId: resolved.action.itemRef.refId, locationId: resolved.action.locationId, name: resolved.label };
                 }
 
                 // Navigate actions: close the dialog (which also stops voice via unmount cleanup).
@@ -312,6 +351,7 @@ export const CommandPaletteAutocomplete: React.FC<CommandPaletteAutocompleteProp
     useEffect(() => {
         if (voice.phase === "idle") {
             voiceHighlightedRef.current = null;
+            locatedItemRef.current = null;
             if (voiceHighlightTimerRef.current) {
                 clearTimeout(voiceHighlightTimerRef.current);
                 voiceHighlightTimerRef.current = null;
@@ -326,7 +366,7 @@ export const CommandPaletteAutocomplete: React.FC<CommandPaletteAutocompleteProp
     voiceActiveRef.current = voiceActive;
     // Voice command resolver: intent parsing + exact matching + action resolution
     const voiceResolverTranscript = voiceActive ? inputValue : "";
-    const { resolvedItems: voiceResolvedItems } = useVoiceCommandResolver(voiceResolverTranscript, allItems, answerElectricityPrice);
+    const { resolvedItems: voiceResolvedItems } = useVoiceCommandResolver(voiceResolverTranscript, allItems, getAnswer);
     // Update voiceMatchedCmdRef with the top voice-resolved item (for conditional confirmation)
     voiceMatchedCmdRef.current = voiceResolvedItems.length > 0 ? voiceResolvedItems[0] : null;
     const displayItems = useMemo(() => {

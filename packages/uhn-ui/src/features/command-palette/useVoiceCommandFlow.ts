@@ -138,6 +138,8 @@ const NOOP_DISMISS_MS = 2000;
 
 /** Auto-dismiss answers to spoken questions after this many milliseconds (longer than no-ops: the user reads them). */
 const ANSWER_DISMISS_MS = 5000;
+/** Delay between the end of a spoken answer and listening again, so the tail of the speech is not heard as a command. */
+const ANSWER_RESUME_DELAY_MS = 300;
 
 /** TTS text for skip-confirm actions. Returns null when no feedback is needed. */
 function getSkipConfirmTts(action: PaletteAction, resolved: VoiceCommandMatch): string | null {
@@ -172,6 +174,10 @@ type UseVoiceCommandFlowOptions = {
      * the transcript is not a bare command (continue normal voice flow).
      */
     onBareCommand?: (transcript: string) => "executed" | "noop" | false;
+    /** Status sentence for a located view or resource, read out instead of "Found X". Undefined for items without a status (scenes). */
+    getStatusAnswer?: (item: VoiceCommandMatch) => string | undefined;
+    /** Called when the spoken status of a located item has finished — the command window restarts from here. */
+    onItemAnnounced?: () => void;
     /** Display name of the current user (for personalized voice responses). */
     userName?: string;
     /** BCP 47 language tag for recognition. Defaults to "en". */
@@ -243,6 +249,8 @@ export function useVoiceCommandFlow({
     onCancel,
     onFilter,
     onBareCommand,
+    getStatusAnswer,
+    onItemAnnounced,
     userName,
     lang,
     analogValueVoiceControlRef,
@@ -298,6 +306,10 @@ export function useVoiceCommandFlow({
     onFilterRef.current = onFilter;
     const onBareCommandRef = useRef(onBareCommand);
     onBareCommandRef.current = onBareCommand;
+    const getStatusAnswerRef = useRef(getStatusAnswer);
+    getStatusAnswerRef.current = getStatusAnswer;
+    const onItemAnnouncedRef = useRef(onItemAnnounced);
+    onItemAnnouncedRef.current = onItemAnnounced;
     const setInputValueRef = useRef(setInputValue);
     setInputValueRef.current = setInputValue;
 
@@ -571,7 +583,7 @@ export function useVoiceCommandFlow({
         // Answer to a spoken question — show (and speak) the answer, nothing to confirm
         if (resolved.isAnswer) {
             // Spoken answers resume listening as soon as the speech ends; unspoken ones stay readable.
-            enterNoOp(resolved.confirmLabel, ANSWER_DISMISS_MS, 0);
+            enterNoOp(resolved.confirmLabel, ANSWER_DISMISS_MS, ANSWER_RESUME_DELAY_MS);
             return;
         }
 
@@ -593,10 +605,13 @@ export function useVoiceCommandFlow({
             setInputValueRef.current("");
 
             // TTS feedback for skip-confirm actions (only when speaker enabled)
-            const ttsText = getSkipConfirmTts(action, resolved);
+            // A located view/resource reads out its status; the command window restarts when the speech ends.
+            const isLocatedItem = action.type === "scroll-to-item";
+            const statusText = isLocatedItem ? getStatusAnswerRef.current?.(resolved) : undefined;
+            const ttsText = statusText ?? getSkipConfirmTts(action, resolved);
             if (ttsText && speakerEnabledRef.current && typeof window.speechSynthesis !== "undefined") {
                 setPhase("listening");
-                speakWithListenGuard(ttsText);
+                speakWithListenGuard(ttsText, isLocatedItem ? () => onItemAnnouncedRef.current?.() : undefined);
                 return;
             }
             setPhase("listening");
