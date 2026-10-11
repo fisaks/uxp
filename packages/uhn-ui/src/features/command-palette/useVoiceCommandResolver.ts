@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { ElectricityPriceQuery } from "../electricity/priceQueries";
 import { exactTokenMatch, searchTokens } from "../shared/fuzzyMatch";
 import { parseSpokenNumber } from "../shared/parseSpokenNumber";
 import { PaletteItem } from "./commandPalette.types";
@@ -15,11 +16,14 @@ export type VoiceIntent =
     | { type: "set-open" }
     | { type: "execute" }
     | { type: "locate" }
-    | { type: "theme-effect" };
+    | { type: "theme-effect" }
+    | { type: "query" };
 
 export type VoiceCommandMatch = PaletteItem & {
     confirmLabel: string;
     isNoOp?: boolean;
+    /** A read-only answer to a spoken question: `confirmLabel` is the answer text, nothing is executed. */
+    isAnswer?: boolean;
 };
 
 /** A bare command spoken after locating an item (e.g. "on", "off", "set 50"). */
@@ -39,6 +43,10 @@ const TOGGLE_WORDS = new Set(["toggle", "switch", "flip"]);
 const EXECUTE_WORDS = new Set(["activate", "run"]);
 const COMMAND_PREFIXES = new Set(["set", "turn"]);
 const THEME_EFFECT_WORDS = new Set(["cast", "summon", "unleash"]);
+/** Question openers ("what is the electricity price", "how much does electricity cost", "tell me ..."). */
+const QUERY_WORDS = new Set(["what", "whats", "what's", "how", "when", "tell"]);
+/** Filler words dropped after a question opener. */
+const QUERY_FILLER_WORDS = new Set(["much", "does", "do", "me", "cost"]);
 const STOP_EFFECT_WORDS = new Set(["stop", "cancel", "dismiss"]);
 const ON_WORDS = new Set(["on"]);
 const OFF_WORDS = new Set(["off"]);
@@ -152,7 +160,12 @@ export function parseVoiceIntent(transcript: string): ParseResult {
         return { intent: { type: "execute" }, searchQuery: tokens.slice(1).join(" ") };
     }
 
-    // 4. No prefix — check end position for "on"/"off"
+    // 4. Question: "what is the electricity price", "how much does electricity cost"
+    if (QUERY_WORDS.has(first)) {
+        return { intent: { type: "query" }, searchQuery: tokens.slice(1).filter(t => !QUERY_FILLER_WORDS.has(t)).join(" ") };
+    }
+
+    // 5. No prefix — check end position for "on"/"off"
     if (tokens.length >= 2) {
         const last = tokens[tokens.length - 1];
         if (ON_WORDS.has(last)) {
@@ -163,7 +176,7 @@ export function parseVoiceIntent(transcript: string): ParseResult {
         }
     }
 
-    // 5. Trailing number without prefix: "dimmer 50"
+    // 6. Trailing number without prefix: "dimmer 50"
     const trailingNum = parseTrailingNumber(tokens);
     if (trailingNum) {
         const searchPart = tokens.slice(0, tokens.length - trailingNum.consumed);
@@ -172,7 +185,7 @@ export function parseVoiceIntent(transcript: string): ParseResult {
         }
     }
 
-    // 6. Default: locate
+    // 7. Default: locate
     return { intent: { type: "locate" }, searchQuery: tokens.join(" ") };
 }
 
@@ -199,6 +212,9 @@ function filterItems(items: PaletteItem[], query: string, intent: VoiceIntent): 
 
         // "theme-effect" intent targets only theme effect actions
         if (intent.type === "theme-effect" && item.action.type !== "trigger-theme-effect" && item.action.type !== "stop-theme-effect") return false;
+
+        // "query" targets answer items only
+        if (intent.type === "query" && item.action.type !== "answer-electricity-price") return false;
 
         // "set-open" targets analog popup items only
         if (analogOnly && !item.analogFallback) return false;
@@ -291,6 +307,7 @@ function resolveVoiceAction(item: PaletteItem, intent: VoiceIntent): VoiceComman
             return { ...item, confirmLabel: item.label };
         }
 
+        case "query":
         case "locate": {
             // Non-action items (scroll-to, navigate, etc.)
             return { ...item, confirmLabel: item.label };
@@ -423,13 +440,14 @@ export function resolveHighlightedAction(
  * Resolves a voice transcript into palette items with intent-aware actions.
  *
  * Unlike the text-based `useCommandPaletteFilter`, this uses:
- * - Intent parsing (on/off/toggle/set/execute/locate) instead of treating all text as search
+ * - Intent parsing (on/off/toggle/set/execute/locate/query) instead of treating all text as search
  * - Exact token matching instead of fuzzy matching (speech gives real words, not typos)
  * - Action resolution matrix for idempotent commands and no-op detection
  */
 export function useVoiceCommandResolver(
     transcript: string,
     allItems: PaletteItem[],
+    answerElectricityPrice: (query: ElectricityPriceQuery) => string,
 ): { resolvedItems: VoiceCommandMatch[]; intent: VoiceIntent | null } {
     return useMemo(() => {
         if (!transcript.trim()) return { resolvedItems: [], intent: null };
@@ -438,13 +456,17 @@ export function useVoiceCommandResolver(
 
         let matched = filterItems(allItems, searchQuery, intent);
 
-        // If locate intent found nothing, try as theme-effect (allows "winter is coming", "godzilla roar" etc.)
+        // If locate intent found nothing, try as a question ("electricity price today", "average price tomorrow")
+        // and then as theme-effect (allows "winter is coming", "godzilla roar" etc.)
         let effectiveIntent = intent;
         if (intent.type === "locate" && matched.length === 0 && searchQuery) {
-            const themeMatched = filterItems(allItems, searchQuery, { type: "theme-effect" });
-            if (themeMatched.length > 0) {
-                matched = themeMatched;
-                effectiveIntent = { type: "theme-effect" };
+            for (const fallbackIntent of [{ type: "query" }, { type: "theme-effect" }] as const) {
+                const fallbackMatched = filterItems(allItems, searchQuery, fallbackIntent);
+                if (fallbackMatched.length > 0) {
+                    matched = fallbackMatched;
+                    effectiveIntent = fallbackIntent;
+                    break;
+                }
             }
         }
 
@@ -461,8 +483,11 @@ export function useVoiceCommandResolver(
             if (toggleItems.length > 0) candidates = toggleItems;
         }
 
-        const resolvedItems = candidates.map(item => resolveVoiceAction(item, effectiveIntent));
+        const resolvedItems = candidates.map((item): VoiceCommandMatch =>
+            item.action.type === "answer-electricity-price"
+                ? { ...item, confirmLabel: answerElectricityPrice(item.action.query), isAnswer: true }
+                : resolveVoiceAction(item, effectiveIntent));
 
         return { resolvedItems, intent: effectiveIntent };
-    }, [transcript, allItems]);
+    }, [transcript, allItems, answerElectricityPrice]);
 }

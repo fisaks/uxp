@@ -1,5 +1,6 @@
 import { BlueprintIcon } from "@uhn/blueprint";
 import { LocationItemRef, RuntimeActionSideEffect, UhnResourceCommand } from "@uhn/common";
+import { ElectricityPriceQuery } from "../electricity/priceQueries";
 
 export type QuickActionId = "expand-all" | "collapse-all" | "refresh" | "scroll-to-top" | "clear-filter";
 
@@ -16,7 +17,8 @@ export type PaletteAction =
     | { type: "expand-location"; locationId: string }
     | { type: "collapse-location"; locationId: string }
     | { type: "trigger-theme-effect"; mode: "full" | "silent" }
-    | { type: "stop-theme-effect" };
+    | { type: "stop-theme-effect" }
+    | { type: "answer-electricity-price"; query: ElectricityPriceQuery };
 
 export type PaletteGroup = "Filter" | "Locations" | "Items" | "Actions" | "Quick Actions" | "Navigation";
 

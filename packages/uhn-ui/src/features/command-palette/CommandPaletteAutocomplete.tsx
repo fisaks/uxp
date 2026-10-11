@@ -24,10 +24,13 @@ import { SxProps, Theme } from "@mui/material/styles";
 import { selectCurrentUser, TooltipIconButton, usePortalContainerRef } from "@uxp/ui-lib";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSelector } from "react-redux";
+import { selectElectricitySnapshot } from "../electricity/electricitySlice";
+import { answerElectricityPriceQuery, ElectricityPriceQuery } from "../electricity/priceQueries";
 import { useFetchFavoritesQuery } from "../favorite/favorite.api";
 import { getBlueprintIcon } from "../view/blueprintIconMap";
 import { selectCommandPaletteItems } from "./commandPaletteSelectors";
 import { adminNavigationItems, navigationItems, quickActionItems } from "./commandPaletteNavigationItems";
+import { electricityQueryItems } from "./electricityQueryItems";
 import { useCommandPaletteFilter } from "./useCommandPaletteFilter";
 import { useCommandPaletteActions } from "./useCommandPaletteActions";
 import { AnalogSliderPopup } from "./AnalogSliderPopup";
@@ -42,6 +45,9 @@ const micPulse = keyframes`
 
 /** How long the voice-highlighted item stays active for bare follow-up commands. */
 const VOICE_HIGHLIGHT_SECONDS = 10;
+
+/** How long a typed-mode answer (e.g. an electricity price) stays visible above the input. */
+const ANSWER_TEXT_SECONDS = 8;
 
 type CommandPaletteAutocompleteProps = {
     /** Called when the user selects a location entry — scrolls to that section on the home page. */
@@ -106,7 +112,7 @@ export const CommandPaletteAutocomplete: React.FC<CommandPaletteAutocompleteProp
 
     // Combine all items with navigation and quick actions
     const allItems = useMemo(() => {
-        const items = [...allPaletteItems, ...quickActionItems, ...navigationItems];
+        const items = [...allPaletteItems, ...electricityQueryItems, ...quickActionItems, ...navigationItems];
         if (isAdmin) items.push(...adminNavigationItems);
         return items;
     }, [allPaletteItems, isAdmin]);
@@ -164,6 +170,23 @@ export const CommandPaletteAutocomplete: React.FC<CommandPaletteAutocompleteProp
         onHighlightItem?.(itemKey, locationId, durationMs ?? (voiceActiveRef.current ? VOICE_HIGHLIGHT_SECONDS * 1000 : undefined));
     }, [onHighlightItem]);
 
+    // Electricity price questions: voice shows/speaks the answer in the noop phase, typed mode shows it above the input.
+    const electricitySnapshot = useSelector(selectElectricitySnapshot);
+    const answerElectricityPrice = useCallback(
+        (query: ElectricityPriceQuery) => answerElectricityPriceQuery(query, electricitySnapshot.prices, Date.now()),
+        [electricitySnapshot.prices],
+    );
+    const [answerText, setAnswerText] = useState("");
+    const answerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const handleAnswerElectricityPrice = useCallback((query: ElectricityPriceQuery) => {
+        setAnswerText(answerElectricityPrice(query));
+        if (answerTimerRef.current) clearTimeout(answerTimerRef.current);
+        answerTimerRef.current = setTimeout(() => setAnswerText(""), ANSWER_TEXT_SECONDS * 1000);
+    }, [answerElectricityPrice]);
+    useEffect(() => () => {
+        if (answerTimerRef.current) clearTimeout(answerTimerRef.current);
+    }, []);
+
     // Action executor
     const execute = useCommandPaletteActions({
         onLocationSelect,
@@ -172,6 +195,7 @@ export const CommandPaletteAutocomplete: React.FC<CommandPaletteAutocompleteProp
         onQuickAction,
         onExpandLocation,
         onCollapseLocation,
+        onAnswerElectricityPrice: handleAnswerElectricityPrice,
     });
 
     // Keep filtered items in a ref so the voice confirm callback can read the current top match
@@ -302,7 +326,7 @@ export const CommandPaletteAutocomplete: React.FC<CommandPaletteAutocompleteProp
     voiceActiveRef.current = voiceActive;
     // Voice command resolver: intent parsing + exact matching + action resolution
     const voiceResolverTranscript = voiceActive ? inputValue : "";
-    const { resolvedItems: voiceResolvedItems } = useVoiceCommandResolver(voiceResolverTranscript, allItems);
+    const { resolvedItems: voiceResolvedItems } = useVoiceCommandResolver(voiceResolverTranscript, allItems, answerElectricityPrice);
     // Update voiceMatchedCmdRef with the top voice-resolved item (for conditional confirmation)
     voiceMatchedCmdRef.current = voiceResolvedItems.length > 0 ? voiceResolvedItems[0] : null;
     const displayItems = useMemo(() => {
@@ -415,7 +439,7 @@ export const CommandPaletteAutocomplete: React.FC<CommandPaletteAutocompleteProp
         <>
             <Box sx={{ position: "relative", ...((sx ?? {}) as Record<string, unknown>) }}>
             {/* Voice hint bar — floats above the input, does not affect layout */}
-            {voiceActive && (
+            {(voiceActive || answerText) && (
                 <Box sx={{
                     position: "absolute",
                     left: 0, right: 0,
@@ -425,7 +449,9 @@ export const CommandPaletteAutocomplete: React.FC<CommandPaletteAutocompleteProp
                     pointerEvents: "none",
                 }}>
                     <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.75rem" }}>
-                        {voice.phase === "noop"
+                        {!voiceActive
+                            ? answerText
+                            : voice.phase === "noop"
                             ? (voiceMatchedCmdRef.current?.confirmLabel ?? "Already in that state")
                             : voice.phase === "listening" && highlightCountdown > 0
                                 ? `${highlightedItemName} — "on" · "off" · "set 50" (${highlightCountdown}s)`
@@ -513,7 +539,7 @@ export const CommandPaletteAutocomplete: React.FC<CommandPaletteAutocompleteProp
                                     />
                                 )}
                                 <Box sx={{ minWidth: 0, flex: 1 }}>
-                                    <Typography variant="body2" noWrap sx={voiceItem?.isNoOp ? { fontStyle: "italic", color: "text.secondary" } : undefined}>{displayLabel}</Typography>
+                                    <Typography variant="body2" noWrap sx={voiceItem?.isNoOp || voiceItem?.isAnswer ? { fontStyle: "italic", color: "text.secondary" } : undefined}>{displayLabel}</Typography>
                                     {option.secondary && (
                                         <Typography variant="caption" color="text.secondary" noWrap>
                                             {option.secondary}

@@ -9,7 +9,7 @@ import type { VoiceCommandMatch } from "./useVoiceCommandResolver";
  * - `idle`: voice off — mic not activated, no recognition running (ready to start)
  * - `listening`: mic active — recognition running, waiting for speech
  * - `confirming`: match found — countdown to auto-confirm, waiting for yes/no
- * - `noop`: item already in desired state — shows "already on/off" message, auto-dismisses
+ * - `noop`: item already in desired state (shows "already on/off") or an answer to a spoken question — auto-dismisses
  *
  * Browser support is tracked separately via `supported` — when false, the mic
  * button is hidden and the phase stays idle (never transitions).
@@ -135,6 +135,9 @@ const LAST_HEARD_CLEAR_MS = 3000;
 
 /** Auto-dismiss no-op messages after this many milliseconds. */
 const NOOP_DISMISS_MS = 2000;
+
+/** Auto-dismiss answers to spoken questions after this many milliseconds (longer than no-ops: the user reads them). */
+const ANSWER_DISMISS_MS = 5000;
 
 /** TTS text for skip-confirm actions. Returns null when no feedback is needed. */
 function getSkipConfirmTts(action: PaletteAction, resolved: VoiceCommandMatch): string | null {
@@ -491,27 +494,27 @@ export function useVoiceCommandFlow({
     };
 
     /** Enter noop phase with optional TTS readout. Shared by startConfirmPhase and bare command handler. */
-    const enterNoOp = (text: string | undefined) => {
+    const enterNoOp = (text: string | undefined, dismissMs = NOOP_DISMISS_MS, dismissAfterSpeechMs = dismissMs) => {
         setIsNoOp(true);
         setPhase("noop");
         setShowMatchesInDropdown(true);
 
-        const scheduleDismiss = () => {
+        const scheduleDismiss = (delayMs: number) => {
             noopTimerRef.current = setTimeout(() => {
                 setIsNoOp(false);
                 setShowMatchesInDropdown(false);
                 setInputValueRef.current("");
                 setPhase("listening");
                 recognition.start();
-            }, NOOP_DISMISS_MS);
+            }, delayMs);
         };
 
         if (speakerEnabledRef.current && text && typeof window.speechSynthesis !== "undefined") {
             speakWithListenGuard(text, () => {
-                if (phaseRef.current === "noop") scheduleDismiss();
+                if (phaseRef.current === "noop") scheduleDismiss(dismissAfterSpeechMs);
             });
         } else {
-            scheduleDismiss();
+            scheduleDismiss(dismissMs);
         }
     };
 
@@ -562,6 +565,13 @@ export function useVoiceCommandFlow({
         // No-op: item is already in the desired state — show message, auto-dismiss
         if (resolved.isNoOp) {
             enterNoOp(resolved.confirmLabel ?? resolved.label);
+            return;
+        }
+
+        // Answer to a spoken question — show (and speak) the answer, nothing to confirm
+        if (resolved.isAnswer) {
+            // Spoken answers resume listening as soon as the speech ends; unspoken ones stay readable.
+            enterNoOp(resolved.confirmLabel, ANSWER_DISMISS_MS, 0);
             return;
         }
 

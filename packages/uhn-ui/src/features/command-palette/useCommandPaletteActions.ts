@@ -2,6 +2,7 @@ import { assertNever } from "@uxp/common";
 import { getUxpWindow, UXP_THEME_EFFECT_TRIGGER, UXP_THEME_EFFECT_STOP } from "@uxp/ui-lib";
 import { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { ElectricityPriceQuery } from "../electricity/priceQueries";
 import { useSendSceneCommand } from "../scene/hooks/useSendSceneCommand";
 import { useSendViewCommand } from "../view/hooks/useSendViewCommand";
 import { AnalogPopupState, PaletteAction, PaletteItem, QuickActionId } from "./commandPalette.types";
@@ -13,6 +14,7 @@ type UseCommandPaletteActionsOptions = {
     onQuickAction?: (action: QuickActionId) => void;
     onExpandLocation?: (locationId: string) => void;
     onCollapseLocation?: (locationId: string) => void;
+    onAnswerElectricityPrice?: (query: ElectricityPriceQuery) => void;
 };
 
 /**
@@ -20,11 +22,11 @@ type UseCommandPaletteActionsOptions = {
  *
  * Self-contained actions (navigate, send-command, execute-scene, open-system-panel)
  * are handled internally. Context-dependent actions (scroll-to-location,
- * scroll-to-item, open-analog-popup, quick-action) are forwarded to the
+ * scroll-to-item, open-analog-popup, quick-action, answer-electricity-price) are forwarded to the
  * caller-supplied callbacks so the hosting component can coordinate UI
  * responses like scrolling, highlighting, or opening popups.
  */
-export function useCommandPaletteActions({ onLocationSelect, onAnalogInputNeeded, onHighlightItem, onQuickAction, onExpandLocation, onCollapseLocation }: UseCommandPaletteActionsOptions = {}) {
+export function useCommandPaletteActions({ onLocationSelect, onAnalogInputNeeded, onHighlightItem, onQuickAction, onExpandLocation, onCollapseLocation, onAnswerElectricityPrice }: UseCommandPaletteActionsOptions = {}) {
     const navigate = useNavigate();
     const sendCommand = useSendViewCommand();
     const sendSceneCommand = useSendSceneCommand();
@@ -94,6 +96,10 @@ export function useCommandPaletteActions({ onLocationSelect, onAnalogInputNeeded
                 window.dispatchEvent(new CustomEvent(UXP_THEME_EFFECT_STOP));
                 break;
 
+            case "answer-electricity-price":
+                onAnswerElectricityPrice?.(action.query);
+                break;
+
             case "filter-grid":
                 // Handled directly in CommandPaletteAutocomplete — no-op here
                 break;
@@ -101,7 +107,7 @@ export function useCommandPaletteActions({ onLocationSelect, onAnalogInputNeeded
             default:
                 assertNever(action, "Unhandled palette action type");
         }
-    }, [navigate, sendCommand, sendSceneCommand, onLocationSelect, onAnalogInputNeeded, onHighlightItem, onQuickAction, onExpandLocation, onCollapseLocation]);
+    }, [navigate, sendCommand, sendSceneCommand, onLocationSelect, onAnalogInputNeeded, onHighlightItem, onQuickAction, onExpandLocation, onCollapseLocation, onAnswerElectricityPrice]);
 
     return execute;
 }
