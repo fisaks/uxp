@@ -72,7 +72,7 @@ export const RuleTile: React.FC<RuleTileProps> = ({ rule, selected, onSelect }) 
                                         schedule:{trigger.scheduleId}
                                     </TechnicalDeepLink>
                                 ) : isPriceTriggerInfo(trigger) ? (
-                                    <TechnicalDeepLink to="/technical/electricity">
+                                    <TechnicalDeepLink to="/technical/electricity" state={{ showRuleIds: [rule.id] }}>
                                         {triggerEventLabel(trigger)}
                                     </TechnicalDeepLink>
                                 ) : (

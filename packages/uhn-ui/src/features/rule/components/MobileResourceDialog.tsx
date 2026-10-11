@@ -11,6 +11,7 @@ type MobileResourceDialogProps = {
     resourceAutocomplete: React.ReactNode;
     resourceIds: string[];
     priceTriggerLabels: string[];
+    priceRuleIds: string[];
     hasSelection: boolean;
     onRemoveResource: (id: string) => void;
     onRemoveAll: () => void;
@@ -25,6 +26,7 @@ export const MobileResourceDialog: React.FC<MobileResourceDialogProps> = ({
     resourceAutocomplete,
     resourceIds,
     priceTriggerLabels,
+    priceRuleIds,
     hasSelection,
     onRemoveResource,
     onRemoveAll,
@@ -53,6 +55,7 @@ export const MobileResourceDialog: React.FC<MobileResourceDialogProps> = ({
             <RuleDetailPanel
                 resourceIds={resourceIds}
                 priceTriggerLabels={priceTriggerLabels}
+                priceRuleIds={priceRuleIds}
                 hasSelection={hasSelection}
                 onRemoveResource={onRemoveResource}
                 onRemoveAll={onRemoveAll}

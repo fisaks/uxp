@@ -19,33 +19,20 @@ import { LineChart } from "@mui/x-charts/LineChart";
 import { ElectricityPriceEntry } from "@uhn/common";
 import { ReloadIconButton, TooltipIconButton, usePortalContainerRef } from "@uxp/ui-lib";
 import { DateTime } from "luxon";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
+import { useLocation } from "react-router-dom";
 import { useUHNWebSocket } from "../../../app/UHNAppBrowserWebSocketManager";
+import { selectPriceRules } from "../../rule/ruleSelectors";
+import { PriceRulesSection } from "../components/PriceRulesSection";
 import { selectElectricitySnapshot } from "../electricitySlice";
+import { getRuleLimits, limitColor, rearmPrice } from "../priceLimits";
+import { CHEAP_COLOR, EXPENSIVE_COLOR, CHEAP_THRESHOLD, EXPENSIVE_THRESHOLD, NORMAL_COLOR, TZ, formatTime, getPriceColor } from "../priceFormat";
+import { useSlotMs } from "../useSlotPrices";
 
 type IntervalMode = "15min" | "60min";
 
-const CHEAP_THRESHOLD = 5;
-const EXPENSIVE_THRESHOLD = 15;
-
-const CHEAP_COLOR = "#4caf50";
-const NORMAL_COLOR = "#ff9800";
-const EXPENSIVE_COLOR = "#f44336";
-
-function getPriceColor(price: number): string {
-    if (price <= CHEAP_THRESHOLD) return CHEAP_COLOR;
-    if (price >= EXPENSIVE_THRESHOLD) return EXPENSIVE_COLOR;
-    return NORMAL_COLOR;
-}
-
-const TZ = "Europe/Helsinki";
 const DATE_OPTIONS: Intl.DateTimeFormatOptions = { timeZone: TZ };
-
-function formatTime(isoDate: string): string {
-    const d = new Date(isoDate);
-    return d.toLocaleTimeString("fi-FI", { ...DATE_OPTIONS, hour: "2-digit", minute: "2-digit" });
-}
 
 function formatDate(isoDate: string): string {
     const d = new Date(isoDate);
@@ -173,26 +160,6 @@ const SummaryCard: React.FC<{ title: string; value: string; subtitle?: string; c
     </Paper>
 );
 
-const QUARTER_MS = 15 * 60_000;
-
-/** Current time, refreshed just after each quarter-hour boundary (where price slots, hours and days change). */
-function useSlotMs(): number {
-    const [slotMs, setSlotMs] = useState(() => Date.now());
-    useEffect(() => {
-        let timer: ReturnType<typeof setTimeout>;
-        const scheduleNext = () => {
-            const now = Date.now();
-            timer = setTimeout(() => {
-                setSlotMs(Date.now());
-                scheduleNext();
-            }, QUARTER_MS - (now % QUARTER_MS) + 50);
-        };
-        scheduleNext();
-        return () => clearTimeout(timer);
-    }, []);
-    return slotMs;
-}
-
 export const ElectricityPricePage: React.FC = () => {
     const snapshot = useSelector(selectElectricitySnapshot);
     const [mode, setMode] = useState<IntervalMode>("60min");
@@ -250,6 +217,34 @@ export const ElectricityPricePage: React.FC = () => {
     }, [displayPrices, nowIndex]);
 
     const hasData = snapshot.prices.length > 0;
+
+    // Rules with price triggers; the checked ones show their limits on the chart.
+    // The rule panel links here with { showRuleIds } to preselect rules (and expand the list).
+    const priceRules = useSelector(selectPriceRules);
+    const locationState = useLocation().state as { showRuleIds?: string[] } | null;
+    const [selectedRuleIds, setSelectedRuleIds] = useState<Set<string>>(() => new Set(locationState?.showRuleIds ?? []));
+    const [rulesExpanded, setRulesExpanded] = useState(() => (locationState?.showRuleIds?.length ?? 0) > 0);
+    const toggleRule = useCallback((ruleId: string) => {
+        setSelectedRuleIds((prev) => {
+            const next = new Set(prev);
+            if (!next.delete(ruleId)) next.add(ruleId);
+            return next;
+        });
+    }, []);
+    const shownLimits = useMemo(
+        () => priceRules
+            .map((rule, index) => ({ rule, color: limitColor(index) }))
+            .filter(({ rule }) => selectedRuleIds.has(rule.id))
+            .flatMap(({ rule, color }) => getRuleLimits(rule).map((limit) => ({ limit, color }))),
+        [priceRules, selectedRuleIds],
+    );
+    // The y-axis follows the data; grow it when a limit would lie above the highest price.
+    const yAxisMax = useMemo(() => {
+        if (shownLimits.length === 0) return undefined;
+        const highestPrice = snapshot.prices.reduce((max, p) => Math.max(max, p.price), 0);
+        const highestLimit = shownLimits.reduce((max, { limit }) => Math.max(max, limit.threshold, rearmPrice(limit)), 0);
+        return Math.max(highestPrice, highestLimit) * 1.08;
+    }, [shownLimits, snapshot.prices]);
 
     return (
         <Box sx={{ maxWidth: fullWidth ? "none" : 1200, mx: "auto" }}>
@@ -330,6 +325,7 @@ export const ElectricityPricePage: React.FC = () => {
                             ]}
                             yAxis={[
                                 {
+                                    ...(yAxisMax !== undefined && { min: 0, max: yAxisMax }),
                                     colorMap: {
                                         type: "piecewise",
                                         thresholds: [CHEAP_THRESHOLD, EXPENSIVE_THRESHOLD],
@@ -366,6 +362,24 @@ export const ElectricityPricePage: React.FC = () => {
                                     label={m.label}
                                 />
                             ))}
+                            {shownLimits.map(({ limit, color }, i) => (
+                                <Fragment key={`${limit.ruleId}-${i}`}>
+                                    <ChartsReferenceLine
+                                        y={limit.threshold}
+                                        lineStyle={{ stroke: color, strokeWidth: 1.5, strokeDasharray: "6 3" }}
+                                        labelStyle={{ fill: color, fontSize: 11 }}
+                                        // above-limits label on the left, below-limits on the right so close limits do not overlap
+                                        labelAlign={limit.direction === "above" ? "start" : "end"}
+                                        label={`${limit.ruleName} ${limit.direction} ${limit.threshold}`}
+                                    />
+                                    {limit.hysteresis > 0 && (
+                                        <ChartsReferenceLine
+                                            y={rearmPrice(limit)}
+                                            lineStyle={{ stroke: color, strokeWidth: 1, strokeDasharray: "2 3", strokeOpacity: 0.8 }}
+                                        />
+                                    )}
+                                </Fragment>
+                            ))}
                             <ChartsReferenceLine
                                 x={new Date(slotMs)}
                                 lineStyle={{ stroke: "#2196f3", strokeWidth: 2, strokeDasharray: "4 2" }}
@@ -376,6 +390,14 @@ export const ElectricityPricePage: React.FC = () => {
                             />
                         </LineChart>
                     </Paper>
+
+                    <PriceRulesSection
+                        rules={priceRules}
+                        selectedRuleIds={selectedRuleIds}
+                        onToggleRule={toggleRule}
+                        expanded={rulesExpanded}
+                        onExpandedChange={setRulesExpanded}
+                    />
 
                     {/* Price table */}
                     <Paper variant="outlined" sx={{ borderRadius: 2 }}>

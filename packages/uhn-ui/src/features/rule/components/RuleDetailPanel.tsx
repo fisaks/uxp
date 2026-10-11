@@ -5,11 +5,13 @@ import { usePortalContainerRef } from "@uxp/ui-lib";
 import { closestCenter, DndContext, DragEndEvent, MouseSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { arrayMove, rectSortingStrategy, SortableContext, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { RuntimeResource } from "@uhn/common";
+import { ElectricityPriceEntry, RuntimeResource } from "@uhn/common";
 import React, { useCallback } from "react";
 import { useSelector } from "react-redux";
 import { ResourceTile } from "../../resource/components/ResourceTile";
 import { TileRuntimeResource, TileRuntimeResourceState } from "../../resource/resource-ui.type";
+import { formatTime, getPriceColor } from "../../electricity/priceFormat";
+import { useCurrentAndNextSlotPrice } from "../../electricity/useSlotPrices";
 import { selectRuntimeStateByResourceId } from "../../runtime-state/runtimeStateSelector";
 import { TechnicalDeepLink } from "../../shared/TechnicalDeepLink";
 
@@ -17,6 +19,8 @@ type RuleDetailPanelProps = {
     resourceIds: string[];
     /** Labels of the selected rules' electricity price triggers (they have no resource tile). */
     priceTriggerLabels: string[];
+    /** Ids of the selected rules that have price triggers; the price page preselects them. */
+    priceRuleIds: string[];
     hasSelection: boolean;
     onRemoveResource: (id: string) => void;
     onRemoveAll: () => void;
@@ -89,9 +93,23 @@ const SortableResourceTile: React.FC<SortableResourceTileProps> = ({ resourceId,
     );
 };
 
-export const RuleDetailPanel: React.FC<RuleDetailPanelProps> = ({ resourceIds, priceTriggerLabels, hasSelection, onRemoveResource, onRemoveAll, onReorder, resourceById }) => {
+/** One line of the price slot overview: "Now: 4.39 snt (from 15.00)". */
+const SlotPriceLine: React.FC<{ label: string; slot: ElectricityPriceEntry | undefined }> = ({ label, slot }) => (
+    <Typography variant="body2" sx={{ fontFamily: "monospace", fontSize: "0.75rem" }}>
+        {label}{" "}
+        {slot ? (
+            <>
+                <Box component="span" sx={{ color: getPriceColor(slot.price), fontWeight: 600 }}>{slot.price.toFixed(2)} snt</Box>
+                <Box component="span" sx={{ color: "text.secondary" }}> (from {formatTime(slot.startDate)})</Box>
+            </>
+        ) : "N/A"}
+    </Typography>
+);
+
+export const RuleDetailPanel: React.FC<RuleDetailPanelProps> = ({ resourceIds, priceTriggerLabels, priceRuleIds, hasSelection, onRemoveResource, onRemoveAll, onReorder, resourceById }) => {
     const portalContainer = usePortalContainerRef();
     const stateById = useSelector(selectRuntimeStateByResourceId);
+    const { current: currentSlot, next: nextSlot } = useCurrentAndNextSlotPrice();
 
     const sensors = useSensors(
         useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
@@ -124,9 +142,13 @@ export const RuleDetailPanel: React.FC<RuleDetailPanelProps> = ({ resourceIds, p
                     <Typography variant="subtitle2">Price triggers</Typography>
                     {priceTriggerLabels.map(label => (
                         <Typography key={label} variant="body2" sx={{ fontFamily: "monospace", fontSize: "0.75rem" }}>
-                            <TechnicalDeepLink to="/technical/electricity">{label}</TechnicalDeepLink>
+                            <TechnicalDeepLink to="/technical/electricity" state={{ showRuleIds: priceRuleIds }}>{label}</TechnicalDeepLink>
                         </Typography>
                     ))}
+                    <Box sx={{ mt: 0.5 }}>
+                        <SlotPriceLine label="Now: " slot={currentSlot} />
+                        <SlotPriceLine label="Next:" slot={nextSlot} />
+                    </Box>
                 </Box>
             )}
             <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>

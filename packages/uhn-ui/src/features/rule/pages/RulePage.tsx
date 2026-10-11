@@ -121,12 +121,15 @@ export const RulePage = () => {
     const groups = useMemo(() => groupFilteredRules(filteredItems), [filteredItems]);
 
     // Price triggers of the selected rules (they have no resource, so they are not part of orderedResourceIds)
-    const priceTriggerLabels = useMemo(() => {
-        const labels = allRules
-            .filter(r => selectedRuleIds.has(r.id))
-            .flatMap(r => r.triggers.filter(isPriceTriggerInfo).map(triggerEventLabel));
-        return Array.from(new Set(labels));
-    }, [allRules, selectedRuleIds]);
+    const selectedPriceRules = useMemo(
+        () => allRules.filter(r => selectedRuleIds.has(r.id) && r.triggers.some(isPriceTriggerInfo)),
+        [allRules, selectedRuleIds]
+    );
+    const priceTriggerLabels = useMemo(
+        () => Array.from(new Set(selectedPriceRules.flatMap(r => r.triggers.filter(isPriceTriggerInfo).map(triggerEventLabel)))),
+        [selectedPriceRules]
+    );
+    const priceRuleIds = useMemo(() => selectedPriceRules.map(r => r.id), [selectedPriceRules]);
 
     const refetch = async () => {
         setLoading(true);
@@ -258,6 +261,7 @@ export const RulePage = () => {
                         <RuleDetailPanel
                             resourceIds={orderedResourceIds}
                             priceTriggerLabels={priceTriggerLabels}
+                            priceRuleIds={priceRuleIds}
                             hasSelection={selectedRuleIds.size > 0}
                             onRemoveResource={handleRemoveResource}
                             onRemoveAll={handleRemoveAllResources}
@@ -275,6 +279,7 @@ export const RulePage = () => {
                 resourceAutocomplete={resourceAutocomplete}
                 resourceIds={orderedResourceIds}
                 priceTriggerLabels={priceTriggerLabels}
+                priceRuleIds={priceRuleIds}
                 hasSelection={selectedRuleIds.size > 0}
                 onRemoveResource={handleRemoveResource}
                 onRemoveAll={handleRemoveAllResources}

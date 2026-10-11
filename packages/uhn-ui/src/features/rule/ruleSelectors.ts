@@ -1,5 +1,5 @@
 import { createSelector } from "@reduxjs/toolkit";
-import { isResourceTriggerInfo, RuntimeRuleInfo } from "@uhn/common";
+import { isPriceTriggerInfo, isResourceTriggerInfo, RuntimeRuleInfo } from "@uhn/common";
 import { RootState } from "../../app/store";
 
 const selectRuleState = (state: RootState) => state.rules;
@@ -7,6 +7,15 @@ const selectRuleState = (state: RootState) => state.rules;
 export const selectAllRules = createSelector(
     [selectRuleState],
     (rules): RuntimeRuleInfo[] => rules.allIds.map(id => rules.byId[id])
+);
+
+/** Rules with at least one electricity price trigger, sorted by display name. */
+export const selectPriceRules = createSelector(
+    [selectAllRules],
+    (rules): RuntimeRuleInfo[] =>
+        rules
+            .filter(rule => rule.triggers.some(isPriceTriggerInfo))
+            .sort((a, b) => (a.name ?? a.id).localeCompare(b.name ?? b.id))
 );
 
 export const selectRulesByResourceId = createSelector(

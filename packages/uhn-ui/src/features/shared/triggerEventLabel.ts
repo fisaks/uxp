@@ -21,6 +21,8 @@ export function triggerEventLabel(trigger: RuntimeRuleTriggerInfo): string {
         case "priceChanged":
             return "price changed";
         case "priceThreshold":
-            return `price ${trigger.direction} ${trigger.threshold}${trigger.basis === "hour" ? " (hour avg)" : ""}`;
+            return `price ${trigger.direction} ${trigger.threshold}`
+                + (trigger.hysteresis ? ` (hysteresis ${trigger.hysteresis})` : "")
+                + (trigger.basis === "hour" ? " (hour avg)" : "");
     }
 }
