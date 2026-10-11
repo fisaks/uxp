@@ -24,6 +24,8 @@ const POLL_WINDOW_END = { hour: 16, minute: 0 };    // Finnish time
 const RETRY_INTERVAL_MS = 5 * 60_000;
 /** Retry interval after the daily window has closed without tomorrow's prices (late publication). */
 const LATE_RETRY_INTERVAL_MS = 30 * 60_000;
+/** How long start() waits for the retained snapshot before fetching without history. */
+const RESTORE_TIMEOUT_MS = 5_000;
 /** How often the wall clock is compared with the planned fetch time (see scheduleNextFetch). */
 const HEARTBEAT_MS = 30_000;
 
@@ -93,8 +95,9 @@ export class ElectricityPriceService extends EventEmitter<ElectricityPriceEventM
         return this.snapshot;
     }
 
-    /** Start the service: fetch immediately, then keep fetching as planned. */
+    /** Start the service: restore the history, fetch immediately, then keep fetching as planned. */
     async start(): Promise<void> {
+        await this.restoreFromRetainedSnapshot();
         await this.fetchPrices();
         this.scheduleNextFetch();
     }
@@ -123,6 +126,34 @@ export class ElectricityPriceService extends EventEmitter<ElectricityPriceEventM
         }, HEARTBEAT_MS);
     }
 
+    /**
+     * Reads the retained snapshot this service published before the restart, so the history that
+     * mergeWithHistory keeps (e.g. today's first hour, which the API no longer returns after the daily
+     * publication) survives a restart. Continues without it, with a warning, when there is none within the timeout.
+     */
+    private restoreFromRetainedSnapshot(): Promise<void> {
+        return new Promise((resolve) => {
+            const finish = (payload?: unknown) => {
+                clearTimeout(timeout);
+                mqttService.unsubscribe(MQTT_TOPIC, onMessage);
+                const restored = (payload as ElectricityPriceSnapshot | undefined)?.prices;
+                if (Array.isArray(restored) && restored.length > 0) {
+                    this.snapshot = { prices: this.mergeWithHistory(restored), fetchedAt: (payload as ElectricityPriceSnapshot).fetchedAt };
+                    AppLogger.info({ message: `${LOG_TAG} Restored ${this.snapshot.prices.length} price entries from the retained snapshot` });
+                }
+                resolve();
+            };
+            const onMessage = (_topic: string, payload: unknown) => finish(payload);
+            const timeout = setTimeout(() => {
+                AppLogger.warn({
+                    message: `${LOG_TAG} No retained price snapshot within ${RESTORE_TIMEOUT_MS / 1000} s (broker connected: ${mqttService.isConnected()}), continuing without history`,
+                });
+                finish();
+            }, RESTORE_TIMEOUT_MS);
+            mqttService.subscribe(MQTT_TOPIC, onMessage, { qos: 1 });
+        });
+    }
+
     // ── Fetching ────────────────────────────────────────────────────────
 
     /** Concurrent callers (poll timer, manual refresh) share one in-flight request. */
@@ -141,9 +172,7 @@ export class ElectricityPriceService extends EventEmitter<ElectricityPriceEventM
                 return;
             }
             const data = (await response.json()) as { prices: ElectricityPriceEntry[] };
-            const prices = data.prices.sort(
-                (a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime(),
-            );
+            const prices = this.mergeWithHistory(data.prices);
 
             this.snapshot = { prices, fetchedAt: new Date().toISOString() };
 
@@ -156,6 +185,23 @@ export class ElectricityPriceService extends EventEmitter<ElectricityPriceEventM
         } catch (error) {
             AppLogger.error({ message: `${LOG_TAG} Failed to fetch prices`, error });
         }
+    }
+
+    /**
+     * Combines a fetched batch with the slots already held, keeping everything from the start of yesterday.
+     * Each daily publication shifts the API's 48 h window forward and drops the first hour of the Finnish day
+     * (see hasNextDayPrices), which would leave "today" incomplete for the rest of the day. Newly fetched
+     * slots replace held ones with the same start.
+     */
+    private mergeWithHistory(fetched: ElectricityPriceEntry[]): ElectricityPriceEntry[] {
+        const keepFromMs = DateTime.now().setZone(TZ).minus({ days: 1 }).startOf("day").toMillis();
+        const byStart = new Map<string, ElectricityPriceEntry>();
+        for (const entry of [...this.snapshot.prices, ...fetched]) {
+            if (new Date(entry.startDate).getTime() >= keepFromMs) byStart.set(entry.startDate, entry);
+        }
+        return Array.from(byStart.values()).sort(
+            (a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime(),
+        );
     }
 
     private publishToMqtt(): void {
