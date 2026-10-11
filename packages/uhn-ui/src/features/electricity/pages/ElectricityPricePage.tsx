@@ -87,11 +87,18 @@ function aggregateTo60Min(prices: ElectricityPriceEntry[]): AggregatedEntry[] {
 }
 
 type DaySummary = {
-    label: string;
     avg: number;
     min: { price: number; time: string };
     max: { price: number; time: string };
 };
+
+/**
+ * A day needs more than half of its 15-minute slots to be summarised. The market publishes delivery days that
+ * run 01:00–01:00 Finnish time (CET), so until tomorrow's prices are published the data only reaches into the
+ * first hour of tomorrow, and after 14:00 today's first hour is missing. Half a day separates those slivers
+ * from real data.
+ */
+const MIN_DAY_SLOTS = 48;
 
 function computeDaySummary(prices: ElectricityPriceEntry[], dayOffset: number, slotMs: number): DaySummary | undefined {
     const targetDateStr = DateTime.fromMillis(slotMs).setZone(TZ).plus({ days: dayOffset }).toFormat("yyyy-MM-dd");
@@ -100,19 +107,41 @@ function computeDaySummary(prices: ElectricityPriceEntry[], dayOffset: number, s
         return finnishDateKey(new Date(p.startDate)) === targetDateStr;
     });
 
-    if (dayPrices.length === 0) return undefined;
+    if (dayPrices.length < MIN_DAY_SLOTS) return undefined;
 
     const avg = dayPrices.reduce((sum, p) => sum + p.price, 0) / dayPrices.length;
     const minEntry = dayPrices.reduce((min, p) => (p.price < min.price ? p : min), dayPrices[0]);
     const maxEntry = dayPrices.reduce((max, p) => (p.price > max.price ? p : max), dayPrices[0]);
 
     return {
-        label: dayOffset === 0 ? "Today" : "Tomorrow",
         avg,
         min: { price: minEntry.price, time: formatTime(minEntry.startDate) },
         max: { price: maxEntry.price, time: formatTime(maxEntry.startDate) },
     };
 }
+
+/** Avg / cheapest / most expensive cards of one day; "N/A" until the day's prices are known. */
+const DaySummaryCards: React.FC<{ day: "Today" | "Tomorrow"; summary: DaySummary | undefined }> = ({ day, summary }) => (
+    <>
+        <SummaryCard
+            title={`Avg ${day}`}
+            value={summary ? `${summary.avg.toFixed(2)} snt` : "N/A"}
+            color={summary ? getPriceColor(summary.avg) : undefined}
+        />
+        <SummaryCard
+            title={`Cheapest ${day}`}
+            value={summary ? `${summary.min.price.toFixed(2)} snt` : "N/A"}
+            subtitle={summary?.min.time}
+            color={summary ? getPriceColor(summary.min.price) : undefined}
+        />
+        <SummaryCard
+            title={`Most Expensive ${day}`}
+            value={summary ? `${summary.max.price.toFixed(2)} snt` : "N/A"}
+            subtitle={summary?.max.time}
+            color={summary ? getPriceColor(summary.max.price) : undefined}
+        />
+    </>
+);
 
 const SummaryCard: React.FC<{ title: string; value: string; subtitle?: string; color?: string }> = ({
     title,
@@ -254,48 +283,8 @@ export const ElectricityPricePage: React.FC = () => {
                                 color={getPriceColor(currentPrice.price)}
                             />
                         )}
-                        {todaySummary && (
-                            <>
-                                <SummaryCard
-                                    title="Avg Today"
-                                    value={`${todaySummary.avg.toFixed(2)} snt`}
-                                    color={getPriceColor(todaySummary.avg)}
-                                />
-                                <SummaryCard
-                                    title="Cheapest Today"
-                                    value={`${todaySummary.min.price.toFixed(2)} snt`}
-                                    subtitle={todaySummary.min.time}
-                                    color={getPriceColor(todaySummary.min.price)}
-                                />
-                                <SummaryCard
-                                    title="Most Expensive Today"
-                                    value={`${todaySummary.max.price.toFixed(2)} snt`}
-                                    subtitle={todaySummary.max.time}
-                                    color={getPriceColor(todaySummary.max.price)}
-                                />
-                            </>
-                        )}
-                        {tomorrowSummary && (
-                            <>
-                                <SummaryCard
-                                    title="Avg Tomorrow"
-                                    value={`${tomorrowSummary.avg.toFixed(2)} snt`}
-                                    color={getPriceColor(tomorrowSummary.avg)}
-                                />
-                                <SummaryCard
-                                    title="Cheapest Tomorrow"
-                                    value={`${tomorrowSummary.min.price.toFixed(2)} snt`}
-                                    subtitle={tomorrowSummary.min.time}
-                                    color={getPriceColor(tomorrowSummary.min.price)}
-                                />
-                                <SummaryCard
-                                    title="Most Expensive Tomorrow"
-                                    value={`${tomorrowSummary.max.price.toFixed(2)} snt`}
-                                    subtitle={tomorrowSummary.max.time}
-                                    color={getPriceColor(tomorrowSummary.max.price)}
-                                />
-                            </>
-                        )}
+                        <DaySummaryCards day="Today" summary={todaySummary} />
+                        <DaySummaryCards day="Tomorrow" summary={tomorrowSummary} />
                     </Box>
 
                     {/* Controls */}
@@ -359,6 +348,7 @@ export const ElectricityPricePage: React.FC = () => {
                                 },
                             ]}
                             height={400}
+                            slotProps={{ popper: { container: portalContainer.current } }}
                             margin={{ left: 30, right: 20, top: 10, bottom: 30 }}
                             sx={{
                                 "& .MuiAreaElement-root": {
@@ -381,6 +371,7 @@ export const ElectricityPricePage: React.FC = () => {
                                 lineStyle={{ stroke: "#2196f3", strokeWidth: 2, strokeDasharray: "4 2" }}
                                 labelStyle={{ fill: "#2196f3", fontSize: 11 }}
                                 labelAlign="start"
+                                spacing={{ x: 5, y: 19 }} // a line below the day labels so they don't overlap when close
                                 label="Now"
                             />
                         </LineChart>
