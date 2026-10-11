@@ -425,8 +425,8 @@ export const ElectricityPricePage: React.FC = () => {
                                                     }),
                                                 }}
                                             >
-                                                <TableCell>{formatDate(p.startDate)}</TableCell>
-                                                <TableCell>
+                                                <TableCell sx={{ whiteSpace: "nowrap" }}>{formatDate(p.startDate)}</TableCell>
+                                                <TableCell sx={{ whiteSpace: "nowrap" }}>
                                                     {formatTime(p.startDate)}–{formatTime(p.endDate)}
                                                 </TableCell>
                                                 <TableCell
