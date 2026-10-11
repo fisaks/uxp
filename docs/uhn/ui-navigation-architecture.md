@@ -185,14 +185,16 @@ useSpeechRecognition (shared)
     │       ├── Normal flow: listen → confirm → execute
     │       ├── Filter flow: "filter ..." / "search for ..." → apply immediately
     │       ├── Bare command follow-up: "on" / "set 50" on highlighted item
-    │       ├── TTS readout: optional speaker for confirmation + noop + easter eggs
+    │       ├── Questions: read-only answers ("what is the outdoor temperature", "electricity price this hour")
+    │       ├── TTS readout: optional speaker for confirmation + noop + answers + locate status + easter eggs
     │       └── Analog redirect: when popup open, route to analog handlers
     │
     ├── useVoiceCommandResolver (intent parsing)
     │       │
-    │       ├── parseVoiceIntent: extract on/off/toggle/set/execute/locate
+    │       ├── parseVoiceIntent: extract on/off/toggle/set/execute/locate/query
     │       ├── filterItems: exact-match search against palette items
-    │       └── resolveVoiceAction: apply action resolution matrix
+    │       ├── resolveVoiceAction: apply action resolution matrix
+    │       └── getAnswer (query intent): sentence for a matched item — statusAnswer.ts / priceQueries.ts
     │
     └── useAnalogValueVoiceControl (analog popup)
             │
@@ -220,6 +222,7 @@ The auto-restart effect in `useVoiceCommandFlow` is the real mechanism that keep
    - Without TTS: 5-second countdown starts immediately
    - With TTS: command is read aloud first, then 3-second countdown starts after speech ends
 4. **Noop** → item already in desired state → show message (+ TTS if speaker on) → auto-dismiss after 2s → **Listening**
+   - Answers to questions use the same phase: the answer is shown (+ spoken if speaker on) and dismissed 5s later, or 0.3s after the speech ends when spoken
 5. At any point, "stop" returns to **Idle**
 
 ### TTS / Speaker toggle
@@ -230,10 +233,11 @@ All TTS in the voice flow pauses recognition during playback (via `speakWithList
 
 - **Confirmation phase**: reads the matched command aloud before starting the countdown. The countdown is shorter (3s instead of 5s) since the user already heard what's about to happen.
 - **Skip-confirm actions**: immediate actions also get spoken feedback when speaker is enabled:
-  - `scroll-to-item`: "Found [name]. Say a command." — prompts the user to issue a bare follow-up command
+  - `scroll-to-item` for a view or resource: its status sentence ("Kitchen Ceiling Light is on."), the same sentence a question would get. The 10s bare-command window restarts when the speech ends. Scenes keep "Found [name]. Say a command."
   - `scroll-to-location`: "Found [name]."
   - `quick-action` / `expand-location` / `collapse-location`: "Done."
 - **Noop phase**: reads the "already on/off" message aloud. Dismiss timer starts after TTS finishes.
+- **Answers**: the answer to a question is read aloud in the noop phase. Listening resumes 300 ms after the speech ends (`ANSWER_RESUME_DELAY_MS`), the same delay as the auto-restart effect, so the tail of the speech is not heard as a command.
 - **No match**: speaks a random feedback line ("I didn't catch that. Try again?").
 - **Easter eggs**: praise and question responses are spoken (see below).
 - **Analog popup open**: reads the current value ("Kitchen dimmer is at 70%. Say a number to adjust."). Note: this TTS is fire-and-forget in `AnalogSliderPopup` and does not pause recognition (the popup doesn't have access to the voice flow's `speakWithListenGuard`).
@@ -267,6 +271,8 @@ The resolver (`useVoiceCommandResolver`) separates voice transcripts into **inte
 - "toggle garage door" → intent: `toggle`, search: "garage door"
 - "activate evening scene" → intent: `execute`, search: "evening scene"
 - "kitchen light" → intent: `locate`, search: "kitchen light"
+- "what is the outdoor temperature" → intent: `query`, search: "outdoor temperature"
+- "is the kitchen light on" → intent: `query`, search: "kitchen light on" (see Questions)
 
 "set" and "turn" are interchangeable command prefixes. "to", "the", "a", etc. are stop words that get stripped.
 
@@ -278,10 +284,25 @@ The resolver (`useVoiceCommandResolver`) separates voice transcripts into **inte
 - **toggle**: uses the pre-computed state-based action (same as text palette).
 - **execute**: activates a scene.
 - **locate**: scrolls to the item in the grid.
+- **query**: answers a question, nothing is executed (see below).
+
+### Questions (read-only answers)
+
+A `query` intent answers instead of acting. Openers: "what", "what's", "how", "when", "tell"; filler such as "much", "does", "status", "state" is dropped. A phrase that finds no item as a locate is retried as a question, so "electricity price today" works without an opener.
+
+**"is"/"are" openers.** `is` is a stop word and is removed from the tokens, so "is the kitchen light on" would otherwise parse as the command "kitchen light on" and turn the light on. `parseVoiceIntent` therefore checks the raw first word. A trailing state word (on, off, open, closed) is dropped if the full phrase matches nothing.
+
+**Targets.** Price items (`electricityQueryItems.ts`, action `answer-electricity-price`) and Items-group views and resources, never scenes or locations. Price items sort first, so a specific price phrase beats a device that happens to match the same words. When several items match, the first one is answered.
+
+**Price answers** (`electricity/priceQueries.ts`, pure, from the `electricity` slice): current slot, this hour and next hour (clock-hour averages), average today and tomorrow, cheapest and most expensive clock hour today. Day boundaries are Helsinki calendar days. The same items work in typed mode (answer shown above the input for 8s, not spoken). Items are ordered most general first because the first match wins ("electricity price today" gives the average).
+
+**Status answers** (`command-palette/statusAnswer.ts`) are built from the same `ViewWithState` the tile renders, so they match the tile. For a view, in order: offline (device availability) → a display value the question names by label ("temperature", "timer"), read on its own → for views with `stateFrom`, the `nameMap` name or "on"/"off" (display values such as an auto-off timer are secondary and are not read) → for display-only views such as sensors, all display values (hero, left, right, with labels and units) → "no status to report". Labels are matched as whole words. A bare resource reads its value and unit. Units are spoken naturally (°C → "degrees celsius", % → "percent"), and "&" is read as "and". Status answers are voice only.
+
+**Limits.** No hedge for unreliable-state devices (Mi-Light): they are read as their last command. The offline check uses the raw device availability flag, not the tile's mains/grace-period logic.
 
 ### Bare command follow-up
 
-After a "locate" intent highlights an item (e.g., "kitchen coffee socket" scrolls to it), the voice flow tracks the highlighted item for 10 seconds. When speaker is enabled, TTS reads "Found [name]. Say a command." A visible countdown in the tip text shows the remaining time and available commands. During that window, short follow-up commands act on the highlighted item without repeating its name:
+After a "locate" intent highlights an item (e.g., "kitchen coffee socket" scrolls to it), the voice flow tracks the highlighted item for 10 seconds. When speaker is enabled, TTS reads the item's status ("Kitchen Ceiling Light is on."), and the 10 seconds start again when the speech ends so the readout does not use up the window. A visible countdown in the tip text shows the remaining time and available commands. During that window, short follow-up commands act on the highlighted item without repeating its name:
 
 - "on" / "off" / "toggle" / "set 50" / "activate"
 
@@ -300,7 +321,8 @@ Not all voice commands need a countdown. The voice flow checks the resolved item
 | `send-command` | Yes — 5s countdown (3s after TTS) |
 | `execute-scene` | Yes |
 | `scroll-to-location` | No — immediate (TTS: "Found [name].") |
-| `scroll-to-item` | No — immediate (TTS: "Found [name]. Say a command.") |
+| `scroll-to-item` | No — immediate (TTS: status sentence for views/resources, "Found [name]. Say a command." for scenes) |
+| `answer-electricity-price` / status question | No — answer shown (+ spoken), auto-dismiss 5s |
 | `filter-grid` | No — handled by "filter" / "search for" prefix |
 | `quick-action` | No — immediate (TTS: "Done.") |
 | `expand-location` / `collapse-location` | No — immediate (TTS: "Done.") |
@@ -513,7 +535,10 @@ The command palette selector (`selectCommandPaletteItems`) reads from multiple R
 | `features/command-palette/useCommandPaletteActions.ts` | Action executor — routes palette actions to effects |
 | `features/command-palette/CommandPaletteAutocomplete.tsx` | Main UI component — Autocomplete, voice integration, speaker toggle, analog popup |
 | `features/command-palette/AnalogSliderPopup.tsx` | Slider popup for analog value control (with TTS readout on open) |
-| `features/command-palette/useVoiceCommandResolver.ts` | Voice intent parsing, action resolution, bare command parsing |
+| `features/command-palette/useVoiceCommandResolver.ts` | Voice intent parsing (incl. questions), action resolution, bare command parsing |
+| `features/command-palette/statusAnswer.ts` | Status sentences for views and resources, built from the tile's own state |
+| `features/command-palette/electricityQueryItems.ts` | Palette items for electricity price questions |
+| `features/electricity/priceQueries.ts` | Price answers (current, hour, averages, cheapest/most expensive hour) |
 | `features/command-palette/useVoiceCommandFlow.ts` | Voice lifecycle orchestration (listen/confirm/cancel/noop, TTS, easter eggs) |
 | `features/command-palette/useAnalogValueVoiceControl.ts` | Voice handlers for the analog slider popup |
 

@@ -32,8 +32,9 @@ function isOffline(resource: RuntimeResource | undefined, ctx: StatusAnswerConte
 }
 
 /**
- * What a view tile shows, as a sentence. Order: offline, display values (hero, left, right), nameMap name, on/off.
- * When the question names one of the display labels ("temperature"), only that value is read.
+ * What a view tile shows, as a sentence. Order: offline, the display value the question names, then either the
+ * on/off state (views with `stateFrom`, where display values such as an auto-off timer are secondary) or all
+ * display values (display-only views such as sensors). A nameMap name stands in for on/off.
  */
 export function answerViewStatus(vws: ViewWithState, ctx: StatusAnswerContext, queryTokens: string[]): string {
     const { view, stateDisplay, resolvedName, active } = vws;
@@ -44,17 +45,21 @@ export function answerViewStatus(vws: ViewWithState, ctx: StatusAnswerContext, q
     }
 
     const values = [...stateDisplay.hero, ...stateDisplay.left, ...stateDisplay.right].filter((v) => v.value != null);
-    if (values.length > 0) {
-        const named = (v: DisplayItemValueState) => v.label != null && queryTokens.some((t) => v.label!.toLowerCase().includes(t));
-        const asked = values.filter(named);
-        const read = asked.length > 0 ? asked : values;
+    const readValues = (read: DisplayItemValueState[]) => {
         const parts = read.map((v) => `${v.label ? `${v.label} ` : ""}${spokenValue(v.value, v.unit, v.decimalPrecision)}`);
         return `${name}: ${parts.join(", ")}.`;
-    }
+    };
 
-    if (resolvedName) return `${spokenName(resolvedName)}.`;
-    if (view.stateFrom.length > 0) return `${name} is ${active ? "on" : "off"}.`;
-    return `${name} has no status to report.`;
+    // The question names a display label ("temperature", "timer"): read just that value.
+    const named = (v: DisplayItemValueState) => v.label != null && v.label.toLowerCase().split(/\W+/).some((word) => queryTokens.includes(word));
+    const asked = values.filter(named);
+    if (asked.length > 0) return readValues(asked);
+
+    if (view.stateFrom.length > 0) {
+        return resolvedName ? `${spokenName(resolvedName)}.` : `${name} is ${active ? "on" : "off"}.`;
+    }
+    if (values.length > 0) return readValues(values);
+    return resolvedName ? `${spokenName(resolvedName)}.` : `${name} has no status to report.`;
 }
 
 /** A location item that is a bare resource (no view): its current value. */

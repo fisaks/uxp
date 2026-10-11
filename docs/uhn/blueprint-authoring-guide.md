@@ -780,7 +780,7 @@ export const viewFrontDoor = view({
 });
 ```
 
-When `nameMap` is set, the tile displays `active` or `inactive` name based on the computed active state. The `name` field is still used as the fallback and for search/command palette.
+When `nameMap` is set, the tile displays `active` or `inactive` name based on the computed active state. The `name` field is still used as the fallback and for search/command palette. Voice questions about the view ("is the front door open") read the resolved `nameMap` name. Display values (`stateDisplay` hero/left/right) are read with their `label` and unit for display-only views such as sensors, and for any view when the question names the label ("what is the kitchen timer"), so give them readable labels.
 
 #### Per-Resource Names
 
