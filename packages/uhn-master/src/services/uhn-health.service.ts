@@ -42,7 +42,7 @@ class UhnHealthService extends EventEmitter<UhnHealthEventMap> {
                 id: "uhn:blueprint",
                 message: "Blueprint compile failed",
                 severity: "warn",
-                action: { label: "Go To Blueprints", target: { type: "route", identifier: "unified-home-network", subPath: "/blueprints/upload" } },
+                action: { label: "Go To Blueprints", target: { type: "route", identifier: "unified-home-network", subPath: "/technical/blueprints/upload" } },
             });
         });
         blueprintService.on("blueprintDeactivating", () => {
@@ -51,7 +51,7 @@ class UhnHealthService extends EventEmitter<UhnHealthEventMap> {
                 id: "uhn:blueprint",
                 message: "Deactivating blueprint",
                 severity: "warn",
-                action: { label: "Go To Blueprints", target: { type: "route", identifier: "unified-home-network", subPath: "/blueprints" } },
+                action: { label: "Go To Blueprints", target: { type: "route", identifier: "unified-home-network", subPath: "/technical/blueprints" } },
             });
         });
         blueprintService.on("noActiveBlueprint", () => {
@@ -60,7 +60,7 @@ class UhnHealthService extends EventEmitter<UhnHealthEventMap> {
                 id: "uhn:blueprint",
                 message: "No active blueprint",
                 severity: "error",
-                action: { label: "Go To Blueprints", target: { type: "route", identifier: "unified-home-network", subPath: "/blueprints/upload" } },
+                action: { label: "Go To Blueprints", target: { type: "route", identifier: "unified-home-network", subPath: "/technical/blueprints/upload" } },
             });
         });
 
@@ -109,7 +109,7 @@ class UhnHealthService extends EventEmitter<UhnHealthEventMap> {
                     id: "uhn:resources",
                     message: `Resource validation errors (${validationErrors.length})`,
                     severity: "warn",
-                    action: { label: "Go To Resources", target: { type: "route", identifier: "unified-home-network", subPath: "/resources" } },
+                    action: { label: "Go To Resources", target: { type: "route", identifier: "unified-home-network", subPath: "/technical/resources" } },
                 });
             }
         });
@@ -119,7 +119,7 @@ class UhnHealthService extends EventEmitter<UhnHealthEventMap> {
                 id: "uhn:resources",
                 message: "No resources loaded",
                 severity: "warn",
-                action: { label: "Go To Blueprints", target: { type: "route", identifier: "unified-home-network", subPath: "/blueprints/upload" } },
+                action: { label: "Go To Blueprints", target: { type: "route", identifier: "unified-home-network", subPath: "/technical/blueprints/upload" } },
             });
         });
 
@@ -128,7 +128,7 @@ class UhnHealthService extends EventEmitter<UhnHealthEventMap> {
                 id: "uhn:resources",
                 message: "Could not load resources",
                 severity: "error",
-                action: { label: "Go To Blueprints", target: { type: "route", identifier: "unified-home-network", subPath: "/blueprints/upload" } }
+                action: { label: "Go To Blueprints", target: { type: "route", identifier: "unified-home-network", subPath: "/technical/blueprints/upload" } }
                 ,
             });
         });
