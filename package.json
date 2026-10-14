@@ -5,7 +5,6 @@
     "version": "1.0.0",
     "type": "module",
     "scripts": {
-        "prepare": "husky install",
         "build": "pnpm -r build",
         "clean": "pnpm -r clean  && echo 'NOTE!!!!!!! RUN TWICE IF DEVSERVER IS ON TO FULLY REMOVE EVERYTING'",
         "watch": "pnpm -r --parallel --filter=@uxp/common --filter=@uxp/bff-common --filter=@uxp/ui-lib --filter=@uxp/config --filter=@uxp/config-dev --filter=@h2c/common  --filter=@demo/common --filter=@uhn/common --filter=@uhn/blueprint --filter=@uhn/rule-runtime watch",
@@ -26,23 +25,6 @@
     "keywords": [],
     "author": "",
     "license": "ISC",
-    "lint-staged": {
-        "*.ts": [
-            "eslint --fix",
-            "prettier --write"
-        ],
-        "*.tsx": [
-            "eslint --fix",
-            "prettier --write"
-        ],
-        "*.js": [
-            "eslint --fix",
-            "prettier --write"
-        ]
-    },
-    "dependencies": {
-        "husky": "^9.1.6"
-    },
     "devDependencies": {
         "@babel/core": "^7.26.0",
         "@babel/preset-env": "^7.26.0",
@@ -67,7 +49,6 @@
         "eslint-plugin-react-hooks": "^5.0.0",
         "globals": "^15.12.0",
         "html-webpack-plugin": "^5.6.3",
-        "lint-staged": "^15.2.10",
         "path": "^0.12.7",
         "prettier": "^3.3.3",
         "react": "^18.3.1",

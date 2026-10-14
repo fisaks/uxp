@@ -112,7 +112,7 @@ The home automation system uses an MQTT-based architecture with a master-edge pa
 
 - **TypeScript**: Strict mode, ES2021 target, path aliases defined in root `tsconfig.json` (e.g., `@uxp/common`, `@h2c/common`, `@uhn/blueprint`)
 - **ESLint**: Flat config (ESLint 9). Separate configs for UI (`eslint.ui.config.js`), BFF (`eslint.bff.config.js`), and common (`eslint.common.config.js`) packages. `no-explicit-any` is warn, unused vars with `_` prefix are ignored.
-- **Prettier**: Configured in `.prettierrc`, enforced via lint-staged + Husky pre-commit hooks
+- **Prettier**: Configured in `.prettierrc`, run with `pnpm format` / `pnpm format:check` (no commit hooks)
 - **Environment**: `.env.template` documents all required variables. Copy to `.env.dev`/`.env.prod`. BFFs need `DATABASE_HOST`, `JWT_SECRET`, and app-specific DB credentials.
 
 ## UHN Design Principles
