@@ -1567,6 +1567,9 @@ importers:
       '@uxp/common':
         specifier: workspace:*
         version: link:../uxp-common
+      axios:
+        specifier: ^1.7.8
+        version: 1.8.4
       diff:
         specifier: ^7.0.0
         version: 7.0.0

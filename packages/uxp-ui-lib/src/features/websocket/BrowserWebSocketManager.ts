@@ -1,4 +1,5 @@
 import { nanoid } from "@reduxjs/toolkit";
+import axios from "axios";
 import { createBinaryMessage, ErrorCodes, ErrorDetail, MAGIC_BINARY_PREFIX, WebSocketAction, WebSocketActionUnion, WebSocketMessage, WebSocketResponse } from "@uxp/common";
 
 
@@ -59,6 +60,24 @@ export class WebSocketError<ActionPayloadRequestMap, ActionPayloadResponseMap> e
 }
 
 const INITIAL_RECONNECT_TIMEOUT = 1000;
+
+type RefreshResult = "ok" | "unauthorized" | "error";
+let refreshInFlight: Promise<RefreshResult> | null = null;
+
+/**
+ * Refreshes the access token cookie. The access token is a session cookie that outlives the JWT inside it,
+ * so a reconnecting socket would otherwise present an expired token. Shared across managers so that
+ * concurrent reconnects trigger a single refresh.
+ */
+const refreshAccessToken = (): Promise<RefreshResult> => {
+    if (!refreshInFlight) {
+        refreshInFlight = axios.post("/api/refresh-token", {}, { withCredentials: true })
+            .then((): RefreshResult => "ok")
+            .catch((error): RefreshResult => axios.isAxiosError(error) && error.response?.status === 401 ? "unauthorized" : "error")
+            .finally(() => { refreshInFlight = null; });
+    }
+    return refreshInFlight;
+};
 
 export type ErrorHandlerProps<ActionPayloadRequestMap, ActionPayloadResponseMap> = {
     action: WebSocketActionUnion<ActionPayloadRequestMap, ActionPayloadResponseMap>;
@@ -328,13 +347,25 @@ export class BrowserWebSocketManager<
             maxReconnectAttempts: this.maxReconnectAttempts,
             connected: false
         });
-        this.reconnectTimeoutId = setTimeout(() => {
+        this.reconnectTimeoutId = setTimeout(async () => {
             this.handleReconnect({
                 phase: "trying",
                 reconnectAttempts: this.reconnectAttempts,
                 maxReconnectAttempts: this.maxReconnectAttempts,
                 connected: false
             });
+            if (await refreshAccessToken() === "unauthorized") {
+                console.error("[WebSocket] Session expired (refresh token rejected). Giving up reconnecting.");
+                this.reconnectAttempts = this.maxReconnectAttempts;
+                this.isReconnecting = false;
+                this.handleReconnect({
+                    phase: "failed",
+                    reconnectAttempts: this.reconnectAttempts,
+                    maxReconnectAttempts: this.maxReconnectAttempts,
+                    connected: false
+                });
+                return;
+            }
             this.connect();
         }, delay);
     }

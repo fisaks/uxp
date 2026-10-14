@@ -58,6 +58,7 @@
         "@tiptap/extension-underline": "^2.11.5",
         "@tiptap/react": "^2.11.5",
         "@uxp/common": "workspace:*",
+        "axios": "^1.7.8",
         "diff": "^7.0.0",
         "html2pdf.js": "^0.10.3",
         "luxon": "^3.5.0",

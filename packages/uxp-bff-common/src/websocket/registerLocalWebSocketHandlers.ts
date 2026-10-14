@@ -118,7 +118,7 @@ const setupWebSocketConnection = async (wsStore: GenericServerWebSocketManager, 
             await request.jwtVerify();
             user = request.user as Token;
         } catch (err: unknown) {
-            AppLogger.error(request, {
+            AppLogger.warn(request, {
                 message: "Failed to verify access token in WebSocket connection",
                 error: err,
             });
