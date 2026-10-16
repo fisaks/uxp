@@ -3,12 +3,13 @@ import DeselectIcon from "@mui/icons-material/Deselect";
 import ListAltIcon from "@mui/icons-material/ListAlt";
 import SearchIcon from "@mui/icons-material/Search";
 import { Autocomplete, Badge, Box, IconButton, InputAdornment, Paper, TextField, Typography } from "@mui/material";
-import { isPriceTriggerInfo, isResourceTriggerInfo, RuntimeResource, RuntimeRuleInfo, isLogicalResource, isPhysicalResource } from "@uhn/common";
+import { isPriceTriggerInfo, isResourceTriggerInfo, isScheduleTriggerInfo, RuntimeResource, RuntimeRuleInfo, isLogicalResource, isPhysicalResource } from "@uhn/common";
 import { ReloadIconButton, TooltipIconButton, usePortalContainerRef } from "@uxp/ui-lib";
 import { useEffect, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import { useUHNWebSocket } from "../../../app/UHNAppBrowserWebSocketManager";
 import { selectAllResources, selectResourceById } from "../../resource/resourceSelector";
+import { groupScheduleTriggers } from "../scheduleTriggerGroups";
 import { selectRuntimeStatusById } from "../../runtime-overview/runtimeOverviewSelectors";
 import { triggerEventLabel } from "../../shared/triggerEventLabel";
 import { TechnicalSearchField } from "../../technical/components/TechnicalSearchField";
@@ -43,6 +44,8 @@ const buildSearchText = (rule: RuntimeRuleInfo, resourceById: Record<string, Run
         ...triggerEvents,
         // Price triggers have no resource: make them findable by their label ("price above 15") and by "electricity"
         ...rule.triggers.filter(isPriceTriggerInfo).flatMap(t => [triggerEventLabel(t), "electricity"]),
+        // Schedule triggers have no resource either: make them findable by schedule and phase id
+        ...rule.triggers.filter(isScheduleTriggerInfo).flatMap(t => [t.scheduleId, t.phaseId]),
     ].filter(Boolean).join(" ").toLowerCase();
 };
 
@@ -130,6 +133,12 @@ export const RulePage = () => {
         [selectedPriceRules]
     );
     const priceRuleIds = useMemo(() => selectedPriceRules.map(r => r.id), [selectedPriceRules]);
+
+    // Schedule triggers of the selected rules (no resource either)
+    const scheduleTriggers = useMemo(
+        () => groupScheduleTriggers(allRules.filter(r => selectedRuleIds.has(r.id))),
+        [allRules, selectedRuleIds]
+    );
 
     const refetch = async () => {
         setLoading(true);
@@ -262,6 +271,7 @@ export const RulePage = () => {
                             resourceIds={orderedResourceIds}
                             priceTriggerLabels={priceTriggerLabels}
                             priceRuleIds={priceRuleIds}
+                            scheduleTriggers={scheduleTriggers}
                             hasSelection={selectedRuleIds.size > 0}
                             onRemoveResource={handleRemoveResource}
                             onRemoveAll={handleRemoveAllResources}
@@ -280,6 +290,7 @@ export const RulePage = () => {
                 resourceIds={orderedResourceIds}
                 priceTriggerLabels={priceTriggerLabels}
                 priceRuleIds={priceRuleIds}
+                scheduleTriggers={scheduleTriggers}
                 hasSelection={selectedRuleIds.size > 0}
                 onRemoveResource={handleRemoveResource}
                 onRemoveAll={handleRemoveAllResources}

@@ -69,7 +69,7 @@ export const RuleTile: React.FC<RuleTileProps> = ({ rule, selected, onSelect }) 
                             <Typography key={i} variant="body2" sx={{ fontFamily: "monospace", fontSize: "0.75rem" }}>
                                 {trigger.kind === "schedule" ? (
                                     <TechnicalDeepLink to={`/technical/schedules/${trigger.scheduleId}`}>
-                                        schedule:{trigger.scheduleId}
+                                        schedule:{trigger.scheduleId}:{trigger.phaseId}
                                     </TechnicalDeepLink>
                                 ) : isPriceTriggerInfo(trigger) ? (
                                     <TechnicalDeepLink to="/technical/electricity" state={{ showRuleIds: [rule.id] }}>

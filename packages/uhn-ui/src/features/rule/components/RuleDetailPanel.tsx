@@ -14,6 +14,7 @@ import { formatTime, getPriceColor } from "../../electricity/priceFormat";
 import { useCurrentAndNextSlotPrice } from "../../electricity/useSlotPrices";
 import { selectRuntimeStateByResourceId } from "../../runtime-state/runtimeStateSelector";
 import { TechnicalDeepLink } from "../../shared/TechnicalDeepLink";
+import { ScheduleTriggerGroup } from "../scheduleTriggerGroups";
 
 type RuleDetailPanelProps = {
     resourceIds: string[];
@@ -21,6 +22,8 @@ type RuleDetailPanelProps = {
     priceTriggerLabels: string[];
     /** Ids of the selected rules that have price triggers; the price page preselects them. */
     priceRuleIds: string[];
+    /** The schedules and phases the selected rules react to (schedule triggers have no resource tile either). */
+    scheduleTriggers: ScheduleTriggerGroup[];
     hasSelection: boolean;
     onRemoveResource: (id: string) => void;
     onRemoveAll: () => void;
@@ -106,7 +109,7 @@ const SlotPriceLine: React.FC<{ label: string; slot: ElectricityPriceEntry | und
     </Typography>
 );
 
-export const RuleDetailPanel: React.FC<RuleDetailPanelProps> = ({ resourceIds, priceTriggerLabels, priceRuleIds, hasSelection, onRemoveResource, onRemoveAll, onReorder, resourceById }) => {
+export const RuleDetailPanel: React.FC<RuleDetailPanelProps> = ({ resourceIds, priceTriggerLabels, priceRuleIds, scheduleTriggers, hasSelection, onRemoveResource, onRemoveAll, onReorder, resourceById }) => {
     const portalContainer = usePortalContainerRef();
     const stateById = useSelector(selectRuntimeStateByResourceId);
     const { current: currentSlot, next: nextSlot } = useCurrentAndNextSlotPrice();
@@ -137,6 +140,17 @@ export const RuleDetailPanel: React.FC<RuleDetailPanelProps> = ({ resourceIds, p
 
     return (
         <Box sx={{ p: 2 }}>
+            {scheduleTriggers.length > 0 && (
+                <Box sx={{ mb: 2 }}>
+                    <Typography variant="subtitle2">Schedule triggers</Typography>
+                    {scheduleTriggers.map(({ scheduleId, phaseIds }) => (
+                        <Typography key={scheduleId} variant="body2" sx={{ fontFamily: "monospace", fontSize: "0.75rem" }}>
+                            <TechnicalDeepLink to={`/technical/schedules/${scheduleId}`}>{scheduleId}</TechnicalDeepLink>
+                            {`: ${phaseIds.join(", ")}`}
+                        </Typography>
+                    ))}
+                </Box>
+            )}
             {priceTriggerLabels.length > 0 && (
                 <Box sx={{ mb: 2 }}>
                     <Typography variant="subtitle2">Price triggers</Typography>

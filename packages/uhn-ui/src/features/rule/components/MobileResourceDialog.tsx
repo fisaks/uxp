@@ -2,6 +2,7 @@ import ClearIcon from "@mui/icons-material/Clear";
 import { Box, Dialog, DialogContent, DialogTitle, IconButton } from "@mui/material";
 import { RuntimeResource } from "@uhn/common";
 import React from "react";
+import { ScheduleTriggerGroup } from "../scheduleTriggerGroups";
 import { RuleDetailPanel } from "./RuleDetailPanel";
 
 type MobileResourceDialogProps = {
@@ -12,6 +13,7 @@ type MobileResourceDialogProps = {
     resourceIds: string[];
     priceTriggerLabels: string[];
     priceRuleIds: string[];
+    scheduleTriggers: ScheduleTriggerGroup[];
     hasSelection: boolean;
     onRemoveResource: (id: string) => void;
     onRemoveAll: () => void;
@@ -27,6 +29,7 @@ export const MobileResourceDialog: React.FC<MobileResourceDialogProps> = ({
     resourceIds,
     priceTriggerLabels,
     priceRuleIds,
+    scheduleTriggers,
     hasSelection,
     onRemoveResource,
     onRemoveAll,
@@ -56,6 +59,7 @@ export const MobileResourceDialog: React.FC<MobileResourceDialogProps> = ({
                 resourceIds={resourceIds}
                 priceTriggerLabels={priceTriggerLabels}
                 priceRuleIds={priceRuleIds}
+                scheduleTriggers={scheduleTriggers}
                 hasSelection={hasSelection}
                 onRemoveResource={onRemoveResource}
                 onRemoveAll={onRemoveAll}
