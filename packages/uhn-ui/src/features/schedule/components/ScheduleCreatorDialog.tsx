@@ -443,7 +443,7 @@ const SlotEditor: React.FC<{
                     label="Time" value={parseTime(slot.when.clockTime)}
                     onChange={(v) => v && updateWhen({ clockTime: v.toFormat("HH:mm") })}
                     ampm={false}
-                    slotProps={{ textField: { size: "small", sx: { width: 150, mt: 1 } }, openPickerIcon: { sx: { color: theme.palette.primary.main } }, popper: { container: portalContainer.current } }}
+                    slotProps={{ textField: { size: "small", sx: { width: 150, mt: 1 } }, openPickerIcon: { sx: { color: theme.palette.primary.main } }, popper: { container: portalContainer.current }, dialog: { container: portalContainer.current } }}
                 />
             </Collapse>
             <Collapse in={slot.when.timeMode === "monthly"} timeout={200}>
@@ -456,7 +456,7 @@ const SlotEditor: React.FC<{
                         label="Time" value={parseTime(slot.when.monthlyTime)}
                         onChange={(v) => v && updateWhen({ monthlyTime: v.toFormat("HH:mm") })}
                         ampm={false}
-                        slotProps={{ textField: { size: "small", sx: { width: 130 } }, openPickerIcon: { sx: { color: theme.palette.primary.main } }, popper: { container: portalContainer.current } }}
+                        slotProps={{ textField: { size: "small", sx: { width: 130 } }, openPickerIcon: { sx: { color: theme.palette.primary.main } }, popper: { container: portalContainer.current }, dialog: { container: portalContainer.current } }}
                     />
                 </Box>
             </Collapse>
@@ -474,7 +474,7 @@ const SlotEditor: React.FC<{
                         label="Time" value={parseTime(slot.when.yearlyTime)}
                         onChange={(v) => v && updateWhen({ yearlyTime: v.toFormat("HH:mm") })}
                         ampm={false}
-                        slotProps={{ textField: { size: "small", sx: { width: 130 } }, openPickerIcon: { sx: { color: theme.palette.primary.main } }, popper: { container: portalContainer.current } }}
+                        slotProps={{ textField: { size: "small", sx: { width: 130 } }, openPickerIcon: { sx: { color: theme.palette.primary.main } }, popper: { container: portalContainer.current }, dialog: { container: portalContainer.current } }}
                     />
                 </Box>
             </Collapse>
@@ -508,6 +508,7 @@ const SlotEditor: React.FC<{
                         textField: { size: "small" },
                         openPickerIcon: { sx: { color: theme.palette.primary.main } },
                         popper: { container: portalContainer.current },
+                        dialog: { container: portalContainer.current },
                         toolbar: { toolbarFormat: "d.M.yyyy", sx: { "& .MuiDateTimePickerToolbar-dateContainer > button:first-of-type": { display: "none" } } },
                     }}
                 />
