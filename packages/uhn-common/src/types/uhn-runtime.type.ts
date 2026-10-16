@@ -8,7 +8,7 @@ export type RuntimeRuleTriggerInfo =
   | { kind: "threshold"; resourceId: string; direction: "above" | "below"; threshold: number; hysteresis?: number }
   | { kind: "tap"; resourceId: string }
   | { kind: "longPress"; resourceId: string; thresholdMs: number }
-  | { kind: "timer"; resourceId: string; event: "activated" | "deactivated" }
+  | { kind: "timer"; resourceId: string; event: "started" | "expired" }
   | { kind: "action"; resourceId: string; action: string }
   | { kind: "schedule"; phaseId: string; scheduleId: string }
   | { kind: "priceChanged" }
@@ -333,6 +333,8 @@ export type RuleRuntimeLogicalResourceStateChangedMessage = {
     value: ResourceStateValue;
     timestamp: number;
     details?: ResourceStateDetails;
+    /** When true, the state change does not trigger rule events (e.g. a timer cleared by a rule). */
+    silent?: boolean;
   };
 };
 

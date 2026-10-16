@@ -12,7 +12,7 @@ import type { TriggerEventBus } from "./trigger-event-bus";
 /**
  * Converts state changes into rule trigger events.
  * Listens to stateService "stateChanged" events and emits typed trigger events
- * (activated, deactivated, changed, timerActivated, etc.) to the TriggerEventBus.
+ * (activated, deactivated, changed, timerStarted, etc.) to the TriggerEventBus.
  *
  * Only handles state-based resources. actionInput events bypass this entirely —
  * they arrive via IPC (actionEvent command) and are emitted directly to the

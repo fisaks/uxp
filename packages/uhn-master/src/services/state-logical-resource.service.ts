@@ -55,7 +55,7 @@ class LogicalResourceStateService extends EventEmitter<LogicalResourceStateEvent
             this.handleMqttState(topic, payload);
         });
         ruleRuntimeProcessService.on("onLogicalResourceStateChanged", (msg) => {
-            this.handleLocalState(msg.payload);
+            this.handleLocalState(msg.payload, msg.payload.silent);
         });
     }
 

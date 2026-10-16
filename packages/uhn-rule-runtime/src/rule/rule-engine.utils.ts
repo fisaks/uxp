@@ -67,10 +67,11 @@ export function getTimerEventsFromStateChange(
     const events: TriggerEvent[] = [];
 
     if ((!prev || !prev.value) && next.value === true) {
-        events.push("activated");
+        events.push("timerStarted");
     }
+    // Only natural expiry reaches here: ctx.timers.clear() updates the state silently
     if (prev?.value === true && next.value === false) {
-        events.push("deactivated");
+        events.push("timerExpired");
     }
     return events;
 }

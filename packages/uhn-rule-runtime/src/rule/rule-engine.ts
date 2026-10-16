@@ -280,7 +280,7 @@ export class RuleEngine {
             return trigger.action === event.action;
         }
         if (isTimerTrigger(trigger)) {
-            return trigger.event === event.event;
+            return (trigger.event === "started" ? "timerStarted" : "timerExpired") === event.event;
         }
 
         return false;

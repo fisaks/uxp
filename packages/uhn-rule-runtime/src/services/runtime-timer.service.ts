@@ -73,8 +73,9 @@ export class RuntimeTimerService implements TimerAPI {
             stopAt: existingTimer.state.stopAt,
         };
 
-        this.stateService.update(timer.id, false, now);
-        this.sendLogicalResourceState(clearedState);
+        // A clear cancels the timer: update state without triggering rules (no onTimerExpired).
+        this.stateService.updateSilent(timer.id, false, now);
+        this.sendLogicalResourceState(clearedState, true);
     }
 
     private clearTimeout(timerId: string, timer: InternalTimer | undefined) {
@@ -94,7 +95,7 @@ export class RuntimeTimerService implements TimerAPI {
         return this.timers.get(timer.id)?.state;
     }
 
-    private sendLogicalResourceState(state: TimerRuntimeState) {
+    private sendLogicalResourceState(state: TimerRuntimeState, silent?: boolean) {
         const details: ResourceStateDetails | undefined = state.active
             ? { type: "timer", startedAt: state.startedAt, stopAt: state.stopAt }
             : undefined;
@@ -106,6 +107,7 @@ export class RuntimeTimerService implements TimerAPI {
                 value: state.active,
                 timestamp: Date.now(),
                 ...(details && { details }),
+                ...(silent && { silent }),
             },
         });
     }

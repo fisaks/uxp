@@ -1594,9 +1594,11 @@ export const panelActions = rule({ description: "Handle panel button actions" })
 **Timers:**
 
 ```typescript
-.onTimerActivated(timer)     // Timer started
-.onTimerDeactivated(timer)   // Timer expired
+.onTimerStarted(timer)   // A stopped timer starts (restarting a running timer does not fire it)
+.onTimerExpired(timer)   // The timer ran out
 ```
+
+`ctx.timers.clear(timer)` cancels a timer silently: it triggers no rule, not even `onTimerExpired`. The timer's state still updates, so `ctx.timers.isRunning(timer)` is false right away and the UI shows it as stopped.
 
 **Schedule phases:**
 
@@ -1653,7 +1655,7 @@ The `run` callback receives a context object:
     // Timer control
     ctx.timers.start(timer, minutes(5), "restart");      // "started" | "restarted" | "alreadyRunning"
     ctx.timers.start(timer, minutes(5), "startOnce");    // Won't restart if already running
-    ctx.timers.clear(timer);                             // "cleared" | "notRunning"
+    ctx.timers.clear(timer);                             // "cleared" | "notRunning" — cancels without triggering any rule
     ctx.timers.isRunning(timer);                         // boolean
 
     // Logging
@@ -1790,7 +1792,7 @@ export const pirTurnsOnLight = rule({ description: "PIR turns on light" })
 
 // Rule 2: Timer expires -> turn off light
 export const timerTurnsOffLight = rule({ description: "Timer turns off light" })
-    .onTimerDeactivated(autoOffTimer)
+    .onTimerExpired(autoOffTimer)
     .run(() => [
         ruleAction({ type: "setDigitalOutput", resource: light, value: false }),
     ]);

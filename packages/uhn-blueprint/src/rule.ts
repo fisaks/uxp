@@ -52,8 +52,8 @@ export type TriggerEvent =
     | "changed"
     | "tap"
     | "longPress"
-    | "timerActivated"
-    | "timerDeactivated"
+    | "timerStarted"
+    | "timerExpired"
     | "thresholdAbove"
     | "thresholdBelow"
     | "action"
@@ -95,7 +95,7 @@ export type RuleTrigger =
     | {
         kind: "timer";
         resource: TimerResourceBase;
-        event: "activated" | "deactivated";
+        event: "started" | "expired";
     }
     | {
         kind: "action";
@@ -155,6 +155,7 @@ export type RuleTimers = {
         mode?: "restart" | "startOnce"
     ): "started" | "alreadyRunning" | "restarted";
 
+    /** Cancels the timer. Does not trigger any rule (not even `onTimerExpired`). */
     clear(timer: TimerResourceBase): "cleared" | "notRunning";
 
     isRunning(timer: TimerResourceBase): boolean;
@@ -479,8 +480,10 @@ export type RuleBuilder = {
 
     onAction<TActions extends string>(resource: ActionInputResourceBase<TActions, any>, action: TActions): RuleBuilder;
 
-    onTimerActivated(timer: TimerResourceBase): RuleBuilder;
-    onTimerDeactivated(timer: TimerResourceBase): RuleBuilder;
+    /** Fires when a stopped timer starts. Restarting a running timer does not fire it. */
+    onTimerStarted(timer: TimerResourceBase): RuleBuilder;
+    /** Fires when a timer runs out. Clearing a timer with `ctx.timers.clear()` does not fire it. */
+    onTimerExpired(timer: TimerResourceBase): RuleBuilder;
 
     onSchedulePhase(phase: BlueprintPhase): RuleBuilder;
 
@@ -610,20 +613,20 @@ export function rule(
             return this;
         },
 
-        onTimerActivated(timer) {
+        onTimerStarted(timer) {
             meta.triggers.push({
                 kind: "timer",
                 resource: timer,
-                event: "activated",
+                event: "started",
             });
             return this;
         },
 
-        onTimerDeactivated(timer) {
+        onTimerExpired(timer) {
             meta.triggers.push({
                 kind: "timer",
                 resource: timer,
-                event: "deactivated",
+                event: "expired",
             });
             return this;
         },
