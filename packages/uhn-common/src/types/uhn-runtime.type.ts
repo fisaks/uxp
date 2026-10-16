@@ -1,5 +1,5 @@
 
-import { ActionInputResourceBase, ActionOutputResourceBase, AnalogInputResourceBase, AnalogOutputOption, AnalogOutputResourceBase, BlueprintIcon, DigitalInputResourceBase, DigitalOutputResourceBase, HeroFontSize, LogicalResourceType, PhysicalResourceType, ResourceType, RuntimeRuleAction, ValueColorRule, ValueIconRule, ViewActiveCondition, ViewCommandType, ViewStateAggregation , ScheduleWhen} from "@uhn/blueprint";
+import { DisplayValueFormat, ActionInputResourceBase, ActionOutputResourceBase, AnalogInputResourceBase, AnalogOutputOption, AnalogOutputResourceBase, BlueprintIcon, DigitalInputResourceBase, DigitalOutputResourceBase, HeroFontSize, LogicalResourceType, PhysicalResourceType, ResourceType, RuntimeRuleAction, ValueColorRule, ValueIconRule, ViewActiveCondition, ViewCommandType, ViewStateAggregation , ScheduleWhen} from "@uhn/blueprint";
 import { RuleRuntimeElectricityPriceCommand } from "./uhn-electricity.type";
 // --- Runtime rule serialization (for IPC + overview) ---
 
@@ -496,6 +496,9 @@ export type RuntimeDisplayValue = {
     label?: string;
     icon?: BlueprintIcon;
     unit?: string;
+    format?: DisplayValueFormat;
+    showWhen?: "active" | "inactive" | "always";
+    showWhenFromResourceId?: string;
 };
 
 /** Runtime version of DisplayIcon — resource object resolved to string ID. */

@@ -1,5 +1,5 @@
 import { BlueprintIcon, ResourceType } from "@uhn/blueprint";
-import type { HeroFontSize, ThemePaletteColor } from "@uhn/blueprint";
+import type { DisplayValueFormat, HeroFontSize, ThemePaletteColor } from "@uhn/blueprint";
 import { ResourceStateDetails, ResourceStateValue } from "@uhn/common";
 
 /** A display value item with resolved runtime state, for `left`, `right`, or `hero` slots.
@@ -11,6 +11,7 @@ export type DisplayItemValueState = {
     icon?: BlueprintIcon;
     unit?: string;
     decimalPrecision?: number;
+    format?: DisplayValueFormat;
     value: ResourceStateValue | undefined;
     active: boolean;
     timestamp: number;

@@ -22,6 +22,9 @@ function serializeDisplayValue(item: DisplayValue): RuntimeDisplayValue {
         label: item.label,
         icon: item.icon,
         unit: item.unit,
+        format: item.format,
+        showWhen: item.showWhen,
+        showWhenFromResourceId: item.showWhenFrom?.id,
     };
 }
 

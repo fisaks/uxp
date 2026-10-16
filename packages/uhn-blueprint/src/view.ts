@@ -124,6 +124,11 @@ export type ValueIconRule =
 /** Font size preset for hero values. Default: `"default"` (1.5rem). */
 export type HeroFontSize = "tiny" | "small" | "default" | "large" | "x-large";
 
+/** How a display value is rendered. Omit for the default: a number or on/off, a timer as a countdown.
+ *  - `"clock"`: the value is a time in epoch milliseconds, shown as Helsinki wall-clock time ("22:00").
+ *    0 or no value shows "—". Meant for a virtual analog resource that a rule keeps up to date. */
+export type DisplayValueFormat = "clock";
+
 /** A value display item for `left`, `right`, or `hero` slots.
  *  Shows a formatted resource value with optional label and unit. */
 export type DisplayValue = {
@@ -134,6 +139,14 @@ export type DisplayValue = {
     icon?: BlueprintIcon;
     /** Unit suffix. Falls back to the resource's own unit if omitted. */
     unit?: string;
+    /** How the value is rendered, see `DisplayValueFormat`. */
+    format?: DisplayValueFormat;
+    /** When to show this value: `"active"` (resource is active, a number is active when not 0), `"inactive"` or
+     *  `"always"` (default). */
+    showWhen?: "active" | "inactive" | "always";
+    /** Decide `showWhen` from this resource instead of the value's own. Use it when the value itself can be 0 or
+     *  negative (a price) and another resource tells whether it is relevant. */
+    showWhenFrom?: ResourceBase<ResourceType>;
 };
 
 /** An icon display item for `topLeft`, `topCenter`, `topRight`, or `badge` slots.

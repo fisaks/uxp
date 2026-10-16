@@ -171,6 +171,7 @@ function computeDisplayValue(item: RuntimeDisplayValue, stateMap: StateMap, reso
         icon: item.icon,
         unit: item.unit ?? analog?.unit,
         decimalPrecision: analog?.decimalPrecision,
+        format: item.format,
         value,
         active,
         timestamp: stateEntry?.timestamp ?? 0,
@@ -217,14 +218,22 @@ function computeStateDisplay(
 ): DisplayItemsState {
     if (!view.stateDisplay) return EMPTY_DISPLAY_ITEMS_STATE;
     const sd = view.stateDisplay;
+    const displayValues = (items: RuntimeDisplayValue[] | undefined): DisplayItemValueState[] => (items ?? [])
+        .map((item) => {
+            const state = computeDisplayValue(item, stateMap, resourceMap);
+            const source = item.showWhenFromResourceId ? isResourceActive(stateMap[item.showWhenFromResourceId]?.value) : state.active;
+            return { state, visible: item.showWhen === "active" ? source : item.showWhen === "inactive" ? !source : true };
+        })
+        .filter(({ visible }) => visible)
+        .map(({ state }) => state);
     return {
         topLeft: (sd.topLeft ?? []).map(i => computeDisplayIcon(i, stateMap, resourceMap)),
         topCenter: (sd.topCenter ?? []).map(i => computeDisplayIcon(i, stateMap, resourceMap)),
         topRight: (sd.topRight ?? []).map(i => computeDisplayIcon(i, stateMap, resourceMap)),
-        left: (sd.left ?? []).map(i => computeDisplayValue(i, stateMap, resourceMap)),
-        right: (sd.right ?? []).map(i => computeDisplayValue(i, stateMap, resourceMap)),
+        left: displayValues(sd.left),
+        right: displayValues(sd.right),
         badge: (sd.badge ?? []).map(i => computeDisplayIcon(i, stateMap, resourceMap)),
-        hero: (sd.hero ?? []).map(i => computeDisplayValue(i, stateMap, resourceMap)),
+        hero: displayValues(sd.hero),
         heroSize: sd.heroSize,
     };
 }

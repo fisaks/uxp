@@ -6,6 +6,7 @@ import { getBlueprintIcon } from "../view/blueprintIconMap";
 import type { HeroFontSize } from "@uhn/blueprint";
 import { DisplayItemIconState, DisplayItemValueState } from "./tile.types";
 import { formatAnalogValue } from "./formatAnalogValue";
+import { formatClockValue } from "./formatClockValue";
 
 
 /* ------------------------------------------------------------------ */
@@ -26,6 +27,8 @@ export const ValueItemCompact: React.FC<{ item: DisplayItemValueState; align: "l
         } else {
             formatted = "—";
         }
+    } else if (item.format === "clock") {
+        formatted = formatClockValue(item.value);
     } else if (item.value == null) {
         formatted = "—";
     } else if (typeof item.value === "boolean") {
@@ -190,6 +193,8 @@ const HeroValue: React.FC<{ item: DisplayItemValueState; fontSize: string }> = (
         } else {
             formatted = "—";
         }
+    } else if (item.format === "clock") {
+        formatted = formatClockValue(item.value);
     } else if (item.value == null) {
         formatted = "—";
     } else if (typeof item.value === "boolean") {

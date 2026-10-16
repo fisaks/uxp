@@ -1,6 +1,7 @@
 import { ResourceStateValue, RuntimeResource } from "@uhn/common";
 import { toDeviceKey } from "../device-availability/useViewAvailability";
 import { formatAnalogValue } from "../shared/formatAnalogValue";
+import { formatClockValue } from "../shared/formatClockValue";
 import { DisplayItemValueState } from "../shared/tile.types";
 import { isAnalogResource, ViewWithState } from "../view/viewSelectors";
 
@@ -46,7 +47,7 @@ export function answerViewStatus(vws: ViewWithState, ctx: StatusAnswerContext, q
 
     const values = [...stateDisplay.hero, ...stateDisplay.left, ...stateDisplay.right].filter((v) => v.value != null);
     const readValues = (read: DisplayItemValueState[]) => {
-        const parts = read.map((v) => `${v.label ? `${v.label} ` : ""}${spokenValue(v.value, v.unit, v.decimalPrecision)}`);
+        const parts = read.map((v) => `${v.label ? `${v.label} ` : ""}${v.format === "clock" ? formatClockValue(v.value) : spokenValue(v.value, v.unit, v.decimalPrecision)}`);
         return `${name}: ${parts.join(", ")}.`;
     };
 

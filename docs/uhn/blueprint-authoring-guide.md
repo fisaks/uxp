@@ -947,6 +947,9 @@ Secondary information shown on the tile, organized by **slots** — named positi
 | `label` | Text label shown above value in flanking slots (omitted in hero) |
 | `icon` | Icon shown instead of label text — label becomes tooltip |
 | `unit` | Unit suffix (falls back to resource's own unit if omitted) |
+| `format` | `"clock"`: the value is a time in epoch milliseconds, shown as Helsinki wall-clock time (`22:00`); 0 shows `—` |
+| `showWhen` | `"active"` (shown when the resource is active; a number is active when it is not 0), `"inactive"`, or `"always"` (default) |
+| `showWhenFrom` | Decide `showWhen` from this resource instead of the value's own. Use it when the value can be 0 or negative (a price) and another resource tells whether it is relevant |
 
 **DisplayIcon** (for `topLeft`, `topCenter`, `topRight`, `badge` slots):
 
