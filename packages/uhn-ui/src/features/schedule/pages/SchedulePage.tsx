@@ -12,12 +12,15 @@ import React, { useCallback, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import { ScheduleCreatorDialog, EditScheduleData } from "../components/ScheduleCreatorDialog";
 import { ScheduleDetailPopover, ScheduleDetailData, SlotActionInfo } from "../components/ScheduleDetailPopover";
+import { locationItemLinks, rulesUsingSchedule } from "../scheduleLinks";
 import { selectBlueprintSchedules, selectMuteByScheduleId, selectUserSchedules } from "../scheduleSelectors";
 import { describeWhen } from "../schedule.util";
 import { useUHNWebSocket } from "../../../app/UHNAppBrowserWebSocketManager";
 import { selectAllViews } from "../../view/viewSelectors";
 import { selectAllResources } from "../../resource/resourceSelector";
 import { selectAllScenes } from "../../scene/sceneSelectors";
+import { selectAllRules } from "../../rule/ruleSelectors";
+import { selectAllLocations } from "../../location/locationSelectors";
 import { TechnicalSearchField } from "../../technical/components/TechnicalSearchField";
 import { useDeepLinkHighlight } from "../../technical/hooks/useDeepLinkHighlight";
 import { SearchIndexEntry, useTechnicalSearch } from "../../technical/hooks/useTechnicalSearch";
@@ -224,6 +227,8 @@ export const SchedulePage: React.FC = () => {
     const allViews = useSelector(selectAllViews);
     const allResources = useSelector(selectAllResources);
     const allScenes = useSelector(selectAllScenes);
+    const allRules = useSelector(selectAllRules);
+    const allLocations = useSelector(selectAllLocations);
     const { sendMessageAsync } = useUHNWebSocket();
     const { highlightedTileId, highlightedTileRef, scrollToHighlightedTile } = useDeepLinkHighlight();
 
@@ -252,6 +257,10 @@ export const SchedulePage: React.FC = () => {
             mute: item.mute,
             dbId: item.dbId,
         };
+        if (item.source === "blueprint") {
+            data.rules = rulesUsingSchedule(allRules, item.id);
+            data.locationItems = locationItemLinks(blueprintSchedules.find(s => s.id === item.id)?.locationItems, allLocations);
+        }
         if (item.source === "user") {
             const userSchedule = userSchedules.find(s => s.scheduleId === item.id);
             if (userSchedule) {
@@ -267,7 +276,7 @@ export const SchedulePage: React.FC = () => {
         const rect = anchor.getBoundingClientRect();
         setDetailAnchorPos({ top: rect.bottom, left: rect.left + rect.width / 2 });
         setDetailData(data);
-    }, [userSchedules]);
+    }, [userSchedules, blueprintSchedules, allRules, allLocations]);
 
     const allItems = useMemo((): ScheduleItem[] => {
         const items: ScheduleItem[] = [];

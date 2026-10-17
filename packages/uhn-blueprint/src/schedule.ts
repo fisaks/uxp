@@ -19,6 +19,8 @@
 //     .phase("lightsOn", { kind: "sun", event: "dusk", offsetMinutes: -15 })
 //     .phase("lightsOff", cron.daily().at("23:00"));
 
+import { type LocationItem, type LocationItemInput, resolveLocationItem } from "./location";
+
 /* ------------------------------------------------------------------ */
 /* Types                                                               */
 /* ------------------------------------------------------------------ */
@@ -53,6 +55,9 @@ export type BlueprintSchedule<TPhases extends Record<string, BlueprintPhase> = R
     name?: string;
     description?: string;
     keywords?: string[];
+    /** The location items (views, scenes or resources) this schedule is about. The schedule's popup links to them
+     *  in the locations view. */
+    locationItems?: LocationItem[];
     phases: TPhases;
     /** Grace window in ms. If the system was down and missed a fire, it will still
      *  fire if the missed time is within this window. 0 = always skip. Default: 15 minutes. */
@@ -138,6 +143,8 @@ export function schedule(props?: {
     name?: string;
     description?: string;
     keywords?: string[];
+    /** Location items (views, scenes or resources) this schedule is about, shown as links in the schedule's popup. */
+    locationItems?: LocationItemInput[];
 }): ScheduleBuilder {
     const phases: Record<string, BlueprintPhase> = {};
     let missedGraceMs = DEFAULT_MISSED_GRACE_MS;
@@ -177,6 +184,7 @@ export function schedule(props?: {
                 name: props?.name,
                 description: props?.description,
                 keywords: props?.keywords,
+                locationItems: props?.locationItems?.map(resolveLocationItem),
                 phases,
                 missedGraceMs,
             };

@@ -8,6 +8,7 @@ import type { RuntimeLocationService } from "./services/runtime-location.service
 import type { RuntimeResourceService } from "./services/runtime-resource.service";
 import type { RuntimeRulesService } from "./services/runtime-rules.service";
 import type { RuntimeSceneService } from "./services/runtime-scene.service";
+import type { RuntimeScheduleService } from "./services/runtime-schedule.service";
 import type { RuntimeViewService } from "./services/runtime-view.service";
 
 type Services = {
@@ -16,6 +17,7 @@ type Services = {
     viewService: RuntimeViewService;
     locationService: RuntimeLocationService;
     sceneService: RuntimeSceneService;
+    scheduleService: RuntimeScheduleService;
 };
 
 /**
@@ -44,6 +46,7 @@ export async function loadAndApplyDevFilter(blueprintRoot: string, services: Ser
     services.rulesService.filterByIds(ruleIds);
     services.viewService.filterByIds(viewIds);
     services.sceneService.filterByIds(sceneIds);
+    services.scheduleService.filterByIds(new Set(devFilter.schedules?.map(s => s.build().id!) ?? []));
     const locationItemKeys = new Set<string>();
     for (const id of resourceIds) locationItemKeys.add(`resource:${id}`);
     for (const id of viewIds) locationItemKeys.add(`view:${id}`);
@@ -142,10 +145,10 @@ function expandComplexDependencies(ids: Set<string>, resourceService: RuntimeRes
 }
 
 function logSummary(name: string, services: Services): void {
-    const { resourceService, rulesService, viewService, sceneService, locationService } = services;
+    const { resourceService, rulesService, viewService, sceneService, locationService, scheduleService } = services;
     runtimeOutput.log({
         level: "info",
         component: "DevFilter",
-        message: `Dev filter "${name}": ${resourceService.list().length} resources, ${viewService.list().length} views, ${rulesService.list().length} rules, ${sceneService.list().length} scenes, ${locationService.list().length} locations`,
+        message: `Dev filter "${name}": ${resourceService.list().length} resources, ${viewService.list().length} views, ${rulesService.list().length} rules, ${sceneService.list().length} scenes, ${scheduleService.list().length} schedules, ${locationService.list().length} locations`,
     });
 }

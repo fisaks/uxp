@@ -31,6 +31,9 @@ import {
  * Without this, scene imports appear as dead-ends and the rule may be
  * incorrectly assigned to an edge that cannot execute the scene's commands.
  *
+ * Schedule files (when `schedulesTmpDir` is provided) are skipped: a schedule only says when a rule fires, and it may
+ * import views or resources for its `locationItems` links, which must not decide where the rule runs.
+ *
  * Manual overrides (author-set executionTarget) are always respected.
  */
 export async function resolveExecutionTargets(opts: {
@@ -39,8 +42,9 @@ export async function resolveExecutionTargets(opts: {
     tsconfigPath: string;
     factoryTmpPath: string;
     scenesTmpDir?: string;
+    schedulesTmpDir?: string;
 }): Promise<void> {
-    const { resourcesTmpDir, rulesTmpDir, tsconfigPath, factoryTmpPath, scenesTmpDir } = opts;
+    const { resourcesTmpDir, rulesTmpDir, tsconfigPath, factoryTmpPath, scenesTmpDir, schedulesTmpDir } = opts;
 
     const project = new Project({
         tsConfigFilePath: tsconfigPath,
@@ -80,6 +84,8 @@ export async function resolveExecutionTargets(opts: {
 
             if (!resolvedFile) continue;
 
+            if (schedulesTmpDir && isPathWithinParent(resolvedFile.getFilePath(), schedulesTmpDir)) continue;
+
             if (isPathWithinParent(resolvedFile.getFilePath(), resourcesTmpDir)) {
                 // Direct resource import — collect targets for each named import
                 for (const named of imp.getNamedImports()) {
@@ -89,7 +95,7 @@ export async function resolveExecutionTargets(opts: {
                         fileTargets.add(target);
                     }
                 }
-            } else if (touchesResources(resolvedFile, resourcesTmpDir, project, new Set())) {
+            } else if (touchesResources(resolvedFile, resourcesTmpDir, project, new Set(), schedulesTmpDir)) {
                 // Local non-resource import that indirectly touches resources
                 console.log(`ℹ ${relPath} imports from non-resource module that touches resources → defaulting to master`);
                 forceToMaster = true;
@@ -327,7 +333,8 @@ function touchesResources(
     sf: SourceFile,
     resourcesDir: string,
     project: Project,
-    visited: Set<string>
+    visited: Set<string>,
+    ignoredDir?: string
 ): boolean {
     const filePath = sf.getFilePath();
     if (visited.has(filePath)) return false;
@@ -341,11 +348,13 @@ function touchesResources(
         const resolvedFile = findSourceFile(project, resolved);
         if (!resolvedFile) continue;
 
+        if (ignoredDir && isPathWithinParent(resolvedFile.getFilePath(), ignoredDir)) continue;
+
         if (isPathWithinParent(resolvedFile.getFilePath(), resourcesDir)) {
             return true;
         }
 
-        if (touchesResources(resolvedFile, resourcesDir, project, visited)) {
+        if (touchesResources(resolvedFile, resourcesDir, project, visited, ignoredDir)) {
             return true;
         }
     }

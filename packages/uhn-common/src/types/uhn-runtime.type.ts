@@ -390,6 +390,8 @@ export type RuntimeSchedule = {
     name: string;
     description?: string;
     keywords?: string[];
+    /** The location items (views, scenes or resources) the schedule is about, for links in the schedule's popup. */
+    locationItems?: RuntimeLocationItem[];
     phases: RuntimePhase[];
     missedGraceMs: number;
 };

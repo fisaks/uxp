@@ -1414,12 +1414,14 @@ export const scheduleCarportEngineHeater = schedule({ name: "Carport Engine Heat
     .missedGrace(minutes(60));
 ```
 
-- **`schedule()`** creates a builder with an optional `name`, `description`, and `keywords`
+- **`schedule()`** creates a builder with an optional `name`, `description`, `keywords`, and `locationItems`
 - **`.phase(name, when)`** adds a named phase with a time trigger
 - **`.missedGrace(ms)`** sets the grace window — if the system was down when a phase should have fired, it will still fire if the missed time is within this window (default: 15 minutes)
 - **`.noGrace()`** shorthand for `.missedGrace(0)` — never catch up missed phases
 
 Phase names become typed properties on the schedule object: `scheduleCarportEngineHeater.phases.on` and `scheduleCarportEngineHeater.phases.off`.
+
+`locationItems` lists the views, scenes or resources (the same refs a location takes) that the schedule is about, for example `locationItems: [viewCarportEngineHeater]`. The schedule's popup then shows, in an expandable "Used by" section, links to the rules that use the schedule and to those tiles in the locations view, where the tile's menu can create a user schedule. A schedule importing a view does not change where the rules that use it run.
 
 ### Time Triggers
 

@@ -1,5 +1,5 @@
 import type { BlueprintPhase, BlueprintSchedule, ScheduleBuilder } from "@uhn/blueprint";
-import { humanizeScheduleId, RuntimePhase, RuntimeSchedule } from "@uhn/common";
+import { humanizeScheduleId, RuntimeLocationItem, RuntimePhase, RuntimeSchedule } from "@uhn/common";
 import fs from "fs-extra";
 import path from "path";
 import { runtimeOutput } from "../io/runtime-output";
@@ -38,6 +38,7 @@ function serializeSchedule(schedule: BlueprintSchedule): RuntimeSchedule {
         name: schedule.name ?? humanizeScheduleId(schedule.id!),
         description: schedule.description,
         keywords: schedule.keywords,
+        locationItems: schedule.locationItems?.map((item): RuntimeLocationItem => ({ kind: item.kind, refId: item.ref.id! })),
         phases: Object.values(schedule.phases).map(phase => serializePhase(phase, schedule.id!)),
         missedGraceMs: schedule.missedGraceMs,
     };
@@ -83,7 +84,12 @@ export class RuntimeScheduleService {
     private constructor(schedules: BlueprintSchedule[]) {
         this.schedules = schedules;
         this.phaseById = new Map();
-        for (const s of schedules) {
+        this.indexPhases();
+    }
+
+    private indexPhases() {
+        this.phaseById.clear();
+        for (const s of this.schedules) {
             for (const phase of Object.values(s.phases)) {
                 phase.scheduleId = s.id;
                 this.phaseById.set(`${s.id}.${phase.id}`, phase);
@@ -104,6 +110,12 @@ export class RuntimeScheduleService {
     /** Resolve a phase by composite key (scheduleId.phaseId). */
     getPhase(scheduleId: string, phaseId: string): BlueprintPhase | undefined {
         return this.phaseById.get(`${scheduleId}.${phaseId}`);
+    }
+
+    /** Reduce to a subset of schedules by ID. Used by dev-filter to restrict which schedules are active during development. */
+    filterByIds(ids: Set<string>): void {
+        this.schedules = this.schedules.filter(s => ids.has(s.id!));
+        this.indexPhases();
     }
 
     /** Serialized list for IPC transport. */

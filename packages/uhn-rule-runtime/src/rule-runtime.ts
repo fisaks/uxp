@@ -52,8 +52,8 @@ async function main() {
         RuntimeSceneService.create(scenesDir),
     ]);
 
-    // Dev filter: if dist/dev-filters/dev-filter.js exists, reduce to a subset of resources/views/rules/scenes/locations
-    await loadAndApplyDevFilter(blueprintRoot, { resourceService, rulesService, viewService, locationService, sceneService });
+    // Dev filter: if dist/dev-filters/dev-filter.js exists, reduce to a subset of resources/views/rules/scenes/schedules/locations
+    await loadAndApplyDevFilter(blueprintRoot, { resourceService, rulesService, viewService, locationService, sceneService, scheduleService });
 
     const stateService = new RuntimeStateService();
     const triggerEventBus = new TriggerEventBus();

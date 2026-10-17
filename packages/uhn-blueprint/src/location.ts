@@ -46,7 +46,8 @@ export type BlueprintLocation = {
 /* Factory                                                             */
 /* ------------------------------------------------------------------ */
 
-function resolveItem(input: LocationItemInput): LocationItem {
+/** Resolve a bare or wrapped ref to a location item (used by location() and schedule()). */
+export function resolveLocationItem(input: LocationItemInput): LocationItem {
     // Wrapped { ref, name? }
     if ("ref" in input && typeof input.ref === "object") {
         const ref = input.ref;
@@ -74,6 +75,6 @@ export function location(props: Omit<BlueprintLocation, "items"> & { items: Loca
     return {
         ...props,
         icon: props.icon ?? "room:generic",
-        items: props.items.map(resolveItem),
+        items: props.items.map(resolveLocationItem),
     };
 }

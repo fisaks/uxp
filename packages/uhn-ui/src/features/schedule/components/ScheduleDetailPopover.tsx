@@ -1,7 +1,9 @@
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import CloseIcon from "@mui/icons-material/Close";
+import ExpandLessIcon from "@mui/icons-material/ExpandLess";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import VolumeOffIcon from "@mui/icons-material/VolumeOff";
-import { Box, Button, Divider, IconButton, Popover, Typography } from "@mui/material";
+import { Box, Button, Collapse, Divider, IconButton, Popover, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterLuxon } from "@mui/x-date-pickers/AdapterLuxon";
@@ -16,6 +18,7 @@ import { Link } from "react-router-dom";
 import { formatDateTime } from "../../shared/dateTimeFormat";
 import { useMuteScheduleMutation, useUnmuteScheduleMutation, useDeleteScheduleMutation } from "../schedule.api";
 import { describeWhen } from "../schedule.util";
+import { ScheduleLinkInfo } from "../scheduleLinks";
 import { selectMuteByScheduleId } from "../scheduleSelectors";
 
 /* ------------------------------------------------------------------ */
@@ -46,6 +49,10 @@ export type ScheduleDetailData = {
     phases: PhaseInfo[];
     slots?: SlotInfo[];
     missedGraceMs?: number;
+    /** Rules that react to the schedule's phases (blueprint schedules). */
+    rules?: ScheduleLinkInfo[];
+    /** Tiles in the locations view the schedule is about (blueprint schedules). */
+    locationItems?: ScheduleLinkInfo[];
     mute?: ScheduleMuteInfo;
     dbId?: number;
     createdBy?: string;
@@ -70,6 +77,28 @@ const SectionHeader: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 );
 
 /* ------------------------------------------------------------------ */
+/* Links to rules and location items                                   */
+/* ------------------------------------------------------------------ */
+
+const LinkList: React.FC<{ title: string; links: ScheduleLinkInfo[]; onNavigate: () => void }> = ({ title, links, onNavigate }) => (
+    <>
+        <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>{title}</Typography>
+        {links.map(({ label, link }) => (
+            <Typography
+                key={link}
+                component={Link}
+                to={link}
+                variant="caption"
+                onClick={onNavigate}
+                sx={{ display: "block", pl: 1, fontSize: "0.8rem", color: "primary.main", textDecoration: "none", "&:hover": { textDecoration: "underline" } }}
+            >
+                {label}
+            </Typography>
+        ))}
+    </>
+);
+
+/* ------------------------------------------------------------------ */
 /* Popover                                                             */
 /* ------------------------------------------------------------------ */
 
@@ -82,6 +111,7 @@ export const ScheduleDetailPopover: React.FC<ScheduleDetailPopoverProps> = ({ da
     const [muteUntilValue, setMuteUntilValue] = useState<DateTime | null>(null);
     const [deleteConfirm, setDeleteConfirm] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [relatedOpen, setRelatedOpen] = useState(false);
     const [muteSchedule] = useMuteScheduleMutation();
     const [unmuteSchedule] = useUnmuteScheduleMutation();
     const [deleteSchedule] = useDeleteScheduleMutation();
@@ -126,6 +156,10 @@ export const ScheduleDetailPopover: React.FC<ScheduleDetailPopoverProps> = ({ da
             setError("Failed to delete schedule");
         }
     }, [data.dbId, onClose, deleteSchedule]);
+
+    const rules = data.rules ?? [];
+    const locationItems = data.locationItems ?? [];
+    const hasRelated = rules.length > 0 || locationItems.length > 0;
 
     const graceLabel = data.missedGraceMs != null
         ? data.missedGraceMs === 0 ? "Skip if missed" : `${Math.round(data.missedGraceMs / 60_000)} min`
@@ -278,6 +312,27 @@ export const ScheduleDetailPopover: React.FC<ScheduleDetailPopoverProps> = ({ da
                 </Show>
             </LocalizationProvider>
             </Box>
+
+            {/* Rules and location items (expandable, last) */}
+            <Show when={hasRelated}>
+                <Box
+                    onClick={() => setRelatedOpen(open => !open)}
+                    sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", mt: 1.5 }}
+                >
+                    <Typography variant="caption" sx={{ fontWeight: 600, color: "text.secondary", textTransform: "uppercase", letterSpacing: 0.5 }}>
+                        Used by
+                    </Typography>
+                    {relatedOpen ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
+                </Box>
+                <Collapse in={relatedOpen}>
+                    <Show when={locationItems.length > 0}>
+                        <LinkList title="Location items" links={locationItems} onNavigate={onClose} />
+                    </Show>
+                    <Show when={rules.length > 0}>
+                        <LinkList title="Rules" links={rules} onNavigate={onClose} />
+                    </Show>
+                </Collapse>
+            </Show>
 
             <Show when={error}>
                 <Typography variant="caption" color="error" sx={{ mt: 1, display: "block" }}>

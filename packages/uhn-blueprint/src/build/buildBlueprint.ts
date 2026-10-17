@@ -165,6 +165,7 @@ export async function buildBlueprint(projectRoot: string, options?: { devFilter?
         tsconfigPath,
         factoryTmpPath: factoryTmp,
         scenesTmpDir: await fs.pathExists(scenesTmp) ? scenesTmp : undefined,
+        schedulesTmpDir: await fs.pathExists(schedulesTmp) ? schedulesTmp : undefined,
     });
 
     // 3.6) Auto-inject emitsTap on complex resources used in .onTap() triggers
