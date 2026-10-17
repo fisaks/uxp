@@ -1,8 +1,13 @@
 import { DeviceAvailabilityEntry } from "@uhn/common";
-import { AppLogger } from "@uxp/bff-common";
+import { AppLogger, runBackgroundTask } from "@uxp/bff-common";
 import { EventEmitter } from "events";
+import { DateTime } from "luxon";
+import { DeviceAvailabilityEntity } from "../db/entities/DeviceAvailabilityEntity";
+import { DeviceAvailabilityRepository } from "../repositories/device-availability.repository";
+import { nextAvailability, StoredAvailability } from "../util/availability-change.util";
 import { parseMqttTopic } from "../util/mqtt-topic.util";
 import { subscriptionService } from "./subscription.service";
+const { AppDataSource } = require("../db/typeorm.config");
 
 type AdapterInfo = { name: string; type: string };
 
@@ -26,6 +31,11 @@ type DeviceAvailabilityEventMap = {
 
 class DeviceAvailabilityServiceImpl extends EventEmitter<DeviceAvailabilityEventMap> {
     private cache = new Map<string, DeviceAvailabilityEntry>();
+    // Last known availability and when it changed, kept in the database so it survives a restart: "edge:device" → record
+    private stored = new Map<string, StoredAvailability>();
+    // Availability messages arrive from MQTT as soon as the master connects, before the stored records are loaded
+    private storedLoaded = false;
+    private pendingMessages: Array<{ topic: string; payload: string | null }> = [];
     // Known infrastructure adapters per edge: "edge:adapterName" → type
     private adapters = new Map<string, string>();
 
@@ -65,7 +75,41 @@ class DeviceAvailabilityServiceImpl extends EventEmitter<DeviceAvailabilityEvent
         AppLogger.info({ message: `[DeviceAvailability] Adapters updated for edge '${edge}'`, object: { count: payload.adapters.length, adapters: payload.adapters.map(a => a.name) } });
     }
 
+    /** Loads the stored availability records, then handles the availability messages that arrived in the meantime. */
+    async start() {
+        try {
+            const rows = await runBackgroundTask(AppDataSource, () => DeviceAvailabilityRepository.findAll());
+            for (const row of rows) {
+                this.stored.set(`${row.edge}:${row.device}`, { available: row.available, changedAt: row.changedAt.toMillis() });
+            }
+            AppLogger.info({ message: `[DeviceAvailability] Loaded ${rows.length} stored availability record(s)` });
+        } catch (error) {
+            // Without the records every device simply gets the time it is first seen
+            AppLogger.error({ message: `[DeviceAvailability] Failed to load stored availability records:`, error });
+        }
+        this.storedLoaded = true;
+        for (const { topic, payload } of this.pendingMessages.splice(0)) {
+            this.processAvailabilityMessage(topic, payload);
+        }
+    }
+
     private handleAvailabilityMessage(topic: string, payload: string | null) {
+        if (!this.storedLoaded) {
+            this.pendingMessages.push({ topic, payload });
+            return;
+        }
+        this.processAvailabilityMessage(topic, payload);
+    }
+
+    private persist(edge: string, device: string, record: StoredAvailability) {
+        runBackgroundTask(AppDataSource, () => DeviceAvailabilityRepository.save(
+            new DeviceAvailabilityEntity({ edge, device, available: record.available, changedAt: DateTime.fromMillis(record.changedAt) }),
+        )).catch((error) => {
+            AppLogger.error({ message: `[DeviceAvailability] Failed to store availability of ${edge}:${device}:`, error });
+        });
+    }
+
+    private processAvailabilityMessage(topic: string, payload: string | null) {
         // Topic: uhn/{edge}/device/{device}/availability
         const parsed = parseMqttTopic(topic, 5);
         if (!parsed) return;
@@ -78,16 +122,20 @@ class DeviceAvailabilityServiceImpl extends EventEmitter<DeviceAvailabilityEvent
         const available = payload.trim() === "online";
 
         const key = `${edge}:${device}`;
-        const existing = this.cache.get(key);
+        // The same status as stored keeps the stored time, also after a restart of the master
+        const { entry: record, changed } = nextAvailability(this.stored.get(key), available, Date.now());
+        this.stored.set(key, record);
+        if (changed) this.persist(edge, device, record);
 
-        // Only emit on actual change
+        // Only emit on actual change (the first message after a start is announced even if it matches the stored one)
+        const existing = this.cache.get(key);
         if (existing && existing.available === available) return;
 
         const entry: DeviceAvailabilityEntry = {
             edge,
             device,
             available,
-            updatedAt: Date.now(),
+            updatedAt: record.changedAt,
         };
 
         this.cache.set(key, entry);

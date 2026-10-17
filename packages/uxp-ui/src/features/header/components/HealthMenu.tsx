@@ -1,4 +1,4 @@
-import { Box, Button, Divider, Menu, Typography } from "@mui/material";
+import { Box, Button, Divider, Link, Menu, Typography } from "@mui/material";
 import { SystemAppMeta } from "@uxp/common";
 import React, { useCallback, useState } from "react";
 import { useSelector } from "react-redux";
@@ -107,9 +107,23 @@ export const HealthMenu: React.FC<HealthMenuProps> = ({ anchorEl, onClose }) => 
                                                         : "text.disabled",
                                         }}
                                     />
-                                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                                        {n.message}
-                                    </Typography>
+                                    {n.link ? (
+                                        <Link
+                                            component="button"
+                                            variant="body2"
+                                            underline="hover"
+                                            sx={{ mt: 0.5, textAlign: "left" }}
+                                            onClick={() => {
+                                                uxpNavigate(n.link!);
+                                                onClose();
+                                            }}>
+                                            {n.message}
+                                        </Link>
+                                    ) : (
+                                        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                                            {n.message}
+                                        </Typography>
+                                    )}
                                 </Box>
 
                                 <Box sx={{ display: "flex", gap: 1, mt: 1 }}>

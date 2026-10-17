@@ -1,5 +1,6 @@
-import { UhnHealthId, UhnHealthItem, UhnHealthSnapshot } from "@uhn/common";
+import { DeviceAvailabilityEntry, UhnHealthId, UhnHealthItem, UhnHealthSnapshot } from "@uhn/common";
 import EventEmitter from "events";
+import { deviceHealthId, deviceHealthItem, MonitoredDeviceKind } from "../util/device-health.util";
 import { parseMqttTopic } from "../util/mqtt-topic.util";
 import { blueprintResourceService } from "./blueprint-resource.service";
 import { blueprintRuntimeSupervisorService } from "./blueprint-runtime-supervisor.service";
@@ -220,22 +221,14 @@ class UhnHealthService extends EventEmitter<UhnHealthEventMap> {
             this.setSuppressByPrefix("uhn:edge:", ":blueprint");
         });
 
-        // ── Device availability (infrastructure adapters only) ──
-        deviceAvailabilityService.on("availabilityChanged", (entry) => {
-            if (!deviceAvailabilityService.isAdapter(entry.edge, entry.device)) return;
-
-            const deviceId: UhnHealthId = `uhn:edge:${entry.edge}:device:${entry.device}`;
-            if (entry.available) {
-                this.remove(deviceId);
-            } else {
-                this.upsert({
-                    id: deviceId,
-                    message: `${entry.device} on edge '${entry.edge}' is offline`,
-                    severity: "error",
-                    action: { label: "Open System Panel", target: { type: "hash", identifier: "system-panel", subPath: "uhn" } },
-                });
-            }
-        });
+        // ── Device availability (infrastructure adapters and battery devices) ──
+        // A mains-powered Zigbee device is offline whenever its mains is switched off, so it raises no health item.
+        // A battery device (one with a battery resource in the blueprint) should always be online.
+        deviceAvailabilityService.on("availabilityChanged", (entry) => this.syncDeviceHealth(entry));
+        // The blueprint tells which devices are battery devices: re-evaluate every known device when it changes
+        const syncAllDevices = () => deviceAvailabilityService.getSnapshot().forEach((entry) => this.syncDeviceHealth(entry));
+        blueprintResourceService.on("resourcesReloaded", syncAllDevices);
+        blueprintResourceService.on("resourcesCleared", syncAllDevices);
 
         // Suppress device health items when the edge itself is offline
         edgeIdentityService.on("edgeStatusChanged", (edgeId, status) => {
@@ -245,6 +238,21 @@ class UhnHealthService extends EventEmitter<UhnHealthEventMap> {
                 this.clearSuppressByPrefix(`uhn:edge:${edgeId}:device:`, "");
             }
         });
+    }
+
+    private monitoredDeviceKind(edge: string, device: string): MonitoredDeviceKind | undefined {
+        if (deviceAvailabilityService.isAdapter(edge, device)) return "adapter";
+        if (blueprintResourceService.isBatteryDevice(edge, device)) return "battery";
+        return undefined;
+    }
+
+    private syncDeviceHealth(entry: DeviceAvailabilityEntry) {
+        const item = deviceHealthItem(entry.edge, entry.device, entry.available, this.monitoredDeviceKind(entry.edge, entry.device), entry.updatedAt);
+        if (item) {
+            this.upsert(item);
+        } else {
+            this.remove(deviceHealthId(entry.edge, entry.device));
+        }
     }
 
     getHealthSnapshot(): UhnHealthSnapshot {

@@ -40,6 +40,12 @@ export type HealthItem<Id extends string = string> = {
     action?: HealthAction
 
     /**
+     * Optional link: when set, the whole message is shown as a link that navigates here
+     * (same kind of target as `action`).
+     */
+    link?: HealthAction["target"];
+
+    /**
      * Optional timestamp (epoch ms).
      * If omitted, treated as "current".
      */

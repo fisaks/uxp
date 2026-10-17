@@ -2,14 +2,17 @@ import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import CloseIcon from "@mui/icons-material/Close";
 import ErrorIcon from "@mui/icons-material/Error";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
+import ReportProblemIcon from "@mui/icons-material/ReportProblem";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import { Box, Card, CardActionArea, IconButton, Tooltip, Typography, alpha } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { usePortalContainerRef } from "@uxp/ui-lib";
-import { isLogicalResource, isPhysicalResource, isResourceTriggerInfo } from "@uhn/common";
+import { formatShortDateTime, isLogicalResource, isPhysicalResource, isResourceTriggerInfo } from "@uhn/common";
 import React, { useCallback, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import { selectDeviceAvailabilityByKey } from "../../device-availability/deviceAvailabilitySelectors";
+import { toDeviceKey } from "../../device-availability/useViewAvailability";
 import { TechnicalDeepLink } from "../../shared/TechnicalDeepLink";
 import { TileDescriptionPopover } from "../../shared/TileDescriptionPopover";
 import { triggerEventLabel } from "../../shared/triggerEventLabel";
@@ -59,6 +62,9 @@ export const ResourceTile: React.FC<ResourceTileProps> = React.memo(({ resource,
     const triggeringRules = rulesByResourceId[resource.id];
     const rulesByActionHint = useSelector(selectRulesByActionHintResourceId);
     const targetOfRules = rulesByActionHint[resource.id];
+    // Availability of the device the resource belongs to (physical resources only; undefined without data)
+    const deviceAvailability = useSelector(selectDeviceAvailabilityByKey(toDeviceKey(resource)));
+    const deviceOffline = deviceAvailability?.available === false;
 
     const tileExtensions = getTileExtensions(resource.type);
     const hasInteractionPanel = Boolean(tileExtensions?.renderInteractionPanel);
@@ -116,6 +122,11 @@ export const ResourceTile: React.FC<ResourceTileProps> = React.memo(({ resource,
                             <>
                                 <Typography variant="body2">Edge: {resource.edge}</Typography>
                                 <Typography variant="body2">Device: {resource.device}</Typography>
+                                {deviceAvailability !== undefined && (
+                                    <Typography variant="body2">
+                                        Device status: {deviceAvailability.available ? "online" : `offline since ${formatShortDateTime(deviceAvailability.updatedAt)}`}
+                                    </Typography>
+                                )}
                                 <Typography variant="body2">Pin: {resource.pin}{typeof resource.pin === "number" ? ` (0x${resource.pin.toString(16).toUpperCase()})` : ""}</Typography>
                             </>
                         )}
@@ -292,6 +303,12 @@ export const ResourceTile: React.FC<ResourceTileProps> = React.memo(({ resource,
                 </Box>
             </CardActionArea>
             <TilePendingIndicator pending={isPending} />
+
+            {deviceOffline && (
+                <Tooltip title="Device offline" {...tooltipProps}>
+                    <ReportProblemIcon sx={{ position: "absolute", bottom: 11, left: 11, fontSize: 16, color: "error.main", opacity: 0.85, zIndex: 2 }} />
+                </Tooltip>
+            )}
 
             {isCmdError && (
                 <Tooltip title={commandFb.error} {...tooltipProps}>

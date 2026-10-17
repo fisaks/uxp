@@ -21,6 +21,7 @@ const { AppDataSource } = require("./db/typeorm.config");
  *  RUNTIME BOOTSTRAP (singleton side effects)
  *  Importing these registers listeners, background loops, and subscriptions.
  * ========================================================================== */
+import { deviceAvailabilityService } from "./services/device-availability.service";
 import { initElectricityPriceDispatcher } from "./dispatchers/electricity-price.dispatcher";
 import { initRuntimeOverviewDispatcher } from "./dispatchers/runtime-overview.dispatcher";
 import { initUhnSystemDispatcher } from "./dispatchers/uhn-system.dispatcher";
@@ -63,6 +64,9 @@ export async function startUhnRuntime() {
 }
 
 async function runStartupBackgroundTasks() {
+
+    // Availability messages wait for the stored records, so load them first
+    await deviceAvailabilityService.start();
 
     try {
         await runBackgroundTask(AppDataSource, async () => {

@@ -2,6 +2,7 @@ import { isLogicalResource, isPhysicalResource, makeAddressKey, ResourceErrorCod
 import { AppLogger } from "@uxp/bff-common";
 import { EventEmitter } from "events";
 import { BlueprintFileUtil } from "../util/blueprint-file.util";
+import { isBatteryDevice } from "../util/device-health.util";
 
 import { blueprintRuntimeSupervisorService } from "./blueprint-runtime-supervisor.service";
 import { physicalCatalogService } from "./physical-catalog.service";
@@ -262,6 +263,11 @@ class BlueprintResourceService extends EventEmitter<ResourceEventMap> {
 
     getAllResources(): RuntimeResourceList {
         return this.resources;
+    }
+
+    /** True if the blueprint has a battery resource on the device: a battery device should always be online. */
+    isBatteryDevice(edge: string, device: string): boolean {
+        return isBatteryDevice(this.resources, edge, device);
     }
 
     getResourceById(id: string): RuntimeResource | undefined {
