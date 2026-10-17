@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { fuzzyTokenMatch, searchTokens } from "../shared/fuzzyMatch";
 import { PaletteItem } from "./commandPalette.types";
+import { rankPaletteItems } from "./paletteRanking";
 
 type UseCommandPaletteFilterResult = {
     filteredItems: PaletteItem[];
@@ -78,6 +79,6 @@ export function useCommandPaletteFilter(
             filteredItems.push(item);
         }
 
-        return { filteredItems };
+        return { filteredItems: rankPaletteItems(filteredItems, tokens) };
     }, [searchTerm, allItems]);
 }

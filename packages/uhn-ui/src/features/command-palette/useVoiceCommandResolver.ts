@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { exactTokenMatch, searchTokens } from "../shared/fuzzyMatch";
 import { parseSpokenNumber } from "../shared/parseSpokenNumber";
 import { PaletteItem } from "./commandPalette.types";
+import { rankPaletteItems } from "./paletteRanking";
 
 /* ------------------------------------------------------------------ */
 /* Types                                                                */
@@ -218,7 +219,7 @@ function filterItems(items: PaletteItem[], query: string, intent: VoiceIntent): 
     const actionsOnly = intent.type !== "locate" && !isQuery;
     const analogOnly = intent.type === "set-open";
 
-    return items.filter(item => {
+    const matches = items.filter(item => {
         // Group filter ("query" has its own target check below)
         if (!isQuery) {
             if (actionsOnly && item.group !== "Actions") return false;
@@ -240,6 +241,7 @@ function filterItems(items: PaletteItem[], query: string, intent: VoiceIntent): 
         // All query tokens must match the item's searchText
         return queryTokens.every(token => exactTokenMatch(token, item.searchText));
     });
+    return rankPaletteItems(matches, queryTokens);
 }
 
 /* ------------------------------------------------------------------ */
