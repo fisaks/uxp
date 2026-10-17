@@ -158,6 +158,9 @@ export type DisplayIcon = {
     tooltip?: string | "value";
     /** When to show this icon. Default: `"always"`. */
     showWhen?: "active" | "inactive" | "always";
+    /** Tooltip shown instead of the normal one while the device of the icon's resource is offline. The icon is then
+     *  shown in the disabled colour (its `colorMap` is skipped). Without it availability has no effect on the icon. */
+    offlineTooltip?: string;
     /** Value-driven color — first matching rule wins. Color is a theme palette token (e.g. `"success"`, `"warning"`, `"error"`). */
     colorMap?: ValueColorRule[];
     /** Value-driven icon override — first matching rule wins. */

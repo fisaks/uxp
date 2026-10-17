@@ -847,7 +847,7 @@ The `command` property defines the tile's click behavior:
 | `"toggle"` | Flip digital state | Light on/off |
 | `"longPress"` | Send long-press with duration | `{ type: "longPress", holdMs: 1000 }`. Add `simulateHold: true` for IHC buttons where the controller detects long press from held state. |
 | `"setAnalog"` | Inline slider or select control | `{ type: "setAnalog", min: 0, max: 100, step: 5, unit: "%" }` |
-| `"clearTimer"` | Stop a running timer | Timer reset |
+| `"clearTimer"` | Stop a running timer. A silent cancel: no rule fires, not even `onTimerExpired` | Timer reset |
 | `"action"` | Fire an action event | `{ type: "action", action: "toggle" }` |
 | `"setActionOutput"` | Send a transient command to device | `{ type: "setActionOutput", action: "blink" }` |
 
@@ -959,6 +959,7 @@ Secondary information shown on the tile, organized by **slots** — named positi
 | `icon` | The default icon to display (used when no `iconMap` rule matches) |
 | `tooltip` | Tooltip text, or `"value"` to show the formatted resource value + unit (e.g. `unit: "/ 255"` renders as `"116 / 255"` — useful for showing the range) |
 | `showWhen` | `"active"` (visible when resource is active), `"inactive"` (visible when resource is inactive), or `"always"` (default) |
+| `offlineTooltip` | Tooltip shown instead of the normal one while the device of the icon's resource is offline; the icon is then greyed out (disabled colour, `colorMap` skipped). Without it availability has no effect on the icon |
 | `colorMap` | Value-driven color rules — first match wins (see below) |
 | `iconMap` | Value-driven icon override rules — first match wins (see below) |
 
@@ -1257,6 +1258,23 @@ The `from` resource can be any resource on the target device — the `pin` is ir
 
 **Health notifications:** Infrastructure adapters (IHC controllers, Z2M bridges) also trigger UHN health alerts in the header when they go offline. This is automatic — the edge publishes a retained `adapters` topic listing configured adapters, and the master cross-references availability events against this list. Individual Zigbee device failures only show on view tiles, not as health alerts (since mains switching would make them noisy).
 
+**Where else availability shows:**
+
+- **Display icons:** `offlineTooltip` on a `DisplayIcon`. While the device of the icon's resource is offline, the icon is shown in the disabled colour (its `colorMap` is skipped) and the tooltip is `offlineTooltip`. Use it for icons that report on a device, such as the battery level of a battery device or the link quality of a Zigbee device. Without the option availability has no effect on the icon. A device without availability data keeps the normal icon.
+
+  ```typescript
+  topRight: [{
+      resource: laundryButtonWorkTableBattery,   // a resource of the button, not of the light the tile is about
+      icon: "energy:battery",
+      tooltip: "value",
+      offlineTooltip: "Button offline",
+      colorMap: [{ below: 20, color: "error" }, { above: 19, color: "success" }],
+  }],
+  ```
+
+- **Resource tiles** on the technical resource page show a red device-offline indicator, and a "Device status" line in their technical details, for resources whose device reports availability.
+- **Which devices report availability:** every Zigbee device (from Zigbee2MQTT's availability, so the time until a device is marked offline follows its `availability` timeouts: short for mains-powered devices, long for battery devices) and each IHC controller (one status shared by all its resources). Modbus devices, Mi-Light zones and logical resources (timers, virtual resources, complex) do not report availability.
+
 ### Side Effects
 
 `sideEffects` on a view fires additional action events alongside the primary command. This exists for **Zigbee binding coexistence**: when a physical button controls a device directly via Zigbee binding AND also reports to Z2M for rules, the UI view must replicate both paths — the primary command controls the device (same as the binding does physically), and side effects fire the same action events so the rules also execute from the UI.
@@ -1474,7 +1492,7 @@ export const heaterControl = rule({ description: "Engine heater schedule" })
 
 ### Missed Grace
 
-When the system restarts after being down, it checks whether any schedule phases should have fired during the downtime. If the missed time is within the grace window, the phase fires immediately on startup.
+When the system restarts after being down, it checks whether any schedule phases should have fired during the downtime. If a phase was missed within the grace window it is replayed on startup, but only **one** phase per schedule (the first missed one in the schedule's phase order, not necessarily the latest), and its rules run with the **current time** as the timestamp, not the phase's time. A rule that depends on the exact time of its phase (for example "a window starts at 16:00") therefore does nothing useful on a replay. Such a schedule should use `.noGrace()` and set its outputs from the current state when the runtime starts (state triggers fire on load, see [Triggers](#triggers)).
 
 - Default: 15 minutes
 - `.missedGrace(0)` or `.noGrace()`: never catch up — skip missed phases entirely
@@ -1534,6 +1552,8 @@ A rule can have multiple triggers (OR logic — any matching trigger fires the r
 .onChanged(resource)        // Value changes (any direction)
 .onChanged(resource, { hysteresis: 5 })  // Only fire after 5-unit change (analog)
 ```
+
+State triggers also fire **when the runtime starts** (a restart or a blueprint upload): the full state is sent in, so every resource with a value looks like it just changed from "nothing". `onChanged` fires even for a sensor that has not moved, and `onActivated` for a value that is already on. A rule can use this to set an output from the current state after a reload. Electricity prices arrive about 100 ms after that state, so a rule that needs prices at that moment must wait for them: check `ctx.electricity.lastUpdated()` and use `onPriceChanged` with `ctx.cause.startup` (see [Electricity Prices](#electricity-prices)).
 
 **Thresholds (analog/complex resources):**
 
@@ -1733,6 +1753,7 @@ rule({ description: "..." })
 ```
 
 - **suppress**: Filters noisy triggers *before* the rule runs. When a trigger fires, the suppress window starts and all subsequent triggers within it are silently dropped. The window is fixed — suppressed events do not extend it. The rule's `.run()` callback is never called for suppressed triggers. Use this for debouncing sensors that fire rapidly (e.g., a PIR that triggers every few hundred milliseconds).
+- **priority**: Orders the rules that react to the same trigger source (the same resource or the same schedule phase), higher first. It does not order rules that react to different events. Use it when a rule relies on another having run first, for example a rule that reads a timer which the other rule clears.
 - **cooldown**: Prevents repeated execution *after* the rule runs. After `.run()` completes, the rule is blocked from running again for the specified duration. Any triggers during the cooldown period are ignored. Use this when the rule's action should not repeat too quickly (e.g., a toggle that shouldn't fire twice if someone double-taps).
 
 The key difference: suppress starts on **trigger**, cooldown starts on **execution**. A rule with `suppress(2000)` that receives a trigger will suppress further triggers for 2 seconds regardless of whether the rule ran. A rule with `cooldown(5000)` will accept a trigger and run, then block for 5 seconds after running.

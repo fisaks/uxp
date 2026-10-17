@@ -19,6 +19,7 @@ import { AvailabilityIndicator } from "../../device-availability/AvailabilityInd
 import { useViewAvailability } from "../../device-availability/useViewAvailability";
 import { useSendViewCommand } from "../hooks/useSendViewCommand";
 import { useViewCommandSlots } from "./ViewCommandControl";
+import { ViewInfoDetails } from "./ViewInfoDetails";
 
 type ViewTileProps = {
     view: RuntimeInteractionView;
@@ -173,6 +174,7 @@ export const ViewTile: React.FC<ViewTileProps> = ({ view, active, stateDisplay, 
                         ))}
                     </Box>
                 )}
+                <ViewInfoDetails view={view} />
             </TileInfoPopover>
 
             {/* Description icon — top-right */}

@@ -34,6 +34,7 @@ function serializeDisplayIcon(item: DisplayIcon): RuntimeDisplayIcon {
         icon: item.icon,
         tooltip: item.tooltip,
         showWhen: item.showWhen,
+        offlineTooltip: item.offlineTooltip,
         colorMap: item.colorMap,
         iconMap: item.iconMap,
     };

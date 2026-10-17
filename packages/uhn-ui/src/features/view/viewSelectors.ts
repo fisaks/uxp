@@ -2,6 +2,8 @@ import { createSelector } from "@reduxjs/toolkit";
 import { BlueprintIcon, ThemePaletteColor, ValueColorRule, ValueIconRule, ViewActiveCondition } from "@uhn/blueprint";
 import { ResourceStateDetails, ResourceStateValue, RuntimeAnalogInputResource, RuntimeAnalogOutputResource, RuntimeDisplayIcon, RuntimeDisplayValue, RuntimeInteractionView, RuntimeResource } from "@uhn/common";
 import { RootState } from "../../app/store";
+import { selectDeviceAvailabilityMap } from "../device-availability/deviceAvailabilitySelectors";
+import { toDeviceKey } from "../device-availability/useViewAvailability";
 import { DisplayItemIconState, DisplayItemValueState, DisplayItemsState, EMPTY_DISPLAY_ITEMS_STATE } from "../shared/tile.types";
 
 type AnalogResource = RuntimeAnalogInputResource | RuntimeAnalogOutputResource;
@@ -179,12 +181,18 @@ function computeDisplayValue(item: RuntimeDisplayValue, stateMap: StateMap, reso
     };
 }
 
-function computeDisplayIcon(item: RuntimeDisplayIcon, stateMap: StateMap, resourceMap: ResourceMap): DisplayItemIconState {
+type AvailabilityMap = Record<string, { available: boolean } | undefined>;
+
+function computeDisplayIcon(item: RuntimeDisplayIcon, stateMap: StateMap, resourceMap: ResourceMap, availabilityByKey: AvailabilityMap): DisplayItemIconState {
     const stateEntry = stateMap[item.resourceId];
     const value = stateEntry?.value;
-    const active = isResourceActive(value);
-    const visible = item.showWhen === "active" ? active : item.showWhen === "inactive" ? !active : true;
-    const color = item.colorMap ? evaluateColorMap(value, item.colorMap) : undefined;
+    const ownActive = isResourceActive(value);
+    const visible = item.showWhen === "active" ? ownActive : item.showWhen === "inactive" ? !ownActive : true;
+    // An icon with an offlineTooltip is greyed out (disabled colour) while the device of its resource is offline
+    const deviceKey = item.offlineTooltip ? toDeviceKey(resourceMap[item.resourceId]) : undefined;
+    const offline = deviceKey != null && availabilityByKey[deviceKey]?.available === false;
+    const active = offline ? false : ownActive;
+    const color = item.colorMap && !offline ? evaluateColorMap(value, item.colorMap) : undefined;
     const resolvedIcon = item.iconMap ? (evaluateIconMap(value, item.iconMap) ?? item.icon) : item.icon;
 
     // Resolve tooltip: "value" → formatted value + unit from resource
@@ -198,6 +206,8 @@ function computeDisplayIcon(item: RuntimeDisplayIcon, stateMap: StateMap, resour
             : String(value);
         tooltip = unit ? `${formatted} ${unit}` : formatted;
     }
+
+    if (offline) tooltip = item.offlineTooltip;
 
     return {
         resourceId: item.resourceId,
@@ -215,6 +225,7 @@ function computeStateDisplay(
     view: RuntimeInteractionView,
     stateMap: StateMap,
     resourceMap: ResourceMap,
+    availabilityByKey: AvailabilityMap,
 ): DisplayItemsState {
     if (!view.stateDisplay) return EMPTY_DISPLAY_ITEMS_STATE;
     const sd = view.stateDisplay;
@@ -227,12 +238,12 @@ function computeStateDisplay(
         .filter(({ visible }) => visible)
         .map(({ state }) => state);
     return {
-        topLeft: (sd.topLeft ?? []).map(i => computeDisplayIcon(i, stateMap, resourceMap)),
-        topCenter: (sd.topCenter ?? []).map(i => computeDisplayIcon(i, stateMap, resourceMap)),
-        topRight: (sd.topRight ?? []).map(i => computeDisplayIcon(i, stateMap, resourceMap)),
+        topLeft: (sd.topLeft ?? []).map(i => computeDisplayIcon(i, stateMap, resourceMap, availabilityByKey)),
+        topCenter: (sd.topCenter ?? []).map(i => computeDisplayIcon(i, stateMap, resourceMap, availabilityByKey)),
+        topRight: (sd.topRight ?? []).map(i => computeDisplayIcon(i, stateMap, resourceMap, availabilityByKey)),
         left: displayValues(sd.left),
         right: displayValues(sd.right),
-        badge: (sd.badge ?? []).map(i => computeDisplayIcon(i, stateMap, resourceMap)),
+        badge: (sd.badge ?? []).map(i => computeDisplayIcon(i, stateMap, resourceMap, availabilityByKey)),
         hero: displayValues(sd.hero),
         heroSize: sd.heroSize,
     };
@@ -272,12 +283,12 @@ export type ViewWithState = {
 /** Combines views with their computed state for rendering.
  *  stateFrom aggregation, activeWhen evaluation — all browser-side. */
 export const selectViewsWithState = createSelector(
-    [selectViewState, selectRuntimeStateSlice, selectResourceById],
-    (views, runtimeState, resourceById): ViewWithState[] => {
+    [selectViewState, selectRuntimeStateSlice, selectResourceById, selectDeviceAvailabilityMap],
+    (views, runtimeState, resourceById, availabilityByKey): ViewWithState[] => {
         return views.allIds.map(id => {
             const view = views.byId[id];
             const active = computeViewActive(view, runtimeState.byResourceId);
-            const stateDisplay = computeStateDisplay(view, runtimeState.byResourceId, resourceById);
+            const stateDisplay = computeStateDisplay(view, runtimeState.byResourceId, resourceById, availabilityByKey);
             const resolvedName = resolveNameMap(view.nameMap, active, runtimeState.byResourceId);
             return { view, active, stateDisplay, resolvedName };
         });
