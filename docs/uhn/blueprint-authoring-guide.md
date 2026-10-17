@@ -1256,7 +1256,7 @@ availability: { from: someState, poweredBy: someSwitch, graceSeconds: 30 }
 
 The `from` resource can be any resource on the target device — the `pin` is irrelevant since availability is a device-level concept. The platform extracts the `edge` and `device` fields from the resource to match against MQTT availability topics (`uhn/{edge}/device/{device}/availability`).
 
-**Health notifications:** Infrastructure adapters (IHC controllers, Z2M bridges) also trigger UHN health alerts in the header when they go offline. This is automatic — the edge publishes a retained `adapters` topic listing configured adapters, and the master cross-references availability events against this list. Individual Zigbee device failures only show on view tiles, not as health alerts (since mains switching would make them noisy).
+**Health notifications:** Infrastructure adapters (IHC controllers, Z2M bridges) also trigger UHN health alerts in the header when they go offline. This is automatic — the edge publishes a retained `adapters` topic listing configured adapters, and the master cross-references availability events against this list. Zigbee devices with a battery resource (an analog input of kind `battery`) also raise an alert, because a battery device should always be online; the message links to the device's resources on the resource page. Other Zigbee devices only show on view tiles, not as health alerts (since mains switching would make them noisy). The alert text tells since when the device is offline.
 
 **Where else availability shows:**
 
@@ -1272,7 +1272,7 @@ The `from` resource can be any resource on the target device — the `pin` is ir
   }],
   ```
 
-- **Resource tiles** on the technical resource page show a red device-offline indicator, and a "Device status" line in their technical details, for resources whose device reports availability.
+- **Resource tiles** on the technical resource page show a red device-offline indicator, and a "Device status" line in their technical details (offline devices show "offline since" the time the status last changed), for resources whose device reports availability. The master stores that time in the database, so it survives a restart.
 - **Which devices report availability:** every Zigbee device (from Zigbee2MQTT's availability, so the time until a device is marked offline follows its `availability` timeouts: short for mains-powered devices, long for battery devices) and each IHC controller (one status shared by all its resources). Modbus devices, Mi-Light zones and logical resources (timers, virtual resources, complex) do not report availability.
 
 ### Side Effects
