@@ -26,6 +26,8 @@ type UseTechnicalSearchResult<T> = {
  * Supports multi-word AND matching — e.g. "kitchen button" matches items
  * containing both words (case-insensitive). The search term is kept in local
  * state for instant feedback and debounced to the `?search=` URL query param.
+ * A `?search=` change that did not come from this hook (a link to the page you are
+ * already on) replaces the search term.
  */
 export function useTechnicalSearch<T>({
     searchIndex,
@@ -36,11 +38,14 @@ export function useTechnicalSearch<T>({
     const initialSearch = searchParams.get(SEARCH_PARAM) ?? "";
     const [searchTerm, setSearchTerm] = useState(initialSearch);
     const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+    // The param value this hook last wrote (or started with), to tell its own URL updates from outside ones
+    const ownParamRef = useRef(initialSearch);
 
     const updateUrl = useCallback(
         (value: string) => {
             clearTimeout(debounceRef.current);
             debounceRef.current = setTimeout(() => {
+                ownParamRef.current = value;
                 setSearchParams(
                     (prev) => {
                         const next = new URLSearchParams(prev);
@@ -65,6 +70,15 @@ export function useTechnicalSearch<T>({
         },
         [updateUrl]
     );
+
+    const urlSearch = searchParams.get(SEARCH_PARAM) ?? "";
+    useEffect(() => {
+        if (urlSearch === ownParamRef.current) return;
+        // Changed from outside, e.g. a link to this page while on it: drop any pending write of the old term
+        clearTimeout(debounceRef.current);
+        ownParamRef.current = urlSearch;
+        setSearchTerm(urlSearch);
+    }, [urlSearch]);
 
     useEffect(() => {
         return () => clearTimeout(debounceRef.current);
