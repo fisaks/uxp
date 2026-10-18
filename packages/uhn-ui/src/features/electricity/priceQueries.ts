@@ -1,5 +1,5 @@
 import { ElectricityPriceEntry } from "@uhn/common";
-import { TZ } from "./priceFormat";
+import { MIN_DAY_SLOTS, TZ } from "./priceFormat";
 
 // Spoken/shown answers to electricity price questions (voice and command palette).
 
@@ -88,7 +88,8 @@ export function answerElectricityPriceQuery(query: ElectricityPriceQuery, prices
         case "tomorrow-average": {
             const tomorrowKey = nextDayKey(todayKey);
             const tomorrow = prices.filter((p) => dayKey(startMs(p)) === tomorrowKey);
-            return tomorrow.length > 0
+            // Until tomorrow is published the data only holds its first hour, which must not be called an average.
+            return tomorrow.length >= MIN_DAY_SLOTS
                 ? averageAnswer("The average electricity price tomorrow is", tomorrow)
                 : "Tomorrow's electricity prices are not available yet.";
         }

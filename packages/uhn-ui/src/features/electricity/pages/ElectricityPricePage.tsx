@@ -27,7 +27,7 @@ import { selectPriceRules } from "../../rule/ruleSelectors";
 import { PriceRulesSection } from "../components/PriceRulesSection";
 import { selectElectricitySnapshot } from "../electricitySlice";
 import { getRuleLimits, limitColor, rearmPrice } from "../priceLimits";
-import { CHEAP_COLOR, EXPENSIVE_COLOR, CHEAP_THRESHOLD, EXPENSIVE_THRESHOLD, NORMAL_COLOR, TZ, formatTime, getPriceColor } from "../priceFormat";
+import { CHEAP_COLOR, EXPENSIVE_COLOR, CHEAP_THRESHOLD, EXPENSIVE_THRESHOLD, MIN_DAY_SLOTS, NORMAL_COLOR, TZ, formatTime, getPriceColor } from "../priceFormat";
 import { useSlotMs } from "../useSlotPrices";
 
 type IntervalMode = "15min" | "60min";
@@ -78,14 +78,6 @@ type DaySummary = {
     min: { price: number; time: string };
     max: { price: number; time: string };
 };
-
-/**
- * A day needs more than half of its 15-minute slots to be summarised. The market publishes delivery days that
- * run 01:00–01:00 Finnish time (CET), so until tomorrow's prices are published the data only reaches into the
- * first hour of tomorrow, and after 14:00 today's first hour is missing. Half a day separates those slivers
- * from real data.
- */
-const MIN_DAY_SLOTS = 48;
 
 function computeDaySummary(prices: ElectricityPriceEntry[], dayOffset: number, slotMs: number): DaySummary | undefined {
     const targetDateStr = DateTime.fromMillis(slotMs).setZone(TZ).plus({ days: dayOffset }).toFormat("yyyy-MM-dd");

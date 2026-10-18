@@ -2,6 +2,14 @@
 
 export const TZ = "Europe/Helsinki";
 
+/**
+ * A day needs more than half of its 15-minute slots to be summarised. The market publishes delivery days that
+ * run 01:00–01:00 Finnish time (CET), so until tomorrow's prices are published the data only reaches into the
+ * first hour of tomorrow, and after 14:00 today's first hour is missing. Half a day separates those slivers
+ * from real data.
+ */
+export const MIN_DAY_SLOTS = 48;
+
 // Limits for colouring a price (snt/kWh incl. VAT).
 export const CHEAP_THRESHOLD = 5;
 export const EXPENSIVE_THRESHOLD = 15;
