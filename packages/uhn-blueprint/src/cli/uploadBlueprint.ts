@@ -60,7 +60,8 @@ export async function uploadBlueprint(opts: UploadOptions): Promise<void> {
         activated: boolean;
     };
 
-    console.log(`✅ Blueprint uploaded successfully`);
+    // fi-FI gives "18.10.2026 klo 14.32.05" ("klo" is Finnish for "at") in the local time of the machine that uploaded
+    console.log(`✅ Blueprint uploaded successfully ${new Date().toLocaleString("fi-FI")}`);
     console.log(`   identifier: ${result.identifier}`);
     console.log(`   version:    ${result.version}`);
     console.log(`   activated:  ${result.activated}`);
