@@ -63,6 +63,11 @@ module.exports = merge(baseConfig, {
                 target: "http://localhost:3020",
                 ws: true,
             },
+            {
+                context: ["/ws-aud"],
+                target: "http://localhost:3040",
+                ws: true,
+            },
         ],
     },
 });

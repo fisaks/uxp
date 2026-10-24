@@ -103,6 +103,11 @@ start_dev_env() {
     tmux send-keys -t $SESSION_NAME:2.3 "pnpm run start:uhn-app" C-m
     
     
+    tmux new-window -t $SESSION_NAME -n 'aud'
+    tmux split-window -h -t $SESSION_NAME:3
+    tmux send-keys -t $SESSION_NAME:3.0 "pnpm run start:aud-bff" C-m
+    tmux send-keys -t $SESSION_NAME:3.1 "pnpm run start:aud-app" C-m
+
     # Select the first tab
     tmux select-window -t $SESSION_NAME:0
     # Attach to the tmux session

@@ -17,6 +17,8 @@
         "debug:uhn-master": "pnpm --filter=@uhn/master dev-debug ",
         "start:demo-app": "pnpm --filter=@uxp/demo-ui start ",
         "start:demo-bff": "pnpm --filter=@uxp/demo-bff dev ",
+        "start:aud-app": "pnpm --filter=@aud/ui start ",
+        "start:aud-bff": "pnpm --filter=@aud/bff dev ",
         "lint": "eslint packages/**",
         "lint:fix": "eslint packages/** --fix",
         "format": "prettier --write .",

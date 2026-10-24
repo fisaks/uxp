@@ -38,6 +38,7 @@ Start with the overview, then jump to the area relevant to your task.
 - [UXP Browser Contract](./uxp-browser-contract.md)
 - [Notification and platform health](./notification-and-health.md)
 - [Deployment guide](./deployment-guide.md)
+- [Adding a remote app](./adding-a-remote-app.md)
 
 ---
 

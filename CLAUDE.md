@@ -25,6 +25,8 @@ pnpm run start:uhn-master   # UHN home automation master service
 pnpm run start:uhn-app      # UHN frontend
 pnpm run start:demo-bff     # Demo backend
 pnpm run start:demo-app     # Demo frontend
+pnpm run start:aud-bff      # AUD (audio) backend
+pnpm run start:aud-app      # AUD frontend
 ```
 
 ### Build & Quality
@@ -71,6 +73,7 @@ All packages live under `packages/`. Each app domain has up to three packages fo
 | **H2C** (house docs) | `h2c-ui` | `h2c-bff` | `h2c-common` |
 | **UHN** (home automation) | `uhn-ui` | `uhn-master` | `uhn-common` |
 | **Demo** | `demo-ui` | `demo-bff` | `demo-common` |
+| **AUD** (audio) | `aud-ui` | `aud-bff` | — (added when first shared types exist) |
 
 Cross-cutting packages:
 - **`uxp-bff-common`** — Shared backend utilities (Fastify plugins, TypeORM helpers) used by all BFFs
@@ -82,7 +85,7 @@ Cross-cutting packages:
 
 ### Remote App Integration Pattern
 
-UXP fetches remote app HTML via reverse proxy, rewrites resource URLs, and renders apps inside Shadow DOM containers. Remote apps receive configuration through `data-*` attributes (`data-base-url`, `data-ws-path`, `data-base-route-path`, `data-uxp-content-id`, `data-app-option`). See `docs/uxp/` for detailed architectural documentation.
+UXP fetches remote app HTML via reverse proxy, rewrites resource URLs, and renders apps inside Shadow DOM containers. Remote apps receive configuration through `data-*` attributes (`data-base-url`, `data-ws-path`, `data-base-route-path`, `data-uxp-content-id`, `data-app-option`). See `docs/uxp/` for detailed architectural documentation, and `docs/uxp/adding-a-remote-app.md` for the step-by-step checklist to add a new remote app.
 
 ### Shared Browser Globals
 
