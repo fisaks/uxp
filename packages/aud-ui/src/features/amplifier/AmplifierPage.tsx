@@ -17,7 +17,7 @@ const AmplifierPage: React.FC = () => {
         return state?.reachable === false ? (
             <Alert severity="error">The amplifier cannot be reached.</Alert>
         ) : (
-            <Box sx={{ p: 2 }}>
+            <Box sx={{ py: 2 }}>
                 <CircularProgress size={24} />
             </Box>
         );
@@ -27,7 +27,7 @@ const AmplifierPage: React.FC = () => {
     const disabled = !state.reachable;
 
     return (
-        <Stack spacing={2} sx={{ p: 2, maxWidth: 700, mx: "auto" }}>
+        <Stack spacing={2} sx={{ maxWidth: 700, mx: "auto" }}>
             {!state.reachable && <Alert severity="warning">The amplifier cannot be reached. Showing the last known state.</Alert>}
             <PowerVolumeCard info={info} status={status} disabled={disabled} send={send} />
             <InputCard info={info} status={status} disabled={disabled} send={send} />

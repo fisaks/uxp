@@ -25,7 +25,7 @@ export default defineConfig({
         { identifier: "uxp-demo-page", name: "UXP Nav Demo", config: { pageType: "leftNavigation", routeLinkGroup: "demo-links" } },
         { identifier: "multi-app-page", name: "Multiple Apps Demo", config: { pageType: "leftNavigation", routeLinkGroup: "demo-links" } },
         { identifier: "self-nav-app-page", name: "Self Nav Demo" },
-        { identifier: "unified-home-network", name: "Unified Home Network" },
+        { identifier: "unified-home-network", name: "House" },
         { identifier: "audio", name: "Audio" },
     ],
     pageApps: [
