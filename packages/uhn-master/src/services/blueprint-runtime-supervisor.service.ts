@@ -57,7 +57,13 @@ class BlueprintRuntimeSupervisorService extends EventEmitter<BlueprintRuntimeSup
         this.runId++;
         this.restartAttempts = 0;
         this.emit("ruleRuntimeStarting");
-        await ruleRuntimeProcessService.startRuleRuntime(BlueprintFileUtil.ActiveBlueprintFolder);
+        try {
+            await ruleRuntimeProcessService.startRuleRuntime(BlueprintFileUtil.ActiveBlueprintFolder);
+        } catch (error) {
+            // Without this a failed start leaves running = true and every later start() returns without doing anything.
+            this.running = false;
+            throw error;
+        }
         this.attachRestartHandler(this.runId);
         this.emit("ruleRuntimeReady");
     }

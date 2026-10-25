@@ -45,8 +45,25 @@ function getRuleRuntimePkgRoot() {
     return path.dirname(pkgJsonPath);
 }
 
+/**
+ * The start time of a process, in clock ticks since boot (field 22 of /proc/<pid>/stat).
+ * Together with the PID it identifies a process: a PID number is reused, for example after a container restart,
+ * which resets the PID counter while the pid file survives on the workspace volume.
+ * Undefined where /proc is not available.
+ */
+async function getProcessStartTime(pid: number): Promise<string | undefined> {
+    try {
+        const stat = await readFile(`/proc/${pid}/stat`, "utf8");
+        // The command name in field 2 may contain spaces and parentheses, so count the fields after the last ")".
+        return stat.slice(stat.lastIndexOf(")") + 2).split(" ")[19];
+    } catch {
+        return undefined;
+    }
+}
+
 async function writePidFile(pid: number) {
-    await writeFile(PID_FILE, pid.toString());
+    const startTime = await getProcessStartTime(pid);
+    await writeFile(PID_FILE, startTime ? `${pid}:${startTime}` : pid.toString());
 }
 
 async function removePidFile() {
@@ -76,8 +93,13 @@ function isProcessAlive(pid?: number): boolean {
 
 async function killOldRuleRuntime() {
     if (await pathExists(PID_FILE)) {
-        const pid = parseInt(await readFile(PID_FILE, "utf8"));
-        if (!isProcessAlive(pid)) {
+        const [pidText, recordedStartTime] = (await readFile(PID_FILE, "utf8")).trim().split(":");
+        const pid = parseInt(pidText);
+        const startTime = await getProcessStartTime(pid);
+        // Only a process that is still the one we started is an orphan. A PID reused by an unrelated process,
+        // or a pid file without a start time from before this check existed, is left alone.
+        const isOrphan = isProcessAlive(pid) && (startTime === undefined || startTime === recordedStartTime);
+        if (!isOrphan) {
             await removePidFile();
             return;
         }
