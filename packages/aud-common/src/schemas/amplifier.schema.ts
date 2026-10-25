@@ -42,10 +42,10 @@ export const AmplifierSetSoundProgramSchema = {
     additionalProperties: false,
 };
 
-export const AmplifierSetTunerPresetSchema = {
+export const AmplifierSetTunerFrequencySchema = {
     type: "object",
-    properties: { preset: { type: "string", maxLength: 50 } },
-    required: ["preset"],
+    properties: { frequency: { type: "integer" } },
+    required: ["frequency"],
     additionalProperties: false,
 };
 

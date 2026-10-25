@@ -35,8 +35,8 @@ export type YamahaBasicStatus = {
 
 export type YamahaTunerInfo = {
     band: string;
-    frequency: string;
-    presetId: string | null;
+    /** In units of 10 kHz for FM and in kHz for AM, as the amplifier reports it. */
+    frequency: number;
     programService: string;
     programType: string;
     radioText: string;
@@ -55,6 +55,8 @@ export type YamahaCapabilities = {
     subwooferTrim: YamahaRange;
     dialogueLevel: YamahaRange;
     dialogueLift: YamahaRange;
+    /** The FM frequencies, in units of 10 kHz. */
+    tunerFrequency: YamahaRange;
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -119,13 +121,10 @@ export class YamahaClient {
     async getTunerInfo(): Promise<YamahaTunerInfo> {
         const info = (await this.get("<Tuner><Play_Info>GetParam</Play_Info></Tuner>")).Tuner.Play_Info;
         const band: string = info.Tuning.Band;
-        const frequency = info.Tuning.Freq.Current;
-        const preset: string = info.Preset.Preset_Sel;
         const meta = info.Meta_Info;
         return {
             band,
-            frequency: `${scaled(frequency).toFixed(Number(frequency.Exp))} ${frequency.Unit}`,
-            presetId: /^\d+$/.test(preset) ? preset : null,
+            frequency: Number(info.Tuning.Freq.Current.Val),
             programService: decodeEntities(meta.Program_Service),
             programType: decodeEntities(meta.Program_Type),
             // Some stations send the same text in both fields
@@ -158,6 +157,12 @@ export class YamahaClient {
             }
             return found;
         };
+        const tuner = this.findMenu(description, (menu) => menu["@_YNC_Tag"] === "Tuner");
+        // The slider of the FM frequency (the other FM menus only step up and down). Its range is "8750,10800,5": units of 10 kHz.
+        const fmSlider = tuner && this.findMenu(tuner, (menu) => menu["@_Func_Ex"] === "Freq_FM" && menu.Put_2 !== undefined);
+        if (!fmSlider) {
+            throw new YamahaCommandError("The amplifier description has no FM frequency menu", "none");
+        }
         return {
             soundPrograms: asArray(menu((m) => m["@_Func_Ex"] === "Program", "sound program").Put_2.Param_1.Direct).map(directText),
             volume: this.range(menu((m) => m["@_Func"] === "Vol_Lvl", "volume")),
@@ -166,6 +171,7 @@ export class YamahaClient {
             subwooferTrim: this.range(menu((m) => m["@_Func_Ex"] === "SW_Trim", "subwoofer trim")),
             dialogueLevel: this.range(menu((m) => m["@_Func_Ex"] === "Dialogue_Lvl", "dialogue level")),
             dialogueLift: this.range(menu((m) => m["@_Func_Ex"] === "Dialogue_Lift", "dialogue lift")),
+            tunerFrequency: this.rawRange(fmSlider),
         };
     }
 
@@ -242,8 +248,11 @@ export class YamahaClient {
         );
     }
 
-    setTunerPreset(preset: string) {
-        return this.put(`<Tuner><Play_Control><Preset><Preset_Sel>${escapeXml(preset)}</Preset_Sel></Preset></Play_Control></Tuner>`);
+    /** The frequency is in units of 10 kHz, the amplifier takes steps of 50 kHz. */
+    setTunerFrequency(frequency: number) {
+        return this.put(
+            `<Tuner><Play_Control><Tuning><Freq><FM><Val>${frequency}</Val><Exp>2</Exp><Unit>MHz</Unit></FM></Freq></Tuning></Play_Control></Tuner>`
+        );
     }
 
     /** Items with RW "R" are shown by the amplifier but cannot be selected, for example "No Preset". */
@@ -268,10 +277,15 @@ export class YamahaClient {
 
     /** The range of a slider menu, written as "min,max,step". Levels in dB are in tenths: the exponent is in Param_2. */
     private range(menu: XmlNode): YamahaRange {
-        const put = menu.Put_2;
-        const [min, max, step] = String(put.Param_1.Range).split(",").map(Number);
-        const scale = put.Param_2 ? 10 ** Number(directText(put.Param_2.Direct)) : 1;
+        const { min, max, step } = this.rawRange(menu);
+        const scale = menu.Put_2.Param_2 ? 10 ** Number(directText(menu.Put_2.Param_2.Direct)) : 1;
         return { min: min / scale, max: max / scale, step: step / scale };
+    }
+
+    /** The range of a slider menu as written in the description, without the exponent applied. */
+    private rawRange(menu: XmlNode): YamahaRange {
+        const [min, max, step] = String(menu.Put_2.Param_1.Range).split(",").map(Number);
+        return { min, max, step };
     }
 
     private async get(body: string) {

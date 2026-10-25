@@ -1,8 +1,9 @@
-import { AmplifierInfo, AmplifierRange, AmplifierState, AmplifierStatus } from "@aud/common";
+import { AmplifierInfo, AmplifierRange, AmplifierState, AmplifierStatus, TunerStation } from "@aud/common";
 import { AppErrorV2, AppLogger, WebSocketDetails } from "@uxp/bff-common";
 import { ErrorCodes } from "@uxp/common";
 import { AudioServerWebSocketManager } from "../ws/AudioServerWebSocketManager";
 import { AmplifierConfig, amplifierConfig } from "./amplifier.config";
+import { stationsFromPresets } from "./tuner-stations";
 import { YamahaClient, YamahaCommandError, YamahaUnreachableError } from "./yamaha.client";
 
 const AMPLIFIER_TOPIC = "amplifier";
@@ -108,13 +109,14 @@ export class AmplifierService {
         return this.execute(() => this.client.setDialogueLift(dialogueLift), { dialogueLift });
     }
 
-    setTunerPreset(preset: string) {
-        this.requireOption(
-            this.requireInfo().tunerPresets.map((p) => p.id),
-            preset,
-            "tuner preset"
-        );
-        return this.execute(() => this.client.setTunerPreset(preset), {});
+    setTunerFrequency(frequency: number) {
+        const tunerFrequency = this.snap(frequency, this.requireInfo().tunerFrequency);
+        const tuner = this.state.status?.tuner;
+        // The name and text of the previous station would be wrong until the amplifier has read the new one.
+        const expected = tuner
+            ? { tuner: { ...tuner, frequency: tunerFrequency, programService: "", programType: "", radioText: "" } }
+            : {};
+        return this.execute(() => this.client.setTunerFrequency(tunerFrequency), expected);
     }
 
     /** The nearest value the amplifier accepts: a whole number of steps from the lowest value, inside the range. */
@@ -159,16 +161,21 @@ export class AmplifierService {
             return this.state.info;
         }
         try {
-            const [amplifierInputs, capabilities, tunerPresets] = await Promise.all([
+            const [amplifierInputs, capabilities, tunerStations] = await Promise.all([
                 this.client.getInputs(),
                 this.client.getCapabilities(),
-                this.client.getTunerPresets(),
+                this.readTunerStations(),
             ]);
-            return { inputs: this.selectInputs(amplifierInputs), tunerPresets, ...capabilities };
+            return { inputs: this.selectInputs(amplifierInputs), tunerStations, ...capabilities };
         } catch (error) {
             AppLogger.warn(undefined, { message: "Could not read the options of the amplifier", error });
             return undefined;
         }
+    }
+
+    /** The station list of the configuration, or the presets stored in the amplifier when there is none. */
+    private async readTunerStations(): Promise<TunerStation[]> {
+        return this.config.tunerStations ?? stationsFromPresets(await this.client.getTunerPresets());
     }
 
     private selectInputs(amplifierInputs: { id: string; title: string }[]): AmplifierInfo["inputs"] {

@@ -10,7 +10,7 @@ import {
     AmplifierSetSoundProgramSchema,
     AmplifierSetStraightSchema,
     AmplifierSetToneSchema,
-    AmplifierSetTunerPresetSchema,
+    AmplifierSetTunerFrequencySchema,
     AmplifierSetVolumeSchema,
     AudioAppRequestMessage,
 } from "@aud/common";
@@ -58,9 +58,9 @@ export class AmplifierHandler {
         return amplifierService.setEnhancer(message.payload.on);
     }
 
-    @WebSocketAction("amplifier_set_tuner_preset", { authenticate: true, schema: AmplifierSetTunerPresetSchema })
-    public setTunerPreset(_wsDetails: WebSocketDetails, message: AudioAppRequestMessage<"amplifier_set_tuner_preset">) {
-        return amplifierService.setTunerPreset(message.payload.preset);
+    @WebSocketAction("amplifier_set_tuner_frequency", { authenticate: true, schema: AmplifierSetTunerFrequencySchema })
+    public setTunerFrequency(_wsDetails: WebSocketDetails, message: AudioAppRequestMessage<"amplifier_set_tuner_frequency">) {
+        return amplifierService.setTunerFrequency(message.payload.frequency);
     }
 
     @WebSocketAction("amplifier_set_bass", { authenticate: true, schema: AmplifierSetToneSchema })

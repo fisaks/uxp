@@ -11,16 +11,18 @@ export type AmplifierInput = {
     label: string;
 };
 
-export type AmplifierTunerPreset = {
-    id: string;
-    title: string;
+/** A station of the station list. The frequency is in units of 10 kHz: 10110 is 101.10 MHz. */
+export type TunerStation = {
+    name: string;
+    frequency: number;
 };
 
 /** What the amplifier offers. Fetched from the amplifier once, so it is missing until the first successful poll. */
 export type AmplifierInfo = {
     inputs: AmplifierInput[];
     soundPrograms: string[];
-    tunerPresets: AmplifierTunerPreset[];
+    /** The stations from the station list file, in the order of the file. */
+    tunerStations: TunerStation[];
     /** The ranges the amplifier reports for its settings. */
     volume: AmplifierRange;
     bass: AmplifierRange;
@@ -28,13 +30,14 @@ export type AmplifierInfo = {
     subwooferTrim: AmplifierRange;
     dialogueLevel: AmplifierRange;
     dialogueLift: AmplifierRange;
+    /** The FM frequencies the amplifier can tune, in units of 10 kHz. */
+    tunerFrequency: AmplifierRange;
 };
 
 export type AmplifierTuner = {
     band: string;
-    frequency: string;
-    /** The selected preset, or null when tuned manually. */
-    presetId: string | null;
+    /** In units of 10 kHz for FM (10110 is 101.10 MHz) and in kHz for AM. */
+    frequency: number;
     programService: string;
     programType: string;
     radioText: string;

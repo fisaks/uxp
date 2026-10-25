@@ -1,10 +1,14 @@
+import { TunerStation } from "@aud/common";
 import env from "../env";
+import { loadTunerStations } from "./tuner-stations";
 
 export type AmplifierConfig = {
     /** Host name or IP address of the amplifier, with an optional port. */
     host: string;
     /** The inputs to show, in order. When not set, all inputs the amplifier offers are shown. */
     inputs?: { id: string; label?: string }[];
+    /** The stations of the tuner, in order. When not set, the presets stored in the amplifier are used. */
+    tunerStations?: TunerStation[];
 };
 
 /** Parses "AV5=Music App,HDMI1=Chromecast,TUNER". An input without a label uses the title of the amplifier. */
@@ -21,4 +25,5 @@ const parseInputs = (value: string | undefined): AmplifierConfig["inputs"] => {
 export const amplifierConfig: AmplifierConfig = {
     host: env.AUD_AMPLIFIER_HOST,
     inputs: parseInputs(process.env.AUD_AMPLIFIER_INPUTS),
+    tunerStations: process.env.AUD_TUNER_STATIONS_FILE ? loadTunerStations(process.env.AUD_TUNER_STATIONS_FILE) : undefined,
 };

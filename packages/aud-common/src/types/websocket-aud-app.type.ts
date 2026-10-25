@@ -11,7 +11,7 @@ export type AudioAppActionPayloadRequestMap = {
     amplifier_set_sound_program: { program: string };
     amplifier_set_straight: { on: boolean };
     amplifier_set_enhancer: { on: boolean };
-    amplifier_set_tuner_preset: { preset: string };
+    amplifier_set_tuner_frequency: { frequency: number };
     amplifier_set_bass: { db: number };
     amplifier_set_treble: { db: number };
     amplifier_set_subwoofer_trim: { db: number };
@@ -33,7 +33,7 @@ export type AudioAppActionPayloadResponseMap = {
     amplifier_set_sound_program: AmplifierState;
     amplifier_set_straight: AmplifierState;
     amplifier_set_enhancer: AmplifierState;
-    amplifier_set_tuner_preset: AmplifierState;
+    amplifier_set_tuner_frequency: AmplifierState;
     amplifier_set_bass: AmplifierState;
     amplifier_set_treble: AmplifierState;
     amplifier_set_subwoofer_trim: AmplifierState;
