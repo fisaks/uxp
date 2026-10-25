@@ -2,7 +2,7 @@ import { envLoader } from "@uxp/bff-common";
 
 envLoader(__dirname);
 
-export const requiredKeys = ["JWT_SECRET"] as const;
+export const requiredKeys = ["JWT_SECRET", "AUD_AMPLIFIER_HOST"] as const;
 export type RequiredKeys = (typeof requiredKeys)[number];
 export type EnvVariables = Record<RequiredKeys, string>;
 

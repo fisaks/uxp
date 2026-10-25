@@ -3,7 +3,8 @@ import { CacheProvider } from "@emotion/react";
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { Provider } from "react-redux";
-import AudApp from "./AudApp";
+import { ShadowRootProvider } from "@uxp/ui-lib";
+import AudioApp from "./AudioApp";
 import { createStore } from "./app/store";
 import { getUxpAppIdentifier, getUxpContentId, initializeConfig } from "./config";
 const styleInsert = require("../../tools/src/insert-function.cjs");
@@ -42,16 +43,18 @@ export const initApplication = (documentRoot: ShadowRoot | Document) => {
             <React.StrictMode>
                 <Provider store={store}>
                     <CacheProvider value={shadowCache}>
-                        <AppComponent />
+                        <ShadowRootProvider documentRoot={documentRoot}>
+                            <AppComponent />
+                        </ShadowRootProvider>
                     </CacheProvider>
                 </Provider>
             </React.StrictMode>
         );
     };
-    renderApp(AudApp);
+    renderApp(AudioApp);
     if (process.env.NODE_ENV === "development" && module.hot) {
-        module.hot.accept("./AudApp", () => {
-            renderApp(require("./AudApp").default);
+        module.hot.accept("./AudioApp", () => {
+            renderApp(require("./AudioApp").default);
         });
     }
     return () => {

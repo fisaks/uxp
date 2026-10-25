@@ -1,20 +1,24 @@
 import "./env";
 import fastifyCookie from "@fastify/cookie";
-import { AppLogger, errorHandler, HandlerRegistry, jwtPlugin, registerRoutes } from "@uxp/bff-common";
+import fastifyWebsocket from "@fastify/websocket";
+import { AppLogger, errorHandler, HandlerRegistry, jwtPlugin, registerLocalWebSocketHandlers } from "@uxp/bff-common";
 import Fastify from "fastify";
 import path from "path";
+import { AudioServerWebSocketManager } from "./ws/AudioServerWebSocketManager";
 
 const fastify = Fastify({ logger: { enabled: true, level: process.env.LOG_LEVEL ?? "info" } });
 AppLogger.initialize(fastify.log);
 fastify.setErrorHandler(errorHandler);
+fastify.register(fastifyWebsocket);
 fastify.register(fastifyCookie);
 fastify.register(jwtPlugin);
 
-HandlerRegistry.discoverHandlers([path.join(__dirname, "./controllers")]);
+HandlerRegistry.discoverHandlers([path.join(__dirname, "./handlers")]);
 
-registerRoutes({
+registerLocalWebSocketHandlers({
     fastify,
-    controllers: Array.from(HandlerRegistry.getRestHandlers()),
+    handlers: Array.from(HandlerRegistry.getWsHandlers()),
+    wsManager: AudioServerWebSocketManager.getInstance(),
 });
 
 const port = 3041;

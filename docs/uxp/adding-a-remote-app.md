@@ -57,7 +57,9 @@ from `uxp-bff-common`: it opens a TypeORM query runner. Add `@fastify/websocket`
   `data-uxp-remove` library script tags, and the root element (see below).
 - `src/config.ts`: reads the `data-*` attributes from the root element
 - `src/index.tsx`: `initApplication(documentRoot)`; also calls it directly when
-  `window.__UXP_PORTAL__` is not set (standalone mode)
+  `window.__UXP_PORTAL__` is not set (standalone mode). Wrap the app in `ShadowRootProvider`
+  (from `uxp-ui-lib`, as `uhn-ui` and `h2c-ui` do) if any component uses `usePortalContainerRef()`;
+  without it the hook throws at render time.
 - `src/app/store.ts`: Redux store that must include `remoteApp: remoteAppReducer`
 - `src/XyzApp.tsx`: `UxpTheme`, `RemoteAppListener`, `BrowserRouter basename={basePath}`,
   `RemoteNavigationListener`
@@ -172,7 +174,16 @@ documented yet; this section will be filled in when `aud` is deployed.
 - `META_TAG` differing from `library.name` leaves the app blank (section 3).
 - MUI popovers, menus and dialogs must use the shadow-root portal container, otherwise they
   render outside the Shadow DOM and lose their styles. See `usePortalContainerRef()` in
-  `uxp-ui-lib`.
+  `uxp-ui-lib`, which needs the `ShadowRootProvider` above. Pass the container as a function
+  (`container: () => portalContainer.current`): the ref is empty on the first render.
 - Controllers are discovered by scanning `src/controllers`; a controller must be an exported
   class with `@Route` methods, otherwise it is not registered.
 - The HMR path (`/ws-xyz`) must be unique per app or dev servers steal each other's sockets.
+- Webpack dev server reads its proxy rules at startup. After adding a proxy (for example
+  `/xyz/ws-api`) restart the UI dev server, otherwise the request falls through to the
+  catch-all `/xyz/` rule and the WebSocket never reaches the BFF.
+- `devserver.sh` sources `.env.dev` as a shell file, so a value with spaces must be quoted
+  (`NAME="a b"`), or sourcing fails. dotenv, which the BFFs use, accepts the quotes.
+- A BFF that subscribes clients to live data should subscribe in the `onConnect` listener of
+  `WebSocketProvider` (it fires on the first connection and on every reconnect), with a short
+  delay so the connection through the UXP proxy has settled, as `uhn-ui` does.

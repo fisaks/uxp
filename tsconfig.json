@@ -27,6 +27,7 @@
             "@uhn/common": ["packages/uhn-common/dist", "packages/uhn-common/src"],
             "@uhn/blueprint": ["packages/uhn-blueprint/dist", "packages/uhn-blueprint/src"],
             "@demo/common": ["packages/demo-common/dist", "packages/demo-common/src"],
+            "@aud/common": ["packages/aud-common/dist", "packages/aud-common/src"],
             "@uxp/tools": ["packages/tools/src"],
             "@uxp/config": ["packages/uxp-config/dist", "packages/uxp-config/src"],
             "@uxp/config-dev": ["packages/uxp-config-dev/dist", "packages/uxp-config-dev/src"]
