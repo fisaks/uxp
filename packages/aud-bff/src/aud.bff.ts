@@ -1,7 +1,7 @@
 import "./env";
 import fastifyCookie from "@fastify/cookie";
 import fastifyWebsocket from "@fastify/websocket";
-import { AppLogger, errorHandler, HandlerRegistry, jwtPlugin, registerLocalWebSocketHandlers } from "@uxp/bff-common";
+import { AppLogger, errorHandler, HandlerRegistry, jwtPlugin, registerLocalWebSocketHandlers, registerRoutes } from "@uxp/bff-common";
 import Fastify from "fastify";
 import path from "path";
 import { libraryService } from "./library/library.service";
@@ -14,7 +14,9 @@ fastify.register(fastifyWebsocket);
 fastify.register(fastifyCookie);
 fastify.register(jwtPlugin);
 
-HandlerRegistry.discoverHandlers([path.join(__dirname, "./handlers")]);
+HandlerRegistry.discoverHandlers([path.join(__dirname, "./controllers"), path.join(__dirname, "./handlers")]);
+
+registerRoutes({ fastify, controllers: Array.from(HandlerRegistry.getRestHandlers()) });
 
 registerLocalWebSocketHandlers({
     fastify,

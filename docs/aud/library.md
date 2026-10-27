@@ -42,3 +42,20 @@ kept in memory and can be rebuilt from them at any time.
   `AUD_DATA_DIR`. After a restart the cache is loaded at once and a scan then looks for changes in the
   background. Deleting the cache is safe.
 - A scan that is running is not started a second time.
+
+## What the UI can ask
+
+| Action | Payload | Answer |
+|--------|---------|--------|
+| `library_get_artists` | none | the artists and the status (`scanning`, `scannedAt`, `trackCount`) |
+| `library_get_albums` | `artistId` | the artist and its albums |
+| `library_get_tracks` | `albumId` | the artist, the album and its tracks |
+| `library_scan` | none | the status; a scan starts in the background if none is running |
+
+An unknown artist or album gives `NOT_FOUND`. The cover picture of an album is served at
+`GET /api/cover/:albumId` (needs the login cookie, cached by the browser for a day); an album without a cover gives
+404 and the UI shows a record icon. The files are never served by path, only the cover the scanner picked.
+
+The UI (`aud-ui/src/features/library`) has three views under the Library tab: the artists with a filter and a
+rescan button, the albums of an artist as a cover grid, and the tracks of an album (grouped by disc when there
+is more than one). While a scan runs, the artists view asks again every 3 seconds.

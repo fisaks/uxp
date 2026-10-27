@@ -2,6 +2,7 @@ import { configureStore } from "@reduxjs/toolkit";
 import { remoteAppReducer } from "@uxp/ui-lib";
 import { createLogger } from "redux-logger";
 import amplifierReducer from "../features/amplifier/amplifierSlice";
+import connectionReducer from "../features/connection/connectionSlice";
 
 export const createStore = () => {
     const logger = createLogger({
@@ -13,6 +14,7 @@ export const createStore = () => {
         reducer: {
             remoteApp: remoteAppReducer,
             amplifier: amplifierReducer,
+            connection: connectionReducer,
         },
         devTools: process.env.NODE_ENV === "development",
         middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(logger),

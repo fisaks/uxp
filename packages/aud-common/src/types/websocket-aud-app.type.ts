@@ -1,11 +1,17 @@
 import { WebSocketAction, WebSocketMessage, WebSocketResponse } from "@uxp/common";
 import { AmplifierReachability, AmplifierState } from "./amplifier.type";
+import { LibraryAlbumsResponse, LibraryArtistsResponse, LibraryStatus, LibraryTracksResponse } from "./library.type";
 
 export type AudioAppActionPayloadRequestMap = {
     /** Starts the live amplifier updates. The response is the current state. */
     amplifier_subscribe: Record<string, never>;
     /** Asks once whether the amplifier answers, for the health check. It does not start the live updates. */
     amplifier_check: Record<string, never>;
+    library_get_artists: Record<string, never>;
+    library_get_albums: { artistId: string };
+    library_get_tracks: { albumId: string };
+    /** Scans the music folder again. The response is the status, which has `scanning: true` until it is done. */
+    library_scan: Record<string, never>;
     amplifier_set_power: { on: boolean };
     amplifier_set_volume: { volumeDb: number };
     amplifier_set_mute: { muted: boolean };
@@ -30,6 +36,10 @@ export type AudioAppActionPayloadResponseMap = {
     amplifier_check: AmplifierReachability;
     /** Pushed to subscribers whenever the amplifier state changes. */
     amplifier_state: AmplifierState;
+    library_get_artists: LibraryArtistsResponse;
+    library_get_albums: LibraryAlbumsResponse;
+    library_get_tracks: LibraryTracksResponse;
+    library_scan: LibraryStatus;
     amplifier_set_power: AmplifierState;
     amplifier_set_volume: AmplifierState;
     amplifier_set_mute: AmplifierState;

@@ -26,3 +26,27 @@ export type LibraryTrack = {
     discNo?: number;
     durationSec?: number;
 };
+
+export type LibraryStatus = {
+    /** True while the music root is being scanned, so the lists may be incomplete. */
+    scanning: boolean;
+    /** When the library was last scanned. */
+    scannedAt?: string;
+    trackCount: number;
+};
+
+export type LibraryArtistsResponse = {
+    artists: LibraryArtist[];
+    status: LibraryStatus;
+};
+
+export type LibraryAlbumsResponse = {
+    artist: LibraryArtist;
+    albums: LibraryAlbum[];
+};
+
+export type LibraryTracksResponse = {
+    artist: LibraryArtist;
+    album: LibraryAlbum;
+    tracks: LibraryTrack[];
+};

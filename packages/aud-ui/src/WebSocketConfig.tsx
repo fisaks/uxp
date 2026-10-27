@@ -11,6 +11,7 @@ import {
 import { useCallback, useMemo, useState } from "react";
 import { AudioAppErrorHandler, AudioAppWebSocketResponseListener } from "./app/AudioBrowserWebSocketManager";
 import { amplifierStateReceived } from "./features/amplifier/amplifierSlice";
+import { connectionLost, connectionReady } from "./features/connection/connectionSlice";
 import { useAppDispatch } from "./hooks";
 
 type WebSocketConfigProps = {
@@ -45,11 +46,20 @@ export const WebSocketConfig: React.FC<WebSocketConfigProps> = ({ getWebSocket, 
 
     // onConnect fires on the initial connection and on every reconnect, and the server forgets subscriptions with the socket.
     const onConnect: OnConnectListener = useCallback(() => {
-        // The subscription is delayed so the connection through the UXP proxy has settled (same as the UHN app).
-        setTimeout(() => ws.sendMessage({ action: "amplifier_subscribe", payload: {} }), 500);
-    }, [ws]);
+        // Messages are delayed so the connection through the UXP proxy has settled (same as the UHN app).
+        setTimeout(() => {
+            dispatch(connectionReady());
+            ws.sendMessage({ action: "amplifier_subscribe", payload: {} });
+        }, 500);
+    }, [ws, dispatch]);
 
-    const onReconnect: ReconnectListener = useCallback((details) => setReconnectDetails(details), []);
+    const onReconnect: ReconnectListener = useCallback(
+        (details) => {
+            setReconnectDetails(details);
+            if (!details.connected) dispatch(connectionLost());
+        },
+        [dispatch]
+    );
 
     const retry = useCallback(() => {
         ws.clearReconnectDetails();

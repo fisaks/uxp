@@ -1,4 +1,4 @@
-import { LibraryAlbum, LibraryArtist, LibraryTrack } from "@aud/common";
+import { LibraryAlbum, LibraryArtist, LibraryStatus, LibraryTrack } from "@aud/common";
 import { AppLogger } from "@uxp/bff-common";
 import { mkdir, readFile, rename, writeFile } from "fs/promises";
 import path from "path";
@@ -33,6 +33,8 @@ export class LibraryService {
     private tracks: ScannedTrack[] = [];
     private folders: ScannedAlbumFolder[] = [];
     private artists: LibraryArtist[] = [];
+    private artistById = new Map<string, LibraryArtist>();
+    private albumById = new Map<string, LibraryAlbum>();
     private albumsByArtist = new Map<string, LibraryAlbum[]>();
     private tracksByAlbum = new Map<string, ScannedTrack[]>();
     private trackById = new Map<string, ScannedTrack>();
@@ -62,12 +64,20 @@ export class LibraryService {
         return this.scanning;
     }
 
-    getStatus() {
+    getStatus(): LibraryStatus {
         return { scanning: this.scanning !== undefined, scannedAt: this.scannedAt, trackCount: this.tracks.length };
     }
 
     getArtists(): LibraryArtist[] {
         return this.artists;
+    }
+
+    getArtist(artistId: string): LibraryArtist | undefined {
+        return this.artistById.get(artistId);
+    }
+
+    getAlbum(albumId: string): LibraryAlbum | undefined {
+        return this.albumById.get(albumId);
     }
 
     getAlbums(artistId: string): LibraryAlbum[] {
@@ -163,9 +173,11 @@ export class LibraryService {
             .sort((a, b) => (a.year ?? 9999) - (b.year ?? 9999) || a.title.localeCompare(b.title, undefined, { sensitivity: "base" }));
 
         const albumsByArtist = new Map<string, LibraryAlbum[]>();
+        const albumById = new Map<string, LibraryAlbum>();
         const artistNames = new Map<string, string>();
         for (const { artistName, ...album } of albums) {
             albumsByArtist.set(album.artistId, [...(albumsByArtist.get(album.artistId) ?? []), album]);
+            albumById.set(album.id, album);
             artistNames.set(album.artistId, artistName);
         }
 
@@ -175,7 +187,9 @@ export class LibraryService {
         this.trackById = new Map(tracks.map((track) => [track.id, track]));
         this.coverByAlbum = new Map(folders.flatMap((f) => (f.cover ? [[f.id, f.cover] as const] : [])));
         this.albumsByArtist = albumsByArtist;
+        this.albumById = albumById;
         this.artists = [...artistNames].map(([id, name]) => ({ id, name, albumCount: albumsByArtist.get(id)!.length })).sort(byName);
+        this.artistById = new Map(this.artists.map((artist) => [artist.id, artist]));
         this.scannedAt = scannedAt;
     }
 }
