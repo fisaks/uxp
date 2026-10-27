@@ -2,7 +2,8 @@ import { TunerStation } from "@aud/common";
 import { readFileSync } from "fs";
 
 /**
- * Reads the station list file: { "stations": [{ "name": "Loop", "frequency": 10180 }] }, the frequency in units of 10 kHz.
+ * Reads the station list file: { "stations": [{ "name": "Loop", "frequency": 10180, "favorite": true }] }, the frequency in units of 10 kHz
+ * and "favorite" optional.
  * Other fields, such as a note, are for people and ignored. A file that cannot be used stops the server at startup.
  */
 export const loadTunerStations = (path: string): TunerStation[] => {
@@ -16,11 +17,14 @@ export const loadTunerStations = (path: string): TunerStation[] => {
         throw new Error(`The tuner station list ${path} has no "stations" array`);
     }
     return content.stations.map((station, index) => {
-        const { name, frequency } = station ?? {};
+        const { name, frequency, favorite } = station ?? {};
         if (typeof name !== "string" || name.trim() === "" || !Number.isInteger(frequency)) {
             throw new Error(`Station ${index + 1} in ${path} needs a name and a whole-number frequency in units of 10 kHz`);
         }
-        return { name, frequency };
+        if (favorite !== undefined && typeof favorite !== "boolean") {
+            throw new Error(`Station ${index + 1} in ${path} has a "favorite" that is not true or false`);
+        }
+        return favorite ? { name, frequency, favorite } : { name, frequency };
     });
 };
 

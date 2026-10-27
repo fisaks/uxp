@@ -15,6 +15,8 @@ export type AmplifierInput = {
 export type TunerStation = {
     name: string;
     frequency: number;
+    /** Marked in the station list: the short list of the System Center panel shows only these. */
+    favorite?: boolean;
 };
 
 /** What the amplifier offers. Fetched from the amplifier once, so it is missing until the first successful poll. */

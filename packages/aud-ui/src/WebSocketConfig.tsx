@@ -1,23 +1,30 @@
 import React from "react";
 import { AudioAppActionPayloadRequestMap, AudioAppActionPayloadResponseMap } from "@aud/common";
-import { OnConnectListener, ReconnectDetails, ReconnectListener, ReconnectOverlay, WebSocketProvider } from "@uxp/ui-lib";
-import { useCallback, useMemo, useState } from "react";
 import {
-    AudioAppBrowserWebSocketManager,
-    AudioAppErrorHandler,
-    AudioAppWebSocketResponseListener,
-} from "./app/AudioBrowserWebSocketManager";
+    BrowserWebSocketManager,
+    OnConnectListener,
+    ReconnectDetails,
+    ReconnectListener,
+    ReconnectOverlay,
+    WebSocketProvider,
+} from "@uxp/ui-lib";
+import { useCallback, useMemo, useState } from "react";
+import { AudioAppErrorHandler, AudioAppWebSocketResponseListener } from "./app/AudioBrowserWebSocketManager";
 import { amplifierStateReceived } from "./features/amplifier/amplifierSlice";
 import { useAppDispatch } from "./hooks";
 
 type WebSocketConfigProps = {
+    /** The connection to use: the one of the page or the one of the System Center panel. */
+    getWebSocket: () => BrowserWebSocketManager<AudioAppActionPayloadRequestMap, AudioAppActionPayloadResponseMap>;
+    /** The overlay covers the whole screen, so the System Center panel leaves it to the page. */
+    reconnectOverlay?: boolean;
     children: React.ReactNode;
 };
 
-export const WebSocketConfig: React.FC<WebSocketConfigProps> = ({ children }) => {
+export const WebSocketConfig: React.FC<WebSocketConfigProps> = ({ getWebSocket, reconnectOverlay = true, children }) => {
     const dispatch = useAppDispatch();
     const [reconnectDetails, setReconnectDetails] = useState<ReconnectDetails | undefined>(undefined);
-    const ws = useMemo(() => AudioAppBrowserWebSocketManager.getInstance(), []);
+    const ws = useMemo(getWebSocket, [getWebSocket]);
 
     const listeners: AudioAppWebSocketResponseListener = useMemo(
         () => ({
@@ -51,7 +58,7 @@ export const WebSocketConfig: React.FC<WebSocketConfigProps> = ({ children }) =>
 
     return (
         <>
-            <ReconnectOverlay details={reconnectDetails} onRetryNow={retry} />
+            {reconnectOverlay && <ReconnectOverlay details={reconnectDetails} onRetryNow={retry} />}
             <WebSocketProvider<AudioAppActionPayloadRequestMap, AudioAppActionPayloadResponseMap>
                 wsInstance={ws}
                 listeners={listeners}

@@ -68,8 +68,11 @@ The buttons of the tuner are the stations in `info.tunerStations`, built once wh
   server starts, and a file that cannot be read stops the server with the reason.
 
   ```json
-  { "stations": [{ "name": "Loop", "frequency": 10180, "note": "free text for people, ignored" }] }
+  { "stations": [{ "name": "Loop", "frequency": 10180, "favorite": true, "note": "free text for people, ignored" }] }
   ```
+
+  `favorite` is optional. The panel in the System Center shows only the stations marked `true`, or all of them
+  when none is marked (so with the amplifier presets too); the Audio page always shows the whole list.
 
   The list is specific to a place (which stations can be received and on which frequencies), so it is not part
   of this repository: keep it with the configuration of your installation and make it available to the backend.

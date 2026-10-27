@@ -5,11 +5,18 @@ import ReactDOM from "react-dom/client";
 import { Provider } from "react-redux";
 import { ShadowRootProvider } from "@uxp/ui-lib";
 import AudioApp from "./AudioApp";
+import AudioSystem from "./AudioSystem";
 import { createStore } from "./app/store";
-import { getUxpAppIdentifier, getUxpContentId, initializeConfig } from "./config";
+import { getAppOption, getUxpAppIdentifier, getUxpContentId, initializeConfig } from "./config";
 const styleInsert = require("../../tools/src/insert-function.cjs");
 
 declare const module: __WebpackModuleApi.Module;
+
+// The page that is mounted is chosen by the data-app-option of the HTML page: index.html is the app, system.html the System Center panel.
+const APPLICATIONS = {
+    AudioApp,
+    SystemView: AudioSystem,
+};
 
 export const initApplication = (documentRoot: ShadowRoot | Document) => {
     const container = documentRoot instanceof Document ? documentRoot.head : documentRoot;
@@ -51,10 +58,11 @@ export const initApplication = (documentRoot: ShadowRoot | Document) => {
             </React.StrictMode>
         );
     };
-    renderApp(AudioApp);
+    const main = getAppOption<{ main?: keyof typeof APPLICATIONS }>()?.main ?? "AudioApp";
+    renderApp(APPLICATIONS[main]);
     if (process.env.NODE_ENV === "development" && module.hot) {
-        module.hot.accept("./AudioApp", () => {
-            renderApp(require("./AudioApp").default);
+        module.hot.accept(["./AudioApp", "./AudioSystem"], () => {
+            renderApp(main === "SystemView" ? require("./AudioSystem").default : require("./AudioApp").default);
         });
     }
     return () => {

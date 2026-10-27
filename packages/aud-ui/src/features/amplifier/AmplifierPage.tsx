@@ -8,7 +8,12 @@ import { PowerVolumeCard } from "./components/PowerVolumeCard";
 import { TunerCard } from "./components/TunerCard";
 import { useAmplifierCommand } from "./useAmplifierCommand";
 
-const AmplifierPage: React.FC = () => {
+type AmplifierPageProps = {
+    /** The short form for the System Center panel: no advanced settings and only the favourite stations. */
+    compact?: boolean;
+};
+
+const AmplifierPage: React.FC<AmplifierPageProps> = ({ compact = false }) => {
     const state = useAppSelector(selectAmplifierState);
     const { send, error, clearError } = useAmplifierCommand();
 
@@ -27,12 +32,12 @@ const AmplifierPage: React.FC = () => {
     const disabled = !state.reachable;
 
     return (
-        <Stack spacing={2} sx={{ maxWidth: 700, mx: "auto" }}>
+        <Stack spacing={2} sx={compact ? { p: 2 } : { maxWidth: 700, mx: "auto" }}>
             {!state.reachable && <Alert severity="warning">The amplifier cannot be reached. Showing the last known state.</Alert>}
             <PowerVolumeCard info={info} status={status} disabled={disabled} send={send} />
             <InputCard info={info} status={status} disabled={disabled} send={send} />
-            {status.tuner && <TunerCard info={info} tuner={status.tuner} disabled={disabled} send={send} />}
-            <AdvancedCard info={info} status={status} disabled={disabled} send={send} />
+            {status.tuner && <TunerCard info={info} tuner={status.tuner} disabled={disabled} send={send} favoritesOnly={compact} />}
+            {!compact && <AdvancedCard info={info} status={status} disabled={disabled} send={send} />}
             <Snackbar open={error !== undefined} autoHideDuration={6000} onClose={clearError}>
                 <Alert severity="error" onClose={clearError}>
                     {error}

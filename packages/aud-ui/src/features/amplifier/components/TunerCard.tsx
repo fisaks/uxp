@@ -19,16 +19,20 @@ type TunerCardProps = {
     tuner: AmplifierTuner;
     disabled: boolean;
     send: SendAmplifierCommand;
+    /** Show the stations marked as favourite in the station list (all of them when none is marked). */
+    favoritesOnly?: boolean;
 };
 
 /** FM frequencies are in units of 10 kHz (10110 is 101.1 MHz), AM frequencies in kHz. */
 const formatFrequency = (band: string, frequency: number) =>
     band === FM_BAND ? `${Number((frequency / 100).toFixed(2))} MHz` : `${frequency} kHz`;
 
-export const TunerCard: React.FC<TunerCardProps> = ({ info, tuner, disabled, send }) => {
+export const TunerCard: React.FC<TunerCardProps> = ({ info, tuner, disabled, send, favoritesOnly = false }) => {
     const isTuned = (frequency: number) => tuner.band === FM_BAND && tuner.frequency === frequency;
     const station = info.tunerStations.find((s) => isTuned(s.frequency));
     const frequency = formatFrequency(tuner.band, tuner.frequency);
+    const favorites = info.tunerStations.filter((s) => s.favorite);
+    const buttons = favoritesOnly && favorites.length > 0 ? favorites : info.tunerStations;
     const program = [tuner.programService, tuner.programType && `(${tuner.programType})`].filter(Boolean).join(" ");
 
     return (
@@ -66,8 +70,15 @@ export const TunerCard: React.FC<TunerCardProps> = ({ info, tuner, disabled, sen
                         )}
                     </Box>
                 </Box>
-                <Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 1, mt: 2 }}>
-                    {info.tunerStations.map((s) => {
+                <Box
+                    sx={{
+                        display: "grid",
+                        gridTemplateColumns: `repeat(auto-fill, minmax(${favoritesOnly ? 130 : 150}px, 1fr))`,
+                        gap: 1,
+                        mt: 2,
+                    }}
+                >
+                    {buttons.map((s) => {
                         const tuned = isTuned(s.frequency);
                         return (
                             // The other buttons are neutral so that the one that is playing is the only coloured one.
