@@ -54,6 +54,10 @@ export class AmplifierService {
         return this.execute(() => this.client.setPower(on), { power: on });
     }
 
+    setSleep(minutes: number) {
+        return this.execute(() => this.client.setSleepMinutes(minutes), { sleepMinutes: minutes });
+    }
+
     setVolume(volumeDb: number) {
         const volume = this.snap(volumeDb, this.requireInfo().volume);
         return this.execute(() => this.client.setVolume(volume), { volumeDb: volume });
@@ -161,7 +165,9 @@ export class AmplifierService {
     }
 
     private async readStatus(): Promise<AmplifierStatus> {
-        const status: AmplifierStatus = await this.client.getBasicStatus();
+        const basic = await this.client.getBasicStatus();
+        // The sleep timer only runs while the amplifier is on.
+        const status: AmplifierStatus = { ...basic, sleepMinutes: basic.power ? await this.client.getSleepMinutes() : 0 };
         if (status.power && status.input === TUNER_INPUT) {
             status.tuner = await this.client.getTunerInfo();
         }

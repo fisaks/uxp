@@ -118,6 +118,13 @@ export class YamahaClient {
         };
     }
 
+    /** The sleep timer that is set in minutes, 0 when it is off. The amplifier does not tell how much time is left. */
+    async getSleepMinutes(): Promise<number> {
+        const sleep = (await this.get("<Main_Zone><Power_Control><Sleep>GetParam</Sleep></Power_Control></Main_Zone>")).Main_Zone
+            .Power_Control.Sleep;
+        return Number.parseInt(String(sleep), 10) || 0;
+    }
+
     async getTunerInfo(): Promise<YamahaTunerInfo> {
         const info = (await this.get("<Tuner><Play_Info>GetParam</Play_Info></Tuner>")).Tuner.Play_Info;
         const band: string = info.Tuning.Band;
@@ -177,6 +184,11 @@ export class YamahaClient {
 
     setPower(on: boolean) {
         return this.put(`<Main_Zone><Power_Control><Power>${on ? "On" : "Standby"}</Power></Power_Control></Main_Zone>`);
+    }
+
+    /** The amplifier names the settings "Off", "30 min", "60 min", "90 min" and "120 min". */
+    setSleepMinutes(minutes: number) {
+        return this.put(`<Main_Zone><Power_Control><Sleep>${minutes === 0 ? "Off" : `${minutes} min`}</Sleep></Power_Control></Main_Zone>`);
     }
 
     /** The amplifier takes steps of 0.5 dB. */

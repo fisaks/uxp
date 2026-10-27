@@ -63,7 +63,9 @@ another Yamaha model offers its own list. Notes from the RX-V673:
   in the code: the BFF reads them (and the sound programs) from `desc.xml` and sends them to the page as
   part of the amplifier info. Every value sent by a client is moved to the nearest step inside the
   range before it goes to the amplifier.
-- Other settings in `desc.xml` that are not used yet: scenes, sleep timer, zone 2, and the other input
+- The sleep timer (Off, 30, 60, 90 or 120 minutes) is on the Audio page only, not in the System Center, and
+  only while the amplifier is on. The amplifier tells which setting is active but not how much time is left.
+- Other settings in `desc.xml` that are not used yet: scenes, zone 2, and the other input
   sources (AirPlay, USB, iPod, net radio, server, Napster) with their play info and browsing.
 
 ## Tuner stations

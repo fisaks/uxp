@@ -7,6 +7,7 @@ import {
     AmplifierSetMuteSchema,
     AmplifierSetPowerSchema,
     AmplifierSetPureDirectSchema,
+    AmplifierSetSleepSchema,
     AmplifierSetSoundProgramSchema,
     AmplifierSetStraightSchema,
     AmplifierSetToneSchema,
@@ -26,6 +27,11 @@ export class AmplifierHandler {
     @WebSocketAction("amplifier_check", { authenticate: true })
     public check() {
         return amplifierService.checkReachable();
+    }
+
+    @WebSocketAction("amplifier_set_sleep", { authenticate: true, schema: AmplifierSetSleepSchema })
+    public setSleep(_wsDetails: WebSocketDetails, message: AudioAppRequestMessage<"amplifier_set_sleep">) {
+        return amplifierService.setSleep(message.payload.minutes);
     }
 
     @WebSocketAction("amplifier_set_power", { authenticate: true, schema: AmplifierSetPowerSchema })

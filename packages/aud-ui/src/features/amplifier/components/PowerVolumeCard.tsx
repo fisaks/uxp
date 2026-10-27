@@ -6,9 +6,10 @@ import RemoveIcon from "@mui/icons-material/Remove";
 import VolumeOffIcon from "@mui/icons-material/VolumeOff";
 import VolumeUpIcon from "@mui/icons-material/VolumeUp";
 import { Box, Card, CardContent, IconButton, Slider, Stack, SxProps, Switch, Theme, Typography } from "@mui/material";
-import { TooltipIconButton, usePortalContainerRef } from "@uxp/ui-lib";
+import { Show, TooltipIconButton, usePortalContainerRef } from "@uxp/ui-lib";
 import React, { useCallback } from "react";
 import { SendAmplifierCommand } from "../useAmplifierCommand";
+import { SleepTimerRow } from "./SleepTimerRow";
 import { useEditableNumberInput } from "../useEditableNumberInput";
 import { useDebouncedSlider } from "../useDebouncedSlider";
 
@@ -141,6 +142,9 @@ export const PowerVolumeCard: React.FC<PowerVolumeCardProps> = ({ info, status, 
                         slotProps={{ input: { "aria-label": "Power" } }}
                     />
                 </Stack>
+                <Show when={status.power && !compact}>
+                    <SleepTimerRow status={status} disabled={disabled} send={send} />
+                </Show>
                 <Stack direction="row" alignItems="baseline" spacing={1.5} sx={{ mt: 2 }}>
                     <Typography variant="h6">Volume</Typography>
                     {/* The value is typed directly into this input: click it, enter a number in dB and press Enter. */}

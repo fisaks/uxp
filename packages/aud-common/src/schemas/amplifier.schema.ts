@@ -1,5 +1,7 @@
 // JSON schemas that validate the payloads of the amplifier WebSocket actions
 
+import { SLEEP_TIMER_MINUTES } from "../types/amplifier.type";
+
 const BOOLEAN_ON_SCHEMA = {
     type: "object",
     properties: { on: { type: "boolean" } },
@@ -60,5 +62,12 @@ export const AmplifierSetDialogueSchema = {
     type: "object",
     properties: { level: { type: "number" } },
     required: ["level"],
+    additionalProperties: false,
+};
+
+export const AmplifierSetSleepSchema = {
+    type: "object",
+    properties: { minutes: { type: "integer", enum: SLEEP_TIMER_MINUTES } },
+    required: ["minutes"],
     additionalProperties: false,
 };

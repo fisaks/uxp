@@ -1,3 +1,6 @@
+/** The sleep timer settings of the amplifier in minutes, 0 is off. */
+export const SLEEP_TIMER_MINUTES = [0, 30, 60, 90, 120];
+
 /** A range the amplifier accepts, in the unit of the setting (dB for levels). */
 export type AmplifierRange = {
     min: number;
@@ -68,6 +71,8 @@ export type AmplifierStatus = {
     cinemaDsp3d: boolean;
     dialogueLevel: number;
     dialogueLift: number;
+    /** The sleep timer that is set, 0 when it is off. The amplifier does not tell how much time is left. */
+    sleepMinutes: number;
     /** Only present while the amplifier is on and the TUNER input is selected. */
     tuner?: AmplifierTuner;
 };
