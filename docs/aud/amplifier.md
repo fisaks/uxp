@@ -34,6 +34,12 @@ Quote `AUD_AMPLIFIER_INPUTS` when a label contains a space (see
   to flip it (`+5`, `-5`). A missing minus sign would otherwise set a very loud volume.
 - The UI subscribes once when the WebSocket connects (`amplifier_subscribe`), so any open AUD
   page keeps the amplifier polled.
+- The UXP header health indicator is fed by `health.html` (`healthEntry`), a page UXP keeps open in the
+  background. Every 30 seconds it sends `amplifier_check`, which answers whether the amplifier is
+  reachable without starting the live updates (while clients are subscribed it answers from the polled
+  state, otherwise it asks the amplifier once). The items are `audio-server` (error when the check gets no
+  answer, since the server cannot report its own death) and `amplifier` (error when it is not reachable).
+  When the server is down the amplifier is not reported, because it is not known.
 
 ## About the amplifier interface
 

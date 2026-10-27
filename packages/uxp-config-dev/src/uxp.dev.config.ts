@@ -13,7 +13,7 @@ export default defineConfig({
     apps: [
         { name: "H2C", baseUrl: REMOTE_HOST_H2C, config: { contextPath: "/h2c", mainEntry: "index.html" } },
         { name: "uxp-demo", baseUrl: REMOTE_HOST_DEMO, config: { contextPath: "/demo", mainEntry: "index.html" } },
-        { name: "AUD", baseUrl: REMOTE_HOST_AUD, config: { contextPath: "/aud", mainEntry: "index.html", systemEntry: "system.html" } },
+        { name: "AUD", baseUrl: REMOTE_HOST_AUD, config: { contextPath: "/aud", mainEntry: "index.html", systemEntry: "system.html", healthEntry: "health.html" } },
         { name: "UHN", baseUrl: REMOTE_HOST_UHN, config: {
             contextPath: "/uhn", mainEntry: "index.html",
             healthEntry: "health.html", systemEntry: "system.html",

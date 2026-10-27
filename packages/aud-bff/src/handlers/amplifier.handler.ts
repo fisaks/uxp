@@ -23,6 +23,11 @@ export class AmplifierHandler {
         return amplifierService.subscribe(wsDetails.socket);
     }
 
+    @WebSocketAction("amplifier_check", { authenticate: true })
+    public check() {
+        return amplifierService.checkReachable();
+    }
+
     @WebSocketAction("amplifier_set_power", { authenticate: true, schema: AmplifierSetPowerSchema })
     public setPower(_wsDetails: WebSocketDetails, message: AudioAppRequestMessage<"amplifier_set_power">) {
         return amplifierService.setPower(message.payload.on);

@@ -1,9 +1,11 @@
 import { WebSocketAction, WebSocketMessage, WebSocketResponse } from "@uxp/common";
-import { AmplifierState } from "./amplifier.type";
+import { AmplifierReachability, AmplifierState } from "./amplifier.type";
 
 export type AudioAppActionPayloadRequestMap = {
     /** Starts the live amplifier updates. The response is the current state. */
     amplifier_subscribe: Record<string, never>;
+    /** Asks once whether the amplifier answers, for the health check. It does not start the live updates. */
+    amplifier_check: Record<string, never>;
     amplifier_set_power: { on: boolean };
     amplifier_set_volume: { volumeDb: number };
     amplifier_set_mute: { muted: boolean };
@@ -24,6 +26,7 @@ export type AudioAppActionPayloadRequestMap = {
 
 export type AudioAppActionPayloadResponseMap = {
     amplifier_subscribe: AmplifierState;
+    amplifier_check: AmplifierReachability;
     /** Pushed to subscribers whenever the amplifier state changes. */
     amplifier_state: AmplifierState;
     amplifier_set_power: AmplifierState;

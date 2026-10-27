@@ -30,6 +30,8 @@ export const HealthMenu: React.FC<HealthMenuProps> = ({ anchorEl, onClose }) => 
     const healthSnapshots = useSelector(selectHealthSnapshots);
     const healthApps: SystemAppMeta[] = useSelector(selectHealthIndicatorApps)
     const uxpNavigate = useUxpNavigate();
+    // An app with a health page is only in the snapshots once it has reported, so until then it would be missing from the list.
+    const waitingApps = healthApps.filter((app) => !healthSnapshots.some((snapshot) => snapshot.appId === app.appId));
 
     return (
         <Menu
@@ -149,6 +151,15 @@ export const HealthMenu: React.FC<HealthMenuProps> = ({ anchorEl, onClose }) => 
                     </Box>
                 );
             })}
+
+            {waitingApps.map((app) => (
+                <Box key={app.appId} sx={{ px: 2, py: 1 }}>
+                    <Typography variant="subtitle2">{app.appName}</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                        Waiting for the first report...
+                    </Typography>
+                </Box>
+            ))}
         </Menu>
     );
 };

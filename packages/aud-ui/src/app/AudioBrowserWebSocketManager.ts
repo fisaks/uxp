@@ -47,5 +47,25 @@ export class AudioSystemBrowserWebSocketManager extends BrowserWebSocketManager<
     }
 }
 
+/** The connection of the health page, which UXP keeps open in the background (see AudioSystemBrowserWebSocketManager). */
+export class AudioHealthBrowserWebSocketManager extends BrowserWebSocketManager<
+    AudioAppActionPayloadRequestMap,
+    AudioAppActionPayloadResponseMap
+> {
+    private static instance: AudioHealthBrowserWebSocketManager | null = null;
+
+    private constructor(url: string) {
+        super(url);
+    }
+
+    static getInstance(): AudioHealthBrowserWebSocketManager {
+        const url = getWSPath();
+        if (!url) {
+            throw new Error("WebSocket URL not set");
+        }
+        return this.instance ?? (this.instance = new AudioHealthBrowserWebSocketManager(url));
+    }
+}
+
 export const useAudioWebSocket = (listeners?: AudioAppWebSocketResponseListener, onError?: AudioAppErrorHandler) =>
     useWebSocket<AudioAppActionPayloadRequestMap, AudioAppActionPayloadResponseMap>(listeners, onError);

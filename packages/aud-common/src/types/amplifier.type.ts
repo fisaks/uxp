@@ -11,6 +11,11 @@ export type AmplifierInput = {
     label: string;
 };
 
+/** The answer to the health check: whether the amplifier answers. */
+export type AmplifierReachability = {
+    reachable: boolean;
+};
+
 /** A station of the station list. The frequency is in units of 10 kHz: 10110 is 101.10 MHz. */
 export type TunerStation = {
     name: string;

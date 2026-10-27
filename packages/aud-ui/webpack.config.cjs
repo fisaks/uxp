@@ -31,6 +31,11 @@ module.exports = merge(baseConfig, {
             publicPath: "/aud/",
         }),
         new HtmlWebpackPlugin({
+            template: "./health.html",
+            filename: "health.html",
+            publicPath: "/aud/",
+        }),
+        new HtmlWebpackPlugin({
             template: "./system.html",
             filename: "system.html",
             publicPath: "/aud/",

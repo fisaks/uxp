@@ -1,4 +1,4 @@
-import { AmplifierInfo, AmplifierRange, AmplifierState, AmplifierStatus, TunerStation } from "@aud/common";
+import { AmplifierInfo, AmplifierRange, AmplifierReachability, AmplifierState, AmplifierStatus, TunerStation } from "@aud/common";
 import { AppErrorV2, AppLogger, WebSocketDetails } from "@uxp/bff-common";
 import { ErrorCodes } from "@uxp/common";
 import { AudioServerWebSocketManager } from "../ws/AudioServerWebSocketManager";
@@ -35,6 +35,19 @@ export class AmplifierService {
             this.scheduleNextPoll();
         }
         return this.state;
+    }
+
+    /** For the health check. While clients are subscribed the polled state tells it, otherwise the amplifier is asked once. */
+    async checkReachable(): Promise<AmplifierReachability> {
+        if (this.polling) {
+            return { reachable: this.state.reachable };
+        }
+        try {
+            await this.client.getBasicStatus();
+            return { reachable: true };
+        } catch {
+            return { reachable: false };
+        }
     }
 
     setPower(on: boolean) {
