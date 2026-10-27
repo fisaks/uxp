@@ -5,7 +5,7 @@ import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import RemoveIcon from "@mui/icons-material/Remove";
 import VolumeOffIcon from "@mui/icons-material/VolumeOff";
 import VolumeUpIcon from "@mui/icons-material/VolumeUp";
-import { Box, Card, CardContent, IconButton, Slider, Stack, Switch, Typography } from "@mui/material";
+import { Box, Card, CardContent, IconButton, Slider, Stack, SxProps, Switch, Theme, Typography } from "@mui/material";
 import { TooltipIconButton, usePortalContainerRef } from "@uxp/ui-lib";
 import React, { useCallback } from "react";
 import { SendAmplifierCommand } from "../useAmplifierCommand";
@@ -22,9 +22,11 @@ type PowerVolumeCardProps = {
     status: AmplifierStatus;
     disabled: boolean;
     send: SendAmplifierCommand;
+    /** No slider, only step buttons: in the scrolling System Center panel a finger can hit a slider and jump to a loud volume. */
+    compact?: boolean;
 };
 
-export const PowerVolumeCard: React.FC<PowerVolumeCardProps> = ({ info, status, disabled, send }) => {
+export const PowerVolumeCard: React.FC<PowerVolumeCardProps> = ({ info, status, disabled, send, compact = false }) => {
     const portalContainer = usePortalContainerRef();
     const sendVolume = useCallback((volumeDb: number) => send("amplifier_set_volume", { volumeDb }), [send]);
     const { localValue, handleChange, handleChangeCommitted, sendExact } = useDebouncedSlider(
@@ -48,16 +50,83 @@ export const PowerVolumeCard: React.FC<PowerVolumeCardProps> = ({ info, status, 
     const stepButton = (label: string, change: number, icon: React.ReactNode) => (
         <TooltipIconButton
             component="span"
-            size="small"
+            size={compact ? "medium" : "small"}
             disabled={disabled}
             onClick={() => sendExact(localValue + change)}
-            sx={{ p: 0.5 }}
+            sx={{ p: compact ? 1 : 0.5 }}
             tooltip={label}
             tooltipPortal={portalContainer}
             enterDelay={TOOLTIP_ENTER_DELAY}
         >
             {icon}
         </TooltipIconButton>
+    );
+
+    const muteButton = (sx?: SxProps<Theme>) => (
+        <IconButton
+            sx={sx}
+            color={status.muted ? "warning" : "default"}
+            disabled={disabled}
+            onClick={() => send("amplifier_set_mute", { muted: !status.muted })}
+            aria-label={status.muted ? "Unmute" : "Mute"}
+        >
+            {status.muted ? <VolumeOffIcon /> : <VolumeUpIcon />}
+        </IconButton>
+    );
+
+    // A small caption above a button says what it does, since the buttons here are icons only.
+    const labelled = (label: string, button: React.ReactNode) => (
+        <Stack alignItems="center">
+            <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.65rem", lineHeight: 1.5 }}>
+                {label}
+            </Typography>
+            {button}
+        </Stack>
+    );
+
+    // The step buttons and the mute button only, for the System Center panel.
+    const stepControls = (
+        <Stack direction="row" alignItems="flex-end" justifyContent="space-between" sx={{ mt: 1 }}>
+            {labelled(`−${VOLUME_BIG_STEP_DB} dB`, stepButton(`−${VOLUME_BIG_STEP_DB} dB`, -VOLUME_BIG_STEP_DB, <ChevronLeftIcon />))}
+            {labelled(`−${info.volume.step} dB`, stepButton(`−${info.volume.step} dB`, -info.volume.step, <RemoveIcon />))}
+            {labelled(`+${info.volume.step} dB`, stepButton(`+${info.volume.step} dB`, info.volume.step, <AddIcon />))}
+            {labelled(`+${VOLUME_BIG_STEP_DB} dB`, stepButton(`+${VOLUME_BIG_STEP_DB} dB`, VOLUME_BIG_STEP_DB, <ChevronRightIcon />))}
+            {labelled(status.muted ? "Unmute" : "Mute", muteButton())}
+        </Stack>
+    );
+
+    // The range labels, the slider and the step buttons share the first column, the mute button sits next to the slider.
+    const sliderControls = (
+        <Box sx={{ display: "grid", gridTemplateColumns: "1fr auto", columnGap: 2, alignItems: "center" }}>
+            <Stack direction="row" justifyContent="space-between" sx={{ gridColumn: 1, gridRow: 1, mb: -1 }}>
+                <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.65rem", lineHeight: 1 }}>
+                    {formatEdge(info.volume.min)}
+                </Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.65rem", lineHeight: 1 }}>
+                    {formatEdge(info.volume.max)}
+                </Typography>
+            </Stack>
+            <Slider
+                sx={{ gridColumn: 1, gridRow: 2 }}
+                value={localValue}
+                min={info.volume.min}
+                max={info.volume.max}
+                step={info.volume.step}
+                disabled={disabled}
+                onChange={handleChange}
+                onChangeCommitted={handleChangeCommitted}
+                aria-label="Volume"
+            />
+            {muteButton({ gridColumn: 2, gridRow: 2 })}
+            <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ gridColumn: 1, gridRow: 3 }}>
+                {stepButton(`−${VOLUME_BIG_STEP_DB} dB`, -VOLUME_BIG_STEP_DB, <ChevronLeftIcon fontSize="small" />)}
+                <Stack direction="row" spacing={1}>
+                    {stepButton(`−${info.volume.step} dB`, -info.volume.step, <RemoveIcon fontSize="small" />)}
+                    {stepButton(`+${info.volume.step} dB`, info.volume.step, <AddIcon fontSize="small" />)}
+                </Stack>
+                {stepButton(`+${VOLUME_BIG_STEP_DB} dB`, VOLUME_BIG_STEP_DB, <ChevronRightIcon fontSize="small" />)}
+            </Stack>
+        </Box>
     );
 
     return (
@@ -100,45 +169,7 @@ export const PowerVolumeCard: React.FC<PowerVolumeCardProps> = ({ info, status, 
                         }}
                     />
                 </Stack>
-                {/* The range labels, the slider and the step buttons share the first column, the mute button sits next to the slider. */}
-                <Box sx={{ display: "grid", gridTemplateColumns: "1fr auto", columnGap: 2, alignItems: "center" }}>
-                    <Stack direction="row" justifyContent="space-between" sx={{ gridColumn: 1, gridRow: 1, mb: -1 }}>
-                        <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.65rem", lineHeight: 1 }}>
-                            {formatEdge(info.volume.min)}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.65rem", lineHeight: 1 }}>
-                            {formatEdge(info.volume.max)}
-                        </Typography>
-                    </Stack>
-                    <Slider
-                        sx={{ gridColumn: 1, gridRow: 2 }}
-                        value={localValue}
-                        min={info.volume.min}
-                        max={info.volume.max}
-                        step={info.volume.step}
-                        disabled={disabled}
-                        onChange={handleChange}
-                        onChangeCommitted={handleChangeCommitted}
-                        aria-label="Volume"
-                    />
-                    <IconButton
-                        sx={{ gridColumn: 2, gridRow: 2 }}
-                        color={status.muted ? "warning" : "default"}
-                        disabled={disabled}
-                        onClick={() => send("amplifier_set_mute", { muted: !status.muted })}
-                        aria-label={status.muted ? "Unmute" : "Mute"}
-                    >
-                        {status.muted ? <VolumeOffIcon /> : <VolumeUpIcon />}
-                    </IconButton>
-                    <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ gridColumn: 1, gridRow: 3 }}>
-                        {stepButton(`−${VOLUME_BIG_STEP_DB} dB`, -VOLUME_BIG_STEP_DB, <ChevronLeftIcon fontSize="small" />)}
-                        <Stack direction="row" spacing={1}>
-                            {stepButton(`−${info.volume.step} dB`, -info.volume.step, <RemoveIcon fontSize="small" />)}
-                            {stepButton(`+${info.volume.step} dB`, info.volume.step, <AddIcon fontSize="small" />)}
-                        </Stack>
-                        {stepButton(`+${VOLUME_BIG_STEP_DB} dB`, VOLUME_BIG_STEP_DB, <ChevronRightIcon fontSize="small" />)}
-                    </Stack>
-                </Box>
+                {compact ? stepControls : sliderControls}
             </CardContent>
         </Card>
     );

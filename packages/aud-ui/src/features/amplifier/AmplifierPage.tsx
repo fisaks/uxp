@@ -34,7 +34,7 @@ const AmplifierPage: React.FC<AmplifierPageProps> = ({ compact = false }) => {
     return (
         <Stack spacing={2} sx={compact ? { p: 2 } : { maxWidth: 700, mx: "auto" }}>
             {!state.reachable && <Alert severity="warning">The amplifier cannot be reached. Showing the last known state.</Alert>}
-            <PowerVolumeCard info={info} status={status} disabled={disabled} send={send} />
+            <PowerVolumeCard info={info} status={status} disabled={disabled} send={send} compact={compact} />
             <InputCard info={info} status={status} disabled={disabled} send={send} />
             {status.tuner && <TunerCard info={info} tuner={status.tuner} disabled={disabled} send={send} favoritesOnly={compact} />}
             {!compact && <AdvancedCard info={info} status={status} disabled={disabled} send={send} />}
