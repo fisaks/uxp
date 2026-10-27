@@ -18,9 +18,9 @@ Configuration is applied to the database at runtime, either automatically on BFF
 |---------|----------|---------|
 | `@uxp/config` | `uxp/packages/uxp-config` | Types, `defineConfig()`, `basePlatformConfig`, `globalConfig()`, CLI tool |
 | `@uxp/config-dev` | `uxp/packages/uxp-config-dev` | Dev environment configuration (all apps: H2C, demo, UHN) |
-| `@uxp/config-prod` | `uxp-server/uxp-config-prod` | Production configuration (UHN only) |
+| `@uxp/config-prod` | outside this repo | Production configuration |
 
-The prod config lives in the `uxp-server` repo alongside deployment infrastructure, not in the uxp monorepo. It depends on `@uxp/config` via `link:` to the uxp repo.
+The prod config lives in a separate private repository alongside the deployment infrastructure, not in the uxp monorepo. It depends on `@uxp/config` via `link:` to the uxp repo.
 
 ---
 
@@ -123,7 +123,7 @@ pnpm --filter @uxp/config-dev apply-config
 ### Prod config
 
 ```bash
-cd uxp-server/uxp-config-prod
+cd <private repo>/uxp-config-prod
 pnpm apply-config
 ```
 
