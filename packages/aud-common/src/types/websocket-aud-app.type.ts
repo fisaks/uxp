@@ -1,6 +1,7 @@
 import { WebSocketAction, WebSocketMessage, WebSocketResponse } from "@uxp/common";
 import { AmplifierReachability, AmplifierState } from "./amplifier.type";
 import { PlayerState, RepeatMode } from "./player.type";
+import { Playlist, PlaylistSummary } from "./playlist.type";
 import { LibraryAlbumsResponse, LibraryArtistsResponse, LibraryStatus, LibraryTracksResponse } from "./library.type";
 
 export type AudioAppActionPayloadRequestMap = {
@@ -8,6 +9,17 @@ export type AudioAppActionPayloadRequestMap = {
     amplifier_subscribe: Record<string, never>;
     /** Asks once whether the amplifier answers, for the health check. It does not start the live updates. */
     amplifier_check: Record<string, never>;
+    playlist_list: Record<string, never>;
+    playlist_get: { id: string };
+    /** Makes a playlist of these tracks, for example of the queue. The tracks may be none: an empty playlist. */
+    playlist_create: { name: string; trackIds: string[] };
+    playlist_rename: { id: string; name: string };
+    playlist_delete: { id: string };
+    /** Adds tracks to the end of the playlist. */
+    playlist_add_tracks: { id: string; trackIds: string[] };
+    playlist_remove_track: { id: string; index: number };
+    /** Moves the track at `from` to `to`, the others move over. */
+    playlist_move_track: { id: string; from: number; to: number };
     library_get_artists: Record<string, never>;
     library_get_albums: { artistId: string };
     library_get_tracks: { albumId: string };
@@ -55,6 +67,15 @@ export type AudioAppActionPayloadResponseMap = {
     amplifier_check: AmplifierReachability;
     /** Pushed to subscribers whenever the amplifier state changes. */
     amplifier_state: AmplifierState;
+    playlist_list: PlaylistSummary[];
+    playlist_get: Playlist;
+    playlist_create: Playlist;
+    playlist_rename: Playlist;
+    /** The playlists that are left. */
+    playlist_delete: PlaylistSummary[];
+    playlist_add_tracks: Playlist;
+    playlist_remove_track: Playlist;
+    playlist_move_track: Playlist;
     library_get_artists: LibraryArtistsResponse;
     library_get_albums: LibraryAlbumsResponse;
     library_get_tracks: LibraryTracksResponse;

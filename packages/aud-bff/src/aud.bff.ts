@@ -7,6 +7,7 @@ import path from "path";
 import { libraryService } from "./library/library.service";
 import { createLogStream } from "./logging/log-stream";
 import { playerService } from "./player/player.service";
+import { playlistService } from "./playlists/playlist.service";
 import { AudioServerWebSocketManager } from "./ws/AudioServerWebSocketManager";
 
 // The request lines of Fastify (two per request, and a browser asks for many covers) are only logged when debugging.
@@ -33,9 +34,12 @@ registerLocalWebSocketHandlers({
 
 const port = 3041;
 
-fastify.listen({ port, host: "0.0.0.0" }, (err, address) => {
-    if (err) throw err;
-    console.log(`AUD BFF is running at address ${address}`);
-    // The queue of before the restart is brought back once the library, whose ids it uses, has been read.
-    void libraryService.start().then(() => playerService.restore());
-});
+// The playlists are read before the first request, so that none is answered with an empty list.
+void playlistService.load().then(() =>
+    fastify.listen({ port, host: "0.0.0.0" }, (err, address) => {
+        if (err) throw err;
+        console.log(`AUD BFF is running at address ${address}`);
+        // The queue of before the restart is brought back once the library, whose ids it uses, has been read.
+        void libraryService.start().then(() => playerService.restore());
+    })
+);
