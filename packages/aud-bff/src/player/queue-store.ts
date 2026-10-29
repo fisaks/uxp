@@ -5,8 +5,9 @@ import { readJsonFile, writeJsonFile } from "../storage/json-file";
 
 /** What is kept of the player between restarts: the queue and how it is played. Not the position, a restart starts the track again. */
 export type PersistedQueue = {
-    trackIds: string[];
-    /** The play order, indexes into `trackIds`. */
+    /** The tracks in the order they were added. The id is what counts, the name ("Artist - Title") is for whoever reads the file. */
+    tracks: { id: string; name: string }[];
+    /** The play order, indexes into `tracks`. */
     order: number[];
     /** Where in `order` the current track is, -1 when the queue is empty. */
     orderPos: number;
@@ -21,7 +22,8 @@ const SAVE_DELAY_MS = 1000;
 const isPersistedQueue = (value: unknown): value is PersistedQueue => {
     const queue = value as PersistedQueue | undefined;
     return (
-        Array.isArray(queue?.trackIds) &&
+        Array.isArray(queue?.tracks) &&
+        queue.tracks.every((track) => typeof track?.id === "string") &&
         Array.isArray(queue?.order) &&
         typeof queue?.orderPos === "number" &&
         typeof queue?.shuffle === "boolean" &&

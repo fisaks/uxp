@@ -74,10 +74,10 @@ export class PlayerService {
      */
     async restore(): Promise<void> {
         const saved = await this.storage.load();
-        if (!saved || saved.trackIds.length === 0 || !this.tracks.hasTracks()) {
+        if (!saved || saved.tracks.length === 0 || !this.tracks.hasTracks()) {
             return;
         }
-        const resolved = saved.trackIds.map((id) => this.tracks.getTrack(id));
+        const resolved = saved.tracks.map(({ id }) => this.tracks.getTrack(id));
         const newIndex = new Map<number, number>();
         this.queue = resolved.flatMap((track, oldIndex) => {
             if (!track) {
@@ -401,7 +401,7 @@ export class PlayerService {
 
     private persist() {
         this.storage.save({
-            trackIds: this.queue.map((track) => track.id),
+            tracks: this.queue.map((track) => ({ id: track.id, name: `${track.artist} - ${track.title}` })),
             order: this.order,
             orderPos: this.orderPos,
             shuffle: this.shuffle,
