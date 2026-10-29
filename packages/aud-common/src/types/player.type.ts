@@ -1,6 +1,11 @@
 import { LibraryTrack } from "./library.type";
 
-export type PlayerStatus = "stopped" | "playing" | "paused";
+/**
+ * "starting" is from the moment the music is asked for until the sound is there: the amplifier may be starting up
+ * and the file loading. The position does not move then, and the player moves on to "playing" at the first position
+ * the player reports.
+ */
+export type PlayerStatus = "stopped" | "starting" | "playing" | "paused";
 
 /** What happens at the end of a track: stop after the last one, start again from the first, or play the same track again. */
 export type RepeatMode = "off" | "all" | "one";

@@ -39,6 +39,10 @@ export class PlayerService {
     private positionAt = Date.now();
     private failures = 0;
     private positionPublishedAt = 0;
+    /** Counts the starts: a start that waits for the amplifier goes on only if nothing else has happened in the meantime. */
+    private startToken = 0;
+    /** True once the engine has the file, so pausing means something. */
+    private engineStarted = false;
 
     constructor(
         private readonly engine: PlayerEngine,
@@ -82,7 +86,7 @@ export class PlayerService {
         if (this.queue.length === 0) {
             return this.stopAll();
         }
-        return this.startByUser();
+        return this.startByUser("start");
     }
 
     enqueue(trackIds: string[]): PlayerState {
@@ -100,7 +104,7 @@ export class PlayerService {
     async playIndex(index: number): Promise<PlayerState> {
         const orderPos = this.order.indexOf(this.requireIndex(index));
         this.orderPos = orderPos;
-        return this.startByUser();
+        return this.startByUser("start");
     }
 
     async remove(index: number): Promise<PlayerState> {
@@ -135,21 +139,25 @@ export class PlayerService {
             this.setPosition(this.currentPosition());
             this.engine.pause();
             this.status = "paused";
+        } else if (this.status === "starting") {
+            // Whatever waits for the amplifier or the file does not go on.
+            this.startToken++;
+            if (!this.engineStarted) {
+                // Nothing has been started yet, so there is nothing to pause: this cancels, and Play starts the track again.
+                return this.stopPlaying();
+            }
+            this.engine.pause();
+            this.status = "paused";
         }
         return this.publish();
     }
 
     async resume(): Promise<PlayerState> {
         if (this.status === "paused") {
-            // The amplifier may have been switched to another input while the music was paused.
-            void this.amplifier.prepareForPlayback();
-            this.engine.resume();
-            this.status = "playing";
-            this.setPosition(this.positionSec);
-            return this.publish();
+            return this.startByUser("resume");
         }
         if (this.status === "stopped" && this.orderPos >= 0) {
-            return this.startByUser();
+            return this.startByUser("start");
         }
         return this.getState();
     }
@@ -174,7 +182,7 @@ export class PlayerService {
     }
 
     seek(positionSec: number): PlayerState {
-        if (this.status !== "stopped") {
+        if (this.status === "playing" || this.status === "paused") {
             const duration = this.queue[this.order[this.orderPos]]?.durationSec;
             const position = Math.max(0, duration ? Math.min(positionSec, duration) : positionSec);
             this.engine.seek(position);
@@ -200,7 +208,7 @@ export class PlayerService {
 
     /** The track after the current one. `ended` is true when it played to its end, which "repeat one" turns into the same track again. */
     private async advance(ended: boolean): Promise<PlayerState> {
-        if (ended && this.status !== "playing") {
+        if (ended && (this.status === "stopped" || this.status === "paused")) {
             return this.getState();
         }
         if (ended && this.repeat === "one") {
@@ -220,19 +228,42 @@ export class PlayerService {
     }
 
     /**
-     * Starts the current track because the user asked for it. The amplifier is made ready at the same time, as it takes a
-     * few seconds to start. The next track of a queue that plays does not do this, so an input that is chosen on the
-     * amplifier while music plays is not changed back.
+     * Starts the current track, or continues a paused one, because the user asked for it. The amplifier is made ready
+     * first and the music does not start until it is, so none of it is lost while the amplifier starts up. The state
+     * is "starting" until the sound is there, and the answer is the state at once: the rest happens in the
+     * background and reaches the clients as updates. The next track of a queue that plays does not do this, so an
+     * input that is chosen on the amplifier while music plays is not changed back.
      */
-    private startByUser(): Promise<PlayerState> {
-        void this.amplifier.prepareForPlayback();
-        return this.startCurrent();
+    private startByUser(from: "start" | "resume"): PlayerState {
+        const token = ++this.startToken;
+        this.status = "starting";
+        if (from === "start") {
+            this.engine.stop();
+            this.engineStarted = false;
+            this.setPosition(0);
+        }
+        const state = this.publish();
+        void this.continueStart(token, from);
+        return state;
+    }
+
+    private async continueStart(token: number, from: "start" | "resume") {
+        await this.amplifier.prepareForPlayback();
+        if (token !== this.startToken) {
+            return;
+        }
+        if (from === "resume") {
+            this.engine.resume();
+        } else {
+            await this.startCurrent();
+        }
     }
 
     private async startCurrent(): Promise<PlayerState> {
         const track = this.queue[this.order[this.orderPos]];
         const file = track && this.tracks.getTrackFile(track.id);
-        this.status = "playing";
+        this.startToken++;
+        this.status = "starting";
         this.setPosition(0);
         if (!file) {
             return this.onFileFailed(`The file of ${track?.title ?? "the track"} is not in the library`);
@@ -243,6 +274,7 @@ export class PlayerService {
         } catch (error) {
             return this.onFileFailed(error instanceof Error ? error.message : String(error));
         }
+        this.engineStarted = true;
         return this.publish();
     }
 
@@ -261,7 +293,12 @@ export class PlayerService {
         if (positionSec > 0) {
             this.failures = 0;
         }
-        if (this.status === "playing") {
+        if (this.status === "starting" && this.engineStarted) {
+            // The first position: the sound is there.
+            this.status = "playing";
+            this.setPosition(positionSec);
+            this.publish();
+        } else if (this.status === "playing") {
             this.setPosition(positionSec);
             this.publishPosition();
         }
@@ -293,6 +330,8 @@ export class PlayerService {
     }
 
     private stopPlaying(): PlayerState {
+        this.startToken++;
+        this.engineStarted = false;
         this.engine.stop();
         this.status = "stopped";
         this.setPosition(0);

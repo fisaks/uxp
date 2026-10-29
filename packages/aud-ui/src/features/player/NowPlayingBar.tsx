@@ -6,7 +6,7 @@ import RepeatOneIcon from "@mui/icons-material/RepeatOne";
 import ShuffleIcon from "@mui/icons-material/Shuffle";
 import SkipNextIcon from "@mui/icons-material/SkipNext";
 import SkipPreviousIcon from "@mui/icons-material/SkipPrevious";
-import { Box, Button, IconButton, Paper, Slider, Stack, Typography } from "@mui/material";
+import { Box, Button, CircularProgress, IconButton, Paper, Slider, Stack, Typography } from "@mui/material";
 import { REPEAT_MODES, RepeatMode } from "@aud/common";
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
@@ -36,11 +36,14 @@ export const NowPlayingBar: React.FC = () => {
     if (!state || !track) return null;
 
     const playing = state.status === "playing";
+    // The amplifier may be starting up and the file loading: the position does not move until the sound is there.
+    const starting = state.status === "starting";
     const duration = track.durationSec ?? 0;
     const shown = Math.min(dragging ?? position, duration || Infinity);
     const nextRepeat = REPEAT_MODES[(REPEAT_MODES.indexOf(state.repeat) + 1) % REPEAT_MODES.length];
 
     const modes = [
+        starting && "Starting...",
         state.shuffle && "Shuffle on",
         state.repeat === "all" && "Repeat all",
         state.repeat === "one" && "Repeat this track",
@@ -81,10 +84,16 @@ export const NowPlayingBar: React.FC = () => {
                 <IconButton
                     color="primary"
                     size="large"
-                    onClick={() => send(playing ? "player_pause" : "player_resume", {})}
-                    aria-label={playing ? "Pause" : "Play"}
+                    onClick={() => send(playing || starting ? "player_pause" : "player_resume", {})}
+                    aria-label={starting ? "Starting, press to cancel" : playing ? "Pause" : "Play"}
                 >
-                    {playing ? <PauseIcon fontSize="large" /> : <PlayArrowIcon fontSize="large" />}
+                    {starting ? (
+                        <CircularProgress size={35} />
+                    ) : playing ? (
+                        <PauseIcon fontSize="large" />
+                    ) : (
+                        <PlayArrowIcon fontSize="large" />
+                    )}
                 </IconButton>
                 <IconButton onClick={() => send("player_next", {})} aria-label="Next">
                     <SkipNextIcon />
@@ -106,7 +115,7 @@ export const NowPlayingBar: React.FC = () => {
                     min={0}
                     max={duration || 1}
                     value={duration ? shown : 0}
-                    disabled={!duration}
+                    disabled={!duration || starting}
                     onChange={(_event, value) => setDragging(value as number)}
                     onChangeCommitted={(_event, value) => {
                         setDragging(undefined);

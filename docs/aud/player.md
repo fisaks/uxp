@@ -45,6 +45,21 @@ The now playing bar is at the bottom of every page of the app while the queue ha
 the queue. In the Library an album can be played, shuffled or added to the queue, and a track can be played (the
 album then becomes the queue, starting there) or added.
 
+## Starting
+
+The status of the player is `stopped`, `starting`, `playing` or `paused`. `starting` is from the moment the user asks
+for music until the sound is there: the amplifier may be starting up, mplayer may be starting (on the Pi it takes
+a couple of seconds the first time) and the file loading. The answer to Play is the state at once, with the status
+`starting`, and the rest happens in the background and reaches the clients as updates. The player moves on to `playing`
+at the first position the engine reports, and only then does the position move in the UI. Until then the bar shows
+"Starting..." and a spinner instead of the pause button, and the position slider is disabled.
+
+- Pause (or Clear, Next, or another Play) while it is starting overrides the start that waits: pausing before the
+  engine has the file cancels, so the player is stopped and Play starts the track again.
+- The next track of a queue that plays also goes through `starting` for a moment, until its first position.
+- mplayer ignores the positions that arrive between a new file being sent and its "Starting playback" line, since they
+  belong to the file before.
+
 ## The amplifier
 
 With `AUD_AMPLIFIER_PLAYER_INPUT` set (the input the sound of the player arrives on, for example `AV5`), starting the
@@ -58,8 +73,9 @@ music also gets the amplifier ready, so it can be heard without setting the ampl
   trying 3 times because an amplifier that is starting up may not accept it yet. If it is on, only the input is
   changed, and only when it is another one.
 - The volume and the mute are never changed.
-- It happens at the same time as the player starts the file, so the first seconds of the first track may be
-  lost while the amplifier starts up.
+- The music does not start until the amplifier is ready, so none of it is lost while the amplifier starts up (see
+  "Starting" below). The wait is only noticeable when the amplifier was in standby, as asking an amplifier that is on
+  takes a fraction of a second.
 - It never stops the music: when the amplifier cannot be reached or does not switch on, a warning is logged and the
   music plays. Several presses of Play while it is running share one run.
 - Without the setting nothing is done, which is what you want when the sound does not go to the amplifier, for example in

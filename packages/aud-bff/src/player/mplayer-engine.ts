@@ -34,6 +34,8 @@ export class MplayerPlayerEngine implements PlayerEngine {
     private paused = false;
     private playing = false;
     private lastPositionAt = 0;
+    /** From loadfile until "Starting playback": a position that arrives in between is of the file before. */
+    private awaitingStart = false;
     private recentLines: string[] = [];
 
     constructor(private readonly config: MplayerConfig) {}
@@ -48,6 +50,7 @@ export class MplayerPlayerEngine implements PlayerEngine {
         }
         await this.ensureRunning();
         this.send(`loadfile ${quote(file)} 0`);
+        this.awaitingStart = true;
         // A file that is loaded while paused plays at once.
         this.paused = false;
         this.playing = true;
@@ -183,9 +186,14 @@ export class MplayerPlayerEngine implements PlayerEngine {
             this.recentLines = [...this.recentLines.slice(-(RECENT_LINES - 1)), line.slice(0, 120)];
         }
         const position = /^ANS_TIME_POSITION=([\d.]+)/.exec(line)?.[1];
+        if (line.startsWith("Starting playback")) {
+            this.awaitingStart = false;
+        }
         if (position !== undefined) {
-            this.lastPositionAt = Date.now();
-            this.listener?.onPosition(Number(position));
+            if (!this.awaitingStart) {
+                this.lastPositionAt = Date.now();
+                this.listener?.onPosition(Number(position));
+            }
         } else if (/^EOF code: 1\b/.test(line)) {
             // Code 1 is the end of the file. The codes for a file that was replaced or stopped by us are 2 and 4.
             this.playing = false;
