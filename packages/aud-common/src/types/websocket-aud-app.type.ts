@@ -62,6 +62,8 @@ export type AudioAppActionPayloadResponseMap = {
     player_subscribe: PlayerState;
     /** Pushed to subscribers whenever the player changes, not every second: see `PlayerState.positionSec`. */
     player_state: PlayerState;
+    /** Pushed every few seconds while playing, so a client that moves the position on by itself is corrected. */
+    player_position: { positionSec: number };
     player_play_tracks: PlayerState;
     player_enqueue: PlayerState;
     player_play_index: PlayerState;

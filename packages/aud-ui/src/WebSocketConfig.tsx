@@ -12,7 +12,7 @@ import { useCallback, useMemo, useState } from "react";
 import { AudioAppErrorHandler, AudioAppWebSocketResponseListener } from "./app/AudioBrowserWebSocketManager";
 import { amplifierStateReceived } from "./features/amplifier/amplifierSlice";
 import { connectionLost, connectionReady } from "./features/connection/connectionSlice";
-import { playerStateReceived } from "./features/player/playerSlice";
+import { playerPositionReceived, playerStateReceived } from "./features/player/playerSlice";
 import { useAppDispatch } from "./hooks";
 
 type WebSocketConfigProps = {
@@ -41,6 +41,9 @@ export const WebSocketConfig: React.FC<WebSocketConfigProps> = ({ getWebSocket, 
             },
             player_state: (message) => {
                 if (message.payload) dispatch(playerStateReceived(message.payload));
+            },
+            player_position: (message) => {
+                if (message.payload) dispatch(playerPositionReceived(message.payload.positionSec));
             },
         }),
         [dispatch]

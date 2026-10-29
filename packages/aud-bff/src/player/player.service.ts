@@ -4,6 +4,7 @@ import { ErrorCodes } from "@uxp/common";
 import { libraryService } from "../library/library.service";
 import { AudioServerWebSocketManager } from "../ws/AudioServerWebSocketManager";
 import { FakePlayerEngine } from "./fake-engine";
+import { MplayerPlayerEngine } from "./mplayer-engine";
 import { MpvPlayerEngine } from "./mpv-engine";
 import { PlayerEngine } from "./player-engine";
 import { PlayerConfig, playerConfig } from "./player.config";
@@ -12,6 +13,8 @@ import { sequentialOrder, shuffledOrder } from "./player-order";
 const PLAYER_TOPIC = "player";
 // Previous plays the current track again when it has been playing for longer than this.
 const RESTART_AFTER_SEC = 3;
+// How often the position is sent to the clients while playing. They move it on by themselves in between.
+const POSITION_PUBLISH_MS = 2000;
 
 type TrackSource = { getTrack(id: string): QueueTrack | undefined; getTrackFile(id: string): string | undefined };
 
@@ -31,6 +34,7 @@ export class PlayerService {
     private positionSec = 0;
     private positionAt = Date.now();
     private failures = 0;
+    private positionPublishedAt = 0;
 
     constructor(
         private readonly engine: PlayerEngine,
@@ -238,6 +242,23 @@ export class PlayerService {
         }
         if (this.status === "playing") {
             this.setPosition(positionSec);
+            this.publishPosition();
+        }
+    }
+
+    /**
+     * The engine knows where the sound really is. The clients only get a full state when something changes, so without
+     * this their position would drift from the sound: a file that is slow to start, or a seek that lands a little off.
+     */
+    private publishPosition() {
+        const now = Date.now();
+        if (now - this.positionPublishedAt >= POSITION_PUBLISH_MS) {
+            this.positionPublishedAt = now;
+            this.wsManager.broadcastToTopic(PLAYER_TOPIC, {
+                action: "player_position",
+                success: true,
+                payload: { positionSec: this.positionSec },
+            });
         }
     }
 
@@ -285,7 +306,15 @@ export class PlayerService {
     }
 }
 
-const createEngine = ({ engine, mpv }: PlayerConfig): PlayerEngine =>
-    engine === "mpv" ? new MpvPlayerEngine(mpv) : new FakePlayerEngine();
+const createEngine = ({ engine, mpv, mplayer }: PlayerConfig): PlayerEngine => {
+    switch (engine) {
+        case "mpv":
+            return new MpvPlayerEngine(mpv);
+        case "mplayer":
+            return new MplayerPlayerEngine(mplayer);
+        default:
+            return new FakePlayerEngine();
+    }
+};
 
 export const playerService = new PlayerService(createEngine(playerConfig), libraryService, AudioServerWebSocketManager.getInstance());

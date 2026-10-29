@@ -22,6 +22,16 @@ const playerSlice = createSlice({
             },
             prepare: (state: PlayerState) => ({ payload: { state, receivedAt: Date.now() } }),
         },
+        /** The position of the sound, sent every few seconds while playing. */
+        playerPositionReceived: {
+            reducer(sliceState, action: PayloadAction<{ positionSec: number; receivedAt: number }>) {
+                if (sliceState.state) {
+                    sliceState.state.positionSec = action.payload.positionSec;
+                    sliceState.receivedAt = action.payload.receivedAt;
+                }
+            },
+            prepare: (positionSec: number) => ({ payload: { positionSec, receivedAt: Date.now() } }),
+        },
         playerCommandFailed(sliceState, action: PayloadAction<string>) {
             sliceState.error = action.payload;
         },
@@ -31,7 +41,7 @@ const playerSlice = createSlice({
     },
 });
 
-export const { playerStateReceived, playerCommandFailed, playerErrorDismissed } = playerSlice.actions;
+export const { playerStateReceived, playerPositionReceived, playerCommandFailed, playerErrorDismissed } = playerSlice.actions;
 export const selectPlayerState = (state: RootState) => state.player.state;
 export const selectPlayerReceivedAt = (state: RootState) => state.player.receivedAt;
 export const selectPlayerError = (state: RootState) => state.player.error;
