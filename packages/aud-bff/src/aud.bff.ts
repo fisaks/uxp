@@ -5,9 +5,15 @@ import { AppLogger, errorHandler, HandlerRegistry, jwtPlugin, registerLocalWebSo
 import Fastify from "fastify";
 import path from "path";
 import { libraryService } from "./library/library.service";
+import { createLogStream } from "./logging/log-stream";
 import { AudioServerWebSocketManager } from "./ws/AudioServerWebSocketManager";
 
-const fastify = Fastify({ logger: { enabled: true, level: process.env.LOG_LEVEL ?? "info" } });
+// The request lines of Fastify (two per request, and a browser asks for many covers) are only logged when debugging.
+const debugging = process.env.LOG_LEVEL === "debug";
+const fastify = Fastify({
+    disableRequestLogging: !debugging,
+    logger: { enabled: true, level: process.env.LOG_LEVEL ?? "info", stream: createLogStream(process.env.AUD_LOKI_URL || undefined) },
+});
 AppLogger.initialize(fastify.log);
 fastify.setErrorHandler(errorHandler);
 fastify.register(fastifyWebsocket);

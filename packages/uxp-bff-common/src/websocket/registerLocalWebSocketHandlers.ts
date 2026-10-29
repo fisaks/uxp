@@ -90,7 +90,7 @@ function preloadWebSocketHandlers(fastify: FastifyInstance, handlers: any[]): We
         const actions: WebSocketActionMetadata[] = getWebSocketActions(HandlerClass);
 
         actions.forEach(({ action, validate, schema, handlerName, authenticate, roles }) => {
-            AppLogger.info(undefined, {
+            AppLogger.debug(undefined, {
                 message: `WebSocket Action: ${action} => ${HandlerClass.name}.${handlerName}`,
             });
             const schemaValidate = schema ? ajv.compile(schema) : undefined;
@@ -157,7 +157,7 @@ const setupPingPong = (socketDetails: WebSocketDetails) => {
     }
     const stopPingPong = () => {
         if (!stopPing) {
-            AppLogger.info(requestMeta, { message: "Received ping from client, stopping automatic pings. UXP is providing pings." });
+            AppLogger.debug(requestMeta, { message: "Received ping from client, stopping automatic pings. UXP is providing pings." });
             stopPing = true;
             clearPing();
             clearPong()
@@ -165,7 +165,7 @@ const setupPingPong = (socketDetails: WebSocketDetails) => {
     }
     const cleanUp = () => {
         if (pingInterval || pongTimeout) {
-            AppLogger.info(requestMeta, { message: `Cleaning up websocket ping pong` });
+            AppLogger.debug(requestMeta, { message: `Cleaning up websocket ping pong` });
         }
         clearPing();
         clearPong();

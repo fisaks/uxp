@@ -86,7 +86,7 @@ export class ServerWebSocketManager<
         (topic: string, message: WebSocketResponse<Action, ActionPayloadResponseMap>,
             requestMetaData?: RequestMetaData, excludeSocket?: WebSocket) {
 
-        AppLogger.info(requestMetaData, {
+        AppLogger.debug(requestMetaData, {
             message: `Broadcasting to topic '${topic}' (${this.topics.get(topic)?.size ?? 0} clients)`
         });
         const data = JSON.stringify(message);

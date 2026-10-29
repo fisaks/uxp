@@ -102,7 +102,7 @@ export function registerRoutes({ fastify, dataSource, controllers, basePath = "/
         const routes: RouteMetadata[] = getRoutes(ControllerClass);
 
         routes.forEach(({ method, path, validate, schema, handlerName, authenticate, roles }) => {
-            AppLogger.info(undefined, {
+            AppLogger.debug(undefined, {
                 message: `Registering route: ${method} ${basePath}${path} => ${ControllerClass.name}.${handlerName}`,
             });
 
