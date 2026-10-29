@@ -217,6 +217,7 @@ export class PlayerService {
         if (!file) {
             return this.onFileFailed(`The file of ${track?.title ?? "the track"} is not in the library`);
         }
+        AppLogger.info(undefined, { message: `Playing "${track.title}" by ${track.artist} from ${file}` });
         try {
             await this.engine.play(file, track.durationSec);
         } catch (error) {

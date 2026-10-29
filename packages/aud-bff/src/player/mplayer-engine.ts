@@ -4,8 +4,11 @@ import { ChildProcess, spawn } from "child_process";
 import { PlayerEngine, PlayerEngineListener } from "./player-engine";
 
 const POSITION_POLL_MS = 500;
-// A file that has not answered with a position for this long is not playing: mplayer prints nothing for some broken files.
-const STALL_MS = 5000;
+// A file that has not answered with a position for this long is not playing: mplayer prints nothing for some broken
+// files, and a Raspberry Pi can take several seconds to start mplayer and open the first file.
+const STALL_MS = 8000;
+// The last lines mplayer printed, kept to be logged when a file stalls.
+const RECENT_LINES = 15;
 
 export type MplayerConfig = {
     /** The mplayer program, "mplayer" by default. */
@@ -31,6 +34,7 @@ export class MplayerPlayerEngine implements PlayerEngine {
     private paused = false;
     private playing = false;
     private lastPositionAt = 0;
+    private recentLines: string[] = [];
 
     constructor(private readonly config: MplayerConfig) {}
 
@@ -91,17 +95,31 @@ export class MplayerPlayerEngine implements PlayerEngine {
     /** Asks for the position, or gives up on the file when it has not answered for a while. */
     private checkPosition() {
         if (Date.now() - this.lastPositionAt > STALL_MS) {
-            this.fail("mplayer does not play the file, it may be broken");
+            this.fail("mplayer does not play the file, it may be broken", true);
         } else {
             this.send("get_time_pos");
         }
     }
 
-    private fail(message: string) {
-        if (this.playing) {
-            this.stop();
-            this.listener?.onError(message);
+    /**
+     * The file does not play. When mplayer printed nothing for it (`restart`), mplayer is killed and the next file starts
+     * a new one: once it did not recover from a file that stalled (all later files stalled too until the service was
+     * restarted), and a new process is cheap. When mplayer said that it could not open the file, it is fine and is kept.
+     */
+    private fail(message: string, restart: boolean) {
+        if (!this.playing) {
+            return;
         }
+        AppLogger.warn(undefined, { message: `${message}. The last output of mplayer: ${this.recentLines.join(" | ") || "none"}` });
+        if (restart) {
+            this.playing = false;
+            this.paused = false;
+            this.stopPolling();
+            this.process?.kill("SIGKILL");
+        } else {
+            this.stop();
+        }
+        this.listener?.onError(message);
     }
 
     private stopPolling() {
@@ -161,6 +179,9 @@ export class MplayerPlayerEngine implements PlayerEngine {
     }
 
     private handle(line: string) {
+        if (!line.startsWith("ANS_TIME_POSITION=") && line.trim() !== "") {
+            this.recentLines = [...this.recentLines.slice(-(RECENT_LINES - 1)), line.slice(0, 120)];
+        }
         const position = /^ANS_TIME_POSITION=([\d.]+)/.exec(line)?.[1];
         if (position !== undefined) {
             this.lastPositionAt = Date.now();
@@ -171,7 +192,7 @@ export class MplayerPlayerEngine implements PlayerEngine {
             this.stopPolling();
             this.listener?.onEnded();
         } else if (line.startsWith("Failed to open ") || line.includes("av_open_input_stream() failed")) {
-            this.fail(line);
+            this.fail(line, false);
         }
     }
 
