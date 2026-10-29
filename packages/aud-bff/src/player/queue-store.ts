@@ -1,0 +1,65 @@
+import { RepeatMode } from "@aud/common";
+import { AppLogger } from "@uxp/bff-common";
+import path from "path";
+import { readJsonFile, writeJsonFile } from "../storage/json-file";
+
+/** What is kept of the player between restarts: the queue and how it is played. Not the position, a restart starts the track again. */
+export type PersistedQueue = {
+    trackIds: string[];
+    /** The play order, indexes into `trackIds`. */
+    order: number[];
+    /** Where in `order` the current track is, -1 when the queue is empty. */
+    orderPos: number;
+    shuffle: boolean;
+    repeat: RepeatMode;
+};
+
+const FILE = "queue.json";
+// The queue changes in bursts (a track after another), so what is written is what it is a moment after the last change.
+const SAVE_DELAY_MS = 1000;
+
+const isPersistedQueue = (value: unknown): value is PersistedQueue => {
+    const queue = value as PersistedQueue | undefined;
+    return (
+        Array.isArray(queue?.trackIds) &&
+        Array.isArray(queue?.order) &&
+        typeof queue?.orderPos === "number" &&
+        typeof queue?.shuffle === "boolean" &&
+        ["off", "all", "one"].includes(queue?.repeat ?? "")
+    );
+};
+
+/** The queue in a JSON file in the data folder. Without a data folder nothing is kept. */
+export class QueueStore {
+    private timer?: NodeJS.Timeout;
+    private lastKept = "";
+
+    constructor(private readonly dataDir?: string) {}
+
+    async load(): Promise<PersistedQueue | undefined> {
+        if (!this.dataDir) {
+            return undefined;
+        }
+        const saved = await readJsonFile<unknown>(path.join(this.dataDir, FILE));
+        if (!isPersistedQueue(saved)) {
+            return undefined;
+        }
+        this.lastKept = JSON.stringify(saved);
+        return saved;
+    }
+
+    save(queue: PersistedQueue) {
+        const json = JSON.stringify(queue);
+        if (!this.dataDir || json === this.lastKept) {
+            return;
+        }
+        this.lastKept = json;
+        clearTimeout(this.timer);
+        this.timer = setTimeout(() => {
+            writeJsonFile(path.join(this.dataDir as string, FILE), queue).catch((error) =>
+                AppLogger.warn(undefined, { message: "Could not save the queue", error })
+            );
+        }, SAVE_DELAY_MS);
+        this.timer.unref();
+    }
+}

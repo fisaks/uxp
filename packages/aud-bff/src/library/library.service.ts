@@ -1,7 +1,7 @@
 import { LibraryAlbum, LibraryArtist, LibraryStatus, LibraryTrack, QueueTrack } from "@aud/common";
 import { AppLogger } from "@uxp/bff-common";
-import { mkdir, readFile, rename, writeFile } from "fs/promises";
 import path from "path";
+import { readJsonFile, writeJsonFile } from "../storage/json-file";
 import { LibraryConfig, libraryConfig } from "./library.config";
 import { scanLibrary } from "./library-scanner";
 import { ScannedAlbumFolder, ScannedTrack } from "./library.types";
@@ -64,6 +64,11 @@ export class LibraryService {
         return this.scanning;
     }
 
+    /** False until the library has been read from the cache or a scan, which is when the ids of tracks mean something. */
+    hasTracks(): boolean {
+        return this.tracks.length > 0;
+    }
+
     getStatus(): LibraryStatus {
         return { scanning: this.scanning !== undefined, scannedAt: this.scannedAt, trackCount: this.tracks.length };
     }
@@ -124,32 +129,24 @@ export class LibraryService {
         if (!this.config.dataDir) {
             return;
         }
-        try {
-            const cache: Cache = JSON.parse(await readFile(path.join(this.config.dataDir, CACHE_FILE), "utf8"));
-            if (cache.version === CACHE_VERSION) {
-                this.setLibrary(cache.tracks, cache.albumFolders, cache.scannedAt);
-            }
-        } catch {
-            // No cache yet, or it is damaged: the scan builds it again.
+        // No cache yet, or it is damaged: the scan builds it again.
+        const cache = await readJsonFile<Cache>(path.join(this.config.dataDir, CACHE_FILE));
+        if (cache?.version === CACHE_VERSION) {
+            this.setLibrary(cache.tracks, cache.albumFolders, cache.scannedAt);
         }
     }
 
-    /** Written to a temporary file first, so a stop in the middle does not leave a damaged cache. */
     private async saveCache() {
         if (!this.config.dataDir) {
             return;
         }
         try {
-            const file = path.join(this.config.dataDir, CACHE_FILE);
-            const cache: Cache = {
+            await writeJsonFile(path.join(this.config.dataDir, CACHE_FILE), {
                 version: CACHE_VERSION,
                 scannedAt: this.scannedAt ?? "",
                 tracks: this.tracks,
                 albumFolders: this.folders,
-            };
-            await mkdir(this.config.dataDir, { recursive: true });
-            await writeFile(`${file}.tmp`, JSON.stringify(cache, null, 2));
-            await rename(`${file}.tmp`, file);
+            } satisfies Cache);
         } catch (error) {
             AppLogger.warn(undefined, { message: "Could not save the cache of the music library", error });
         }

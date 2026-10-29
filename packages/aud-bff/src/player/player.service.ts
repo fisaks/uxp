@@ -2,6 +2,7 @@ import { PlayerState, PlayerStatus, QueueTrack, RepeatMode } from "@aud/common";
 import { AppErrorV2, AppLogger, WebSocketDetails } from "@uxp/bff-common";
 import { ErrorCodes } from "@uxp/common";
 import { amplifierService } from "../amplifier/amplifier.service";
+import { libraryConfig } from "../library/library.config";
 import { libraryService } from "../library/library.service";
 import { AudioServerWebSocketManager } from "../ws/AudioServerWebSocketManager";
 import { FakePlayerEngine } from "./fake-engine";
@@ -9,6 +10,7 @@ import { MplayerPlayerEngine } from "./mplayer-engine";
 import { MpvPlayerEngine } from "./mpv-engine";
 import { PlayerEngine } from "./player-engine";
 import { PlayerConfig, playerConfig } from "./player.config";
+import { PersistedQueue, QueueStore } from "./queue-store";
 import { sequentialOrder, shuffledOrder } from "./player-order";
 
 const PLAYER_TOPIC = "player";
@@ -20,7 +22,14 @@ const POSITION_PUBLISH_MS = 2000;
 /** What the player needs of the amplifier: to have it ready when the music starts. */
 type AmplifierControl = { prepareForPlayback(): Promise<void> };
 
-type TrackSource = { getTrack(id: string): QueueTrack | undefined; getTrackFile(id: string): string | undefined };
+type TrackSource = {
+    getTrack(id: string): QueueTrack | undefined;
+    getTrackFile(id: string): string | undefined;
+    hasTracks(): boolean;
+};
+
+/** Where the queue is kept between restarts. */
+type QueueStorage = { load(): Promise<PersistedQueue | undefined>; save(queue: PersistedQueue): void };
 
 /**
  * The queue and what is playing, shared by every client. The queue keeps the tracks in the order they were added, and
@@ -48,13 +57,44 @@ export class PlayerService {
         private readonly engine: PlayerEngine,
         private readonly tracks: TrackSource,
         private readonly wsManager: AudioServerWebSocketManager,
-        private readonly amplifier: AmplifierControl
+        private readonly amplifier: AmplifierControl,
+        private readonly storage: QueueStorage
     ) {
         engine.setListener({
             onPosition: (positionSec) => this.onPosition(positionSec),
             onEnded: () => void this.advance(true),
             onError: (message) => void this.onFileFailed(message),
         });
+    }
+
+    /**
+     * Brings back the queue of before the restart, ready to play from the start of the current track. Tracks that are no
+     * longer in the library are left out. Nothing is done while the library is empty, as it is before the first scan
+     * and then every track would look missing: the saved queue is kept for the next start.
+     */
+    async restore(): Promise<void> {
+        const saved = await this.storage.load();
+        if (!saved || saved.trackIds.length === 0 || !this.tracks.hasTracks()) {
+            return;
+        }
+        const resolved = saved.trackIds.map((id) => this.tracks.getTrack(id));
+        const newIndex = new Map<number, number>();
+        this.queue = resolved.flatMap((track, oldIndex) => {
+            if (!track) {
+                return [];
+            }
+            newIndex.set(oldIndex, newIndex.size);
+            return [track];
+        });
+        this.order = saved.order.flatMap((oldIndex) => (newIndex.has(oldIndex) ? [newIndex.get(oldIndex) as number] : []));
+        const savedCurrent = saved.order[saved.orderPos];
+        const kept = this.order.indexOf(newIndex.get(savedCurrent) ?? -1);
+        // A current track that is gone gives way to the one that came after it.
+        this.orderPos = this.queue.length === 0 ? -1 : kept !== -1 ? kept : Math.min(Math.max(saved.orderPos, 0), this.order.length - 1);
+        this.shuffle = saved.shuffle;
+        this.repeat = saved.repeat;
+        this.persist();
+        AppLogger.info(undefined, { message: `Restored the queue: ${this.queue.length} tracks` });
     }
 
     subscribe(socket: WebSocketDetails["socket"]): PlayerState {
@@ -359,7 +399,18 @@ export class PlayerService {
         return index;
     }
 
+    private persist() {
+        this.storage.save({
+            trackIds: this.queue.map((track) => track.id),
+            order: this.order,
+            orderPos: this.orderPos,
+            shuffle: this.shuffle,
+            repeat: this.repeat,
+        });
+    }
+
     private publish(): PlayerState {
+        this.persist();
         const state = this.getState();
         this.wsManager.broadcastToTopic(PLAYER_TOPIC, { action: "player_state", success: true, payload: state });
         return state;
@@ -381,5 +432,6 @@ export const playerService = new PlayerService(
     createEngine(playerConfig),
     libraryService,
     AudioServerWebSocketManager.getInstance(),
-    amplifierService
+    amplifierService,
+    new QueueStore(libraryConfig.dataDir)
 );

@@ -29,7 +29,12 @@ of the chosen engine must be installed.
 - **Previous** plays the track again when it has played for more than 3 seconds, otherwise the one before.
 - A track whose file is missing or that mpv cannot play is skipped. When every track of the queue fails one after the
   other the player stops.
-- The queue is not kept when the backend restarts.
+- The queue is kept when the backend restarts: it is saved to `queue.json` in `AUD_DATA_DIR` a moment after it
+  changes (the tracks, the play order and the place in it, shuffle and repeat, not the position and not every
+  position update). At the next start it is brought back once the library has been read, stopped and ready to
+  play from the start of the current track. Tracks that have gone from the library are left out, and a current track that
+  is gone gives way to the next one. While the library is empty (before the first scan) nothing is restored and the saved
+  queue is not overwritten.
 
 ## What the UI does
 
