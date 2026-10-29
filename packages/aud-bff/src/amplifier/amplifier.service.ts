@@ -11,6 +11,14 @@ const TUNER_INPUT = "TUNER";
 const POLL_INTERVAL_MS = 5000;
 // The amplifier needs a moment to apply a command, so the state is read back after this delay.
 const CONFIRM_DELAY_MS = 1000;
+// After it is told to switch on, the amplifier is asked every half second until it says it is on.
+const POWER_ON_POLL_MS = 500;
+const POWER_ON_ATTEMPTS = 20;
+// An input may not be accepted while the amplifier is still starting up.
+const INPUT_ATTEMPTS = 3;
+const INPUT_RETRY_MS = 1500;
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
  * Keeps the state of the amplifier and pushes changes to subscribed clients.
@@ -20,6 +28,7 @@ export class AmplifierService {
     private state: AmplifierState = { reachable: false };
     private polling = false;
     private confirmTimer?: NodeJS.Timeout;
+    private preparing?: Promise<void>;
 
     constructor(
         private readonly client: YamahaClient,
@@ -47,6 +56,64 @@ export class AmplifierService {
             return { reachable: true };
         } catch {
             return { reachable: false };
+        }
+    }
+
+    /**
+     * For the player, so that music can be heard without setting up the amplifier by hand: turns the amplifier on and
+     * selects the input of the player (`AUD_AMPLIFIER_PLAYER_INPUT`), if it is not already. The volume and the mute
+     * are left as they are. It does nothing when no input is configured, and it never throws: the music plays
+     * whether or not the amplifier can be reached. A call while one is running joins it.
+     */
+    prepareForPlayback(): Promise<void> {
+        const input = this.config.playerInput;
+        if (!input) {
+            return Promise.resolve();
+        }
+        this.preparing ??= this.selectForPlayback(input).finally(() => (this.preparing = undefined));
+        return this.preparing;
+    }
+
+    private async selectForPlayback(input: string) {
+        try {
+            // Read from the amplifier itself: the state kept here is up to 5 seconds old, or not polled at all.
+            const status = await this.client.getBasicStatus();
+            const wasOff = !status.power;
+            if (wasOff) {
+                await this.client.setPower(true);
+                await this.waitUntilOn();
+            }
+            if (status.input !== input) {
+                await this.setInputWithRetry(input, wasOff ? INPUT_ATTEMPTS : 1);
+            }
+            if (wasOff || status.input !== input) {
+                void this.refresh();
+            }
+        } catch (error) {
+            AppLogger.warn(undefined, { message: "Could not set up the amplifier for playing music", error });
+        }
+    }
+
+    private async waitUntilOn() {
+        for (let attempt = 0; attempt < POWER_ON_ATTEMPTS; attempt++) {
+            await sleep(POWER_ON_POLL_MS);
+            if ((await this.client.getBasicStatus()).power) {
+                return;
+            }
+        }
+        throw new Error("The amplifier did not switch on");
+    }
+
+    private async setInputWithRetry(input: string, attempts: number) {
+        for (let attempt = 1; ; attempt++) {
+            try {
+                return await this.client.setInput(input);
+            } catch (error) {
+                if (attempt >= attempts) {
+                    throw error;
+                }
+                await sleep(INPUT_RETRY_MS);
+            }
         }
     }
 

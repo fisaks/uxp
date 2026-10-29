@@ -1,6 +1,7 @@
 import { PlayerState, PlayerStatus, QueueTrack, RepeatMode } from "@aud/common";
 import { AppErrorV2, AppLogger, WebSocketDetails } from "@uxp/bff-common";
 import { ErrorCodes } from "@uxp/common";
+import { amplifierService } from "../amplifier/amplifier.service";
 import { libraryService } from "../library/library.service";
 import { AudioServerWebSocketManager } from "../ws/AudioServerWebSocketManager";
 import { FakePlayerEngine } from "./fake-engine";
@@ -15,6 +16,9 @@ const PLAYER_TOPIC = "player";
 const RESTART_AFTER_SEC = 3;
 // How often the position is sent to the clients while playing. They move it on by themselves in between.
 const POSITION_PUBLISH_MS = 2000;
+
+/** What the player needs of the amplifier: to have it ready when the music starts. */
+type AmplifierControl = { prepareForPlayback(): Promise<void> };
 
 type TrackSource = { getTrack(id: string): QueueTrack | undefined; getTrackFile(id: string): string | undefined };
 
@@ -39,7 +43,8 @@ export class PlayerService {
     constructor(
         private readonly engine: PlayerEngine,
         private readonly tracks: TrackSource,
-        private readonly wsManager: AudioServerWebSocketManager
+        private readonly wsManager: AudioServerWebSocketManager,
+        private readonly amplifier: AmplifierControl
     ) {
         engine.setListener({
             onPosition: (positionSec) => this.onPosition(positionSec),
@@ -74,7 +79,10 @@ export class PlayerService {
         );
         this.order = this.shuffle ? shuffledOrder(this.queue.length, start) : sequentialOrder(this.queue.length);
         this.orderPos = this.queue.length === 0 ? -1 : this.shuffle ? 0 : start;
-        return this.queue.length === 0 ? this.stopAll() : this.startCurrent();
+        if (this.queue.length === 0) {
+            return this.stopAll();
+        }
+        return this.startByUser();
     }
 
     enqueue(trackIds: string[]): PlayerState {
@@ -92,7 +100,7 @@ export class PlayerService {
     async playIndex(index: number): Promise<PlayerState> {
         const orderPos = this.order.indexOf(this.requireIndex(index));
         this.orderPos = orderPos;
-        return this.startCurrent();
+        return this.startByUser();
     }
 
     async remove(index: number): Promise<PlayerState> {
@@ -133,13 +141,15 @@ export class PlayerService {
 
     async resume(): Promise<PlayerState> {
         if (this.status === "paused") {
+            // The amplifier may have been switched to another input while the music was paused.
+            void this.amplifier.prepareForPlayback();
             this.engine.resume();
             this.status = "playing";
             this.setPosition(this.positionSec);
             return this.publish();
         }
         if (this.status === "stopped" && this.orderPos >= 0) {
-            return this.startCurrent();
+            return this.startByUser();
         }
         return this.getState();
     }
@@ -207,6 +217,16 @@ export class PlayerService {
         // The end of the queue: stop at its start, ready to be played again.
         this.orderPos = this.order.length > 0 ? 0 : -1;
         return this.stopPlaying();
+    }
+
+    /**
+     * Starts the current track because the user asked for it. The amplifier is made ready at the same time, as it takes a
+     * few seconds to start. The next track of a queue that plays does not do this, so an input that is chosen on the
+     * amplifier while music plays is not changed back.
+     */
+    private startByUser(): Promise<PlayerState> {
+        void this.amplifier.prepareForPlayback();
+        return this.startCurrent();
     }
 
     private async startCurrent(): Promise<PlayerState> {
@@ -318,4 +338,9 @@ const createEngine = ({ engine, mpv, mplayer }: PlayerConfig): PlayerEngine => {
     }
 };
 
-export const playerService = new PlayerService(createEngine(playerConfig), libraryService, AudioServerWebSocketManager.getInstance());
+export const playerService = new PlayerService(
+    createEngine(playerConfig),
+    libraryService,
+    AudioServerWebSocketManager.getInstance(),
+    amplifierService
+);

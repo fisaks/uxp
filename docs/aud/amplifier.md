@@ -8,6 +8,7 @@ volume, mute, input, sound program (including Straight and Enhancer) and the FM 
 | Variable | Required | Meaning |
 |---|---|---|
 | `AUD_AMPLIFIER_HOST` | yes | Host name or IP address of the amplifier, optionally with a port |
+| `AUD_AMPLIFIER_PLAYER_INPUT` | no | The input the sound of the player arrives on, for example `AV5`. When set, starting the player turns the amplifier on and selects this input (see `player.md`). |
 | `AUD_TUNER_STATIONS_FILE` | no | Path of the tuner station list (JSON, see below). Without it the tuner shows the presets stored in the amplifier. A file that cannot be read stops the server at startup. |
 | `AUD_AMPLIFIER_INPUTS` | no | Inputs to show, in order, with labels: `"AV5=Music App,HDMI1=Chromecast,TUNER"`. An input without a label uses the amplifier's own title. When not set all inputs the amplifier offers are shown. |
 

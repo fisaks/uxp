@@ -45,6 +45,26 @@ The now playing bar is at the bottom of every page of the app while the queue ha
 the queue. In the Library an album can be played, shuffled or added to the queue, and a track can be played (the
 album then becomes the queue, starting there) or added.
 
+## The amplifier
+
+With `AUD_AMPLIFIER_PLAYER_INPUT` set (the input the sound of the player arrives on, for example `AV5`), starting the
+music also gets the amplifier ready, so it can be heard without setting the amplifier up by hand:
+
+- It is done when the user starts the music: playing tracks or an album, playing a track of the queue, and resuming
+  a paused or stopped player. It is not done when a track ends and the next one starts, or for Next and Previous, so
+  an input that is chosen on the amplifier while music plays is not changed back.
+- The amplifier is asked first (not the state that is kept, which can be 5 seconds old). If it is in standby it is
+  switched on and the server waits, up to 10 seconds, until it says it is on, and then selects the input,
+  trying 3 times because an amplifier that is starting up may not accept it yet. If it is on, only the input is
+  changed, and only when it is another one.
+- The volume and the mute are never changed.
+- It happens at the same time as the player starts the file, so the first seconds of the first track may be
+  lost while the amplifier starts up.
+- It never stops the music: when the amplifier cannot be reached or does not switch on, a warning is logged and the
+  music plays. Several presses of Play while it is running share one run.
+- Without the setting nothing is done, which is what you want when the sound does not go to the amplifier, for example in
+  development, where the player plays on the speakers of the computer.
+
 ## The engines
 
 Both play one file at a time and are chosen with `AUD_PLAYER`. A file that cannot be played, or a program that dies,

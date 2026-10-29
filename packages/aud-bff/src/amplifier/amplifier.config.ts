@@ -7,6 +7,8 @@ export type AmplifierConfig = {
     host: string;
     /** The inputs to show, in order. When not set, all inputs the amplifier offers are shown. */
     inputs?: { id: string; label?: string }[];
+    /** The input the sound of the player arrives on. When set, playing music turns the amplifier on and selects it. */
+    playerInput?: string;
     /** The stations of the tuner, in order. When not set, the presets stored in the amplifier are used. */
     tunerStations?: TunerStation[];
 };
@@ -25,5 +27,6 @@ const parseInputs = (value: string | undefined): AmplifierConfig["inputs"] => {
 export const amplifierConfig: AmplifierConfig = {
     host: env.AUD_AMPLIFIER_HOST,
     inputs: parseInputs(process.env.AUD_AMPLIFIER_INPUTS),
+    playerInput: process.env.AUD_AMPLIFIER_PLAYER_INPUT || undefined,
     tunerStations: process.env.AUD_TUNER_STATIONS_FILE ? loadTunerStations(process.env.AUD_TUNER_STATIONS_FILE) : undefined,
 };
