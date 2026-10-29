@@ -4,6 +4,9 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { AudioNavigation } from "./AudioNavigation";
 import AmplifierPage from "./features/amplifier/AmplifierPage";
 import LibraryPage from "./features/library/LibraryPage";
+import { NowPlayingBar } from "./features/player/NowPlayingBar";
+import { PlayerErrorSnackbar } from "./features/player/PlayerErrorSnackbar";
+import QueuePage from "./features/player/QueuePage";
 
 export const AudioBody = () => {
     return (
@@ -13,8 +16,11 @@ export const AudioBody = () => {
                 <Routes>
                     <Route path="/amplifier" element={<AmplifierPage />} />
                     <Route path="/library/*" element={<LibraryPage />} />
+                    <Route path="/queue" element={<QueuePage />} />
                     <Route path="*" element={<Navigate to="/amplifier" replace={true} />} />
                 </Routes>
+                <NowPlayingBar />
+                <PlayerErrorSnackbar />
             </Box>
         </AppBodyContent>
     );

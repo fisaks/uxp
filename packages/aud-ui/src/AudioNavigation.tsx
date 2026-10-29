@@ -5,6 +5,7 @@ import { Link, useLocation } from "react-router-dom";
 const TABS = [
     { value: "/amplifier", label: "Amplifier" },
     { value: "/library", label: "Library" },
+    { value: "/queue", label: "Queue" },
 ];
 
 /** The tabs between the pages of the app. The Library tab stays selected on the pages below /library. */

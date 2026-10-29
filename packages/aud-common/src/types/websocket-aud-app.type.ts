@@ -1,5 +1,6 @@
 import { WebSocketAction, WebSocketMessage, WebSocketResponse } from "@uxp/common";
 import { AmplifierReachability, AmplifierState } from "./amplifier.type";
+import { PlayerState, RepeatMode } from "./player.type";
 import { LibraryAlbumsResponse, LibraryArtistsResponse, LibraryStatus, LibraryTracksResponse } from "./library.type";
 
 export type AudioAppActionPayloadRequestMap = {
@@ -12,6 +13,24 @@ export type AudioAppActionPayloadRequestMap = {
     library_get_tracks: { albumId: string };
     /** Scans the music folder again. The response is the status, which has `scanning: true` until it is done. */
     library_scan: Record<string, never>;
+    /** Starts the live player updates. The response is the current state. */
+    player_subscribe: Record<string, never>;
+    /** Replaces the queue with these tracks and starts with the one at `startIndex` (the first by default). */
+    player_play_tracks: { trackIds: string[]; startIndex?: number };
+    /** Adds tracks to the end of the queue. */
+    player_enqueue: { trackIds: string[] };
+    /** Plays the track at this place of the queue. */
+    player_play_index: { index: number };
+    player_remove: { index: number };
+    player_clear: Record<string, never>;
+    player_pause: Record<string, never>;
+    player_resume: Record<string, never>;
+    player_next: Record<string, never>;
+    /** Plays the previous track, or the current one again when it has played for more than a few seconds. */
+    player_previous: Record<string, never>;
+    player_seek: { positionSec: number };
+    player_set_shuffle: { on: boolean };
+    player_set_repeat: { mode: RepeatMode };
     amplifier_set_power: { on: boolean };
     amplifier_set_volume: { volumeDb: number };
     amplifier_set_mute: { muted: boolean };
@@ -40,6 +59,21 @@ export type AudioAppActionPayloadResponseMap = {
     library_get_albums: LibraryAlbumsResponse;
     library_get_tracks: LibraryTracksResponse;
     library_scan: LibraryStatus;
+    player_subscribe: PlayerState;
+    /** Pushed to subscribers whenever the player changes, not every second: see `PlayerState.positionSec`. */
+    player_state: PlayerState;
+    player_play_tracks: PlayerState;
+    player_enqueue: PlayerState;
+    player_play_index: PlayerState;
+    player_remove: PlayerState;
+    player_clear: PlayerState;
+    player_pause: PlayerState;
+    player_resume: PlayerState;
+    player_next: PlayerState;
+    player_previous: PlayerState;
+    player_seek: PlayerState;
+    player_set_shuffle: PlayerState;
+    player_set_repeat: PlayerState;
     amplifier_set_power: AmplifierState;
     amplifier_set_volume: AmplifierState;
     amplifier_set_mute: AmplifierState;

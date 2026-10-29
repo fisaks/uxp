@@ -1,4 +1,4 @@
-import { LibraryAlbum, LibraryArtist, LibraryStatus, LibraryTrack } from "@aud/common";
+import { LibraryAlbum, LibraryArtist, LibraryStatus, LibraryTrack, QueueTrack } from "@aud/common";
 import { AppLogger } from "@uxp/bff-common";
 import { mkdir, readFile, rename, writeFile } from "fs/promises";
 import path from "path";
@@ -86,6 +86,12 @@ export class LibraryService {
 
     getTracks(albumId: string): LibraryTrack[] {
         return (this.tracksByAlbum.get(albumId) ?? []).map(toLibraryTrack);
+    }
+
+    /** A track with what the player shows: the cover of its album. */
+    getTrack(trackId: string): QueueTrack | undefined {
+        const track = this.trackById.get(trackId);
+        return track && { ...toLibraryTrack(track), hasCover: this.coverByAlbum.has(track.albumId) };
     }
 
     /** The full path of the audio file of a track, for the player. */
