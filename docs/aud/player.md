@@ -51,8 +51,10 @@ The status of the player is `stopped`, `starting`, `playing` or `paused`. `start
 for music until the sound is there: the amplifier may be starting up, mplayer may be starting (on the Pi it takes
 a couple of seconds the first time) and the file loading. The answer to Play is the state at once, with the status
 `starting`, and the rest happens in the background and reaches the clients as updates. The player moves on to `playing`
-at the first position the engine reports, and only then does the position move in the UI. Until then the bar shows
-"Starting..." and a spinner instead of the pause button, and the position slider is disabled.
+at the first position the engine reports, and only then does the position move in the UI. Until then the position
+slider is disabled. If it takes longer than a second, which it does when the amplifier starts up, the bar shows
+"Loading..." and a spinner instead of the pause button. A shorter wait, such as moving to the next track, shows nothing
+and the bar looks the same as before.
 
 - Pause (or Clear, Next, or another Play) while it is starting overrides the start that waits: pausing before the
   engine has the file cancels, so the player is stopped and Play starts the track again.

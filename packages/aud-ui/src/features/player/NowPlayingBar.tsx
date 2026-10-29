@@ -16,9 +16,12 @@ import { formatDuration } from "../library/libraryFormat";
 import { PlayerToggleButton } from "./PlayerToggleButton";
 import { selectPlayerState } from "./playerSlice";
 import { usePlayerCommand } from "./usePlayerCommand";
+import { useAfterDelay } from "./useAfterDelay";
 import { usePlayerPosition } from "./usePlayerPosition";
 
 const COVER_SIZE = 48;
+// A track is usually loaded in less than this, and then nothing is shown: only a wait that is noticed gets a spinner and a text.
+const LOADING_SHOWN_AFTER_MS = 1000;
 const REPEAT_LABELS: Record<RepeatMode, string> = {
     off: "Repeat is off, press to repeat the whole queue",
     all: "Repeating the whole queue, press to repeat this track",
@@ -31,19 +34,29 @@ export const NowPlayingBar: React.FC = () => {
     const position = usePlayerPosition();
     const send = usePlayerCommand();
     const [dragging, setDragging] = useState<number | undefined>(undefined);
+    // The amplifier may be starting up and the file loading: the position does not move until the sound is there.
+    const starting = state?.status === "starting";
+    const loading = useAfterDelay(starting, LOADING_SHOWN_AFTER_MS);
 
     const track = state && state.currentIndex !== undefined ? state.queue[state.currentIndex] : undefined;
     if (!state || !track) return null;
 
     const playing = state.status === "playing";
-    // The amplifier may be starting up and the file loading: the position does not move until the sound is there.
-    const starting = state.status === "starting";
     const duration = track.durationSec ?? 0;
     const shown = Math.min(dragging ?? position, duration || Infinity);
     const nextRepeat = REPEAT_MODES[(REPEAT_MODES.indexOf(state.repeat) + 1) % REPEAT_MODES.length];
 
+    // While loading the button shows a spinner and cancels; a load that is over quickly still looks like the pause button.
+    const playPauseIcon = loading ? (
+        <CircularProgress size={35} />
+    ) : playing || starting ? (
+        <PauseIcon fontSize="large" />
+    ) : (
+        <PlayArrowIcon fontSize="large" />
+    );
+
     const modes = [
-        starting && "Starting...",
+        loading && "Loading...",
         state.shuffle && "Shuffle on",
         state.repeat === "all" && "Repeat all",
         state.repeat === "one" && "Repeat this track",
@@ -85,15 +98,9 @@ export const NowPlayingBar: React.FC = () => {
                     color="primary"
                     size="large"
                     onClick={() => send(playing || starting ? "player_pause" : "player_resume", {})}
-                    aria-label={starting ? "Starting, press to cancel" : playing ? "Pause" : "Play"}
+                    aria-label={loading ? "Loading, press to cancel" : playing || starting ? "Pause" : "Play"}
                 >
-                    {starting ? (
-                        <CircularProgress size={35} />
-                    ) : playing ? (
-                        <PauseIcon fontSize="large" />
-                    ) : (
-                        <PlayArrowIcon fontSize="large" />
-                    )}
+                    {playPauseIcon}
                 </IconButton>
                 <IconButton onClick={() => send("player_next", {})} aria-label="Next">
                     <SkipNextIcon />
