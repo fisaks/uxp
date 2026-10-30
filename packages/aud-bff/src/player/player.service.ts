@@ -631,7 +631,11 @@ export class PlayerService {
         return saved && saved.partId === track?.id ? Math.max(0, saved.positionSec - REWIND_ON_RESUME_SEC) : 0;
     }
 
+    /** Keeps the place in a part of a book. Nothing is kept for music. */
     private keepProgress(track: QueueTrack, positionSec: number) {
+        if (track.collection !== "audiobooks") {
+            return;
+        }
         this.progress.save(track.albumId, `${track.artist} - ${track.albumTitle}`, {
             partId: track.id,
             positionSec: Math.floor(positionSec),

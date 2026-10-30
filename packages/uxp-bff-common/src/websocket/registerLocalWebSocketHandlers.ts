@@ -297,8 +297,10 @@ const handleWebSocketMessage = async ({ actionMap, socketDetails, message, dataS
             return result;
         });
     } catch (err: any) {
-        AppLogger.error(requestMeta, { message: "Error in WebSocket message", error: err });
         const isAppError = err instanceof AppErrorV2;
+        // A request the client got wrong (an unknown id, a command that does not fit the state) is a warning, not a fault of the server.
+        const log = isAppError && err.statusCode < 500 ? AppLogger.warn.bind(AppLogger) : AppLogger.error.bind(AppLogger);
+        log(requestMeta, { message: "Error in WebSocket message", error: err });
         sendWebSocketMessage({
             socket,
             message: createErrorMessageResponse(requestMeta, action,
