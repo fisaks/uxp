@@ -69,6 +69,13 @@ Audiobooks). In the album view:
   now and the queue is kept, so nothing is lost.
 - Whenever the queue that had tracks is replaced (an album, a playlist, Play album from here) or cleared, a message
   "Queue replaced" or "Queue cleared" has an Undo for a few seconds (`undo_queue`).
+- The Audio tab of the System Center has a **now playing card**, right below the input selector where the tuner card is. It is titled "Music" and has the same coloured "Now playing" panel as the tuner card (a component they share), with the cover, the title and performer (the book and its
+  part for an audiobook), Previous, Play or Pause and Next, and the position as a thin bar. The position is not a slider
+  there, since the panel is scrolled with a finger and a slider would be moved by accident; seeking is on the player bar of
+  the Audio page. The card is there while the queue has tracks and the amplifier is on the input of the player
+  (`AUD_AMPLIFIER_PLAYER_INPUT`, sent to the UI as `playerInput` in the amplifier info). On another input, such as the tuner,
+  it is hidden, since what is heard is not what the player plays and the tuner card shows the station. Without the setting
+  the card is always there.
 - Messages (what was added, Undo, and errors) are a coloured strip in the column of the app right above the player bar,
   not a pop up at the edge of the window, which is far from the controls on a wide screen.
 

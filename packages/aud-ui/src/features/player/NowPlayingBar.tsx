@@ -1,21 +1,20 @@
-import PauseIcon from "@mui/icons-material/Pause";
-import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import QueueMusicIcon from "@mui/icons-material/QueueMusic";
 import RepeatIcon from "@mui/icons-material/Repeat";
 import RepeatOneIcon from "@mui/icons-material/RepeatOne";
 import ShuffleIcon from "@mui/icons-material/Shuffle";
 import SkipNextIcon from "@mui/icons-material/SkipNext";
 import SkipPreviousIcon from "@mui/icons-material/SkipPrevious";
-import { Box, Button, CircularProgress, IconButton, Paper, Slider, Stack, Typography } from "@mui/material";
+import { Box, Button, IconButton, Paper, Slider, Stack, Typography } from "@mui/material";
 import { REPEAT_MODES, RepeatMode } from "@aud/common";
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAppSelector } from "../../hooks";
 import { AlbumCover } from "../library/AlbumCover";
 import { formatDuration } from "../library/libraryFormat";
-import { partNames } from "../audiobook/partNames";
+import { nowPlayingText } from "./nowPlayingText";
+import { PlayPauseButton } from "./PlayPauseButton";
 import { PlayerToggleButton } from "./PlayerToggleButton";
-import { selectCurrentTrack, selectIsBookQueue, selectPlayerState } from "./playerSelectors";
+import { selectCurrentTrack, selectPlayerState } from "./playerSelectors";
 import { usePlayerCommand } from "./usePlayerCommand";
 import { usePlayerPosition } from "./usePlayerPosition";
 
@@ -33,27 +32,15 @@ export const NowPlayingBar: React.FC = () => {
     const send = usePlayerCommand();
     const [dragging, setDragging] = useState<number | undefined>(undefined);
     const track = useAppSelector(selectCurrentTrack);
-    const isBook = useAppSelector(selectIsBookQueue);
     if (!state || !track) return null;
 
-    const playing = state.status === "playing";
     // The amplifier may be starting up and the file loading: the position does not move until the sound is there.
     const loading = state.status === "starting";
     const duration = track.durationSec ?? 0;
     const shown = Math.min(dragging ?? position, duration || Infinity);
     const nextRepeat = REPEAT_MODES[(REPEAT_MODES.indexOf(state.repeat) + 1) % REPEAT_MODES.length];
 
-    // While loading the button shows a spinner, and pressing it cancels.
-    const playPauseIcon = loading ? (
-        <CircularProgress size={35} />
-    ) : playing ? (
-        <PauseIcon fontSize="large" />
-    ) : (
-        <PlayArrowIcon fontSize="large" />
-    );
-
-    // A book is shown by its title, with the part under it: the file names of its parts say nothing.
-    const part = isBook && state.queue.length > 1 ? partNames(state.queue)[state.currentIndex ?? 0] : undefined;
+    const { title, subtitle, isBook } = nowPlayingText(state.queue, state.currentIndex ?? 0);
     const modes = [
         loading && "Loading...",
         state.shuffle && "Shuffle on",
@@ -69,10 +56,10 @@ export const NowPlayingBar: React.FC = () => {
                 </Box>
                 <Box sx={{ minWidth: 0, flex: 1 }}>
                     <Typography noWrap sx={{ fontWeight: 600 }}>
-                        {isBook ? track.albumTitle : track.title}
+                        {title}
                     </Typography>
                     <Typography noWrap variant="body2" color="text.secondary">
-                        {[part, track.artist].filter(Boolean).join(" · ")}
+                        {subtitle}
                     </Typography>
                     <Typography noWrap variant="caption" color="primary">
                         {modes.join(" · ")}
@@ -95,14 +82,7 @@ export const NowPlayingBar: React.FC = () => {
                 <IconButton onClick={() => send("player_previous", {})} aria-label="Previous">
                     <SkipPreviousIcon />
                 </IconButton>
-                <IconButton
-                    color="primary"
-                    size="large"
-                    onClick={() => send(playing || loading ? "player_pause" : "player_resume", {})}
-                    aria-label={loading ? "Loading, press to cancel" : playing ? "Pause" : "Play"}
-                >
-                    {playPauseIcon}
-                </IconButton>
+                <PlayPauseButton />
                 <IconButton onClick={() => send("player_next", {})} aria-label="Next">
                     <SkipNextIcon />
                 </IconButton>

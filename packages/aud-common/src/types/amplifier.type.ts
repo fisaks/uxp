@@ -30,6 +30,8 @@ export type TunerStation = {
 /** What the amplifier offers. Fetched from the amplifier once, so it is missing until the first successful poll. */
 export type AmplifierInfo = {
     inputs: AmplifierInput[];
+    /** The input the sound of the player arrives on, when the server knows it (`AUD_AMPLIFIER_PLAYER_INPUT`). */
+    playerInput?: string;
     soundPrograms: string[];
     /** The stations from the station list file, in the order of the file. */
     tunerStations: TunerStation[];

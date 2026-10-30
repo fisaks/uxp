@@ -3,6 +3,7 @@ import { AmplifierInfo, AmplifierTuner } from "@aud/common";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import RadioIcon from "@mui/icons-material/Radio";
 import { alpha, Box, Button, Card, CardContent, keyframes, Typography } from "@mui/material";
+import { NowPlayingPanel } from "../../shared/NowPlayingPanel";
 import { SendAmplifierCommand } from "../useAmplifierCommand";
 
 const FM_BAND = "FM";
@@ -42,34 +43,17 @@ export const TunerCard: React.FC<TunerCardProps> = ({ info, tuner, disabled, sen
                     Tuner
                 </Typography>
                 {/* What is playing: the station of the list when the frequency is in it, otherwise the frequency itself. */}
-                <Box
-                    sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 2,
-                        p: 2,
-                        borderRadius: 1,
-                        borderLeft: 4,
-                        borderColor: "primary.main",
-                        bgcolor: (theme) => alpha(theme.palette.primary.main, 0.12),
-                    }}
+                <NowPlayingPanel
+                    leading={<RadioIcon color="primary" sx={{ fontSize: 40 }} />}
+                    title={station ? station.name : `${tuner.band} ${frequency}`}
+                    subtitle={[station && frequency, program].filter(Boolean).join(" · ")}
                 >
-                    <RadioIcon color="primary" sx={{ fontSize: 40 }} />
-                    <Box sx={{ minWidth: 0 }}>
-                        <Typography variant="overline" color="text.secondary" sx={{ lineHeight: 1.5 }}>
-                            Now playing
+                    {tuner.radioText && (
+                        <Typography variant="body2" color="text.secondary" sx={{ fontStyle: "italic", overflowWrap: "anywhere" }}>
+                            {tuner.radioText}
                         </Typography>
-                        <Typography variant="h5" sx={{ fontWeight: 600, overflowWrap: "anywhere", lineHeight: 1.2 }}>
-                            {station ? station.name : `${tuner.band} ${frequency}`}
-                        </Typography>
-                        <Typography color="text.secondary">{[station && frequency, program].filter(Boolean).join(" · ")}</Typography>
-                        {tuner.radioText && (
-                            <Typography variant="body2" color="text.secondary" sx={{ fontStyle: "italic", overflowWrap: "anywhere" }}>
-                                {tuner.radioText}
-                            </Typography>
-                        )}
-                    </Box>
-                </Box>
+                    )}
+                </NowPlayingPanel>
                 <Box
                     sx={{
                         display: "grid",

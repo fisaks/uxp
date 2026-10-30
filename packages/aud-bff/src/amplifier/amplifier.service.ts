@@ -252,7 +252,7 @@ export class AmplifierService {
                 this.client.getCapabilities(),
                 this.readTunerStations(),
             ]);
-            return { inputs: this.selectInputs(amplifierInputs), tunerStations, ...capabilities };
+            return { inputs: this.selectInputs(amplifierInputs), playerInput: this.config.playerInput, tunerStations, ...capabilities };
         } catch (error) {
             AppLogger.warn(undefined, { message: "Could not read the options of the amplifier", error });
             return undefined;
