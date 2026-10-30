@@ -1,8 +1,9 @@
 import LibraryAddIcon from "@mui/icons-material/LibraryAdd";
-import { Box, Button, IconButton, Stack, Typography } from "@mui/material";
+import { Box, Button, Stack, Typography } from "@mui/material";
 import { PreviousQueue } from "@aud/common";
 import React from "react";
 import { usePlayerActions } from "../player/usePlayerActions";
+import { LabelledIconButton } from "../shared/LabelledIconButton";
 import { dayAndTime } from "./historyFormat";
 
 const NAMES_SHOWN = 3;
@@ -39,14 +40,11 @@ export const PreviousQueueList: React.FC<PreviousQueueListProps> = ({ queues, on
                             </Typography>
                         </Box>
                         <Stack direction="row" alignItems="center">
-                            <IconButton
-                                size="small"
-                                aria-label="Save as a playlist"
-                                disabled={trackIds.length === 0}
-                                onClick={() => onSaveAsPlaylist(trackIds)}
-                            >
-                                <LibraryAddIcon fontSize="small" />
-                            </IconButton>
+                            {trackIds.length > 0 && (
+                                <LabelledIconButton label="Save as a playlist" onClick={() => onSaveAsPlaylist(trackIds)}>
+                                    <LibraryAddIcon fontSize="small" />
+                                </LabelledIconButton>
+                            )}
                             <Button
                                 size="small"
                                 variant="outlined"

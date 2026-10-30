@@ -1,7 +1,8 @@
 import PlaylistAddIcon from "@mui/icons-material/PlaylistAdd";
-import { IconButton, ListItem, ListItemButton, ListItemText, Stack, Typography } from "@mui/material";
+import { ListItem, ListItemButton, ListItemText, Stack, Typography } from "@mui/material";
 import { LibraryTrack } from "@aud/common";
 import React from "react";
+import { LabelledIconButton } from "../shared/LabelledIconButton";
 import { formatDuration } from "./libraryFormat";
 import { TrackMenu } from "./TrackMenu";
 
@@ -32,9 +33,9 @@ export const TrackRow: React.FC<TrackRowProps> = ({ track, artistName, playing, 
                 <Typography color="text.secondary" sx={{ mr: 0.5 }}>
                     {track.durationSec ? formatDuration(track.durationSec) : ""}
                 </Typography>
-                <IconButton size="small" aria-label="Add to queue" onClick={onAddToQueue}>
+                <LabelledIconButton label="Add to queue" onClick={onAddToQueue}>
                     <PlaylistAddIcon fontSize="small" />
-                </IconButton>
+                </LabelledIconButton>
                 <TrackMenu {...menu} />
             </Stack>
         }

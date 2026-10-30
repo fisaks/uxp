@@ -1,8 +1,9 @@
 import PlaylistAddIcon from "@mui/icons-material/PlaylistAdd";
-import { Box, IconButton, ListSubheader, Typography } from "@mui/material";
+import { Box, ListSubheader, Typography } from "@mui/material";
 import { HistoryPlay } from "@aud/common";
 import React, { useMemo } from "react";
 import { usePlayerActions } from "../player/usePlayerActions";
+import { LabelledIconButton } from "../shared/LabelledIconButton";
 import { groupByDay, timeOf } from "./historyFormat";
 
 const TIME_WIDTH = 52;
@@ -44,14 +45,11 @@ export const PlayedList: React.FC<PlayedListProps> = ({ plays }) => {
                                         {track ? track.artist : "Missing from the library"}
                                     </Typography>
                                 </Box>
-                                <IconButton
-                                    size="small"
-                                    aria-label="Add to queue"
-                                    disabled={!track}
-                                    onClick={() => track && enqueue([track.id])}
-                                >
-                                    <PlaylistAddIcon fontSize="small" />
-                                </IconButton>
+                                {track && (
+                                    <LabelledIconButton label="Add to queue" onClick={() => enqueue([track.id])}>
+                                        <PlaylistAddIcon fontSize="small" />
+                                    </LabelledIconButton>
+                                )}
                             </Box>
                         );
                     })}

@@ -2,13 +2,16 @@ import { closestCenter, DndContext, DragEndEvent, KeyboardSensor, Modifier, Poin
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
-import { Box, IconButton } from "@mui/material";
+import { Box, IconButton, Tooltip } from "@mui/material";
+import { usePortalContainerRef } from "@uxp/ui-lib";
 import React, { useEffect, useState } from "react";
 
 // The list only moves up and down.
 const verticalOnly: Modifier = ({ transform }) => ({ ...transform, x: 0 });
 // Only the handle starts a drag, so the rest of a row scrolls on a phone, and it starts after a short move so a tap on it does not.
 const DRAG_STARTS_AFTER_PX = 4;
+const TOOLTIP = "Drag to reorder";
+const TOOLTIP_ENTER_DELAY = 500;
 
 type SortableRowProps = {
     id: string;
@@ -16,18 +19,27 @@ type SortableRowProps = {
 };
 
 const SortableRow: React.FC<SortableRowProps> = ({ id, children }) => {
+    const portalContainer = usePortalContainerRef();
     const { attributes, listeners, setNodeRef, setActivatorNodeRef, transform, transition, isDragging } = useSortable({ id });
     const handle = (
-        <IconButton
-            ref={setActivatorNodeRef}
-            size="small"
-            aria-label="Drag to move"
-            {...attributes}
-            {...listeners}
-            sx={{ touchAction: "none", cursor: "grab", "&:active": { cursor: "grabbing" } }}
+        // The tooltip is not shown while the row is being dragged: the handle is under the pointer then.
+        <Tooltip
+            title={isDragging ? "" : TOOLTIP}
+            arrow
+            enterDelay={TOOLTIP_ENTER_DELAY}
+            slotProps={{ popper: { container: portalContainer.current } }}
         >
-            <DragIndicatorIcon fontSize="small" />
-        </IconButton>
+            <IconButton
+                ref={setActivatorNodeRef}
+                size="small"
+                aria-label={TOOLTIP}
+                {...attributes}
+                {...listeners}
+                sx={{ touchAction: "none", cursor: "grab", "&:active": { cursor: "grabbing" } }}
+            >
+                <DragIndicatorIcon fontSize="small" />
+            </IconButton>
+        </Tooltip>
     );
     return (
         <Box
