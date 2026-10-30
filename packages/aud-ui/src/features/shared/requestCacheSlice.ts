@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 /** What the server says has changed: the lists of the library, or the playlists. */
-export type ContentTopic = "library" | "playlists";
+export type ContentTopic = "library" | "playlists" | "history";
 
 type RequestCacheState = {
     /** The latest answer of every question that has been asked, by the question: "library_get_albums:{...}". */
@@ -12,7 +12,7 @@ type RequestCacheState = {
 
 const requestCacheSlice = createSlice({
     name: "requestCache",
-    initialState: { answers: {}, versions: { library: 0, playlists: 0 } } as RequestCacheState,
+    initialState: { answers: {}, versions: { library: 0, playlists: 0, history: 0 } } as RequestCacheState,
     reducers: {
         requestAnswered(sliceState, action: PayloadAction<{ key: string; data: unknown }>) {
             sliceState.answers[action.payload.key] = action.payload.data;

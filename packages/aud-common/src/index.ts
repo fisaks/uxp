@@ -5,5 +5,6 @@ export * from "./schemas/playlist.schema";
 export * from "./types/amplifier.type";
 export * from "./types/websocket-aud-app.type";
 export * from "./types/library.type";
+export * from "./types/history.type";
 export * from "./types/player.type";
 export * from "./types/playlist.type";

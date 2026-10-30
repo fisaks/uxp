@@ -46,6 +46,9 @@ export const WebSocketConfig: React.FC<WebSocketConfigProps> = ({ getWebSocket, 
             playlists_changed: () => {
                 dispatch(contentChanged("playlists"));
             },
+            history_changed: () => {
+                dispatch(contentChanged("history"));
+            },
             player_state: (message) => {
                 if (message.payload) dispatch(playerStateReceived(message.payload));
             },

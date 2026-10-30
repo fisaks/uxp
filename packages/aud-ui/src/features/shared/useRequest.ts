@@ -8,7 +8,8 @@ import { requestKey, RequestAction } from "./requestKey";
 import { selectCachedAnswer, selectContentVersion } from "./requestCacheSelectors";
 import { ContentTopic, requestAnswered } from "./requestCacheSlice";
 
-const topicOf = (action: RequestAction): ContentTopic => (action.startsWith("library_") ? "library" : "playlists");
+const topicOf = (action: RequestAction): ContentTopic =>
+    action.startsWith("library_") ? "library" : action.startsWith("history_") ? "history" : "playlists";
 
 /**
  * Asks the server once the connection is ready, and again after a reconnect and when the server says that what is shown

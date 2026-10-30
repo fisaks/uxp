@@ -16,3 +16,18 @@ export const writeJsonFile = async (file: string, data: unknown): Promise<void> 
     await writeFile(`${file}.tmp`, JSON.stringify(data, null, 2));
     await rename(`${file}.tmp`, file);
 };
+
+/** Writes a JSON file after the writes that are already waiting, so a burst of changes ends in the file with the last one. */
+export class SerializedJsonWriter {
+    private writing: Promise<void> = Promise.resolve();
+
+    constructor(
+        private readonly file: string,
+        private readonly onError: (error: unknown) => void
+    ) {}
+
+    write(data: unknown): Promise<void> {
+        this.writing = this.writing.then(() => writeJsonFile(this.file, data)).catch(this.onError);
+        return this.writing;
+    }
+}

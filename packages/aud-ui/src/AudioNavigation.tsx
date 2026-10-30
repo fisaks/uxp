@@ -7,6 +7,7 @@ const TABS = [
     { value: "/library", label: "Library" },
     { value: "/playlists", label: "Playlists" },
     { value: "/queue", label: "Queue" },
+    { value: "/history", label: "History" },
 ];
 
 /** The tabs between the pages of the app. The Library tab stays selected on the pages below /library. */

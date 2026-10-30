@@ -1,0 +1,62 @@
+import PlaylistAddIcon from "@mui/icons-material/PlaylistAdd";
+import { Box, IconButton, ListSubheader, Typography } from "@mui/material";
+import { HistoryPlay } from "@aud/common";
+import React, { useMemo } from "react";
+import { usePlayerActions } from "../player/usePlayerActions";
+import { groupByDay, timeOf } from "./historyFormat";
+
+const TIME_WIDTH = 52;
+
+type PlayedListProps = {
+    plays: HistoryPlay[];
+};
+
+/** The tracks that were played, newest first, in a group for each day. Pressing one plays it, and the + puts it in the queue. */
+export const PlayedList: React.FC<PlayedListProps> = ({ plays }) => {
+    const { hadQueue, playTracks, playNow, enqueue } = usePlayerActions();
+    const groups = useMemo(() => groupByDay(plays), [plays]);
+    return (
+        <>
+            {groups.map(({ day, plays: dayPlays }) => (
+                <Box key={day}>
+                    <ListSubheader disableGutters sx={{ bgcolor: "transparent" }}>
+                        {day}
+                    </ListSubheader>
+                    {dayPlays.map((play) => {
+                        const track = play.track;
+                        return (
+                            <Box
+                                key={`${play.playedAt}-${play.id}`}
+                                sx={{ display: "flex", alignItems: "center", borderBottom: 1, borderColor: "divider" }}
+                            >
+                                <Typography color="text.secondary" sx={{ width: TIME_WIDTH, flexShrink: 0 }}>
+                                    {timeOf(play.playedAt)}
+                                </Typography>
+                                <Box
+                                    // With a queue the track is played now and the queue is kept, without one it is played alone.
+                                    onClick={track ? () => (hadQueue ? playNow(track.id) : playTracks([track.id])) : undefined}
+                                    sx={{ flex: 1, minWidth: 0, py: 1, cursor: track ? "pointer" : "default" }}
+                                >
+                                    <Typography sx={{ overflowWrap: "anywhere" }} color={track ? "text.primary" : "text.disabled"}>
+                                        {track ? track.title : play.name}
+                                    </Typography>
+                                    <Typography variant="body2" color={track ? "text.secondary" : "text.disabled"}>
+                                        {track ? track.artist : "Missing from the library"}
+                                    </Typography>
+                                </Box>
+                                <IconButton
+                                    size="small"
+                                    aria-label="Add to queue"
+                                    disabled={!track}
+                                    onClick={() => track && enqueue([track.id])}
+                                >
+                                    <PlaylistAddIcon fontSize="small" />
+                                </IconButton>
+                            </Box>
+                        );
+                    })}
+                </Box>
+            ))}
+        </>
+    );
+};

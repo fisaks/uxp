@@ -8,7 +8,7 @@ kept in memory and can be rebuilt from them at any time.
 | Variable         | Required | Meaning                                                                                       |
 | ---------------- | -------- | --------------------------------------------------------------------------------------------- |
 | `AUD_MUSIC_ROOT` | no       | The folder with the music. Without it the library is empty.                                   |
-| `AUD_DATA_DIR`   | no       | Where aud keeps its data: the cache of the scan (`library.json`) and the queue (`queue.json`, see `player.md`) and the playlists (`playlists.json`, see `playlists.md`). Without it every start scans all files, and the queue and the playlists are lost at a restart. |
+| `AUD_DATA_DIR`   | no       | Where aud keeps its data: the cache of the scan (`library.json`) and the queue (`queue.json`, see `player.md`), the playlists (`playlists.json`, see `playlists.md`) and the history (`history.json`, see `history.md`). Without it every start scans all files, and the queue, the playlists and the history are lost at a restart. |
 
 ## Folder layout
 
@@ -74,6 +74,7 @@ connects (`content_subscribe`), and gets:
 |---------|------|------------------|
 | `library_changed` | a scan found another library: a file added, removed or changed, or another cover picture. Not a scan that finds the same files, and not a restart that loads the cache. | asks again for the lists of the library that are open |
 | `playlists_changed` | a playlist was made, changed or deleted (also by this browser) | asks again for the playlists that are open |
+| `history_changed` | a play counted, a queue was kept, or the history was cleared (see `history.md`) | asks again for the History tab, when it is open |
 
 Only the views that are open ask; the other cached answers are asked for again when they are opened. While a scan is running the artists
 view still asks every 3 seconds, to show how many tracks have been found so far.

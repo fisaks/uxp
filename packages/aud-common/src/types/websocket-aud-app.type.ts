@@ -1,6 +1,7 @@
 import { WebSocketAction, WebSocketMessage, WebSocketResponse } from "@uxp/common";
 import { AmplifierReachability, AmplifierState } from "./amplifier.type";
 import { PlayerState, RepeatMode } from "./player.type";
+import { HistoryResponse } from "./history.type";
 import { Playlist, PlaylistSummary } from "./playlist.type";
 import { LibraryAlbumsResponse, LibraryArtistsResponse, LibraryStatus, LibraryTracksResponse } from "./library.type";
 
@@ -11,6 +12,10 @@ export type AudioAppActionPayloadRequestMap = {
     amplifier_check: Record<string, never>;
     /** Starts the messages that say the library or the playlists have changed, so a client can ask again. */
     content_subscribe: Record<string, never>;
+    /** The plays that counted, and the queues that were replaced, for the History tab. */
+    history_get: Record<string, never>;
+    /** Forgets the plays and the previous queues. */
+    history_clear: Record<string, never>;
     playlist_list: Record<string, never>;
     playlist_get: { id: string };
     /** Makes a playlist of these tracks, for example of the queue. The tracks may be none: an empty playlist. */
@@ -82,6 +87,10 @@ export type AudioAppActionPayloadResponseMap = {
     library_changed: Record<string, never>;
     /** Pushed to subscribers when a playlist has been made, changed or deleted. */
     playlists_changed: Record<string, never>;
+    /** Pushed to subscribers when a track has counted as played, or a queue has been kept. */
+    history_changed: Record<string, never>;
+    history_get: HistoryResponse;
+    history_clear: HistoryResponse;
     playlist_list: PlaylistSummary[];
     playlist_get: Playlist;
     playlist_create: Playlist;

@@ -1,7 +1,8 @@
-import { PlayerState, PlayerStatus, QueueTrack, RepeatMode } from "@aud/common";
+import { PLAYED_AFTER_SEC, PlayerState, PlayerStatus, QueueTrack, RepeatMode } from "@aud/common";
 import { AppErrorV2, AppLogger, WebSocketDetails } from "@uxp/bff-common";
 import { ErrorCodes } from "@uxp/common";
 import { amplifierService } from "../amplifier/amplifier.service";
+import { historyService } from "../history/history.service";
 import { libraryConfig } from "../library/library.config";
 import { libraryService } from "../library/library.service";
 import { AudioServerWebSocketManager } from "../ws/AudioServerWebSocketManager";
@@ -27,6 +28,18 @@ type TrackSource = {
     getTrackFile(id: string): string | undefined;
     hasTracks(): boolean;
 };
+
+/** Where what was played and the queues that were replaced are kept. */
+type HistoryRecorder = {
+    trackPlayed(track: QueueTrack): void;
+    queueReplaced(queue: QueueTrack[], currentIndex: number): void;
+};
+
+// Position reports come twice a second: a longer gap (a stall, a pause) is not listening time.
+const LISTEN_GAP_MAX_MS = 2000;
+
+/** How long a track has to be listened to for it to count as played: 30 seconds, or half of a short track. */
+const playedAfterSec = (track: QueueTrack) => Math.min(PLAYED_AFTER_SEC, (track.durationSec ?? 2 * PLAYED_AFTER_SEC) / 2);
 
 /** A queue as it was, to bring it back. */
 type QueueSnapshot = { queue: QueueTrack[]; currentIndex: number; shuffle: boolean; unshuffled: QueueTrack[]; wasPlaying: boolean };
@@ -59,13 +72,18 @@ export class PlayerService {
     private startToken = 0;
     /** True once the engine has the file, so pausing means something. */
     private engineStarted = false;
+    /** How long the current track has really been listened to, and whether it has counted as played. */
+    private listenedSec = 0;
+    private lastListenAt?: number;
+    private playCounted = false;
 
     constructor(
         private readonly engine: PlayerEngine,
         private readonly tracks: TrackSource,
         private readonly wsManager: AudioServerWebSocketManager,
         private readonly amplifier: AmplifierControl,
-        private readonly storage: QueueStorage
+        private readonly storage: QueueStorage,
+        private readonly history: HistoryRecorder
     ) {
         engine.setListener({
             onPosition: (positionSec) => this.onPosition(positionSec),
@@ -255,6 +273,7 @@ export class PlayerService {
             this.setPosition(this.currentPosition());
             this.engine.pause();
             this.status = "paused";
+            this.lastListenAt = undefined;
         } else if (this.status === "starting") {
             // Whatever waits for the amplifier or the file does not go on.
             this.startToken++;
@@ -389,6 +408,9 @@ export class PlayerService {
         this.startToken++;
         this.status = "starting";
         this.setPosition(0);
+        this.listenedSec = 0;
+        this.lastListenAt = undefined;
+        this.playCounted = false;
         if (!file) {
             return this.onFileFailed(`The file of ${track?.title ?? "the track"} is not in the library`);
         }
@@ -421,10 +443,26 @@ export class PlayerService {
             // The first position: the sound is there.
             this.status = "playing";
             this.setPosition(positionSec);
+            this.lastListenAt = Date.now();
             this.publish();
         } else if (this.status === "playing") {
             this.setPosition(positionSec);
+            this.countListening();
             this.publishPosition();
+        }
+    }
+
+    /** Adds the time since the last position to what the track has been listened to, and records the play when it is enough. */
+    private countListening() {
+        const now = Date.now();
+        if (this.lastListenAt !== undefined) {
+            this.listenedSec += Math.min(now - this.lastListenAt, LISTEN_GAP_MAX_MS) / 1000;
+        }
+        this.lastListenAt = now;
+        const track = this.queue[this.currentIndex];
+        if (track && !this.playCounted && this.listenedSec >= playedAfterSec(track)) {
+            this.playCounted = true;
+            this.history.trackPlayed(track);
         }
     }
 
@@ -472,6 +510,7 @@ export class PlayerService {
     /** Keeps the queue as it is, if it has tracks, before it is replaced or cleared. */
     private rememberQueue() {
         if (this.queue.length > 0) {
+            this.history.queueReplaced(this.queue, this.currentIndex);
             this.replaced = {
                 queue: this.queue,
                 currentIndex: this.currentIndex,
@@ -541,5 +580,6 @@ export const playerService = new PlayerService(
     libraryService,
     AudioServerWebSocketManager.getInstance(),
     amplifierService,
-    new QueueStore(libraryConfig.dataDir)
+    new QueueStore(libraryConfig.dataDir),
+    historyService
 );

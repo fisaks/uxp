@@ -6,7 +6,7 @@ import { EventEmitter } from "events";
 import path from "path";
 import { libraryConfig } from "../library/library.config";
 import { libraryService } from "../library/library.service";
-import { readJsonFile, writeJsonFile } from "../storage/json-file";
+import { readJsonFile, SerializedJsonWriter } from "../storage/json-file";
 
 const FILE = "playlists.json";
 
@@ -44,13 +44,18 @@ export type PlaylistEventMap = {
 
 export class PlaylistService extends EventEmitter<PlaylistEventMap> {
     private playlists: StoredPlaylist[] = [];
-    private saving: Promise<void> = Promise.resolve();
+    private readonly writer?: SerializedJsonWriter;
 
     constructor(
         private readonly library: TrackSource,
         private readonly dataDir?: string
     ) {
         super();
+        if (dataDir) {
+            this.writer = new SerializedJsonWriter(path.join(dataDir, FILE), (error) =>
+                AppLogger.warn(undefined, { message: "Could not save the playlists", error })
+            );
+        }
     }
 
     async load(): Promise<void> {
@@ -150,17 +155,8 @@ export class PlaylistService extends EventEmitter<PlaylistEventMap> {
         return { id: playlist.id, name: playlist.name, trackCount: playlist.tracks.length, durationSec, updatedAt: playlist.updatedAt };
     }
 
-    /** Saves after the saves that are already waiting, so a burst of changes is written in order and the last one wins. */
     private save(): Promise<void> {
-        if (!this.dataDir) {
-            return Promise.resolve();
-        }
-        const file = path.join(this.dataDir, FILE);
-        const content = { playlists: this.playlists };
-        this.saving = this.saving
-            .then(() => writeJsonFile(file, content))
-            .catch((error) => AppLogger.warn(undefined, { message: "Could not save the playlists", error }));
-        return this.saving;
+        return this.writer?.write({ playlists: this.playlists }) ?? Promise.resolve();
     }
 
     private require(id: string): StoredPlaylist {

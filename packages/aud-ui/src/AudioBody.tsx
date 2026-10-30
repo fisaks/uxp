@@ -3,6 +3,7 @@ import { AppBodyContent } from "@uxp/ui-lib";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { AudioNavigation } from "./AudioNavigation";
 import AmplifierPage from "./features/amplifier/AmplifierPage";
+import HistoryPage from "./features/history/HistoryPage";
 import LibraryPage from "./features/library/LibraryPage";
 import { BottomDock } from "./features/player/BottomDock";
 import PlaylistsPage from "./features/playlist/PlaylistsPage";
@@ -18,6 +19,7 @@ export const AudioBody = () => {
                     <Route path="/library/*" element={<LibraryPage />} />
                     <Route path="/playlists/*" element={<PlaylistsPage />} />
                     <Route path="/queue" element={<QueuePage />} />
+                    <Route path="/history" element={<HistoryPage />} />
                     <Route path="*" element={<Navigate to="/amplifier" replace={true} />} />
                 </Routes>
                 <BottomDock />

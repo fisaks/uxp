@@ -19,4 +19,5 @@ export const selectCachedAnswer = <A extends RequestAction>(action: A, payload: 
 export const selectContentVersion: Record<ContentTopic, (state: RootState) => number> = {
     library: createSelector([selectRequestCacheState], (cache): number => cache.versions.library),
     playlists: createSelector([selectRequestCacheState], (cache): number => cache.versions.playlists),
+    history: createSelector([selectRequestCacheState], (cache): number => cache.versions.history),
 };

@@ -1,4 +1,5 @@
 import { EventEmitter } from "events";
+import { HistoryEventMap, historyService } from "../history/history.service";
 import { LibraryEventMap, libraryService } from "../library/library.service";
 import { PlaylistEventMap, playlistService } from "../playlists/playlist.service";
 import { AudioServerWebSocketManager } from "../ws/AudioServerWebSocketManager";
@@ -14,10 +15,12 @@ export class ContentChangeService {
     constructor(
         library: EventEmitter<LibraryEventMap>,
         playlists: EventEmitter<PlaylistEventMap>,
+        history: EventEmitter<HistoryEventMap>,
         private readonly wsManager: AudioServerWebSocketManager
     ) {
         library.on("changed", () => this.broadcast("library_changed"));
         playlists.on("changed", () => this.broadcast("playlists_changed"));
+        history.on("changed", () => this.broadcast("history_changed"));
     }
 
     subscribe(socket: WebSocketDetails["socket"]) {
@@ -25,9 +28,14 @@ export class ContentChangeService {
         return {};
     }
 
-    private broadcast(action: "library_changed" | "playlists_changed") {
+    private broadcast(action: "library_changed" | "playlists_changed" | "history_changed") {
         this.wsManager.broadcastToTopic(CONTENT_TOPIC, { action, success: true, payload: {} });
     }
 }
 
-export const contentChangeService = new ContentChangeService(libraryService, playlistService, AudioServerWebSocketManager.getInstance());
+export const contentChangeService = new ContentChangeService(
+    libraryService,
+    playlistService,
+    historyService,
+    AudioServerWebSocketManager.getInstance()
+);
