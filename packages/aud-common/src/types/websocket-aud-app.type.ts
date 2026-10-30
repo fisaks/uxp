@@ -31,6 +31,12 @@ export type AudioAppActionPayloadRequestMap = {
     player_play_tracks: { trackIds: string[]; startIndex?: number };
     /** Adds tracks to the end of the queue. */
     player_enqueue: { trackIds: string[] };
+    /** Puts tracks in the queue right after the current track. */
+    player_play_next: { trackIds: string[] };
+    /** Plays a track now: it goes right after the current track and starts, and the rest of the queue goes on after it. */
+    player_play_now: { trackId: string };
+    /** Brings back the queue that the last replacing or clearing of the queue took away. */
+    player_undo_queue: Record<string, never>;
     /** Plays the track at this place of the queue. */
     player_play_index: { index: number };
     player_remove: { index: number };
@@ -89,6 +95,9 @@ export type AudioAppActionPayloadResponseMap = {
     player_position: { positionSec: number };
     player_play_tracks: PlayerState;
     player_enqueue: PlayerState;
+    player_play_next: PlayerState;
+    player_play_now: PlayerState;
+    player_undo_queue: PlayerState;
     player_play_index: PlayerState;
     player_remove: PlayerState;
     player_move: PlayerState;

@@ -9,6 +9,8 @@ type PlayerSliceState = {
     receivedAt: number;
     /** Why the last command failed, until it is dismissed. */
     error?: string;
+    /** What the last command did, shown for a moment, with Undo when the queue it took away can be brought back. */
+    notice?: { text: string; undo: boolean };
 };
 
 const playerSlice = createSlice({
@@ -38,11 +40,25 @@ const playerSlice = createSlice({
         playerErrorDismissed(sliceState) {
             sliceState.error = undefined;
         },
+        playerNoticeShown(sliceState, action: PayloadAction<{ text: string; undo?: boolean }>) {
+            sliceState.notice = { text: action.payload.text, undo: action.payload.undo ?? false };
+        },
+        playerNoticeDismissed(sliceState) {
+            sliceState.notice = undefined;
+        },
     },
 });
 
-export const { playerStateReceived, playerPositionReceived, playerCommandFailed, playerErrorDismissed } = playerSlice.actions;
+export const {
+    playerStateReceived,
+    playerPositionReceived,
+    playerCommandFailed,
+    playerErrorDismissed,
+    playerNoticeShown,
+    playerNoticeDismissed,
+} = playerSlice.actions;
 export const selectPlayerState = (state: RootState) => state.player.state;
 export const selectPlayerReceivedAt = (state: RootState) => state.player.receivedAt;
 export const selectPlayerError = (state: RootState) => state.player.error;
+export const selectPlayerNotice = (state: RootState) => state.player.notice;
 export default playerSlice.reducer;

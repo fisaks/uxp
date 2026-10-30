@@ -58,7 +58,7 @@ export const NowPlayingBar: React.FC = () => {
     ].filter(Boolean);
 
     return (
-        <Paper elevation={6} sx={{ position: "sticky", bottom: 0, zIndex: 2, mt: 2, px: 2, py: 1 }}>
+        <Paper elevation={6} sx={{ px: 2, py: 1 }}>
             <Stack direction="row" alignItems="center" spacing={2}>
                 <Box sx={{ width: COVER_SIZE, flexShrink: 0 }}>
                     <AlbumCover albumId={track.albumId} hasCover={track.hasCover} />

@@ -24,7 +24,7 @@ import { useAppSelector } from "../../hooks";
 import { formatDuration } from "../library/libraryFormat";
 import { LibraryBreadcrumbs } from "../library/LibraryBreadcrumbs";
 import { selectPlayerState } from "../player/playerSlice";
-import { usePlayerCommand } from "../player/usePlayerCommand";
+import { usePlayerActions } from "../player/usePlayerActions";
 import { SortableList, uniqueKeys } from "../shared/SortableList";
 import { useRequest } from "../shared/useRequest";
 import { NamePlaylistDialog } from "./NamePlaylistDialog";
@@ -38,7 +38,7 @@ export const PlaylistView: React.FC = () => {
     const { id = "" } = useParams();
     const { data: playlist, error, setData } = useRequest("playlist_get", { id });
     const send = usePlaylistCommand();
-    const sendToPlayer = usePlayerCommand();
+    const { playTracks, shuffleTracks, enqueue } = usePlayerActions();
     const player = useAppSelector(selectPlayerState);
     const playingId = player?.currentIndex !== undefined ? player.queue[player.currentIndex]?.id : undefined;
     const [renaming, setRenaming] = useState(false);
@@ -88,7 +88,7 @@ export const PlaylistView: React.FC = () => {
                     variant="contained"
                     startIcon={<PlayArrowIcon />}
                     disabled={trackIds.length === 0}
-                    onClick={() => sendToPlayer("player_play_tracks", { trackIds })}
+                    onClick={() => playTracks(trackIds)}
                 >
                     Play
                 </Button>
@@ -96,10 +96,7 @@ export const PlaylistView: React.FC = () => {
                     variant="outlined"
                     startIcon={<ShuffleIcon />}
                     disabled={trackIds.length === 0}
-                    onClick={async () => {
-                        await sendToPlayer("player_set_shuffle", { on: true });
-                        await sendToPlayer("player_play_tracks", { trackIds });
-                    }}
+                    onClick={() => shuffleTracks(trackIds)}
                 >
                     Shuffle
                 </Button>
@@ -107,7 +104,7 @@ export const PlaylistView: React.FC = () => {
                     variant="outlined"
                     startIcon={<PlaylistAddIcon />}
                     disabled={trackIds.length === 0}
-                    onClick={() => sendToPlayer("player_enqueue", { trackIds })}
+                    onClick={() => enqueue(trackIds)}
                 >
                     Add to queue
                 </Button>
@@ -138,11 +135,7 @@ export const PlaylistView: React.FC = () => {
                         >
                             {handle}
                             <Box
-                                onClick={
-                                    track
-                                        ? () => sendToPlayer("player_play_tracks", { trackIds, startIndex: playablePlaceOf(entry) })
-                                        : undefined
-                                }
+                                onClick={track ? () => playTracks(trackIds, playablePlaceOf(entry)) : undefined}
                                 sx={{ flex: 1, minWidth: 0, py: 1, px: 1, cursor: track ? "pointer" : "default" }}
                             >
                                 <Typography

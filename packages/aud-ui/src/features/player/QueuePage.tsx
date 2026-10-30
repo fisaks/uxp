@@ -9,6 +9,7 @@ import { formatDuration } from "../library/libraryFormat";
 import { AddToPlaylistDialog } from "../playlist/AddToPlaylistDialog";
 import { SortableList, uniqueKeys } from "../shared/SortableList";
 import { selectPlayerState } from "./playerSlice";
+import { usePlayerActions } from "./usePlayerActions";
 import { usePlayerCommand } from "./usePlayerCommand";
 
 type QueueRow = { track: QueueTrack; key: string };
@@ -17,6 +18,7 @@ type QueueRow = { track: QueueTrack; key: string };
 const QueuePage: React.FC = () => {
     const state = useAppSelector(selectPlayerState);
     const send = usePlayerCommand();
+    const { clear } = usePlayerActions();
     const [saving, setSaving] = useState<string[] | undefined>(undefined);
 
     const rows = useMemo<QueueRow[]>(() => {
@@ -37,7 +39,7 @@ const QueuePage: React.FC = () => {
                     <Button startIcon={<LibraryAddIcon />} onClick={() => setSaving(state.queue.map((track) => track.id))}>
                         Save as playlist
                     </Button>
-                    <Button onClick={() => send("player_clear", {})}>Clear</Button>
+                    <Button onClick={clear}>Clear</Button>
                 </Stack>
             </Stack>
             <SortableList

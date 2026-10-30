@@ -28,6 +28,9 @@ type TrackSource = {
     hasTracks(): boolean;
 };
 
+/** A queue as it was, to bring it back. */
+type QueueSnapshot = { queue: QueueTrack[]; currentIndex: number; shuffle: boolean; unshuffled: QueueTrack[]; wasPlaying: boolean };
+
 /** Where the queue is kept between restarts. */
 type QueueStorage = { load(): Promise<PersistedQueue | undefined>; save(queue: PersistedQueue): void };
 
@@ -43,6 +46,8 @@ export class PlayerService {
     private currentIndex = -1;
     /** The queue as it was before shuffle was turned on (the same objects), and nothing while shuffle is off. */
     private unshuffled: QueueTrack[] = [];
+    /** The queue that was taken away when the queue was replaced or cleared, for Undo. */
+    private replaced?: QueueSnapshot;
     private status: PlayerStatus = "stopped";
     private shuffle = false;
     private repeat: RepeatMode = "off";
@@ -125,6 +130,7 @@ export class PlayerService {
         if (tracks.length === 0) {
             return this.stopAll();
         }
+        this.rememberQueue();
         const start = Math.max(
             0,
             tracks.findIndex((track) => track.id === startId)
@@ -154,6 +160,50 @@ export class PlayerService {
             this.currentIndex = 0;
         }
         return this.publish();
+    }
+
+    /** The tracks go right after the current track, and the current track keeps playing. */
+    playNext(trackIds: string[]): PlayerState {
+        const added = this.resolve(trackIds);
+        if (this.currentIndex === -1) {
+            return this.enqueue(trackIds);
+        }
+        this.insertAfterCurrent(added);
+        return this.publish();
+    }
+
+    /** A track is played now without losing the queue: it goes right after the current track and starts, and the queue goes on after it. */
+    async playNow(trackId: string): Promise<PlayerState> {
+        const [track] = this.resolve([trackId]);
+        if (!track) {
+            return this.getState();
+        }
+        if (this.currentIndex === -1) {
+            this.queue = [track];
+            this.unshuffled = this.shuffle ? [track] : [];
+            this.currentIndex = 0;
+        } else {
+            this.insertAfterCurrent([track]);
+            this.currentIndex++;
+        }
+        return this.startByUser("start");
+    }
+
+    /**
+     * Brings back the queue that the last replacing or clearing of the queue took away, as it was, with the track that
+     * was current. It plays again when it was playing, from the start of that track. There is only one to bring back.
+     */
+    async undoQueue(): Promise<PlayerState> {
+        const snapshot = this.replaced;
+        if (!snapshot) {
+            throw new AppErrorV2({ statusCode: 409, code: ErrorCodes.INVALID_STATE, message: "There is no queue to bring back" });
+        }
+        this.replaced = undefined;
+        this.queue = snapshot.queue;
+        this.unshuffled = snapshot.unshuffled;
+        this.shuffle = snapshot.shuffle;
+        this.currentIndex = snapshot.currentIndex;
+        return snapshot.wasPlaying ? this.startByUser("start") : this.stopPlaying();
     }
 
     async playIndex(index: number): Promise<PlayerState> {
@@ -196,6 +246,7 @@ export class PlayerService {
     }
 
     async clear(): Promise<PlayerState> {
+        this.rememberQueue();
         return this.stopAll();
     }
 
@@ -416,6 +467,28 @@ export class PlayerService {
         this.unshuffled = [];
         this.currentIndex = -1;
         return this.stopPlaying();
+    }
+
+    /** Keeps the queue as it is, if it has tracks, before it is replaced or cleared. */
+    private rememberQueue() {
+        if (this.queue.length > 0) {
+            this.replaced = {
+                queue: this.queue,
+                currentIndex: this.currentIndex,
+                shuffle: this.shuffle,
+                unshuffled: this.unshuffled,
+                wasPlaying: this.status === "playing" || this.status === "starting",
+            };
+        }
+    }
+
+    /** Puts tracks in the queue after the current track, and in the order of before the shuffle after it as well. */
+    private insertAfterCurrent(tracks: QueueTrack[]) {
+        if (this.shuffle) {
+            const place = this.unshuffled.indexOf(this.queue[this.currentIndex]);
+            this.unshuffled.splice(place + 1, 0, ...tracks);
+        }
+        this.queue.splice(this.currentIndex + 1, 0, ...tracks);
     }
 
     private resolve(trackIds: string[]): QueueTrack[] {

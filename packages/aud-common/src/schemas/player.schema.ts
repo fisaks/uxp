@@ -57,3 +57,12 @@ export const PlayerMoveSchema = {
     required: ["from", "to"],
     additionalProperties: false,
 };
+
+export const PlayerPlayNextSchema = PlayerEnqueueSchema;
+
+export const PlayerPlayNowSchema = {
+    type: "object",
+    properties: { trackId: TRACK_ID_SCHEMA },
+    required: ["trackId"],
+    additionalProperties: false,
+};

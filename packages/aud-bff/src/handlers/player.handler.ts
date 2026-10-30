@@ -3,6 +3,8 @@ import {
     PlayerEnqueueSchema,
     PlayerIndexSchema,
     PlayerMoveSchema,
+    PlayerPlayNextSchema,
+    PlayerPlayNowSchema,
     PlayerPlayTracksSchema,
     PlayerSeekSchema,
     PlayerSetRepeatSchema,
@@ -25,6 +27,21 @@ export class PlayerHandler {
     @WebSocketAction("player_enqueue", { authenticate: true, schema: PlayerEnqueueSchema })
     public enqueue(_wsDetails: WebSocketDetails, message: AudioAppRequestMessage<"player_enqueue">) {
         return playerService.enqueue(message.payload.trackIds);
+    }
+
+    @WebSocketAction("player_play_next", { authenticate: true, schema: PlayerPlayNextSchema })
+    public playNext(_wsDetails: WebSocketDetails, message: AudioAppRequestMessage<"player_play_next">) {
+        return playerService.playNext(message.payload.trackIds);
+    }
+
+    @WebSocketAction("player_play_now", { authenticate: true, schema: PlayerPlayNowSchema })
+    public playNow(_wsDetails: WebSocketDetails, message: AudioAppRequestMessage<"player_play_now">) {
+        return playerService.playNow(message.payload.trackId);
+    }
+
+    @WebSocketAction("player_undo_queue", { authenticate: true })
+    public undoQueue() {
+        return playerService.undoQueue();
     }
 
     @WebSocketAction("player_play_index", { authenticate: true, schema: PlayerIndexSchema })

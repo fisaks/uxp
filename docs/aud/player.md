@@ -49,12 +49,25 @@ the server does not send a state every second. While playing, the server also se
 bytes) so the moving position cannot drift from the sound, for example when a file is slow to start or a seek lands
 a little off. The commands are the other `player_*` actions: `play_tracks`
 (replaces the queue), `enqueue`, `play_index`, `remove`, `clear`, `pause`, `resume`, `next`, `previous`, `seek`,
-`set_shuffle` and `set_repeat`. Each answers with the new state. `move` (`from`, `to`) moves a track of the queue,
+`set_shuffle` and `set_repeat`. Each answers with the new state. `play_next` puts tracks right after the
+current one, `play_now` plays a track without losing the queue (it goes right after the current track, starts, and the
+queue goes on after it), and `undo_queue` brings back the queue that the last replacing (`play_tracks`) or clearing of
+the queue took away (as it was, with its current track, and playing again if it was playing; there is only one, and it is
+kept in memory only). `move` (`from`, `to`) moves a track of the queue,
 the others move over, and what is playing keeps playing (and what follows it is what the queue shows after it).
 
 The now playing bar is at the bottom of every page of the app while the queue has tracks; the Queue tab lists
-the queue. In the Library an album can be played, shuffled or added to the queue, and a track can be played (the
-album then becomes the queue, starting there) or added.
+the queue. In the album view:
+
+- An album can be played or shuffled (both replace the queue), added to the queue or put in a playlist.
+- A track row has a **+** that adds it to the queue (one tap, with a message), and a menu with Play next, Add to the playlist
+  that was changed last, Add to a playlist (a dialog, the playlists changed most recently first) and Play album from here.
+- **Pressing a track** plays the album from that track when the queue is empty. When there is a queue the track is played
+  now and the queue is kept, so nothing is lost.
+- Whenever the queue that had tracks is replaced (an album, a playlist, Play album from here) or cleared, a message
+  "Queue replaced" or "Queue cleared" has an Undo for a few seconds (`undo_queue`).
+- Messages (what was added, Undo, and errors) are a coloured strip in the column of the app right above the player bar,
+  not a pop up at the edge of the window, which is far from the controls on a wide screen.
 
 ## Starting
 
