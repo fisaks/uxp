@@ -8,6 +8,7 @@ kept in memory and can be rebuilt from them at any time.
 | Variable         | Required | Meaning                                                                                       |
 | ---------------- | -------- | --------------------------------------------------------------------------------------------- |
 | `AUD_MUSIC_ROOT` | no       | The folder with the music. Without it the library is empty.                                   |
+| `AUD_AUDIOBOOK_ROOT` | no   | The folder with the audiobooks (see Audiobooks). Without it there are none.                   |
 | `AUD_DATA_DIR`   | no       | Where aud keeps its data: the cache of the scan (`library.json`) and the queue (`queue.json`, see `player.md`), the playlists (`playlists.json`, see `playlists.md`) and the history (`history.json`, see `history.md`). Without it every start scans all files, and the queue, the playlists and the history are lost at a restart. |
 
 ## Folder layout
@@ -53,7 +54,7 @@ kept in memory and can be rebuilt from them at any time.
 | `library_scan` | none | the status; a scan starts in the background if none is running |
 
 An unknown artist or album gives `NOT_FOUND`. The cover picture of an album is served at
-`GET /api/cover/:albumId` (needs the login cookie, cached by the browser for a day); an album without a cover gives
+`GET /api/cover/music/:albumId` (or `/api/cover/audiobooks/:albumId` for a book) (needs the login cookie, cached by the browser for a day); an album without a cover gives
 404 and the UI shows a record icon. The files are never served by path, only the cover the scanner picked.
 
 The UI (`aud-ui/src/features/library`) has three views under the Library tab: the artists with a filter and a
@@ -79,3 +80,14 @@ connects (`content_subscribe`), and gets:
 Only the views that are open ask; the other cached answers are asked for again when they are opened. While a scan is running the artists
 view still asks every 3 seconds, to show how many tracks have been found so far.
 
+
+## Audiobooks
+
+The audiobooks are a second library with the same scanner, kept apart from the music: its own folder
+(`AUD_AUDIOBOOK_ROOT`), its own cache (`audiobooks.json`) and ids that cannot be those of a music track. The layout is
+`Author/Book/Disc 01/part.mp3`, or `Author/Book/part.mp3`. A book is an album, an author is an artist and a part is a track,
+so the actions are the library ones with the names `audiobook_get_authors`, `audiobook_get_books`, `audiobook_get_parts` and
+`audiobook_scan`.
+
+The parts of a book are put in order by the names of their folders and files, with numbers compared as numbers (`Disc 2`
+before `Disc 10`), not by the track numbers of the tags, because the tags of audiobooks often number every part 1.

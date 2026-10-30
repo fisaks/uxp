@@ -3,11 +3,10 @@ import { LibraryAlbum, LibraryArtist, LibraryStatus, LibraryTrack, QueueTrack } 
 import { AppLogger } from "@uxp/bff-common";
 import path from "path";
 import { readJsonFile, writeJsonFile } from "../storage/json-file";
-import { LibraryConfig, libraryConfig } from "./library.config";
+import { LibraryConfig, audiobookConfig, libraryConfig } from "./library.config";
 import { scanLibrary } from "./library-scanner";
 import { ScannedAlbumFolder, ScannedTrack } from "./library.types";
 
-const CACHE_FILE = "library.json";
 const CACHE_VERSION = 1;
 
 type Cache = { version: number; scannedAt: string; tracks: ScannedTrack[]; albumFolders: ScannedAlbumFolder[] };
@@ -26,7 +25,7 @@ const toLibraryTrack = ({ id, albumId, artistId, title, artist, trackNo, discNo,
 const byName = (a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" });
 
 /**
- * The music library, kept in memory. It is built from the files of the music root by the scanner and cached in a JSON
+ * A library, kept in memory: the music or the audiobooks. It is built from the files of its root by the scanner and cached in a JSON
  * file, so after a restart it is there at once while the scan looks for changes in the background. The files are the
  * truth: the cache can be deleted at any time and is rebuilt by a scan.
  */
@@ -57,8 +56,8 @@ export class LibraryService extends EventEmitter<LibraryEventMap> {
 
     /** Loads the cache, then scans in the background. Never throws. */
     async start() {
-        if (!this.config.musicRoot) {
-            AppLogger.info(undefined, { message: "AUD_MUSIC_ROOT is not set, the music library is empty" });
+        if (!this.config.root) {
+            AppLogger.info(undefined, { message: `The ${this.config.name} folder is not set, the ${this.config.name} library is empty` });
             return;
         }
         await this.loadCache();
@@ -67,11 +66,11 @@ export class LibraryService extends EventEmitter<LibraryEventMap> {
 
     /** Scans the music root. A scan that is running is not started again. */
     scan(): Promise<void> {
-        const { musicRoot } = this.config;
-        if (!musicRoot) {
+        const { root } = this.config;
+        if (!root) {
             return Promise.resolve();
         }
-        this.scanning ??= this.runScan(musicRoot).finally(() => (this.scanning = undefined));
+        this.scanning ??= this.runScan(root).finally(() => (this.scanning = undefined));
         return this.scanning;
     }
 
@@ -113,29 +112,31 @@ export class LibraryService extends EventEmitter<LibraryEventMap> {
     /** The full path of the audio file of a track, for the player. */
     getTrackFile(trackId: string): string | undefined {
         const track = this.trackById.get(trackId);
-        return track && this.config.musicRoot ? path.join(this.config.musicRoot, track.file) : undefined;
+        return track && this.config.root ? path.join(this.config.root, track.file) : undefined;
     }
 
     /** The full path of the cover picture of an album. */
     getCoverFile(albumId: string): string | undefined {
         const cover = this.coverByAlbum.get(albumId);
-        return cover && this.config.musicRoot ? path.join(this.config.musicRoot, cover) : undefined;
+        return cover && this.config.root ? path.join(this.config.root, cover) : undefined;
     }
 
-    private async runScan(musicRoot: string) {
+    private async runScan(root: string) {
         try {
             const started = Date.now();
             const previous = new Map(this.tracks.map((track) => [track.file, track]));
-            const { tracks, albumFolders, unreadable } = await scanLibrary(musicRoot, previous);
+            const { tracks, albumFolders, unreadable } = await scanLibrary(root, previous, this.config.idSalt);
             unreadable.forEach((file) => AppLogger.warn(undefined, { message: `Could not read the tags of ${file}, using the file name` }));
             const changed = this.setLibrary(tracks, albumFolders, new Date().toISOString());
             await this.saveCache();
             if (changed) {
                 this.emit("changed");
             }
-            AppLogger.info(undefined, { message: `Scanned the music library: ${tracks.length} tracks in ${Date.now() - started} ms` });
+            AppLogger.info(undefined, {
+                message: `Scanned the ${this.config.name} library: ${tracks.length} tracks in ${Date.now() - started} ms`,
+            });
         } catch (error) {
-            AppLogger.error(undefined, { message: "Could not scan the music library", error });
+            AppLogger.error(undefined, { message: `Could not scan the ${this.config.name} library`, error });
         }
     }
 
@@ -144,7 +145,7 @@ export class LibraryService extends EventEmitter<LibraryEventMap> {
             return;
         }
         // No cache yet, or it is damaged: the scan builds it again.
-        const cache = await readJsonFile<Cache>(path.join(this.config.dataDir, CACHE_FILE));
+        const cache = await readJsonFile<Cache>(path.join(this.config.dataDir, this.config.cacheFile));
         if (cache?.version === CACHE_VERSION) {
             this.setLibrary(cache.tracks, cache.albumFolders, cache.scannedAt);
         }
@@ -155,14 +156,14 @@ export class LibraryService extends EventEmitter<LibraryEventMap> {
             return;
         }
         try {
-            await writeJsonFile(path.join(this.config.dataDir, CACHE_FILE), {
+            await writeJsonFile(path.join(this.config.dataDir, this.config.cacheFile), {
                 version: CACHE_VERSION,
                 scannedAt: this.scannedAt ?? "",
                 tracks: this.tracks,
                 albumFolders: this.folders,
             } satisfies Cache);
         } catch (error) {
-            AppLogger.warn(undefined, { message: "Could not save the cache of the music library", error });
+            AppLogger.warn(undefined, { message: `Could not save the cache of the ${this.config.name} library`, error });
         }
     }
 
@@ -175,7 +176,9 @@ export class LibraryService extends EventEmitter<LibraryEventMap> {
         const changed = signature !== this.signature;
         this.signature = signature;
         const sorted = [...tracks].sort(
-            (a, b) => (a.discNo ?? 0) - (b.discNo ?? 0) || (a.trackNo ?? 0) - (b.trackNo ?? 0) || a.file.localeCompare(b.file)
+            this.config.order === "files"
+                ? (a, b) => a.file.localeCompare(b.file, undefined, { numeric: true, sensitivity: "base" })
+                : (a, b) => (a.discNo ?? 0) - (b.discNo ?? 0) || (a.trackNo ?? 0) - (b.trackNo ?? 0) || a.file.localeCompare(b.file)
         );
         const tracksByAlbum = new Map<string, ScannedTrack[]>();
         sorted.forEach((track) => tracksByAlbum.set(track.albumId, [...(tracksByAlbum.get(track.albumId) ?? []), track]));
@@ -220,3 +223,4 @@ export class LibraryService extends EventEmitter<LibraryEventMap> {
 }
 
 export const libraryService = new LibraryService(libraryConfig);
+export const audiobookService = new LibraryService(audiobookConfig);

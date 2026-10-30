@@ -50,3 +50,12 @@ export type LibraryTracksResponse = {
     album: LibraryAlbum;
     tracks: LibraryTrack[];
 };
+
+/** Which library a cover is in. */
+export type Collection = "music" | "audiobooks";
+
+/** The parameters of the path of the cover route: `/cover/:collection/:albumId`. */
+export type CoverParams = {
+    collection: Collection;
+    albumId: string;
+};

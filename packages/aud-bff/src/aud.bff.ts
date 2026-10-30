@@ -4,7 +4,7 @@ import fastifyWebsocket from "@fastify/websocket";
 import { AppLogger, errorHandler, HandlerRegistry, jwtPlugin, registerLocalWebSocketHandlers, registerRoutes } from "@uxp/bff-common";
 import Fastify from "fastify";
 import path from "path";
-import { libraryService } from "./library/library.service";
+import { audiobookService, libraryService } from "./library/library.service";
 import { createLogStream } from "./logging/log-stream";
 import { playerService } from "./player/player.service";
 import { historyService } from "./history/history.service";
@@ -40,7 +40,7 @@ void Promise.all([playlistService.load(), historyService.load()]).then(() =>
     fastify.listen({ port, host: "0.0.0.0" }, (err, address) => {
         if (err) throw err;
         console.log(`AUD BFF is running at address ${address}`);
-        // The queue of before the restart is brought back once the library, whose ids it uses, has been read.
-        void libraryService.start().then(() => playerService.restore());
+        // The queue of before the restart is brought back once the libraries, whose ids it uses, have been read.
+        void Promise.all([libraryService.start(), audiobookService.start()]).then(() => playerService.restore());
     })
 );

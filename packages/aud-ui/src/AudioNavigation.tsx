@@ -5,6 +5,7 @@ import { Link, useLocation } from "react-router-dom";
 const TABS = [
     { value: "/amplifier", label: "Amplifier" },
     { value: "/library", label: "Library" },
+    { value: "/audiobooks", label: "Audiobooks" },
     { value: "/playlists", label: "Playlists" },
     { value: "/queue", label: "Queue" },
     { value: "/history", label: "History" },

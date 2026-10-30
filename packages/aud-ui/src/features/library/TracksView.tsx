@@ -59,7 +59,7 @@ export const TracksView: React.FC = () => {
             />
             <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
                 <Box sx={{ width: COVER_SIZE, flexShrink: 0 }}>
-                    <AlbumCover albumId={album.id} hasCover={album.hasCover} />
+                    <AlbumCover collection="music" albumId={album.id} hasCover={album.hasCover} />
                 </Box>
                 <Box sx={{ minWidth: 0 }}>
                     <Typography variant="h5" sx={{ overflowWrap: "anywhere" }}>

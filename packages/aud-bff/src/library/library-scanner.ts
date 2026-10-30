@@ -16,7 +16,12 @@ const UNKNOWN_ALBUM = "Unknown album";
 const COVER_NAMES = [/^folder$/i, /^cover$/i, /^front$/i, /large/i, /small/i];
 const NOT_A_COVER = /back|cd|disc|inlay|tray/i;
 
-export const idOf = (relativePath: string) => createHash("sha1").update(relativePath).digest("hex").slice(0, 16);
+/** The id of a file, folder or name. The salt keeps the ids of one root from being those of another with the same paths. */
+export const idOf = (relativePath: string, salt = "") =>
+    createHash("sha1")
+        .update(salt + relativePath)
+        .digest("hex")
+        .slice(0, 16);
 
 const isVisible = (entry: Dirent) => !entry.name.startsWith(".");
 
@@ -82,13 +87,14 @@ const readTrack = async (
     root: string,
     file: string,
     size: number,
-    modifiedMs: number
+    modifiedMs: number,
+    salt: string
 ): Promise<{ track: ScannedTrack; readable: boolean }> => {
     const { artistName, folder } = placementOf(file);
     const base = {
-        id: idOf(file),
-        albumId: idOf(folder),
-        artistId: idOf(artistName),
+        id: idOf(file, salt),
+        albumId: idOf(folder, salt),
+        artistId: idOf(artistName, salt),
         file,
         size,
         modifiedMs,
@@ -135,7 +141,7 @@ const inBatches = async <T, R>(items: T[], work: (item: T) => Promise<R>): Promi
  * has the same modification time as in `previous` is not read again. Tags win over the names of the folders and files,
  * except for the artist and the album of an album, which are the folders.
  */
-export const scanLibrary = async (root: string, previous: Map<string, ScannedTrack>): Promise<ScanResult> => {
+export const scanLibrary = async (root: string, previous: Map<string, ScannedTrack>, idSalt = ""): Promise<ScanResult> => {
     const files = (await filesBelow(root)).sort((a, b) => a.localeCompare(b));
     const audioFiles = files.filter((f) => AUDIO_EXTENSIONS.has(path.extname(f).toLowerCase()));
 
@@ -146,7 +152,7 @@ export const scanLibrary = async (root: string, previous: Map<string, ScannedTra
         if (known && known.size === size && known.modifiedMs === mtimeMs) {
             return known;
         }
-        const { track, readable } = await readTrack(root, file, size, mtimeMs);
+        const { track, readable } = await readTrack(root, file, size, mtimeMs, idSalt);
         if (!readable) unreadable.push(file);
         return track;
     });

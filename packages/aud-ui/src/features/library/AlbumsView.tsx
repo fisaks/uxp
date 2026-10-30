@@ -20,7 +20,7 @@ export const AlbumsView: React.FC = () => {
                 {data.albums.map((album) => (
                     <Card key={album.id}>
                         <CardActionArea onClick={() => navigate(`/library/album/${album.id}`)}>
-                            <AlbumCover albumId={album.id} hasCover={album.hasCover} />
+                            <AlbumCover collection="music" albumId={album.id} hasCover={album.hasCover} />
                             <CardContent sx={{ p: 1.5 }}>
                                 <Typography variant="body2" sx={{ fontWeight: 600, overflowWrap: "anywhere" }}>
                                     {album.title}

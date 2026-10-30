@@ -30,6 +30,12 @@ export type AudioAppActionPayloadRequestMap = {
     library_get_artists: Record<string, never>;
     library_get_albums: { artistId: string };
     library_get_tracks: { albumId: string };
+    /** The audiobooks have the same shape as the music: authors are artists, books are albums and parts are tracks. */
+    audiobook_get_authors: Record<string, never>;
+    audiobook_get_books: { artistId: string };
+    audiobook_get_parts: { albumId: string };
+    /** Scans the audiobook folder again. */
+    audiobook_scan: Record<string, never>;
     /** Scans the music folder again. The response is the status, which has `scanning: true` until it is done. */
     library_scan: Record<string, never>;
     /** Starts the live player updates. The response is the current state. */
@@ -103,6 +109,10 @@ export type AudioAppActionPayloadResponseMap = {
     library_get_artists: LibraryArtistsResponse;
     library_get_albums: LibraryAlbumsResponse;
     library_get_tracks: LibraryTracksResponse;
+    audiobook_get_authors: LibraryArtistsResponse;
+    audiobook_get_books: LibraryAlbumsResponse;
+    audiobook_get_parts: LibraryTracksResponse;
+    audiobook_scan: LibraryStatus;
     library_scan: LibraryStatus;
     player_subscribe: PlayerState;
     /** Pushed to subscribers whenever the player changes, not every second: see `PlayerState.positionSec`. */

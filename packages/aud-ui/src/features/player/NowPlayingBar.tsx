@@ -61,7 +61,7 @@ export const NowPlayingBar: React.FC = () => {
         <Paper elevation={6} sx={{ px: 2, py: 1 }}>
             <Stack direction="row" alignItems="center" spacing={2}>
                 <Box sx={{ width: COVER_SIZE, flexShrink: 0 }}>
-                    <AlbumCover albumId={track.albumId} hasCover={track.hasCover} />
+                    <AlbumCover collection="music" albumId={track.albumId} hasCover={track.hasCover} />
                 </Box>
                 <Box sx={{ minWidth: 0, flex: 1 }}>
                     <Typography noWrap sx={{ fontWeight: 600 }}>

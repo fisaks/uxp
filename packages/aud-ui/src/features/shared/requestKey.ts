@@ -3,6 +3,9 @@ export type RequestAction =
     | "library_get_artists"
     | "library_get_albums"
     | "library_get_tracks"
+    | "audiobook_get_authors"
+    | "audiobook_get_books"
+    | "audiobook_get_parts"
     | "playlist_list"
     | "playlist_get"
     | "history_get";

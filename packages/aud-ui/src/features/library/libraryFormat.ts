@@ -1,3 +1,4 @@
+import { Collection } from "@aud/common";
 import { getBaseUrl } from "../../config";
 
 /** 213 seconds is "3:33", and 3725 seconds is "1:02:05". */
@@ -8,4 +9,5 @@ export const formatDuration = (totalSeconds: number) => {
     return hours > 0 ? `${hours}:${String(minutes).padStart(2, "0")}:${seconds}` : `${minutes}:${seconds}`;
 };
 
-export const coverUrl = (albumId: string) => `${getBaseUrl().replace(/\/$/, "")}/api/cover/${albumId}`;
+export const coverUrl = (collection: Collection, albumId: string) =>
+    `${getBaseUrl().replace(/\/$/, "")}/api/cover/${collection}/${albumId}`;

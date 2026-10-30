@@ -9,7 +9,7 @@ import { selectCachedAnswer, selectContentVersion } from "./requestCacheSelector
 import { ContentTopic, requestAnswered } from "./requestCacheSlice";
 
 const topicOf = (action: RequestAction): ContentTopic =>
-    action.startsWith("library_") ? "library" : action.startsWith("history_") ? "history" : "playlists";
+    action.startsWith("library_") || action.startsWith("audiobook_") ? "library" : action.startsWith("history_") ? "history" : "playlists";
 
 /**
  * Asks the server once the connection is ready, and again after a reconnect and when the server says that what is shown
