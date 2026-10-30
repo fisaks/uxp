@@ -9,6 +9,8 @@ export type AudioAppActionPayloadRequestMap = {
     amplifier_subscribe: Record<string, never>;
     /** Asks once whether the amplifier answers, for the health check. It does not start the live updates. */
     amplifier_check: Record<string, never>;
+    /** Starts the messages that say the library or the playlists have changed, so a client can ask again. */
+    content_subscribe: Record<string, never>;
     playlist_list: Record<string, never>;
     playlist_get: { id: string };
     /** Makes a playlist of these tracks, for example of the queue. The tracks may be none: an empty playlist. */
@@ -75,6 +77,11 @@ export type AudioAppActionPayloadResponseMap = {
     amplifier_check: AmplifierReachability;
     /** Pushed to subscribers whenever the amplifier state changes. */
     amplifier_state: AmplifierState;
+    content_subscribe: Record<string, never>;
+    /** Pushed to subscribers when a scan has changed the library. */
+    library_changed: Record<string, never>;
+    /** Pushed to subscribers when a playlist has been made, changed or deleted. */
+    playlists_changed: Record<string, never>;
     playlist_list: PlaylistSummary[];
     playlist_get: Playlist;
     playlist_create: Playlist;

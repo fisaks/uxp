@@ -14,7 +14,7 @@ import { useAppSelector } from "../../hooks";
 import { AlbumCover } from "../library/AlbumCover";
 import { formatDuration } from "../library/libraryFormat";
 import { PlayerToggleButton } from "./PlayerToggleButton";
-import { selectPlayerState } from "./playerSlice";
+import { selectCurrentTrack, selectPlayerState } from "./playerSelectors";
 import { usePlayerCommand } from "./usePlayerCommand";
 import { usePlayerPosition } from "./usePlayerPosition";
 
@@ -31,7 +31,7 @@ export const NowPlayingBar: React.FC = () => {
     const position = usePlayerPosition();
     const send = usePlayerCommand();
     const [dragging, setDragging] = useState<number | undefined>(undefined);
-    const track = state && state.currentIndex !== undefined ? state.queue[state.currentIndex] : undefined;
+    const track = useAppSelector(selectCurrentTrack);
     if (!state || !track) return null;
 
     const playing = state.status === "playing";

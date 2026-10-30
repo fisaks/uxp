@@ -32,7 +32,7 @@ const countOf = (count: number) => `${count} ${count === 1 ? "track" : "tracks"}
 export const AddToPlaylistDialog: React.FC<AddToPlaylistDialogProps> = ({ trackIds, title, onClose }) => {
     const portalContainer = usePortalContainerRef();
     const open = trackIds !== undefined;
-    const { data: playlists } = useRequest("playlist_list", {}, { enabled: open });
+    const { data: playlists } = useRequest("playlist_list", {});
     const send = usePlaylistCommand();
     const { notify } = usePlayerActions();
     const [newName, setNewName] = useState("");

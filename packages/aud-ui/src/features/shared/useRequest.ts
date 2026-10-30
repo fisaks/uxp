@@ -1,46 +1,48 @@
 import { AudioAppActionPayloadRequestMap, AudioAppActionPayloadResponseMap } from "@aud/common";
 import { WebSocketError } from "@uxp/ui-lib";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAudioWebSocket } from "../../app/AudioBrowserWebSocketManager";
-import { useAppSelector } from "../../hooks";
-import { selectConnected } from "../connection/connectionSlice";
+import { useAppDispatch, useAppSelector } from "../../hooks";
+import { selectConnected } from "../connection/connectionSelectors";
+import { requestKey, RequestAction } from "./requestKey";
+import { selectCachedAnswer, selectContentVersion } from "./requestCacheSelectors";
+import { ContentTopic, requestAnswered } from "./requestCacheSlice";
 
-/** The questions that are asked once and answered with a list or an item (the commands are sent by the player and playlist hooks). */
-export type RequestAction = "library_get_artists" | "library_get_albums" | "library_get_tracks" | "playlist_list" | "playlist_get";
-
-type RequestOptions = {
-    /** False to wait with asking, for example until a dialog is open. */
-    enabled?: boolean;
-};
+const topicOf = (action: RequestAction): ContentTopic => (action.startsWith("library_") ? "library" : "playlists");
 
 /**
- * Asks the server once the connection is ready, and again after a reconnect. `reload` asks again, for example to follow
- * a scan that is running, and `setData` replaces the answer with a newer one that a command has returned.
+ * Asks the server once the connection is ready, and again after a reconnect and when the server says that what is shown
+ * has changed. The latest answer is kept, so a view that is opened again shows what it showed at once and is then brought
+ * up to date. `reload` asks again, for example to follow a scan that is running, and `setData` replaces the answer with a
+ * newer one that a command has returned.
  */
-export const useRequest = <A extends RequestAction>(
-    action: A,
-    payload: AudioAppActionPayloadRequestMap[A],
-    { enabled = true }: RequestOptions = {}
-) => {
+export const useRequest = <A extends RequestAction>(action: A, payload: AudioAppActionPayloadRequestMap[A]) => {
+    type Answer = AudioAppActionPayloadResponseMap[A];
     const { sendMessageAsync } = useAudioWebSocket();
+    const dispatch = useAppDispatch();
     const connected = useAppSelector(selectConnected);
-    const [data, setData] = useState<AudioAppActionPayloadResponseMap[A] | undefined>(undefined);
-    const [error, setError] = useState<string | undefined>(undefined);
     const payloadKey = JSON.stringify(payload);
+    const key = requestKey(action, payload);
+    const data = useAppSelector(useMemo(() => selectCachedAnswer(action, JSON.parse(payloadKey)), [action, payloadKey]));
+    const contentVersion = useAppSelector(selectContentVersion[topicOf(action)]);
+    const [error, setError] = useState<string | undefined>(undefined);
 
     const reload = useCallback(async () => {
         try {
             const response = await sendMessageAsync(action, JSON.parse(payloadKey));
-            setData(response.payload as AudioAppActionPayloadResponseMap[A]);
+            dispatch(requestAnswered({ key, data: response.payload }));
             setError(undefined);
         } catch (e) {
             setError(e instanceof WebSocketError && e.error.code === "NOT_FOUND" ? "Not found." : "It could not be read.");
         }
-    }, [sendMessageAsync, action, payloadKey]);
+    }, [sendMessageAsync, dispatch, action, payloadKey, key]);
 
     useEffect(() => {
-        if (connected && enabled) void reload();
-    }, [connected, enabled, reload]);
+        if (connected) void reload();
+    }, [connected, reload, contentVersion]);
 
-    return { data, error, reload, setData };
+    const setData = useCallback((answer: Answer) => dispatch(requestAnswered({ key, data: answer })), [dispatch, key]);
+
+    // What is shown stays when asking again fails: an error is only reported when there is nothing to show.
+    return { data, error: data === undefined ? error : undefined, reload, setData };
 };

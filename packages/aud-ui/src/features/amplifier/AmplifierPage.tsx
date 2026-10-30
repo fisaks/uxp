@@ -1,7 +1,7 @@
 import { Alert, Box, CircularProgress, Snackbar, Stack } from "@mui/material";
 import React from "react";
 import { useAppSelector } from "../../hooks";
-import { selectAmplifierState } from "./amplifierSlice";
+import { selectAmplifierState } from "./amplifierSelectors";
 import { AdvancedCard } from "./components/AdvancedCard";
 import { InputCard } from "./components/InputCard";
 import { PowerVolumeCard } from "./components/PowerVolumeCard";

@@ -8,7 +8,7 @@ import { useAppSelector } from "../../hooks";
 import { formatDuration } from "../library/libraryFormat";
 import { AddToPlaylistDialog } from "../playlist/AddToPlaylistDialog";
 import { SortableList, uniqueKeys } from "../shared/SortableList";
-import { selectPlayerState } from "./playerSlice";
+import { selectPlayerState } from "./playerSelectors";
 import { usePlayerActions } from "./usePlayerActions";
 import { usePlayerCommand } from "./usePlayerCommand";
 

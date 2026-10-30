@@ -4,6 +4,7 @@ import { createLogger } from "redux-logger";
 import amplifierReducer from "../features/amplifier/amplifierSlice";
 import connectionReducer from "../features/connection/connectionSlice";
 import playerReducer from "../features/player/playerSlice";
+import requestCacheReducer from "../features/shared/requestCacheSlice";
 
 export const createStore = () => {
     const logger = createLogger({
@@ -17,6 +18,7 @@ export const createStore = () => {
             amplifier: amplifierReducer,
             connection: connectionReducer,
             player: playerReducer,
+            requestCache: requestCacheReducer,
         },
         devTools: process.env.NODE_ENV === "development",
         middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(logger),

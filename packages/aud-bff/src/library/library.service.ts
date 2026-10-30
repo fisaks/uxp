@@ -1,3 +1,4 @@
+import { EventEmitter } from "events";
 import { LibraryAlbum, LibraryArtist, LibraryStatus, LibraryTrack, QueueTrack } from "@aud/common";
 import { AppLogger } from "@uxp/bff-common";
 import path from "path";
@@ -29,7 +30,12 @@ const byName = (a: { name: string }, b: { name: string }) => a.name.localeCompar
  * file, so after a restart it is there at once while the scan looks for changes in the background. The files are the
  * truth: the cache can be deleted at any time and is rebuilt by a scan.
  */
-export class LibraryService {
+export type LibraryEventMap = {
+    /** A scan has found another library than before: a file added, removed or changed, or another cover picture. */
+    changed: [];
+};
+
+export class LibraryService extends EventEmitter<LibraryEventMap> {
     private tracks: ScannedTrack[] = [];
     private folders: ScannedAlbumFolder[] = [];
     private artists: LibraryArtist[] = [];
@@ -42,7 +48,12 @@ export class LibraryService {
     private scanning?: Promise<void>;
     private scannedAt?: string;
 
-    constructor(private readonly config: LibraryConfig) {}
+    /** What the library is made of: when it changes between scans the listeners of "changed" are told. */
+    private signature = "";
+
+    constructor(private readonly config: LibraryConfig) {
+        super();
+    }
 
     /** Loads the cache, then scans in the background. Never throws. */
     async start() {
@@ -117,8 +128,11 @@ export class LibraryService {
             const previous = new Map(this.tracks.map((track) => [track.file, track]));
             const { tracks, albumFolders, unreadable } = await scanLibrary(musicRoot, previous);
             unreadable.forEach((file) => AppLogger.warn(undefined, { message: `Could not read the tags of ${file}, using the file name` }));
-            this.setLibrary(tracks, albumFolders, new Date().toISOString());
+            const changed = this.setLibrary(tracks, albumFolders, new Date().toISOString());
             await this.saveCache();
+            if (changed) {
+                this.emit("changed");
+            }
             AppLogger.info(undefined, { message: `Scanned the music library: ${tracks.length} tracks in ${Date.now() - started} ms` });
         } catch (error) {
             AppLogger.error(undefined, { message: "Could not scan the music library", error });
@@ -152,7 +166,14 @@ export class LibraryService {
         }
     }
 
-    private setLibrary(tracks: ScannedTrack[], folders: ScannedAlbumFolder[], scannedAt: string) {
+    /** Sets the library. The answer is whether it is another library than before, which is what the listeners of "changed" are told. */
+    private setLibrary(tracks: ScannedTrack[], folders: ScannedAlbumFolder[], scannedAt: string): boolean {
+        const signature = [
+            ...tracks.map((track) => `${track.id}:${track.modifiedMs}`),
+            ...folders.map((folder) => `${folder.id}:${folder.cover ?? ""}`),
+        ].join(",");
+        const changed = signature !== this.signature;
+        this.signature = signature;
         const sorted = [...tracks].sort(
             (a, b) => (a.discNo ?? 0) - (b.discNo ?? 0) || (a.trackNo ?? 0) - (b.trackNo ?? 0) || a.file.localeCompare(b.file)
         );
@@ -194,6 +215,7 @@ export class LibraryService {
         this.artists = [...artistNames].map(([id, name]) => ({ id, name, albumCount: albumsByArtist.get(id)!.length })).sort(byName);
         this.artistById = new Map(this.artists.map((artist) => [artist.id, artist]));
         this.scannedAt = scannedAt;
+        return changed;
     }
 }
 

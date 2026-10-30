@@ -59,3 +59,22 @@ An unknown artist or album gives `NOT_FOUND`. The cover picture of an album is s
 The UI (`aud-ui/src/features/library`) has three views under the Library tab: the artists with a filter and a
 rescan button, the albums of an artist as a cover grid, and the tracks of an album (grouped by disc when there
 is more than one). While a scan runs, the artists view asks again every 3 seconds.
+
+## What the UI keeps, and what the server tells it
+
+The UI keeps the latest answer of every list it has asked for (artists, the albums of an artist, the tracks of an
+album, the playlists), in a Redux slice (`requestCache`) by the question. A view that is opened again shows that answer at once,
+without a spinner, and asks again in the background to bring it up to date; if asking fails what is shown stays.
+A playlist command (rename, add, remove, move, delete) puts its answer in the cache, so the views of it do not have to ask.
+
+The server tells the browsers when what they keep is out of date. A browser asks for these messages once, when it
+connects (`content_subscribe`), and gets:
+
+| Message | When | What the UI does |
+|---------|------|------------------|
+| `library_changed` | a scan found another library: a file added, removed or changed, or another cover picture. Not a scan that finds the same files, and not a restart that loads the cache. | asks again for the lists of the library that are open |
+| `playlists_changed` | a playlist was made, changed or deleted (also by this browser) | asks again for the playlists that are open |
+
+Only the views that are open ask; the other cached answers are asked for again when they are opened. While a scan is running the artists
+view still asks every 3 seconds, to show how many tracks have been found so far.
+

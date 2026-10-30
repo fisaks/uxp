@@ -1,6 +1,5 @@
 import { PlayerState } from "@aud/common";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import type { RootState } from "../../app/store";
 
 type PlayerSliceState = {
     /** Missing until the server has sent the first state. */
@@ -57,8 +56,4 @@ export const {
     playerNoticeShown,
     playerNoticeDismissed,
 } = playerSlice.actions;
-export const selectPlayerState = (state: RootState) => state.player.state;
-export const selectPlayerReceivedAt = (state: RootState) => state.player.receivedAt;
-export const selectPlayerError = (state: RootState) => state.player.error;
-export const selectPlayerNotice = (state: RootState) => state.player.notice;
 export default playerSlice.reducer;

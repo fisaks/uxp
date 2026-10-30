@@ -23,7 +23,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useAppSelector } from "../../hooks";
 import { formatDuration } from "../library/libraryFormat";
 import { LibraryBreadcrumbs } from "../library/LibraryBreadcrumbs";
-import { selectPlayerState } from "../player/playerSlice";
+import { selectCurrentTrackId } from "../player/playerSelectors";
 import { usePlayerActions } from "../player/usePlayerActions";
 import { SortableList, uniqueKeys } from "../shared/SortableList";
 import { useRequest } from "../shared/useRequest";
@@ -39,8 +39,7 @@ export const PlaylistView: React.FC = () => {
     const { data: playlist, error, setData } = useRequest("playlist_get", { id });
     const send = usePlaylistCommand();
     const { playTracks, shuffleTracks, enqueue } = usePlayerActions();
-    const player = useAppSelector(selectPlayerState);
-    const playingId = player?.currentIndex !== undefined ? player.queue[player.currentIndex]?.id : undefined;
+    const playingId = useAppSelector(selectCurrentTrackId);
     const [renaming, setRenaming] = useState(false);
     const [deleting, setDeleting] = useState(false);
 

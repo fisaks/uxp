@@ -1,9 +1,10 @@
 import { Alert, Box, CircularProgress, List, ListSubheader, Stack, Typography } from "@mui/material";
 import { LibraryTrack } from "@aud/common";
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useAppSelector } from "../../hooks";
-import { selectPlayerState } from "../player/playerSlice";
+import { selectCurrentTrackId } from "../player/playerSelectors";
+import { selectMostRecentPlaylist } from "../playlist/playlistSelectors";
 import { usePlayerActions } from "../player/usePlayerActions";
 import { AddToPlaylistDialog } from "../playlist/AddToPlaylistDialog";
 import { usePlaylistCommand } from "../playlist/usePlaylistCommand";
@@ -25,15 +26,14 @@ const groupByDisc = (tracks: LibraryTrack[]): { disc?: number; tracks: LibraryTr
 export const TracksView: React.FC = () => {
     const { albumId = "" } = useParams();
     const { data, error } = useRequest("library_get_tracks", { albumId });
-    const { data: playlists, reload: reloadPlaylists } = useRequest("playlist_list", {});
+    useRequest("playlist_list", {});
     const { playTracks, enqueue, playNext, playNow, hadQueue, notify } = usePlayerActions();
     const sendPlaylist = usePlaylistCommand();
-    const player = useAppSelector(selectPlayerState);
     // The tracks that are being put in a playlist, while the dialog for it is open.
     const [playlistTrackIds, setPlaylistTrackIds] = useState<string[] | undefined>(undefined);
-    const playingId = player?.currentIndex !== undefined ? player.queue[player.currentIndex]?.id : undefined;
+    const playingId = useAppSelector(selectCurrentTrackId);
     // Where tracks most likely go: the playlist that was changed last.
-    const lastPlaylist = useMemo(() => [...(playlists ?? [])].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0], [playlists]);
+    const lastPlaylist = useAppSelector(selectMostRecentPlaylist);
 
     if (error) return <Alert severity="error">{error}</Alert>;
     if (!data) return <CircularProgress size={24} />;
@@ -45,7 +45,6 @@ export const TracksView: React.FC = () => {
     const addToLastPlaylist = async (track: LibraryTrack) => {
         if (lastPlaylist && (await sendPlaylist("playlist_add_tracks", { id: lastPlaylist.id, trackIds: [track.id] }))) {
             notify(`Added "${track.title}" to "${lastPlaylist.name}"`);
-            void reloadPlaylists();
         }
     };
 
@@ -98,14 +97,7 @@ export const TracksView: React.FC = () => {
                     ))}
                 </List>
             ))}
-            <AddToPlaylistDialog
-                trackIds={playlistTrackIds}
-                title="Add to a playlist"
-                onClose={() => {
-                    setPlaylistTrackIds(undefined);
-                    void reloadPlaylists();
-                }}
-            />
+            <AddToPlaylistDialog trackIds={playlistTrackIds} title="Add to a playlist" onClose={() => setPlaylistTrackIds(undefined)} />
         </>
     );
 };

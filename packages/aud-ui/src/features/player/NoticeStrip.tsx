@@ -2,7 +2,8 @@ import CloseIcon from "@mui/icons-material/Close";
 import { Alert, Button, IconButton } from "@mui/material";
 import React, { useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "../../hooks";
-import { playerErrorDismissed, playerNoticeDismissed, selectPlayerError, selectPlayerNotice } from "./playerSlice";
+import { selectPlayerError, selectPlayerNotice } from "./playerSelectors";
+import { playerErrorDismissed, playerNoticeDismissed } from "./playerSlice";
 import { usePlayerActions } from "./usePlayerActions";
 
 const NOTICE_MS = 3500;

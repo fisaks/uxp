@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useAppDispatch, useAppSelector } from "../../hooks";
-import { playerNoticeShown, selectPlayerState } from "./playerSlice";
+import { selectHasQueue } from "./playerSelectors";
+import { playerNoticeShown } from "./playerSlice";
 import { usePlayerCommand } from "./usePlayerCommand";
 
 const countOf = (count: number) => `${count} ${count === 1 ? "track" : "tracks"}`;
@@ -12,7 +13,7 @@ const countOf = (count: number) => `${count} ${count === 1 ? "track" : "tracks"}
 export const usePlayerActions = () => {
     const send = usePlayerCommand();
     const dispatch = useAppDispatch();
-    const hadQueue = (useAppSelector(selectPlayerState)?.queue.length ?? 0) > 0;
+    const hadQueue = useAppSelector(selectHasQueue);
 
     return useMemo(() => {
         const notify = (text: string, undo = false) => dispatch(playerNoticeShown({ text, undo }));

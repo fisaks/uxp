@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAppSelector } from "../../hooks";
-import { selectPlayerReceivedAt, selectPlayerState } from "./playerSlice";
+import { selectPlayerReceivedAt, selectPlayerState } from "./playerSelectors";
 
 const TICK_MS = 500;
 

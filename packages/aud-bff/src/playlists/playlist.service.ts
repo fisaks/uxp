@@ -2,6 +2,7 @@ import { MAX_PLAYLIST_NAME_LENGTH, Playlist, PlaylistEntry, PlaylistSummary, Que
 import { AppErrorV2, AppLogger } from "@uxp/bff-common";
 import { ErrorCodes } from "@uxp/common";
 import { randomUUID } from "crypto";
+import { EventEmitter } from "events";
 import path from "path";
 import { libraryConfig } from "../library/library.config";
 import { libraryService } from "../library/library.service";
@@ -36,14 +37,21 @@ const isStoredPlaylist = (value: unknown): value is StoredPlaylist => {
  * The playlists of the household, kept in memory and in a JSON file in the data folder. Every change is written at once,
  * one after the other. Without a data folder they are only kept until the next restart.
  */
-export class PlaylistService {
+export type PlaylistEventMap = {
+    /** A playlist has been made, changed or deleted. */
+    changed: [];
+};
+
+export class PlaylistService extends EventEmitter<PlaylistEventMap> {
     private playlists: StoredPlaylist[] = [];
     private saving: Promise<void> = Promise.resolve();
 
     constructor(
         private readonly library: TrackSource,
         private readonly dataDir?: string
-    ) {}
+    ) {
+        super();
+    }
 
     async load(): Promise<void> {
         if (!this.dataDir) {
@@ -75,6 +83,7 @@ export class PlaylistService {
         };
         this.playlists.push(playlist);
         await this.save();
+        this.emit("changed");
         return this.toPlaylist(playlist);
     }
 
@@ -88,6 +97,7 @@ export class PlaylistService {
         this.require(id);
         this.playlists = this.playlists.filter((playlist) => playlist.id !== id);
         await this.save();
+        this.emit("changed");
         return this.list();
     }
 
@@ -115,6 +125,7 @@ export class PlaylistService {
     private async changed(playlist: StoredPlaylist): Promise<Playlist> {
         playlist.updatedAt = new Date().toISOString();
         await this.save();
+        this.emit("changed");
         return this.toPlaylist(playlist);
     }
 

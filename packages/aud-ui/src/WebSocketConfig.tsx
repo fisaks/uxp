@@ -13,6 +13,7 @@ import { AudioAppErrorHandler, AudioAppWebSocketResponseListener } from "./app/A
 import { amplifierStateReceived } from "./features/amplifier/amplifierSlice";
 import { connectionLost, connectionReady } from "./features/connection/connectionSlice";
 import { playerPositionReceived, playerStateReceived } from "./features/player/playerSlice";
+import { contentChanged } from "./features/shared/requestCacheSlice";
 import { useAppDispatch } from "./hooks";
 
 type WebSocketConfigProps = {
@@ -39,6 +40,12 @@ export const WebSocketConfig: React.FC<WebSocketConfigProps> = ({ getWebSocket, 
             player_subscribe: (message) => {
                 if (message.payload) dispatch(playerStateReceived(message.payload));
             },
+            library_changed: () => {
+                dispatch(contentChanged("library"));
+            },
+            playlists_changed: () => {
+                dispatch(contentChanged("playlists"));
+            },
             player_state: (message) => {
                 if (message.payload) dispatch(playerStateReceived(message.payload));
             },
@@ -61,6 +68,7 @@ export const WebSocketConfig: React.FC<WebSocketConfigProps> = ({ getWebSocket, 
             dispatch(connectionReady());
             ws.sendMessage({ action: "amplifier_subscribe", payload: {} });
             ws.sendMessage({ action: "player_subscribe", payload: {} });
+            ws.sendMessage({ action: "content_subscribe", payload: {} });
         }, 500);
     }, [ws, dispatch]);
 
