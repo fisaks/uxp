@@ -1,3 +1,4 @@
+import LibraryAddIcon from "@mui/icons-material/LibraryAdd";
 import PlaylistAddIcon from "@mui/icons-material/PlaylistAdd";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import ShuffleIcon from "@mui/icons-material/Shuffle";
@@ -6,7 +7,6 @@ import {
     Box,
     Button,
     CircularProgress,
-    IconButton,
     List,
     ListItem,
     ListItemButton,
@@ -16,7 +16,7 @@ import {
     Typography,
 } from "@mui/material";
 import { LibraryTrack } from "@aud/common";
-import React from "react";
+import React, { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useAppSelector } from "../../hooks";
 import { selectPlayerState } from "../player/playerSlice";
@@ -24,7 +24,9 @@ import { SendPlayerCommand, usePlayerCommand } from "../player/usePlayerCommand"
 import { AlbumCover } from "./AlbumCover";
 import { formatDuration } from "./libraryFormat";
 import { LibraryBreadcrumbs } from "./LibraryBreadcrumbs";
-import { useLibraryRequest } from "./useLibraryRequest";
+import { AddToPlaylistDialog } from "../playlist/AddToPlaylistDialog";
+import { useRequest } from "../shared/useRequest";
+import { TrackMenu } from "./TrackMenu";
 
 const COVER_SIZE = 120;
 
@@ -37,9 +39,10 @@ const groupByDisc = (tracks: LibraryTrack[]): { disc?: number; tracks: LibraryTr
 type AlbumActionsProps = {
     trackIds: string[];
     send: SendPlayerCommand;
+    onAddToPlaylist: () => void;
 };
 
-const AlbumActions: React.FC<AlbumActionsProps> = ({ trackIds, send }) => (
+const AlbumActions: React.FC<AlbumActionsProps> = ({ trackIds, send, onAddToPlaylist }) => (
     <Stack direction="row" spacing={1} sx={{ mt: 1.5 }} flexWrap="wrap" useFlexGap>
         <Button variant="contained" startIcon={<PlayArrowIcon />} onClick={() => send("player_play_tracks", { trackIds })}>
             Play
@@ -57,14 +60,19 @@ const AlbumActions: React.FC<AlbumActionsProps> = ({ trackIds, send }) => (
         <Button variant="outlined" startIcon={<PlaylistAddIcon />} onClick={() => send("player_enqueue", { trackIds })}>
             Add to queue
         </Button>
+        <Button variant="outlined" startIcon={<LibraryAddIcon />} onClick={onAddToPlaylist}>
+            Add to playlist
+        </Button>
     </Stack>
 );
 
 export const TracksView: React.FC = () => {
     const { albumId = "" } = useParams();
-    const { data, error } = useLibraryRequest("library_get_tracks", { albumId });
+    const { data, error } = useRequest("library_get_tracks", { albumId });
     const send = usePlayerCommand();
     const player = useAppSelector(selectPlayerState);
+    // The tracks that are being put in a playlist, while the dialog for it is open.
+    const [playlistTrackIds, setPlaylistTrackIds] = useState<string[] | undefined>(undefined);
     const playingId = player?.currentIndex !== undefined ? player.queue[player.currentIndex]?.id : undefined;
 
     if (error) return <Alert severity="error">{error}</Alert>;
@@ -96,7 +104,7 @@ export const TracksView: React.FC = () => {
                             .filter(Boolean)
                             .join(" · ")}
                     </Typography>
-                    <AlbumActions trackIds={trackIds} send={send} />
+                    <AlbumActions trackIds={trackIds} send={send} onAddToPlaylist={() => setPlaylistTrackIds(trackIds)} />
                 </Box>
             </Stack>
             {groupByDisc(tracks).map(({ disc, tracks: discTracks }) => (
@@ -115,13 +123,10 @@ export const TracksView: React.FC = () => {
                                     <Typography color="text.secondary">
                                         {track.durationSec ? formatDuration(track.durationSec) : ""}
                                     </Typography>
-                                    <IconButton
-                                        size="small"
-                                        onClick={() => send("player_enqueue", { trackIds: [track.id] })}
-                                        aria-label="Add to queue"
-                                    >
-                                        <PlaylistAddIcon fontSize="small" />
-                                    </IconButton>
+                                    <TrackMenu
+                                        onAddToQueue={() => send("player_enqueue", { trackIds: [track.id] })}
+                                        onAddToPlaylist={() => setPlaylistTrackIds([track.id])}
+                                    />
                                 </Stack>
                             }
                         >
@@ -145,6 +150,7 @@ export const TracksView: React.FC = () => {
                     ))}
                 </List>
             ))}
+            <AddToPlaylistDialog trackIds={playlistTrackIds} title="Add to a playlist" onClose={() => setPlaylistTrackIds(undefined)} />
         </>
     );
 };

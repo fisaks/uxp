@@ -6,7 +6,8 @@ import { useAppDispatch } from "../../hooks";
 import { playerCommandFailed, playerStateReceived } from "./playerSlice";
 
 export type PlayerCommandAction = Extract<keyof AudioAppActionPayloadRequestMap, `player_${string}`>;
-export type SendPlayerCommand = <A extends PlayerCommandAction>(action: A, payload: AudioAppActionPayloadRequestMap[A]) => Promise<void>;
+/** Answers whether the command was done. */
+export type SendPlayerCommand = <A extends PlayerCommandAction>(action: A, payload: AudioAppActionPayloadRequestMap[A]) => Promise<boolean>;
 
 /** Sends a command to the player. The answer is the new state of the player, and a failure is shown by the error snackbar. */
 export const usePlayerCommand = (): SendPlayerCommand => {
@@ -18,12 +19,14 @@ export const usePlayerCommand = (): SendPlayerCommand => {
             try {
                 const response = await sendMessageAsync(action, payload);
                 dispatch(playerStateReceived(response.payload as PlayerState));
+                return true;
             } catch (error) {
                 dispatch(
                     playerCommandFailed(
                         error instanceof WebSocketTimeoutError ? "The player did not answer in time." : "The player could not do that."
                     )
                 );
+                return false;
             }
         },
         [sendMessageAsync, dispatch]

@@ -16,14 +16,14 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAudioWebSocket } from "../../app/AudioBrowserWebSocketManager";
 import { LibraryBreadcrumbs } from "./LibraryBreadcrumbs";
-import { useLibraryRequest } from "./useLibraryRequest";
+import { useRequest } from "../shared/useRequest";
 
 const SCAN_POLL_MS = 3000;
 
 export const ArtistsView: React.FC = () => {
     const navigate = useNavigate();
     const { sendMessageAsync } = useAudioWebSocket();
-    const { data, error, reload } = useLibraryRequest("library_get_artists", {});
+    const { data, error, reload } = useRequest("library_get_artists", {});
     const [filter, setFilter] = useState("");
     const scanning = data?.status.scanning;
 

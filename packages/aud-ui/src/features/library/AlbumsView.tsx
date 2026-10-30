@@ -3,12 +3,12 @@ import React from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AlbumCover } from "./AlbumCover";
 import { LibraryBreadcrumbs } from "./LibraryBreadcrumbs";
-import { useLibraryRequest } from "./useLibraryRequest";
+import { useRequest } from "../shared/useRequest";
 
 export const AlbumsView: React.FC = () => {
     const navigate = useNavigate();
     const { artistId = "" } = useParams();
-    const { data, error } = useLibraryRequest("library_get_albums", { artistId });
+    const { data, error } = useRequest("library_get_albums", { artistId });
 
     if (error) return <Alert severity="error">{error}</Alert>;
     if (!data) return <CircularProgress size={24} />;

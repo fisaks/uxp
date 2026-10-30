@@ -5,13 +5,23 @@ import { useAudioWebSocket } from "../../app/AudioBrowserWebSocketManager";
 import { useAppSelector } from "../../hooks";
 import { selectConnected } from "../connection/connectionSlice";
 
-export type LibraryAction = Extract<keyof AudioAppActionPayloadRequestMap, `library_${string}`>;
+/** The questions that are asked once and answered with a list or an item (the commands are sent by the player and playlist hooks). */
+export type RequestAction = "library_get_artists" | "library_get_albums" | "library_get_tracks" | "playlist_list" | "playlist_get";
+
+type RequestOptions = {
+    /** False to wait with asking, for example until a dialog is open. */
+    enabled?: boolean;
+};
 
 /**
- * Asks the server for a library list once the connection is ready, and again after a reconnect.
- * `reload` asks again, for example to follow a scan that is running.
+ * Asks the server once the connection is ready, and again after a reconnect. `reload` asks again, for example to follow
+ * a scan that is running, and `setData` replaces the answer with a newer one that a command has returned.
  */
-export const useLibraryRequest = <A extends LibraryAction>(action: A, payload: AudioAppActionPayloadRequestMap[A]) => {
+export const useRequest = <A extends RequestAction>(
+    action: A,
+    payload: AudioAppActionPayloadRequestMap[A],
+    { enabled = true }: RequestOptions = {}
+) => {
     const { sendMessageAsync } = useAudioWebSocket();
     const connected = useAppSelector(selectConnected);
     const [data, setData] = useState<AudioAppActionPayloadResponseMap[A] | undefined>(undefined);
@@ -24,15 +34,13 @@ export const useLibraryRequest = <A extends LibraryAction>(action: A, payload: A
             setData(response.payload as AudioAppActionPayloadResponseMap[A]);
             setError(undefined);
         } catch (e) {
-            setError(
-                e instanceof WebSocketError && e.error.code === "NOT_FOUND" ? "Not found in the library." : "The library could not be read."
-            );
+            setError(e instanceof WebSocketError && e.error.code === "NOT_FOUND" ? "Not found." : "It could not be read.");
         }
     }, [sendMessageAsync, action, payloadKey]);
 
     useEffect(() => {
-        if (connected) void reload();
-    }, [connected, reload]);
+        if (connected && enabled) void reload();
+    }, [connected, enabled, reload]);
 
-    return { data, error, reload };
+    return { data, error, reload, setData };
 };

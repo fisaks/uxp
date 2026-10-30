@@ -44,3 +44,17 @@ playlist or a bad name `VALIDATION`.
 
 There is no action for playing a playlist: the UI has its tracks and uses `player_play_tracks` (with `startIndex`)
 or `player_enqueue`, with the ids of the entries that have a `track`.
+
+## What the UI does
+
+- **Playlists tab:** the playlists by name (with the number of tracks and the length), and "New playlist". A playlist has
+  Play, Shuffle, Add to queue (of the tracks that are in the library), Rename and Delete (with a question first). Its
+  tracks are moved by dragging them by their handle, removed with the cross, and a click on a track plays the playlist from
+  it. A track that is missing from the library is shown with its saved name and "Missing from the library".
+- **Putting tracks in a playlist:** an album has "Add to playlist", a track has it in its "more" menu, and the Queue tab has
+  "Save as playlist". They all open one dialog: a new playlist with a name, or one of the playlists that are there. The
+  dialog says what was done afterwards.
+- **Dragging** is done with `@dnd-kit`, as in the UHN app. Only the handle starts a drag, so the rest of a row scrolls on a
+  phone, and the keyboard can move a row too. The list is moved at once and the move is then sent to the server; if
+  the server refuses it the list goes back. The Queue tab is moved the same way (`player_move`, see `player.md`).
+
