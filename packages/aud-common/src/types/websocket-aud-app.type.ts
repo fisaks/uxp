@@ -34,6 +34,8 @@ export type AudioAppActionPayloadRequestMap = {
     /** Plays the track at this place of the queue. */
     player_play_index: { index: number };
     player_remove: { index: number };
+    /** Moves the track at `from` of the queue to `to`, the others move over. What is playing keeps playing. */
+    player_move: { from: number; to: number };
     player_clear: Record<string, never>;
     player_pause: Record<string, never>;
     player_resume: Record<string, never>;
@@ -89,6 +91,7 @@ export type AudioAppActionPayloadResponseMap = {
     player_enqueue: PlayerState;
     player_play_index: PlayerState;
     player_remove: PlayerState;
+    player_move: PlayerState;
     player_clear: PlayerState;
     player_pause: PlayerState;
     player_resume: PlayerState;

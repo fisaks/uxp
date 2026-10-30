@@ -2,6 +2,7 @@ import {
     AudioAppRequestMessage,
     PlayerEnqueueSchema,
     PlayerIndexSchema,
+    PlayerMoveSchema,
     PlayerPlayTracksSchema,
     PlayerSeekSchema,
     PlayerSetRepeatSchema,
@@ -34,6 +35,11 @@ export class PlayerHandler {
     @WebSocketAction("player_remove", { authenticate: true, schema: PlayerIndexSchema })
     public remove(_wsDetails: WebSocketDetails, message: AudioAppRequestMessage<"player_remove">) {
         return playerService.remove(message.payload.index);
+    }
+
+    @WebSocketAction("player_move", { authenticate: true, schema: PlayerMoveSchema })
+    public move(_wsDetails: WebSocketDetails, message: AudioAppRequestMessage<"player_move">) {
+        return playerService.move(message.payload.from, message.payload.to);
     }
 
     @WebSocketAction("player_clear", { authenticate: true })

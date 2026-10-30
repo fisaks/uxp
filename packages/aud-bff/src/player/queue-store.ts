@@ -3,16 +3,16 @@ import { AppLogger } from "@uxp/bff-common";
 import path from "path";
 import { readJsonFile, writeJsonFile } from "../storage/json-file";
 
-/** What is kept of the player between restarts: the queue and how it is played. Not the position, a restart starts the track again. */
+/** What is kept of the player between restarts: the queue in the order it plays, and how it is played. Not the position, a restart starts the track again. */
 export type PersistedQueue = {
     /** The tracks in the order they were added. The id is what counts, the name ("Artist - Title") is for whoever reads the file. */
     tracks: { id: string; name: string }[];
-    /** The play order, indexes into `tracks`. */
-    order: number[];
-    /** Where in `order` the current track is, -1 when the queue is empty. */
-    orderPos: number;
+    /** The place in `tracks` of the current track, -1 when the queue is empty. */
+    currentIndex: number;
     shuffle: boolean;
     repeat: RepeatMode;
+    /** Only while shuffle is on: the order the tracks had before, as places in `tracks`. */
+    original?: number[];
 };
 
 const FILE = "queue.json";
@@ -24,8 +24,8 @@ const isPersistedQueue = (value: unknown): value is PersistedQueue => {
     return (
         Array.isArray(queue?.tracks) &&
         queue.tracks.every((track) => typeof track?.id === "string") &&
-        Array.isArray(queue?.order) &&
-        typeof queue?.orderPos === "number" &&
+        typeof queue?.currentIndex === "number" &&
+        (queue.original === undefined || (Array.isArray(queue.original) && queue.original.every((place) => typeof place === "number"))) &&
         typeof queue?.shuffle === "boolean" &&
         ["off", "all", "one"].includes(queue?.repeat ?? "")
     );

@@ -1,12 +1,9 @@
-/** The play order of a queue of `length` tracks when shuffle is off: the order they were added in. */
-export const sequentialOrder = (length: number): number[] => Array.from({ length }, (_, index) => index);
-
 /**
- * A random play order of a queue of `length` tracks in which every track comes once and `first` comes first, so turning
- * shuffle on does not skip away from the track that is playing.
+ * A random order of `length` places in which every place comes once and `first` comes first, so mixing a queue does not
+ * move away from the track that is playing. The result says which place of the queue goes where.
  */
 export const shuffledOrder = (length: number, first?: number, random: () => number = Math.random): number[] => {
-    const rest = sequentialOrder(length).filter((index) => index !== first);
+    const rest = Array.from({ length }, (_, index) => index).filter((index) => index !== first);
     for (let i = rest.length - 1; i > 0; i--) {
         const j = Math.floor(random() * (i + 1));
         [rest[i], rest[j]] = [rest[j], rest[i]];

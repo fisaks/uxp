@@ -16,7 +16,7 @@ export type QueueTrack = LibraryTrack & { hasCover: boolean };
 
 export type PlayerState = {
     status: PlayerStatus;
-    /** The tracks in the order they were added. The play order differs when shuffle is on. */
+    /** The tracks in the order they are played, which is what is shown: shuffle mixes it and turning shuffle off brings the earlier order back. */
     queue: QueueTrack[];
     /** The track in `queue` that is playing or paused, or that plays next when stopped. Missing when the queue is empty. */
     currentIndex?: number;

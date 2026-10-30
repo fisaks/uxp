@@ -11,7 +11,7 @@ import { MpvPlayerEngine } from "./mpv-engine";
 import { PlayerEngine } from "./player-engine";
 import { PlayerConfig, playerConfig } from "./player.config";
 import { PersistedQueue, QueueStore } from "./queue-store";
-import { sequentialOrder, shuffledOrder } from "./player-order";
+import { shuffledOrder } from "./player-order";
 
 const PLAYER_TOPIC = "player";
 // Previous plays the current track again when it has been playing for longer than this.
@@ -32,15 +32,17 @@ type TrackSource = {
 type QueueStorage = { load(): Promise<PersistedQueue | undefined>; save(queue: PersistedQueue): void };
 
 /**
- * The queue and what is playing, shared by every client. The queue keeps the tracks in the order they were added, and
- * `order` is the order they are played in: the same unless shuffle is on, when it is a random order that is made once
- * and then followed forwards and backwards. The service does not make sound itself, an engine does.
+ * The queue and what is playing, shared by every client. The queue is the order the tracks are played in, and what is
+ * shown is what plays: Next is the track after the current one, and dragging a track changes when it plays. Turning
+ * shuffle on mixes the queue (the current track stays first), and turning it off brings back the order it had, kept in
+ * `unshuffled` while shuffle is on. The service does not make sound itself, an engine does.
  */
 export class PlayerService {
     private queue: QueueTrack[] = [];
-    private order: number[] = [];
-    /** Where in `order` the current track is, -1 while the queue is empty. */
-    private orderPos = -1;
+    /** The place in the queue of the current track, -1 while the queue is empty. */
+    private currentIndex = -1;
+    /** The queue as it was before shuffle was turned on (the same objects), and nothing while shuffle is off. */
+    private unshuffled: QueueTrack[] = [];
     private status: PlayerStatus = "stopped";
     private shuffle = false;
     private repeat: RepeatMode = "off";
@@ -86,13 +88,16 @@ export class PlayerService {
             newIndex.set(oldIndex, newIndex.size);
             return [track];
         });
-        this.order = saved.order.flatMap((oldIndex) => (newIndex.has(oldIndex) ? [newIndex.get(oldIndex) as number] : []));
-        const savedCurrent = saved.order[saved.orderPos];
-        const kept = this.order.indexOf(newIndex.get(savedCurrent) ?? -1);
-        // A current track that is gone gives way to the one that came after it.
-        this.orderPos = this.queue.length === 0 ? -1 : kept !== -1 ? kept : Math.min(Math.max(saved.orderPos, 0), this.order.length - 1);
+        // A current track that is gone gives way to the track that came after it.
+        const nextKept = [...newIndex].find(([oldIndex]) => oldIndex >= saved.currentIndex)?.[1];
+        this.currentIndex = this.queue.length === 0 ? -1 : (nextKept ?? this.queue.length - 1);
         this.shuffle = saved.shuffle;
         this.repeat = saved.repeat;
+        this.unshuffled = !saved.shuffle
+            ? []
+            : (saved.original?.flatMap((oldIndex) => (newIndex.has(oldIndex) ? [this.queue[newIndex.get(oldIndex) as number]] : [])) ?? [
+                  ...this.queue,
+              ]);
         this.persist();
         AppLogger.info(undefined, { message: `Restored the queue: ${this.queue.length} tracks` });
     }
@@ -106,7 +111,7 @@ export class PlayerService {
         return {
             status: this.status,
             queue: this.queue,
-            currentIndex: this.orderPos >= 0 ? this.order[this.orderPos] : undefined,
+            currentIndex: this.currentIndex >= 0 ? this.currentIndex : undefined,
             positionSec: this.currentPosition(),
             shuffle: this.shuffle,
             repeat: this.repeat,
@@ -116,58 +121,78 @@ export class PlayerService {
     /** Replaces the queue with the tracks and plays the one at `startIndex`. Tracks that are not in the library are left out. */
     async playTracks(trackIds: string[], startIndex = 0): Promise<PlayerState> {
         const startId = trackIds[startIndex] ?? trackIds[0];
-        this.queue = this.resolve(trackIds);
+        const tracks = this.resolve(trackIds);
+        if (tracks.length === 0) {
+            return this.stopAll();
+        }
         const start = Math.max(
             0,
-            this.queue.findIndex((track) => track.id === startId)
+            tracks.findIndex((track) => track.id === startId)
         );
-        this.order = this.shuffle ? shuffledOrder(this.queue.length, start) : sequentialOrder(this.queue.length);
-        this.orderPos = this.queue.length === 0 ? -1 : this.shuffle ? 0 : start;
-        if (this.queue.length === 0) {
-            return this.stopAll();
+        if (this.shuffle) {
+            this.unshuffled = tracks;
+            this.queue = shuffledOrder(tracks.length, start).map((index) => tracks[index]);
+            this.currentIndex = 0;
+        } else {
+            this.unshuffled = [];
+            this.queue = tracks;
+            this.currentIndex = start;
         }
         return this.startByUser("start");
     }
 
     enqueue(trackIds: string[]): PlayerState {
         const added = this.resolve(trackIds);
-        const firstNew = this.queue.length;
-        this.queue = [...this.queue, ...added];
-        const newOrder = sequentialOrder(added.length).map((index) => firstNew + index);
-        this.order = [...this.order, ...(this.shuffle ? shuffledOrder(added.length).map((index) => firstNew + index) : newOrder)];
-        if (this.orderPos === -1 && this.queue.length > 0) {
-            this.orderPos = 0;
+        if (this.shuffle) {
+            // What is added is mixed among itself and comes last, and it is where it was added in the order of before the shuffle.
+            this.unshuffled.push(...added);
+            this.queue.push(...shuffledOrder(added.length).map((index) => added[index]));
+        } else {
+            this.queue.push(...added);
+        }
+        if (this.currentIndex === -1 && this.queue.length > 0) {
+            this.currentIndex = 0;
         }
         return this.publish();
     }
 
     async playIndex(index: number): Promise<PlayerState> {
-        const orderPos = this.order.indexOf(this.requireIndex(index));
-        this.orderPos = orderPos;
+        this.currentIndex = this.requireIndex(index);
         return this.startByUser("start");
     }
 
     async remove(index: number): Promise<PlayerState> {
         this.requireIndex(index);
-        const removedPos = this.order.indexOf(index);
-        this.queue = this.queue.filter((_, i) => i !== index);
-        this.order = this.order.filter((i) => i !== index).map((i) => (i > index ? i - 1 : i));
+        const [removed] = this.queue.splice(index, 1);
+        this.unshuffled = this.unshuffled.filter((track) => track !== removed);
         if (this.queue.length === 0) {
             return this.stopAll();
         }
-        if (removedPos < this.orderPos) {
-            this.orderPos--;
+        if (index < this.currentIndex) {
+            this.currentIndex--;
             return this.publish();
         }
-        if (removedPos > this.orderPos) {
+        if (index > this.currentIndex) {
             return this.publish();
         }
         // The current track was removed: the track after it is now at its place.
-        if (this.orderPos >= this.order.length) {
-            this.orderPos = 0;
+        if (this.currentIndex >= this.queue.length) {
+            this.currentIndex = 0;
             return this.stopPlaying();
         }
         return this.status === "stopped" ? this.publish() : this.startCurrent();
+    }
+
+    /** What is playing keeps playing, and what comes after it is what the queue shows after it. */
+    move(from: number, to: number): PlayerState {
+        this.requireIndex(from);
+        this.requireIndex(to);
+        if (from !== to) {
+            const current = this.queue[this.currentIndex];
+            this.queue.splice(to, 0, ...this.queue.splice(from, 1));
+            this.currentIndex = this.queue.indexOf(current);
+        }
+        return this.publish();
     }
 
     async clear(): Promise<PlayerState> {
@@ -196,7 +221,7 @@ export class PlayerService {
         if (this.status === "paused") {
             return this.startByUser("resume");
         }
-        if (this.status === "stopped" && this.orderPos >= 0) {
+        if (this.status === "stopped" && this.currentIndex >= 0) {
             return this.startByUser("start");
         }
         return this.getState();
@@ -210,20 +235,20 @@ export class PlayerService {
         if (this.queue.length === 0) {
             return this.getState();
         }
-        const startOfQueue = this.orderPos === 0;
+        const startOfQueue = this.currentIndex === 0;
         if (this.status !== "stopped" && this.currentPosition() > RESTART_AFTER_SEC) {
             return this.seek(0);
         }
         if (startOfQueue && this.repeat !== "all") {
             return this.status === "stopped" ? this.getState() : this.seek(0);
         }
-        this.orderPos = startOfQueue ? this.order.length - 1 : this.orderPos - 1;
+        this.currentIndex = startOfQueue ? this.queue.length - 1 : this.currentIndex - 1;
         return this.startCurrent();
     }
 
     seek(positionSec: number): PlayerState {
         if (this.status === "playing" || this.status === "paused") {
-            const duration = this.queue[this.order[this.orderPos]]?.durationSec;
+            const duration = this.queue[this.currentIndex]?.durationSec;
             const position = Math.max(0, duration ? Math.min(positionSec, duration) : positionSec);
             this.engine.seek(position);
             this.setPosition(position);
@@ -234,9 +259,17 @@ export class PlayerService {
     setShuffle(on: boolean): PlayerState {
         if (on !== this.shuffle) {
             this.shuffle = on;
-            const current = this.orderPos >= 0 ? this.order[this.orderPos] : undefined;
-            this.order = on ? shuffledOrder(this.queue.length, current) : sequentialOrder(this.queue.length);
-            this.orderPos = current === undefined ? -1 : on ? 0 : current;
+            if (on) {
+                this.unshuffled = [...this.queue];
+                const current = this.currentIndex >= 0 ? this.currentIndex : undefined;
+                this.queue = shuffledOrder(this.queue.length, current).map((index) => this.unshuffled[index]);
+                this.currentIndex = current === undefined ? -1 : 0;
+            } else {
+                const current = this.queue[this.currentIndex];
+                this.queue = this.unshuffled;
+                this.unshuffled = [];
+                this.currentIndex = this.queue.indexOf(current);
+            }
         }
         return this.publish();
     }
@@ -254,16 +287,16 @@ export class PlayerService {
         if (ended && this.repeat === "one") {
             return this.startCurrent();
         }
-        if (this.orderPos + 1 < this.order.length) {
-            this.orderPos++;
+        if (this.currentIndex + 1 < this.queue.length) {
+            this.currentIndex++;
             return this.startCurrent();
         }
         if (this.repeat === "all") {
-            this.orderPos = 0;
+            this.currentIndex = 0;
             return this.startCurrent();
         }
         // The end of the queue: stop at its start, ready to be played again.
-        this.orderPos = this.order.length > 0 ? 0 : -1;
+        this.currentIndex = this.queue.length > 0 ? 0 : -1;
         return this.stopPlaying();
     }
 
@@ -300,7 +333,7 @@ export class PlayerService {
     }
 
     private async startCurrent(): Promise<PlayerState> {
-        const track = this.queue[this.order[this.orderPos]];
+        const track = this.queue[this.currentIndex];
         const file = track && this.tracks.getTrackFile(track.id);
         this.startToken++;
         this.status = "starting";
@@ -380,8 +413,8 @@ export class PlayerService {
 
     private stopAll(): PlayerState {
         this.queue = [];
-        this.order = [];
-        this.orderPos = -1;
+        this.unshuffled = [];
+        this.currentIndex = -1;
         return this.stopPlaying();
     }
 
@@ -400,12 +433,14 @@ export class PlayerService {
     }
 
     private persist() {
+        const placeOf = new Map(this.queue.map((track, index) => [track, index]));
         this.storage.save({
             tracks: this.queue.map((track) => ({ id: track.id, name: `${track.artist} - ${track.title}` })),
-            order: this.order,
-            orderPos: this.orderPos,
+            currentIndex: this.currentIndex,
             shuffle: this.shuffle,
             repeat: this.repeat,
+            // While shuffle is on: the places the tracks had before, in that order, to bring it back when shuffle is turned off.
+            ...(this.shuffle ? { original: this.unshuffled.map((track) => placeOf.get(track) as number) } : {}),
         });
     }
 

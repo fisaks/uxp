@@ -20,18 +20,23 @@ of the chosen engine must be installed.
 
 - `PlayerService` (`aud-bff/src/player/player.service.ts`) owns the queue and what is playing. It does not make
   sound itself: an engine does, behind the `PlayerEngine` interface (`MpvPlayerEngine`, `FakePlayerEngine`).
-- The **queue** keeps the tracks in the order they were added. The **play order** is the same, unless shuffle is on:
-  then it is a random order that is made once, starting with the track that is playing, and followed forwards and
-  backwards, so Previous goes back the way you came. Turning shuffle off continues from the current track in the
-  order of the queue.
+- The **queue** is the order the tracks are played in, and what the Queue tab shows is what plays: Next is the track
+  below the current one, Previous the one above, and dragging a track changes when it plays. There is no separate
+  hidden play order.
+- **Shuffle** mixes the queue: the current track stays at the top and the rest is mixed. The queue as it was before is
+  kept, and turning shuffle off brings it back with the current track kept. While shuffle is on, tracks that are added
+  come last (mixed among themselves) and are also added to the kept order, a removed track is removed from both, and
+  what is played (`play_tracks`) is mixed with the chosen track first. Dragging a track in a mixed queue only changes
+  the mixed queue.
 - **Repeat** is `off` (stop after the last track, ready at the start of the queue), `all` (start again) or `one`
   (the same track again). Next and Previous ignore `one`.
 - **Previous** plays the track again when it has played for more than 3 seconds, otherwise the one before.
 - A track whose file is missing or that mpv cannot play is skipped. When every track of the queue fails one after the
   other the player stops.
 - The queue is kept when the backend restarts: it is saved to `queue.json` in `AUD_DATA_DIR` a moment after it
-  changes (the tracks, each as its id and a name "Artist - Title" that is only there to be read, the play order and the place in it, shuffle and repeat, not the position and not every
-  position update). At the next start it is brought back once the library has been read, stopped and ready to
+  changes (the tracks in the order they play, each as its id and a name "Artist - Title" that is only there to be read,
+  the place of the current track, shuffle and repeat, and while shuffle is on the order of before as places in the
+  tracks; not the position and not every position update). At the next start it is brought back once the library has been read, stopped and ready to
   play from the start of the current track. Tracks that have gone from the library are left out, and a current track that
   is gone gives way to the next one. While the library is empty (before the first scan) nothing is restored and the saved
   queue is not overwritten.
@@ -44,7 +49,8 @@ the server does not send a state every second. While playing, the server also se
 bytes) so the moving position cannot drift from the sound, for example when a file is slow to start or a seek lands
 a little off. The commands are the other `player_*` actions: `play_tracks`
 (replaces the queue), `enqueue`, `play_index`, `remove`, `clear`, `pause`, `resume`, `next`, `previous`, `seek`,
-`set_shuffle` and `set_repeat`. Each answers with the new state.
+`set_shuffle` and `set_repeat`. Each answers with the new state. `move` (`from`, `to`) moves a track of the queue,
+the others move over, and what is playing keeps playing (and what follows it is what the queue shows after it).
 
 The now playing bar is at the bottom of every page of the app while the queue has tracks; the Queue tab lists
 the queue. In the Library an album can be played, shuffled or added to the queue, and a track can be played (the

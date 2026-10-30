@@ -50,3 +50,10 @@ export const PlayerSetRepeatSchema = {
     required: ["mode"],
     additionalProperties: false,
 };
+
+export const PlayerMoveSchema = {
+    type: "object",
+    properties: { from: { type: "integer", minimum: 0 }, to: { type: "integer", minimum: 0 } },
+    required: ["from", "to"],
+    additionalProperties: false,
+};
