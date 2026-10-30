@@ -4,6 +4,7 @@ import { PlayerState, RepeatMode } from "./player.type";
 import { HistoryResponse } from "./history.type";
 import { Playlist, PlaylistSummary } from "./playlist.type";
 import {
+    AudiobookAuthorsResponse,
     AudiobookPartsResponse,
     LibraryAlbumsResponse,
     LibraryArtistsResponse,
@@ -117,7 +118,7 @@ export type AudioAppActionPayloadResponseMap = {
     library_get_artists: LibraryArtistsResponse;
     library_get_albums: LibraryAlbumsResponse;
     library_get_tracks: LibraryTracksResponse;
-    audiobook_get_authors: LibraryArtistsResponse;
+    audiobook_get_authors: AudiobookAuthorsResponse;
     audiobook_get_books: LibraryAlbumsResponse;
     audiobook_get_parts: AudiobookPartsResponse;
     audiobook_scan: LibraryStatus;

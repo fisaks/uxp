@@ -1,5 +1,6 @@
 import {
     AudioAppRequestMessage,
+    AudiobookAuthorsResponse,
     AudiobookPartsResponse,
     LibraryAlbumsResponse,
     LibraryArtistsResponse,
@@ -10,6 +11,7 @@ import {
 } from "@aud/common";
 import { AppErrorV2, WebSocketAction, WebSocketDetails } from "@uxp/bff-common";
 import { ErrorCodes } from "@uxp/common";
+import { listeningService } from "../audiobook/listening.service";
 import { LibraryService, audiobookService, libraryService } from "../library/library.service";
 import { bookProgressStore } from "../player/book-progress";
 
@@ -61,8 +63,8 @@ export class LibraryHandler {
     }
 
     @WebSocketAction("audiobook_get_authors", { authenticate: true })
-    public getAuthors(): LibraryArtistsResponse {
-        return getArtists(audiobookService);
+    public getAuthors(): AudiobookAuthorsResponse {
+        return { ...getArtists(audiobookService), continueListening: listeningService.continueListening() };
     }
 
     @WebSocketAction("audiobook_get_books", { authenticate: true, schema: LibraryGetAlbumsSchema })

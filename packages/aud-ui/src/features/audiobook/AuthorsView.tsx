@@ -1,8 +1,23 @@
 import RefreshIcon from "@mui/icons-material/Refresh";
-import { Alert, CircularProgress, IconButton, List, ListItemButton, ListItemText, Stack, Tooltip, Typography } from "@mui/material";
+import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import {
+    Alert,
+    CircularProgress,
+    IconButton,
+    LinearProgress,
+    List,
+    ListItemButton,
+    ListItemIcon,
+    ListItemText,
+    ListSubheader,
+    Stack,
+    Tooltip,
+    Typography,
+} from "@mui/material";
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAudioWebSocket } from "../../app/AudioBrowserWebSocketManager";
+import { usePlayerActions } from "../player/usePlayerActions";
 import { LibraryBreadcrumbs } from "../library/LibraryBreadcrumbs";
 import { useRequest } from "../shared/useRequest";
 
@@ -11,6 +26,7 @@ const SCAN_POLL_MS = 3000;
 export const AuthorsView: React.FC = () => {
     const navigate = useNavigate();
     const { sendMessageAsync } = useAudioWebSocket();
+    const { playBook } = usePlayerActions();
     const { data, error, reload } = useRequest("audiobook_get_authors", {});
     const scanning = data?.status.scanning;
 
@@ -47,6 +63,41 @@ export const AuthorsView: React.FC = () => {
                 </Alert>
             )}
             {!scanning && data.artists.length === 0 && <Typography color="text.secondary">There are no audiobooks.</Typography>}
+            {data.continueListening.length > 0 && (
+                <List
+                    disablePadding
+                    sx={{ mb: 2 }}
+                    subheader={
+                        <ListSubheader disableGutters sx={{ bgcolor: "transparent" }}>
+                            Continue listening
+                        </ListSubheader>
+                    }
+                >
+                    {data.continueListening.map(({ album, artist, listenedSec, totalSec }) => (
+                        <ListItemButton key={album.id} onClick={() => playBook(album.id)}>
+                            <ListItemIcon sx={{ minWidth: 40 }}>
+                                <PlayArrowIcon color="primary" />
+                            </ListItemIcon>
+                            <ListItemText
+                                primary={album.title}
+                                secondary={
+                                    <>
+                                        {artist.name}
+                                        {totalSec > 0 && (
+                                            <LinearProgress
+                                                variant="determinate"
+                                                value={Math.min(100, (100 * listenedSec) / totalSec)}
+                                                sx={{ mt: 0.75 }}
+                                            />
+                                        )}
+                                    </>
+                                }
+                                slotProps={{ secondary: { component: "div" } }}
+                            />
+                        </ListItemButton>
+                    ))}
+                </List>
+            )}
             <List disablePadding>
                 {data.artists.map((author) => (
                     <ListItemButton key={author.id} onClick={() => navigate(`/audiobooks/author/${author.id}`)}>

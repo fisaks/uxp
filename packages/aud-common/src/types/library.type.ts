@@ -66,6 +66,24 @@ export type BookProgress = {
     positionSec: number;
 };
 
+/** A book that was started and not heard to its end, with how far the listening has come. */
+export type ContinueBook = {
+    album: LibraryAlbum;
+    artist: LibraryArtist;
+    progress: BookProgress;
+    /** The time of the book before the place it was left at, and the time of the whole book. */
+    listenedSec: number;
+    totalSec: number;
+};
+
+/** How many books the Audiobooks tab offers to continue: the ones listened to last. */
+export const MAX_CONTINUE_BOOKS = 3;
+
+export type AudiobookAuthorsResponse = LibraryArtistsResponse & {
+    /** The latest listened books first. */
+    continueListening: ContinueBook[];
+};
+
 export type AudiobookPartsResponse = LibraryTracksResponse & {
     /** Where the household was in the book, missing when it has not been listened to or was listened to to its end. */
     progress?: BookProgress;

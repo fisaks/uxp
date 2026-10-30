@@ -92,6 +92,11 @@ so the actions are the library ones with the names `audiobook_get_authors`, `aud
 The parts of a book are put in order by the names of their folders and files, with numbers compared as numbers (`Disc 2`
 before `Disc 10`), not by the track numbers of the tags, because the tags of audiobooks often number every part 1.
 
+`audiobook_get_authors` also answers with `continueListening`: the 3 books listened to last that are not finished (a book heard to its
+end is forgotten), latest first, each with how far the listening has come (`listenedSec` of `totalSec`, counting the parts
+before the one it is in). The Audiobooks tab shows them above the authors as "Continue listening", with a thin progress bar;
+pressing one plays it from where it was left (the queue is replaced, with Undo). A book that has gone from the library is left out.
+
 `audiobook_get_parts` also answers with `progress` (the part and the place in it) when the book has been started and not heard to
 its end. The Audiobooks tab has the authors (with a button that scans again), the books of an author, and a book page with the
 cover or a book icon, **Play** (or **Continue** and **Start over** when there is progress), and the parts, which can be pressed to

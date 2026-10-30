@@ -43,6 +43,13 @@ export class BookProgressStore {
         return stored && { partId: stored.partId, positionSec: stored.positionSec };
     }
 
+    /** The books that were started and not finished, the one listened to last first. */
+    byRecency(): { albumId: string; progress: BookProgress }[] {
+        return [...this.books]
+            .sort(([, a], [, b]) => b.updatedAt.localeCompare(a.updatedAt))
+            .map(([albumId, { partId, positionSec }]) => ({ albumId, progress: { partId, positionSec } }));
+    }
+
     save(albumId: string, name: string, progress: BookProgress) {
         this.books.set(albumId, { ...progress, name, updatedAt: new Date().toISOString() });
         this.write();
