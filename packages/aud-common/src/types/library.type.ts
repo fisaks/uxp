@@ -59,3 +59,14 @@ export type CoverParams = {
     collection: Collection;
     albumId: string;
 };
+
+/** Where the listening to a book was left: the part and the place in it. */
+export type BookProgress = {
+    partId: string;
+    positionSec: number;
+};
+
+export type AudiobookPartsResponse = LibraryTracksResponse & {
+    /** Where the household was in the book, missing when it has not been listened to or was listened to to its end. */
+    progress?: BookProgress;
+};

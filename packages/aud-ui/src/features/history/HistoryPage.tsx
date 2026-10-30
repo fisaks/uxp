@@ -57,7 +57,7 @@ const HistoryPage: React.FC = () => {
             </Stack>
             {empty && (
                 <Typography color="text.secondary">
-                    Nothing has been played yet. A track is in the history when it has been listened to for 30 seconds.
+                    Nothing has been played yet. A track or book is in the history when it has been listened to for 30 seconds.
                 </Typography>
             )}
             {data.queues.length > 0 && (

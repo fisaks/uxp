@@ -91,3 +91,9 @@ so the actions are the library ones with the names `audiobook_get_authors`, `aud
 
 The parts of a book are put in order by the names of their folders and files, with numbers compared as numbers (`Disc 2`
 before `Disc 10`), not by the track numbers of the tags, because the tags of audiobooks often number every part 1.
+
+`audiobook_get_parts` also answers with `progress` (the part and the place in it) when the book has been started and not heard to
+its end. The Audiobooks tab has the authors (with a button that scans again), the books of an author, and a book page with the
+cover or a book icon, **Play** (or **Continue** and **Start over** when there is progress), and the parts, which can be pressed to
+play from their start. Parts are named "Part 3", "Disc 2 · Part 3" when the book has several discs, or "Whole book" for one
+file. A cover is `GET /api/cover/audiobooks/:albumId`. How a book is played, and its progress, is in player.md.

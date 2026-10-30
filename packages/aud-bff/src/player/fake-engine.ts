@@ -1,4 +1,4 @@
-import { PlayerEngine, PlayerEngineListener } from "./player-engine";
+import { PlayOptions, PlayerEngine, PlayerEngineListener } from "./player-engine";
 
 const TICK_MS = 500;
 const DEFAULT_DURATION_SEC = 180;
@@ -15,9 +15,9 @@ export class FakePlayerEngine implements PlayerEngine {
         this.listener = listener;
     }
 
-    async play(_file: string, durationSec?: number) {
+    async play(_file: string, { durationSec, startSec }: PlayOptions) {
         this.stop();
-        this.positionSec = 0;
+        this.positionSec = startSec;
         this.durationSec = durationSec || DEFAULT_DURATION_SEC;
         this.paused = false;
         this.timer = setInterval(() => this.tick(), TICK_MS);

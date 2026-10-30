@@ -4,7 +4,7 @@ import { rmSync } from "fs";
 import net from "net";
 import os from "os";
 import path from "path";
-import { PlayerEngine, PlayerEngineListener } from "./player-engine";
+import { PlayOptions, PlayerEngine, PlayerEngineListener } from "./player-engine";
 
 const SOCKET_PATH = path.join(os.tmpdir(), "aud-mpv.sock");
 const CONNECT_ATTEMPTS = 25;
@@ -29,6 +29,8 @@ export class MpvPlayerEngine implements PlayerEngine {
     private socket?: net.Socket;
     private starting?: Promise<void>;
     private received = "";
+    /** Where to go when the file that was just loaded is ready: the start of a file that does not start at its beginning. */
+    private pendingStartSec = 0;
 
     constructor(private readonly config: MpvConfig) {}
 
@@ -36,8 +38,9 @@ export class MpvPlayerEngine implements PlayerEngine {
         this.listener = listener;
     }
 
-    async play(file: string) {
+    async play(file: string, { startSec }: PlayOptions) {
         await this.ensureRunning();
+        this.pendingStartSec = startSec;
         this.send(["loadfile", file, "replace"]);
         this.send(["set_property", "pause", false]);
     }
@@ -145,6 +148,9 @@ export class MpvPlayerEngine implements PlayerEngine {
     private handle(message: { event?: string; name?: string; data?: unknown; reason?: string; file_error?: string }) {
         if (message.event === "property-change" && message.name === "time-pos" && typeof message.data === "number") {
             this.listener?.onPosition(message.data);
+        } else if (message.event === "file-loaded" && this.pendingStartSec > 0) {
+            this.seek(this.pendingStartSec);
+            this.pendingStartSec = 0;
         } else if (message.event === "end-file") {
             // "stop" is a file that was stopped or replaced by us.
             if (message.reason === "eof") this.listener?.onEnded();

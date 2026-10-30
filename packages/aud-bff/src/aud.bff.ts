@@ -6,6 +6,7 @@ import Fastify from "fastify";
 import path from "path";
 import { audiobookService, libraryService } from "./library/library.service";
 import { createLogStream } from "./logging/log-stream";
+import { bookProgressStore } from "./player/book-progress";
 import { playerService } from "./player/player.service";
 import { historyService } from "./history/history.service";
 import { playlistService } from "./playlists/playlist.service";
@@ -36,7 +37,7 @@ registerLocalWebSocketHandlers({
 const port = 3041;
 
 // The playlists and the history are read before the first request, so that none is answered with an empty list.
-void Promise.all([playlistService.load(), historyService.load()]).then(() =>
+void Promise.all([playlistService.load(), historyService.load(), bookProgressStore.load()]).then(() =>
     fastify.listen({ port, host: "0.0.0.0" }, (err, address) => {
         if (err) throw err;
         console.log(`AUD BFF is running at address ${address}`);

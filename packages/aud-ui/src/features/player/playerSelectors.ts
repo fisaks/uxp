@@ -28,3 +28,6 @@ export const selectCurrentTrack = createSelector([selectPlayerState], (state): Q
 );
 
 export const selectCurrentTrackId = createSelector([selectCurrentTrack], (track) => track?.id);
+
+/** Whether the queue is an audiobook, which is played and not changed: no reordering, removing, mixing or repeating. */
+export const selectIsBookQueue = createSelector([selectQueue], (queue): boolean => queue[0]?.collection === "audiobooks");

@@ -1,5 +1,6 @@
 import {
     AudioAppRequestMessage,
+    AudiobookPartsResponse,
     LibraryAlbumsResponse,
     LibraryArtistsResponse,
     LibraryGetAlbumsSchema,
@@ -10,6 +11,7 @@ import {
 import { AppErrorV2, WebSocketAction, WebSocketDetails } from "@uxp/bff-common";
 import { ErrorCodes } from "@uxp/common";
 import { LibraryService, audiobookService, libraryService } from "../library/library.service";
+import { bookProgressStore } from "../player/book-progress";
 
 const notFound = (what: string) => new AppErrorV2({ statusCode: 404, code: ErrorCodes.NOT_FOUND, message: `Unknown ${what}` });
 
@@ -69,8 +71,9 @@ export class LibraryHandler {
     }
 
     @WebSocketAction("audiobook_get_parts", { authenticate: true, schema: LibraryGetTracksSchema })
-    public getParts(_wsDetails: WebSocketDetails, message: AudioAppRequestMessage<"audiobook_get_parts">): LibraryTracksResponse {
-        return getTracks(audiobookService, message.payload.albumId);
+    public getParts(_wsDetails: WebSocketDetails, message: AudioAppRequestMessage<"audiobook_get_parts">): AudiobookPartsResponse {
+        const book = getTracks(audiobookService, message.payload.albumId);
+        return { ...book, progress: bookProgressStore.get(book.album.id) };
     }
 
     @WebSocketAction("audiobook_scan", { authenticate: true })

@@ -9,6 +9,9 @@ The history is what was played and the queues that were replaced. It is shared b
   player adds up the time between its position reports while the track plays: a pause is not counted, and neither is
   a gap longer than 2 seconds (a stall), and seeking ahead does not give credit. A track counts once each time
   it is played, so with repeat one every time round counts. Skipping a track before the time counts nothing.
+- **An audiobook** is one entry, however many of its parts were heard: it is recorded when a part has been listened to for
+  the same time, and listening to it again takes the earlier entry away and puts it at the top with the new time. The queue
+  of a book is not kept as a previous queue, Continue on the book page is how it is taken up again.
 - **A previous queue** is the queue that was taken away when it was replaced (an album, a playlist, a track played from
   the history) or cleared. A queue of one track is not kept, nor is a queue that is the same as the latest one kept.
   The last 10 are kept. Taking a track off the queue or moving it does not keep anything.
@@ -29,7 +32,8 @@ The history is what was played and the queues that were replaced. It is shared b
 }
 ```
 
-The newest is first. Up to 1000 plays are kept. A track is its library id and a name "Artist - Title": the id counts, and the
+The newest is first. Up to 1000 plays are kept. An audiobook has `"book": true` and the id of the book.
+ A track is its library id and a name "Artist - Title": the id counts, and the
 name is for whoever reads the file and for a track that has gone from the library (it is then shown as missing and
 skipped when a queue is played again). A damaged file gives an empty history, and entries of the wrong shape are skipped.
 

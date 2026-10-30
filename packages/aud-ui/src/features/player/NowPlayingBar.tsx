@@ -13,8 +13,9 @@ import { Link } from "react-router-dom";
 import { useAppSelector } from "../../hooks";
 import { AlbumCover } from "../library/AlbumCover";
 import { formatDuration } from "../library/libraryFormat";
+import { partNames } from "../audiobook/partNames";
 import { PlayerToggleButton } from "./PlayerToggleButton";
-import { selectCurrentTrack, selectPlayerState } from "./playerSelectors";
+import { selectCurrentTrack, selectIsBookQueue, selectPlayerState } from "./playerSelectors";
 import { usePlayerCommand } from "./usePlayerCommand";
 import { usePlayerPosition } from "./usePlayerPosition";
 
@@ -32,6 +33,7 @@ export const NowPlayingBar: React.FC = () => {
     const send = usePlayerCommand();
     const [dragging, setDragging] = useState<number | undefined>(undefined);
     const track = useAppSelector(selectCurrentTrack);
+    const isBook = useAppSelector(selectIsBookQueue);
     if (!state || !track) return null;
 
     const playing = state.status === "playing";
@@ -50,6 +52,8 @@ export const NowPlayingBar: React.FC = () => {
         <PlayArrowIcon fontSize="large" />
     );
 
+    // A book is shown by its title, with the part under it: the file names of its parts say nothing.
+    const part = isBook && state.queue.length > 1 ? partNames(state.queue)[state.currentIndex ?? 0] : undefined;
     const modes = [
         loading && "Loading...",
         state.shuffle && "Shuffle on",
@@ -61,31 +65,33 @@ export const NowPlayingBar: React.FC = () => {
         <Paper elevation={6} sx={{ px: 2, py: 1 }}>
             <Stack direction="row" alignItems="center" spacing={2}>
                 <Box sx={{ width: COVER_SIZE, flexShrink: 0 }}>
-                    <AlbumCover collection="music" albumId={track.albumId} hasCover={track.hasCover} />
+                    <AlbumCover collection={track.collection} albumId={track.albumId} hasCover={track.hasCover} />
                 </Box>
                 <Box sx={{ minWidth: 0, flex: 1 }}>
                     <Typography noWrap sx={{ fontWeight: 600 }}>
-                        {track.title}
+                        {isBook ? track.albumTitle : track.title}
                     </Typography>
                     <Typography noWrap variant="body2" color="text.secondary">
-                        {track.artist}
+                        {[part, track.artist].filter(Boolean).join(" · ")}
                     </Typography>
                     <Typography noWrap variant="caption" color="primary">
                         {modes.join(" · ")}
                     </Typography>
                 </Box>
                 <Button component={Link} to="/queue" size="small" startIcon={<QueueMusicIcon />}>
-                    Queue ({state.queue.length})
+                    {isBook ? "Book" : `Queue (${state.queue.length})`}
                 </Button>
             </Stack>
             <Stack direction="row" alignItems="center" justifyContent="center" spacing={1}>
-                <PlayerToggleButton
-                    active={state.shuffle}
-                    label={state.shuffle ? "Shuffle is on, press to turn it off" : "Shuffle is off, press to turn it on"}
-                    onClick={() => send("player_set_shuffle", { on: !state.shuffle })}
-                >
-                    <ShuffleIcon />
-                </PlayerToggleButton>
+                {!isBook && (
+                    <PlayerToggleButton
+                        active={state.shuffle}
+                        label={state.shuffle ? "Shuffle is on, press to turn it off" : "Shuffle is off, press to turn it on"}
+                        onClick={() => send("player_set_shuffle", { on: !state.shuffle })}
+                    >
+                        <ShuffleIcon />
+                    </PlayerToggleButton>
+                )}
                 <IconButton onClick={() => send("player_previous", {})} aria-label="Previous">
                     <SkipPreviousIcon />
                 </IconButton>
@@ -100,13 +106,15 @@ export const NowPlayingBar: React.FC = () => {
                 <IconButton onClick={() => send("player_next", {})} aria-label="Next">
                     <SkipNextIcon />
                 </IconButton>
-                <PlayerToggleButton
-                    active={state.repeat !== "off"}
-                    label={REPEAT_LABELS[state.repeat]}
-                    onClick={() => send("player_set_repeat", { mode: nextRepeat })}
-                >
-                    {state.repeat === "one" ? <RepeatOneIcon /> : <RepeatIcon />}
-                </PlayerToggleButton>
+                {!isBook && (
+                    <PlayerToggleButton
+                        active={state.repeat !== "off"}
+                        label={REPEAT_LABELS[state.repeat]}
+                        onClick={() => send("player_set_repeat", { mode: nextRepeat })}
+                    >
+                        {state.repeat === "one" ? <RepeatOneIcon /> : <RepeatIcon />}
+                    </PlayerToggleButton>
+                )}
             </Stack>
             <Stack direction="row" alignItems="center" spacing={1.5}>
                 <Typography variant="caption" color="text.secondary" sx={{ width: 40, textAlign: "right" }}>

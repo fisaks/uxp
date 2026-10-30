@@ -1,14 +1,15 @@
-import { PLAYED_AFTER_SEC, PlayerState, PlayerStatus, QueueTrack, RepeatMode } from "@aud/common";
+import { BookProgress, Collection, PLAYED_AFTER_SEC, PlayerState, PlayerStatus, QueueTrack, RepeatMode } from "@aud/common";
 import { AppErrorV2, AppLogger, WebSocketDetails } from "@uxp/bff-common";
 import { ErrorCodes } from "@uxp/common";
 import { amplifierService } from "../amplifier/amplifier.service";
 import { historyService } from "../history/history.service";
 import { libraryConfig } from "../library/library.config";
-import { libraryService } from "../library/library.service";
+import { audiobookService, libraryService } from "../library/library.service";
 import { AudioServerWebSocketManager } from "../ws/AudioServerWebSocketManager";
 import { FakePlayerEngine } from "./fake-engine";
 import { MplayerPlayerEngine } from "./mplayer-engine";
 import { MpvPlayerEngine } from "./mpv-engine";
+import { bookProgressStore } from "./book-progress";
 import { PlayerEngine } from "./player-engine";
 import { PlayerConfig, playerConfig } from "./player.config";
 import { PersistedQueue, QueueStore } from "./queue-store";
@@ -17,21 +18,36 @@ import { shuffledOrder } from "./player-order";
 const PLAYER_TOPIC = "player";
 // Previous plays the current track again when it has been playing for longer than this.
 const RESTART_AFTER_SEC = 3;
+// A book that is taken up again starts a little before where it was left, to hear what it was about.
+const REWIND_ON_RESUME_SEC = 15;
+// How often the place in a book that plays is kept.
+const PROGRESS_SAVE_EVERY_MS = 15000;
 // How often the position is sent to the clients while playing. They move it on by themselves in between.
 const POSITION_PUBLISH_MS = 2000;
 
 /** What the player needs of the amplifier: to have it ready when the music starts. */
 type AmplifierControl = { prepareForPlayback(): Promise<void> };
 
+/** A library the player takes its tracks from. The tracks of the two libraries are never looked up together: a request says which it means. */
 type TrackSource = {
     getTrack(id: string): QueueTrack | undefined;
     getTrackFile(id: string): string | undefined;
     hasTracks(): boolean;
+    /** The tracks of an album, in the order they are played. */
+    getTracks(albumId: string): { id: string }[];
+};
+
+/** Where the listening to the books is kept. */
+type ProgressStorage = {
+    get(albumId: string): BookProgress | undefined;
+    save(albumId: string, name: string, progress: BookProgress): void;
+    clear(albumId: string): void;
 };
 
 /** Where what was played and the queues that were replaced are kept. */
 type HistoryRecorder = {
     trackPlayed(track: QueueTrack): void;
+    bookPlayed(track: QueueTrack): void;
     queueReplaced(queue: QueueTrack[], currentIndex: number): void;
 };
 
@@ -51,7 +67,9 @@ type QueueStorage = { load(): Promise<PersistedQueue | undefined>; save(queue: P
  * The queue and what is playing, shared by every client. The queue is the order the tracks are played in, and what is
  * shown is what plays: Next is the track after the current one, and dragging a track changes when it plays. Turning
  * shuffle on mixes the queue (the current track stays first), and turning it off brings back the order it had, kept in
- * `unshuffled` while shuffle is on. The service does not make sound itself, an engine does.
+ * `unshuffled` while shuffle is on. The queue is music or one audiobook, never both: a book is played in order from where
+ * the listening was left, and its queue is not changed, shuffled or repeated, only played, paused, sought and replaced.
+ * The service does not make sound itself, an engine does.
  */
 export class PlayerService {
     private queue: QueueTrack[] = [];
@@ -76,14 +94,16 @@ export class PlayerService {
     private listenedSec = 0;
     private lastListenAt?: number;
     private playCounted = false;
+    private progressSavedAt = 0;
 
     constructor(
         private readonly engine: PlayerEngine,
-        private readonly tracks: TrackSource,
+        private readonly libraries: Record<Collection, TrackSource>,
         private readonly wsManager: AudioServerWebSocketManager,
         private readonly amplifier: AmplifierControl,
         private readonly storage: QueueStorage,
-        private readonly history: HistoryRecorder
+        private readonly history: HistoryRecorder,
+        private readonly progress: ProgressStorage
     ) {
         engine.setListener({
             onPosition: (positionSec) => this.onPosition(positionSec),
@@ -99,10 +119,11 @@ export class PlayerService {
      */
     async restore(): Promise<void> {
         const saved = await this.storage.load();
-        if (!saved || saved.tracks.length === 0 || !this.tracks.hasTracks()) {
+        if (!saved || saved.tracks.length === 0 || !Object.values(this.libraries).some((library) => library.hasTracks())) {
             return;
         }
-        const resolved = saved.tracks.map(({ id }) => this.tracks.getTrack(id));
+        // A queue saved before the audiobooks has no collection: it is music.
+        const resolved = saved.tracks.map(({ id, collection = "music" }) => this.libraries[collection].getTrack(id));
         const newIndex = new Map<number, number>();
         this.queue = resolved.flatMap((track, oldIndex) => {
             if (!track) {
@@ -142,13 +163,16 @@ export class PlayerService {
     }
 
     /** Replaces the queue with the tracks and plays the one at `startIndex`. Tracks that are not in the library are left out. */
-    async playTracks(trackIds: string[], startIndex = 0): Promise<PlayerState> {
+    async playTracks(trackIds: string[], startIndex = 0, shuffle?: boolean): Promise<PlayerState> {
         const startId = trackIds[startIndex] ?? trackIds[0];
         const tracks = this.resolve(trackIds);
         if (tracks.length === 0) {
             return this.stopAll();
         }
         this.rememberQueue();
+        if (shuffle !== undefined) {
+            this.shuffle = shuffle;
+        }
         const start = Math.max(
             0,
             tracks.findIndex((track) => track.id === startId)
@@ -165,8 +189,39 @@ export class PlayerService {
         return this.startByUser("start");
     }
 
+    /**
+     * Replaces the queue with the parts of a book and plays it from where the listening was left: the part and a little before
+     * the place in it. With `partId` it starts that part from its beginning instead.
+     */
+    async playBook(albumId: string, partId?: string): Promise<PlayerState> {
+        const parts = this.resolve(
+            this.libraries.audiobooks.getTracks(albumId).map((part) => part.id),
+            "audiobooks"
+        );
+        if (parts.length === 0) {
+            throw new AppErrorV2({ statusCode: 404, code: ErrorCodes.NOT_FOUND, message: "Unknown book" });
+        }
+        const saved = this.progress.get(albumId);
+        const startId = partId ?? saved?.partId;
+        const start = Math.max(
+            0,
+            parts.findIndex((part) => part.id === startId)
+        );
+        this.rememberQueue();
+        if (partId) {
+            this.keepProgress(parts[start], 0);
+        }
+        this.shuffle = false;
+        this.repeat = "off";
+        this.unshuffled = [];
+        this.queue = parts;
+        this.currentIndex = start;
+        return this.startByUser("start");
+    }
+
     enqueue(trackIds: string[]): PlayerState {
         const added = this.resolve(trackIds);
+        this.requireMusicQueue();
         if (this.shuffle) {
             // What is added is mixed among itself and comes last, and it is where it was added in the order of before the shuffle.
             this.unshuffled.push(...added);
@@ -183,6 +238,7 @@ export class PlayerService {
     /** The tracks go right after the current track, and the current track keeps playing. */
     playNext(trackIds: string[]): PlayerState {
         const added = this.resolve(trackIds);
+        this.requireMusicQueue();
         if (this.currentIndex === -1) {
             return this.enqueue(trackIds);
         }
@@ -196,6 +252,7 @@ export class PlayerService {
         if (!track) {
             return this.getState();
         }
+        this.requireMusicQueue();
         if (this.currentIndex === -1) {
             this.queue = [track];
             this.unshuffled = this.shuffle ? [track] : [];
@@ -230,6 +287,7 @@ export class PlayerService {
     }
 
     async remove(index: number): Promise<PlayerState> {
+        this.requireMusicQueue();
         this.requireIndex(index);
         const [removed] = this.queue.splice(index, 1);
         this.unshuffled = this.unshuffled.filter((track) => track !== removed);
@@ -253,6 +311,7 @@ export class PlayerService {
 
     /** What is playing keeps playing, and what comes after it is what the queue shows after it. */
     move(from: number, to: number): PlayerState {
+        this.requireMusicQueue();
         this.requireIndex(from);
         this.requireIndex(to);
         if (from !== to) {
@@ -274,6 +333,7 @@ export class PlayerService {
             this.engine.pause();
             this.status = "paused";
             this.lastListenAt = undefined;
+            this.saveProgress();
         } else if (this.status === "starting") {
             // Whatever waits for the amplifier or the file does not go on.
             this.startToken++;
@@ -322,11 +382,15 @@ export class PlayerService {
             const position = Math.max(0, duration ? Math.min(positionSec, duration) : positionSec);
             this.engine.seek(position);
             this.setPosition(position);
+            this.saveProgress();
         }
         return this.publish();
     }
 
     setShuffle(on: boolean): PlayerState {
+        if (on) {
+            this.requireMusicQueue();
+        }
         if (on !== this.shuffle) {
             this.shuffle = on;
             if (on) {
@@ -345,6 +409,9 @@ export class PlayerService {
     }
 
     setRepeat(mode: RepeatMode): PlayerState {
+        if (mode !== "off") {
+            this.requireMusicQueue();
+        }
         this.repeat = mode;
         return this.publish();
     }
@@ -365,7 +432,10 @@ export class PlayerService {
             this.currentIndex = 0;
             return this.startCurrent();
         }
-        // The end of the queue: stop at its start, ready to be played again.
+        // The end of the queue: stop at its start, ready to be played again. A book that was heard to its end starts over.
+        if (ended && this.isBookQueue()) {
+            this.progress.clear(this.queue[0].albumId);
+        }
         this.currentIndex = this.queue.length > 0 ? 0 : -1;
         return this.stopPlaying();
     }
@@ -383,7 +453,7 @@ export class PlayerService {
         if (from === "start") {
             this.engine.stop();
             this.engineStarted = false;
-            this.setPosition(0);
+            this.setPosition(this.startOf(this.queue[this.currentIndex]));
         }
         const state = this.publish();
         void this.continueStart(token, from);
@@ -404,10 +474,12 @@ export class PlayerService {
 
     private async startCurrent(): Promise<PlayerState> {
         const track = this.queue[this.currentIndex];
-        const file = track && this.tracks.getTrackFile(track.id);
+        const file = track && this.libraries[track.collection].getTrackFile(track.id);
         this.startToken++;
         this.status = "starting";
-        this.setPosition(0);
+        const startSec = this.startOf(track);
+        this.setPosition(startSec);
+        this.keepProgress(track, startSec);
         this.listenedSec = 0;
         this.lastListenAt = undefined;
         this.playCounted = false;
@@ -416,7 +488,7 @@ export class PlayerService {
         }
         AppLogger.info(undefined, { message: `Playing "${track.title}" by ${track.artist} from ${file}` });
         try {
-            await this.engine.play(file, track.durationSec);
+            await this.engine.play(file, { durationSec: track.durationSec, startSec, accurateSeek: track.collection === "music" });
         } catch (error) {
             return this.onFileFailed(error instanceof Error ? error.message : String(error));
         }
@@ -449,6 +521,7 @@ export class PlayerService {
             this.setPosition(positionSec);
             this.countListening();
             this.publishPosition();
+            this.saveProgressRegularly();
         }
     }
 
@@ -462,7 +535,11 @@ export class PlayerService {
         const track = this.queue[this.currentIndex];
         if (track && !this.playCounted && this.listenedSec >= playedAfterSec(track)) {
             this.playCounted = true;
-            this.history.trackPlayed(track);
+            if (track.collection === "music") {
+                this.history.trackPlayed(track);
+            } else {
+                this.history.bookPlayed(track);
+            }
         }
     }
 
@@ -509,8 +586,11 @@ export class PlayerService {
 
     /** Keeps the queue as it is, if it has tracks, before it is replaced or cleared. */
     private rememberQueue() {
+        this.saveProgress();
         if (this.queue.length > 0) {
-            this.history.queueReplaced(this.queue, this.currentIndex);
+            if (!this.isBookQueue()) {
+                this.history.queueReplaced(this.queue, this.currentIndex);
+            }
             this.replaced = {
                 queue: this.queue,
                 currentIndex: this.currentIndex,
@@ -530,9 +610,53 @@ export class PlayerService {
         this.queue.splice(this.currentIndex + 1, 0, ...tracks);
     }
 
-    private resolve(trackIds: string[]): QueueTrack[] {
+    private isBookQueue(): boolean {
+        return this.queue[0]?.collection === "audiobooks";
+    }
+
+    /** The queue of a book is only played: what it is made of and the order of it stay. */
+    private requireMusicQueue() {
+        if (this.isBookQueue()) {
+            throw new AppErrorV2({
+                statusCode: 409,
+                code: ErrorCodes.INVALID_STATE,
+                message: "The queue is an audiobook, it cannot be changed",
+            });
+        }
+    }
+
+    /** Where a track starts: at its beginning, and a part of a book where the listening was left, a little before. */
+    private startOf(track?: QueueTrack): number {
+        const saved = track?.collection === "audiobooks" ? this.progress.get(track.albumId) : undefined;
+        return saved && saved.partId === track?.id ? Math.max(0, saved.positionSec - REWIND_ON_RESUME_SEC) : 0;
+    }
+
+    private keepProgress(track: QueueTrack, positionSec: number) {
+        this.progress.save(track.albumId, `${track.artist} - ${track.albumTitle}`, {
+            partId: track.id,
+            positionSec: Math.floor(positionSec),
+        });
+        this.progressSavedAt = Date.now();
+    }
+
+    /** Keeps the place in the book that is the queue. Nothing is kept while it is not playing or paused, as the position then is not where the listening is. */
+    private saveProgress() {
+        const track = this.queue[this.currentIndex];
+        if (this.isBookQueue() && track && this.status !== "stopped") {
+            this.keepProgress(track, this.currentPosition());
+        }
+    }
+
+    private saveProgressRegularly() {
+        if (Date.now() - this.progressSavedAt >= PROGRESS_SAVE_EVERY_MS) {
+            this.saveProgress();
+        }
+    }
+
+    /** The tracks of a library that are in it, in the order asked for: requests are about music unless they say audiobooks. */
+    private resolve(trackIds: string[], collection: Collection = "music"): QueueTrack[] {
         return trackIds.flatMap((id) => {
-            const track = this.tracks.getTrack(id);
+            const track = this.libraries[collection].getTrack(id);
             return track ? [track] : [];
         });
     }
@@ -547,7 +671,7 @@ export class PlayerService {
     private persist() {
         const placeOf = new Map(this.queue.map((track, index) => [track, index]));
         this.storage.save({
-            tracks: this.queue.map((track) => ({ id: track.id, name: `${track.artist} - ${track.title}` })),
+            tracks: this.queue.map((track) => ({ id: track.id, name: `${track.artist} - ${track.title}`, collection: track.collection })),
             currentIndex: this.currentIndex,
             shuffle: this.shuffle,
             repeat: this.repeat,
@@ -577,9 +701,10 @@ const createEngine = ({ engine, mpv, mplayer }: PlayerConfig): PlayerEngine => {
 
 export const playerService = new PlayerService(
     createEngine(playerConfig),
-    libraryService,
+    { music: libraryService, audiobooks: audiobookService },
     AudioServerWebSocketManager.getInstance(),
     amplifierService,
     new QueueStore(libraryConfig.dataDir),
-    historyService
+    historyService,
+    bookProgressStore
 );

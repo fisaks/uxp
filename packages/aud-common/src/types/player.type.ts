@@ -1,4 +1,4 @@
-import { LibraryTrack } from "./library.type";
+import { Collection, LibraryTrack } from "./library.type";
 
 /**
  * "starting" is from the moment the music is asked for until the sound is there: the amplifier may be starting up
@@ -11,8 +11,11 @@ export type PlayerStatus = "stopped" | "starting" | "playing" | "paused";
 export type RepeatMode = "off" | "all" | "one";
 export const REPEAT_MODES: RepeatMode[] = ["off", "all", "one"];
 
-/** A track in the queue. The cover of its album is at /api/cover/<albumId> when `hasCover` is true. */
-export type QueueTrack = LibraryTrack & { hasCover: boolean };
+/**
+ * A track in the queue: a song, or a part of an audiobook. The cover of its album is at /api/cover/<collection>/<albumId>
+ * when `hasCover` is true. The queue is either all music or all of one audiobook.
+ */
+export type QueueTrack = LibraryTrack & { collection: Collection; albumTitle: string; hasCover: boolean };
 
 export type PlayerState = {
     status: PlayerStatus;

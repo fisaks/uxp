@@ -1,13 +1,27 @@
 import { QueueTrack } from "./player.type";
 
-/** A track that was played. `track` is missing when the track is no longer in the library, and `name` is what it was called. */
+/** An audiobook in the history. */
+export type HistoryBook = {
+    albumId: string;
+    title: string;
+    artist: string;
+    hasCover: boolean;
+};
+
+/**
+ * A track that was played, or an audiobook that was listened to: a book is one entry however many parts of it were heard, and
+ * it moves to the top with a new time when it is listened to again. `track` or `book` is missing when it is no longer in the
+ * library, and `name` is what it was called.
+ */
 export type HistoryPlay = {
     id: string;
-    /** "Artist - Title" */
+    kind: "track" | "book";
+    /** "Artist - Title", or "Author - Book" */
     name: string;
     /** When it had been played long enough to count, as a time (ISO). */
     playedAt: string;
     track?: QueueTrack;
+    book?: HistoryBook;
 };
 
 export type PreviousQueueEntry = {

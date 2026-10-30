@@ -34,7 +34,7 @@ of the chosen engine must be installed.
 - A track whose file is missing or that mpv cannot play is skipped. When every track of the queue fails one after the
   other the player stops.
 - The queue is kept when the backend restarts: it is saved to `queue.json` in `AUD_DATA_DIR` a moment after it
-  changes (the tracks in the order they play, each as its id and a name "Artist - Title" that is only there to be read,
+  changes (the tracks in the order they play, each as its id, its collection (`music` or `audiobooks`, music when missing) and a name "Artist - Title" that is only there to be read,
   the place of the current track, shuffle and repeat, and while shuffle is on the order of before as places in the
   tracks; not the position and not every position update). At the next start it is brought back once the library has been read, stopped and ready to
   play from the start of the current track. Tracks that have gone from the library are left out, and a current track that
@@ -48,7 +48,8 @@ position of the current track at the time it was sent, and the UI moves it on fr
 the server does not send a state every second. While playing, the server also sends the real position of the sound every 2 seconds (`player_position`, a few
 bytes) so the moving position cannot drift from the sound, for example when a file is slow to start or a seek lands
 a little off. The commands are the other `player_*` actions: `play_tracks`
-(replaces the queue), `enqueue`, `play_index`, `remove`, `clear`, `pause`, `resume`, `next`, `previous`, `seek`,
+(replaces the queue; `shuffle` turns shuffle on or off for the new queue), `play_book` (replaces the queue with a book, see
+Audiobooks), `enqueue`, `play_index`, `remove`, `clear`, `pause`, `resume`, `next`, `previous`, `seek`,
 `set_shuffle` and `set_repeat`. Each answers with the new state. `play_next` puts tracks right after the
 current one, `play_now` plays a track without losing the queue (it goes right after the current track, starts, and the
 queue goes on after it), and `undo_queue` brings back the queue that the last replacing (`play_tracks`) or clearing of
@@ -57,7 +58,9 @@ kept in memory only). `move` (`from`, `to`) moves a track of the queue,
 the others move over, and what is playing keeps playing (and what follows it is what the queue shows after it).
 
 The now playing bar is at the bottom of every page of the app while the queue has tracks; the Queue tab lists
-the queue. In the album view:
+the queue. While the queue is an audiobook, the bar shows the book title with the part and the author under it, and has no
+shuffle and repeat buttons, and the Queue tab lists the parts without drag handles, Remove or Save as playlist (see
+Audiobooks). In the album view:
 
 - An album can be played or shuffled (both replace the queue), added to the queue or put in a playlist.
 - A track row has a **+** that adds it to the queue (one tap, with a message), and a menu with Play next, Add to the playlist
@@ -105,6 +108,27 @@ music also gets the amplifier ready, so it can be heard without setting the ampl
 - Without the setting nothing is done, which is what you want when the sound does not go to the amplifier, for example in
   development, where the player plays on the speakers of the computer.
 
+## Audiobooks
+
+The audiobook pages (`/audiobooks`: authors, books, a book with its parts) are described in library.md. A book is played with
+`player_play_book { albumId, partId? }`, which replaces the queue with the parts of the book (Undo
+brings the old queue back). The queue is then a book queue, which is only played:
+
+- Moving, removing, adding (music or anything else), shuffle and repeat are refused with a 409 and a message, and the UI
+  hides them. Play, pause, seek, Next, Previous, tapping a part and Clear work. The requests about tracks (`play_tracks`,
+  `enqueue`, `play_next`, `play_now`) are about music and look their ids up in the music library only, so the part of a book is
+  not found by them: a book gets into the queue through `player_play_book`, which looks in the audiobooks. The collection of a
+  track is kept in the queue, so the file of a track is looked for in the right library.
+- Where the listening was left is kept for the whole household in `book-progress.json` in the data folder, by book: the
+  part and the place in it. It is written when the book is paused, sought, replaced, changes part and every 15 seconds while
+  it plays. A book that is heard to its end is forgotten and starts over. Playing a book, or pressing Play on the queue
+  after a restart, starts 15 seconds before the saved place. `partId` starts that part from its beginning.
+- A book is one entry in the history (see history.md): listening to it for 30 seconds records it, and more listening moves the entry to the top with the new time. Its queue is not kept among the previous queues.
+- The engines get `startSec` and `accurateSeek` with every file. Music is played with `accurateSeek` (see mplayer below),
+  audiobooks without, because on a Raspberry Pi 3 a seek to hour 10 of a 340 MB constant bitrate book takes 22 s with
+  `-hr-mp3-seek` and 3 s without, and lands on the right place in both. mplayer is started again (about 2 seconds) when
+  the next file wants the other kind.
+
 ## The engines
 
 Both play one file at a time and are chosen with `AUD_PLAYER`. A file that cannot be played, or a program that dies,
@@ -124,7 +148,7 @@ which only has mpv 0.29). It runs in slave mode, started with `-msglevel global=
   stopped by us and are ignored), a file that cannot be opened is `Failed to open`, and the position is asked for twice
   a second with `get_time_pos`.
 - While paused, commands must be sent as `pausing_keep_force <command>`, or mplayer starts playing again.
-- It is started with `-hr-mp3-seek`. Some mp3 files have a variable bitrate and no Xing header (no table of
+- It is started with `-hr-mp3-seek` for music (not for audiobooks, see above). Some mp3 files have a variable bitrate and no Xing header (no table of
   contents). Without this option mplayer guesses the byte position of a seek from the bitrate, lands somewhere
   else in the song and still counts from the time that was asked for, so the position runs past the end of the track and
   no end of file comes. With the option mplayer finds the exact place by scanning the file, which is a little slower

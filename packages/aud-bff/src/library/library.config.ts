@@ -1,6 +1,8 @@
+import { Collection } from "@aud/common";
+
 export type LibraryConfig = {
-    /** What the library is called in the log. */
-    name: string;
+    /** Which library this is: what it is called in the log, and the collection its tracks and covers belong to. */
+    collection: Collection;
     /** The folder with the files: Artist/Album/tracks, or Author/Book/tracks. Without it the library is empty. */
     root?: string;
     /** Where the cache of the scan is kept. Without it every start scans all files. */
@@ -19,7 +21,7 @@ export type LibraryConfig = {
 const dataDir = process.env.AUD_DATA_DIR || undefined;
 
 export const libraryConfig: LibraryConfig = {
-    name: "music",
+    collection: "music",
     root: process.env.AUD_MUSIC_ROOT || undefined,
     dataDir,
     cacheFile: "library.json",
@@ -28,7 +30,7 @@ export const libraryConfig: LibraryConfig = {
 };
 
 export const audiobookConfig: LibraryConfig = {
-    name: "audiobook",
+    collection: "audiobooks",
     root: process.env.AUD_AUDIOBOOK_ROOT || undefined,
     dataDir,
     cacheFile: "audiobooks.json",

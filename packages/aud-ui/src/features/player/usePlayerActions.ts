@@ -28,8 +28,11 @@ export const usePlayerActions = () => {
             },
             /** The same with the tracks mixed. */
             shuffleTracks: async (trackIds: string[]) => {
-                await send("player_set_shuffle", { on: true });
-                if ((await send("player_play_tracks", { trackIds })) && hadQueue) notify("Queue replaced", true);
+                if ((await send("player_play_tracks", { trackIds, shuffle: true })) && hadQueue) notify("Queue replaced", true);
+            },
+            /** Replaces the queue with a book, which plays from where it was left, or from the start of `partId`. */
+            playBook: async (albumId: string, partId?: string) => {
+                if ((await send("player_play_book", { albumId, partId })) && hadQueue) notify("Queue replaced", true);
             },
             enqueue: async (trackIds: string[]) => {
                 if (await send("player_enqueue", { trackIds })) notify(`Added ${countOf(trackIds.length)} to the queue`);

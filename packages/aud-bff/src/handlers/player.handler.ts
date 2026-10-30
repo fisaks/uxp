@@ -3,6 +3,7 @@ import {
     PlayerEnqueueSchema,
     PlayerIndexSchema,
     PlayerMoveSchema,
+    PlayerPlayBookSchema,
     PlayerPlayNextSchema,
     PlayerPlayNowSchema,
     PlayerPlayTracksSchema,
@@ -21,7 +22,12 @@ export class PlayerHandler {
 
     @WebSocketAction("player_play_tracks", { authenticate: true, schema: PlayerPlayTracksSchema })
     public playTracks(_wsDetails: WebSocketDetails, message: AudioAppRequestMessage<"player_play_tracks">) {
-        return playerService.playTracks(message.payload.trackIds, message.payload.startIndex);
+        return playerService.playTracks(message.payload.trackIds, message.payload.startIndex, message.payload.shuffle);
+    }
+
+    @WebSocketAction("player_play_book", { authenticate: true, schema: PlayerPlayBookSchema })
+    public playBook(_wsDetails: WebSocketDetails, message: AudioAppRequestMessage<"player_play_book">) {
+        return playerService.playBook(message.payload.albumId, message.payload.partId);
     }
 
     @WebSocketAction("player_enqueue", { authenticate: true, schema: PlayerEnqueueSchema })

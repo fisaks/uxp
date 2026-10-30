@@ -3,7 +3,13 @@ import { AmplifierReachability, AmplifierState } from "./amplifier.type";
 import { PlayerState, RepeatMode } from "./player.type";
 import { HistoryResponse } from "./history.type";
 import { Playlist, PlaylistSummary } from "./playlist.type";
-import { LibraryAlbumsResponse, LibraryArtistsResponse, LibraryStatus, LibraryTracksResponse } from "./library.type";
+import {
+    AudiobookPartsResponse,
+    LibraryAlbumsResponse,
+    LibraryArtistsResponse,
+    LibraryStatus,
+    LibraryTracksResponse,
+} from "./library.type";
 
 export type AudioAppActionPayloadRequestMap = {
     /** Starts the live amplifier updates. The response is the current state. */
@@ -41,7 +47,9 @@ export type AudioAppActionPayloadRequestMap = {
     /** Starts the live player updates. The response is the current state. */
     player_subscribe: Record<string, never>;
     /** Replaces the queue with these tracks and starts with the one at `startIndex` (the first by default). */
-    player_play_tracks: { trackIds: string[]; startIndex?: number };
+    player_play_tracks: { trackIds: string[]; startIndex?: number; shuffle?: boolean };
+    /** Replaces the queue with the parts of a book. It starts where the listening was left, or at the start of `partId`. */
+    player_play_book: { albumId: string; partId?: string };
     /** Adds tracks to the end of the queue. */
     player_enqueue: { trackIds: string[] };
     /** Puts tracks in the queue right after the current track. */
@@ -111,7 +119,7 @@ export type AudioAppActionPayloadResponseMap = {
     library_get_tracks: LibraryTracksResponse;
     audiobook_get_authors: LibraryArtistsResponse;
     audiobook_get_books: LibraryAlbumsResponse;
-    audiobook_get_parts: LibraryTracksResponse;
+    audiobook_get_parts: AudiobookPartsResponse;
     audiobook_scan: LibraryStatus;
     library_scan: LibraryStatus;
     player_subscribe: PlayerState;
@@ -120,6 +128,7 @@ export type AudioAppActionPayloadResponseMap = {
     /** Pushed every few seconds while playing, so a client that moves the position on by itself is corrected. */
     player_position: { positionSec: number };
     player_play_tracks: PlayerState;
+    player_play_book: PlayerState;
     player_enqueue: PlayerState;
     player_play_next: PlayerState;
     player_play_now: PlayerState;

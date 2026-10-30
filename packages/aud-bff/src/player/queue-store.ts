@@ -1,12 +1,12 @@
-import { RepeatMode } from "@aud/common";
+import { Collection, RepeatMode } from "@aud/common";
 import { AppLogger } from "@uxp/bff-common";
 import path from "path";
 import { readJsonFile, writeJsonFile } from "../storage/json-file";
 
 /** What is kept of the player between restarts: the queue in the order it plays, and how it is played. Not the position, a restart starts the track again. */
 export type PersistedQueue = {
-    /** The tracks in the order they were added. The id is what counts, the name ("Artist - Title") is for whoever reads the file. */
-    tracks: { id: string; name: string }[];
+    /** The tracks in the order they were added. The id is what counts, the name ("Artist - Title") is for whoever reads the file. A queue saved before the audiobooks has no collection, and is music. */
+    tracks: { id: string; name: string; collection?: Collection }[];
     /** The place in `tracks` of the current track, -1 when the queue is empty. */
     currentIndex: number;
     shuffle: boolean;
@@ -23,7 +23,10 @@ const isPersistedQueue = (value: unknown): value is PersistedQueue => {
     const queue = value as PersistedQueue | undefined;
     return (
         Array.isArray(queue?.tracks) &&
-        queue.tracks.every((track) => typeof track?.id === "string") &&
+        queue.tracks.every(
+            (track) =>
+                typeof track?.id === "string" && (track.collection === undefined || ["music", "audiobooks"].includes(track.collection))
+        ) &&
         typeof queue?.currentIndex === "number" &&
         (queue.original === undefined || (Array.isArray(queue.original) && queue.original.every((place) => typeof place === "number"))) &&
         typeof queue?.shuffle === "boolean" &&

@@ -11,8 +11,20 @@ export const PlayerPlayTracksSchema = {
         trackIds: { type: "array", items: TRACK_ID_SCHEMA, minItems: 1, maxItems: MAX_TRACKS },
         /** The track of `trackIds` to start with. */
         startIndex: { type: "integer", minimum: 0 },
+        /** Turns shuffle on or off for the new queue, which keeps the setting of before when it is missing. */
+        shuffle: { type: "boolean" },
     },
     required: ["trackIds"],
+    additionalProperties: false,
+};
+
+export const PlayerPlayBookSchema = {
+    type: "object",
+    properties: {
+        albumId: TRACK_ID_SCHEMA,
+        partId: TRACK_ID_SCHEMA,
+    },
+    required: ["albumId"],
     additionalProperties: false,
 };
 

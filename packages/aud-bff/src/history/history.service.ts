@@ -12,16 +12,23 @@ import { randomUUID } from "crypto";
 import { EventEmitter } from "events";
 import path from "path";
 import { libraryConfig } from "../library/library.config";
-import { libraryService } from "../library/library.service";
+import { audiobookService, libraryService } from "../library/library.service";
 import { readJsonFile, SerializedJsonWriter } from "../storage/json-file";
 
 const FILE = "history.json";
 
 type StoredTrack = { id: string; name: string };
-type StoredPlay = StoredTrack & { playedAt: string };
+/** `book` is true for an audiobook, and then `id` is the id of the book. */
+type StoredPlay = StoredTrack & { playedAt: string; book?: boolean };
 type StoredQueue = { id: string; replacedAt: string; currentIndex: number; tracks: StoredTrack[] };
 
 type TrackSource = { getTrack(id: string): QueueTrack | undefined };
+
+/** What the history needs of the audiobooks: the books it names. */
+type BookSource = {
+    getAlbum(id: string): { title: string; artistId: string; hasCover: boolean } | undefined;
+    getArtist(id: string): { name: string } | undefined;
+};
 
 export type HistoryEventMap = {
     /** A track has counted as played, a queue has been kept, or the history has been cleared. */
@@ -55,6 +62,7 @@ export class HistoryService extends EventEmitter<HistoryEventMap> {
 
     constructor(
         private readonly library: TrackSource,
+        private readonly books: BookSource,
         private readonly dataDir?: string
     ) {
         super();
@@ -76,6 +84,19 @@ export class HistoryService extends EventEmitter<HistoryEventMap> {
 
     trackPlayed(track: QueueTrack): void {
         this.plays.unshift({ id: track.id, name: nameOf(track), playedAt: new Date().toISOString() });
+        this.plays.length = Math.min(this.plays.length, MAX_HISTORY_PLAYS);
+        this.changed();
+    }
+
+    /** A book that is being listened to. It is one entry: an earlier one is taken away, so it stands at the top with the new time. */
+    bookPlayed(track: QueueTrack): void {
+        this.plays = this.plays.filter((play) => !(play.book && play.id === track.albumId));
+        this.plays.unshift({
+            id: track.albumId,
+            name: `${track.artist} - ${track.albumTitle}`,
+            playedAt: new Date().toISOString(),
+            book: true,
+        });
         this.plays.length = Math.min(this.plays.length, MAX_HISTORY_PLAYS);
         this.changed();
     }
@@ -102,7 +123,10 @@ export class HistoryService extends EventEmitter<HistoryEventMap> {
             return { id, name: track ? nameOf(track) : name, track };
         };
         return {
-            plays: this.plays.slice(0, HISTORY_PLAYS_SENT).map<HistoryPlay>((play) => ({ ...resolve(play), playedAt: play.playedAt })),
+            plays: this.plays.slice(0, HISTORY_PLAYS_SENT).map<HistoryPlay>((play) => ({
+                ...(play.book ? this.resolveBook(play) : { ...resolve(play), kind: "track" as const }),
+                playedAt: play.playedAt,
+            })),
             playCount: this.plays.length,
             queues: this.queues.map<PreviousQueue>((queue) => ({
                 id: queue.id,
@@ -111,6 +135,13 @@ export class HistoryService extends EventEmitter<HistoryEventMap> {
                 entries: queue.tracks.map(resolve),
             })),
         };
+    }
+
+    private resolveBook({ id, name }: StoredPlay) {
+        const album = this.books.getAlbum(id);
+        const artist = album && this.books.getArtist(album.artistId);
+        const book = album && artist ? { albumId: id, title: album.title, artist: artist.name, hasCover: album.hasCover } : undefined;
+        return { id, name, kind: "book" as const, book };
     }
 
     async clear(): Promise<HistoryResponse> {
@@ -131,4 +162,4 @@ export class HistoryService extends EventEmitter<HistoryEventMap> {
     }
 }
 
-export const historyService = new HistoryService(libraryService, libraryConfig.dataDir);
+export const historyService = new HistoryService(libraryService, audiobookService, libraryConfig.dataDir);

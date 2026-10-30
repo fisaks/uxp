@@ -57,7 +57,9 @@ export class LibraryService extends EventEmitter<LibraryEventMap> {
     /** Loads the cache, then scans in the background. Never throws. */
     async start() {
         if (!this.config.root) {
-            AppLogger.info(undefined, { message: `The ${this.config.name} folder is not set, the ${this.config.name} library is empty` });
+            AppLogger.info(undefined, {
+                message: `The ${this.config.collection} folder is not set, the ${this.config.collection} library is empty`,
+            });
             return;
         }
         await this.loadCache();
@@ -106,7 +108,14 @@ export class LibraryService extends EventEmitter<LibraryEventMap> {
     /** A track with what the player shows: the cover of its album. */
     getTrack(trackId: string): QueueTrack | undefined {
         const track = this.trackById.get(trackId);
-        return track && { ...toLibraryTrack(track), hasCover: this.coverByAlbum.has(track.albumId) };
+        return (
+            track && {
+                ...toLibraryTrack(track),
+                collection: this.config.collection,
+                albumTitle: this.albumById.get(track.albumId)?.title ?? "",
+                hasCover: this.coverByAlbum.has(track.albumId),
+            }
+        );
     }
 
     /** The full path of the audio file of a track, for the player. */
@@ -133,10 +142,10 @@ export class LibraryService extends EventEmitter<LibraryEventMap> {
                 this.emit("changed");
             }
             AppLogger.info(undefined, {
-                message: `Scanned the ${this.config.name} library: ${tracks.length} tracks in ${Date.now() - started} ms`,
+                message: `Scanned the ${this.config.collection} library: ${tracks.length} tracks in ${Date.now() - started} ms`,
             });
         } catch (error) {
-            AppLogger.error(undefined, { message: `Could not scan the ${this.config.name} library`, error });
+            AppLogger.error(undefined, { message: `Could not scan the ${this.config.collection} library`, error });
         }
     }
 
@@ -163,7 +172,7 @@ export class LibraryService extends EventEmitter<LibraryEventMap> {
                 albumFolders: this.folders,
             } satisfies Cache);
         } catch (error) {
-            AppLogger.warn(undefined, { message: `Could not save the cache of the ${this.config.name} library`, error });
+            AppLogger.warn(undefined, { message: `Could not save the cache of the ${this.config.collection} library`, error });
         }
     }
 
