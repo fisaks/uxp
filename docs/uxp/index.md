@@ -37,6 +37,7 @@ Start with the overview, then jump to the area relevant to your task.
 - [Styling model](./styling-model.md)
 - [UXP Browser Contract](./uxp-browser-contract.md)
 - [Notification and platform health](./notification-and-health.md)
+- [Platform services for remote apps](./platform-services.md)
 - [Deployment guide](./deployment-guide.md)
 - [Adding a remote app](./adding-a-remote-app.md)
 
