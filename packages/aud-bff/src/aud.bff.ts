@@ -9,6 +9,7 @@ import { createLogStream } from "./logging/log-stream";
 import { bookProgressStore } from "./player/book-progress";
 import { playerService } from "./player/player.service";
 import { historyService } from "./history/history.service";
+import { searchIndexer } from "./search/search-indexer";
 import { playlistService } from "./playlists/playlist.service";
 import { AudioServerWebSocketManager } from "./ws/AudioServerWebSocketManager";
 
@@ -42,6 +43,10 @@ void Promise.all([playlistService.load(), historyService.load(), bookProgressSto
         if (err) throw err;
         console.log(`AUD BFF is running at address ${address}`);
         // The queue of before the restart is brought back once the libraries, whose ids it uses, have been read.
-        void Promise.all([libraryService.start(), audiobookService.start()]).then(() => playerService.restore());
+        void Promise.all([libraryService.start(), audiobookService.start()]).then(() => {
+            void playerService.restore();
+            // The libraries are read, so what the indexes are filled with is there.
+            void searchIndexer.start();
+        });
     })
 );

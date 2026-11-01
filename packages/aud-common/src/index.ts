@@ -8,3 +8,4 @@ export * from "./types/library.type";
 export * from "./types/history.type";
 export * from "./types/player.type";
 export * from "./types/playlist.type";
+export * from "./types/search.type";

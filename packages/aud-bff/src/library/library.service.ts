@@ -89,6 +89,15 @@ export class LibraryService extends EventEmitter<LibraryEventMap> {
         return this.artists;
     }
 
+    /** Every track with all its tags, for the search index. */
+    getScannedTracks(): readonly ScannedTrack[] {
+        return this.tracks;
+    }
+
+    getAllAlbums(): LibraryAlbum[] {
+        return [...this.albumById.values()];
+    }
+
     getArtist(artistId: string): LibraryArtist | undefined {
         return this.artistById.get(artistId);
     }
