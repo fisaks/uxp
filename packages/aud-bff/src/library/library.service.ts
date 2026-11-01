@@ -81,7 +81,7 @@ export class LibraryService extends EventEmitter<LibraryEventMap> {
         return this.tracks.length > 0;
     }
 
-    getStatus(): LibraryStatus {
+    getStatus(): Omit<LibraryStatus, "searchAvailable"> {
         return { scanning: this.scanning !== undefined, scannedAt: this.scannedAt, trackCount: this.tracks.length };
     }
 

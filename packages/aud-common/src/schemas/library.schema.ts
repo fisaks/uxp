@@ -27,3 +27,18 @@ export const CoverSchema: SchemaValidate<undefined, undefined, CoverParams> = {
         additionalProperties: false,
     },
 };
+
+export const LibrarySearchSchema = {
+    type: "object",
+    properties: {
+        query: { type: "string", maxLength: 200 },
+        context: { type: "object", properties: { artistId: ID_SCHEMA, albumId: ID_SCHEMA }, additionalProperties: false },
+        limit: { type: "integer", minimum: 1, maximum: 100 },
+        collection: { type: "string", enum: ["music", "audiobooks"] },
+        genre: { type: "string", maxLength: 100 },
+        yearFrom: { type: "integer" },
+        yearTo: { type: "integer" },
+    },
+    required: ["query"],
+    additionalProperties: false,
+};

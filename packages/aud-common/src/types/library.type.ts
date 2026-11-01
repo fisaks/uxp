@@ -33,6 +33,8 @@ export type LibraryStatus = {
     /** When the library was last scanned. */
     scannedAt?: string;
     trackCount: number;
+    /** False when search is not set up or not working, so the UI leaves the search box out. */
+    searchAvailable: boolean;
 };
 
 export type LibraryArtistsResponse = {

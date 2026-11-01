@@ -30,8 +30,8 @@ const SETTINGS: Record<Kind, SearchIndexSettings> = {
         searchableAttributes: ["title", "artist", "album", "composers", "genres", "fileName", "year"],
         filterableAttributes: ["artistId", "albumId", "genres", "year"],
     },
-    albums: { ...base, primaryKey: "id", searchableAttributes: ["title", "artist", "year"], filterableAttributes: ["artistId", "year"] },
-    artists: { ...base, primaryKey: "id", searchableAttributes: ["name"] },
+    albums: { ...base, primaryKey: "id", searchableAttributes: ["title", "artist", "year"], filterableAttributes: ["id", "artistId", "year"] },
+    artists: { ...base, primaryKey: "id", searchableAttributes: ["name"], filterableAttributes: ["id"] },
     books: { ...base, primaryKey: "id", searchableAttributes: ["title", "author"], filterableAttributes: ["authorId"] },
     playlists: { ...base, primaryKey: "id", searchableAttributes: ["name"] },
 };
@@ -74,6 +74,11 @@ export class SearchIndexer {
             AppLogger.error(undefined, { message: "[Search] Could not set up the indexes, search is off", error });
             this.search = undefined;
         }
+    }
+
+    /** The client for searching, which is missing while search is off. */
+    get client(): SearchService | undefined {
+        return this.search;
     }
 
     /** In the dev environment the BFF holds the master key and makes the key of the app itself. In production it is given the scoped key. */
