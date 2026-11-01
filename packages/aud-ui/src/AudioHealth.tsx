@@ -1,6 +1,6 @@
 import { HealthItem } from "@uxp/common";
 import { getUxpWindow, WebSocketProvider } from "@uxp/ui-lib";
-import { AmplifierReachability, AudioAppActionPayloadRequestMap, AudioAppActionPayloadResponseMap } from "@aud/common";
+import { AmplifierReachability, AudioAppActionPayloadRequestMap, AudioAppActionPayloadResponseMap, SearchReachability } from "@aud/common";
 import React, { useCallback, useEffect, useMemo } from "react";
 import {
     AudioAppErrorHandler,
@@ -21,13 +21,15 @@ const AUDIO_SERVER_ERROR: HealthItem = {
 const AUDIO_SERVER_OK: HealthItem = { id: "audio-server", severity: "ok", message: "The audio server is running" };
 const AMPLIFIER_ERROR: HealthItem = { id: "amplifier", severity: "error", message: "The amplifier cannot be reached" };
 const AMPLIFIER_OK: HealthItem = { id: "amplifier", severity: "ok", message: "The amplifier is reachable" };
+const SEARCH_ERROR: HealthItem = { id: "search", severity: "error", message: "Search cannot be reached" };
+const SEARCH_OK: HealthItem = { id: "search", severity: "ok", message: "Search is running" };
 
 // The page only asks questions; a failed check is what it reports, so there is nothing to listen to or to handle.
 const NO_LISTENERS: AudioAppWebSocketResponseListener = {};
 const IGNORE_ERROR: AudioAppErrorHandler = () => true;
 
 /**
- * Asks the audio server every 30 seconds whether it and the amplifier answer, and reports it to UXP. The server cannot
+ * Asks the audio server every 30 seconds whether it, the amplifier and search answer, and reports it to UXP. The server cannot
  * report its own death, so a check that gets no answer is what tells that it is down; the amplifier is then not known.
  * The first check is made when the connection opens (and again after a reconnect), since a message cannot be sent before.
  * The items have no timestamp, so UXP only shows a notice when a severity or a message changes.
@@ -40,7 +42,11 @@ const AudioHealth: React.FC = () => {
             getUxpWindow()?.signal.health({ appId: APP_ID, items, updatedAt: new Date().toISOString() });
         try {
             const { payload } = await ws.sendMessageAsync({ action: "amplifier_check", payload: {} });
-            report([AUDIO_SERVER_OK, (payload as AmplifierReachability | undefined)?.reachable ? AMPLIFIER_OK : AMPLIFIER_ERROR]);
+            const items = [AUDIO_SERVER_OK, (payload as AmplifierReachability | undefined)?.reachable ? AMPLIFIER_OK : AMPLIFIER_ERROR];
+            // Search is optional: it has an item only when the server has it switched on.
+            const search = (await ws.sendMessageAsync({ action: "search_check", payload: {} })).payload as SearchReachability | undefined;
+            if (search?.enabled) items.push(search.reachable ? SEARCH_OK : SEARCH_ERROR);
+            report(items);
         } catch {
             report([AUDIO_SERVER_ERROR]);
         }

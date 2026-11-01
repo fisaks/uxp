@@ -2,7 +2,7 @@ import { WebSocketAction, WebSocketMessage, WebSocketResponse } from "@uxp/commo
 import { AmplifierReachability, AmplifierState } from "./amplifier.type";
 import { PlayerState, RepeatMode } from "./player.type";
 import { HistoryResponse } from "./history.type";
-import { LibrarySearchRequest, LibrarySearchResponse } from "./search.type";
+import { LibrarySearchRequest, LibrarySearchResponse, SearchReachability } from "./search.type";
 import { Playlist, PlaylistSummary } from "./playlist.type";
 import {
     AudiobookAuthorsResponse,
@@ -40,6 +40,8 @@ export type AudioAppActionPayloadRequestMap = {
     library_get_tracks: { albumId: string };
     /** Searches music, books and playlists at once. */
     library_search: LibrarySearchRequest;
+    /** Asks once whether search is on and Meilisearch answers, for the health check. */
+    search_check: Record<string, never>;
     /** The audiobooks have the same shape as the music: authors are artists, books are albums and parts are tracks. */
     audiobook_get_authors: Record<string, never>;
     audiobook_get_books: { artistId: string };
@@ -122,6 +124,7 @@ export type AudioAppActionPayloadResponseMap = {
     library_get_albums: LibraryAlbumsResponse;
     library_get_tracks: LibraryTracksResponse;
     library_search: LibrarySearchResponse;
+    search_check: SearchReachability;
     audiobook_get_authors: AudiobookAuthorsResponse;
     audiobook_get_books: LibraryAlbumsResponse;
     audiobook_get_parts: AudiobookPartsResponse;

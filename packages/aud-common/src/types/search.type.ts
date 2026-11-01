@@ -75,3 +75,9 @@ export type LibrarySearchResponse = {
     /** The values of the matching tracks and albums, with how many each has, for the filter chips. */
     facets: { genres: Record<string, number>; years: Record<string, number> };
 };
+
+/** The answer to the health check: whether search is switched on and, when it is, whether Meilisearch answers. */
+export type SearchReachability = {
+    enabled: boolean;
+    reachable: boolean;
+};

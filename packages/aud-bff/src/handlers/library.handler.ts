@@ -10,6 +10,7 @@ import {
     LibrarySearchSchema,
     LibraryStatus,
     LibraryTracksResponse,
+    SearchReachability,
 } from "@aud/common";
 import { AppErrorV2, AppLogger, WebSocketAction, WebSocketDetails } from "@uxp/bff-common";
 import { ErrorCodes } from "@uxp/common";
@@ -64,6 +65,12 @@ export class LibraryHandler {
     @WebSocketAction("library_get_tracks", { authenticate: true, schema: LibraryGetTracksSchema })
     public getTracks(_wsDetails: WebSocketDetails, message: AudioAppRequestMessage<"library_get_tracks">): LibraryTracksResponse {
         return getTracks(libraryService, message.payload.albumId);
+    }
+
+    @WebSocketAction("search_check", { authenticate: true })
+    public async searchCheck(): Promise<SearchReachability> {
+        const client = searchIndexer.client;
+        return { enabled: client !== undefined, reachable: client ? await client.health() : false };
     }
 
     @WebSocketAction("library_search", { authenticate: true, schema: LibrarySearchSchema })
