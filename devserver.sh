@@ -13,7 +13,7 @@ start_dev_env() {
     fi
     
     
-    docker compose up -d db-server mqtt dev-https
+    docker compose up -d db-server mqtt meilisearch dev-https
     
     
     echo "⏳ Waiting for Mosquitto to be ready on localhost:2883..."
@@ -104,9 +104,12 @@ start_dev_env() {
     
     
     tmux new-window -t $SESSION_NAME -n 'aud'
-    tmux split-window -h -t $SESSION_NAME:3
+    tmux split-window -v -l 30% -t $SESSION_NAME:3
+    tmux split-window -h -t $SESSION_NAME:3.0
     tmux send-keys -t $SESSION_NAME:3.0 "pnpm run start:aud-bff" C-m
     tmux send-keys -t $SESSION_NAME:3.1 "pnpm run start:aud-app" C-m
+    tmux send-keys -t $SESSION_NAME:3.2 "docker logs -f uxp-meilisearch" C-m
+    tmux select-pane -t $SESSION_NAME:3.0
 
     # Select the first tab
     tmux select-window -t $SESSION_NAME:0

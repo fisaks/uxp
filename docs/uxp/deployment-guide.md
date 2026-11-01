@@ -164,6 +164,14 @@ Pub/sub message bus available to any remote app that needs it. How it's used dep
 
 **Why its own container:** The broker must be reachable by any service that needs it. Running it separately makes it independently restartable and configurable.
 
+### Search (Meilisearch)
+
+Full-text search service available to any remote app that needs it, like the database and the MQTT broker. The platform itself does not use it. An app BFF talks to it over HTTP with `MEILI_URL` and `MEILI_API_KEY`; without them search is simply off. Each app keeps its own indexes under an `<app>_` prefix and should use a scoped API key limited to those indexes, never the master key (`MEILI_MASTER_KEY`, admin only).
+
+In development it is the `meilisearch` service in `docker-compose.yaml` (port 7700, started by `devserver.sh`, master key in `.env.dev`). The data is derived from the app's own source data and rebuilt by a reindex, so it needs no backup.
+
+**Why its own container:** Independently restartable, and shared by any app instead of each embedding its own search.
+
 ### App BFF (one per app)
 
 Each remote application has its own backend container with its own domain logic. For example: a home automation app that orchestrates lighting and sensors, an HVAC/climate control app that manages heating circuits and schedules, a security camera app that handles streams and motion events, or an energy monitoring app that tracks solar and consumption data.

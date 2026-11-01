@@ -30,6 +30,22 @@ services:
             - ./mosquitto/log:/mosquitto/log
         command: ["mosquitto", "-c", "/mosquitto/config/mosquitto.conf"]
 
+    meilisearch:
+        image: getmeili/meilisearch:v1.12
+        container_name: uxp-meilisearch
+        restart: unless-stopped
+        env_file:
+            - ./.env.dev
+        environment:
+            - MEILI_ENV=development
+            - MEILI_NO_ANALYTICS=true
+        ports:
+            - "7700:7700"
+        volumes:
+            - meili_dev_data:/meili_data
+        networks:
+            - uxp-network
+
     dev-https:
         image: nginx:alpine
         container_name: uxp-dev-https
@@ -43,6 +59,7 @@ services:
 
 volumes:
     db_dev_data:
+    meili_dev_data:
 
 networks:
     uxp-network:
