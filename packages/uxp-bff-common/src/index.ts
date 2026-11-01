@@ -26,3 +26,4 @@ export * from "./health/health.controller";
 export * from "./websocket/ServerWebSocketManager";
 export * from "./websocket/registerLocalWebSocketHandlers";
 export * from "./services/mqtt.service";
+export * from "./services/search.service";
