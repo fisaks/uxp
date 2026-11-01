@@ -40,8 +40,8 @@ export type SearchBookDoc = { id: string; authorId: string; title: string; autho
 export type SearchPlaylistDoc = { id: string; name: string };
 
 /** Marks the start and end of the matched text in `LibrarySearchHit.highlighted`. Not HTML: the UI splits the text at these and marks what is between. */
-export const HIGHLIGHT_START = "";
-export const HIGHLIGHT_END = "";
+export const HIGHLIGHT_START = "\uE000";
+export const HIGHLIGHT_END = "\uE001";
 
 /** Where the user is when searching. The hits of that artist or album are ranked first, everything else is still found. */
 export type LibrarySearchContext = { artistId?: string; albumId?: string };
