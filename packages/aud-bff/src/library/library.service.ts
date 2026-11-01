@@ -7,7 +7,7 @@ import { LibraryConfig, audiobookConfig, libraryConfig } from "./library.config"
 import { scanLibrary } from "./library-scanner";
 import { ScannedAlbumFolder, ScannedTrack } from "./library.types";
 
-const CACHE_VERSION = 1;
+const CACHE_VERSION = 2;
 
 type Cache = { version: number; scannedAt: string; tracks: ScannedTrack[]; albumFolders: ScannedAlbumFolder[] };
 

@@ -66,6 +66,12 @@ const discNoFromFolders = (file: string) => {
     return digits ? Number(digits) : undefined;
 };
 
+/** The trimmed, non-empty values of a multi-value tag, or undefined when there are none. */
+const tagValues = (values: string[] | undefined) => {
+    const trimmed = values?.map((v) => v.trim()).filter((v) => v !== "");
+    return trimmed?.length ? trimmed : undefined;
+};
+
 const positive = (value: number | null | undefined) => (value && value > 0 ? value : undefined);
 
 type Placement = { artistName: string; albumTitle: string; folder: string };
@@ -115,6 +121,8 @@ const readTrack = async (
                 discNo: positive(common.disk.no) ?? base.discNo,
                 durationSec: format.duration ? Math.round(format.duration) : undefined,
                 year: positive(common.year),
+                genres: tagValues(common.genre),
+                composers: tagValues(common.composer),
             },
         };
     } catch {

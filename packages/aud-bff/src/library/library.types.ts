@@ -6,6 +6,8 @@ export type ScannedTrack = LibraryTrack & {
     size: number;
     modifiedMs: number;
     year?: number;
+    genres?: string[];
+    composers?: string[];
 };
 
 /** What the scanner found about an album folder, next to its tracks. */
