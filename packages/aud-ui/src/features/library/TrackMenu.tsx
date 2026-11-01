@@ -9,7 +9,7 @@ type TrackMenuProps = {
     lastPlaylist?: { id: string; name: string };
     onAddToLastPlaylist: () => void;
     onAddToPlaylist: () => void;
-    onPlayAlbumFromHere: () => void;
+    onPlayAlbumFromHere?: () => void;
 };
 
 /** The "more" menu of a track row: what is done less often than adding it to the queue. */
@@ -43,9 +43,11 @@ export const TrackMenu: React.FC<TrackMenuProps> = ({
                 <MenuItem onClick={choose(onAddToPlaylist)}>
                     <ListItemText>Add to playlist...</ListItemText>
                 </MenuItem>
-                <MenuItem onClick={choose(onPlayAlbumFromHere)}>
-                    <ListItemText>Play album from here</ListItemText>
-                </MenuItem>
+                {onPlayAlbumFromHere && (
+                    <MenuItem onClick={choose(onPlayAlbumFromHere)}>
+                        <ListItemText>Play album from here</ListItemText>
+                    </MenuItem>
+                )}
             </Menu>
         </>
     );

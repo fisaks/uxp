@@ -1,7 +1,7 @@
 import PlaylistAddIcon from "@mui/icons-material/PlaylistAdd";
 import { ListItem, ListItemButton, ListItemText, Stack, Typography } from "@mui/material";
 import { LibraryTrack } from "@aud/common";
-import React from "react";
+import React, { ReactNode } from "react";
 import { LabelledIconButton } from "../shared/LabelledIconButton";
 import { formatDuration } from "./libraryFormat";
 import { TrackMenu } from "./TrackMenu";
@@ -10,6 +10,9 @@ type TrackRowProps = {
     track: LibraryTrack;
     /** Shown under the title when the performer is not the artist of the album. */
     artistName: string;
+    /** Replaces the title and the line under it, for a track that is shown outside its album (the track number is left out then). */
+    primary?: ReactNode;
+    secondary?: ReactNode;
     playing: boolean;
     onPress: () => void;
     onAddToQueue: () => void;
@@ -17,14 +20,15 @@ type TrackRowProps = {
     lastPlaylist?: { id: string; name: string };
     onAddToLastPlaylist: () => void;
     onAddToPlaylist: () => void;
-    onPlayAlbumFromHere: () => void;
+    /** Left out where the album is not at hand, as in the search results. */
+    onPlayAlbumFromHere?: () => void;
 };
 
 // The room for the length and the two buttons at the right of the row.
 const ROOM_FOR_BUTTONS = 16;
 
 /** A track of an album: pressing it plays it, the + puts it in the queue, and the menu has the rest. */
-export const TrackRow: React.FC<TrackRowProps> = ({ track, artistName, playing, onPress, onAddToQueue, ...menu }) => (
+export const TrackRow: React.FC<TrackRowProps> = ({ track, artistName, primary, secondary, playing, onPress, onAddToQueue, ...menu }) => (
     <ListItem
         disablePadding
         divider
@@ -41,12 +45,14 @@ export const TrackRow: React.FC<TrackRowProps> = ({ track, artistName, playing, 
         }
     >
         <ListItemButton selected={playing} onClick={onPress} sx={{ pr: ROOM_FOR_BUTTONS }}>
-            <Typography color="text.secondary" sx={{ width: 32, flexShrink: 0 }}>
-                {track.trackNo ?? ""}
-            </Typography>
+            {primary === undefined && (
+                <Typography color="text.secondary" sx={{ width: 32, flexShrink: 0 }}>
+                    {track.trackNo ?? ""}
+                </Typography>
+            )}
             <ListItemText
-                primary={track.title}
-                secondary={track.artist !== artistName ? track.artist : undefined}
+                primary={primary ?? track.title}
+                secondary={secondary ?? (track.artist !== artistName ? track.artist : undefined)}
                 slotProps={{ primary: { sx: { overflowWrap: "anywhere", fontWeight: playing ? 600 : undefined } } }}
             />
         </ListItemButton>

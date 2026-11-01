@@ -9,6 +9,8 @@ import LibraryPage from "./features/library/LibraryPage";
 import { BottomDock } from "./features/player/BottomDock";
 import PlaylistsPage from "./features/playlist/PlaylistsPage";
 import QueuePage from "./features/player/QueuePage";
+import { SearchPage } from "./features/search/SearchPage";
+import { SEARCH_PATH } from "./features/search/searchPath";
 
 export const AudioBody = () => {
     return (
@@ -20,6 +22,7 @@ export const AudioBody = () => {
                     <Route path="/library/*" element={<LibraryPage />} />
                     <Route path="/audiobooks/*" element={<AudiobooksPage />} />
                     <Route path="/playlists/*" element={<PlaylistsPage />} />
+                    <Route path={SEARCH_PATH} element={<SearchPage />} />
                     <Route path="/queue" element={<QueuePage />} />
                     <Route path="/history" element={<HistoryPage />} />
                     <Route path="*" element={<Navigate to="/amplifier" replace={true} />} />

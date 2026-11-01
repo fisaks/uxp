@@ -21,7 +21,7 @@ import {
 } from "@mui/material";
 import { usePortalContainerRef } from "@uxp/ui-lib";
 import React, { useRef, useState } from "react";
-import { useMatch, useNavigate } from "react-router-dom";
+import { useMatch, useNavigate, useSearchParams } from "react-router-dom";
 import { useAppSelector } from "../../hooks";
 import { selectCurrentTrackId } from "../player/playerSelectors";
 import { usePlayerActions } from "../player/usePlayerActions";
@@ -30,6 +30,7 @@ import { useRequest } from "../shared/useRequest";
 import { HighlightedText } from "./HighlightedText";
 import { clearRecentSearches, loadRecentSearches, rememberSearch } from "./recentSearches";
 import { useLibrarySearch } from "./useLibrarySearch";
+import { SEARCH_PATH, searchPagePath } from "./searchPath";
 
 const DROPDOWN_MAX_HEIGHT = "70vh";
 // The room for the + button at the right of a track.
@@ -56,7 +57,10 @@ export const SearchBox: React.FC = () => {
     const { playTracks, playNow, enqueue, hadQueue } = usePlayerActions();
     const playingId = useAppSelector(selectCurrentTrackId);
     const anchorRef = useRef<HTMLDivElement>(null);
-    const [query, setQuery] = useState("");
+    // On the results page the box starts with the words of the page.
+    const onResultsPage = useMatch(SEARCH_PATH) !== null;
+    const [searchParams] = useSearchParams();
+    const [query, setQuery] = useState(() => (onResultsPage ? (searchParams.get("q") ?? "") : ""));
     const [open, setOpen] = useState(false);
     const [recent, setRecent] = useState(loadRecentSearches);
     const { response, failed } = useLibrarySearch(query, context);
@@ -67,6 +71,15 @@ export const SearchBox: React.FC = () => {
     const hitCount = response
         ? response.artists.length + response.albums.length + response.tracks.length + response.books.length + response.playlists.length
         : 0;
+
+    /** Shows all the hits of the words on the results page. */
+    const showAll = (words = query) => {
+        const wanted = words.trim();
+        if (!wanted) return;
+        setRecent(rememberSearch(wanted));
+        setOpen(false);
+        navigate(searchPagePath(wanted));
+    };
 
     /** Opens what the hit is, remembers the search and closes the dropdown. */
     const choose = (action: () => void) => () => {
@@ -93,7 +106,7 @@ export const SearchBox: React.FC = () => {
                     onFocus={() => setOpen(true)}
                     onKeyDown={(e) => {
                         if (e.key === "Escape") setOpen(false);
-                        if (e.key === "Enter" && trimmed) setRecent(rememberSearch(query));
+                        if (e.key === "Enter") showAll();
                     }}
                     slotProps={{
                         input: {
@@ -123,7 +136,13 @@ export const SearchBox: React.FC = () => {
                         {!trimmed && (
                             <List dense disablePadding subheader={subheader("Recent searches")}>
                                 {recent.map((item) => (
-                                    <ListItemButton key={item} onClick={() => setQuery(item)}>
+                                    <ListItemButton
+                                        key={item}
+                                        onClick={() => {
+                                            setQuery(item);
+                                            showAll(item);
+                                        }}
+                                    >
                                         <ListItemIcon sx={{ minWidth: 32 }}>
                                             <HistoryIcon fontSize="small" color="info" />
                                         </ListItemIcon>
@@ -222,6 +241,11 @@ export const SearchBox: React.FC = () => {
                                         <ListItemText primary={text(hit, "name", hit.item.name)} />
                                     </ListItemButton>
                                 ))}
+                                <Box sx={{ p: 0.5 }}>
+                                    <Button size="small" onClick={() => showAll()}>
+                                        Show all results
+                                    </Button>
+                                </Box>
                             </List>
                         )}
                     </Paper>
