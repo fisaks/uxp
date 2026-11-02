@@ -1,7 +1,8 @@
-import { Alert, CircularProgress, List, ListItemButton, ListItemText } from "@mui/material";
+import { Alert, CircularProgress } from "@mui/material";
 import React from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { LibraryBreadcrumbs } from "../library/LibraryBreadcrumbs";
+import { Navigate, useNavigate, useParams } from "react-router-dom";
+import { AlbumCover } from "../library/AlbumCover";
+import { Tile, TileGrid } from "../library/TileGrid";
 import { useRequest } from "../shared/useRequest";
 
 export const BooksView: React.FC = () => {
@@ -11,17 +12,22 @@ export const BooksView: React.FC = () => {
 
     if (error) return <Alert severity="error">{error}</Alert>;
     if (!data) return <CircularProgress size={24} />;
+    // With a single one there is nothing to choose from, so the page is skipped, and Back goes to the list the artist was chosen in.
+    if (data.albums.length === 1) return <Navigate to={`/audiobooks/book/${data.albums[0].id}`} replace />;
 
     return (
         <>
-            <LibraryBreadcrumbs trail={[{ label: "Audiobooks", to: "/audiobooks" }]} current={data.artist.name} />
-            <List disablePadding>
+            <TileGrid>
                 {data.albums.map((book) => (
-                    <ListItemButton key={book.id} onClick={() => navigate(`/audiobooks/book/${book.id}`)}>
-                        <ListItemText primary={book.title} secondary={book.trackCount === 1 ? "1 part" : `${book.trackCount} parts`} />
-                    </ListItemButton>
+                    <Tile
+                        key={book.id}
+                        picture={<AlbumCover collection="audiobooks" albumId={book.id} hasCover={book.hasCover} />}
+                        title={book.title}
+                        subtitle={book.trackCount === 1 ? "1 part" : `${book.trackCount} parts`}
+                        onClick={() => navigate(`/audiobooks/book/${book.id}`)}
+                    />
                 ))}
-            </List>
+            </TileGrid>
         </>
     );
 };

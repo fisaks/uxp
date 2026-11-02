@@ -13,6 +13,8 @@ export const PlayerPlayTracksSchema = {
         startIndex: { type: "integer", minimum: 0 },
         /** Turns shuffle on or off for the new queue, which keeps the setting of before when it is missing. */
         shuffle: { type: "boolean" },
+        /** The playlist the tracks come from, so that it is remembered as played. */
+        playlistId: { type: "string", minLength: 1 },
     },
     required: ["trackIds"],
     additionalProperties: false,

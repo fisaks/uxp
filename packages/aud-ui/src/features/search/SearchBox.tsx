@@ -49,7 +49,14 @@ const text = (hit: LibrarySearchHit<unknown>, field: string, plain: string) => <
  * The search box of the app: while typing, a dropdown shows the best few hits of the artists, albums, tracks, books and
  * playlists, and with an empty box the last searches. It is left out when the server has no search.
  */
-export const SearchBox: React.FC = () => {
+type SearchBoxProps = {
+    /** Puts the cursor in the box when it is shown, for a box that was opened by pressing the search icon. */
+    autoFocus?: boolean;
+    /** Called when the search is done: the results page was opened or a hit was chosen. */
+    onDone?: () => void;
+};
+
+export const SearchBox: React.FC<SearchBoxProps> = ({ autoFocus, onDone }) => {
     const navigate = useNavigate();
     const portalContainer = usePortalContainerRef();
     const { data } = useRequest("library_get_artists", {});
@@ -79,6 +86,7 @@ export const SearchBox: React.FC = () => {
         setRecent(rememberSearch(wanted));
         setOpen(false);
         navigate(searchPagePath(wanted));
+        onDone?.();
     };
 
     /** Opens what the hit is, remembers the search and closes the dropdown. */
@@ -86,6 +94,7 @@ export const SearchBox: React.FC = () => {
         setRecent(rememberSearch(query));
         setOpen(false);
         action();
+        onDone?.();
     };
 
     const subheader = (label: string) => <ListSubheader sx={{ lineHeight: "32px" }}>{label}</ListSubheader>;
@@ -96,6 +105,7 @@ export const SearchBox: React.FC = () => {
                 <TextField
                     size="small"
                     fullWidth
+                    autoFocus={autoFocus}
                     placeholder="Search"
                     value={query}
                     onChange={(e) => {

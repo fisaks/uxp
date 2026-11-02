@@ -1,4 +1,4 @@
-import { Alert, Box, CircularProgress, List, ListSubheader, Stack, Typography } from "@mui/material";
+import { Alert, CircularProgress, List, ListSubheader, Typography } from "@mui/material";
 import { LibraryTrack } from "@aud/common";
 import React, { useState } from "react";
 import { useParams } from "react-router-dom";
@@ -10,12 +10,9 @@ import { AddToPlaylistDialog } from "../playlist/AddToPlaylistDialog";
 import { usePlaylistCommand } from "../playlist/usePlaylistCommand";
 import { useRequest } from "../shared/useRequest";
 import { AlbumActions } from "./AlbumActions";
-import { AlbumCover } from "./AlbumCover";
+import { AlbumPage } from "./AlbumPage";
 import { formatDuration } from "./libraryFormat";
-import { LibraryBreadcrumbs } from "./LibraryBreadcrumbs";
 import { TrackRow } from "./TrackRow";
-
-const COVER_SIZE = 120;
 
 /** The tracks of one disc, or of the whole album when it has a single disc. */
 const groupByDisc = (tracks: LibraryTrack[]): { disc?: number; tracks: LibraryTrack[] }[] => {
@@ -50,53 +47,49 @@ export const TracksView: React.FC = () => {
 
     return (
         <>
-            <LibraryBreadcrumbs
-                trail={[
-                    { label: "Library", to: "/library" },
-                    { label: artist.name, to: `/library/artist/${artist.id}` },
-                ]}
-                current={album.title}
-            />
-            <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
-                <Box sx={{ width: COVER_SIZE, flexShrink: 0 }}>
-                    <AlbumCover collection="music" albumId={album.id} hasCover={album.hasCover} />
-                </Box>
-                <Box sx={{ minWidth: 0 }}>
-                    <Typography variant="h5" sx={{ overflowWrap: "anywhere" }}>
-                        {album.title}
-                    </Typography>
-                    <Typography color="text.secondary">
-                        {[artist.name, album.year, `${tracks.length} tracks`, totalSeconds > 0 && formatDuration(totalSeconds)]
-                            .filter(Boolean)
-                            .join(" · ")}
-                    </Typography>
-                    <AlbumActions trackIds={trackIds} onAddToPlaylist={() => setPlaylistTrackIds(trackIds)} />
-                </Box>
-            </Stack>
-            {groupByDisc(tracks).map(({ disc, tracks: discTracks }) => (
-                <List
-                    key={disc ?? "all"}
-                    disablePadding
-                    subheader={disc === undefined ? undefined : <ListSubheader disableGutters>Disc {disc}</ListSubheader>}
-                >
-                    {discTracks.map((track) => (
-                        <TrackRow
-                            key={track.id}
-                            track={track}
-                            artistName={artist.name}
-                            playing={track.id === playingId}
-                            // With a queue the track is played now and the queue is kept, without one the album is played from it.
-                            onPress={() => (hadQueue ? playNow(track.id) : playTracks(trackIds, trackIds.indexOf(track.id)))}
-                            onAddToQueue={() => enqueue([track.id])}
-                            onPlayNext={() => playNext([track.id])}
-                            lastPlaylist={lastPlaylist}
-                            onAddToLastPlaylist={() => addToLastPlaylist(track)}
-                            onAddToPlaylist={() => setPlaylistTrackIds([track.id])}
-                            onPlayAlbumFromHere={() => playTracks(trackIds, trackIds.indexOf(track.id))}
-                        />
-                    ))}
-                </List>
-            ))}
+            <AlbumPage
+                collection="music"
+                artistId={artist.id}
+                album={album}
+                info={
+                    <>
+                        <Typography variant="h5" sx={{ overflowWrap: "anywhere" }}>
+                            {album.title}
+                        </Typography>
+                        <Typography color="text.secondary">
+                            {[artist.name, album.year, `${tracks.length} tracks`, totalSeconds > 0 && formatDuration(totalSeconds)]
+                                .filter(Boolean)
+                                .join(" · ")}
+                        </Typography>
+                        <AlbumActions trackIds={trackIds} onAddToPlaylist={() => setPlaylistTrackIds(trackIds)} />
+                    </>
+                }
+            >
+                {groupByDisc(tracks).map(({ disc, tracks: discTracks }) => (
+                    <List
+                        key={disc ?? "all"}
+                        disablePadding
+                        subheader={disc === undefined ? undefined : <ListSubheader disableGutters>Disc {disc}</ListSubheader>}
+                    >
+                        {discTracks.map((track) => (
+                            <TrackRow
+                                key={track.id}
+                                track={track}
+                                artistName={artist.name}
+                                playing={track.id === playingId}
+                                // With a queue the track is played now and the queue is kept, without one the album is played from it.
+                                onPress={() => (hadQueue ? playNow(track.id) : playTracks(trackIds, trackIds.indexOf(track.id)))}
+                                onAddToQueue={() => enqueue([track.id])}
+                                onPlayNext={() => playNext([track.id])}
+                                lastPlaylist={lastPlaylist}
+                                onAddToLastPlaylist={() => addToLastPlaylist(track)}
+                                onAddToPlaylist={() => setPlaylistTrackIds([track.id])}
+                                onPlayAlbumFromHere={() => playTracks(trackIds, trackIds.indexOf(track.id))}
+                            />
+                        ))}
+                    </List>
+                ))}
+            </AlbumPage>
             <AddToPlaylistDialog trackIds={playlistTrackIds} title="Add to a playlist" onClose={() => setPlaylistTrackIds(undefined)} />
         </>
     );

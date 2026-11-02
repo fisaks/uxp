@@ -1,5 +1,5 @@
 import { EventEmitter } from "events";
-import { LibraryAlbum, LibraryArtist, LibraryStatus, LibraryTrack, QueueTrack } from "@aud/common";
+import { LibraryAlbum, LibraryArtist, LibraryStatus, LibraryTrack, MAX_ARTIST_COVERS, QueueTrack } from "@aud/common";
 import { AppLogger } from "@uxp/bff-common";
 import path from "path";
 import { readJsonFile, writeJsonFile } from "../storage/json-file";
@@ -233,7 +233,16 @@ export class LibraryService extends EventEmitter<LibraryEventMap> {
         this.coverByAlbum = new Map(folders.flatMap((f) => (f.cover ? [[f.id, f.cover] as const] : [])));
         this.albumsByArtist = albumsByArtist;
         this.albumById = albumById;
-        this.artists = [...artistNames].map(([id, name]) => ({ id, name, albumCount: albumsByArtist.get(id)!.length })).sort(byName);
+        this.artists = [...artistNames]
+            .map(([id, name]) => {
+                const artistAlbums = albumsByArtist.get(id)!;
+                const coverAlbumIds = artistAlbums
+                    .filter((album) => album.hasCover)
+                    .slice(0, MAX_ARTIST_COVERS)
+                    .map((album) => album.id);
+                return { id, name, albumCount: artistAlbums.length, coverAlbumIds };
+            })
+            .sort(byName);
         this.artistById = new Map(this.artists.map((artist) => [artist.id, artist]));
         this.scannedAt = scannedAt;
         return changed;

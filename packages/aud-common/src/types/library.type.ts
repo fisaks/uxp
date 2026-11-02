@@ -3,7 +3,11 @@ export type LibraryArtist = {
     id: string;
     name: string;
     albumCount: number;
+    /** Up to MAX_ARTIST_COVERS albums of the artist that have a cover, for the picture of the artist. */
+    coverAlbumIds: string[];
 };
+
+export const MAX_ARTIST_COVERS = 4;
 
 export type LibraryAlbum = {
     id: string;

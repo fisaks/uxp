@@ -1,8 +1,8 @@
-import { Alert, Card, CardActionArea, CardContent, CircularProgress, Typography } from "@mui/material";
+import { Alert, CircularProgress } from "@mui/material";
 import React from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { AlbumCover } from "./AlbumCover";
-import { LibraryBreadcrumbs } from "./LibraryBreadcrumbs";
+import { Tile, TileGrid } from "./TileGrid";
 import { useRequest } from "../shared/useRequest";
 
 export const AlbumsView: React.FC = () => {
@@ -12,27 +12,22 @@ export const AlbumsView: React.FC = () => {
 
     if (error) return <Alert severity="error">{error}</Alert>;
     if (!data) return <CircularProgress size={24} />;
+    // With a single one there is nothing to choose from, so the page is skipped, and Back goes to the list the artist was chosen in.
+    if (data.albums.length === 1) return <Navigate to={`/library/album/${data.albums[0].id}`} replace />;
 
     return (
         <>
-            <LibraryBreadcrumbs trail={[{ label: "Library", to: "/library" }]} current={data.artist.name} />
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 16 }}>
+            <TileGrid>
                 {data.albums.map((album) => (
-                    <Card key={album.id}>
-                        <CardActionArea onClick={() => navigate(`/library/album/${album.id}`)}>
-                            <AlbumCover collection="music" albumId={album.id} hasCover={album.hasCover} />
-                            <CardContent sx={{ p: 1.5 }}>
-                                <Typography variant="body2" sx={{ fontWeight: 600, overflowWrap: "anywhere" }}>
-                                    {album.title}
-                                </Typography>
-                                <Typography variant="caption" color="text.secondary">
-                                    {[album.year, `${album.trackCount} tracks`].filter(Boolean).join(" · ")}
-                                </Typography>
-                            </CardContent>
-                        </CardActionArea>
-                    </Card>
+                    <Tile
+                        key={album.id}
+                        picture={<AlbumCover collection="music" albumId={album.id} hasCover={album.hasCover} />}
+                        title={album.title}
+                        subtitle={[album.year, `${album.trackCount} tracks`].filter(Boolean).join(" · ")}
+                        onClick={() => navigate(`/library/album/${album.id}`)}
+                    />
                 ))}
-            </div>
+            </TileGrid>
         </>
     );
 };

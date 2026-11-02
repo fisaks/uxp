@@ -13,6 +13,7 @@ import {
 } from "@aud/common";
 import { WebSocketAction, WebSocketDetails } from "@uxp/bff-common";
 import { playerService } from "../player/player.service";
+import { playlistService } from "../playlists/playlist.service";
 
 export class PlayerHandler {
     @WebSocketAction("player_subscribe", { authenticate: true })
@@ -21,8 +22,11 @@ export class PlayerHandler {
     }
 
     @WebSocketAction("player_play_tracks", { authenticate: true, schema: PlayerPlayTracksSchema })
-    public playTracks(_wsDetails: WebSocketDetails, message: AudioAppRequestMessage<"player_play_tracks">) {
-        return playerService.playTracks(message.payload.trackIds, message.payload.startIndex, message.payload.shuffle);
+    public async playTracks(_wsDetails: WebSocketDetails, message: AudioAppRequestMessage<"player_play_tracks">) {
+        const { trackIds, startIndex, shuffle, playlistId } = message.payload;
+        const state = await playerService.playTracks(trackIds, startIndex, shuffle);
+        if (playlistId) await playlistService.markPlayed(playlistId);
+        return state;
     }
 
     @WebSocketAction("player_play_book", { authenticate: true, schema: PlayerPlayBookSchema })

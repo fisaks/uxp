@@ -1,4 +1,4 @@
-import { MAX_PLAYLIST_NAME_LENGTH, Playlist, PlaylistEntry, PlaylistSummary, QueueTrack } from "@aud/common";
+import { MAX_ARTIST_COVERS, MAX_PLAYLIST_NAME_LENGTH, Playlist, PlaylistEntry, PlaylistSummary, QueueTrack } from "@aud/common";
 import { AppErrorV2, AppLogger } from "@uxp/bff-common";
 import { ErrorCodes } from "@uxp/common";
 import { randomUUID } from "crypto";
@@ -15,6 +15,7 @@ type StoredPlaylist = {
     name: string;
     createdAt: string;
     updatedAt: string;
+    lastPlayedAt?: string;
     /** The id is what counts, the name ("Artist - Title") is for whoever reads the file and for a track that is gone. */
     tracks: { id: string; name: string }[];
 };
@@ -106,6 +107,15 @@ export class PlaylistService extends EventEmitter<PlaylistEventMap> {
         return this.list();
     }
 
+    /** Remembers that the playlist was played now. An unknown playlist (deleted meanwhile) is ignored. */
+    async markPlayed(id: string): Promise<void> {
+        const playlist = this.playlists.find((candidate) => candidate.id === id);
+        if (!playlist) return;
+        playlist.lastPlayedAt = new Date().toISOString();
+        await this.save();
+        this.emit("changed");
+    }
+
     async addTracks(id: string, trackIds: string[]): Promise<Playlist> {
         const playlist = this.require(id);
         playlist.tracks.push(...this.resolve(trackIds));
@@ -152,7 +162,21 @@ export class PlaylistService extends EventEmitter<PlaylistEventMap> {
 
     private summarize(playlist: StoredPlaylist): PlaylistSummary {
         const durationSec = playlist.tracks.reduce((sum, { id }) => sum + (this.library.getTrack(id)?.durationSec ?? 0), 0);
-        return { id: playlist.id, name: playlist.name, trackCount: playlist.tracks.length, durationSec, updatedAt: playlist.updatedAt };
+        const coverAlbumIds = new Set<string>();
+        for (const { id } of playlist.tracks) {
+            const track = this.library.getTrack(id);
+            if (track?.hasCover) coverAlbumIds.add(track.albumId);
+            if (coverAlbumIds.size === MAX_ARTIST_COVERS) break;
+        }
+        return {
+            id: playlist.id,
+            name: playlist.name,
+            trackCount: playlist.tracks.length,
+            durationSec,
+            updatedAt: playlist.updatedAt,
+            lastPlayedAt: playlist.lastPlayedAt,
+            coverAlbumIds: [...coverAlbumIds],
+        };
     }
 
     private save(): Promise<void> {

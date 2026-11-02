@@ -1,35 +1,27 @@
-import RefreshIcon from "@mui/icons-material/Refresh";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import {
     Alert,
     CircularProgress,
-    IconButton,
     LinearProgress,
     List,
     ListItemButton,
     ListItemIcon,
     ListItemText,
     ListSubheader,
-    Stack,
-    TextField,
-    Tooltip,
     Typography,
 } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAudioWebSocket } from "../../app/AudioBrowserWebSocketManager";
 import { usePlayerActions } from "../player/usePlayerActions";
-import { LibraryBreadcrumbs } from "../library/LibraryBreadcrumbs";
+import { ArtistGrid } from "../library/ArtistGrid";
 import { useRequest } from "../shared/useRequest";
 
 const SCAN_POLL_MS = 3000;
 
 export const AuthorsView: React.FC = () => {
     const navigate = useNavigate();
-    const { sendMessageAsync } = useAudioWebSocket();
     const { playBook } = usePlayerActions();
     const { data, error, reload } = useRequest("audiobook_get_authors", {});
-    const [filter, setFilter] = useState("");
     const scanning = data?.status.scanning;
 
     // While a scan is running the lists grow, so they are asked for again until it is done.
@@ -39,29 +31,11 @@ export const AuthorsView: React.FC = () => {
         return () => clearTimeout(timer);
     }, [scanning, data, reload]);
 
-    const rescan = async () => {
-        await sendMessageAsync("audiobook_scan", {});
-        void reload();
-    };
-
     if (error) return <Alert severity="error">{error}</Alert>;
     if (!data) return <CircularProgress size={24} />;
 
-    const authors = data.artists.filter((author) => author.name.toLowerCase().includes(filter.trim().toLowerCase()));
-
     return (
         <>
-            <LibraryBreadcrumbs trail={[]} current="Audiobooks" />
-            <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
-                <TextField size="small" fullWidth placeholder="Filter authors" value={filter} onChange={(e) => setFilter(e.target.value)} />
-                <Tooltip title="Scan the audiobook folder again">
-                    <span>
-                        <IconButton onClick={rescan} disabled={scanning} aria-label="Scan the audiobook folder again">
-                            <RefreshIcon />
-                        </IconButton>
-                    </span>
-                </Tooltip>
-            </Stack>
             {scanning && (
                 <Alert severity="info" icon={<CircularProgress size={18} />} sx={{ mb: 1 }}>
                     Scanning the audiobook folder, {data.status.trackCount} parts so far...
@@ -74,7 +48,7 @@ export const AuthorsView: React.FC = () => {
                     sx={{ mb: 2 }}
                     subheader={
                         <ListSubheader disableGutters sx={{ bgcolor: "transparent" }}>
-                            Continue listening
+                            Latest listened
                         </ListSubheader>
                     }
                 >
@@ -103,21 +77,12 @@ export const AuthorsView: React.FC = () => {
                     ))}
                 </List>
             )}
-            <List disablePadding>
-                {authors.map((author) => (
-                    <ListItemButton key={author.id} onClick={() => navigate(`/audiobooks/author/${author.id}`)}>
-                        <ListItemText
-                            primary={author.name}
-                            secondary={`${author.albumCount} ${author.albumCount === 1 ? "book" : "books"}`}
-                        />
-                    </ListItemButton>
-                ))}
-            </List>
-            {data.artists.length > 0 && authors.length === 0 && (
-                <Typography color="text.secondary" sx={{ py: 1 }}>
-                    No author matches.
-                </Typography>
-            )}
+            <ArtistGrid
+                collection="audiobooks"
+                artists={data.artists}
+                unit="book"
+                onOpen={(author) => navigate(`/audiobooks/author/${author.id}`)}
+            />
         </>
     );
 };

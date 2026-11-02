@@ -1,8 +1,10 @@
 import AddIcon from "@mui/icons-material/Add";
-import { Alert, Button, CircularProgress, List, ListItemButton, ListItemText, Stack, Typography } from "@mui/material";
+import { Alert, Button, CircularProgress, Stack, Typography } from "@mui/material";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { CoverMosaic } from "../library/CoverMosaic";
 import { formatDuration } from "../library/libraryFormat";
+import { Tile, TileGrid } from "../library/TileGrid";
 import { useRequest } from "../shared/useRequest";
 import { NamePlaylistDialog } from "./NamePlaylistDialog";
 import { usePlaylistCommand } from "./usePlaylistCommand";
@@ -35,21 +37,22 @@ export const PlaylistListView: React.FC = () => {
                     No playlists yet. Make one here, or save the queue or an album from the Library as a playlist.
                 </Typography>
             )}
-            <List disablePadding>
+            <TileGrid>
                 {playlists.map((playlist) => (
-                    <ListItemButton key={playlist.id} onClick={() => navigate(`/playlists/${playlist.id}`)}>
-                        <ListItemText
-                            primary={playlist.name}
-                            secondary={[
-                                `${playlist.trackCount} ${playlist.trackCount === 1 ? "track" : "tracks"}`,
-                                playlist.durationSec > 0 && formatDuration(playlist.durationSec),
-                            ]
-                                .filter(Boolean)
-                                .join(" · ")}
-                        />
-                    </ListItemButton>
+                    <Tile
+                        key={playlist.id}
+                        picture={<CoverMosaic collection="music" albumIds={playlist.coverAlbumIds} />}
+                        title={playlist.name}
+                        subtitle={[
+                            `${playlist.trackCount} ${playlist.trackCount === 1 ? "track" : "tracks"}`,
+                            playlist.durationSec > 0 && formatDuration(playlist.durationSec),
+                        ]
+                            .filter(Boolean)
+                            .join(" · ")}
+                        onClick={() => navigate(`/playlists/${playlist.id}`)}
+                    />
                 ))}
-            </List>
+            </TileGrid>
             <NamePlaylistDialog
                 open={naming}
                 title="New playlist"

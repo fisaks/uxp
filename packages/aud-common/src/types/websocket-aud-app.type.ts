@@ -53,7 +53,7 @@ export type AudioAppActionPayloadRequestMap = {
     /** Starts the live player updates. The response is the current state. */
     player_subscribe: Record<string, never>;
     /** Replaces the queue with these tracks and starts with the one at `startIndex` (the first by default). */
-    player_play_tracks: { trackIds: string[]; startIndex?: number; shuffle?: boolean };
+    player_play_tracks: { trackIds: string[]; startIndex?: number; shuffle?: boolean; playlistId?: string };
     /** Replaces the queue with the parts of a book. It starts where the listening was left, or at the start of `partId`. */
     player_play_book: { albumId: string; partId?: string };
     /** Adds tracks to the end of the queue. */

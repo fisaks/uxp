@@ -22,13 +22,13 @@ export const usePlayerActions = () => {
             notify,
             /** Whether there is a queue, which decides if pressing a track plays it now or the list from it. */
             hadQueue,
-            /** Replaces the queue with the tracks and plays from `startIndex`. */
-            playTracks: async (trackIds: string[], startIndex?: number) => {
-                if ((await send("player_play_tracks", { trackIds, startIndex })) && hadQueue) notify("Queue replaced", true);
+            /** Replaces the queue with the tracks and plays from `startIndex`. `playlistId` is the playlist they come from. */
+            playTracks: async (trackIds: string[], startIndex?: number, playlistId?: string) => {
+                if ((await send("player_play_tracks", { trackIds, startIndex, playlistId })) && hadQueue) notify("Queue replaced", true);
             },
             /** The same with the tracks mixed. */
-            shuffleTracks: async (trackIds: string[]) => {
-                if ((await send("player_play_tracks", { trackIds, shuffle: true })) && hadQueue) notify("Queue replaced", true);
+            shuffleTracks: async (trackIds: string[], playlistId?: string) => {
+                if ((await send("player_play_tracks", { trackIds, shuffle: true, playlistId })) && hadQueue) notify("Queue replaced", true);
             },
             /** Replaces the queue with a book, which plays from where it was left, or from the start of `partId`. */
             playBook: async (albumId: string, partId?: string) => {

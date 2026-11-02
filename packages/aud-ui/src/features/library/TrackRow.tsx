@@ -24,8 +24,8 @@ type TrackRowProps = {
     onPlayAlbumFromHere?: () => void;
 };
 
-// The room for the length and the two buttons at the right of the row.
-const ROOM_FOR_BUTTONS = 16;
+// The room for the length and the two buttons at the right of the row; on a phone the length is left out.
+const ROOM_FOR_BUTTONS = { xs: 12, sm: 16 };
 
 /** A track of an album: pressing it plays it, the + puts it in the queue, and the menu has the rest. */
 export const TrackRow: React.FC<TrackRowProps> = ({ track, artistName, primary, secondary, playing, onPress, onAddToQueue, ...menu }) => (
@@ -34,7 +34,7 @@ export const TrackRow: React.FC<TrackRowProps> = ({ track, artistName, primary, 
         divider
         secondaryAction={
             <Stack direction="row" alignItems="center" spacing={0.25}>
-                <Typography color="text.secondary" sx={{ mr: 0.5 }}>
+                <Typography color="text.secondary" sx={{ mr: 0.5, display: { xs: "none", sm: "block" } }}>
                     {track.durationSec ? formatDuration(track.durationSec) : ""}
                 </Typography>
                 <LabelledIconButton label="Add to queue" onClick={onAddToQueue}>
@@ -44,7 +44,7 @@ export const TrackRow: React.FC<TrackRowProps> = ({ track, artistName, primary, 
             </Stack>
         }
     >
-        <ListItemButton selected={playing} onClick={onPress} sx={{ pr: ROOM_FOR_BUTTONS }}>
+        <ListItemButton selected={playing} onClick={onPress} sx={{ "&&": { pr: ROOM_FOR_BUTTONS } }}>
             {primary === undefined && (
                 <Typography color="text.secondary" sx={{ width: 32, flexShrink: 0 }}>
                     {track.trackNo ?? ""}

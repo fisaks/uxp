@@ -22,7 +22,6 @@ import React, { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAppSelector } from "../../hooks";
 import { formatDuration } from "../library/libraryFormat";
-import { LibraryBreadcrumbs } from "../library/LibraryBreadcrumbs";
 import { selectCurrentTrackId } from "../player/playerSelectors";
 import { usePlayerActions } from "../player/usePlayerActions";
 import { SortableList, uniqueKeys } from "../shared/SortableList";
@@ -73,7 +72,6 @@ export const PlaylistView: React.FC = () => {
 
     return (
         <>
-            <LibraryBreadcrumbs trail={[{ label: "Playlists", to: "/playlists" }]} current={playlist.name} />
             <Typography variant="h5" sx={{ overflowWrap: "anywhere" }}>
                 {playlist.name}
             </Typography>
@@ -87,7 +85,7 @@ export const PlaylistView: React.FC = () => {
                     variant="contained"
                     startIcon={<PlayArrowIcon />}
                     disabled={trackIds.length === 0}
-                    onClick={() => playTracks(trackIds)}
+                    onClick={() => playTracks(trackIds, undefined, playlist.id)}
                 >
                     Play
                 </Button>
@@ -95,7 +93,7 @@ export const PlaylistView: React.FC = () => {
                     variant="outlined"
                     startIcon={<ShuffleIcon />}
                     disabled={trackIds.length === 0}
-                    onClick={() => shuffleTracks(trackIds)}
+                    onClick={() => shuffleTracks(trackIds, playlist.id)}
                 >
                     Shuffle
                 </Button>
@@ -134,7 +132,7 @@ export const PlaylistView: React.FC = () => {
                         >
                             {handle}
                             <Box
-                                onClick={track ? () => playTracks(trackIds, playablePlaceOf(entry)) : undefined}
+                                onClick={track ? () => playTracks(trackIds, playablePlaceOf(entry), playlist.id) : undefined}
                                 sx={{ flex: 1, minWidth: 0, py: 1, px: 1, cursor: track ? "pointer" : "default" }}
                             >
                                 <Typography

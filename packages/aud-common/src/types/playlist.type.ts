@@ -1,3 +1,4 @@
+import { MAX_ARTIST_COVERS } from "./library.type";
 import { QueueTrack } from "./player.type";
 
 /** One place of a playlist. `track` is missing when the track is no longer in the library, and `name` is what it was called when it was added. */
@@ -15,6 +16,10 @@ export type PlaylistSummary = {
     /** The length of the tracks that are in the library. */
     durationSec: number;
     updatedAt: string;
+    /** When it was last played from the playlist, missing if never. */
+    lastPlayedAt?: string;
+    /** Up to MAX_ARTIST_COVERS albums with a cover, in the order of the tracks, for the picture of the playlist. */
+    coverAlbumIds: string[];
 };
 
 export type Playlist = {
