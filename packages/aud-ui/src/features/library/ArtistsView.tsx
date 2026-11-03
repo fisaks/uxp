@@ -3,6 +3,7 @@ import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArtistGrid } from "./ArtistGrid";
 import { useRequest } from "../shared/useRequest";
+import { useRestoreScroll } from "../shared/useRestoreScroll";
 
 const SCAN_POLL_MS = 3000;
 
@@ -10,6 +11,7 @@ export const ArtistsView: React.FC = () => {
     const navigate = useNavigate();
     const { data, error, reload } = useRequest("library_get_artists", {});
     const scanning = data?.status.scanning;
+    useRestoreScroll(data !== undefined);
 
     // While a scan is running the lists grow, so they are asked for again until it is done.
     useEffect(() => {

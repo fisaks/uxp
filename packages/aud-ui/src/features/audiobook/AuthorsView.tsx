@@ -15,6 +15,7 @@ import { useNavigate } from "react-router-dom";
 import { usePlayerActions } from "../player/usePlayerActions";
 import { ArtistGrid } from "../library/ArtistGrid";
 import { useRequest } from "../shared/useRequest";
+import { useRestoreScroll } from "../shared/useRestoreScroll";
 
 const SCAN_POLL_MS = 3000;
 
@@ -23,6 +24,7 @@ export const AuthorsView: React.FC = () => {
     const { playBook } = usePlayerActions();
     const { data, error, reload } = useRequest("audiobook_get_authors", {});
     const scanning = data?.status.scanning;
+    useRestoreScroll(data !== undefined);
 
     // While a scan is running the lists grow, so they are asked for again until it is done.
     useEffect(() => {

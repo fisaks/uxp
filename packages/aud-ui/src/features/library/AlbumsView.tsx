@@ -4,11 +4,13 @@ import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { AlbumCover } from "./AlbumCover";
 import { Tile, TileGrid } from "./TileGrid";
 import { useRequest } from "../shared/useRequest";
+import { useRestoreScroll } from "../shared/useRestoreScroll";
 
 export const AlbumsView: React.FC = () => {
     const navigate = useNavigate();
     const { artistId = "" } = useParams();
     const { data, error } = useRequest("library_get_albums", { artistId });
+    useRestoreScroll(data !== undefined);
 
     if (error) return <Alert severity="error">{error}</Alert>;
     if (!data) return <CircularProgress size={24} />;

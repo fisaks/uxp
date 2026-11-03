@@ -1,6 +1,6 @@
 import { Collection, LibraryAlbum } from "@aud/common";
 import { Box, Stack, Typography } from "@mui/material";
-import React from "react";
+import React, { useLayoutEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useRequest } from "../shared/useRequest";
 import { AlbumCover } from "./AlbumCover";
@@ -12,6 +12,9 @@ const STRIP_TILE_WIDTH = 140;
 /** Where the side column sticks: just under the top bar of the page. */
 const TOP_BAR_HEIGHT = 56;
 const SIDE_GAP = 16;
+
+/** How far the column of albums was scrolled when an album was picked from it, as the page of the next one is a new page. */
+let columnScroll = { artistId: "", top: 0 };
 
 const SIBLINGS_ACTION = { music: "library_get_albums", audiobooks: "audiobook_get_books" } as const;
 const ALBUM_PATH = { music: "/library/album", audiobooks: "/audiobooks/book" } as const;
@@ -38,6 +41,11 @@ export const AlbumPage: React.FC<AlbumPageProps> = ({ collection, artistId, albu
     const albums = [...(data?.albums ?? [])].sort((a, b) => Number(b.id === leadId) - Number(a.id === leadId));
     const others = albums.filter((other) => other.id !== album.id);
     const hasOthers = others.length > 0;
+    const columnRef = useRef<HTMLDivElement>(null);
+    // Picking an album opens a new page, so the column is put back to where it was, as long as it is the same artist's.
+    useLayoutEffect(() => {
+        if (columnRef.current && columnScroll.artistId === artistId) columnRef.current.scrollTop = columnScroll.top;
+    }, [artistId, hasOthers]);
 
     const albumTile = (other: LibraryAlbum) => (
         <Tile
@@ -71,6 +79,10 @@ export const AlbumPage: React.FC<AlbumPageProps> = ({ collection, artistId, albu
             >
                 {hasOthers ? (
                     <Stack
+                        ref={columnRef}
+                        onScroll={(event) => {
+                            columnScroll = { artistId, top: event.currentTarget.scrollTop };
+                        }}
                         spacing={2}
                         sx={{
                             maxHeight: `calc(100vh - ${TOP_BAR_HEIGHT + 2 * SIDE_GAP}px)`,

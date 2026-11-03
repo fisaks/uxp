@@ -4,11 +4,13 @@ import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { AlbumCover } from "../library/AlbumCover";
 import { Tile, TileGrid } from "../library/TileGrid";
 import { useRequest } from "../shared/useRequest";
+import { useRestoreScroll } from "../shared/useRestoreScroll";
 
 export const BooksView: React.FC = () => {
     const navigate = useNavigate();
     const { authorId = "" } = useParams();
     const { data, error } = useRequest("audiobook_get_books", { artistId: authorId });
+    useRestoreScroll(data !== undefined);
 
     if (error) return <Alert severity="error">{error}</Alert>;
     if (!data) return <CircularProgress size={24} />;
