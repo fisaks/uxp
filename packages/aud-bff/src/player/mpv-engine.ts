@@ -31,6 +31,7 @@ export class MpvPlayerEngine implements PlayerEngine {
     private received = "";
     /** Where to go when the file that was just loaded is ready: the start of a file that does not start at its beginning. */
     private pendingStartSec = 0;
+    private speed = 1;
 
     constructor(private readonly config: MpvConfig) {}
 
@@ -40,6 +41,8 @@ export class MpvPlayerEngine implements PlayerEngine {
 
     async play(file: string, { startSec }: PlayOptions) {
         await this.ensureRunning();
+        // A speed set while mpv was not running is applied here.
+        this.send(["set_property", "speed", this.speed]);
         this.pendingStartSec = startSec;
         this.send(["loadfile", file, "replace"]);
         this.send(["set_property", "pause", false]);
@@ -59,6 +62,12 @@ export class MpvPlayerEngine implements PlayerEngine {
 
     seek(positionSec: number) {
         this.send(["seek", positionSec, "absolute"]);
+    }
+
+    setSpeed(rate: number) {
+        // mpv keeps the pitch (it corrects it by default) and the speed for the next files.
+        this.speed = rate;
+        this.send(["set_property", "speed", rate]);
     }
 
     private send(command: unknown[]) {

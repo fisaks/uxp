@@ -10,6 +10,7 @@ export class FakePlayerEngine implements PlayerEngine {
     private positionSec = 0;
     private durationSec = DEFAULT_DURATION_SEC;
     private paused = false;
+    private speed = 1;
 
     setListener(listener: PlayerEngineListener) {
         this.listener = listener;
@@ -40,11 +41,15 @@ export class FakePlayerEngine implements PlayerEngine {
         this.positionSec = positionSec;
     }
 
+    setSpeed(rate: number) {
+        this.speed = rate;
+    }
+
     private tick() {
         if (this.paused) {
             return;
         }
-        this.positionSec += TICK_MS / 1000;
+        this.positionSec += (TICK_MS / 1000) * this.speed;
         if (this.positionSec >= this.durationSec) {
             this.stop();
             this.listener?.onEnded();

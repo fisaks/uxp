@@ -41,6 +41,7 @@ export class MplayerPlayerEngine implements PlayerEngine {
     private accurateSeek = true;
     /** Where to go once "Starting playback" is printed: the start of a file that does not start at its beginning. */
     private pendingStartSec = 0;
+    private speed = 1;
 
     constructor(private readonly config: MplayerConfig) {}
 
@@ -92,6 +93,16 @@ export class MplayerPlayerEngine implements PlayerEngine {
     seek(positionSec: number) {
         // "pausing_keep_force" keeps the pause: a command sent while paused would otherwise start playing again.
         this.send(`pausing_keep_force seek ${positionSec} 2`);
+    }
+
+    setSpeed(rate: number) {
+        this.speed = rate;
+        this.sendSpeed();
+    }
+
+    /** "speed_set" keeps the pause, and mplayer may go back to normal speed when it loads a file, so it is sent again then. */
+    private sendSpeed() {
+        this.send(`pausing_keep_force speed_set ${this.speed}`);
     }
 
     /** Ends mplayer and waits until it has, so that the next one finds the sound device free. */
@@ -174,6 +185,9 @@ export class MplayerPlayerEngine implements PlayerEngine {
             "null",
             "-msglevel",
             "global=6",
+            // Without it a faster speed raises the pitch.
+            "-af",
+            "scaletempo",
             // mp3 files that have no table of contents (a variable bitrate without a Xing header) cannot be seeked
             // to the right place by guessing from the bitrate: mplayer lands somewhere else and counts from the wanted time.
             // It reads the file up to the place, which is why long audiobooks, that are constant bitrate, are played without it.
@@ -214,6 +228,9 @@ export class MplayerPlayerEngine implements PlayerEngine {
         const position = /^ANS_TIME_POSITION=([\d.]+)/.exec(line)?.[1];
         if (line.startsWith("Starting playback")) {
             this.awaitingStart = false;
+            if (this.speed !== 1) {
+                this.sendSpeed();
+            }
             if (this.pendingStartSec > 0) {
                 // The seek can take seconds in a long file, which is no stall.
                 this.lastPositionAt = Date.now();

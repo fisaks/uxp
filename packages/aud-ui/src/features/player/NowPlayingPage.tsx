@@ -11,6 +11,8 @@ import { Link } from "react-router-dom";
 import { useAppSelector } from "../../hooks";
 import { AlbumCover } from "../library/AlbumCover";
 import { formatDuration } from "../library/libraryFormat";
+import { BookSkipButton } from "./BookSkipButton";
+import { BookSpeedButton } from "./BookSpeedButton";
 import { nowPlayingText } from "./nowPlayingText";
 import { PlayPauseButton } from "./PlayPauseButton";
 import { PlayerToggleButton } from "./PlayerToggleButton";
@@ -103,7 +105,9 @@ const NowPlayingPage: React.FC = () => {
                 <IconButton onClick={() => send("player_previous", {})} aria-label="Previous">
                     <SkipPreviousIcon fontSize="large" />
                 </IconButton>
+                {isBook && <BookSkipButton direction="back" fontSize="large" />}
                 <PlayPauseButton />
+                {isBook && <BookSkipButton direction="forward" fontSize="large" />}
                 <IconButton onClick={() => send("player_next", {})} aria-label="Next">
                     <SkipNextIcon fontSize="large" />
                 </IconButton>
@@ -117,11 +121,12 @@ const NowPlayingPage: React.FC = () => {
                     </PlayerToggleButton>
                 )}
             </Stack>
-            <Box sx={{ textAlign: "center" }}>
+            <Stack direction="row" alignItems="center" justifyContent="center" spacing={1}>
+                {isBook && <BookSpeedButton />}
                 <Button component={Link} to="/queue" startIcon={<QueueMusicIcon />}>
                     {isBook ? "Book" : `Queue (${state.queue.length})`}
                 </Button>
-            </Box>
+            </Stack>
         </Stack>
     );
 };

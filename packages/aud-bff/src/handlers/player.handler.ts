@@ -10,6 +10,7 @@ import {
     PlayerSeekSchema,
     PlayerSetRepeatSchema,
     PlayerSetShuffleSchema,
+    PlayerSetSpeedSchema,
 } from "@aud/common";
 import { WebSocketAction, WebSocketDetails } from "@uxp/bff-common";
 import { playerService } from "../player/player.service";
@@ -107,5 +108,10 @@ export class PlayerHandler {
     @WebSocketAction("player_set_repeat", { authenticate: true, schema: PlayerSetRepeatSchema })
     public setRepeat(_wsDetails: WebSocketDetails, message: AudioAppRequestMessage<"player_set_repeat">) {
         return playerService.setRepeat(message.payload.mode);
+    }
+
+    @WebSocketAction("player_set_speed", { authenticate: true, schema: PlayerSetSpeedSchema })
+    public setSpeed(_wsDetails: WebSocketDetails, message: AudioAppRequestMessage<"player_set_speed">) {
+        return playerService.setSpeed(message.payload.rate);
     }
 }

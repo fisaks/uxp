@@ -24,6 +24,8 @@ import { useAppSelector } from "../../hooks";
 import { AlbumCover } from "../library/AlbumCover";
 import { formatDuration } from "../library/libraryFormat";
 import { NOW_PLAYING_PATH } from "./nowPlayingPath";
+import { BookSkipButton } from "./BookSkipButton";
+import { BookSpeedButton } from "./BookSpeedButton";
 import { nowPlayingText } from "./nowPlayingText";
 import { PlayPauseButton } from "./PlayPauseButton";
 import { PlayerToggleButton } from "./PlayerToggleButton";
@@ -128,7 +130,9 @@ export const NowPlayingBar: React.FC = () => {
                     <IconButton onClick={() => send("player_previous", {})} aria-label="Previous">
                         <SkipPreviousIcon />
                     </IconButton>
+                    {isBook && <BookSkipButton direction="back" />}
                     <PlayPauseButton />
+                    {isBook && <BookSkipButton direction="forward" />}
                     <IconButton onClick={() => send("player_next", {})} aria-label="Next">
                         <SkipNextIcon />
                     </IconButton>
@@ -163,6 +167,7 @@ export const NowPlayingBar: React.FC = () => {
                         {duration ? formatDuration(duration) : ""}
                     </Typography>
                 </Stack>
+                {isBook && <BookSpeedButton />}
                 <Button component={Link} to="/queue" size="small" startIcon={<QueueMusicIcon />}>
                     {isBook ? "Book" : `Queue (${state.queue.length})`}
                 </Button>

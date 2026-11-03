@@ -4,7 +4,7 @@ import { selectPlayerReceivedAt, selectPlayerState } from "./playerSelectors";
 
 const TICK_MS = 500;
 
-/** Where the current track is, in seconds. The server sends the position when something changes, so while playing it moves on from there. */
+/** Where the current track is, in seconds. The server sends the position when something changes, so while playing it moves on from there, at the playback speed. */
 export const usePlayerPosition = (): number => {
     const state = useAppSelector(selectPlayerState);
     const receivedAt = useAppSelector(selectPlayerReceivedAt);
@@ -19,5 +19,5 @@ export const usePlayerPosition = (): number => {
     }, [playing, receivedAt]);
 
     if (!state) return 0;
-    return playing ? state.positionSec + Math.max(0, now - receivedAt) / 1000 : state.positionSec;
+    return playing ? state.positionSec + (state.speed * Math.max(0, now - receivedAt)) / 1000 : state.positionSec;
 };

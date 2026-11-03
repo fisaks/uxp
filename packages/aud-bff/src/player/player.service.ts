@@ -82,6 +82,8 @@ export class PlayerService {
     private status: PlayerStatus = "stopped";
     private shuffle = false;
     private repeat: RepeatMode = "off";
+    /** The speed chosen for the books: music always plays at normal speed, and this is kept for the next book. */
+    private bookSpeed = 1;
     private positionSec = 0;
     private positionAt = Date.now();
     private failures = 0;
@@ -159,6 +161,7 @@ export class PlayerService {
             positionSec: this.currentPosition(),
             shuffle: this.shuffle,
             repeat: this.repeat,
+            speed: this.playbackSpeed(),
         };
     }
 
@@ -416,6 +419,14 @@ export class PlayerService {
         return this.publish();
     }
 
+    setSpeed(rate: number): PlayerState {
+        // The position is brought up to date first: it is extrapolated from the speed it had until now.
+        this.setPosition(this.currentPosition());
+        this.bookSpeed = rate;
+        this.engine.setSpeed(this.playbackSpeed());
+        return this.publish();
+    }
+
     /** The track after the current one. `ended` is true when it played to its end, which "repeat one" turns into the same track again. */
     private async advance(ended: boolean): Promise<PlayerState> {
         if (ended && (this.status === "stopped" || this.status === "paused")) {
@@ -487,6 +498,7 @@ export class PlayerService {
             return this.onFileFailed(`The file of ${track?.title ?? "the track"} is not in the library`);
         }
         AppLogger.info(undefined, { message: `Playing "${track.title}" by ${track.artist} from ${file}` });
+        this.engine.setSpeed(this.playbackSpeed());
         try {
             await this.engine.play(file, { durationSec: track.durationSec, startSec, accurateSeek: track.collection === "music" });
         } catch (error) {
@@ -565,7 +577,7 @@ export class PlayerService {
     }
 
     private currentPosition(): number {
-        return this.status === "playing" ? this.positionSec + (Date.now() - this.positionAt) / 1000 : this.positionSec;
+        return this.status === "playing" ? this.positionSec + ((Date.now() - this.positionAt) / 1000) * this.playbackSpeed() : this.positionSec;
     }
 
     private stopPlaying(): PlayerState {
@@ -608,6 +620,10 @@ export class PlayerService {
             this.unshuffled.splice(place + 1, 0, ...tracks);
         }
         this.queue.splice(this.currentIndex + 1, 0, ...tracks);
+    }
+
+    private playbackSpeed(): number {
+        return this.isBookQueue() ? this.bookSpeed : 1;
     }
 
     private isBookQueue(): boolean {

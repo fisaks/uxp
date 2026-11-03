@@ -78,6 +78,7 @@ export type AudioAppActionPayloadRequestMap = {
     player_seek: { positionSec: number };
     player_set_shuffle: { on: boolean };
     player_set_repeat: { mode: RepeatMode };
+    player_set_speed: { rate: number };
     amplifier_set_power: { on: boolean };
     amplifier_set_volume: { volumeDb: number };
     amplifier_set_mute: { muted: boolean };
@@ -152,6 +153,7 @@ export type AudioAppActionPayloadResponseMap = {
     player_seek: PlayerState;
     player_set_shuffle: PlayerState;
     player_set_repeat: PlayerState;
+    player_set_speed: PlayerState;
     amplifier_set_power: AmplifierState;
     amplifier_set_volume: AmplifierState;
     amplifier_set_mute: AmplifierState;

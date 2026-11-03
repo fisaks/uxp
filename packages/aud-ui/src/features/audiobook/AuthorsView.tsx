@@ -1,6 +1,6 @@
-import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import {
     Alert,
+    Box,
     CircularProgress,
     LinearProgress,
     List,
@@ -13,11 +13,13 @@ import {
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { usePlayerActions } from "../player/usePlayerActions";
+import { AlbumCover } from "../library/AlbumCover";
 import { ArtistGrid } from "../library/ArtistGrid";
 import { useRequest } from "../shared/useRequest";
 import { useRestoreScroll } from "../shared/useRestoreScroll";
 
 const SCAN_POLL_MS = 3000;
+const COVER_SIZE = 48;
 
 export const AuthorsView: React.FC = () => {
     const navigate = useNavigate();
@@ -56,8 +58,10 @@ export const AuthorsView: React.FC = () => {
                 >
                     {data.continueListening.map(({ album, artist, listenedSec, totalSec }) => (
                         <ListItemButton key={album.id} onClick={() => playBook(album.id)}>
-                            <ListItemIcon sx={{ minWidth: 40 }}>
-                                <PlayArrowIcon color="primary" />
+                            <ListItemIcon sx={{ minWidth: COVER_SIZE + 16 }}>
+                                <Box sx={{ width: COVER_SIZE }}>
+                                    <AlbumCover collection="audiobooks" albumId={album.id} hasCover={album.hasCover} />
+                                </Box>
                             </ListItemIcon>
                             <ListItemText
                                 primary={album.title}

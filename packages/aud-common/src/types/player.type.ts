@@ -30,4 +30,8 @@ export type PlayerState = {
     positionSec: number;
     shuffle: boolean;
     repeat: RepeatMode;
+    /** How fast it plays, 1 is normal. It stays when the next track or book starts. */
+    speed: number;
 };
+export const MIN_SPEED = 0.5;
+export const MAX_SPEED = 3;
