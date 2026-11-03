@@ -6,12 +6,13 @@ import React from "react";
 import { AlbumCover } from "./AlbumCover";
 import { coverUrl } from "./libraryFormat";
 
-const MOSAIC_MIN = 4;
+const MOSAIC_MIN = 2;
+const MOSAIC_MAX = 4;
 const ICON_SX = { width: "40%", height: "auto" };
 
 type CoverMosaicProps = {
     collection: Collection;
-    /** The albums with a cover to show: four or more make a 2x2 mosaic, fewer show the first one big, none show a person (author) or a music note. */
+    /** The albums with a cover to show: four or more make a 2x2 mosaic, three a tall one beside two, two a pair, one shows it big, none show a person (author) or a music note. */
     albumIds: string[];
 };
 
@@ -25,17 +26,25 @@ export const CoverMosaic: React.FC<CoverMosaicProps> = ({ collection, albumIds }
                     width: "100%",
                     display: "grid",
                     gridTemplateColumns: "1fr 1fr",
+                    gridTemplateRows: albumIds.length === 2 ? "1fr" : "1fr 1fr",
                     gap: "1px",
                     bgcolor: "background.default",
                 }}
             >
-                {albumIds.slice(0, MOSAIC_MIN).map((albumId) => (
+                {albumIds.slice(0, MOSAIC_MAX).map((albumId, index) => (
                     <img
                         key={albumId}
                         src={coverUrl(collection, albumId)}
                         alt=""
                         loading="lazy"
-                        style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                        style={{
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "cover",
+                            display: "block",
+                            minHeight: 0,
+                            gridRow: albumIds.length === 3 && index === 0 ? "span 2" : undefined,
+                        }}
                     />
                 ))}
             </Box>
