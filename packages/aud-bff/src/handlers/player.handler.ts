@@ -90,6 +90,16 @@ export class PlayerHandler {
         return playerService.resume();
     }
 
+    @WebSocketAction("player_resume_queue", { authenticate: true })
+    public resumeQueue() {
+        return playerService.resumeQueue();
+    }
+
+    @WebSocketAction("player_resume_spotify", { authenticate: true })
+    public resumeSpotify() {
+        return playerService.resumeSpotify();
+    }
+
     @WebSocketAction("player_next", { authenticate: true })
     public next() {
         return playerService.next();

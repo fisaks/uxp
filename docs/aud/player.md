@@ -57,6 +57,13 @@ cover from Spotify, position, duration, status) and the clients show it instead 
 the buttons. The buttons of the player (play, pause, next, previous, seek) are then Soloist's, and there is no shuffle, repeat or
 queue. It lasts until the user starts the player: the queue is then shown again, where it was left.
 
+`spotify` also carries `upcoming`, the next 50 tracks (title, artist, duration) from Soloist's `queue_changed` event; the 50 is
+asked for with `get_queue` when the connection opens, Soloist reports 10 otherwise. The one that is not playing is paused where
+it is: while the player plays, `spotifyIdle` carries what Spotify has paused. The queue page then has a Queue | Spotify
+switch, and each side that is not playing has a Continue button: `player_resume_queue` plays the queue on and pauses Spotify,
+`player_resume_spotify` sends `play` to Soloist, whose `playing` report makes the player give way as above. Spotify can only be
+continued where Soloist still holds it; it cannot be started from aud.
+
 The connection is opened again every 5 seconds when it drops. Nothing of Spotify is used when `AUD_SOLOIST_WS` is not set.
 
 | Variable | Required | Meaning |

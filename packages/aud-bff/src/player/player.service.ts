@@ -175,6 +175,7 @@ export class PlayerService {
             repeat: this.repeat,
             speed: this.playbackSpeed(),
             spotify: this.spotifyIsSource ? this.spotify.nowPlaying() : undefined,
+            spotifyIdle: this.spotifyIsSource ? undefined : this.spotify.nowPlaying(),
         };
     }
 
@@ -382,11 +383,24 @@ export class PlayerService {
         return this.publish();
     }
 
-    /** What Spotify plays changed: the clients show it while it is what the player shows. */
+    /** What Spotify plays changed: the clients show it, as what the player shows or as what can be continued. */
     onSpotifyChanged() {
-        if (this.spotifyIsSource) {
-            this.wsManager.broadcastToTopic(PLAYER_TOPIC, { action: "player_state", success: true, payload: this.getState() });
+        this.wsManager.broadcastToTopic(PLAYER_TOPIC, { action: "player_state", success: true, payload: this.getState() });
+    }
+
+    /** The user continues the queue, which Spotify may have been the source over: it is paused where it is. */
+    async resumeQueue(): Promise<PlayerState> {
+        if (this.queue.length === 0) {
+            return this.getState();
         }
+        this.spotifyIsSource = false;
+        return this.resume();
+    }
+
+    /** The user continues Spotify: when it plays, it is told the same way as when it is started from a Spotify app, and the player pauses. */
+    resumeSpotify(): PlayerState {
+        this.spotify.control("play");
+        return this.getState();
     }
 
     /** Spotify is what was played last, and it is known what it plays: the buttons of the player are its buttons. */

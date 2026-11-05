@@ -1,8 +1,9 @@
 import CloseIcon from "@mui/icons-material/Close";
 import GraphicEqIcon from "@mui/icons-material/GraphicEq";
 import LibraryAddIcon from "@mui/icons-material/LibraryAdd";
-import { Box, Button, IconButton, Stack, Typography } from "@mui/material";
-import { QueueTrack } from "@aud/common";
+import PauseIcon from "@mui/icons-material/Pause";
+import { alpha, Box, Button, IconButton, Stack, Tab, Tabs, Typography } from "@mui/material";
+import { QueueTrack, SpotifyNowPlaying } from "@aud/common";
 import React, { useMemo, useState } from "react";
 import { useAppSelector } from "../../hooks";
 import { formatDuration } from "../library/libraryFormat";
@@ -71,6 +72,82 @@ const BookQueue: React.FC = () => {
     );
 };
 
+const COVER_SIZE = 48;
+
+type Source = "queue" | "spotify";
+
+// The tab that is not shown stays easy to read in dark mode, where the default grey is too dim against the background.
+const TAB_SX = { color: "text.primary", opacity: 0.75, "&.Mui-selected": { opacity: 1 } };
+
+/** What Spotify plays next, as far as its player reports it. It is only shown: the Spotify app is where it is changed. */
+const SpotifyQueue: React.FC<{ spotify: SpotifyNowPlaying; active: boolean; onContinue: () => void }> = ({
+    spotify,
+    active,
+    onContinue,
+}) => {
+    const rows = [
+        {
+            title: spotify.title,
+            artist: spotify.artist,
+            durationSec: spotify.durationSec,
+            coverUrl: spotify.coverUrl,
+            current: true,
+        },
+        ...spotify.upcoming.map((entry) => ({ ...entry, current: false })),
+    ];
+    return (
+        <>
+            <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
+                <Box sx={{ minWidth: 0 }}>
+                    <Typography variant="h6">Spotify queue</Typography>
+                    {active ? null : (
+                        <Typography variant="body2" color="text.secondary">
+                            paused at {formatDuration(Math.round(spotify.positionSec))}
+                        </Typography>
+                    )}
+                </Box>
+                {active ? null : <Button onClick={onContinue}>Continue</Button>}
+            </Stack>
+            {rows.map((row, index) => (
+                <Box
+                    key={index}
+                    sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        borderBottom: 1,
+                        borderColor: "divider",
+                        py: 1,
+                        pl: 1,
+                        // The track that plays glows: a ring and a soft light in the colour of the theme.
+                        ...(row.current && {
+                            bgcolor: (theme) => alpha(theme.palette.primary.main, 0.16),
+                            borderLeft: 3,
+                            borderLeftColor: "primary.main",
+                            boxShadow: (theme) => `0 0 14px ${alpha(theme.palette.primary.main, 0.45)}`,
+                        }),
+                    }}
+                >
+                    <Box
+                        component="img"
+                        src={row.coverUrl}
+                        alt=""
+                        sx={{ width: COVER_SIZE, height: COVER_SIZE, flexShrink: 0, borderRadius: 0.5, mr: 1.5, bgcolor: "action.hover" }}
+                    />
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography sx={{ overflowWrap: "anywhere", fontWeight: row.current ? 600 : undefined }}>{row.title}</Typography>
+                        <Typography variant="body2" color="text.secondary">
+                            {[row.artist, row.durationSec ? formatDuration(row.durationSec) : undefined].filter(Boolean).join(" · ")}
+                        </Typography>
+                    </Box>
+                    {row.current && active && spotify.status === "playing" ? (
+                        <GraphicEqIcon color="primary" fontSize="small" sx={{ mx: 1 }} />
+                    ) : null}
+                </Box>
+            ))}
+        </>
+    );
+};
+
 /** The tracks that will be played, in the order they were added, which can be changed by dragging. The one that is playing is marked. */
 const QueuePage: React.FC = () => {
     const state = useAppSelector(selectPlayerState);
@@ -78,6 +155,7 @@ const QueuePage: React.FC = () => {
     const { clear } = usePlayerActions();
     const isBook = useAppSelector(selectIsBookQueue);
     const [saving, setSaving] = useState<string[] | undefined>(undefined);
+    const [chosen, setChosen] = useState<Source | undefined>(undefined);
 
     const rows = useMemo<QueueRow[]>(() => {
         const queue = state?.queue ?? [];
@@ -85,7 +163,49 @@ const QueuePage: React.FC = () => {
         return queue.map((track, index) => ({ track, key: keys[index] }));
     }, [state?.queue]);
 
-    if (!state || state.queue.length === 0) {
+    if (!state) {
+        return null;
+    }
+
+    // Spotify and the queue never play together: the one that is not the source is paused where it is, and Continue plays it on.
+    const spotify = state.spotify ?? state.spotifyIdle;
+    const source: Source = state.spotify ? "spotify" : "queue";
+    const shown = spotify ? (chosen ?? source) : "queue";
+    const switchTo = (to: Source) => {
+        send(to === "queue" ? "player_resume_queue" : "player_resume_spotify", {});
+        setChosen(undefined);
+    };
+    // The tab of the one that is the source shows it: the bars move while it plays, a pause sign when it is paused.
+    const sourcePlaying = state.spotify ? state.spotify.status === "playing" : state.status === "playing" || state.status === "starting";
+    const sourcePaused = state.spotify ? state.spotify.status === "paused" : state.status === "paused";
+    const sourceIcon = (tab: Source) =>
+        tab !== source ? undefined : sourcePlaying ? (
+            <GraphicEqIcon color="primary" fontSize="small" />
+        ) : sourcePaused ? (
+            <PauseIcon color="primary" fontSize="small" />
+        ) : undefined;
+    const toggle =
+        spotify && state.queue.length > 0 ? (
+            <Tabs
+                value={shown}
+                onChange={(_event, value: Source) => setChosen(value)}
+                sx={{ mb: 2, borderBottom: 1, borderColor: "divider" }}
+            >
+                <Tab value="queue" label={`Queue (${state.queue.length})`} icon={sourceIcon("queue")} iconPosition="start" sx={TAB_SX} />
+                <Tab value="spotify" label="Spotify" icon={sourceIcon("spotify")} iconPosition="start" sx={TAB_SX} />
+            </Tabs>
+        ) : null;
+
+    if (spotify && shown === "spotify") {
+        return (
+            <>
+                {toggle}
+                <SpotifyQueue spotify={spotify} active={source === "spotify"} onContinue={() => switchTo("spotify")} />
+            </>
+        );
+    }
+
+    if (state.queue.length === 0) {
         return <Typography color="text.secondary">The queue is empty. Play something from the Library.</Typography>;
     }
 
@@ -93,11 +213,21 @@ const QueuePage: React.FC = () => {
         return <BookQueue />;
     }
 
+    const current = state.currentIndex === undefined ? undefined : state.queue[state.currentIndex];
     return (
         <>
+            {toggle}
             <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
-                <Typography variant="h6">Queue, {state.queue.length} tracks</Typography>
+                <Box>
+                    <Typography variant="h6">Queue, {state.queue.length} tracks</Typography>
+                    {source === "spotify" && current ? (
+                        <Typography variant="body2" color="text.secondary">
+                            paused at {formatDuration(Math.round(state.positionSec))} in {current.title}
+                        </Typography>
+                    ) : null}
+                </Box>
                 <Stack direction="row">
+                    {source === "spotify" ? <Button onClick={() => switchTo("queue")}>Continue</Button> : null}
                     <Button startIcon={<LibraryAddIcon />} onClick={() => setSaving(state.queue.map((track) => track.id))}>
                         Save as playlist
                     </Button>

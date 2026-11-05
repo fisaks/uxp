@@ -74,6 +74,10 @@ export type AudioAppActionPayloadRequestMap = {
     player_clear: Record<string, never>;
     player_pause: Record<string, never>;
     player_resume: Record<string, never>;
+    /** Plays the queue on from where it was paused, and pauses Spotify. */
+    player_resume_queue: Record<string, never>;
+    /** Plays Spotify on from where it was paused, and pauses the queue. */
+    player_resume_spotify: Record<string, never>;
     player_next: Record<string, never>;
     /** Plays the previous track, or the current one again when it has played for more than a few seconds. */
     player_previous: Record<string, never>;
@@ -151,6 +155,8 @@ export type AudioAppActionPayloadResponseMap = {
     player_clear: PlayerState;
     player_pause: PlayerState;
     player_resume: PlayerState;
+    player_resume_queue: PlayerState;
+    player_resume_spotify: PlayerState;
     player_next: PlayerState;
     player_previous: PlayerState;
     player_seek: PlayerState;

@@ -178,11 +178,9 @@ export const NowPlayingBar: React.FC = () => {
                     </Typography>
                 </Stack>
                 {isBook && <BookSpeedButton />}
-                {!spotify && (
-                    <Button component={Link} to="/queue" size="small" startIcon={<QueueMusicIcon />}>
-                        {isBook ? "Book" : `Queue (${state.queue.length})`}
-                    </Button>
-                )}
+                <Button component={Link} to="/queue" size="small" startIcon={<QueueMusicIcon />}>
+                    {isBook ? "Book" : spotify ? "Queue" : `Queue (${state.queue.length})`}
+                </Button>
             </Stack>
         </Paper>
     );

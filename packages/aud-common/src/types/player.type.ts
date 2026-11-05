@@ -30,6 +30,15 @@ export type SpotifyHealth = {
     lastUpdateAt?: string;
 };
 
+/** A track that Spotify plays after the current one. */
+export type SpotifyQueueEntry = {
+    title: string;
+    artist: string;
+    durationSec: number;
+    /** A small picture of the album, from Spotify. */
+    coverUrl?: string;
+};
+
 /** What Spotify plays, when it is what was played last. It is played by the Spotify player of the machine, not by the queue. */
 export type SpotifyNowPlaying = {
     status: "playing" | "paused";
@@ -41,6 +50,8 @@ export type SpotifyNowPlaying = {
     /** Where the track is when the state is sent; while playing a client shows it moving on from the time it received the state. */
     positionSec: number;
     durationSec: number;
+    /** The tracks that come next, as far as Spotify's player reports them. */
+    upcoming: SpotifyQueueEntry[];
 };
 
 export type PlayerState = {
@@ -60,6 +71,8 @@ export type PlayerState = {
     speed: number;
     /** Set while Spotify is what was played last: the buttons of the player then control Spotify, and the queue waits. */
     spotify?: SpotifyNowPlaying;
+    /** Set while Spotify is paused in the background because the player was started: it can be continued from where it is. */
+    spotifyIdle?: SpotifyNowPlaying;
 };
 export const MIN_SPEED = 0.5;
 export const MAX_SPEED = 3;

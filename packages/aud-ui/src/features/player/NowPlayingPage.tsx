@@ -131,11 +131,9 @@ const NowPlayingPage: React.FC = () => {
             </Stack>
             <Stack direction="row" alignItems="center" justifyContent="center" spacing={1}>
                 {isBook && <BookSpeedButton />}
-                {!spotify && (
-                    <Button component={Link} to="/queue" startIcon={<QueueMusicIcon />}>
-                        {isBook ? "Book" : `Queue (${state.queue.length})`}
-                    </Button>
-                )}
+                <Button component={Link} to="/queue" startIcon={<QueueMusicIcon />}>
+                    {isBook ? "Book" : spotify ? "Queue" : `Queue (${state.queue.length})`}
+                </Button>
             </Stack>
         </Stack>
     );

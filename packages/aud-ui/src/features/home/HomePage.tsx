@@ -156,13 +156,14 @@ export const HomePage: React.FC = () => {
                 : [],
         },
         "/queue": {
-            lines:
-                player && player.queue.length > 0 && player.currentIndex !== undefined
-                    ? [
-                          plural(player.queue.length, player.queue[0].collection === "audiobooks" ? "part" : "track"),
-                          `Now: ${nowPlayingText(player.queue, player.currentIndex).title}`,
-                      ]
-                    : ["Empty"],
+            lines: spotify
+                ? [`Spotify · ${plural(spotify.upcoming.length, "track")} next`, `Now: ${spotify.title}`]
+                : player && player.queue.length > 0 && player.currentIndex !== undefined
+                  ? [
+                        plural(player.queue.length, player.queue[0].collection === "audiobooks" ? "part" : "track"),
+                        `Now: ${nowPlayingText(player.queue, player.currentIndex).title}`,
+                    ]
+                  : ["Empty"],
         },
         "/history": {
             lines: lastPlay ? [lastPlay.name, dayAndTime(lastPlay.playedAt)] : history ? ["Nothing played yet"] : [],
