@@ -8,7 +8,7 @@ import { AlbumCover } from "../library/AlbumCover";
 import { formatDuration } from "../library/libraryFormat";
 import { nowPlayingText } from "./nowPlayingText";
 import { PlayPauseButton } from "./PlayPauseButton";
-import { selectCurrentTrack, selectPlayerState } from "./playerSelectors";
+import { selectCurrentTrack, selectPlayerState, selectSpotify } from "./playerSelectors";
 import { usePlayerCommand } from "./usePlayerCommand";
 import { usePlayerPosition } from "./usePlayerPosition";
 
@@ -21,24 +21,37 @@ const COVER_SIZE = 64;
 export const NowPlayingCard: React.FC = () => {
     const state = useAppSelector(selectPlayerState);
     const track = useAppSelector(selectCurrentTrack);
+    const spotify = useAppSelector(selectSpotify);
     const position = usePlayerPosition();
     const send = usePlayerCommand();
-    if (!state || !track || state.currentIndex === undefined) return null;
+    if (!state || (!spotify && (!track || state.currentIndex === undefined))) return null;
 
-    const { title, subtitle, isBook } = nowPlayingText(state.queue, state.currentIndex);
-    const duration = track.durationSec ?? 0;
+    const { title, subtitle, isBook } = spotify
+        ? { title: spotify.title, subtitle: spotify.artist, isBook: false }
+        : nowPlayingText(state.queue, state.currentIndex ?? 0);
+    const duration = spotify ? spotify.durationSec : (track?.durationSec ?? 0);
     const shown = Math.min(position, duration || Infinity);
 
     return (
         <Card>
             <CardContent>
                 <Typography variant="h6" gutterBottom>
-                    {isBook ? "Audiobook" : "Music"}
+                    {spotify ? "Spotify" : isBook ? "Audiobook" : "Music"}
                 </Typography>
                 <NowPlayingPanel
                     leading={
                         <Box sx={{ width: COVER_SIZE, flexShrink: 0 }}>
-                            <AlbumCover collection={track.collection} albumId={track.albumId} hasCover={track.hasCover} />
+                            {spotify ? (
+                                <AlbumCover
+                                    collection="music"
+                                    albumId=""
+                                    hasCover={!!spotify.coverUrl}
+                                    imageUrl={spotify.coverUrl}
+                                    banner="Spotify"
+                                />
+                            ) : (
+                                track && <AlbumCover collection={track.collection} albumId={track.albumId} hasCover={track.hasCover} />
+                            )}
                         </Box>
                     }
                     title={title}

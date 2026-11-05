@@ -10,9 +10,10 @@ import { usePlayerCommand } from "./usePlayerCommand";
 export const PlayPauseButton: React.FC = () => {
     const state = useAppSelector(selectPlayerState);
     const send = usePlayerCommand();
-    const playing = state?.status === "playing";
+    const spotify = state?.spotify;
+    const playing = (spotify ?? state)?.status === "playing";
     // The amplifier may be starting up and the file loading: the position does not move until the sound is there.
-    const loading = state?.status === "starting";
+    const loading = !spotify && state?.status === "starting";
     return (
         <IconButton
             color="primary"

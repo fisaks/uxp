@@ -29,7 +29,7 @@ import { BookSpeedButton } from "./BookSpeedButton";
 import { nowPlayingText } from "./nowPlayingText";
 import { PlayPauseButton } from "./PlayPauseButton";
 import { PlayerToggleButton } from "./PlayerToggleButton";
-import { selectCurrentTrack, selectPlayerState } from "./playerSelectors";
+import { selectCurrentTrack, selectPlayerState, selectSpotify } from "./playerSelectors";
 import { REPEAT_LABELS } from "./repeatLabels";
 import { usePlayerCommand } from "./usePlayerCommand";
 import { usePlayerPosition } from "./usePlayerPosition";
@@ -51,22 +51,28 @@ export const NowPlayingBar: React.FC = () => {
     const wide = useMediaQuery(theme.breakpoints.up("md"));
     const [dragging, setDragging] = useState<number | undefined>(undefined);
     const track = useAppSelector(selectCurrentTrack);
+    const spotify = useAppSelector(selectSpotify);
     // The full screen player has all the buttons itself.
-    if (!state || !track || pathname === NOW_PLAYING_PATH) return null;
+    if (!state || (!track && !spotify) || pathname === NOW_PLAYING_PATH) return null;
 
     // The amplifier may be starting up and the file loading: the position does not move until the sound is there.
-    const loading = state.status === "starting";
-    const duration = track.durationSec ?? 0;
+    const loading = !spotify && state.status === "starting";
+    const duration = spotify ? spotify.durationSec : (track?.durationSec ?? 0);
     const shown = Math.min(dragging ?? position, duration || Infinity);
     const nextRepeat = REPEAT_MODES[(REPEAT_MODES.indexOf(state.repeat) + 1) % REPEAT_MODES.length];
 
-    const { title, subtitle, isBook } = nowPlayingText(state.queue, state.currentIndex ?? 0);
-    const modes = [
-        loading && "Loading...",
-        state.shuffle && "Shuffle on",
-        state.repeat === "all" && "Repeat all",
-        state.repeat === "one" && "Repeat this track",
-    ].filter(Boolean);
+    // What Spotify plays is not in the queue: it has no shuffle, repeat or queue of its own here.
+    const { title, subtitle, isBook } = spotify
+        ? { title: spotify.title, subtitle: spotify.artist, isBook: false }
+        : nowPlayingText(state.queue, state.currentIndex ?? 0);
+    const modes = spotify
+        ? []
+        : [
+              loading && "Loading...",
+              state.shuffle && "Shuffle on",
+              state.repeat === "all" && "Repeat all",
+              state.repeat === "one" && "Repeat this track",
+          ].filter(Boolean);
 
     const text = (
         <ButtonBase
@@ -75,7 +81,11 @@ export const NowPlayingBar: React.FC = () => {
             sx={{ minWidth: 0, flex: 1, textAlign: "left", display: "flex", gap: 1.5, justifyContent: "flex-start" }}
         >
             <Box sx={{ width: COVER_SIZE, flexShrink: 0 }}>
-                <AlbumCover collection={track.collection} albumId={track.albumId} hasCover={track.hasCover} />
+                {spotify ? (
+                    <AlbumCover collection="music" albumId="" hasCover={!!spotify.coverUrl} imageUrl={spotify.coverUrl} banner="Spotify" />
+                ) : (
+                    track && <AlbumCover collection={track.collection} albumId={track.albumId} hasCover={track.hasCover} />
+                )}
             </Box>
             <Box sx={{ minWidth: 0, flex: 1 }}>
                 <Typography noWrap sx={{ fontWeight: 600 }}>
@@ -118,7 +128,7 @@ export const NowPlayingBar: React.FC = () => {
             <Stack direction="row" alignItems="center" spacing={2}>
                 <Box sx={{ display: "flex", width: "30%", minWidth: 0 }}>{text}</Box>
                 <Stack direction="row" alignItems="center" spacing={0.5}>
-                    {!isBook && (
+                    {!isBook && !spotify && (
                         <PlayerToggleButton
                             active={state.shuffle}
                             label={state.shuffle ? "Shuffle is on, press to turn it off" : "Shuffle is off, press to turn it on"}
@@ -136,7 +146,7 @@ export const NowPlayingBar: React.FC = () => {
                     <IconButton onClick={() => send("player_next", {})} aria-label="Next">
                         <SkipNextIcon />
                     </IconButton>
-                    {!isBook && (
+                    {!isBook && !spotify && (
                         <PlayerToggleButton
                             active={state.repeat !== "off"}
                             label={REPEAT_LABELS[state.repeat]}
@@ -168,9 +178,11 @@ export const NowPlayingBar: React.FC = () => {
                     </Typography>
                 </Stack>
                 {isBook && <BookSpeedButton />}
-                <Button component={Link} to="/queue" size="small" startIcon={<QueueMusicIcon />}>
-                    {isBook ? "Book" : `Queue (${state.queue.length})`}
-                </Button>
+                {!spotify && (
+                    <Button component={Link} to="/queue" size="small" startIcon={<QueueMusicIcon />}>
+                        {isBook ? "Book" : `Queue (${state.queue.length})`}
+                    </Button>
+                )}
             </Stack>
         </Paper>
     );

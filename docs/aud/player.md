@@ -41,6 +41,28 @@ of the chosen engine must be installed.
   is gone gives way to the next one. While the library is empty (before the first scan) nothing is restored and the saved
   queue is not overwritten.
 
+## Spotify on the same output
+
+Spotify plays through a Spotify Connect player on the machine (Soloist, Spotify's own client). It and the player both play
+to the sound server (PipeWire) of the machine, and the two never play at the same time. The service keeps a WebSocket
+connection to Soloist (`SoloistClient`, `AUD_SOLOIST_WS`, for example `ws://127.0.0.1:8765`; the API of Soloist has no
+login, so it must only listen on the machine itself) and reads its `playback_state` events:
+
+- When Spotify starts to play, the player that plays pauses (`yieldToSpotify`), so Play goes on from the same place in
+  the track. A player that is paused or stopped is left as it is.
+- When the user starts the player, Spotify is paused (`pause` command), if it plays.
+
+While Spotify is what was played last, the state of the player carries what it plays (`spotify`: title, artist, album, the
+cover from Spotify, position, duration, status) and the clients show it instead of the queue, with the cover, the position and
+the buttons. The buttons of the player (play, pause, next, previous, seek) are then Soloist's, and there is no shuffle, repeat or
+queue. It lasts until the user starts the player: the queue is then shown again, where it was left.
+
+The connection is opened again every 5 seconds when it drops. Nothing of Spotify is used when `AUD_SOLOIST_WS` is not set.
+
+| Variable | Required | Meaning |
+|----------|----------|---------|
+| `AUD_SOLOIST_WS` | no | The WebSocket address of Soloist. |
+
 ## What the UI does
 
 Clients subscribe once (`player_subscribe`) and get `player_state` whenever the player changes. The state carries the

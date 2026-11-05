@@ -17,6 +17,19 @@ export const REPEAT_MODES: RepeatMode[] = ["off", "all", "one"];
  */
 export type QueueTrack = LibraryTrack & { collection: Collection; albumTitle: string; hasCover: boolean };
 
+/** What Spotify plays, when it is what was played last. It is played by the Spotify player of the machine, not by the queue. */
+export type SpotifyNowPlaying = {
+    status: "playing" | "paused";
+    title: string;
+    artist: string;
+    album: string;
+    /** The picture of the album, from Spotify. */
+    coverUrl?: string;
+    /** Where the track is when the state is sent; while playing a client shows it moving on from the time it received the state. */
+    positionSec: number;
+    durationSec: number;
+};
+
 export type PlayerState = {
     status: PlayerStatus;
     /** The tracks in the order they are played, which is what is shown: shuffle mixes it and turning shuffle off brings the earlier order back. */
@@ -32,6 +45,8 @@ export type PlayerState = {
     repeat: RepeatMode;
     /** How fast it plays, 1 is normal. It stays when the next track or book starts. */
     speed: number;
+    /** Set while Spotify is what was played last: the buttons of the player then control Spotify, and the queue waits. */
+    spotify?: SpotifyNowPlaying;
 };
 export const MIN_SPEED = 0.5;
 export const MAX_SPEED = 3;

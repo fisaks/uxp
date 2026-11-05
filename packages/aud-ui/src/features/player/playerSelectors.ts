@@ -1,5 +1,5 @@
 import { createSelector } from "@reduxjs/toolkit";
-import { QueueTrack } from "@aud/common";
+import { QueueTrack, SpotifyNowPlaying } from "@aud/common";
 import { RootState } from "../../app/store";
 
 const selectPlayerSliceState = (state: RootState) => state.player;
@@ -26,6 +26,9 @@ export const selectHasQueue = createSelector([selectQueue], (queue): boolean => 
 export const selectCurrentTrack = createSelector([selectPlayerState], (state): QueueTrack | undefined =>
     state && state.currentIndex !== undefined ? state.queue[state.currentIndex] : undefined
 );
+
+/** What Spotify plays, while Spotify is what was played last: it is then shown instead of the queue, and the buttons control it. */
+export const selectSpotify = createSelector([selectPlayerState], (state): SpotifyNowPlaying | undefined => state?.spotify);
 
 export const selectCurrentTrackId = createSelector([selectCurrentTrack], (track) => track?.id);
 

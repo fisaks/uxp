@@ -11,7 +11,7 @@ import { dayAndTime } from "../history/historyFormat";
 import { AlbumCover } from "../library/AlbumCover";
 import { NOW_PLAYING_PATH } from "../player/nowPlayingPath";
 import { nowPlayingText } from "../player/nowPlayingText";
-import { selectCurrentTrack, selectPlayerState } from "../player/playerSelectors";
+import { selectCurrentTrack, selectPlayerState, selectSpotify } from "../player/playerSelectors";
 import { useRequest } from "../shared/useRequest";
 import { ScanLibraries } from "./ScanLibraries";
 
@@ -108,6 +108,7 @@ export const HomePage: React.FC = () => {
     const { send: sendAmplifier, error: amplifierError, clearError } = useAmplifierCommand();
     const player = useAppSelector(selectPlayerState);
     const track = useAppSelector(selectCurrentTrack);
+    const spotify = useAppSelector(selectSpotify);
     const { data: library } = useRequest("library_get_artists", {});
     const { data: books } = useRequest("audiobook_get_authors", {});
     const { data: playlists } = useRequest("playlist_list", {});
@@ -124,11 +125,16 @@ export const HomePage: React.FC = () => {
 
     const content: Record<string, Pick<TileProps, "lines" | "picture">> = {
         [NOW_PLAYING_PATH]: {
-            lines:
-                player && track && player.currentIndex !== undefined
-                    ? (({ title, subtitle }) => [title, subtitle])(nowPlayingText(player.queue, player.currentIndex))
-                    : ["Nothing is playing"],
-            picture: track && <AlbumCover collection={track.collection} albumId={track.albumId} hasCover={track.hasCover} />,
+            lines: spotify
+                ? [spotify.title, spotify.artist]
+                : player && track && player.currentIndex !== undefined
+                  ? (({ title, subtitle }) => [title, subtitle])(nowPlayingText(player.queue, player.currentIndex))
+                  : ["Nothing is playing"],
+            picture: spotify ? (
+                <AlbumCover collection="music" albumId="" hasCover={!!spotify.coverUrl} imageUrl={spotify.coverUrl} banner="Spotify" />
+            ) : (
+                track && <AlbumCover collection={track.collection} albumId={track.albumId} hasCover={track.hasCover} />
+            ),
         },
         "/amplifier": {
             lines: [amplifierLine, amplifier?.status?.tuner?.programService || undefined],

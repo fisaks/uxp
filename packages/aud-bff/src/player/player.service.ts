@@ -1,4 +1,4 @@
-import { BookProgress, Collection, PLAYED_AFTER_SEC, PlayerState, PlayerStatus, QueueTrack, RepeatMode } from "@aud/common";
+import { BookProgress, Collection, PLAYED_AFTER_SEC, PlayerState, PlayerStatus, QueueTrack, RepeatMode, SpotifyNowPlaying } from "@aud/common";
 import { AppErrorV2, AppLogger, WebSocketDetails } from "@uxp/bff-common";
 import { ErrorCodes } from "@uxp/common";
 import { amplifierService } from "../amplifier/amplifier.service";
@@ -13,6 +13,7 @@ import { bookProgressStore } from "./book-progress";
 import { PlayerEngine } from "./player-engine";
 import { PlayerConfig, playerConfig } from "./player.config";
 import { PersistedQueue, QueueStore } from "./queue-store";
+import { SoloistClient } from "./soloist-client";
 import { shuffledOrder } from "./player-order";
 
 const PLAYER_TOPIC = "player";
@@ -27,6 +28,14 @@ const POSITION_PUBLISH_MS = 2000;
 
 /** What the player needs of the amplifier: to have it ready when the music starts. */
 type AmplifierControl = { prepareForPlayback(): Promise<void> };
+
+/** The Spotify player of the machine: what it plays, and its buttons while Spotify is what the player shows. */
+type SpotifyControl = {
+    pause(): void;
+    nowPlaying(): SpotifyNowPlaying | undefined;
+    control(command: "play" | "pause" | "skip_next" | "skip_prev"): void;
+    seek(positionSec: number): void;
+};
 
 /** A library the player takes its tracks from. The tracks of the two libraries are never looked up together: a request says which it means. */
 type TrackSource = {
@@ -80,6 +89,8 @@ export class PlayerService {
     /** The queue that was taken away when the queue was replaced or cleared, for Undo. */
     private replaced?: QueueSnapshot;
     private status: PlayerStatus = "stopped";
+    /** Spotify is what was played last: until the user starts the player, the buttons are Spotify's. */
+    private spotifyIsSource = false;
     private shuffle = false;
     private repeat: RepeatMode = "off";
     /** The speed chosen for the books: music always plays at normal speed, and this is kept for the next book. */
@@ -105,7 +116,8 @@ export class PlayerService {
         private readonly amplifier: AmplifierControl,
         private readonly storage: QueueStorage,
         private readonly history: HistoryRecorder,
-        private readonly progress: ProgressStorage
+        private readonly progress: ProgressStorage,
+        private readonly spotify: SpotifyControl
     ) {
         engine.setListener({
             onPosition: (positionSec) => this.onPosition(positionSec),
@@ -162,6 +174,7 @@ export class PlayerService {
             shuffle: this.shuffle,
             repeat: this.repeat,
             speed: this.playbackSpeed(),
+            spotify: this.spotifyIsSource ? this.spotify.nowPlaying() : undefined,
         };
     }
 
@@ -331,6 +344,14 @@ export class PlayerService {
     }
 
     pause(): PlayerState {
+        if (this.spotifyActive) {
+            this.spotify.control("pause");
+            return this.getState();
+        }
+        return this.pausePlayer();
+    }
+
+    private pausePlayer(): PlayerState {
         if (this.status === "playing") {
             this.setPosition(this.currentPosition());
             this.engine.pause();
@@ -350,7 +371,34 @@ export class PlayerService {
         return this.publish();
     }
 
+    /**
+     * Spotify starts to play, and the two never play at the same time: the player pauses where it is, and it is Spotify that
+     * the buttons control from now on, until the user starts the player. A player that is already paused or stopped is left as it is.
+     */
+    yieldToSpotify(): PlayerState {
+        AppLogger.info(undefined, { message: "Spotify plays, the player pauses" });
+        this.pausePlayer();
+        this.spotifyIsSource = true;
+        return this.publish();
+    }
+
+    /** What Spotify plays changed: the clients show it while it is what the player shows. */
+    onSpotifyChanged() {
+        if (this.spotifyIsSource) {
+            this.wsManager.broadcastToTopic(PLAYER_TOPIC, { action: "player_state", success: true, payload: this.getState() });
+        }
+    }
+
+    /** Spotify is what was played last, and it is known what it plays: the buttons of the player are its buttons. */
+    private get spotifyActive(): boolean {
+        return this.spotifyIsSource && this.spotify.nowPlaying() !== undefined;
+    }
+
     async resume(): Promise<PlayerState> {
+        if (this.spotifyActive) {
+            this.spotify.control("play");
+            return this.getState();
+        }
         if (this.status === "paused") {
             return this.startByUser("resume");
         }
@@ -361,10 +409,18 @@ export class PlayerService {
     }
 
     async next(): Promise<PlayerState> {
+        if (this.spotifyActive) {
+            this.spotify.control("skip_next");
+            return this.getState();
+        }
         return this.queue.length === 0 ? this.getState() : this.advance(false);
     }
 
     async previous(): Promise<PlayerState> {
+        if (this.spotifyActive) {
+            this.spotify.control("skip_prev");
+            return this.getState();
+        }
         if (this.queue.length === 0) {
             return this.getState();
         }
@@ -380,6 +436,10 @@ export class PlayerService {
     }
 
     seek(positionSec: number): PlayerState {
+        if (this.spotifyActive) {
+            this.spotify.seek(positionSec);
+            return this.getState();
+        }
         if (this.status === "playing" || this.status === "paused") {
             const duration = this.queue[this.currentIndex]?.durationSec;
             const position = Math.max(0, duration ? Math.min(positionSec, duration) : positionSec);
@@ -459,6 +519,8 @@ export class PlayerService {
      * input that is chosen on the amplifier while music plays is not changed back.
      */
     private startByUser(from: "start" | "resume"): PlayerState {
+        this.spotify.pause();
+        this.spotifyIsSource = false;
         const token = ++this.startToken;
         this.status = "starting";
         if (from === "start") {
@@ -719,6 +781,13 @@ const createEngine = ({ engine, mpv, mplayer }: PlayerConfig): PlayerEngine => {
     }
 };
 
+const soloist = new SoloistClient(
+    playerConfig.soloistUrl,
+    () => playerService.yieldToSpotify(),
+    () => amplifierService.prepareForPlayback(),
+    () => playerService.onSpotifyChanged()
+);
+
 export const playerService = new PlayerService(
     createEngine(playerConfig),
     { music: libraryService, audiobooks: audiobookService },
@@ -726,5 +795,7 @@ export const playerService = new PlayerService(
     amplifierService,
     new QueueStore(libraryConfig.dataDir),
     historyService,
-    bookProgressStore
+    bookProgressStore,
+    soloist
 );
+soloist.start();

@@ -9,7 +9,9 @@ export const usePlayerPosition = (): number => {
     const state = useAppSelector(selectPlayerState);
     const receivedAt = useAppSelector(selectPlayerReceivedAt);
     const [now, setNow] = useState(Date.now());
-    const playing = state?.status === "playing";
+    // What Spotify plays has its own position, at normal speed.
+    const spotify = state?.spotify;
+    const playing = (spotify ?? state)?.status === "playing";
 
     useEffect(() => {
         if (!playing) return;
@@ -19,5 +21,6 @@ export const usePlayerPosition = (): number => {
     }, [playing, receivedAt]);
 
     if (!state) return 0;
-    return playing ? state.positionSec + (state.speed * Math.max(0, now - receivedAt)) / 1000 : state.positionSec;
+    const positionSec = spotify?.positionSec ?? state.positionSec;
+    return playing ? positionSec + ((spotify ? 1 : state.speed) * Math.max(0, now - receivedAt)) / 1000 : positionSec;
 };
