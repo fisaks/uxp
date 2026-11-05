@@ -62,6 +62,15 @@ The connection is opened again every 5 seconds when it drops. Nothing of Spotify
 | Variable | Required | Meaning |
 |----------|----------|---------|
 | `AUD_SOLOIST_WS` | no | The WebSocket address of Soloist. |
+| `AUD_SOLOIST_DIR` | no | The folder Soloist is installed in, for the health check. |
+
+## Health
+
+The AUD health item in the header shows a `spotify` entry when `AUD_SOLOIST_WS` is set (`spotify_check`). It is an error when
+Soloist does not answer, when its build has expired or has 7 days left or less, a warning from 30 days left, and a warning when
+the last update is more than 45 days old. A Soloist build stops working 90 days after it was made. The build is read from
+`soloist --version` in `AUD_SOLOIST_DIR` (the answer is kept for an hour), and the time of the last update from the file
+`last-update` there, which the update of Soloist writes. Without `AUD_SOLOIST_DIR` the item only says whether Soloist answers.
 
 ## What the UI does
 

@@ -783,6 +783,7 @@ const createEngine = ({ engine, mpv, mplayer }: PlayerConfig): PlayerEngine => {
 
 const soloist = new SoloistClient(
     playerConfig.soloistUrl,
+    playerConfig.soloistDir,
     () => playerService.yieldToSpotify(),
     () => amplifierService.prepareForPlayback(),
     () => playerService.onSpotifyChanged()
@@ -799,3 +800,5 @@ export const playerService = new PlayerService(
     soloist
 );
 soloist.start();
+
+export const spotifyHealth = () => soloist.health();

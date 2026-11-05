@@ -8,6 +8,8 @@ export type PlayerConfig = {
     mplayer: MplayerConfig;
     /** The WebSocket of the Spotify player (Soloist) on the machine, for example "ws://127.0.0.1:8765". Spotify is not played with when not set. */
     soloistUrl?: string;
+    /** The folder Soloist is installed in: its build date and the time of its last update are read there, for the health check. */
+    soloistDir?: string;
 };
 
 const ENGINES: PlayerConfig["engine"][] = ["mpv", "mplayer", "fake"];
@@ -17,4 +19,5 @@ export const playerConfig: PlayerConfig = {
     mpv: { command: process.env.AUD_MPV_COMMAND || "mpv", audioDevice: process.env.AUD_MPV_AUDIO_DEVICE || undefined },
     mplayer: { command: process.env.AUD_MPLAYER_COMMAND || "mplayer", audioOutput: process.env.AUD_MPLAYER_AUDIO_OUTPUT || undefined },
     soloistUrl: process.env.AUD_SOLOIST_WS || undefined,
+    soloistDir: process.env.AUD_SOLOIST_DIR || undefined,
 };

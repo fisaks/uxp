@@ -13,10 +13,15 @@ import {
     PlayerSetSpeedSchema,
 } from "@aud/common";
 import { WebSocketAction, WebSocketDetails } from "@uxp/bff-common";
-import { playerService } from "../player/player.service";
+import { playerService, spotifyHealth } from "../player/player.service";
 import { playlistService } from "../playlists/playlist.service";
 
 export class PlayerHandler {
+    @WebSocketAction("spotify_check", { authenticate: true })
+    public spotifyCheck() {
+        return spotifyHealth();
+    }
+
     @WebSocketAction("player_subscribe", { authenticate: true })
     public subscribe(wsDetails: WebSocketDetails) {
         return playerService.subscribe(wsDetails.socket);

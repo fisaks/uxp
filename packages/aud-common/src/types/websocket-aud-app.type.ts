@@ -1,6 +1,6 @@
 import { WebSocketAction, WebSocketMessage, WebSocketResponse } from "@uxp/common";
 import { AmplifierReachability, AmplifierState } from "./amplifier.type";
-import { PlayerState, RepeatMode } from "./player.type";
+import { PlayerState, RepeatMode, SpotifyHealth } from "./player.type";
 import { HistoryResponse } from "./history.type";
 import { LibrarySearchRequest, LibrarySearchResponse, SearchReachability } from "./search.type";
 import { Playlist, PlaylistSummary } from "./playlist.type";
@@ -42,6 +42,8 @@ export type AudioAppActionPayloadRequestMap = {
     library_search: LibrarySearchRequest;
     /** Asks once whether search is on and Meilisearch answers, for the health check. */
     search_check: Record<string, never>;
+    /** Asks once whether Spotify is set up and its player answers, and how long its build lasts, for the health check. */
+    spotify_check: Record<string, never>;
     /** The audiobooks have the same shape as the music: authors are artists, books are albums and parts are tracks. */
     audiobook_get_authors: Record<string, never>;
     audiobook_get_books: { artistId: string };
@@ -126,6 +128,7 @@ export type AudioAppActionPayloadResponseMap = {
     library_get_tracks: LibraryTracksResponse;
     library_search: LibrarySearchResponse;
     search_check: SearchReachability;
+    spotify_check: SpotifyHealth;
     audiobook_get_authors: AudiobookAuthorsResponse;
     audiobook_get_books: LibraryAlbumsResponse;
     audiobook_get_parts: AudiobookPartsResponse;

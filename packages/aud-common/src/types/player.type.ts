@@ -17,6 +17,19 @@ export const REPEAT_MODES: RepeatMode[] = ["off", "all", "one"];
  */
 export type QueueTrack = LibraryTrack & { collection: Collection; albumTitle: string; hasCover: boolean };
 
+/**
+ * The answer to the health check: whether Spotify is set up on the machine, whether its player answers, and when the build of it
+ * stops working (a build is good for 90 days) and when it was last updated.
+ */
+export type SpotifyHealth = {
+    enabled: boolean;
+    reachable: boolean;
+    /** ISO time. Unknown when the build cannot be read. */
+    expiresAt?: string;
+    /** ISO time of the last update run that ended well, even when there was no newer build. */
+    lastUpdateAt?: string;
+};
+
 /** What Spotify plays, when it is what was played last. It is played by the Spotify player of the machine, not by the queue. */
 export type SpotifyNowPlaying = {
     status: "playing" | "paused";

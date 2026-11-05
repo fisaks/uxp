@@ -1,10 +1,21 @@
-import { SpotifyNowPlaying } from "@aud/common";
+import { SpotifyHealth, SpotifyNowPlaying } from "@aud/common";
 import { AppLogger } from "@uxp/bff-common";
+import { execFile } from "child_process";
+import { readFile } from "fs/promises";
+import path from "path";
+import { promisify } from "util";
+
+const execFileAsync = promisify(execFile);
 
 const RECONNECT_MS = 5000;
 // How long the amplifier may take to be ready before Spotify is held back, so none of its beginning is lost. An amplifier that is
 // already on answers well inside this, and then Spotify is not touched.
 const HOLD_AFTER_MS = 400;
+
+// A Soloist build stops working 90 days after it was made.
+const BUILD_LIFE_MS = 90 * 24 * 3600 * 1000;
+// The build of the installed binary only changes with an update, so it is not asked for at every health check.
+const BUILD_CACHE_MS = 3600 * 1000;
 
 type Named = { entity?: { decorations?: { identity?: { name?: string } } } };
 
@@ -65,9 +76,11 @@ export class SoloistClient {
     private currentAt = 0;
     /** Spotify is held back until the amplifier is ready: what Soloist reports meanwhile is ours (the pause) or the user's (overridden). */
     private holding = false;
+    private buildCache?: { at: number; expiresAt?: string };
 
     constructor(
         private readonly url: string | undefined,
+        private readonly dir: string | undefined,
         private readonly onPlaying: () => void,
         private readonly prepare: () => Promise<void>,
         private readonly onChange: () => void
@@ -85,6 +98,41 @@ export class SoloistClient {
             this.send("pause");
             // Soloist reports the pause, this only keeps a second start of the player from sending it twice.
             this.playing = false;
+        }
+    }
+
+    /** For the health check: whether Spotify is set up, whether Soloist answers, and when its build expires and was last updated. */
+    async health(): Promise<SpotifyHealth> {
+        const reachable = this.socket?.readyState === WebSocket.OPEN;
+        return { enabled: this.url !== undefined, reachable, expiresAt: await this.expiresAt(), lastUpdateAt: await this.lastUpdateAt() };
+    }
+
+    /** The build number in `soloist --version` ("... build 1793793704 (20261104) ...") is the time it was made, in seconds. */
+    private async expiresAt(): Promise<string | undefined> {
+        if (!this.dir) {
+            return undefined;
+        }
+        if (!this.buildCache || Date.now() - this.buildCache.at > BUILD_CACHE_MS) {
+            try {
+                const { stdout } = await execFileAsync(path.join(this.dir, "soloist"), ["--version"], { timeout: 10_000 });
+                const build = /\bbuild (\d+)\b/.exec(stdout)?.[1];
+                this.buildCache = { at: Date.now(), expiresAt: build ? new Date(Number(build) * 1000 + BUILD_LIFE_MS).toISOString() : undefined };
+            } catch (error) {
+                AppLogger.warn(undefined, { message: "[Soloist] The version could not be read", error });
+                return undefined;
+            }
+        }
+        return this.buildCache.expiresAt;
+    }
+
+    private async lastUpdateAt(): Promise<string | undefined> {
+        if (!this.dir) {
+            return undefined;
+        }
+        try {
+            return (await readFile(path.join(this.dir, "last-update"), "utf8")).trim() || undefined;
+        } catch {
+            return undefined;
         }
     }
 

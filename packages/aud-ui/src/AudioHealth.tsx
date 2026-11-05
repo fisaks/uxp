@@ -1,6 +1,6 @@
 import { HealthItem } from "@uxp/common";
 import { getUxpWindow, WebSocketProvider } from "@uxp/ui-lib";
-import { AmplifierReachability, AudioAppActionPayloadRequestMap, AudioAppActionPayloadResponseMap, SearchReachability } from "@aud/common";
+import { AmplifierReachability, AudioAppActionPayloadRequestMap, AudioAppActionPayloadResponseMap, SearchReachability, SpotifyHealth } from "@aud/common";
 import React, { useCallback, useEffect, useMemo } from "react";
 import {
     AudioAppErrorHandler,
@@ -24,12 +24,43 @@ const AMPLIFIER_OK: HealthItem = { id: "amplifier", severity: "ok", message: "Th
 const SEARCH_ERROR: HealthItem = { id: "search", severity: "error", message: "Search cannot be reached" };
 const SEARCH_OK: HealthItem = { id: "search", severity: "ok", message: "Search is running" };
 
+const SPOTIFY_ERROR: HealthItem = { id: "spotify", severity: "error", message: "Spotify cannot be reached" };
+const SPOTIFY_OK: HealthItem = { id: "spotify", severity: "ok", message: "Spotify is running" };
+const DAY_MS = 24 * 3600 * 1000;
+// The monthly update and its retries leave a gap of at most a month and a few hours.
+const UPDATE_STALE_DAYS = 45;
+const BUILD_WARN_DAYS = 30;
+const BUILD_ERROR_DAYS = 7;
+
+/**
+ * A Spotify build stops working 90 days after it is made, and a monthly update installs a newer one. The item turns to a warning
+ * when updates stop being made, well before the build runs out, so there is time to look at the Pi.
+ */
+const spotifyItem = ({ reachable, expiresAt, lastUpdateAt }: SpotifyHealth, now = Date.now()): HealthItem => {
+    const daysLeft = expiresAt ? Math.floor((Date.parse(expiresAt) - now) / DAY_MS) : undefined;
+    if (daysLeft !== undefined && daysLeft < 0) {
+        return { ...SPOTIFY_ERROR, message: "The Spotify build has expired: it must be updated on the Pi" };
+    }
+    if (!reachable) {
+        return SPOTIFY_ERROR;
+    }
+    if (daysLeft !== undefined && daysLeft <= BUILD_WARN_DAYS) {
+        const severity = daysLeft <= BUILD_ERROR_DAYS ? "error" : "warn";
+        return { id: "spotify", severity, message: `Spotify stops working in ${daysLeft} days: the update has not worked` };
+    }
+    const staleDays = lastUpdateAt ? Math.floor((now - Date.parse(lastUpdateAt)) / DAY_MS) : undefined;
+    if (staleDays !== undefined && staleDays > UPDATE_STALE_DAYS) {
+        return { id: "spotify", severity: "warn", message: `Spotify has not been updated for ${staleDays} days` };
+    }
+    return SPOTIFY_OK;
+};
+
 // The page only asks questions; a failed check is what it reports, so there is nothing to listen to or to handle.
 const NO_LISTENERS: AudioAppWebSocketResponseListener = {};
 const IGNORE_ERROR: AudioAppErrorHandler = () => true;
 
 /**
- * Asks the audio server every 30 seconds whether it, the amplifier and search answer, and reports it to UXP. The server cannot
+ * Asks the audio server every 30 seconds whether it, the amplifier, search and Spotify answer, and reports it to UXP. The server cannot
  * report its own death, so a check that gets no answer is what tells that it is down; the amplifier is then not known.
  * The first check is made when the connection opens (and again after a reconnect), since a message cannot be sent before.
  * The items have no timestamp, so UXP only shows a notice when a severity or a message changes.
@@ -46,6 +77,9 @@ const AudioHealth: React.FC = () => {
             // Search is optional: it has an item only when the server has it switched on.
             const search = (await ws.sendMessageAsync({ action: "search_check", payload: {} })).payload as SearchReachability | undefined;
             if (search?.enabled) items.push(search.reachable ? SEARCH_OK : SEARCH_ERROR);
+            // Spotify is optional too.
+            const spotify = (await ws.sendMessageAsync({ action: "spotify_check", payload: {} })).payload as SpotifyHealth | undefined;
+            if (spotify?.enabled) items.push(spotifyItem(spotify));
             report(items);
         } catch {
             report([AUDIO_SERVER_ERROR]);
