@@ -9,6 +9,7 @@ import { selectAmplifierState } from "../amplifier/amplifierSelectors";
 import { useAmplifierCommand } from "../amplifier/useAmplifierCommand";
 import { dayAndTime } from "../history/historyFormat";
 import { AlbumCover } from "../library/AlbumCover";
+import { TrackCover } from "../library/TrackCover";
 import { NOW_PLAYING_PATH } from "../player/nowPlayingPath";
 import { nowPlayingText } from "../player/nowPlayingText";
 import { selectCurrentTrack, selectPlayerState, selectSpotify } from "../player/playerSelectors";
@@ -133,7 +134,7 @@ export const HomePage: React.FC = () => {
             picture: spotify ? (
                 <AlbumCover collection="music" albumId="" hasCover={!!spotify.coverUrl} imageUrl={spotify.coverUrl} banner="Spotify" />
             ) : (
-                track && <AlbumCover collection={track.collection} albumId={track.albumId} hasCover={track.hasCover} />
+                track && <TrackCover track={track} />
             ),
         },
         "/amplifier": {

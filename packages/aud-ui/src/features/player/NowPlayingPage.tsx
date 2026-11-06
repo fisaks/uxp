@@ -10,6 +10,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAppSelector } from "../../hooks";
 import { AlbumCover } from "../library/AlbumCover";
+import { TrackCover } from "../library/TrackCover";
 import { formatDuration } from "../library/libraryFormat";
 import { BookSkipButton } from "./BookSkipButton";
 import { BookSpeedButton } from "./BookSpeedButton";
@@ -62,7 +63,7 @@ const NowPlayingPage: React.FC = () => {
                 {spotify ? (
                     <AlbumCover collection="music" albumId="" hasCover={!!spotify.coverUrl} imageUrl={spotify.coverUrl} banner="Spotify" />
                 ) : (
-                    track && <AlbumCover collection={track.collection} albumId={track.albumId} hasCover={track.hasCover} />
+                    track && <TrackCover track={track} />
                 )}
             </Box>
             <Box sx={{ textAlign: "center" }}>

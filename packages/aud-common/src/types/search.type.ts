@@ -81,3 +81,8 @@ export type SearchReachability = {
     enabled: boolean;
     reachable: boolean;
 };
+
+export type SpotifySearchRequest = { query: string; offset?: number };
+
+/** The tracks of Spotify that match, as tracks of the queue (their id is the URI), one page of them; `hasMore` when another page may follow. */
+export type SpotifySearchResponse = { query: string; tracks: QueueTrack[]; hasMore: boolean };

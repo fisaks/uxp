@@ -13,15 +13,20 @@ export const REPEAT_MODES: RepeatMode[] = ["off", "all", "one"];
 
 /**
  * A track in the queue: a song, or a part of an audiobook. The cover of its album is at /api/cover/<collection>/<albumId>
- * when `hasCover` is true. The queue is either all music or all of one audiobook.
+ * when `hasCover` is true. The queue is either all music or all of one audiobook. A track of Spotify is music that is not in
+ * the library: its `id` is its Spotify URI, it has no album or artist id, and `spotify` is set, with the picture to show.
  */
-export type QueueTrack = LibraryTrack & { collection: Collection; albumTitle: string; hasCover: boolean };
+export type QueueTrack = LibraryTrack & { collection: Collection; albumTitle: string; hasCover: boolean; spotify?: { coverUrl?: string } };
+
+export type SpotifyCatalogHealth = { enabled: boolean; ok: boolean };
 
 /**
  * The answer to the health check: whether Spotify is set up on the machine, whether its player answers, and when the build of it
  * stops working (a build is good for 90 days) and when it was last updated.
  */
 export type SpotifyHealth = {
+    /** Whether Spotify's catalog (search, lookup of tracks) is set up and answers. It is not needed to play. */
+    catalog: SpotifyCatalogHealth;
     enabled: boolean;
     reachable: boolean;
     /** ISO time. Unknown when the build cannot be read. */
@@ -32,8 +37,11 @@ export type SpotifyHealth = {
 
 /** A track that Spotify plays after the current one. */
 export type SpotifyQueueEntry = {
+    /** The Spotify URI of the track, which is what is played and what a queue of the player keeps. */
+    uri: string;
     title: string;
     artist: string;
+    album: string;
     durationSec: number;
     /** A small picture of the album, from Spotify. */
     coverUrl?: string;
@@ -41,6 +49,7 @@ export type SpotifyQueueEntry = {
 
 /** What Spotify plays, when it is what was played last. It is played by the Spotify player of the machine, not by the queue. */
 export type SpotifyNowPlaying = {
+    uri: string;
     status: "playing" | "paused";
     title: string;
     artist: string;

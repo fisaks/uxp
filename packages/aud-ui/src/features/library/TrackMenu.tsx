@@ -7,8 +7,9 @@ type TrackMenuProps = {
     onPlayNext: () => void;
     /** The playlist that was changed last, which is where tracks are most likely to go: one tap less than the dialog. */
     lastPlaylist?: { id: string; name: string };
-    onAddToLastPlaylist: () => void;
-    onAddToPlaylist: () => void;
+    /** Left out for a track of Spotify, which a playlist cannot hold. */
+    onAddToLastPlaylist?: () => void;
+    onAddToPlaylist?: () => void;
     onPlayAlbumFromHere?: () => void;
 };
 
@@ -35,14 +36,16 @@ export const TrackMenu: React.FC<TrackMenuProps> = ({
                 <MenuItem onClick={choose(onPlayNext)}>
                     <ListItemText>Play next</ListItemText>
                 </MenuItem>
-                {lastPlaylist && (
+                {lastPlaylist && onAddToLastPlaylist && (
                     <MenuItem onClick={choose(onAddToLastPlaylist)}>
                         <ListItemText>Add to "{lastPlaylist.name}"</ListItemText>
                     </MenuItem>
                 )}
-                <MenuItem onClick={choose(onAddToPlaylist)}>
-                    <ListItemText>Add to playlist...</ListItemText>
-                </MenuItem>
+                {onAddToPlaylist && (
+                    <MenuItem onClick={choose(onAddToPlaylist)}>
+                        <ListItemText>Add to playlist...</ListItemText>
+                    </MenuItem>
+                )}
                 {onPlayAlbumFromHere && (
                     <MenuItem onClick={choose(onPlayAlbumFromHere)}>
                         <ListItemText>Play album from here</ListItemText>

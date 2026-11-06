@@ -18,8 +18,8 @@ type TrackRowProps = {
     onAddToQueue: () => void;
     onPlayNext: () => void;
     lastPlaylist?: { id: string; name: string };
-    onAddToLastPlaylist: () => void;
-    onAddToPlaylist: () => void;
+    onAddToLastPlaylist?: () => void;
+    onAddToPlaylist?: () => void;
     /** Left out where the album is not at hand, as in the search results. */
     onPlayAlbumFromHere?: () => void;
 };

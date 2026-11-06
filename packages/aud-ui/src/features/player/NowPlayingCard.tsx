@@ -5,6 +5,7 @@ import React from "react";
 import { useAppSelector } from "../../hooks";
 import { NowPlayingPanel } from "../shared/NowPlayingPanel";
 import { AlbumCover } from "../library/AlbumCover";
+import { TrackCover } from "../library/TrackCover";
 import { formatDuration } from "../library/libraryFormat";
 import { nowPlayingText } from "./nowPlayingText";
 import { PlayPauseButton } from "./PlayPauseButton";
@@ -50,7 +51,7 @@ export const NowPlayingCard: React.FC = () => {
                                     banner="Spotify"
                                 />
                             ) : (
-                                track && <AlbumCover collection={track.collection} albumId={track.albumId} hasCover={track.hasCover} />
+                                track && <TrackCover track={track} />
                             )}
                         </Box>
                     }

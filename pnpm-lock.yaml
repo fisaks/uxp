@@ -140,6 +140,9 @@ importers:
       '@uxp/common':
         specifier: workspace:*
         version: link:../uxp-common
+      axios:
+        specifier: ^1.7.9
+        version: 1.8.4
       dotenv:
         specifier: ^16.4.5
         version: 16.5.0

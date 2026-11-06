@@ -1,3 +1,4 @@
+import axios from "axios";
 import os from "os";
 import { Writable } from "stream";
 
@@ -54,15 +55,11 @@ export class LokiShipper {
         const batch = this.buffer.splice(0, MAX_BATCH_LINES);
         let delivered = false;
         try {
-            const response = await fetch(`${this.url.replace(/\/$/, "")}/loki/api/v1/push`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ streams: [{ stream: this.labels, values: batch }] }),
-                signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-            });
-            if (!response.ok) {
-                throw new Error(`Loki answered ${response.status}`);
-            }
+            await axios.post(
+                `${this.url.replace(/\/$/, "")}/loki/api/v1/push`,
+                { streams: [{ stream: this.labels, values: batch }] },
+                { timeout: REQUEST_TIMEOUT_MS }
+            );
             delivered = true;
         } catch (error) {
             this.buffer.unshift(...batch);

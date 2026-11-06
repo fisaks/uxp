@@ -1,4 +1,4 @@
-import { BookProgress, Collection, PLAYED_AFTER_SEC, PlayerState, PlayerStatus, QueueTrack, RepeatMode, SpotifyNowPlaying } from "@aud/common";
+import { BookProgress, Collection, PLAYED_AFTER_SEC, PlayerState, PlayerStatus, QueueTrack, RepeatMode, SpotifyNowPlaying, SpotifyQueueEntry } from "@aud/common";
 import { AppErrorV2, AppLogger, WebSocketDetails } from "@uxp/bff-common";
 import { ErrorCodes } from "@uxp/common";
 import { amplifierService } from "../amplifier/amplifier.service";
@@ -14,6 +14,7 @@ import { PlayerEngine } from "./player-engine";
 import { PlayerConfig, playerConfig } from "./player.config";
 import { PersistedQueue, QueueStore } from "./queue-store";
 import { SoloistClient } from "./soloist-client";
+import { isSpotifyId, spotifyCatalog } from "./spotify-catalog";
 import { shuffledOrder } from "./player-order";
 
 const PLAYER_TOPIC = "player";
@@ -35,6 +36,14 @@ type SpotifyControl = {
     nowPlaying(): SpotifyNowPlaying | undefined;
     control(command: "play" | "pause" | "skip_next" | "skip_prev"): void;
     seek(positionSec: number): void;
+    /** Plays a track for the queue; false when Spotify cannot be reached. */
+    playOwned(uri: string): boolean;
+    /** Whether the track is the one of the queue that Spotify plays. */
+    owns(uri: string): boolean;
+    /** The track of the queue that Spotify plays is stopped. */
+    releaseOwned(): void;
+    /** The tracks of the URIs that Spotify plays or has coming. */
+    find(uris: string[]): SpotifyQueueEntry[];
 };
 
 /** A library the player takes its tracks from. The tracks of the two libraries are never looked up together: a request says which it means. */
@@ -136,8 +145,14 @@ export class PlayerService {
         if (!saved || saved.tracks.length === 0 || !Object.values(this.libraries).some((library) => library.hasTracks())) {
             return;
         }
+        // The tracks of Spotify are not in a library: they are asked for, so that they are known below.
+        if (!(await spotifyCatalog.resolve(saved.tracks.map(({ id }) => id)))) {
+            // Spotify could not be asked: the tracks are not gone, and a queue without them would be what is saved next. It stays as it is.
+            AppLogger.warn(undefined, { message: "Did not restore the queue: Spotify could not be asked for its tracks" });
+            return;
+        }
         // A queue saved before the audiobooks has no collection: it is music.
-        const resolved = saved.tracks.map(({ id, collection = "music" }) => this.libraries[collection].getTrack(id));
+        const resolved = saved.tracks.map(({ id, collection = "music" }) => this.trackOf(id, collection));
         const newIndex = new Map<number, number>();
         this.queue = resolved.flatMap((track, oldIndex) => {
             if (!track) {
@@ -175,7 +190,8 @@ export class PlayerService {
             repeat: this.repeat,
             speed: this.playbackSpeed(),
             spotify: this.spotifyIsSource ? this.spotify.nowPlaying() : undefined,
-            spotifyIdle: this.spotifyIsSource ? undefined : this.spotify.nowPlaying(),
+            // What Spotify plays for the queue is the queue's, there is nothing to continue.
+            spotifyIdle: this.spotifyIsSource || (this.status !== "stopped" && this.currentSpotifyUri) ? undefined : this.spotify.nowPlaying(),
         };
     }
 
@@ -237,8 +253,26 @@ export class PlayerService {
     }
 
     enqueue(trackIds: string[]): PlayerState {
-        const added = this.resolve(trackIds);
+        return this.addToQueue(this.resolve(trackIds), false);
+    }
+
+    /** The tracks that Spotify plays or has coming are put in the queue, to be played by Spotify when their turn comes. */
+    enqueueSpotify(uris: string[], next = false): PlayerState {
+        const found = this.spotify.find(uris);
+        if (found.length === 0) {
+            throw new AppErrorV2({ statusCode: 404, code: ErrorCodes.NOT_FOUND, message: "Spotify does not play or have those tracks coming" });
+        }
+        spotifyCatalog.add(found);
+        return this.addToQueue(this.resolve(found.map((entry) => entry.uri)), next);
+    }
+
+    /** At the end of the queue, or right after the current track when `next` is true. */
+    private addToQueue(added: QueueTrack[], next: boolean): PlayerState {
         this.requireMusicQueue();
+        if (next && this.currentIndex !== -1) {
+            this.insertAfterCurrent(added);
+            return this.publish();
+        }
         if (this.shuffle) {
             // What is added is mixed among itself and comes last, and it is where it was added in the order of before the shuffle.
             this.unshuffled.push(...added);
@@ -254,13 +288,7 @@ export class PlayerService {
 
     /** The tracks go right after the current track, and the current track keeps playing. */
     playNext(trackIds: string[]): PlayerState {
-        const added = this.resolve(trackIds);
-        this.requireMusicQueue();
-        if (this.currentIndex === -1) {
-            return this.enqueue(trackIds);
-        }
-        this.insertAfterCurrent(added);
-        return this.publish();
+        return this.addToQueue(this.resolve(trackIds), true);
     }
 
     /** A track is played now without losing the queue: it goes right after the current track and starts, and the queue goes on after it. */
@@ -355,7 +383,7 @@ export class PlayerService {
     private pausePlayer(): PlayerState {
         if (this.status === "playing") {
             this.setPosition(this.currentPosition());
-            this.engine.pause();
+            this.pauseSound();
             this.status = "paused";
             this.lastListenAt = undefined;
             this.saveProgress();
@@ -366,10 +394,44 @@ export class PlayerService {
                 // Nothing has been started yet, so there is nothing to pause: this cancels, and Play starts the track again.
                 return this.stopPlaying();
             }
-            this.engine.pause();
+            this.pauseSound();
             this.status = "paused";
         }
         return this.publish();
+    }
+
+    /** The current track is paused, by the engine or, for a track of Spotify, by Spotify (unless the user has taken it over). */
+    private pauseSound() {
+        const uri = this.currentSpotifyUri;
+        if (!uri) {
+            this.engine.pause();
+        } else if (this.spotify.owns(uri)) {
+            this.spotify.control("pause");
+        }
+    }
+
+    /** The URI of the current track when it is a track of Spotify. */
+    private get currentSpotifyUri(): string | undefined {
+        const track = this.queue[this.currentIndex];
+        return track?.spotify ? track.id : undefined;
+    }
+
+    /** Spotify reports what it plays of the queue: it plays or pauses (a Spotify app can do that too), or the track ended. */
+    onQueueTrackChanged(change: "playing" | "paused" | "ended") {
+        if (!this.currentSpotifyUri) {
+            return;
+        }
+        if (change === "ended") {
+            void this.advance(true);
+        } else if (change === "playing" && (this.status === "starting" || this.status === "paused")) {
+            this.status = "playing";
+            this.setPosition(this.spotify.nowPlaying()?.positionSec ?? 0);
+            this.publish();
+        } else if (change === "paused" && this.status === "playing") {
+            this.setPosition(this.currentPosition());
+            this.status = "paused";
+            this.publish();
+        }
     }
 
     /**
@@ -457,7 +519,11 @@ export class PlayerService {
         if (this.status === "playing" || this.status === "paused") {
             const duration = this.queue[this.currentIndex]?.durationSec;
             const position = Math.max(0, duration ? Math.min(positionSec, duration) : positionSec);
-            this.engine.seek(position);
+            if (this.currentSpotifyUri) {
+                this.spotify.seek(position);
+            } else {
+                this.engine.seek(position);
+            }
             this.setPosition(position);
             this.saveProgress();
         }
@@ -533,7 +599,9 @@ export class PlayerService {
      * input that is chosen on the amplifier while music plays is not changed back.
      */
     private startByUser(from: "start" | "resume"): PlayerState {
-        this.spotify.pause();
+        if (!this.currentSpotifyUri) {
+            this.spotify.pause();
+        }
         this.spotifyIsSource = false;
         const token = ++this.startToken;
         this.status = "starting";
@@ -552,7 +620,10 @@ export class PlayerService {
         if (token !== this.startToken) {
             return;
         }
-        if (from === "resume") {
+        const uri = this.currentSpotifyUri;
+        if (from === "resume" && uri && this.spotify.owns(uri)) {
+            this.spotify.control("play");
+        } else if (from === "resume" && !uri) {
             this.engine.resume();
         } else {
             await this.startCurrent();
@@ -570,6 +641,10 @@ export class PlayerService {
         this.listenedSec = 0;
         this.lastListenAt = undefined;
         this.playCounted = false;
+        if (track?.spotify) {
+            return this.startSpotifyTrack(track);
+        }
+        this.spotify.releaseOwned();
         if (!file) {
             return this.onFileFailed(`The file of ${track?.title ?? "the track"} is not in the library`);
         }
@@ -580,6 +655,17 @@ export class PlayerService {
         } catch (error) {
             return this.onFileFailed(error instanceof Error ? error.message : String(error));
         }
+        this.engineStarted = true;
+        return this.publish();
+    }
+
+    private async startSpotifyTrack(track: QueueTrack): Promise<PlayerState> {
+        AppLogger.info(undefined, { message: `Playing "${track.title}" by ${track.artist} from Spotify` });
+        this.engine.stop();
+        if (!this.spotify.playOwned(track.id)) {
+            return this.onFileFailed(`Spotify cannot be reached, "${track.title}" is skipped`);
+        }
+        // Pausing is Spotify's now, and the sound is there when it reports it (`onQueueTrackChanged`).
         this.engineStarted = true;
         return this.publish();
     }
@@ -660,6 +746,7 @@ export class PlayerService {
         this.startToken++;
         this.engineStarted = false;
         this.engine.stop();
+        this.spotify.releaseOwned();
         this.status = "stopped";
         this.setPosition(0);
         return this.publish();
@@ -752,9 +839,17 @@ export class PlayerService {
     /** The tracks of a library that are in it, in the order asked for: requests are about music unless they say audiobooks. */
     private resolve(trackIds: string[], collection: Collection = "music"): QueueTrack[] {
         return trackIds.flatMap((id) => {
-            const track = this.libraries[collection].getTrack(id);
+            const track = this.trackOf(id, collection);
             return track ? [track] : [];
         });
+    }
+
+    /** A track by its id: of the library, or of Spotify, which music is also made of. */
+    private trackOf(id: string, collection: Collection): QueueTrack | undefined {
+        if (isSpotifyId(id)) {
+            return collection === "music" ? spotifyCatalog.getTrack(id) : undefined;
+        }
+        return this.libraries[collection].getTrack(id);
     }
 
     private requireIndex(index: number): number {
@@ -800,7 +895,8 @@ const soloist = new SoloistClient(
     playerConfig.soloistDir,
     () => playerService.yieldToSpotify(),
     () => amplifierService.prepareForPlayback(),
-    () => playerService.onSpotifyChanged()
+    () => playerService.onSpotifyChanged(),
+    (change) => playerService.onQueueTrackChanged(change)
 );
 
 export const playerService = new PlayerService(
@@ -815,4 +911,4 @@ export const playerService = new PlayerService(
 );
 soloist.start();
 
-export const spotifyHealth = () => soloist.health();
+export const spotifyHealth = async () => ({ ...(await soloist.health()), catalog: await spotifyCatalog.health() });

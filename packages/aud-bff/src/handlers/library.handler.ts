@@ -11,12 +11,15 @@ import {
     LibraryStatus,
     LibraryTracksResponse,
     SearchReachability,
+    SpotifySearchResponse,
+    SpotifySearchSchema,
 } from "@aud/common";
 import { AppErrorV2, AppLogger, WebSocketAction, WebSocketDetails } from "@uxp/bff-common";
 import { ErrorCodes } from "@uxp/common";
 import { listeningService } from "../audiobook/listening.service";
 import { LibraryService, audiobookService, libraryService } from "../library/library.service";
 import { bookProgressStore } from "../player/book-progress";
+import { SEARCH_PAGE_SIZE, spotifyCatalog, spotifyTrack } from "../player/spotify-catalog";
 import { librarySearch } from "../search/library-search";
 import { searchIndexer } from "../search/search-indexer";
 
@@ -71,6 +74,14 @@ export class LibraryHandler {
     public async searchCheck(): Promise<SearchReachability> {
         const client = searchIndexer.client;
         return { enabled: client !== undefined, reachable: client ? await client.health() : false };
+    }
+
+    /** Spotify's tracks for the same words; none when Spotify's search is not set up or does not answer, so that the library's hits stand alone. */
+    @WebSocketAction("spotify_search", { authenticate: true, schema: SpotifySearchSchema })
+    public async spotifySearch(_wsDetails: WebSocketDetails, message: AudioAppRequestMessage<"spotify_search">): Promise<SpotifySearchResponse> {
+        const { query, offset } = message.payload;
+        const found = await spotifyCatalog.search(query.trim(), offset);
+        return { query, tracks: found.map(spotifyTrack), hasMore: found.length === SEARCH_PAGE_SIZE };
     }
 
     @WebSocketAction("library_search", { authenticate: true, schema: LibrarySearchSchema })

@@ -1,3 +1,4 @@
+import axios from "axios";
 import { XMLParser } from "fast-xml-parser";
 
 const REQUEST_TIMEOUT_MS = 3000;
@@ -155,7 +156,7 @@ export class YamahaClient {
 
     /** The sound programs and the ranges of the settings of this amplifier model, read from its interface description. */
     async getCapabilities(): Promise<YamahaCapabilities> {
-        const description = this.parser.parse(await this.fetchText("/YamahaRemoteControl/desc.xml")).Unit_Description;
+        const description = this.parser.parse(await this.requestText("/YamahaRemoteControl/desc.xml")).Unit_Description;
         const mainZone = this.findMenu(description, (menu) => menu["@_YNC_Tag"] === "Main_Zone");
         const menu = (matches: (menu: XmlNode) => boolean, name: string): XmlNode => {
             const found = mainZone && this.findMenu(mainZone, matches);
@@ -311,7 +312,7 @@ export class YamahaClient {
     private send(command: "GET" | "PUT", body: string): Promise<XmlNode> {
         const run = async () => {
             const reply = this.parser.parse(
-                await this.fetchText("/YamahaRemoteControl/ctrl", `<YAMAHA_AV cmd="${command}">${body}</YAMAHA_AV>`)
+                await this.requestText("/YamahaRemoteControl/ctrl", `<YAMAHA_AV cmd="${command}">${body}</YAMAHA_AV>`)
             ).YAMAHA_AV;
             const returnCode: string = reply["@_RC"];
             if (returnCode !== "0") {
@@ -324,20 +325,22 @@ export class YamahaClient {
         return result;
     }
 
-    private async fetchText(path: string, body?: string): Promise<string> {
+    private async requestText(path: string, body?: string): Promise<string> {
         try {
-            const response = await fetch(`http://${this.host}${path}`, {
+            const { data } = await axios.request<string>({
+                url: `http://${this.host}${path}`,
                 method: body === undefined ? "GET" : "POST",
-                body,
-                signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+                data: body,
+                // The reply is XML, which is parsed here, and the amplifier is sent the text as it is.
+                responseType: "text",
+                transformResponse: (reply: string) => reply,
+                headers: body === undefined ? undefined : { "Content-Type": "text/plain;charset=UTF-8" },
+                timeout: REQUEST_TIMEOUT_MS,
             });
-            if (!response.ok) {
-                throw new YamahaCommandError(`The amplifier answered HTTP ${response.status}`, String(response.status));
-            }
-            return await response.text();
+            return data;
         } catch (error) {
-            if (error instanceof YamahaCommandError) {
-                throw error;
+            if (axios.isAxiosError(error) && error.response) {
+                throw new YamahaCommandError(`The amplifier answered HTTP ${error.response.status}`, String(error.response.status));
             }
             throw new YamahaUnreachableError(
                 `The amplifier at ${this.host} did not answer: ${error instanceof Error ? error.message : String(error)}`

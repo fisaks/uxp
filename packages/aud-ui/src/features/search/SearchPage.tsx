@@ -1,5 +1,5 @@
 import { Collection, LibrarySearchHit } from "@aud/common";
-import { Alert, Box, Chip, CircularProgress, List, ListItemButton, ListItemText, ListSubheader, Stack, Typography } from "@mui/material";
+import { Alert, Box, Button, Chip, CircularProgress, List, ListItemButton, ListItemText, ListSubheader, Stack, Typography } from "@mui/material";
 import React, { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAppSelector } from "../../hooks";
@@ -12,6 +12,7 @@ import { usePlaylistCommand } from "../playlist/usePlaylistCommand";
 import { useRequest } from "../shared/useRequest";
 import { HighlightedText } from "./HighlightedText";
 import { useLibrarySearch } from "./useLibrarySearch";
+import { useSpotifySearch } from "./useSpotifySearch";
 
 /** The most hits of each group on the page. */
 const PAGE_LIMIT = 100;
@@ -57,6 +58,12 @@ export const SearchPage: React.FC = () => {
             yearTo: decade === undefined ? undefined : decade + DECADE_YEARS - 1,
         }
     );
+    // Spotify has no genre or decade, and no audiobooks.
+    const spotify = useSpotifySearch(
+        query,
+        collection !== "audiobooks" && genre === undefined && decade === undefined,
+        response?.tracks.map((hit) => hit.item) ?? []
+    );
     useRequest("playlist_list", {});
     const { playTracks, enqueue, playNext, playNow, hadQueue, notify } = usePlayerActions();
     const sendPlaylist = usePlaylistCommand();
@@ -86,7 +93,7 @@ export const SearchPage: React.FC = () => {
     const decades = decadesOf(response.facets.years);
     const filtered = collection !== undefined || genre !== undefined || decade !== undefined;
     const total =
-        response.artists.length + response.albums.length + response.tracks.length + response.books.length + response.playlists.length;
+        response.artists.length + response.albums.length + response.tracks.length + response.books.length + response.playlists.length + spotify.tracks.length;
 
     const group = (label: string, count: number) =>
         count > 0 && (
@@ -177,6 +184,25 @@ export const SearchPage: React.FC = () => {
                         />
                     );
                 })}
+                {group("Spotify", spotify.tracks.length)}
+                {spotify.tracks.map((track) => (
+                    <TrackRow
+                        key={track.id}
+                        track={track}
+                        artistName=""
+                        primary={track.title}
+                        secondary={`${track.artist} · ${track.albumTitle}`}
+                        playing={track.id === playingId}
+                        onPress={() => (hadQueue ? playNow(track.id) : playTracks([track.id]))}
+                        onAddToQueue={() => enqueue([track.id])}
+                        onPlayNext={() => playNext([track.id])}
+                    />
+                ))}
+                {spotify.hasMore && (
+                    <Button disabled={spotify.loading} onClick={() => void spotify.more()}>
+                        More from Spotify
+                    </Button>
+                )}
                 {group("Books", response.books.length)}
                 {response.books.map((hit) => (
                     <ListItemButton key={hit.item.album.id} divider onClick={() => navigate(`/audiobooks/book/${hit.item.album.id}`)}>

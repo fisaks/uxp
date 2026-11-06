@@ -6,6 +6,7 @@ import { alpha, Box, Button, IconButton, Stack, Tab, Tabs, Typography } from "@m
 import { QueueTrack, SpotifyNowPlaying } from "@aud/common";
 import React, { useMemo, useState } from "react";
 import { useAppSelector } from "../../hooks";
+import { SPOTIFY_GREEN } from "../library/AlbumCover";
 import { formatDuration } from "../library/libraryFormat";
 import { AddToPlaylistDialog } from "../playlist/AddToPlaylistDialog";
 import { SortableList, uniqueKeys } from "../shared/SortableList";
@@ -73,6 +74,16 @@ const BookQueue: React.FC = () => {
 };
 
 const COVER_SIZE = 48;
+
+/** Tells that a track of the queue is Spotify's, in the green of its cover banner. */
+const SpotifyMark: React.FC = () => (
+    <Box
+        component="span"
+        sx={{ bgcolor: SPOTIFY_GREEN, color: "#000", fontWeight: 700, fontSize: "0.65rem", px: 0.5, mr: 0.75, borderRadius: 0.5, textTransform: "uppercase" }}
+    >
+        Spotify
+    </Box>
+);
 
 type Source = "queue" | "spotify";
 
@@ -264,6 +275,7 @@ const QueuePage: React.FC = () => {
                                     {track.title}
                                 </Typography>
                                 <Typography variant="body2" color="text.secondary">
+                                    {track.spotify && <SpotifyMark />}
                                     {[track.artist, track.durationSec ? formatDuration(track.durationSec) : undefined]
                                         .filter(Boolean)
                                         .join(" · ")}

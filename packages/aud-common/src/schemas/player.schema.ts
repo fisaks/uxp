@@ -4,11 +4,13 @@ import { MAX_SPEED, MIN_SPEED, REPEAT_MODES } from "../types/player.type";
 
 const TRACK_ID_SCHEMA = { type: "string", pattern: "^[0-9a-f]{16}$" };
 const MAX_TRACKS = 5000;
+// What a queue is made of: a track of the library, or of Spotify.
+const TRACK_REF_SCHEMA = { type: "string", pattern: "^([0-9a-f]{16}|spotify:track:[A-Za-z0-9]+)$" };
 
 export const PlayerPlayTracksSchema = {
     type: "object",
     properties: {
-        trackIds: { type: "array", items: TRACK_ID_SCHEMA, minItems: 1, maxItems: MAX_TRACKS },
+        trackIds: { type: "array", items: TRACK_REF_SCHEMA, minItems: 1, maxItems: MAX_TRACKS },
         /** The track of `trackIds` to start with. */
         startIndex: { type: "integer", minimum: 0 },
         /** Turns shuffle on or off for the new queue, which keeps the setting of before when it is missing. */
@@ -32,7 +34,7 @@ export const PlayerPlayBookSchema = {
 
 export const PlayerEnqueueSchema = {
     type: "object",
-    properties: { trackIds: { type: "array", items: TRACK_ID_SCHEMA, minItems: 1, maxItems: MAX_TRACKS } },
+    properties: { trackIds: { type: "array", items: TRACK_REF_SCHEMA, minItems: 1, maxItems: MAX_TRACKS } },
     required: ["trackIds"],
     additionalProperties: false,
 };
@@ -76,7 +78,7 @@ export const PlayerPlayNextSchema = PlayerEnqueueSchema;
 
 export const PlayerPlayNowSchema = {
     type: "object",
-    properties: { trackId: TRACK_ID_SCHEMA },
+    properties: { trackId: TRACK_REF_SCHEMA },
     required: ["trackId"],
     additionalProperties: false,
 };
@@ -85,5 +87,15 @@ export const PlayerSetSpeedSchema = {
     type: "object",
     properties: { rate: { type: "number", minimum: MIN_SPEED, maximum: MAX_SPEED } },
     required: ["rate"],
+    additionalProperties: false,
+};
+
+export const PlayerEnqueueSpotifySchema = {
+    type: "object",
+    properties: {
+        uris: { type: "array", items: { type: "string", pattern: "^spotify:track:[A-Za-z0-9]+$" }, minItems: 1, maxItems: 50 },
+        next: { type: "boolean" },
+    },
+    required: ["uris"],
     additionalProperties: false,
 };

@@ -13,6 +13,7 @@ import { EventEmitter } from "events";
 import path from "path";
 import { libraryConfig } from "../library/library.config";
 import { audiobookService, libraryService } from "../library/library.service";
+import { isSpotifyId, spotifyCatalog } from "../player/spotify-catalog";
 import { readJsonFile, SerializedJsonWriter } from "../storage/json-file";
 
 const FILE = "history.json";
@@ -80,6 +81,11 @@ export class HistoryService extends EventEmitter<HistoryEventMap> {
         const file = await readJsonFile<{ plays?: unknown[]; queues?: unknown[] }>(path.join(this.dataDir, FILE));
         this.plays = (file?.plays ?? []).filter(isStoredPlay).slice(0, MAX_HISTORY_PLAYS);
         this.queues = (file?.queues ?? []).filter(isStoredQueue).slice(0, MAX_PREVIOUS_QUEUES);
+    }
+
+    /** The ids of the tracks of Spotify that the history names, to be looked up so that it can show them. */
+    spotifyIds(): string[] {
+        return [...this.plays.filter((play) => !play.book), ...this.queues.flatMap((queue) => queue.tracks)].map(({ id }) => id).filter(isSpotifyId);
     }
 
     trackPlayed(track: QueueTrack): void {
@@ -162,4 +168,8 @@ export class HistoryService extends EventEmitter<HistoryEventMap> {
     }
 }
 
-export const historyService = new HistoryService(libraryService, audiobookService, libraryConfig.dataDir);
+export const historyService = new HistoryService(
+    { getTrack: (id) => (isSpotifyId(id) ? spotifyCatalog.getTrack(id) : libraryService.getTrack(id)) },
+    audiobookService,
+    libraryConfig.dataDir
+);

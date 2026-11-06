@@ -24,6 +24,7 @@ type PlaybackState = {
     type?: string;
     status?: string;
     item?: {
+        uri?: string;
         decorations?: {
             identity?: { name?: string };
             visual_identity?: { cover?: { url: string; size: string }[] };
@@ -43,6 +44,10 @@ const QUEUE_DEFAULT = 10;
 // How long a report may take to answer a request for more tracks.
 const ANSWER_WAIT_MS = 3000;
 
+// A track of the player's queue has ended when Soloist moves on to another one (it goes on by itself, with a track of its own choice,
+// where nothing is queued) this close to the end of it. Further from the end the user chose another track, in a Spotify app.
+const END_MARGIN_SEC = 3;
+
 const BETWEEN_TRACKS_STATUSES = ["ended", "buffering", "loading"];
 
 /** The coming tracks of a `queue_changed` message. */
@@ -51,10 +56,12 @@ type QueueChanged = { type?: string; upcoming?: { uid?: string; item?: PlaybackS
 const upcomingOf = (message: QueueChanged): SpotifyQueueEntry[] =>
     (message.upcoming ?? []).flatMap((entry) => {
         const decorations = entry.item?.decorations;
-        return decorations?.identity?.name
+        return entry.item?.uri && decorations?.identity?.name
             ? {
+                  uri: entry.item.uri,
                   title: decorations.identity.name,
                   artist: (decorations.creators ?? []).flatMap((creator) => creator.entity?.decorations?.identity?.name ?? []).join(", "),
+                  album: decorations.parent?.entity?.decorations?.identity?.name ?? "",
                   durationSec: Math.round((decorations.playback?.duration_ms ?? 0) / 1000),
                   coverUrl: (decorations.visual_identity?.cover ?? []).find((cover) => cover.size === "small")?.url,
               }
@@ -64,7 +71,7 @@ const upcomingOf = (message: QueueChanged): SpotifyQueueEntry[] =>
 const nowPlayingOf = (message: PlaybackState): Omit<SpotifyNowPlaying, "upcoming"> | undefined => {
     const decorations = message.item?.decorations;
     const playing = PLAYING_STATUSES.includes(message.status ?? "");
-    if (!decorations?.identity?.name || (!playing && message.status !== "paused")) {
+    if (!message.item?.uri || !decorations?.identity?.name || (!playing && message.status !== "paused")) {
         return undefined;
     }
     const durationSec = Math.round((decorations.playback?.duration_ms ?? 0) / 1000);
@@ -72,6 +79,7 @@ const nowPlayingOf = (message: PlaybackState): Omit<SpotifyNowPlaying, "upcoming
     const sinceSec = playing && message.position?.timestamp_ms ? Math.max(0, (Date.now() - message.position.timestamp_ms) / 1000) : 0;
     const covers = decorations.visual_identity?.cover ?? [];
     return {
+        uri: message.item.uri,
         status: playing ? "playing" : "paused",
         title: decorations.identity.name,
         artist: (decorations.creators ?? []).flatMap((creator) => creator.entity?.decorations?.identity?.name ?? []).join(", "),
@@ -85,7 +93,9 @@ const nowPlayingOf = (message: PlaybackState): Omit<SpotifyNowPlaying, "upcoming
 /**
  * The connection to the Spotify player (Soloist) on the same machine, over its WebSocket API. Soloist plays Spotify to the
  * same sound server as the player, and the two never play at the same time: when Spotify starts the player gives way
- * (`onPlaying`), and when the user starts the player Spotify is paused (`pause`). Spotify starts when it is picked in the Spotify
+ * (`onPlaying`), and when the user starts the player Spotify is paused (`pause`). A track of the queue of the player is played
+ * by Soloist as well (`playOwned`): what Soloist reports of it is then the player's own business, it is told when it plays, pauses and
+ * ends, and Soloist is paused at its end so that it does not go on to a track of its own. Spotify starts when it is picked in the Spotify
  * app, with the amplifier perhaps off: it is made ready (`prepare`) and Spotify waits for it. The API has no login, so it is only
  * reached on the machine itself. The connection is opened again when it drops, and Soloist reports its state at once when it
  * is opened.
@@ -102,13 +112,16 @@ export class SoloistClient {
     /** Spotify is held back until the amplifier is ready: what Soloist reports meanwhile is ours (the pause) or the user's (overridden). */
     private holding = false;
     private buildCache?: { at: number; expiresAt?: string };
+    /** The URI of the track of the queue of the player that Soloist plays, while it is the one that plays. */
+    private owned?: string;
 
     constructor(
         private readonly url: string | undefined,
         private readonly dir: string | undefined,
         private readonly onPlaying: () => void,
         private readonly prepare: () => Promise<void>,
-        private readonly onChange: () => void
+        private readonly onChange: () => void,
+        private readonly onOwnedChange: (change: "playing" | "paused" | "ended") => void
     ) {}
 
     start() {
@@ -117,8 +130,38 @@ export class SoloistClient {
         }
     }
 
+    /** Plays a track for the queue of the player. False when Soloist cannot be reached. */
+    playOwned(uri: string): boolean {
+        if (!this.send("play", { uri })) {
+            return false;
+        }
+        this.owned = uri;
+        // Soloist reports the start of it, which is not Spotify starting on its own.
+        this.playing = true;
+        return true;
+    }
+
+    /** Whether the track is the one of the queue that Soloist plays. */
+    owns(uri: string): boolean {
+        return this.owned === uri;
+    }
+
+    /** The queue goes on with something else: the track of it that Soloist plays stops. */
+    releaseOwned() {
+        if (this.owned) {
+            this.pause();
+        }
+    }
+
+    /** The tracks that Soloist plays or has coming, to put in the queue: only these are known, the player has no way to look one up. */
+    find(uris: string[]): SpotifyQueueEntry[] {
+        const known = [...(this.current ? [this.current] : []), ...this.upcoming];
+        return uris.flatMap((uri) => known.find((entry) => entry.uri === uri) ?? []);
+    }
+
     /** The user started the player: Spotify gives way, if it plays. */
     pause() {
+        this.owned = undefined;
         if (this.playing) {
             this.send("pause");
             // Soloist reports the pause, this only keeps a second start of the player from sending it twice.
@@ -127,7 +170,7 @@ export class SoloistClient {
     }
 
     /** For the health check: whether Spotify is set up, whether Soloist answers, and when its build expires and was last updated. */
-    async health(): Promise<SpotifyHealth> {
+    async health(): Promise<Omit<SpotifyHealth, "catalog">> {
         const reachable = this.socket?.readyState === WebSocket.OPEN;
         return { enabled: this.url !== undefined, reachable, expiresAt: await this.expiresAt(), lastUpdateAt: await this.lastUpdateAt() };
     }
@@ -191,10 +234,12 @@ export class SoloistClient {
         this.send("seek", { position_ms: Math.round(positionSec * 1000) });
     }
 
-    private send(command: string, fields: object = {}) {
-        if (this.socket?.readyState === WebSocket.OPEN) {
-            this.socket.send(JSON.stringify({ type: "command", command, ...fields }));
+    private send(command: string, fields: object = {}): boolean {
+        if (this.socket?.readyState !== WebSocket.OPEN) {
+            return false;
         }
+        this.socket.send(JSON.stringify({ type: "command", command, ...fields }));
+        return true;
     }
 
     /** Spotify started to play: the player gives way, and the amplifier is made ready, with Spotify held back if that takes a while. */
@@ -232,6 +277,7 @@ export class SoloistClient {
                 message: `[Soloist] The connection is lost (${reason}), trying again in ${RECONNECT_MS / 1000} s`,
             });
             this.playing = false;
+            this.owned = undefined;
             this.upcoming = [];
             this.awaitingAnswerUntil = 0;
             this.setCurrent(undefined);
@@ -245,6 +291,27 @@ export class SoloistClient {
         this.current = current;
         this.currentAt = Date.now();
         this.onChange();
+    }
+
+    /** Soloist went on to another track while a track of the queue of the player played. */
+    private onTrackChanged(uri?: string) {
+        if (!this.owned || !uri || uri === this.owned) {
+            return;
+        }
+        const finished = this.owned;
+        this.owned = undefined;
+        const current = this.nowPlaying();
+        const atEnd = current?.uri === finished && current.positionSec >= current.durationSec - END_MARGIN_SEC;
+        if (atEnd) {
+            // What Soloist plays next is of its own choice. It is stopped before it is heard, and its start is not seen as Spotify starting.
+            this.playing = true;
+            this.send("pause");
+            this.onOwnedChange("ended");
+        } else {
+            // The user chose another track in a Spotify app: Spotify plays, and the player gives way.
+            this.playing = true;
+            void this.onStarted();
+        }
     }
 
     private onMessage(data: string) {
@@ -267,6 +334,10 @@ export class SoloistClient {
             }
             return;
         }
+        if (message.type === "track_changed") {
+            this.onTrackChanged(message.item?.uri);
+            return;
+        }
         if (message.type !== "playback_state" || this.holding) {
             return;
         }
@@ -276,6 +347,15 @@ export class SoloistClient {
             this.setCurrent(current);
         }
         const playing = PLAYING_STATUSES.includes(message.status ?? "");
+        if (this.owned) {
+            if (message.item?.uri === this.owned) {
+                this.playing = playing;
+                if (message.status === "playing" || message.status === "paused") {
+                    this.onOwnedChange(message.status);
+                }
+            }
+            return;
+        }
         const started = playing && !this.playing;
         this.playing = playing;
         if (started) {

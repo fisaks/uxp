@@ -1,4 +1,4 @@
-import { LibrarySearchContext, LibrarySearchHit } from "@aud/common";
+import { LibrarySearchContext, LibrarySearchHit, QueueTrack } from "@aud/common";
 import ClearIcon from "@mui/icons-material/Clear";
 import HistoryIcon from "@mui/icons-material/History";
 import PlaylistAddIcon from "@mui/icons-material/PlaylistAdd";
@@ -30,6 +30,7 @@ import { useRequest } from "../shared/useRequest";
 import { HighlightedText } from "./HighlightedText";
 import { clearRecentSearches, loadRecentSearches, rememberSearch } from "./recentSearches";
 import { useLibrarySearch } from "./useLibrarySearch";
+import { useSpotifySearch } from "./useSpotifySearch";
 import { SEARCH_PATH, searchPagePath } from "./searchPath";
 
 const DROPDOWN_MAX_HEIGHT = "70vh";
@@ -71,12 +72,18 @@ export const SearchBox: React.FC<SearchBoxProps> = ({ autoFocus, onDone }) => {
     const [open, setOpen] = useState(false);
     const [recent, setRecent] = useState(loadRecentSearches);
     const { response, failed } = useLibrarySearch(query, context);
+    const spotify = useSpotifySearch(query, true, response?.tracks.map((hit) => hit.item) ?? []);
 
     if (!data?.status.searchAvailable) return null;
 
     const trimmed = query.trim();
     const hitCount = response
-        ? response.artists.length + response.albums.length + response.tracks.length + response.books.length + response.playlists.length
+        ? response.artists.length +
+          response.albums.length +
+          response.tracks.length +
+          response.books.length +
+          response.playlists.length +
+          spotify.tracks.length
         : 0;
 
     /** Shows all the hits of the words on the results page. */
@@ -96,6 +103,39 @@ export const SearchBox: React.FC<SearchBoxProps> = ({ autoFocus, onDone }) => {
         action();
         onDone?.();
     };
+
+    /** A track of the library (with the matched text) or of Spotify (without), which is played and queued the same way. */
+    const trackItem = (track: QueueTrack, hit?: LibrarySearchHit<QueueTrack>) => (
+        <ListItem
+            key={track.id}
+            disablePadding
+            secondaryAction={
+                <LabelledIconButton label="Add to queue" onClick={() => void enqueue([track.id])}>
+                    <PlaylistAddIcon fontSize="small" />
+                </LabelledIconButton>
+            }
+        >
+            <ListItemButton
+                selected={track.id === playingId}
+                sx={{ pr: ROOM_FOR_BUTTON }}
+                // With a queue the track is played now and the queue is kept, as in an album.
+                onClick={choose(() => (hadQueue ? void playNow(track.id) : void playTracks([track.id])))}
+            >
+                <ListItemText
+                    primary={hit ? text(hit, "title", track.title) : track.title}
+                    secondary={
+                        hit ? (
+                            <>
+                                {text(hit, "artist", track.artist)} · {text(hit, "album", track.albumTitle)}
+                            </>
+                        ) : (
+                            `${track.artist} · ${track.albumTitle}`
+                        )
+                    }
+                />
+            </ListItemButton>
+        </ListItem>
+    );
 
     const subheader = (label: string) => <ListSubheader sx={{ lineHeight: "32px" }}>{label}</ListSubheader>;
 
@@ -203,36 +243,7 @@ export const SearchBox: React.FC<SearchBoxProps> = ({ autoFocus, onDone }) => {
                                     </ListItemButton>
                                 ))}
                                 {response.tracks.length > 0 && subheader("Tracks")}
-                                {response.tracks.map((hit) => {
-                                    const track = hit.item;
-                                    return (
-                                        <ListItem
-                                            key={track.id}
-                                            disablePadding
-                                            secondaryAction={
-                                                <LabelledIconButton label="Add to queue" onClick={() => void enqueue([track.id])}>
-                                                    <PlaylistAddIcon fontSize="small" />
-                                                </LabelledIconButton>
-                                            }
-                                        >
-                                            <ListItemButton
-                                                selected={track.id === playingId}
-                                                sx={{ pr: ROOM_FOR_BUTTON }}
-                                                // With a queue the track is played now and the queue is kept, as in an album.
-                                                onClick={choose(() => (hadQueue ? void playNow(track.id) : void playTracks([track.id])))}
-                                            >
-                                                <ListItemText
-                                                    primary={text(hit, "title", track.title)}
-                                                    secondary={
-                                                        <>
-                                                            {text(hit, "artist", track.artist)} · {text(hit, "album", track.albumTitle)}
-                                                        </>
-                                                    }
-                                                />
-                                            </ListItemButton>
-                                        </ListItem>
-                                    );
-                                })}
+                                {response.tracks.map((hit) => trackItem(hit.item, hit))}
                                 {response.books.length > 0 && subheader("Books")}
                                 {response.books.map((hit) => (
                                     <ListItemButton
@@ -251,6 +262,8 @@ export const SearchBox: React.FC<SearchBoxProps> = ({ autoFocus, onDone }) => {
                                         <ListItemText primary={text(hit, "name", hit.item.name)} />
                                     </ListItemButton>
                                 ))}
+                                {spotify.tracks.length > 0 && subheader("Spotify")}
+                                {spotify.tracks.map((track) => trackItem(track))}
                                 <Box sx={{ p: 0.5 }}>
                                     <Button size="small" onClick={() => showAll()}>
                                         Show all results

@@ -22,6 +22,7 @@ import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAppSelector } from "../../hooks";
 import { AlbumCover } from "../library/AlbumCover";
+import { TrackCover } from "../library/TrackCover";
 import { formatDuration } from "../library/libraryFormat";
 import { NOW_PLAYING_PATH } from "./nowPlayingPath";
 import { BookSkipButton } from "./BookSkipButton";
@@ -84,7 +85,7 @@ export const NowPlayingBar: React.FC = () => {
                 {spotify ? (
                     <AlbumCover collection="music" albumId="" hasCover={!!spotify.coverUrl} imageUrl={spotify.coverUrl} banner="Spotify" />
                 ) : (
-                    track && <AlbumCover collection={track.collection} albumId={track.albumId} hasCover={track.hasCover} />
+                    track && <TrackCover track={track} />
                 )}
             </Box>
             <Box sx={{ minWidth: 0, flex: 1 }}>

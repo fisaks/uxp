@@ -42,3 +42,10 @@ export const LibrarySearchSchema = {
     required: ["query"],
     additionalProperties: false,
 };
+
+export const SpotifySearchSchema = {
+    type: "object",
+    properties: { query: { type: "string", maxLength: 200 }, offset: { type: "integer", minimum: 0, maximum: 1000 } },
+    required: ["query"],
+    additionalProperties: false,
+};

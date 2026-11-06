@@ -1,6 +1,7 @@
 import {
     AudioAppRequestMessage,
     PlayerEnqueueSchema,
+    PlayerEnqueueSpotifySchema,
     PlayerIndexSchema,
     PlayerMoveSchema,
     PlayerPlayBookSchema,
@@ -43,6 +44,11 @@ export class PlayerHandler {
     @WebSocketAction("player_enqueue", { authenticate: true, schema: PlayerEnqueueSchema })
     public enqueue(_wsDetails: WebSocketDetails, message: AudioAppRequestMessage<"player_enqueue">) {
         return playerService.enqueue(message.payload.trackIds);
+    }
+
+    @WebSocketAction("player_enqueue_spotify", { authenticate: true, schema: PlayerEnqueueSpotifySchema })
+    public enqueueSpotify(_wsDetails: WebSocketDetails, message: AudioAppRequestMessage<"player_enqueue_spotify">) {
+        return playerService.enqueueSpotify(message.payload.uris, message.payload.next);
     }
 
     @WebSocketAction("player_play_next", { authenticate: true, schema: PlayerPlayNextSchema })

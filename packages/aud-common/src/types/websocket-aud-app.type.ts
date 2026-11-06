@@ -2,7 +2,7 @@ import { WebSocketAction, WebSocketMessage, WebSocketResponse } from "@uxp/commo
 import { AmplifierReachability, AmplifierState } from "./amplifier.type";
 import { PlayerState, RepeatMode, SpotifyHealth } from "./player.type";
 import { HistoryResponse } from "./history.type";
-import { LibrarySearchRequest, LibrarySearchResponse, SearchReachability } from "./search.type";
+import { LibrarySearchRequest, LibrarySearchResponse, SearchReachability, SpotifySearchRequest, SpotifySearchResponse } from "./search.type";
 import { Playlist, PlaylistSummary } from "./playlist.type";
 import {
     AudiobookAuthorsResponse,
@@ -40,6 +40,8 @@ export type AudioAppActionPayloadRequestMap = {
     library_get_tracks: { albumId: string };
     /** Searches music, books and playlists at once. */
     library_search: LibrarySearchRequest;
+    /** Searches the tracks of Spotify, which are not in the library: asked for apart, since Spotify answers slower than the library. */
+    spotify_search: SpotifySearchRequest;
     /** Asks once whether search is on and Meilisearch answers, for the health check. */
     search_check: Record<string, never>;
     /** Asks once whether Spotify is set up and its player answers, and how long its build lasts, for the health check. */
@@ -62,6 +64,8 @@ export type AudioAppActionPayloadRequestMap = {
     player_enqueue: { trackIds: string[] };
     /** Puts tracks in the queue right after the current track. */
     player_play_next: { trackIds: string[] };
+    /** Tracks that Spotify plays or has coming are put in the queue, after the current track when `next` is true. */
+    player_enqueue_spotify: { uris: string[]; next?: boolean };
     /** Plays a track now: it goes right after the current track and starts, and the rest of the queue goes on after it. */
     player_play_now: { trackId: string };
     /** Brings back the queue that the last replacing or clearing of the queue took away. */
@@ -131,6 +135,7 @@ export type AudioAppActionPayloadResponseMap = {
     library_get_albums: LibraryAlbumsResponse;
     library_get_tracks: LibraryTracksResponse;
     library_search: LibrarySearchResponse;
+    spotify_search: SpotifySearchResponse;
     search_check: SearchReachability;
     spotify_check: SpotifyHealth;
     audiobook_get_authors: AudiobookAuthorsResponse;
@@ -147,6 +152,7 @@ export type AudioAppActionPayloadResponseMap = {
     player_play_book: PlayerState;
     player_enqueue: PlayerState;
     player_play_next: PlayerState;
+    player_enqueue_spotify: PlayerState;
     player_play_now: PlayerState;
     player_undo_queue: PlayerState;
     player_play_index: PlayerState;

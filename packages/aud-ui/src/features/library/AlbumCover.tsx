@@ -6,7 +6,7 @@ import React, { useState } from "react";
 import { coverUrl } from "./libraryFormat";
 
 // The green of Spotify, which tells at a glance that the music is not from the library.
-const SPOTIFY_GREEN = "#1DB954";
+export const SPOTIFY_GREEN = "#1DB954";
 const ICON_SX = { width: "40%", height: "auto" };
 
 type AlbumCoverProps = {
