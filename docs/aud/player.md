@@ -71,6 +71,19 @@ The connection is opened again every 5 seconds when it drops. Nothing of Spotify
 | `AUD_SOLOIST_WS` | no | The WebSocket address of Soloist. |
 | `AUD_SOLOIST_DIR` | no | The folder Soloist is installed in, for the health check. |
 
+### Spotify and local speakers in development
+
+`setup-dev-soloist.sh` (run once) downloads Soloist into `.dev-soloist/` and builds a Docker image for it. 
+`dev-soloist.sh` runs it as the device "AUD Dev" with the WebSocket on
+`127.0.0.1:8765`; `devserver.sh` starts it in the `aud` window. Sound goes to the default output of the PulseAudio of the
+machine, through a PipeWire inside the container.
+
+Set these in `.env.dev`: `SOLOIST_API_KEY`, `AUD_SOLOIST_WS=ws://127.0.0.1:8765`, `AUD_PLAYER=mpv` (and `AUD_MPV_AUDIO_DEVICE` if
+the default output is wrong), and leave `AUD_AMPLIFIER_PLAYER_INPUT` out so playing does not touch the amplifier. Do not set
+`AUD_SOLOIST_DIR`, the build cannot run outside the container. Pair once by picking "AUD Dev" in Spotify on a phone, with a
+different Spotify account than any other Soloist uses: with the same account only one of them can play. Delete
+`.dev-soloist/data/` to pair another account. The build expires after about 90 days; run `setup-dev-soloist.sh` again.
+
 ## Health
 
 The AUD health item in the header shows a `spotify` entry when `AUD_SOLOIST_WS` is set (`spotify_check`). It is an error when

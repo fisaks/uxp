@@ -109,6 +109,8 @@ start_dev_env() {
     tmux send-keys -t $SESSION_NAME:3.0 "pnpm run start:aud-bff" C-m
     tmux send-keys -t $SESSION_NAME:3.1 "pnpm run start:aud-app" C-m
     tmux send-keys -t $SESSION_NAME:3.2 "docker logs -f uxp-meilisearch" C-m
+    tmux split-window -h -t $SESSION_NAME:3.2
+    tmux send-keys -t $SESSION_NAME:3.3 "./dev-soloist.sh" C-m
     tmux select-pane -t $SESSION_NAME:3.0
 
     # Select the first tab
