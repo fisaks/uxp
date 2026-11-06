@@ -49,6 +49,25 @@ filter chips of the results page.
   decade. The state is in the URL.
 - The Audiobooks author list has its own filter field (no search service).
 
+## Spotify in the search
+
+When Spotify is set up (see [the player](player.md)), the same words are also searched at Spotify, and its tracks are
+shown as a "Spotify" group below the library's hits, both in the dropdown and on the results page. Only tracks are
+searched (not artists or albums), so a Spotify hit can be played and queued but has no page of its own.
+
+- WebSocket action `spotify_search` (query, offset) answers a page of tracks and whether there is more
+  (`hasMore`). Spotify answers at most 10 tracks per request, so the results page has a "More from Spotify" button
+  that asks for the next page and adds it.
+- The library's hits show at once. Spotify is asked separately, 400 ms after the last letter, and its tracks are added
+  when they come. A search that fails or finds nothing leaves the library's hits alone.
+- A Spotify track with the same artist and title as a track of the library is left out, so a track is not shown twice.
+- Spotify has no genre or decade and no audiobooks, so it is not searched while the audiobooks chip or a genre or
+  decade chip is on.
+- The search runs with an app token of the BFF (`AUD_SPOTIFY_CLIENT_ID` and `AUD_SPOTIFY_CLIENT_SECRET`), not with
+  the account that Soloist plays as. Without them there is no Spotify group.
+- The search box is part of the Meilisearch search, so **Spotify search needs Meilisearch on**: without
+  `MEILI_URL` there is no box (above), and thus no Spotify search either.
+
 ## Health
 
 The AUD health item in the header shows a `search` entry when search is configured, ok or error depending on
