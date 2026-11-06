@@ -1,5 +1,6 @@
 import { HistoryPlay } from "@aud/common";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import SearchIcon from "@mui/icons-material/Search";
 import { Alert, Box, ButtonBase, Paper, Snackbar, Switch, Typography } from "@mui/material";
 import React from "react";
 import { Link } from "react-router-dom";
@@ -13,6 +14,8 @@ import { TrackCover } from "../library/TrackCover";
 import { NOW_PLAYING_PATH } from "../player/nowPlayingPath";
 import { nowPlayingText } from "../player/nowPlayingText";
 import { selectCurrentTrack, selectPlayerState, selectSpotify } from "../player/playerSelectors";
+import { loadRecentSearches } from "../search/recentSearches";
+import { SEARCH_PATH, searchPagePath } from "../search/searchPath";
 import { useRequest } from "../shared/useRequest";
 import { ScanLibraries } from "./ScanLibraries";
 
@@ -171,6 +174,8 @@ export const HomePage: React.FC = () => {
         },
     };
 
+    const lastSearch = loadRecentSearches()[0];
+
     const amplifierPowerSwitch = amplifier?.status && (
         <Switch
             checked={amplifier.status.power}
@@ -220,6 +225,14 @@ export const HomePage: React.FC = () => {
                         </React.Fragment>
                     );
                 })}
+                {library?.status.searchAvailable && (
+                    <Tile
+                        to={lastSearch ? searchPagePath(lastSearch) : SEARCH_PATH}
+                        icon={<SearchIcon />}
+                        title="Search"
+                        lines={[lastSearch ? `Last: ${lastSearch}` : "Artists, albums, tracks and books"]}
+                    />
+                )}
             </Box>
             <ScanLibraries />
             <Snackbar open={amplifierError !== undefined} autoHideDuration={6000} onClose={clearError}>
