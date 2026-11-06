@@ -127,6 +127,7 @@ is_db_running() {
 # Function to stop the development environment
 stop_dev_env() {
     echo "Stopping tmux session and Docker Compose..."
+    docker stop uxp-dev-soloist >/dev/null 2>&1
     tmux kill-session -t $SESSION_NAME 2>/dev/null || echo "No tmux session found with name $SESSION_NAME"
     docker compose down
     timeout=30         # Maximum wait time in seconds
