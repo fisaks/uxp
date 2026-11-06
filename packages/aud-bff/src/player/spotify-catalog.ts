@@ -83,6 +83,11 @@ export class SpotifyCatalog {
         return entry && spotifyTrack(entry);
     }
 
+    /** The entry of a URI that is known, as it was found. */
+    getEntry(uri: string): SpotifyQueueEntry | undefined {
+        return this.entries.get(uri);
+    }
+
     add(entries: SpotifyQueueEntry[]) {
         for (const entry of entries) {
             // Added again, it is the newest.

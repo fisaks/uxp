@@ -3,7 +3,8 @@
 import { MAX_PLAYLIST_NAME_LENGTH } from "../types/playlist.type";
 
 const PLAYLIST_ID_SCHEMA = { type: "string", pattern: "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$" };
-const TRACK_ID_SCHEMA = { type: "string", pattern: "^[0-9a-f]{16}$" };
+// A track of the library, or a track of Spotify by its URI
+const TRACK_ID_SCHEMA = { type: "string", pattern: "^([0-9a-f]{16}|spotify:track:[0-9A-Za-z]{22})$" };
 const NAME_SCHEMA = { type: "string", minLength: 1, maxLength: MAX_PLAYLIST_NAME_LENGTH };
 const TRACK_IDS_SCHEMA = { type: "array", items: TRACK_ID_SCHEMA, maxItems: 5000 };
 const INDEX_SCHEMA = { type: "integer", minimum: 0 };

@@ -196,6 +196,9 @@ export const SearchPage: React.FC = () => {
                         onPress={() => (hadQueue ? playNow(track.id) : playTracks([track.id]))}
                         onAddToQueue={() => enqueue([track.id])}
                         onPlayNext={() => playNext([track.id])}
+                        lastPlaylist={lastPlaylist}
+                        onAddToLastPlaylist={() => addToLastPlaylist(track.id, track.title)}
+                        onAddToPlaylist={() => setPlaylistTrackIds([track.id])}
                     />
                 ))}
                 {spotify.hasMore && (

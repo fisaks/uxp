@@ -13,13 +13,15 @@ export type PlaylistSummary = {
     id: string;
     name: string;
     trackCount: number;
-    /** The length of the tracks that are in the library. */
+    /** The length of the tracks that are in the library or known from Spotify. */
     durationSec: number;
     updatedAt: string;
     /** When it was last played from the playlist, missing if never. */
     lastPlayedAt?: string;
     /** Up to MAX_ARTIST_COVERS albums with a cover, in the order of the tracks, for the picture of the playlist. */
     coverAlbumIds: string[];
+    /** The pictures of Spotify tracks for the same picture, counted together with `coverAlbumIds` against MAX_ARTIST_COVERS. */
+    coverUrls: string[];
 };
 
 export type Playlist = {

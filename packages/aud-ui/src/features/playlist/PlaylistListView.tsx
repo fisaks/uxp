@@ -41,7 +41,7 @@ export const PlaylistListView: React.FC = () => {
                 {playlists.map((playlist) => (
                     <Tile
                         key={playlist.id}
-                        picture={<CoverMosaic collection="music" albumIds={playlist.coverAlbumIds} />}
+                        picture={<CoverMosaic collection="music" albumIds={playlist.coverAlbumIds} imageUrls={playlist.coverUrls} />}
                         title={playlist.name}
                         subtitle={[
                             `${playlist.trackCount} ${playlist.trackCount === 1 ? "track" : "tracks"}`,

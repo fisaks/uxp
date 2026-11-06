@@ -1,4 +1,4 @@
-import { MAX_ARTIST_COVERS, MAX_PLAYLIST_NAME_LENGTH, Playlist, PlaylistEntry, PlaylistSummary, QueueTrack } from "@aud/common";
+import { MAX_ARTIST_COVERS, MAX_PLAYLIST_NAME_LENGTH, Playlist, PlaylistEntry, PlaylistSummary, QueueTrack, SpotifyQueueEntry } from "@aud/common";
 import { AppErrorV2, AppLogger } from "@uxp/bff-common";
 import { ErrorCodes } from "@uxp/common";
 import { randomUUID } from "crypto";
@@ -6,6 +6,7 @@ import { EventEmitter } from "events";
 import path from "path";
 import { libraryConfig } from "../library/library.config";
 import { libraryService } from "../library/library.service";
+import { isSpotifyId, spotifyCatalog } from "../player/spotify-catalog";
 import { readJsonFile, SerializedJsonWriter } from "../storage/json-file";
 
 const FILE = "playlists.json";
@@ -17,10 +18,17 @@ type StoredPlaylist = {
     updatedAt: string;
     lastPlayedAt?: string;
     /** The id is what counts, the name ("Artist - Title") is for whoever reads the file and for a track that is gone. */
-    tracks: { id: string; name: string }[];
+    tracks: StoredTrack[];
 };
 
+/** A track of Spotify keeps what is known of it, so that a playlist needs no lookup at Spotify. */
+type StoredTrack = { id: string; name: string; spotify?: SpotifyQueueEntry };
+
+/** The tracks of the library and of Spotify, by id. */
 type TrackSource = { getTrack(id: string): QueueTrack | undefined };
+
+/** Where the entries of the Spotify tracks of the playlists are kept known. */
+type SpotifyEntries = { getEntry(uri: string): SpotifyQueueEntry | undefined; add(entries: SpotifyQueueEntry[]): void };
 
 const nameOf = (track: QueueTrack) => `${track.artist} - ${track.title}`;
 
@@ -48,7 +56,8 @@ export class PlaylistService extends EventEmitter<PlaylistEventMap> {
     private readonly writer?: SerializedJsonWriter;
 
     constructor(
-        private readonly library: TrackSource,
+        private readonly tracks: TrackSource,
+        private readonly spotify: SpotifyEntries,
         private readonly dataDir?: string
     ) {
         super();
@@ -66,6 +75,8 @@ export class PlaylistService extends EventEmitter<PlaylistEventMap> {
         }
         const file = await readJsonFile<{ playlists?: unknown[] }>(path.join(this.dataDir, FILE));
         this.playlists = (file?.playlists ?? []).filter(isStoredPlaylist);
+        // The tracks of Spotify are known from now on, wherever a track is looked up.
+        this.spotify.add(this.playlists.flatMap((playlist) => playlist.tracks.flatMap((track) => (track.spotify ? [track.spotify] : []))));
     }
 
     list(): PlaylistSummary[] {
@@ -144,29 +155,33 @@ export class PlaylistService extends EventEmitter<PlaylistEventMap> {
         return this.toPlaylist(playlist);
     }
 
-    /** Tracks that are not in the library are left out. */
-    private resolve(trackIds: string[]): StoredPlaylist["tracks"] {
+    /** Tracks that are neither in the library nor known from Spotify are left out. */
+    private resolve(trackIds: string[]): StoredTrack[] {
         return trackIds.flatMap((id) => {
-            const track = this.library.getTrack(id);
-            return track ? [{ id, name: nameOf(track) }] : [];
+            const track = this.tracks.getTrack(id);
+            if (!track) return [];
+            const spotify = isSpotifyId(id) ? this.spotify.getEntry(id) : undefined;
+            return [{ id, name: nameOf(track), ...(spotify && { spotify }) }];
         });
     }
 
     private toPlaylist(playlist: StoredPlaylist): Playlist {
         const entries = playlist.tracks.map<PlaylistEntry>(({ id, name }) => {
-            const track = this.library.getTrack(id);
+            const track = this.tracks.getTrack(id);
             return { id, name: track ? nameOf(track) : name, track };
         });
         return { id: playlist.id, name: playlist.name, createdAt: playlist.createdAt, updatedAt: playlist.updatedAt, entries };
     }
 
     private summarize(playlist: StoredPlaylist): PlaylistSummary {
-        const durationSec = playlist.tracks.reduce((sum, { id }) => sum + (this.library.getTrack(id)?.durationSec ?? 0), 0);
+        const durationSec = playlist.tracks.reduce((sum, { id }) => sum + (this.tracks.getTrack(id)?.durationSec ?? 0), 0);
         const coverAlbumIds = new Set<string>();
+        const coverUrls = new Set<string>();
         for (const { id } of playlist.tracks) {
-            const track = this.library.getTrack(id);
+            const track = this.tracks.getTrack(id);
             if (track?.hasCover) coverAlbumIds.add(track.albumId);
-            if (coverAlbumIds.size === MAX_ARTIST_COVERS) break;
+            if (track?.spotify?.coverUrl) coverUrls.add(track.spotify.coverUrl);
+            if (coverAlbumIds.size + coverUrls.size >= MAX_ARTIST_COVERS) break;
         }
         return {
             id: playlist.id,
@@ -176,6 +191,7 @@ export class PlaylistService extends EventEmitter<PlaylistEventMap> {
             updatedAt: playlist.updatedAt,
             lastPlayedAt: playlist.lastPlayedAt,
             coverAlbumIds: [...coverAlbumIds],
+            coverUrls: [...coverUrls],
         };
     }
 
@@ -210,4 +226,8 @@ export class PlaylistService extends EventEmitter<PlaylistEventMap> {
     }
 }
 
-export const playlistService = new PlaylistService(libraryService, libraryConfig.dataDir);
+export const playlistService = new PlaylistService(
+    { getTrack: (id) => (isSpotifyId(id) ? spotifyCatalog.getTrack(id) : libraryService.getTrack(id)) },
+    spotifyCatalog,
+    libraryConfig.dataDir
+);

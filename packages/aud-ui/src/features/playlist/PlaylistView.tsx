@@ -22,6 +22,7 @@ import React, { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAppSelector } from "../../hooks";
 import { formatDuration } from "../library/libraryFormat";
+import { SpotifyMark } from "../library/SpotifyMark";
 import { selectCurrentTrackId } from "../player/playerSelectors";
 import { usePlayerActions } from "../player/usePlayerActions";
 import { SortableList, uniqueKeys } from "../shared/SortableList";
@@ -142,6 +143,7 @@ export const PlaylistView: React.FC = () => {
                                     {track ? track.title : entry.name}
                                 </Typography>
                                 <Typography variant="body2" color={track ? "text.secondary" : "text.disabled"}>
+                                    {track?.spotify && <SpotifyMark />}
                                     {track ? track.artist : "Missing from the library"}
                                 </Typography>
                             </Box>

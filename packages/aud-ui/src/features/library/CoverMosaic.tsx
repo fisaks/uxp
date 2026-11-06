@@ -14,11 +14,14 @@ type CoverMosaicProps = {
     collection: Collection;
     /** The albums with a cover to show: four or more make a 2x2 mosaic, three a tall one beside two, two a pair, one shows it big, none show a person (author) or a music note. */
     albumIds: string[];
+    /** Pictures from elsewhere (Spotify), shown after the albums and counted with them. */
+    imageUrls?: string[];
 };
 
 /** The picture of an artist, an author or a playlist, made from the covers of its albums. It fills the width of its parent as a square. */
-export const CoverMosaic: React.FC<CoverMosaicProps> = ({ collection, albumIds }) => {
-    if (albumIds.length >= MOSAIC_MIN) {
+export const CoverMosaic: React.FC<CoverMosaicProps> = ({ collection, albumIds, imageUrls = [] }) => {
+    const sources = [...albumIds.map((albumId) => coverUrl(collection, albumId)), ...imageUrls];
+    if (sources.length >= MOSAIC_MIN) {
         return (
             <Box
                 sx={{
@@ -26,15 +29,15 @@ export const CoverMosaic: React.FC<CoverMosaicProps> = ({ collection, albumIds }
                     width: "100%",
                     display: "grid",
                     gridTemplateColumns: "1fr 1fr",
-                    gridTemplateRows: albumIds.length === 2 ? "1fr" : "1fr 1fr",
+                    gridTemplateRows: sources.length === 2 ? "1fr" : "1fr 1fr",
                     gap: "1px",
                     bgcolor: "background.default",
                 }}
             >
-                {albumIds.slice(0, MOSAIC_MAX).map((albumId, index) => (
+                {sources.slice(0, MOSAIC_MAX).map((source, index) => (
                     <img
-                        key={albumId}
-                        src={coverUrl(collection, albumId)}
+                        key={source}
+                        src={source}
                         alt=""
                         loading="lazy"
                         style={{
@@ -43,7 +46,7 @@ export const CoverMosaic: React.FC<CoverMosaicProps> = ({ collection, albumIds }
                             objectFit: "cover",
                             display: "block",
                             minHeight: 0,
-                            gridRow: albumIds.length === 3 && index === 0 ? "span 2" : undefined,
+                            gridRow: sources.length === 3 && index === 0 ? "span 2" : undefined,
                         }}
                     />
                 ))}
@@ -52,6 +55,9 @@ export const CoverMosaic: React.FC<CoverMosaicProps> = ({ collection, albumIds }
     }
     if (albumIds.length > 0) {
         return <AlbumCover collection={collection} albumId={albumIds[0]} hasCover={true} />;
+    }
+    if (imageUrls.length > 0) {
+        return <AlbumCover collection={collection} albumId="" hasCover={true} imageUrl={imageUrls[0]} />;
     }
     const Icon = collection === "audiobooks" ? PersonIcon : MusicNoteIcon;
     return (
