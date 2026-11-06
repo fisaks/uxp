@@ -4,7 +4,7 @@ import { usePortalContainerRef } from "@uxp/ui-lib";
 import React, { useState } from "react";
 
 type TrackMenuProps = {
-    onPlayNext: () => void;
+    onPlayNext?: () => void;
     /** The playlist that was changed last, which is where tracks are most likely to go: one tap less than the dialog. */
     lastPlaylist?: { id: string; name: string };
     onAddToLastPlaylist?: () => void;
@@ -32,9 +32,11 @@ export const TrackMenu: React.FC<TrackMenuProps> = ({
                 <MoreVertIcon fontSize="small" />
             </IconButton>
             <Menu anchorEl={anchor} open={anchor !== null} onClose={() => setAnchor(null)} container={portalContainer.current}>
-                <MenuItem onClick={choose(onPlayNext)}>
-                    <ListItemText>Play next</ListItemText>
-                </MenuItem>
+                {onPlayNext && (
+                    <MenuItem onClick={choose(onPlayNext)}>
+                        <ListItemText>Play next</ListItemText>
+                    </MenuItem>
+                )}
                 {lastPlaylist && onAddToLastPlaylist && (
                     <MenuItem onClick={choose(onAddToLastPlaylist)}>
                         <ListItemText>Add to "{lastPlaylist.name}"</ListItemText>

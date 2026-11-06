@@ -8,8 +8,12 @@ import React, { useMemo, useState } from "react";
 import { useAppSelector } from "../../hooks";
 import { formatDuration } from "../library/libraryFormat";
 import { SpotifyMark } from "../library/SpotifyMark";
+import { TrackMenu } from "../library/TrackMenu";
 import { AddToPlaylistDialog } from "../playlist/AddToPlaylistDialog";
+import { selectMostRecentPlaylist } from "../playlist/playlistSelectors";
+import { usePlaylistCommand } from "../playlist/usePlaylistCommand";
 import { SortableList, uniqueKeys } from "../shared/SortableList";
+import { useRequest } from "../shared/useRequest";
 import { partNames } from "../audiobook/partNames";
 import { selectIsBookQueue, selectPlayerState } from "./playerSelectors";
 import { usePlayerActions } from "./usePlayerActions";
@@ -153,7 +157,10 @@ const SpotifyQueue: React.FC<{ spotify: SpotifyNowPlaying; active: boolean; onCo
 const QueuePage: React.FC = () => {
     const state = useAppSelector(selectPlayerState);
     const send = usePlayerCommand();
-    const { clear } = usePlayerActions();
+    const { clear, notify } = usePlayerActions();
+    useRequest("playlist_list", {});
+    const sendPlaylist = usePlaylistCommand();
+    const lastPlaylist = useAppSelector(selectMostRecentPlaylist);
     const isBook = useAppSelector(selectIsBookQueue);
     const [saving, setSaving] = useState<string[] | undefined>(undefined);
     const [chosen, setChosen] = useState<Source | undefined>(undefined);
@@ -215,6 +222,11 @@ const QueuePage: React.FC = () => {
     }
 
     const current = state.currentIndex === undefined ? undefined : state.queue[state.currentIndex];
+    const addToLastPlaylist = async (track: QueueTrack) => {
+        if (lastPlaylist && (await sendPlaylist("playlist_add_tracks", { id: lastPlaylist.id, trackIds: [track.id] }))) {
+            notify(`Added "${track.title}" to "${lastPlaylist.name}"`);
+        }
+    };
     return (
         <>
             {toggle}
@@ -274,11 +286,16 @@ const QueuePage: React.FC = () => {
                             <IconButton size="small" aria-label="Remove from the queue" onClick={() => send("player_remove", { index })}>
                                 <CloseIcon fontSize="small" />
                             </IconButton>
+                            <TrackMenu
+                                lastPlaylist={lastPlaylist}
+                                onAddToLastPlaylist={() => addToLastPlaylist(track)}
+                                onAddToPlaylist={() => setSaving([track.id])}
+                            />
                         </Box>
                     );
                 }}
             />
-            <AddToPlaylistDialog trackIds={saving} title="Save the queue as a playlist" onClose={() => setSaving(undefined)} />
+            <AddToPlaylistDialog trackIds={saving} title={saving?.length === 1 ? "Add to a playlist" : "Save the queue as a playlist"} onClose={() => setSaving(undefined)} />
         </>
     );
 };
