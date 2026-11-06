@@ -5,6 +5,7 @@ import PauseIcon from "@mui/icons-material/Pause";
 import { alpha, Box, Button, IconButton, Stack, Tab, Tabs, Typography } from "@mui/material";
 import { QueueTrack, SpotifyNowPlaying } from "@aud/common";
 import React, { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAppSelector } from "../../hooks";
 import { formatDuration } from "../library/libraryFormat";
 import { SpotifyMark } from "../library/SpotifyMark";
@@ -12,6 +13,7 @@ import { TrackMenu } from "../library/TrackMenu";
 import { AddToPlaylistDialog } from "../playlist/AddToPlaylistDialog";
 import { selectMostRecentPlaylist } from "../playlist/playlistSelectors";
 import { usePlaylistCommand } from "../playlist/usePlaylistCommand";
+import { searchPagePath } from "../search/searchPath";
 import { SortableList, uniqueKeys } from "../shared/SortableList";
 import { useRequest } from "../shared/useRequest";
 import { partNames } from "../audiobook/partNames";
@@ -156,6 +158,7 @@ const SpotifyQueue: React.FC<{ spotify: SpotifyNowPlaying; active: boolean; onCo
 /** The tracks that will be played, in the order they were added, which can be changed by dragging. The one that is playing is marked. */
 const QueuePage: React.FC = () => {
     const state = useAppSelector(selectPlayerState);
+    const navigate = useNavigate();
     const send = usePlayerCommand();
     const { clear, notify } = usePlayerActions();
     useRequest("playlist_list", {});
@@ -290,6 +293,7 @@ const QueuePage: React.FC = () => {
                                 lastPlaylist={lastPlaylist}
                                 onAddToLastPlaylist={() => addToLastPlaylist(track)}
                                 onAddToPlaylist={() => setSaving([track.id])}
+                                moreFromArtist={{ name: track.artist, onChoose: () => navigate(searchPagePath(track.artist)) }}
                             />
                         </Box>
                     );

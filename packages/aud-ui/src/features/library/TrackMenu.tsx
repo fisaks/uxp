@@ -10,6 +10,8 @@ type TrackMenuProps = {
     onAddToLastPlaylist?: () => void;
     onAddToPlaylist?: () => void;
     onPlayAlbumFromHere?: () => void;
+    /** Searches for more of the performer, whose name is shown in the item. */
+    moreFromArtist?: { name: string; onChoose: () => void };
 };
 
 /** The "more" menu of a track row: what is done less often than adding it to the queue. */
@@ -19,6 +21,7 @@ export const TrackMenu: React.FC<TrackMenuProps> = ({
     onAddToLastPlaylist,
     onAddToPlaylist,
     onPlayAlbumFromHere,
+    moreFromArtist,
 }) => {
     const portalContainer = usePortalContainerRef();
     const [anchor, setAnchor] = useState<HTMLElement | null>(null);
@@ -50,6 +53,11 @@ export const TrackMenu: React.FC<TrackMenuProps> = ({
                 {onPlayAlbumFromHere && (
                     <MenuItem onClick={choose(onPlayAlbumFromHere)}>
                         <ListItemText>Play album from here</ListItemText>
+                    </MenuItem>
+                )}
+                {moreFromArtist && (
+                    <MenuItem onClick={choose(moreFromArtist.onChoose)}>
+                        <ListItemText>More from {moreFromArtist.name}</ListItemText>
                     </MenuItem>
                 )}
             </Menu>

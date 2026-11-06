@@ -27,7 +27,7 @@ import { formatDuration } from "../library/libraryFormat";
 import { NOW_PLAYING_PATH } from "./nowPlayingPath";
 import { BookSkipButton } from "./BookSkipButton";
 import { BookSpeedButton } from "./BookSpeedButton";
-import { nowPlayingText } from "./nowPlayingText";
+import { nowPlayingText, songSubtitle } from "./nowPlayingText";
 import { PlayPauseButton } from "./PlayPauseButton";
 import { PlayerToggleButton } from "./PlayerToggleButton";
 import { selectCurrentTrack, selectPlayerState, selectSpotify } from "./playerSelectors";
@@ -64,7 +64,7 @@ export const NowPlayingBar: React.FC = () => {
 
     // What Spotify plays is not in the queue: it has no shuffle, repeat or queue of its own here.
     const { title, subtitle, isBook } = spotify
-        ? { title: spotify.title, subtitle: spotify.artist, isBook: false }
+        ? { title: spotify.title, subtitle: songSubtitle(spotify.artist, spotify.album), isBook: false }
         : nowPlayingText(state.queue, state.currentIndex ?? 0);
     const modes = spotify
         ? []

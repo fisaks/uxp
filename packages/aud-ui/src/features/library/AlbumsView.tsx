@@ -1,9 +1,11 @@
-import { Alert, CircularProgress } from "@mui/material";
+import SearchIcon from "@mui/icons-material/Search";
+import { Alert, Box, CircularProgress } from "@mui/material";
 import React from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { AlbumCover } from "./AlbumCover";
 import { Tile, TileGrid } from "./TileGrid";
 import { useRequest } from "../shared/useRequest";
+import { searchPagePath } from "../search/searchPath";
 import { useRestoreScroll } from "../shared/useRestoreScroll";
 
 export const AlbumsView: React.FC = () => {
@@ -29,6 +31,15 @@ export const AlbumsView: React.FC = () => {
                         onClick={() => navigate(`/library/album/${album.id}`)}
                     />
                 ))}
+                <Tile
+                    picture={
+                        <Box sx={{ aspectRatio: "1", display: "flex", alignItems: "center", justifyContent: "center", bgcolor: "action.hover", color: "text.disabled" }}>
+                            <SearchIcon sx={{ width: "40%", height: "auto" }} />
+                        </Box>
+                    }
+                    title={`More from ${data.artist.name}`}
+                    onClick={() => navigate(searchPagePath(data.artist.name))}
+                />
             </TileGrid>
         </>
     );

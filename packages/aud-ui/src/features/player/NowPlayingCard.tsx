@@ -7,7 +7,7 @@ import { NowPlayingPanel } from "../shared/NowPlayingPanel";
 import { AlbumCover } from "../library/AlbumCover";
 import { TrackCover } from "../library/TrackCover";
 import { formatDuration } from "../library/libraryFormat";
-import { nowPlayingText } from "./nowPlayingText";
+import { nowPlayingText, songSubtitle } from "./nowPlayingText";
 import { PlayPauseButton } from "./PlayPauseButton";
 import { selectCurrentTrack, selectPlayerState, selectSpotify } from "./playerSelectors";
 import { usePlayerCommand } from "./usePlayerCommand";
@@ -28,7 +28,7 @@ export const NowPlayingCard: React.FC = () => {
     if (!state || (!spotify && (!track || state.currentIndex === undefined))) return null;
 
     const { title, subtitle, isBook } = spotify
-        ? { title: spotify.title, subtitle: spotify.artist, isBook: false }
+        ? { title: spotify.title, subtitle: songSubtitle(spotify.artist, spotify.album), isBook: false }
         : nowPlayingText(state.queue, state.currentIndex ?? 0);
     const duration = spotify ? spotify.durationSec : (track?.durationSec ?? 0);
     const shown = Math.min(position, duration || Infinity);

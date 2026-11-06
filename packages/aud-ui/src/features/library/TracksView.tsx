@@ -64,7 +64,7 @@ export const TracksView: React.FC = () => {
                                 .filter(Boolean)
                                 .join(" · ")}
                         </Typography>
-                        <AlbumActions trackIds={trackIds} onAddToPlaylist={() => setPlaylistTrackIds(trackIds)} onSetGain={() => setGainTrackIds(trackIds)} />
+                        <AlbumActions artistName={artist.name} trackIds={trackIds} onAddToPlaylist={() => setPlaylistTrackIds(trackIds)} onSetGain={() => setGainTrackIds(trackIds)} />
                     </>
                 }
             >

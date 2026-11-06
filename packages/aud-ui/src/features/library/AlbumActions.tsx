@@ -4,17 +4,21 @@ import ShuffleIcon from "@mui/icons-material/Shuffle";
 import { Button, IconButton, ListItemText, Menu, MenuItem, Stack } from "@mui/material";
 import React, { useState } from "react";
 import { usePortalContainerRef } from "@uxp/ui-lib";
+import { useNavigate } from "react-router-dom";
 import { usePlayerActions } from "../player/usePlayerActions";
+import { searchPagePath } from "../search/searchPath";
 
 type AlbumActionsProps = {
+    artistName: string;
     trackIds: string[];
     onAddToPlaylist: () => void;
     onSetGain: () => void;
 };
 
-/** What can be done with a whole album: play it or play it mixed, and in the menu put it in the queue or a playlist, or set how loud it is played. */
-export const AlbumActions: React.FC<AlbumActionsProps> = ({ trackIds, onAddToPlaylist, onSetGain }) => {
+/** What can be done with a whole album: play it or play it mixed, and in the menu put it in the queue or a playlist, or set how loud it is played, or search for more from the artist. */
+export const AlbumActions: React.FC<AlbumActionsProps> = ({ artistName, trackIds, onAddToPlaylist, onSetGain }) => {
     const { playTracks, shuffleTracks, enqueue } = usePlayerActions();
+    const navigate = useNavigate();
     const portalContainer = usePortalContainerRef();
     const [anchor, setAnchor] = useState<HTMLElement | null>(null);
     const choose = (action: () => void) => () => {
@@ -41,6 +45,9 @@ export const AlbumActions: React.FC<AlbumActionsProps> = ({ trackIds, onAddToPla
                 </MenuItem>
                 <MenuItem onClick={choose(onSetGain)}>
                     <ListItemText>Gain...</ListItemText>
+                </MenuItem>
+                <MenuItem onClick={choose(() => navigate(searchPagePath(artistName)))}>
+                    <ListItemText>More from {artistName}</ListItemText>
                 </MenuItem>
             </Menu>
         </Stack>

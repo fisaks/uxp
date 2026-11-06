@@ -4,7 +4,7 @@ import RepeatOneIcon from "@mui/icons-material/RepeatOne";
 import ShuffleIcon from "@mui/icons-material/Shuffle";
 import SkipNextIcon from "@mui/icons-material/SkipNext";
 import SkipPreviousIcon from "@mui/icons-material/SkipPrevious";
-import { Box, Button, IconButton, Slider, Stack, Typography } from "@mui/material";
+import { Box, Button, IconButton, Link as MuiLink, Slider, Stack, Typography } from "@mui/material";
 import { REPEAT_MODES } from "@aud/common";
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
@@ -15,11 +15,12 @@ import { formatDuration } from "../library/libraryFormat";
 import { BookSkipButton } from "./BookSkipButton";
 import { BookSpeedButton } from "./BookSpeedButton";
 import { GainButtons } from "./GainButtons";
-import { nowPlayingText } from "./nowPlayingText";
+import { nowPlayingText, songSubtitle } from "./nowPlayingText";
 import { PlayPauseButton } from "./PlayPauseButton";
 import { PlayerToggleButton } from "./PlayerToggleButton";
 import { selectCurrentTrack, selectPlayerState, selectSpotify } from "./playerSelectors";
 import { REPEAT_LABELS } from "./repeatLabels";
+import { searchPagePath } from "../search/searchPath";
 import { usePlayerCommand } from "./usePlayerCommand";
 import { usePlayerPosition } from "./usePlayerPosition";
 
@@ -55,8 +56,16 @@ const NowPlayingPage: React.FC = () => {
     const nextRepeat = REPEAT_MODES[(REPEAT_MODES.indexOf(state.repeat) + 1) % REPEAT_MODES.length];
     // What Spotify plays is not in the queue: it has no shuffle, repeat or queue of its own here.
     const { title, subtitle, isBook } = spotify
-        ? { title: spotify.title, subtitle: spotify.artist, isBook: false }
+        ? { title: spotify.title, subtitle: songSubtitle(spotify.artist, spotify.album), isBook: false }
         : nowPlayingText(state.queue, state.currentIndex ?? 0);
+    // A song of the library links to its album, a song of Spotify to a search for its performer.
+    const subtitleTo = isBook
+        ? undefined
+        : spotify
+          ? searchPagePath(spotify.artist)
+          : track?.spotify
+            ? searchPagePath(track.artist)
+            : `/library/album/${track?.albumId}`;
 
     return (
         <Stack spacing={2} sx={{ maxWidth: PAGE_WIDTH, mx: "auto", px: 2 }}>
@@ -72,7 +81,13 @@ const NowPlayingPage: React.FC = () => {
                     {title}
                 </Typography>
                 <Typography color="text.secondary" sx={{ overflowWrap: "anywhere" }}>
-                    {subtitle}
+                    {subtitleTo ? (
+                        <MuiLink component={Link} to={subtitleTo} color="inherit" underline="hover">
+                            {subtitle}
+                        </MuiLink>
+                    ) : (
+                        subtitle
+                    )}
                 </Typography>
                 {loading && (
                     <Typography variant="caption" color="primary">
