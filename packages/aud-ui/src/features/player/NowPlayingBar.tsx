@@ -41,7 +41,7 @@ const WIDE_SLIDER_MIN_WIDTH = 160;
 /**
  * What is playing and the buttons to control it, fixed at the bottom of the window and only there while the queue has tracks.
  * On a wide screen it is one row with everything; on a narrow one the cover, the text, play/pause and next, and a line for the
- * place in the track. The text opens the queue on a wide screen and the full screen player on a narrow one.
+ * place in the track. The text opens the full screen player; the wide bar has its own button for the queue.
  */
 export const NowPlayingBar: React.FC = () => {
     const state = useAppSelector(selectPlayerState);
@@ -78,7 +78,7 @@ export const NowPlayingBar: React.FC = () => {
     const text = (
         <ButtonBase
             component={Link}
-            to={wide ? "/queue" : NOW_PLAYING_PATH}
+            to={NOW_PLAYING_PATH}
             sx={{ minWidth: 0, flex: 1, textAlign: "left", display: "flex", gap: 1.5, justifyContent: "flex-start" }}
         >
             <Box sx={{ width: COVER_SIZE, flexShrink: 0 }}>

@@ -29,6 +29,8 @@ export type LibraryTrack = {
     trackNo?: number;
     discNo?: number;
     durationSec?: number;
+    /** How much louder than normal the track is played, in dB. Missing when it is 0. Music of the library only. */
+    gainDb?: number;
 };
 
 export type LibraryStatus = {

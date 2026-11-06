@@ -33,6 +33,14 @@ of the chosen engine must be installed.
 - **Previous** plays the track again when it has played for more than 3 seconds, otherwise the one before.
 - A track whose file is missing or that mpv cannot play is skipped. When every track of the queue fails one after the
   other the player stops.
+- **Gain**: a song of the library can be played louder than normal, 0 to +10 dB in steps of 2 (`player_set_gain`, which
+  sets it for the song that is playing). It is kept for that song, for the whole household, in `track-gain.json` in the data
+  folder, by the id of the track (with a name "Artist - Title" that is only there to be read); a song at 0 has no entry. The
+  queue in the state carries `gainDb` on the tracks that have one. mpv gets it as its volume, `100 * 10^(dB/20)`, set before
+  each file is loaded and when the gain is changed (mpv is started with `--volume-max=400`). mplayer, audiobooks and Spotify
+  (which has its own level, see below) play without gain. The album view has **Gain...** in the album menu (`player_set_tracks_gain`): it
+  gives every track of the album the chosen gain as a snapshot (a track added to the album later has none), shows "different" when the
+  tracks differ, and a track of it that is playing changes at once. `library_get_tracks` carries `gainDb` on the tracks that have one.
 - The queue is kept when the backend restarts: it is saved to `queue.json` in `AUD_DATA_DIR` a moment after it
   changes (the tracks in the order they play, each as its id, its collection (`music` or `audiobooks`, music when missing) and a name "Artist - Title" that is only there to be read,
   the place of the current track, shuffle and repeat, and while shuffle is on the order of before as places in the
@@ -101,15 +109,16 @@ bytes) so the moving position cannot drift from the sound, for example when a fi
 a little off. The commands are the other `player_*` actions: `play_tracks`
 (replaces the queue; `shuffle` turns shuffle on or off for the new queue), `play_book` (replaces the queue with a book, see
 Audiobooks), `enqueue`, `play_index`, `remove`, `clear`, `pause`, `resume`, `next`, `previous`, `seek`,
-`set_shuffle` and `set_repeat`. Each answers with the new state. `play_next` puts tracks right after the
+`set_shuffle`, `set_repeat`, `set_speed` (books) and `set_gain` (the playing song). Each answers with the new state. `play_next` puts tracks right after the
 current one, `play_now` plays a track without losing the queue (it goes right after the current track, starts, and the
 queue goes on after it), and `undo_queue` brings back the queue that the last replacing (`play_tracks`) or clearing of
 the queue took away (as it was, with its current track, and playing again if it was playing; there is only one, and it is
 kept in memory only). `move` (`from`, `to`) moves a track of the queue,
 the others move over, and what is playing keeps playing (and what follows it is what the queue shows after it).
 
-The now playing bar is at the bottom of every page of the app while the queue has tracks; the Queue tab lists
-the queue. While the queue is an audiobook, the bar shows the book title with the part and the author under it, and has no
+The now playing bar is at the bottom of every page of the app while the queue has tracks; its text opens the full screen
+Now playing page, which has the **gain** of a song as `-` and `+` buttons with the value (not for books and Spotify), and the Queue tab lists
+the queue, where a song with a gain has "+4 dB" after its artist and length. While the queue is an audiobook, the bar shows the book title with the part and the author under it, and has no
 shuffle and repeat buttons, and the Queue tab lists the parts without drag handles, Remove or Save as playlist (see
 Audiobooks). In the album view:
 

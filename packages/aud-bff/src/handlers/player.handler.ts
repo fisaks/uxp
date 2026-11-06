@@ -11,6 +11,8 @@ import {
     PlayerSeekSchema,
     PlayerSetRepeatSchema,
     PlayerSetShuffleSchema,
+    PlayerSetGainSchema,
+    PlayerSetTracksGainSchema,
     PlayerSetSpeedSchema,
 } from "@aud/common";
 import { WebSocketAction, WebSocketDetails } from "@uxp/bff-common";
@@ -134,5 +136,15 @@ export class PlayerHandler {
     @WebSocketAction("player_set_speed", { authenticate: true, schema: PlayerSetSpeedSchema })
     public setSpeed(_wsDetails: WebSocketDetails, message: AudioAppRequestMessage<"player_set_speed">) {
         return playerService.setSpeed(message.payload.rate);
+    }
+
+    @WebSocketAction("player_set_gain", { authenticate: true, schema: PlayerSetGainSchema })
+    public setGain(_wsDetails: WebSocketDetails, message: AudioAppRequestMessage<"player_set_gain">) {
+        return playerService.setGain(message.payload.gainDb);
+    }
+
+    @WebSocketAction("player_set_tracks_gain", { authenticate: true, schema: PlayerSetTracksGainSchema })
+    public setTracksGain(_wsDetails: WebSocketDetails, message: AudioAppRequestMessage<"player_set_tracks_gain">) {
+        return playerService.setTracksGain(message.payload.trackIds, message.payload.gainDb);
     }
 }

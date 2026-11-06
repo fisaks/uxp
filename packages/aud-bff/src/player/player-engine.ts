@@ -33,4 +33,6 @@ export interface PlayerEngine {
     seek(positionSec: number): void;
     /** Plays at `rate` times the normal speed with the pitch kept, from now on and for the files after this one. 1 is normal. */
     setSpeed(rate: number): void;
+    /** Plays `db` louder than normal, from now on and for the files after this one. 0 is normal. */
+    setGain(db: number): void;
 }

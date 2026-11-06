@@ -41,6 +41,10 @@ export class FakePlayerEngine implements PlayerEngine {
         this.positionSec = positionSec;
     }
 
+    setGain() {
+        // The fake engine makes no sound.
+    }
+
     setSpeed(rate: number) {
         this.speed = rate;
     }

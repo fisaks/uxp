@@ -10,6 +10,7 @@ import { FakePlayerEngine } from "./fake-engine";
 import { MplayerPlayerEngine } from "./mplayer-engine";
 import { MpvPlayerEngine } from "./mpv-engine";
 import { bookProgressStore } from "./book-progress";
+import { trackGainStore } from "./track-gain";
 import { PlayerEngine } from "./player-engine";
 import { PlayerConfig, playerConfig } from "./player.config";
 import { PersistedQueue, QueueStore } from "./queue-store";
@@ -60,6 +61,12 @@ type ProgressStorage = {
     get(albumId: string): BookProgress | undefined;
     save(albumId: string, name: string, progress: BookProgress): void;
     clear(albumId: string): void;
+};
+
+/** Where the gain of the tracks is kept. */
+type GainStorage = {
+    get(trackId: string): number;
+    set(trackId: string, name: string, gainDb: number): void;
 };
 
 /** Where what was played and the queues that were replaced are kept. */
@@ -126,6 +133,7 @@ export class PlayerService {
         private readonly storage: QueueStorage,
         private readonly history: HistoryRecorder,
         private readonly progress: ProgressStorage,
+        private readonly gains: GainStorage,
         private readonly spotify: SpotifyControl
     ) {
         engine.setListener({
@@ -183,7 +191,7 @@ export class PlayerService {
     getState(): PlayerState {
         return {
             status: this.status,
-            queue: this.queue,
+            queue: this.queue.map((track) => this.withGain(track)),
             currentIndex: this.currentIndex >= 0 ? this.currentIndex : undefined,
             positionSec: this.currentPosition(),
             shuffle: this.shuffle,
@@ -567,6 +575,30 @@ export class PlayerService {
         return this.publish();
     }
 
+    /** Sets how much louder the current track is played, and keeps it for that track. Only the music of the library has a gain. */
+    setGain(gainDb: number): PlayerState {
+        const track = this.queue[this.currentIndex];
+        if (!track || !this.hasGain(track)) {
+            throw new AppErrorV2({ statusCode: 409, code: ErrorCodes.INVALID_STATE, message: "The gain is set for a song of the library that is playing" });
+        }
+        this.gains.set(track.id, `${track.artist} - ${track.title}`, gainDb);
+        this.engine.setGain(gainDb);
+        return this.publish();
+    }
+
+    /** Sets the gain of songs of the library, such as an album, and keeps it for each. When one of them is playing it is heard at once. */
+    setTracksGain(trackIds: string[], gainDb: number): PlayerState {
+        const tracks = this.resolve(trackIds);
+        for (const track of tracks) {
+            this.gains.set(track.id, `${track.artist} - ${track.title}`, gainDb);
+        }
+        const current = this.queue[this.currentIndex];
+        if (current && this.hasGain(current) && tracks.some((track) => track.id === current.id)) {
+            this.engine.setGain(gainDb);
+        }
+        return this.publish();
+    }
+
     /** The track after the current one. `ended` is true when it played to its end, which "repeat one" turns into the same track again. */
     private async advance(ended: boolean): Promise<PlayerState> {
         if (ended && (this.status === "stopped" || this.status === "paused")) {
@@ -650,6 +682,7 @@ export class PlayerService {
         }
         AppLogger.info(undefined, { message: `Playing "${track.title}" by ${track.artist} from ${file}` });
         this.engine.setSpeed(this.playbackSpeed());
+        this.engine.setGain(this.hasGain(track) ? this.gains.get(track.id) : 0);
         try {
             await this.engine.play(file, { durationSec: track.durationSec, startSec, accurateSeek: track.collection === "music" });
         } catch (error) {
@@ -836,6 +869,16 @@ export class PlayerService {
         }
     }
 
+    /** Whether the track can be played louder: a song of the library, not a part of a book and not Spotify, which has its own level. */
+    private hasGain(track: QueueTrack): boolean {
+        return track.collection === "music" && !track.spotify;
+    }
+
+    private withGain(track: QueueTrack): QueueTrack {
+        const gainDb = this.hasGain(track) ? this.gains.get(track.id) : 0;
+        return gainDb === 0 ? track : { ...track, gainDb };
+    }
+
     /** The tracks of a library that are in it, in the order asked for: requests are about music unless they say audiobooks. */
     private resolve(trackIds: string[], collection: Collection = "music"): QueueTrack[] {
         return trackIds.flatMap((id) => {
@@ -907,6 +950,7 @@ export const playerService = new PlayerService(
     new QueueStore(libraryConfig.dataDir),
     historyService,
     bookProgressStore,
+    trackGainStore,
     soloist
 );
 soloist.start();

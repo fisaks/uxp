@@ -1,6 +1,6 @@
 // JSON schemas that validate the payloads of the player WebSocket actions
 
-import { MAX_SPEED, MIN_SPEED, REPEAT_MODES } from "../types/player.type";
+import { GAIN_STEP_DB, MAX_GAIN_DB, MAX_SPEED, MIN_SPEED, REPEAT_MODES } from "../types/player.type";
 
 const TRACK_ID_SCHEMA = { type: "string", pattern: "^[0-9a-f]{16}$" };
 const MAX_TRACKS = 5000;
@@ -87,6 +87,23 @@ export const PlayerSetSpeedSchema = {
     type: "object",
     properties: { rate: { type: "number", minimum: MIN_SPEED, maximum: MAX_SPEED } },
     required: ["rate"],
+    additionalProperties: false,
+};
+
+export const PlayerSetGainSchema = {
+    type: "object",
+    properties: { gainDb: { type: "number", minimum: 0, maximum: MAX_GAIN_DB, multipleOf: GAIN_STEP_DB } },
+    required: ["gainDb"],
+    additionalProperties: false,
+};
+
+export const PlayerSetTracksGainSchema = {
+    type: "object",
+    properties: {
+        trackIds: { type: "array", items: TRACK_ID_SCHEMA, minItems: 1, maxItems: MAX_TRACKS },
+        gainDb: PlayerSetGainSchema.properties.gainDb,
+    },
+    required: ["trackIds", "gainDb"],
     additionalProperties: false,
 };
 

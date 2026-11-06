@@ -14,6 +14,7 @@ import { TrackCover } from "../library/TrackCover";
 import { formatDuration } from "../library/libraryFormat";
 import { BookSkipButton } from "./BookSkipButton";
 import { BookSpeedButton } from "./BookSpeedButton";
+import { GainButtons } from "./GainButtons";
 import { nowPlayingText } from "./nowPlayingText";
 import { PlayPauseButton } from "./PlayPauseButton";
 import { PlayerToggleButton } from "./PlayerToggleButton";
@@ -28,8 +29,8 @@ const ROOM_BESIDES_COVER = 440;
 const MIN_COVER_SIZE = 120;
 
 /**
- * The full screen player, opened from the mini player on a narrow screen: a large cover, the place in the track that can be
- * moved, all the buttons and the way to the queue.
+ * The full screen player, opened from the text of the player bar: a large cover, the place in the track that can be
+ * moved, all the buttons, the gain of a song and the way to the queue.
  */
 const NowPlayingPage: React.FC = () => {
     const state = useAppSelector(selectPlayerState);
@@ -132,6 +133,7 @@ const NowPlayingPage: React.FC = () => {
             </Stack>
             <Stack direction="row" alignItems="center" justifyContent="center" spacing={1}>
                 {isBook && <BookSpeedButton />}
+                {!isBook && !spotify && <GainButtons />}
                 <Button component={Link} to="/queue" startIcon={<QueueMusicIcon />}>
                     {isBook ? "Book" : spotify ? "Queue" : `Queue (${state.queue.length})`}
                 </Button>

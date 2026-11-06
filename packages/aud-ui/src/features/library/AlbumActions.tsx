@@ -9,10 +9,11 @@ import { usePlayerActions } from "../player/usePlayerActions";
 type AlbumActionsProps = {
     trackIds: string[];
     onAddToPlaylist: () => void;
+    onSetGain: () => void;
 };
 
-/** What can be done with a whole album: play it or play it mixed, and in the menu put it in the queue or a playlist. */
-export const AlbumActions: React.FC<AlbumActionsProps> = ({ trackIds, onAddToPlaylist }) => {
+/** What can be done with a whole album: play it or play it mixed, and in the menu put it in the queue or a playlist, or set how loud it is played. */
+export const AlbumActions: React.FC<AlbumActionsProps> = ({ trackIds, onAddToPlaylist, onSetGain }) => {
     const { playTracks, shuffleTracks, enqueue } = usePlayerActions();
     const portalContainer = usePortalContainerRef();
     const [anchor, setAnchor] = useState<HTMLElement | null>(null);
@@ -37,6 +38,9 @@ export const AlbumActions: React.FC<AlbumActionsProps> = ({ trackIds, onAddToPla
                 </MenuItem>
                 <MenuItem onClick={choose(onAddToPlaylist)}>
                     <ListItemText>Add to playlist...</ListItemText>
+                </MenuItem>
+                <MenuItem onClick={choose(onSetGain)}>
+                    <ListItemText>Gain...</ListItemText>
                 </MenuItem>
             </Menu>
         </Stack>

@@ -89,6 +89,10 @@ export type AudioAppActionPayloadRequestMap = {
     player_set_shuffle: { on: boolean };
     player_set_repeat: { mode: RepeatMode };
     player_set_speed: { rate: number };
+    /** Sets the gain of the track that is playing, which is kept for that track. */
+    player_set_gain: { gainDb: number };
+    /** Sets the gain of songs of the library, such as the songs of an album, and keeps it for each of them. */
+    player_set_tracks_gain: { trackIds: string[]; gainDb: number };
     amplifier_set_power: { on: boolean };
     amplifier_set_volume: { volumeDb: number };
     amplifier_set_mute: { muted: boolean };
@@ -169,6 +173,8 @@ export type AudioAppActionPayloadResponseMap = {
     player_set_shuffle: PlayerState;
     player_set_repeat: PlayerState;
     player_set_speed: PlayerState;
+    player_set_gain: PlayerState;
+    player_set_tracks_gain: PlayerState;
     amplifier_set_power: AmplifierState;
     amplifier_set_volume: AmplifierState;
     amplifier_set_mute: AmplifierState;

@@ -83,5 +83,8 @@ export type PlayerState = {
     /** Set while Spotify is paused in the background because the player was started: it can be continued from where it is. */
     spotifyIdle?: SpotifyNowPlaying;
 };
+/** The gain of a track is 0 to this many dB, in steps of `GAIN_STEP_DB`. */
+export const MAX_GAIN_DB = 10;
+export const GAIN_STEP_DB = 2;
 export const MIN_SPEED = 0.5;
 export const MAX_SPEED = 3;

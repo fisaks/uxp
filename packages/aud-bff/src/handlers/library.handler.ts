@@ -9,6 +9,7 @@ import {
     LibrarySearchResponse,
     LibrarySearchSchema,
     LibraryStatus,
+    LibraryTrack,
     LibraryTracksResponse,
     SearchReachability,
     SpotifySearchResponse,
@@ -19,6 +20,7 @@ import { ErrorCodes } from "@uxp/common";
 import { listeningService } from "../audiobook/listening.service";
 import { LibraryService, audiobookService, libraryService } from "../library/library.service";
 import { bookProgressStore } from "../player/book-progress";
+import { trackGainStore } from "../player/track-gain";
 import { SEARCH_PAGE_SIZE, spotifyCatalog, spotifyTrack } from "../player/spotify-catalog";
 import { librarySearch } from "../search/library-search";
 import { searchIndexer } from "../search/search-indexer";
@@ -49,6 +51,12 @@ const getTracks = (library: LibraryService, albumId: string): LibraryTracksRespo
     return { artist, album, tracks: library.getTracks(album.id) };
 };
 
+/** The track with the gain it is played with, when it has one. Music only: the parts of a book have none. */
+const withGain = (track: LibraryTrack): LibraryTrack => {
+    const gainDb = trackGainStore.get(track.id);
+    return gainDb === 0 ? track : { ...track, gainDb };
+};
+
 const scan = (library: LibraryService): LibraryStatus => {
     void library.scan();
     return statusOf(library);
@@ -67,7 +75,8 @@ export class LibraryHandler {
 
     @WebSocketAction("library_get_tracks", { authenticate: true, schema: LibraryGetTracksSchema })
     public getTracks(_wsDetails: WebSocketDetails, message: AudioAppRequestMessage<"library_get_tracks">): LibraryTracksResponse {
-        return getTracks(libraryService, message.payload.albumId);
+        const answer = getTracks(libraryService, message.payload.albumId);
+        return { ...answer, tracks: answer.tracks.map(withGain) };
     }
 
     @WebSocketAction("search_check", { authenticate: true })

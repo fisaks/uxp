@@ -10,6 +10,8 @@ const SOCKET_PATH = path.join(os.tmpdir(), "aud-mpv.sock");
 const CONNECT_ATTEMPTS = 25;
 const CONNECT_RETRY_MS = 200;
 const TIME_POS_OBSERVER_ID = 1;
+/** mpv's volume is 100 at normal level, and goes no higher than this unless told: 400 is 12 dB, above the +10 dB the player asks for. */
+const VOLUME_MAX = 400;
 
 export type MpvConfig = {
     /** The mpv program, "mpv" by default. */
@@ -32,6 +34,7 @@ export class MpvPlayerEngine implements PlayerEngine {
     /** Where to go when the file that was just loaded is ready: the start of a file that does not start at its beginning. */
     private pendingStartSec = 0;
     private speed = 1;
+    private volume = 100;
 
     constructor(private readonly config: MpvConfig) {}
 
@@ -43,6 +46,7 @@ export class MpvPlayerEngine implements PlayerEngine {
         await this.ensureRunning();
         // A speed set while mpv was not running is applied here.
         this.send(["set_property", "speed", this.speed]);
+        this.send(["set_property", "volume", this.volume]);
         this.pendingStartSec = startSec;
         this.send(["loadfile", file, "replace"]);
         this.send(["set_property", "pause", false]);
@@ -70,6 +74,11 @@ export class MpvPlayerEngine implements PlayerEngine {
         this.send(["set_property", "speed", rate]);
     }
 
+    setGain(db: number) {
+        this.volume = Math.round(100 * 10 ** (db / 20));
+        this.send(["set_property", "volume", this.volume]);
+    }
+
     private send(command: unknown[]) {
         this.socket?.write(`${JSON.stringify({ command })}\n`);
     }
@@ -90,6 +99,7 @@ export class MpvPlayerEngine implements PlayerEngine {
             "--no-terminal",
             "--really-quiet",
             "--audio-display=no",
+            `--volume-max=${VOLUME_MAX}`,
             `--input-ipc-server=${SOCKET_PATH}`,
             ...(this.config.audioDevice ? [`--audio-device=${this.config.audioDevice}`] : []),
         ];

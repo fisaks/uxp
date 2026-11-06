@@ -278,7 +278,7 @@ const QueuePage: React.FC = () => {
                                 </Typography>
                                 <Typography variant="body2" color="text.secondary">
                                     {track.spotify && <SpotifyMark />}
-                                    {[track.artist, track.durationSec ? formatDuration(track.durationSec) : undefined]
+                                    {[track.artist, track.durationSec ? formatDuration(track.durationSec) : undefined, track.gainDb ? `+${track.gainDb} dB` : undefined]
                                         .filter(Boolean)
                                         .join(" · ")}
                                 </Typography>

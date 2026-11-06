@@ -9,6 +9,7 @@ import { usePlayerActions } from "../player/usePlayerActions";
 import { AddToPlaylistDialog } from "../playlist/AddToPlaylistDialog";
 import { usePlaylistCommand } from "../playlist/usePlaylistCommand";
 import { useRequest } from "../shared/useRequest";
+import { AlbumGainDialog } from "./AlbumGainDialog";
 import { AlbumActions } from "./AlbumActions";
 import { AlbumPage } from "./AlbumPage";
 import { formatDuration } from "./libraryFormat";
@@ -22,12 +23,14 @@ const groupByDisc = (tracks: LibraryTrack[]): { disc?: number; tracks: LibraryTr
 
 export const TracksView: React.FC = () => {
     const { albumId = "" } = useParams();
-    const { data, error } = useRequest("library_get_tracks", { albumId });
+    const { data, error, reload } = useRequest("library_get_tracks", { albumId });
     useRequest("playlist_list", {});
     const { playTracks, enqueue, playNext, playNow, hadQueue, notify } = usePlayerActions();
     const sendPlaylist = usePlaylistCommand();
     // The tracks that are being put in a playlist, while the dialog for it is open.
     const [playlistTrackIds, setPlaylistTrackIds] = useState<string[] | undefined>(undefined);
+    // The tracks of the album, while the dialog for their gain is open.
+    const [gainTrackIds, setGainTrackIds] = useState<string[] | undefined>(undefined);
     const playingId = useAppSelector(selectCurrentTrackId);
     // Where tracks most likely go: the playlist that was changed last.
     const lastPlaylist = useAppSelector(selectMostRecentPlaylist);
@@ -61,7 +64,7 @@ export const TracksView: React.FC = () => {
                                 .filter(Boolean)
                                 .join(" · ")}
                         </Typography>
-                        <AlbumActions trackIds={trackIds} onAddToPlaylist={() => setPlaylistTrackIds(trackIds)} />
+                        <AlbumActions trackIds={trackIds} onAddToPlaylist={() => setPlaylistTrackIds(trackIds)} onSetGain={() => setGainTrackIds(trackIds)} />
                     </>
                 }
             >
@@ -90,6 +93,12 @@ export const TracksView: React.FC = () => {
                     </List>
                 ))}
             </AlbumPage>
+            <AlbumGainDialog
+                trackIds={gainTrackIds}
+                currentDb={new Set(tracks.map((track) => track.gainDb ?? 0)).size === 1 ? (tracks[0].gainDb ?? 0) : undefined}
+                onClose={() => setGainTrackIds(undefined)}
+                onSet={() => void reload()}
+            />
             <AddToPlaylistDialog trackIds={playlistTrackIds} title="Add to a playlist" onClose={() => setPlaylistTrackIds(undefined)} />
         </>
     );

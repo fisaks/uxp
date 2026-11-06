@@ -95,6 +95,10 @@ export class MplayerPlayerEngine implements PlayerEngine {
         this.send(`pausing_keep_force seek ${positionSec} 2`);
     }
 
+    setGain() {
+        // mplayer is kept as it was: it plays without gain.
+    }
+
     setSpeed(rate: number) {
         this.speed = rate;
         this.sendSpeed();
