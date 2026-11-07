@@ -1772,6 +1772,117 @@ importers:
         specifier: ^4.10.2
         version: 4.10.2
 
+  packages/vid-bff:
+    dependencies:
+      '@fastify/cookie':
+        specifier: ^11.0.1
+        version: 11.0.2
+      '@fastify/jwt':
+        specifier: ^9.0.1
+        version: 9.1.0
+      '@uxp/bff-common':
+        specifier: workspace:*
+        version: link:../uxp-bff-common
+      '@uxp/common':
+        specifier: workspace:*
+        version: link:../uxp-common
+      '@vid/common':
+        specifier: workspace:*
+        version: link:../vid-common
+      dotenv:
+        specifier: ^16.4.5
+        version: 16.5.0
+      fastify:
+        specifier: ^5.1.0
+        version: 5.3.0
+    devDependencies:
+      '@types/node':
+        specifier: ^22.10.1
+        version: 22.14.1
+      tsx:
+        specifier: ^4.21.0
+        version: 4.21.0
+      typescript:
+        specifier: ^5.7.2
+        version: 5.8.3
+
+  packages/vid-common:
+    dependencies:
+      '@uxp/common':
+        specifier: workspace:*
+        version: link:../uxp-common
+    devDependencies:
+      '@types/node':
+        specifier: ^22.13.1
+        version: 22.14.1
+
+  packages/vid-ui:
+    dependencies:
+      '@emotion/cache':
+        specifier: ^11.14.0
+        version: 11.14.0
+      '@emotion/react':
+        specifier: ^11.13.5
+        version: 11.14.0(@types/react@18.3.20)(react@18.3.1)
+      '@emotion/styled':
+        specifier: ^11.13.5
+        version: 11.14.0(@emotion/react@11.14.0(@types/react@18.3.20)(react@18.3.1))(@types/react@18.3.20)(react@18.3.1)
+      '@fontsource/roboto':
+        specifier: ^5.1.0
+        version: 5.2.5
+      '@mui/icons-material':
+        specifier: ^6.1.8
+        version: 6.4.11(@mui/material@6.4.11(@emotion/react@11.14.0(@types/react@18.3.20)(react@18.3.1))(@emotion/styled@11.14.0(@emotion/react@11.14.0(@types/react@18.3.20)(react@18.3.1))(@types/react@18.3.20)(react@18.3.1))(@types/react@18.3.20)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@types/react@18.3.20)(react@18.3.1)
+      '@mui/material':
+        specifier: ^6.1.8
+        version: 6.4.11(@emotion/react@11.14.0(@types/react@18.3.20)(react@18.3.1))(@emotion/styled@11.14.0(@emotion/react@11.14.0(@types/react@18.3.20)(react@18.3.1))(@types/react@18.3.20)(react@18.3.1))(@types/react@18.3.20)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@mui/utils':
+        specifier: ^6.1.10
+        version: 6.4.9(@types/react@18.3.20)(react@18.3.1)
+      '@reduxjs/toolkit':
+        specifier: ^2.3.0
+        version: 2.6.1(react-redux@9.2.0(@types/react@18.3.20)(react@18.3.1)(redux@5.0.1))(react@18.3.1)
+      '@uxp/common':
+        specifier: workspace:*
+        version: link:../uxp-common
+      '@uxp/ui-lib':
+        specifier: workspace:*
+        version: link:../uxp-ui-lib
+      '@vid/common':
+        specifier: workspace:*
+        version: link:../vid-common
+      axios:
+        specifier: ^1.7.8
+        version: 1.8.4
+      react:
+        specifier: ^18.0.0
+        version: 18.3.1
+      react-dom:
+        specifier: ^18.0.0
+        version: 18.3.1(react@18.3.1)
+      react-redux:
+        specifier: ^9.1.2
+        version: 9.2.0(@types/react@18.3.20)(react@18.3.1)(redux@5.0.1)
+      react-router-dom:
+        specifier: ^7.0.1
+        version: 7.5.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      redux-logger:
+        specifier: ^3.0.6
+        version: 3.0.6
+    devDependencies:
+      '@types/node':
+        specifier: ^22.13.1
+        version: 22.14.1
+      '@types/react':
+        specifier: ^18.3.12
+        version: 18.3.20
+      '@types/redux-logger':
+        specifier: ^3.0.13
+        version: 3.0.13
+      html-webpack-inject-attributes-plugin:
+        specifier: ^1.0.6
+        version: 1.0.6
+
 packages:
 
   '@ampproject/remapping@2.3.0':

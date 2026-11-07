@@ -7,7 +7,7 @@
     "scripts": {
         "build": "pnpm -r build",
         "clean": "pnpm -r clean  && echo 'NOTE!!!!!!! RUN TWICE IF DEVSERVER IS ON TO FULLY REMOVE EVERYTING'",
-        "watch": "pnpm -r --parallel --filter=@uxp/common --filter=@uxp/bff-common --filter=@uxp/ui-lib --filter=@uxp/config --filter=@uxp/config-dev --filter=@h2c/common  --filter=@demo/common --filter=@aud/common --filter=@uhn/common --filter=@uhn/blueprint --filter=@uhn/rule-runtime watch",
+        "watch": "pnpm -r --parallel --filter=@uxp/common --filter=@uxp/bff-common --filter=@uxp/ui-lib --filter=@uxp/config --filter=@uxp/config-dev --filter=@h2c/common  --filter=@demo/common --filter=@aud/common --filter=@vid/common --filter=@uhn/common --filter=@uhn/blueprint --filter=@uhn/rule-runtime watch",
         "start:app": "pnpm --filter=@uxp/ui start ",
         "start:bff": "pnpm --filter=@uxp/bff dev ",
         "start:h2c-app": "pnpm --filter=@h2c/ui start ",
@@ -19,6 +19,8 @@
         "start:demo-bff": "pnpm --filter=@uxp/demo-bff dev ",
         "start:aud-app": "pnpm --filter=@aud/ui start ",
         "start:aud-bff": "pnpm --filter=@aud/bff dev ",
+        "start:vid-app": "pnpm --filter=@vid/ui start ",
+        "start:vid-bff": "pnpm --filter=@vid/bff dev ",
         "lint": "eslint packages/**",
         "lint:fix": "eslint packages/** --fix",
         "format": "prettier --write .",

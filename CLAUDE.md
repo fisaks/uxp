@@ -27,6 +27,8 @@ pnpm run start:demo-bff     # Demo backend
 pnpm run start:demo-app     # Demo frontend
 pnpm run start:aud-bff      # AUD (audio) backend
 pnpm run start:aud-app      # AUD frontend
+pnpm run start:vid-bff      # VID (video) backend
+pnpm run start:vid-app      # VID frontend
 ```
 
 ### Build & Quality
@@ -74,6 +76,7 @@ All packages live under `packages/`. Each app domain has up to three packages fo
 | **UHN** (home automation) | `uhn-ui` | `uhn-master` | `uhn-common` |
 | **Demo** | `demo-ui` | `demo-bff` | `demo-common` |
 | **AUD** (audio) | `aud-ui` | `aud-bff` | — (added when first shared types exist) |
+| **VID** (video) | `vid-ui` | `vid-bff` | `vid-common` |
 
 Cross-cutting packages:
 - **`uxp-bff-common`** — Shared backend utilities (Fastify plugins, TypeORM helpers) used by all BFFs

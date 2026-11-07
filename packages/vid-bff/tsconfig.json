@@ -1,0 +1,33 @@
+{
+    "extends": "../../tsconfig.json",
+    "compilerOptions": {
+        "outDir": "./dist",
+        "rootDir": "./src",
+        "module": "commonjs",
+        "target": "ES2021",
+        "declarationDir": "./build_types",
+        "declaration": true,
+        "declarationMap": true,
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
+        "strict": true
+    },
+    "include": [
+        "src/**/*"
+    ],
+    "exclude": [
+        "node_modules",
+        "dist"
+    ],
+    "references": [
+        {
+            "path": "../uxp-common"
+        },
+        {
+            "path": "../uxp-bff-common"
+        },
+        {
+            "path": "../vid-common"
+        }
+    ]
+}

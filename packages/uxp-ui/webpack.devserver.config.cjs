@@ -68,6 +68,11 @@ module.exports = merge(baseConfig, {
                 target: "http://localhost:3040",
                 ws: true,
             },
+            {
+                context: ["/ws-vid"],
+                target: "http://localhost:3050",
+                ws: true,
+            },
         ],
     },
 });

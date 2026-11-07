@@ -115,6 +115,11 @@ start_dev_env() {
     tmux send-keys -t $SESSION_NAME:3.4 "./dev-soloist.sh house" C-m
     tmux select-pane -t $SESSION_NAME:3.0
 
+    tmux new-window -t $SESSION_NAME -n 'vid'
+    tmux split-window -h -t $SESSION_NAME:4
+    tmux send-keys -t $SESSION_NAME:4.0 "pnpm run start:vid-bff" C-m
+    tmux send-keys -t $SESSION_NAME:4.1 "pnpm run start:vid-app" C-m
+
     # Select the first tab
     tmux select-window -t $SESSION_NAME:0
     # Attach to the tmux session
