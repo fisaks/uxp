@@ -170,7 +170,7 @@ export class SoloistClient {
     }
 
     /** For the health check: whether Spotify is set up, whether Soloist answers, and when its build expires and was last updated. */
-    async health(): Promise<Omit<SpotifyHealth, "catalog">> {
+    async health(): Promise<Omit<SpotifyHealth, "catalog" | "houseReachable">> {
         const reachable = this.socket?.readyState === WebSocket.OPEN;
         return { enabled: this.url !== undefined, reachable, expiresAt: await this.expiresAt(), lastUpdateAt: await this.lastUpdateAt() };
     }

@@ -14,7 +14,7 @@ import { trackGainStore } from "./track-gain";
 import { PlayerEngine } from "./player-engine";
 import { PlayerConfig, playerConfig } from "./player.config";
 import { PersistedQueue, QueueStore } from "./queue-store";
-import { SoloistClient } from "./soloist-client";
+import { SpotifyPlayers } from "./spotify-players";
 import { isSpotifyId, spotifyCatalog } from "./spotify-catalog";
 import { shuffledOrder } from "./player-order";
 
@@ -37,6 +37,10 @@ type SpotifyControl = {
     nowPlaying(): SpotifyNowPlaying | undefined;
     control(command: "play" | "pause" | "skip_next" | "skip_prev"): void;
     seek(positionSec: number): void;
+    /** Seeks in the track of the queue that Spotify plays. */
+    seekOwned(positionSec: number): void;
+    /** Where the track of the queue that Spotify plays is. */
+    ownedPositionSec(): number;
     /** Plays a track for the queue; false when Spotify cannot be reached. */
     playOwned(uri: string): boolean;
     /** Whether the track is the one of the queue that Spotify plays. */
@@ -433,7 +437,7 @@ export class PlayerService {
             void this.advance(true);
         } else if (change === "playing" && (this.status === "starting" || this.status === "paused")) {
             this.status = "playing";
-            this.setPosition(this.spotify.nowPlaying()?.positionSec ?? 0);
+            this.setPosition(this.spotify.ownedPositionSec());
             this.publish();
         } else if (change === "paused" && this.status === "playing") {
             this.setPosition(this.currentPosition());
@@ -528,7 +532,7 @@ export class PlayerService {
             const duration = this.queue[this.currentIndex]?.durationSec;
             const position = Math.max(0, duration ? Math.min(positionSec, duration) : positionSec);
             if (this.currentSpotifyUri) {
-                this.spotify.seek(position);
+                this.spotify.seekOwned(position);
             } else {
                 this.engine.seek(position);
             }
@@ -933,14 +937,12 @@ const createEngine = ({ engine, mpv, mplayer }: PlayerConfig): PlayerEngine => {
     }
 };
 
-const soloist = new SoloistClient(
-    playerConfig.soloistUrl,
-    playerConfig.soloistDir,
-    () => playerService.yieldToSpotify(),
-    () => amplifierService.prepareForPlayback(),
-    () => playerService.onSpotifyChanged(),
-    (change) => playerService.onQueueTrackChanged(change)
-);
+const soloist = new SpotifyPlayers({ public: playerConfig.soloistUrl, house: playerConfig.soloistHouseUrl }, playerConfig.soloistDir, {
+    onPlaying: () => playerService.yieldToSpotify(),
+    prepare: () => amplifierService.prepareForPlayback(),
+    onChange: () => playerService.onSpotifyChanged(),
+    onOwnedChange: (change) => playerService.onQueueTrackChanged(change),
+});
 
 export const playerService = new PlayerService(
     createEngine(playerConfig),

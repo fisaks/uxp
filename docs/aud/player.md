@@ -72,21 +72,36 @@ switch, and each side that is not playing has a Continue button: `player_resume_
 `player_resume_spotify` sends `play` to Soloist, whose `playing` report makes the player give way as above. Spotify can only be
 continued where Soloist still holds it; it cannot be started from aud.
 
-The connection is opened again every 5 seconds when it drops. Nothing of Spotify is used when `AUD_SOLOIST_WS` is not set.
+There are two Soloist instances, each with its own connection (`SpotifyPlayers` holds both, `SoloistClient` is one connection):
+
+- The **public** one (`AUD_SOLOIST_WS`) is the device a phone picks, as whichever account picks it. What a phone starts there is
+  what is described above: the player gives way, and its buttons, `spotify`, `spotifyIdle`, the Spotify queue and `find` (adding
+  to the queue from the Spotify tab) are that of this instance.
+- The **house** one (`AUD_SOLOIST_HOUSE_WS`) is paired once as an account of its own that nobody else uses, and plays every
+  Spotify track that the queue of the player asks for (`playOwned`), including its end and position. It is the device named
+  "do not use" in the Spotify apps. Without it Spotify tracks of the queue cannot be played.
+
+They play to the same sound server and would be heard together, so only one plays: when the player starts anything the public
+one is paused, and when a phone starts the public one the house one is paused as well as the player. Nobody should pick the
+public device with the house account: both would then report the same account-wide playback.
+
+The connections are opened again every 5 seconds when they drop. Nothing of Spotify is used when `AUD_SOLOIST_WS` is not set.
 
 | Variable | Required | Meaning |
 |----------|----------|---------|
-| `AUD_SOLOIST_WS` | no | The WebSocket address of Soloist. |
+| `AUD_SOLOIST_WS` | no | The WebSocket address of the public Soloist. |
+| `AUD_SOLOIST_HOUSE_WS` | with `AUD_SOLOIST_WS` | The WebSocket address of the house Soloist. |
 | `AUD_SOLOIST_DIR` | no | The folder Soloist is installed in, for the health check. |
 
 ### Spotify and local speakers in development
 
 `setup-dev-soloist.sh` (run once) downloads Soloist into `.dev-soloist/` and builds a Docker image for it. 
 `dev-soloist.sh` runs it as the device "AUD Dev" with the WebSocket on
-`127.0.0.1:8765`; `devserver.sh` starts it in the `aud` window. Sound goes to the default output of the PulseAudio of the
+`127.0.0.1:8765`, and `dev-soloist.sh house` as the house device "AUD Dev (do not use)" on `127.0.0.1:8766` (paired once with an
+account of its own, its data in `.dev-soloist/data-house/`); `devserver.sh` starts it in the `aud` window. Sound goes to the default output of the PulseAudio of the
 machine, through a PipeWire inside the container.
 
-Set these in `.env.dev`: `SOLOIST_API_KEY`, `AUD_SOLOIST_WS=ws://127.0.0.1:8765`, `AUD_PLAYER=mpv` (and `AUD_MPV_AUDIO_DEVICE` if
+Set these in `.env.dev`: `SOLOIST_API_KEY`, `AUD_SOLOIST_WS=ws://127.0.0.1:8765`, `AUD_SOLOIST_HOUSE_WS=ws://127.0.0.1:8766`, `AUD_PLAYER=mpv` (and `AUD_MPV_AUDIO_DEVICE` if
 the default output is wrong), and leave `AUD_AMPLIFIER_PLAYER_INPUT` out so playing does not touch the amplifier. Do not set
 `AUD_SOLOIST_DIR`, the build cannot run outside the container. Pair once by picking "AUD Dev" in Spotify on a phone, with a
 different Spotify account than any other Soloist uses: with the same account only one of them can play. Delete

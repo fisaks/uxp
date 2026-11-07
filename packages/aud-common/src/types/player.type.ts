@@ -29,6 +29,8 @@ export type SpotifyHealth = {
     catalog: SpotifyCatalogHealth;
     enabled: boolean;
     reachable: boolean;
+    /** Whether the house player, which plays what the player's own queue asks for, answers. */
+    houseReachable: boolean;
     /** ISO time. Unknown when the build cannot be read. */
     expiresAt?: string;
     /** ISO time of the last update run that ended well, even when there was no newer build. */
