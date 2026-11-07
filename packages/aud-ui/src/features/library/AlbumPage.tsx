@@ -3,7 +3,7 @@ import { Box, Stack, Typography } from "@mui/material";
 import React, { useLayoutEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useRequest } from "../shared/useRequest";
-import { AlbumCover } from "./AlbumCover";
+import { LibraryAlbumCover } from "./AlbumCover";
 import { PAGE_WIDTH, READABLE_WIDTH, SIDE_COLUMN_GAP, SIDE_COLUMN_WIDTH } from "../shared/ReadableWidth";
 import { Tile } from "./TileGrid";
 
@@ -50,7 +50,7 @@ export const AlbumPage: React.FC<AlbumPageProps> = ({ collection, artistId, albu
     const albumTile = (other: LibraryAlbum) => (
         <Tile
             key={other.id}
-            picture={<AlbumCover collection={collection} albumId={other.id} hasCover={other.hasCover} />}
+            picture={<LibraryAlbumCover collection={collection} album={other} />}
             title={other.title}
             subtitle={other.year ? String(other.year) : undefined}
             highlighted={other.id === album.id}
@@ -97,14 +97,14 @@ export const AlbumPage: React.FC<AlbumPageProps> = ({ collection, artistId, albu
                         {albums.map(albumTile)}
                     </Stack>
                 ) : (
-                    <AlbumCover collection={collection} albumId={album.id} hasCover={album.hasCover} />
+                    <LibraryAlbumCover collection={collection} album={album} />
                 )}
             </Box>
             <Box sx={{ flex: 1, minWidth: 0, maxWidth: READABLE_WIDTH }}>
                 <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
                     {/* Without other albums the big cover beside the page already shows it on a wide screen. */}
                     <Box sx={{ width: COVER_SIZE, flexShrink: 0, display: { xs: "block", md: hasOthers ? "block" : "none" } }}>
-                        <AlbumCover collection={collection} albumId={album.id} hasCover={album.hasCover} />
+                        <LibraryAlbumCover collection={collection} album={album} />
                     </Box>
                     <Box sx={{ minWidth: 0 }}>{info}</Box>
                 </Stack>

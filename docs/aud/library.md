@@ -53,6 +53,20 @@ kept in memory and can be rebuilt from them at any time.
 | `library_get_tracks` | `albumId` | the artist, the album and its tracks |
 | `library_scan` | none | the status; a scan starts in the background if none is running |
 
+### Spotify artists and albums
+
+`library_get_albums` and `library_get_tracks` also take Spotify ids (`spotify:artist:...`, `spotify:album:...`) and answer
+in the same shapes as for local ones; the handler dispatches on the prefix. Such albums have `coverUrl` (the cover from
+Spotify, shown with a Spotify banner) instead of a cover file. The tracks of a Spotify album can be played, queued and
+played from here as any other.
+
+What Spotify says about an artist (with its albums) and an album (with its tracks) is cached in `spotify-cache.json` in
+`AUD_DATA_DIR` for 24 hours (at most 2000 of each, the oldest are forgotten), so a visit asks Spotify once a day at most
+and a restart does not start over. When Spotify fails the stale copy is served. If Spotify answers 429 with a Retry-After
+over 10 seconds, that kind of call is not made until then (also kept in the file, so it survives a restart). Without a
+copy the action fails with 503 and "Spotify limits this until HH:MM" or "Spotify does not answer". Every 429 is logged
+with `[Spotify]` and its Retry-After. Deleting the file is safe.
+
 An unknown artist or album gives `NOT_FOUND`. The cover picture of an album is served at
 `GET /api/cover/music/:albumId` (or `/api/cover/audiobooks/:albumId` for a book) (needs the login cookie, cached by the browser for a day); an album without a cover gives
 404 and the UI shows a record icon. The files are never served by path, only the cover the scanner picked.

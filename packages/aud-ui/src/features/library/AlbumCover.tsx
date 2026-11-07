@@ -1,4 +1,4 @@
-import { Collection } from "@aud/common";
+import { Collection, LibraryAlbum } from "@aud/common";
 import AlbumIcon from "@mui/icons-material/Album";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
 import { Box } from "@mui/material";
@@ -76,3 +76,11 @@ export const AlbumCover: React.FC<AlbumCoverProps> = ({ collection, albumId, has
         </Box>
     );
 };
+
+/** The cover of an album of the library or of Spotify: for Spotify's its own picture, marked as Spotify's. */
+export const LibraryAlbumCover: React.FC<{ collection: Collection; album: LibraryAlbum }> = ({ collection, album }) =>
+    album.coverUrl ? (
+        <AlbumCover collection={collection} albumId={album.id} hasCover imageUrl={album.coverUrl} banner="Spotify" />
+    ) : (
+        <AlbumCover collection={collection} albumId={album.id} hasCover={album.hasCover} />
+    );

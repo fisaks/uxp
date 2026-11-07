@@ -5,6 +5,8 @@ export type LibraryArtist = {
     albumCount: number;
     /** Up to MAX_ARTIST_COVERS albums of the artist that have a cover, for the picture of the artist. */
     coverAlbumIds: string[];
+    /** A picture of the artist from Spotify, which has no albums of the library to show. */
+    coverUrl?: string;
 };
 
 export const MAX_ARTIST_COVERS = 4;
@@ -17,6 +19,8 @@ export type LibraryAlbum = {
     trackCount: number;
     /** True when the album folder has a picture that can be used as cover. */
     hasCover: boolean;
+    /** The cover of an album of Spotify, which the library has no folder picture for. */
+    coverUrl?: string;
 };
 
 export type LibraryTrack = {

@@ -82,7 +82,16 @@ export type SearchReachability = {
     reachable: boolean;
 };
 
-export type SpotifySearchRequest = { query: string; offset?: number };
+export type SpotifySearchType = "track" | "artist" | "album";
+
+export type SpotifySearchRequest = { query: string; offset?: number; types?: SpotifySearchType[] };
 
 /** The tracks of Spotify that match, as tracks of the queue (their id is the URI), one page of them; `hasMore` when another page may follow. */
-export type SpotifySearchResponse = { query: string; tracks: QueueTrack[]; hasMore: boolean };
+export type SpotifySearchResponse = {
+    query: string;
+    tracks: QueueTrack[];
+    /** Artists and albums of Spotify, in the shapes of the library with Spotify ids; empty unless asked for. */
+    artists: LibraryArtist[];
+    albums: LibraryAlbum[];
+    hasMore: boolean;
+};

@@ -1,4 +1,4 @@
-import { QueueTrack, SpotifySearchResponse } from "@aud/common";
+import { LibraryAlbum, LibraryArtist, QueueTrack, SpotifySearchResponse, SpotifySearchType } from "@aud/common";
 import { useCallback, useEffect, useState } from "react";
 import { useAudioWebSocket } from "../../app/AudioBrowserWebSocketManager";
 import { useAppSelector } from "../../hooks";
@@ -6,6 +6,8 @@ import { selectConnected } from "../connection/connectionSelectors";
 
 // A little longer than the library's: Spotify is asked over the internet, so a question is not sent for each letter.
 const DEBOUNCE_MS = 400;
+
+const ALL_TYPES: SpotifySearchType[] = ["track", "artist", "album"];
 
 const sameTrack = (a: QueueTrack, b: QueueTrack) => key(a) === key(b);
 const key = (track: QueueTrack) => `${track.artist}\u0000${track.title}`.toLowerCase();
@@ -19,14 +21,16 @@ export const useSpotifySearch = (query: string, enabled: boolean, localTracks: Q
     const { sendMessageAsync } = useAudioWebSocket();
     const connected = useAppSelector(selectConnected);
     const [found, setFound] = useState<QueueTrack[]>([]);
+    const [artists, setArtists] = useState<LibraryArtist[]>([]);
+    const [albums, setAlbums] = useState<LibraryAlbum[]>([]);
     const [hasMore, setHasMore] = useState(false);
     const [loading, setLoading] = useState(false);
     const trimmed = query.trim();
 
     const ask = useCallback(
-        async (offset: number): Promise<SpotifySearchResponse | undefined> => {
+        async (offset: number, types: SpotifySearchType[]): Promise<SpotifySearchResponse | undefined> => {
             try {
-                return (await sendMessageAsync("spotify_search", { query: trimmed, offset })).payload as SpotifySearchResponse;
+                return (await sendMessageAsync("spotify_search", { query: trimmed, offset, types })).payload as SpotifySearchResponse;
             } catch {
                 return undefined;
             }
@@ -37,16 +41,20 @@ export const useSpotifySearch = (query: string, enabled: boolean, localTracks: Q
     useEffect(() => {
         if (!trimmed || !connected || !enabled) {
             setFound([]);
+            setArtists([]);
+            setAlbums([]);
             setHasMore(false);
             return;
         }
         let current = true;
         const timer = setTimeout(async () => {
             setLoading(true);
-            const answer = await ask(0);
+            const answer = await ask(0, ALL_TYPES);
             if (!current) return;
             setLoading(false);
             setFound(answer?.tracks ?? []);
+            setArtists(answer?.artists ?? []);
+            setAlbums(answer?.albums ?? []);
             setHasMore(answer?.hasMore ?? false);
         }, DEBOUNCE_MS);
         return () => {
@@ -57,7 +65,7 @@ export const useSpotifySearch = (query: string, enabled: boolean, localTracks: Q
 
     const more = async () => {
         setLoading(true);
-        const answer = await ask(found.length);
+        const answer = await ask(found.length, ["track"]);
         setLoading(false);
         if (answer) {
             setFound((previous) => [...previous, ...answer.tracks.filter((track) => !previous.some((item) => item.id === track.id))]);
@@ -66,5 +74,5 @@ export const useSpotifySearch = (query: string, enabled: boolean, localTracks: Q
     };
 
     const tracks = found.filter((track) => !localTracks.some((local) => sameTrack(local, track)));
-    return { tracks, hasMore, loading, more };
+    return { tracks, artists, albums, hasMore, loading, more };
 };

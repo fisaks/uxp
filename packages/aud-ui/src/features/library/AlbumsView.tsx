@@ -2,7 +2,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import { Alert, Box, CircularProgress } from "@mui/material";
 import React from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
-import { AlbumCover } from "./AlbumCover";
+import { LibraryAlbumCover } from "./AlbumCover";
 import { Tile, TileGrid } from "./TileGrid";
 import { useRequest } from "../shared/useRequest";
 import { searchPagePath } from "../search/searchPath";
@@ -25,7 +25,7 @@ export const AlbumsView: React.FC = () => {
                 {data.albums.map((album) => (
                     <Tile
                         key={album.id}
-                        picture={<AlbumCover collection="music" albumId={album.id} hasCover={album.hasCover} />}
+                        picture={<LibraryAlbumCover collection="music" album={album} />}
                         title={album.title}
                         subtitle={[album.year, `${album.trackCount} tracks`].filter(Boolean).join(" · ")}
                         onClick={() => navigate(`/library/album/${album.id}`)}

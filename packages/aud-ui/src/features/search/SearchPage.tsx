@@ -1,8 +1,27 @@
 import { Collection, LibrarySearchHit } from "@aud/common";
-import { Alert, Box, Button, Chip, CircularProgress, List, ListItemButton, ListItemText, ListSubheader, Stack, Typography } from "@mui/material";
+import {
+    Alert,
+    Badge,
+    Box,
+    Button,
+    Chip,
+    IconButton,
+    CircularProgress,
+    Collapse,
+    List,
+    ListItemButton,
+    ListItemText,
+    ListSubheader,
+    Stack,
+    Typography,
+    useMediaQuery,
+    useTheme,
+} from "@mui/material";
+import TuneIcon from "@mui/icons-material/Tune";
 import React, { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAppSelector } from "../../hooks";
+import { SpotifyMark } from "../library/SpotifyMark";
 import { TrackRow } from "../library/TrackRow";
 import { selectCurrentTrackId } from "../player/playerSelectors";
 import { usePlayerActions } from "../player/usePlayerActions";
@@ -26,6 +45,37 @@ const COLLECTIONS: { value: Collection | undefined; label: string }[] = [
     { value: "audiobooks", label: "Audiobooks" },
 ];
 
+type Source = "local" | "spotify";
+type Kind = "artists" | "albums" | "tracks";
+
+const SOURCES: { value: Source | undefined; label: string }[] = [
+    { value: undefined, label: "All" },
+    { value: "local", label: "Local" },
+    { value: "spotify", label: "Spotify" },
+];
+
+const KINDS: { value: Kind | undefined; label: string }[] = [
+    { value: undefined, label: "Everything" },
+    { value: "artists", label: "Artists" },
+    { value: "albums", label: "Albums" },
+    { value: "tracks", label: "Tracks" },
+];
+
+/** Chips that belong together: a thin border with the label of the group on its top edge. */
+const FilterGroup: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
+    <Box
+        component="fieldset"
+        sx={{ m: 0, px: 1.25, pt: 0.25, pb: 0.75, border: "1px dashed", borderColor: "primary.main", borderRadius: 3, minWidth: 0 }}
+    >
+        <Typography component="legend" variant="caption" color="text.secondary" sx={{ px: 0.5, lineHeight: 1.2 }}>
+            {label}
+        </Typography>
+        <Stack direction="row" flexWrap="wrap" useFlexGap spacing={0.5}>
+            {children}
+        </Stack>
+    </Box>
+);
+
 const text = (hit: LibrarySearchHit<unknown>, field: string, plain: string) => <HighlightedText text={hit.highlighted[field] ?? plain} />;
 
 /** The decades of the years, with how many tracks each has, oldest first. */
@@ -38,12 +88,17 @@ const decadesOf = (years: Record<string, number>) => {
     return [...decades.entries()].sort(([a], [b]) => a - b);
 };
 
-/** The results page: all the hits of the words in the header box, up to 100 per group, narrowed by chips for collection, genre and decade. */
+/** The results page: all the hits of the words in the header box, up to 100 per group, narrowed by chips for source (library or Spotify), kind, collection, genre and decade. */
 export const SearchPage: React.FC = () => {
     const navigate = useNavigate();
+    const theme = useTheme();
+    const wide = useMediaQuery(theme.breakpoints.up("md"));
+    const [moreFilters, setMoreFilters] = useState(false);
     const [params, setParams] = useSearchParams();
     const query = params.get("q") ?? "";
     const collection = COLLECTIONS.find((item) => item.value === params.get("collection"))?.value;
+    const source = SOURCES.find((item) => item.value === params.get("source"))?.value;
+    const kind = KINDS.find((item) => item.value === params.get("type"))?.value;
     const genre = params.get("genre") ?? undefined;
     const decade = params.has("decade") ? Number(params.get("decade")) : undefined;
 
@@ -61,7 +116,7 @@ export const SearchPage: React.FC = () => {
     // Spotify has no genre or decade, and no audiobooks.
     const spotify = useSpotifySearch(
         query,
-        collection !== "audiobooks" && genre === undefined && decade === undefined,
+        source !== "local" && collection !== "audiobooks" && genre === undefined && decade === undefined,
         response?.tracks.map((hit) => hit.item) ?? []
     );
     useRequest("playlist_list", {});
@@ -91,9 +146,28 @@ export const SearchPage: React.FC = () => {
         .sort(([, a], [, b]) => b - a)
         .slice(0, MAX_GENRE_CHIPS);
     const decades = decadesOf(response.facets.years);
+    // The library's hits are left out when only Spotify is asked for; books and playlists belong to no kind.
+    const showLocal = source !== "spotify";
+    const showKind = (shown: Kind) => kind === undefined || kind === shown;
+    const localArtists = showLocal && showKind("artists") ? response.artists : [];
+    const localAlbums = showLocal && showKind("albums") ? response.albums : [];
+    const localTracks = showLocal && showKind("tracks") ? response.tracks : [];
+    const books = showLocal && kind === undefined ? response.books : [];
+    const playlists = showLocal && kind === undefined ? response.playlists : [];
+    const spotifyArtists = showKind("artists") ? spotify.artists : [];
+    const spotifyAlbums = showKind("albums") ? spotify.albums : [];
+    const spotifyTracks = showKind("tracks") ? spotify.tracks : [];
+    const activeOthers = [kind, collection, genre, decade].filter((value) => value !== undefined).length;
     const filtered = collection !== undefined || genre !== undefined || decade !== undefined;
     const total =
-        response.artists.length + response.albums.length + response.tracks.length + response.books.length + response.playlists.length + spotify.tracks.length;
+        localArtists.length +
+        localAlbums.length +
+        localTracks.length +
+        books.length +
+        playlists.length +
+        spotifyArtists.length +
+        spotifyAlbums.length +
+        spotifyTracks.length;
 
     const group = (label: string, count: number) =>
         count > 0 && (
@@ -108,14 +182,24 @@ export const SearchPage: React.FC = () => {
         }
     };
 
-    return (
+    const otherGroups = (
         <>
-            <Typography variant="h6" sx={{ overflowWrap: "anywhere" }}>
-                Results for "{response.query}"
-            </Typography>
-            <Stack direction="row" flexWrap="wrap" useFlexGap spacing={0.5} sx={{ my: 1 }}>
+            <FilterGroup label="Show">
+                {KINDS.map((item) => (
+                    <Chip
+                        size="small"
+                        key={item.label}
+                        label={item.label}
+                        color="secondary"
+                        variant={kind === item.value ? "filled" : "outlined"}
+                        onClick={() => toggle("type", item.value)}
+                    />
+                ))}
+            </FilterGroup>
+            <FilterGroup label="Collection">
                 {COLLECTIONS.map((item) => (
                     <Chip
+                        size="small"
                         key={item.label}
                         label={item.label}
                         color="primary"
@@ -123,44 +207,130 @@ export const SearchPage: React.FC = () => {
                         onClick={() => toggle("collection", item.value)}
                     />
                 ))}
-                {genres.map(([name, count]) => (
-                    <Chip
-                        key={name}
-                        label={`${name} (${count})`}
-                        variant={genre === name ? "filled" : "outlined"}
-                        onClick={() => toggle("genre", name)}
-                    />
-                ))}
-                {decades.map(([start, count]) => (
-                    <Chip
-                        key={start}
-                        label={`${start}s (${count})`}
-                        variant={decade === start ? "filled" : "outlined"}
-                        onClick={() => toggle("decade", String(start))}
-                    />
-                ))}
+            </FilterGroup>
+            {genres.length > 0 && (
+                <FilterGroup label="Genre">
+                    {genres.map(([name, count]) => (
+                        <Chip
+                            size="small"
+                            key={name}
+                            label={`${name} (${count})`}
+                            variant={genre === name ? "filled" : "outlined"}
+                            onClick={() => toggle("genre", name)}
+                        />
+                    ))}
+                </FilterGroup>
+            )}
+            {decades.length > 0 && (
+                <FilterGroup label="Decade">
+                    {decades.map(([start, count]) => (
+                        <Chip
+                            size="small"
+                            key={start}
+                            label={`${start}s (${count})`}
+                            variant={decade === start ? "filled" : "outlined"}
+                            onClick={() => toggle("decade", String(start))}
+                        />
+                    ))}
+                </FilterGroup>
+            )}
+        </>
+    );
+
+    const sourceGroup = (
+        <FilterGroup label="Source">
+            {SOURCES.map((item) => (
+                <Chip
+                    size="small"
+                    key={item.label}
+                    label={item.label}
+                    color="secondary"
+                    variant={source === item.value ? "filled" : "outlined"}
+                    onClick={() => toggle("source", item.value)}
+                />
+            ))}
+        </FilterGroup>
+    );
+
+    return (
+        <>
+            <Typography variant="h6" sx={{ overflowWrap: "anywhere" }}>
+                Results for "{response.query}"
+            </Typography>
+            <Stack direction={wide ? "row" : "column"} flexWrap="wrap" useFlexGap columnGap={1} rowGap={1} sx={{ my: 1 }}>
+                {wide ? (
+                    sourceGroup
+                ) : (
+                    <Stack direction="row" alignItems="stretch" spacing={1}>
+                        {sourceGroup}
+                        <IconButton
+                            size="small"
+                            aria-label="More filters"
+                            color={moreFilters || activeOthers > 0 ? "primary" : "default"}
+                            onClick={() => setMoreFilters(!moreFilters)}
+                            // The label of the box sticks half a line above its border: the button starts at the border, not at the label.
+                            sx={{ mt: "7px", px: 1.25, }}
+                        >
+                            <Badge badgeContent={activeOthers} color="primary" sx={{ mt: "7px" }}>
+                                <TuneIcon fontSize="small" />
+                            </Badge>
+                        </IconButton>
+                    </Stack>
+                )}
+                {wide ? (
+                    otherGroups
+                ) : (
+                    <Collapse in={moreFilters}>
+                        <Stack spacing={1}>{otherGroups}</Stack>
+                    </Collapse>
+                )}
             </Stack>
             {filtered && (genre !== undefined || decade !== undefined) && (
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                    A genre or decade only leaves tracks and albums.
+                    A genre or decade only leaves tracks and albums of the library.
                 </Typography>
             )}
             {total === 0 && <Typography color="text.secondary">Nothing found.</Typography>}
             <List disablePadding>
-                {group("Artists", response.artists.length)}
-                {response.artists.map((hit) => (
+                {group("Artists", localArtists.length + spotifyArtists.length)}
+                {localArtists.map((hit) => (
                     <ListItemButton key={hit.item.id} divider onClick={() => navigate(`/library/artist/${hit.item.id}`)}>
                         <ListItemText primary={text(hit, "name", hit.item.name)} />
                     </ListItemButton>
                 ))}
-                {group("Albums", response.albums.length)}
-                {response.albums.map((hit) => (
+                {spotifyArtists.map((artist) => (
+                    <ListItemButton key={artist.id} divider onClick={() => navigate(`/library/artist/${artist.id}`)}>
+                        <ListItemText
+                            primary={
+                                <>
+                                    <SpotifyMark />
+                                    {artist.name}
+                                </>
+                            }
+                        />
+                    </ListItemButton>
+                ))}
+                {group("Albums", localAlbums.length + spotifyAlbums.length)}
+                {localAlbums.map((hit) => (
                     <ListItemButton key={hit.item.album.id} divider onClick={() => navigate(`/library/album/${hit.item.album.id}`)}>
                         <ListItemText primary={text(hit, "title", hit.item.album.title)} secondary={text(hit, "artist", hit.item.artist)} />
                     </ListItemButton>
                 ))}
-                {group("Tracks", response.tracks.length)}
-                {response.tracks.map((hit) => {
+                {spotifyAlbums.map((album) => (
+                    <ListItemButton key={album.id} divider onClick={() => navigate(`/library/album/${album.id}`)}>
+                        <ListItemText
+                            primary={
+                                <>
+                                    <SpotifyMark />
+                                    {album.title}
+                                </>
+                            }
+                            secondary={[album.year, `${album.trackCount} tracks`].filter(Boolean).join(" · ")}
+                        />
+                    </ListItemButton>
+                ))}
+                {group("Tracks", localTracks.length)}
+                {localTracks.map((hit) => {
                     const track = hit.item;
                     return (
                         <TrackRow
@@ -184,8 +354,8 @@ export const SearchPage: React.FC = () => {
                         />
                     );
                 })}
-                {group("Spotify", spotify.tracks.length)}
-                {spotify.tracks.map((track) => (
+                {group("Spotify", spotifyTracks.length)}
+                {spotifyTracks.map((track) => (
                     <TrackRow
                         key={track.id}
                         track={track}
@@ -201,19 +371,19 @@ export const SearchPage: React.FC = () => {
                         onAddToPlaylist={() => setPlaylistTrackIds([track.id])}
                     />
                 ))}
-                {spotify.hasMore && (
+                {spotify.hasMore && spotifyTracks.length > 0 && (
                     <Button disabled={spotify.loading} onClick={() => void spotify.more()}>
                         More from Spotify
                     </Button>
                 )}
-                {group("Books", response.books.length)}
-                {response.books.map((hit) => (
+                {group("Books", books.length)}
+                {books.map((hit) => (
                     <ListItemButton key={hit.item.album.id} divider onClick={() => navigate(`/audiobooks/book/${hit.item.album.id}`)}>
                         <ListItemText primary={text(hit, "title", hit.item.album.title)} secondary={text(hit, "author", hit.item.artist)} />
                     </ListItemButton>
                 ))}
-                {group("Playlists", response.playlists.length)}
-                {response.playlists.map((hit) => (
+                {group("Playlists", playlists.length)}
+                {playlists.map((hit) => (
                     <ListItemButton key={hit.item.id} divider onClick={() => navigate(`/playlists/${hit.item.id}`)}>
                         <ListItemText primary={text(hit, "name", hit.item.name)} />
                     </ListItemButton>

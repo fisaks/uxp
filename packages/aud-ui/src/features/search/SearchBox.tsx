@@ -37,10 +37,13 @@ const DROPDOWN_MAX_HEIGHT = "70vh";
 // The room for the + button at the right of a track.
 const ROOM_FOR_BUTTON = 6;
 
+// An artist or album of Spotify has no hits of its own in the library to put first.
+const ofLibrary = (id: string | undefined) => (id?.startsWith("spotify:") ? undefined : id);
+
 /** Where the user is in the library, which makes the hits of that artist or album come first. */
 const useSearchContext = (): LibrarySearchContext => {
-    const albumId = useMatch("/library/album/:albumId")?.params.albumId;
-    const artistId = useMatch("/library/artist/:artistId")?.params.artistId;
+    const albumId = ofLibrary(useMatch("/library/album/:albumId")?.params.albumId);
+    const artistId = ofLibrary(useMatch("/library/artist/:artistId")?.params.artistId);
     return { albumId, artistId };
 };
 

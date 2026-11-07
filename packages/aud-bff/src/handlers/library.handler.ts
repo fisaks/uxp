@@ -21,7 +21,7 @@ import { listeningService } from "../audiobook/listening.service";
 import { LibraryService, audiobookService, libraryService } from "../library/library.service";
 import { bookProgressStore } from "../player/book-progress";
 import { trackGainStore } from "../player/track-gain";
-import { SEARCH_PAGE_SIZE, spotifyCatalog, spotifyTrack } from "../player/spotify-catalog";
+import { SEARCH_PAGE_SIZE, isSpotifyAlbumId, isSpotifyArtistId, SpotifyUnavailableError, spotifyCatalog, spotifyTrack } from "../player/spotify-catalog";
 import { librarySearch } from "../search/library-search";
 import { searchIndexer } from "../search/search-indexer";
 
@@ -57,6 +57,19 @@ const withGain = (track: LibraryTrack): LibraryTrack => {
     return gainDb === 0 ? track : { ...track, gainDb };
 };
 
+/** Asks Spotify; when it does not answer (fully) the client gets an error to show, not an empty or short list. */
+const fromSpotify = async <T>(what: string, ask: () => Promise<T | undefined>): Promise<T> => {
+    try {
+        return (await ask()) ?? Promise.reject(notFound(what));
+    } catch (error) {
+        if (!(error instanceof SpotifyUnavailableError)) {
+            throw error;
+        }
+        AppLogger.warn(undefined, { message: `[Spotify] ${error.message}` });
+        throw new AppErrorV2({ statusCode: 503, code: ErrorCodes.INTERNAL_SERVER_ERROR, message: error.until ? `Spotify limits this until ${new Date(error.until).toLocaleTimeString("fi-FI", { hour: "2-digit", minute: "2-digit" })}` : "Spotify does not answer, try again in a moment" });
+    }
+};
+
 const scan = (library: LibraryService): LibraryStatus => {
     void library.scan();
     return statusOf(library);
@@ -69,13 +82,21 @@ export class LibraryHandler {
     }
 
     @WebSocketAction("library_get_albums", { authenticate: true, schema: LibraryGetAlbumsSchema })
-    public getAlbums(_wsDetails: WebSocketDetails, message: AudioAppRequestMessage<"library_get_albums">): LibraryAlbumsResponse {
-        return getAlbums(libraryService, message.payload.artistId);
+    public async getAlbums(_wsDetails: WebSocketDetails, message: AudioAppRequestMessage<"library_get_albums">): Promise<LibraryAlbumsResponse> {
+        const { artistId } = message.payload;
+        if (isSpotifyArtistId(artistId)) {
+            return fromSpotify("artist", () => spotifyCatalog.getArtistAlbums(artistId));
+        }
+        return getAlbums(libraryService, artistId);
     }
 
     @WebSocketAction("library_get_tracks", { authenticate: true, schema: LibraryGetTracksSchema })
-    public getTracks(_wsDetails: WebSocketDetails, message: AudioAppRequestMessage<"library_get_tracks">): LibraryTracksResponse {
-        const answer = getTracks(libraryService, message.payload.albumId);
+    public async getTracks(_wsDetails: WebSocketDetails, message: AudioAppRequestMessage<"library_get_tracks">): Promise<LibraryTracksResponse> {
+        const { albumId } = message.payload;
+        if (isSpotifyAlbumId(albumId)) {
+            return fromSpotify("album", () => spotifyCatalog.getAlbumTracks(albumId));
+        }
+        const answer = getTracks(libraryService, albumId);
         return { ...answer, tracks: answer.tracks.map(withGain) };
     }
 
@@ -85,12 +106,13 @@ export class LibraryHandler {
         return { enabled: client !== undefined, reachable: client ? await client.health() : false };
     }
 
-    /** Spotify's tracks for the same words; none when Spotify's search is not set up or does not answer, so that the library's hits stand alone. */
+    /** Spotify's tracks (and artists and albums when asked for) for the same words; none when Spotify's search is not set up or does not answer, so that the library's hits stand alone. */
     @WebSocketAction("spotify_search", { authenticate: true, schema: SpotifySearchSchema })
     public async spotifySearch(_wsDetails: WebSocketDetails, message: AudioAppRequestMessage<"spotify_search">): Promise<SpotifySearchResponse> {
-        const { query, offset } = message.payload;
-        const found = await spotifyCatalog.search(query.trim(), offset);
-        return { query, tracks: found.map(spotifyTrack), hasMore: found.length === SEARCH_PAGE_SIZE };
+        const { query, offset, types } = message.payload;
+        const found = await spotifyCatalog.search(query.trim(), offset, types);
+        // Only the tracks have a "more" button.
+        return { query, tracks: found.tracks.map(spotifyTrack), artists: found.artists, albums: found.albums, hasMore: found.tracks.length === SEARCH_PAGE_SIZE };
     }
 
     @WebSocketAction("library_search", { authenticate: true, schema: LibrarySearchSchema })

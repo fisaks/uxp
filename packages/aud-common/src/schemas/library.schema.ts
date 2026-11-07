@@ -5,16 +5,20 @@ import { CoverParams } from "../types/library.type";
 const ID_PATTERN = "^[0-9a-f]{16}$";
 const ID_SCHEMA = { type: "string", pattern: ID_PATTERN };
 
+// What an artist or an album is named by: its id in the library, or its Spotify id.
+const ARTIST_REF_SCHEMA = { type: "string", pattern: `${ID_PATTERN}|^spotify:artist:[A-Za-z0-9]+$` };
+const ALBUM_REF_SCHEMA = { type: "string", pattern: `${ID_PATTERN}|^spotify:album:[A-Za-z0-9]+$` };
+
 export const LibraryGetAlbumsSchema = {
     type: "object",
-    properties: { artistId: ID_SCHEMA },
+    properties: { artistId: ARTIST_REF_SCHEMA },
     required: ["artistId"],
     additionalProperties: false,
 };
 
 export const LibraryGetTracksSchema = {
     type: "object",
-    properties: { albumId: ID_SCHEMA },
+    properties: { albumId: ALBUM_REF_SCHEMA },
     required: ["albumId"],
     additionalProperties: false,
 };
@@ -45,7 +49,12 @@ export const LibrarySearchSchema = {
 
 export const SpotifySearchSchema = {
     type: "object",
-    properties: { query: { type: "string", maxLength: 200 }, offset: { type: "integer", minimum: 0, maximum: 1000 } },
+    properties: {
+        query: { type: "string", maxLength: 200 },
+        offset: { type: "integer", minimum: 0, maximum: 1000 },
+        /** What to look for; the tracks when left out. */
+        types: { type: "array", items: { type: "string", enum: ["track", "artist", "album"] }, minItems: 1, uniqueItems: true },
+    },
     required: ["query"],
     additionalProperties: false,
 };

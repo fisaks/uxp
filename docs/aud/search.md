@@ -51,16 +51,22 @@ filter chips of the results page.
 
 ## Spotify in the search
 
-When Spotify is set up (see [the player](player.md)), the same words are also searched at Spotify, and its tracks are
-shown as a "Spotify" group below the library's hits, both in the dropdown and on the results page. Only tracks are
-searched (not artists or albums), so a Spotify hit can be played and queued but has no page of its own.
+When Spotify is set up (see [the player](player.md)), the same words are also searched at Spotify: its artists and
+albums are added to the Artists and Albums groups and its tracks are shown as a "Spotify" group below the library's
+hits, both in the dropdown and on the results page. Spotify rows carry the green SPOTIFY mark. A Spotify artist or
+album opens the same pages as a local one (`/library/artist/spotify:artist:...`, `/library/album/spotify:album:...`,
+see [the library](library.md)).
 
-- WebSocket action `spotify_search` (query, offset) answers a page of tracks and whether there is more
-  (`hasMore`). Spotify answers at most 10 tracks per request, so the results page has a "More from Spotify" button
-  that asks for the next page and adds it.
-- The library's hits show at once. Spotify is asked separately, 400 ms after the last letter, and its tracks are added
+- WebSocket action `spotify_search` (query, offset, `types` of track, artist and album) answers a page of each and
+  whether there is more (`hasMore`). Spotify answers at most 10 per request, so the results page has a "More from
+  Spotify" button that asks for the next page of tracks and adds it.
+- The library's hits show at once. Spotify is asked separately, 400 ms after the last letter, and its hits are added
   when they come. A search that fails or finds nothing leaves the library's hits alone.
 - A Spotify track with the same artist and title as a track of the library is left out, so a track is not shown twice.
+- Results page chips: **Source** (All / Local / Spotify, URL `source=`): Local does not ask Spotify, Spotify hides the
+  library's hits. **Show** (Everything / Artists / Albums / Tracks, URL `type=`) filters both sources; books and
+  playlists belong to no kind, so they show only under Everything. On a narrow screen only Source is shown, the other
+  chips are behind the tune button.
 - Spotify has no genre or decade and no audiobooks, so it is not searched while the audiobooks chip or a genre or
   decade chip is on.
 - The search runs with an app token of the BFF (`AUD_SPOTIFY_CLIENT_ID` and `AUD_SPOTIFY_CLIENT_SECRET`), not with
