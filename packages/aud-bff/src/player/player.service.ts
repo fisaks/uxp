@@ -47,6 +47,8 @@ type SpotifyControl = {
     nowPlaying(): SpotifyNowPlaying | undefined;
     control(command: "play" | "pause" | "skip_next" | "skip_prev"): void;
     seek(positionSec: number): void;
+    /** A button for the track of the queue that Spotify plays. */
+    controlOwned(command: "play" | "pause"): void;
     /** Seeks in the track of the queue that Spotify plays. */
     seekOwned(positionSec: number): void;
     /** Where the track of the queue that Spotify plays is. */
@@ -433,7 +435,7 @@ export class PlayerService {
         if (!uri) {
             this.engine.pause();
         } else if (this.spotify.owns(uri)) {
-            this.spotify.control("pause");
+            this.spotify.controlOwned("pause");
         }
     }
 
@@ -693,7 +695,7 @@ export class PlayerService {
         }
         const uri = this.currentSpotifyUri;
         if (from === "resume" && uri && this.spotify.owns(uri)) {
-            this.spotify.control("play");
+            this.spotify.controlOwned("play");
         } else if (from === "resume" && !uri) {
             this.engine.resume();
         } else {

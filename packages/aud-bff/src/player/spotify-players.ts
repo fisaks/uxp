@@ -75,6 +75,11 @@ export class SpotifyPlayers {
         this.shown.seek(positionSec);
     }
 
+    /** A button for the track of the queue that the house player plays, whatever a phone started before. */
+    controlOwned(command: "play" | "pause") {
+        this.house.control(command);
+    }
+
     /** Seeks in the track of the queue that the house player plays. */
     seekOwned(positionSec: number) {
         this.house.seek(positionSec);
