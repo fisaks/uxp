@@ -36,7 +36,7 @@ const BUILD_ERROR_DAYS = 7;
  * A Spotify build stops working 90 days after it is made, and a monthly update installs a newer one. The item turns to a warning
  * when updates stop being made, well before the build runs out, so there is time to look at the Pi.
  */
-const spotifyItem = ({ reachable, houseReachable, expiresAt, lastUpdateAt, catalog }: SpotifyHealth, now = Date.now()): HealthItem => {
+const spotifyItem = ({ reachable, loggedIn, houseReachable, houseLoggedIn, expiresAt, lastUpdateAt, catalog }: SpotifyHealth, now = Date.now()): HealthItem => {
     const daysLeft = expiresAt ? Math.floor((Date.parse(expiresAt) - now) / DAY_MS) : undefined;
     if (daysLeft !== undefined && daysLeft < 0) {
         return { ...SPOTIFY_ERROR, message: "The Spotify build has expired: it must be updated on the Pi" };
@@ -46,6 +46,15 @@ const spotifyItem = ({ reachable, houseReachable, expiresAt, lastUpdateAt, catal
     }
     if (!houseReachable) {
         return { ...SPOTIFY_ERROR, message: "The house Spotify player cannot be reached: Spotify tracks of the queue cannot be played" };
+    }
+    if (!houseLoggedIn) {
+        return {
+            ...SPOTIFY_ERROR,
+            message: "The house Spotify account is not paired: pick the house player once in Spotify on a phone on the home network, logged in as the house account",
+        };
+    }
+    if (!loggedIn) {
+        return { id: "spotify", severity: "warn", message: "The public Spotify player has no account yet: it gets one when a phone picks it in Spotify" };
     }
     if (daysLeft !== undefined && daysLeft <= BUILD_WARN_DAYS) {
         const severity = daysLeft <= BUILD_ERROR_DAYS ? "error" : "warn";

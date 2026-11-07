@@ -29,8 +29,12 @@ export type SpotifyHealth = {
     catalog: SpotifyCatalogHealth;
     enabled: boolean;
     reachable: boolean;
+    /** Whether a Spotify account is paired to the public player. */
+    loggedIn: boolean;
     /** Whether the house player, which plays what the player's own queue asks for, answers. */
     houseReachable: boolean;
+    /** Whether the house account is paired to the house player. If not, it is paired again from a phone on the home network. */
+    houseLoggedIn: boolean;
     /** ISO time. Unknown when the build cannot be read. */
     expiresAt?: string;
     /** ISO time of the last update run that ended well, even when there was no newer build. */

@@ -105,6 +105,7 @@ export class SpotifyPlayers {
 
     async health(): Promise<Omit<SpotifyHealth, "catalog">> {
         const pub = await this.pub.health();
-        return { ...pub, houseReachable: (await this.house.health()).reachable };
+        const house = await this.house.health();
+        return { ...pub, houseReachable: house.reachable, houseLoggedIn: house.loggedIn };
     }
 }

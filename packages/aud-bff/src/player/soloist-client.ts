@@ -22,6 +22,8 @@ type Named = { entity?: { decorations?: { identity?: { name?: string } } } };
 /** What Soloist reports of the playback (the part that is used). */
 type PlaybackState = {
     type?: string;
+    /** Of `auth_state`: whether a Spotify account is paired. */
+    logged_in?: boolean;
     status?: string;
     item?: {
         uri?: string;
@@ -111,6 +113,8 @@ export class SoloistClient {
     private currentAt = 0;
     /** Spotify is held back until the amplifier is ready: what Soloist reports meanwhile is ours (the pause) or the user's (overridden). */
     private holding = false;
+    /** Soloist reports `auth_state` when the connection is opened: false means no account is paired (it is assumed until reported). */
+    private loggedIn = true;
     private buildCache?: { at: number; expiresAt?: string };
     /** The URI of the track of the queue of the player that Soloist plays, while it is the one that plays. */
     private owned?: string;
@@ -170,9 +174,9 @@ export class SoloistClient {
     }
 
     /** For the health check: whether Spotify is set up, whether Soloist answers, and when its build expires and was last updated. */
-    async health(): Promise<Omit<SpotifyHealth, "catalog" | "houseReachable">> {
+    async health(): Promise<Omit<SpotifyHealth, "catalog" | "houseReachable" | "houseLoggedIn">> {
         const reachable = this.socket?.readyState === WebSocket.OPEN;
-        return { enabled: this.url !== undefined, reachable, expiresAt: await this.expiresAt(), lastUpdateAt: await this.lastUpdateAt() };
+        return { enabled: this.url !== undefined, reachable, loggedIn: this.loggedIn, expiresAt: await this.expiresAt(), lastUpdateAt: await this.lastUpdateAt() };
     }
 
     /** The build number in `soloist --version` ("... build 1793793704 (20261104) ...") is the time it was made, in seconds. */
@@ -320,6 +324,10 @@ export class SoloistClient {
             message = JSON.parse(data);
         } catch {
             AppLogger.warn(undefined, { message: "Soloist sent something that is not JSON" });
+            return;
+        }
+        if (message.type === "auth_state") {
+            this.loggedIn = message.logged_in !== false;
             return;
         }
         if (message.type === "queue_changed") {
