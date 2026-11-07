@@ -20,6 +20,8 @@ export { default as jwtPlugin } from "./plugins/jwt";
 export * from "./types/token.types";
 export * from "./utils/AppLogger";
 export * from "./utils/file.util";
+export * from "./utils/json-file";
+export * from "./utils/shutdown";
 export * from "./utils/zip.util";
 export * from "./utils/multipartUpload";
 export * from "./health/health.controller";

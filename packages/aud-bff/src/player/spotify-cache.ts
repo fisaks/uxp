@@ -1,7 +1,6 @@
 import { LibraryAlbum, LibraryArtist, LibraryTrack, SpotifyQueueEntry } from "@aud/common";
-import { AppLogger } from "@uxp/bff-common";
+import { AppLogger, tryReadJsonFile, SerializedJsonWriter } from "@uxp/bff-common";
 import path from "path";
-import { readJsonFile, SerializedJsonWriter } from "../storage/json-file";
 
 const FILE = "spotify-cache.json";
 /** How long what Spotify told about an artist or an album is taken as it is, without asking again. */
@@ -49,7 +48,7 @@ export class SpotifyCache {
     }
 
     async load() {
-        const saved = this.dataDir ? await readJsonFile<Partial<Stored>>(path.join(this.dataDir, FILE)) : undefined;
+        const saved = this.dataDir ? await tryReadJsonFile<Partial<Stored>>(path.join(this.dataDir, FILE)) : undefined;
         this.artists = new Map(Object.entries(saved?.artists ?? {}));
         this.albums = new Map(Object.entries(saved?.albums ?? {}));
         this.blocked = new Map(Object.entries(saved?.blocked ?? {}).filter(([, until]) => until > Date.now()));

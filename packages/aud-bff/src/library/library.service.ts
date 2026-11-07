@@ -1,8 +1,7 @@
 import { EventEmitter } from "events";
 import { LibraryAlbum, LibraryArtist, LibraryStatus, LibraryTrack, MAX_ARTIST_COVERS, QueueTrack } from "@aud/common";
-import { AppLogger } from "@uxp/bff-common";
+import { AppLogger, tryReadJsonFile, writeJsonFile } from "@uxp/bff-common";
 import path from "path";
-import { readJsonFile, writeJsonFile } from "../storage/json-file";
 import { LibraryConfig, audiobookConfig, libraryConfig } from "./library.config";
 import { scanLibrary } from "./library-scanner";
 import { ScannedAlbumFolder, ScannedTrack } from "./library.types";
@@ -163,7 +162,7 @@ export class LibraryService extends EventEmitter<LibraryEventMap> {
             return;
         }
         // No cache yet, or it is damaged: the scan builds it again.
-        const cache = await readJsonFile<Cache>(path.join(this.config.dataDir, this.config.cacheFile));
+        const cache = await tryReadJsonFile<Cache>(path.join(this.config.dataDir, this.config.cacheFile));
         if (cache?.version === CACHE_VERSION) {
             this.setLibrary(cache.tracks, cache.albumFolders, cache.scannedAt);
         }

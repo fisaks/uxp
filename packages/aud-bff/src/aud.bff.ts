@@ -1,13 +1,12 @@
 import "./env";
 import fastifyCookie from "@fastify/cookie";
 import fastifyWebsocket from "@fastify/websocket";
-import { AppLogger, errorHandler, HandlerRegistry, jwtPlugin, registerLocalWebSocketHandlers, registerRoutes } from "@uxp/bff-common";
+import { AppLogger, errorHandler, HandlerRegistry, jwtPlugin, onShutdown, registerLocalWebSocketHandlers, registerRoutes } from "@uxp/bff-common";
 import Fastify from "fastify";
 import path from "path";
 import { chromecastService } from "./chromecast/chromecast.service";
 import { audiobookService, libraryService } from "./library/library.service";
 import { createLogStream } from "./logging/log-stream";
-import { onShutdown } from "./shutdown";
 import { bookProgressStore } from "./player/book-progress";
 import { trackGainStore } from "./player/track-gain";
 import { playerService } from "./player/player.service";

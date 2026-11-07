@@ -1,5 +1,5 @@
 import { MAX_ARTIST_COVERS, MAX_PLAYLIST_NAME_LENGTH, Playlist, PlaylistEntry, PlaylistSummary, QueueTrack, SpotifyQueueEntry } from "@aud/common";
-import { AppErrorV2, AppLogger } from "@uxp/bff-common";
+import { AppErrorV2, AppLogger, tryReadJsonFile, SerializedJsonWriter } from "@uxp/bff-common";
 import { ErrorCodes } from "@uxp/common";
 import { randomUUID } from "crypto";
 import { EventEmitter } from "events";
@@ -7,7 +7,6 @@ import path from "path";
 import { libraryConfig } from "../library/library.config";
 import { libraryService } from "../library/library.service";
 import { isSpotifyId, spotifyCatalog } from "../player/spotify-catalog";
-import { readJsonFile, SerializedJsonWriter } from "../storage/json-file";
 
 const FILE = "playlists.json";
 
@@ -73,7 +72,7 @@ export class PlaylistService extends EventEmitter<PlaylistEventMap> {
             AppLogger.info(undefined, { message: "AUD_DATA_DIR is not set, the playlists are lost at a restart" });
             return;
         }
-        const file = await readJsonFile<{ playlists?: unknown[] }>(path.join(this.dataDir, FILE));
+        const file = await tryReadJsonFile<{ playlists?: unknown[] }>(path.join(this.dataDir, FILE));
         this.playlists = (file?.playlists ?? []).filter(isStoredPlaylist);
         // The tracks of Spotify are known from now on, wherever a track is looked up.
         this.spotify.add(this.playlists.flatMap((playlist) => playlist.tracks.flatMap((track) => (track.spotify ? [track.spotify] : []))));

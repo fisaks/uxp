@@ -1,7 +1,6 @@
-import { AppLogger } from "@uxp/bff-common";
+import { AppLogger, tryReadJsonFile, SerializedJsonWriter } from "@uxp/bff-common";
 import path from "path";
 import { libraryConfig } from "../library/library.config";
-import { readJsonFile, SerializedJsonWriter } from "../storage/json-file";
 
 const FILE = "track-gain.json";
 
@@ -28,7 +27,7 @@ export class TrackGainStore {
     }
 
     async load() {
-        const saved = this.dataDir && (await readJsonFile<Record<string, unknown>>(path.join(this.dataDir, FILE)));
+        const saved = this.dataDir && (await tryReadJsonFile<Record<string, unknown>>(path.join(this.dataDir, FILE)));
         this.tracks = new Map(Object.entries(saved || {}).filter((entry): entry is [string, StoredGain] => isStoredGain(entry[1])));
     }
 

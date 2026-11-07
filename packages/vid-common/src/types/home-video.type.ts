@@ -1,0 +1,36 @@
+/** A home video clip in the home video folder. */
+export interface HomeVideoClip {
+    /** Names the clip in the API: 16 hex characters made from its file path. */
+    id: string;
+    /** The path of the file, relative to the home video folder. */
+    file: string;
+    durationSeconds: number;
+    width: number;
+    height: number;
+    sizeBytes: number;
+    /** A full ISO date (YYYY-MM-DD), or null when the clip has none. */
+    date: string | null;
+    title: string;
+    description: string;
+    people: string[];
+    tags: string[];
+}
+
+/** The fields of a clip that can be edited. Only the fields that are present change. */
+export interface HomeVideoClipUpdate {
+    date?: string | null;
+    title?: string;
+    description?: string;
+    people?: string[];
+    tags?: string[];
+}
+
+export interface HomeVideoClipParams {
+    id: string;
+}
+
+/** The people and tags that are used on the clips, most used first, for autocomplete. */
+export interface HomeVideoLabels {
+    people: string[];
+    tags: string[];
+}

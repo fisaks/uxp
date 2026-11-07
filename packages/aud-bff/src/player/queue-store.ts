@@ -1,7 +1,6 @@
 import { Collection, RepeatMode } from "@aud/common";
-import { AppLogger } from "@uxp/bff-common";
+import { AppLogger, tryReadJsonFile, writeJsonFile } from "@uxp/bff-common";
 import path from "path";
-import { readJsonFile, writeJsonFile } from "../storage/json-file";
 
 /** What is kept of the player between restarts: the queue in the order it plays, and how it is played. Not the position, a restart starts the track again. */
 export type PersistedQueue = {
@@ -45,7 +44,7 @@ export class QueueStore {
         if (!this.dataDir) {
             return undefined;
         }
-        const saved = await readJsonFile<unknown>(path.join(this.dataDir, FILE));
+        const saved = await tryReadJsonFile<unknown>(path.join(this.dataDir, FILE));
         if (!isPersistedQueue(saved)) {
             return undefined;
         }

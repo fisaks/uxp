@@ -7,14 +7,13 @@ import {
     PreviousQueue,
     QueueTrack,
 } from "@aud/common";
-import { AppLogger } from "@uxp/bff-common";
+import { AppLogger, tryReadJsonFile, SerializedJsonWriter } from "@uxp/bff-common";
 import { randomUUID } from "crypto";
 import { EventEmitter } from "events";
 import path from "path";
 import { libraryConfig } from "../library/library.config";
 import { audiobookService, libraryService } from "../library/library.service";
 import { isSpotifyId, spotifyCatalog } from "../player/spotify-catalog";
-import { readJsonFile, SerializedJsonWriter } from "../storage/json-file";
 
 const FILE = "history.json";
 
@@ -78,7 +77,7 @@ export class HistoryService extends EventEmitter<HistoryEventMap> {
         if (!this.dataDir) {
             return;
         }
-        const file = await readJsonFile<{ plays?: unknown[]; queues?: unknown[] }>(path.join(this.dataDir, FILE));
+        const file = await tryReadJsonFile<{ plays?: unknown[]; queues?: unknown[] }>(path.join(this.dataDir, FILE));
         this.plays = (file?.plays ?? []).filter(isStoredPlay).slice(0, MAX_HISTORY_PLAYS);
         this.queues = (file?.queues ?? []).filter(isStoredQueue).slice(0, MAX_PREVIOUS_QUEUES);
     }

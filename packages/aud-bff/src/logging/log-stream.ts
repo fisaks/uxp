@@ -1,7 +1,7 @@
+import { onShutdown } from "@uxp/bff-common";
 import axios from "axios";
 import os from "os";
 import { Writable } from "stream";
-import { onShutdown } from "../shutdown";
 
 const FLUSH_INTERVAL_MS = 5000;
 const MAX_BATCH_LINES = 200;

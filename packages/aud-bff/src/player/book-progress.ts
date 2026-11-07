@@ -1,8 +1,7 @@
 import { BookProgress } from "@aud/common";
-import { AppLogger } from "@uxp/bff-common";
+import { AppLogger, tryReadJsonFile, SerializedJsonWriter } from "@uxp/bff-common";
 import path from "path";
 import { libraryConfig } from "../library/library.config";
-import { readJsonFile, SerializedJsonWriter } from "../storage/json-file";
 
 const FILE = "book-progress.json";
 
@@ -34,7 +33,7 @@ export class BookProgressStore {
     }
 
     async load() {
-        const saved = this.dataDir && (await readJsonFile<Record<string, unknown>>(path.join(this.dataDir, FILE)));
+        const saved = this.dataDir && (await tryReadJsonFile<Record<string, unknown>>(path.join(this.dataDir, FILE)));
         this.books = new Map(Object.entries(saved || {}).filter((entry): entry is [string, StoredProgress] => isStoredProgress(entry[1])));
     }
 
