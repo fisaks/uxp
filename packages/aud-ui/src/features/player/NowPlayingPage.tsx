@@ -9,6 +9,8 @@ import { REPEAT_MODES } from "@aud/common";
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAppSelector } from "../../hooks";
+import { selectChromecastActive } from "../chromecast/chromecastSelectors";
+import { ChromecastNowPlaying } from "../chromecast/ChromecastNowPlaying";
 import { AlbumCover } from "../library/AlbumCover";
 import { TrackCover } from "../library/TrackCover";
 import { formatDuration } from "../library/libraryFormat";
@@ -31,9 +33,21 @@ const MIN_COVER_SIZE = 120;
 
 /**
  * The full screen player, opened from the text of the player bar: a large cover, the place in the track that can be
- * moved, all the buttons, the gain of a song and the way to the queue.
+ * moved, all the buttons, the gain of a song and the way to the queue. While the amplifier is on the Chromecast it shows
+ * what the Chromecast plays instead.
  */
 const NowPlayingPage: React.FC = () => {
+    const chromecastActive = useAppSelector(selectChromecastActive);
+    return chromecastActive ? (
+        <Box sx={{ px: 2 }}>
+            <ChromecastNowPlaying />
+        </Box>
+    ) : (
+        <PlayerNowPlaying />
+    );
+};
+
+const PlayerNowPlaying: React.FC = () => {
     const state = useAppSelector(selectPlayerState);
     const track = useAppSelector(selectCurrentTrack);
     const spotify = useAppSelector(selectSpotify);

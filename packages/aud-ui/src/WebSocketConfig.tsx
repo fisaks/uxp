@@ -11,6 +11,7 @@ import {
 import { useCallback, useMemo, useState } from "react";
 import { AudioAppErrorHandler, AudioAppWebSocketResponseListener } from "./app/AudioBrowserWebSocketManager";
 import { amplifierStateReceived } from "./features/amplifier/amplifierSlice";
+import { chromecastStateReceived } from "./features/chromecast/chromecastSlice";
 import { connectionLost, connectionReady } from "./features/connection/connectionSlice";
 import { playerPositionReceived, playerStateReceived } from "./features/player/playerSlice";
 import { contentChanged } from "./features/shared/requestCacheSlice";
@@ -36,6 +37,12 @@ export const WebSocketConfig: React.FC<WebSocketConfigProps> = ({ getWebSocket, 
             },
             amplifier_state: (message) => {
                 if (message.payload) dispatch(amplifierStateReceived(message.payload));
+            },
+            chromecast_subscribe: (message) => {
+                if (message.payload) dispatch(chromecastStateReceived(message.payload));
+            },
+            chromecast_state: (message) => {
+                if (message.payload) dispatch(chromecastStateReceived(message.payload));
             },
             player_subscribe: (message) => {
                 if (message.payload) dispatch(playerStateReceived(message.payload));
@@ -70,6 +77,7 @@ export const WebSocketConfig: React.FC<WebSocketConfigProps> = ({ getWebSocket, 
         setTimeout(() => {
             dispatch(connectionReady());
             ws.sendMessage({ action: "amplifier_subscribe", payload: {} });
+            ws.sendMessage({ action: "chromecast_subscribe", payload: {} });
             ws.sendMessage({ action: "player_subscribe", payload: {} });
             ws.sendMessage({ action: "content_subscribe", payload: {} });
         }, 500);

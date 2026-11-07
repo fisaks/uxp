@@ -5,6 +5,7 @@ import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { AudioNavigation } from "./AudioNavigation";
 import AudiobooksPage from "./features/audiobook/AudiobooksPage";
 import AmplifierPage from "./features/amplifier/AmplifierPage";
+import ChromecastPage from "./features/chromecast/ChromecastPage";
 import HistoryPage from "./features/history/HistoryPage";
 import { HomePage } from "./features/home/HomePage";
 import LibraryPage from "./features/library/LibraryPage";
@@ -47,6 +48,14 @@ export const AudioBody = () => {
                         element={
                             <ReadableWidth>
                                 <AmplifierPage />
+                            </ReadableWidth>
+                        }
+                    />
+                    <Route
+                        path="/chromecast"
+                        element={
+                            <ReadableWidth>
+                                <ChromecastPage />
                             </ReadableWidth>
                         }
                     />

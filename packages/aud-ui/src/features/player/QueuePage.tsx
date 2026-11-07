@@ -17,6 +17,7 @@ import { searchPagePath } from "../search/searchPath";
 import { SortableList, uniqueKeys } from "../shared/SortableList";
 import { useRequest } from "../shared/useRequest";
 import { partNames } from "../audiobook/partNames";
+import { selectChromecastActive } from "../chromecast/chromecastSelectors";
 import { selectIsBookQueue, selectPlayerState } from "./playerSelectors";
 import { usePlayerActions } from "./usePlayerActions";
 import { usePlayerCommand } from "./usePlayerCommand";
@@ -28,7 +29,10 @@ const BookQueue: React.FC = () => {
     const state = useAppSelector(selectPlayerState);
     const send = usePlayerCommand();
     const { clear } = usePlayerActions();
+    const chromecastActive = useAppSelector(selectChromecastActive);
     if (!state) return null;
+    // As on the music queue: the book can be continued when Spotify is the source, or when a cast paused it.
+    const continuable = state.spotify !== undefined || (chromecastActive && state.status === "paused");
     const names = partNames(state.queue);
     const [first] = state.queue;
     return (
@@ -42,7 +46,10 @@ const BookQueue: React.FC = () => {
                         {first.artist}
                     </Typography>
                 </Box>
-                <Button onClick={clear}>Clear</Button>
+                <Stack direction="row">
+                    {continuable ? <Button onClick={() => send("player_resume_queue", {})}>Continue</Button> : null}
+                    <Button onClick={clear}>Clear</Button>
+                </Stack>
             </Stack>
             {state.queue.map((part, index) => {
                 const current = index === state.currentIndex;
@@ -86,7 +93,11 @@ type Source = "queue" | "spotify";
 // The tab that is not shown stays easy to read in dark mode, where the default grey is too dim against the background.
 const TAB_SX = { color: "text.primary", opacity: 0.75, "&.Mui-selected": { opacity: 1 } };
 
-/** What Spotify plays next, as far as its player reports it. It is only shown: the Spotify app is where it is changed. */
+/**
+ * What Spotify plays next, as far as its player reports it. It is only shown: the Spotify app is where it is changed.
+ * Continue plays it on when it is not the source, or when it was paused by something cast to the Chromecast, whose bar then
+ * has no play button for it.
+ */
 const SpotifyQueue: React.FC<{ spotify: SpotifyNowPlaying; active: boolean; onContinue: () => void }> = ({
     spotify,
     active,
@@ -97,7 +108,9 @@ const SpotifyQueue: React.FC<{ spotify: SpotifyNowPlaying; active: boolean; onCo
     useRequest("playlist_list", {});
     const sendPlaylist = usePlaylistCommand();
     const lastPlaylist = useAppSelector(selectMostRecentPlaylist);
+    const chromecastActive = useAppSelector(selectChromecastActive);
     const [saving, setSaving] = useState<string[] | undefined>(undefined);
+    const continuable = !active || (chromecastActive && spotify.status === "paused");
     const addToLastPlaylist = async (uri: string, title: string) => {
         if (lastPlaylist && (await sendPlaylist("playlist_add_tracks", { id: lastPlaylist.id, trackIds: [uri] }))) {
             notify(`Added "${title}" to "${lastPlaylist.name}"`);
@@ -125,7 +138,7 @@ const SpotifyQueue: React.FC<{ spotify: SpotifyNowPlaying; active: boolean; onCo
                         </Typography>
                     )}
                 </Box>
-                {active ? null : <Button onClick={onContinue}>Continue</Button>}
+                {continuable ? <Button onClick={onContinue}>Continue</Button> : null}
             </Stack>
             {rows.map((row, index) => (
                 <Box
@@ -184,6 +197,7 @@ const QueuePage: React.FC = () => {
     const sendPlaylist = usePlaylistCommand();
     const lastPlaylist = useAppSelector(selectMostRecentPlaylist);
     const isBook = useAppSelector(selectIsBookQueue);
+    const chromecastActive = useAppSelector(selectChromecastActive);
     const [saving, setSaving] = useState<string[] | undefined>(undefined);
     const [chosen, setChosen] = useState<Source | undefined>(undefined);
 
@@ -214,6 +228,8 @@ const QueuePage: React.FC = () => {
         ) : sourcePaused ? (
             <PauseIcon color="primary" fontSize="small" />
         ) : undefined;
+    // The Chromecast bar cannot play what the cast paused, so the queue page can.
+    const continuable = source === "spotify" || (chromecastActive && sourcePaused);
     const toggle =
         spotify && state.queue.length > 0 ? (
             <Tabs
@@ -262,7 +278,7 @@ const QueuePage: React.FC = () => {
                     ) : null}
                 </Box>
                 <Stack direction="row">
-                    {source === "spotify" ? <Button onClick={() => switchTo("queue")}>Continue</Button> : null}
+                    {continuable ? <Button onClick={() => switchTo("queue")}>Continue</Button> : null}
                     <Button startIcon={<LibraryAddIcon />} onClick={() => setSaving(state.queue.map((track) => track.id))}>
                         Save as playlist
                     </Button>
@@ -300,7 +316,11 @@ const QueuePage: React.FC = () => {
                                 </Typography>
                                 <Typography variant="body2" color="text.secondary">
                                     {track.spotify && <SpotifyMark />}
-                                    {[track.artist, track.durationSec ? formatDuration(track.durationSec) : undefined, track.gainDb ? `+${track.gainDb} dB` : undefined]
+                                    {[
+                                        track.artist,
+                                        track.durationSec ? formatDuration(track.durationSec) : undefined,
+                                        track.gainDb ? `+${track.gainDb} dB` : undefined,
+                                    ]
                                         .filter(Boolean)
                                         .join(" · ")}
                                 </Typography>
@@ -318,7 +338,11 @@ const QueuePage: React.FC = () => {
                     );
                 }}
             />
-            <AddToPlaylistDialog trackIds={saving} title={saving?.length === 1 ? "Add to a playlist" : "Save the queue as a playlist"} onClose={() => setSaving(undefined)} />
+            <AddToPlaylistDialog
+                trackIds={saving}
+                title={saving?.length === 1 ? "Add to a playlist" : "Save the queue as a playlist"}
+                onClose={() => setSaving(undefined)}
+            />
         </>
     );
 };

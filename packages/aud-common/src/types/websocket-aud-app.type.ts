@@ -1,5 +1,6 @@
 import { WebSocketAction, WebSocketMessage, WebSocketResponse } from "@uxp/common";
 import { AmplifierReachability, AmplifierState } from "./amplifier.type";
+import { ChromecastHealth, ChromecastState } from "./chromecast.type";
 import { PlayerState, RepeatMode, SpotifyHealth } from "./player.type";
 import { HistoryResponse } from "./history.type";
 import { LibrarySearchRequest, LibrarySearchResponse, SearchReachability, SpotifySearchRequest, SpotifySearchResponse } from "./search.type";
@@ -18,6 +19,22 @@ export type AudioAppActionPayloadRequestMap = {
     amplifier_subscribe: Record<string, never>;
     /** Asks once whether the amplifier answers, for the health check. It does not start the live updates. */
     amplifier_check: Record<string, never>;
+    /** Starts the live Chromecast updates. The response is the current state. */
+    chromecast_subscribe: Record<string, never>;
+    /** Asks once how the Chromecast is doing, for the health check. */
+    chromecast_check: Record<string, never>;
+    chromecast_play: Record<string, never>;
+    chromecast_pause: Record<string, never>;
+    /** Absolute position in seconds; the UI works out +-30 s from the position it shows. */
+    chromecast_seek: { positionSec: number };
+    chromecast_next: Record<string, never>;
+    chromecast_previous: Record<string, never>;
+    /** Stops the running app, which clears a stuck or empty app without a reboot. */
+    chromecast_stop_app: Record<string, never>;
+    /** Reboots the device. It is unreachable for about a minute afterwards. */
+    chromecast_reboot: Record<string, never>;
+    /** Switches the amplifier on and to the Chromecast input now, the manual twin of the automatic switch. */
+    chromecast_select_amp: Record<string, never>;
     /** Starts the messages that say the library or the playlists have changed, so a client can ask again. */
     content_subscribe: Record<string, never>;
     /** The plays that counted, and the queues that were replaced, for the History tab. */
@@ -117,6 +134,18 @@ export type AudioAppActionPayloadResponseMap = {
     amplifier_check: AmplifierReachability;
     /** Pushed to subscribers whenever the amplifier state changes. */
     amplifier_state: AmplifierState;
+    chromecast_subscribe: ChromecastState;
+    chromecast_check: ChromecastHealth;
+    /** Pushed to subscribers whenever the Chromecast state changes. */
+    chromecast_state: ChromecastState;
+    chromecast_play: ChromecastState;
+    chromecast_pause: ChromecastState;
+    chromecast_seek: ChromecastState;
+    chromecast_next: ChromecastState;
+    chromecast_previous: ChromecastState;
+    chromecast_stop_app: ChromecastState;
+    chromecast_reboot: ChromecastState;
+    chromecast_select_amp: ChromecastState;
     content_subscribe: Record<string, never>;
     /** Pushed to subscribers when a scan has changed the library. */
     library_changed: Record<string, never>;

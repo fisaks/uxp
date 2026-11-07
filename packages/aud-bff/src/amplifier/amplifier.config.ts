@@ -9,6 +9,8 @@ export type AmplifierConfig = {
     inputs?: { id: string; label?: string }[];
     /** The input the sound of the player arrives on. When set, playing music turns the amplifier on and selects it. */
     playerInput?: string;
+    /** The input the Chromecast is on. When set, it can be selected, and a cast switches the amplifier to it by itself. */
+    chromecastInput?: string;
     /** The stations of the tuner, in order. When not set, the presets stored in the amplifier are used. */
     tunerStations?: TunerStation[];
 };
@@ -28,5 +30,6 @@ export const amplifierConfig: AmplifierConfig = {
     host: env.AUD_AMPLIFIER_HOST,
     inputs: parseInputs(process.env.AUD_AMPLIFIER_INPUTS),
     playerInput: process.env.AUD_AMPLIFIER_PLAYER_INPUT || undefined,
+    chromecastInput: process.env.AUD_AMPLIFIER_CHROMECAST_INPUT || undefined,
     tunerStations: process.env.AUD_TUNER_STATIONS_FILE ? loadTunerStations(process.env.AUD_TUNER_STATIONS_FILE) : undefined,
 };

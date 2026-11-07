@@ -28,13 +28,25 @@ export class AmplifierService {
     private state: AmplifierState = { reachable: false };
     private polling = false;
     private confirmTimer?: NodeJS.Timeout;
-    private preparing?: Promise<void>;
+    private chromecastInputLeft?: () => void;
+    private preparing?: { input: string; done: Promise<void> };
 
     constructor(
         private readonly client: YamahaClient,
         private readonly config: AmplifierConfig,
         private readonly wsManager: AudioServerWebSocketManager
     ) {}
+
+    /** Called when aud moves the amplifier away from the Chromecast input, so that the cast does not play on unheard. */
+    onChromecastInputLeft(listener: () => void) {
+        this.chromecastInputLeft = listener;
+    }
+
+    private noteInputChange(from: string | undefined, to: string) {
+        if (from !== undefined && from === this.config.chromecastInput && to !== from) {
+            this.chromecastInputLeft?.();
+        }
+    }
 
     async subscribe(socket: WebSocketDetails["socket"]): Promise<AmplifierState> {
         this.wsManager.joinTopic(socket, AMPLIFIER_TOPIC);
@@ -70,8 +82,40 @@ export class AmplifierService {
         if (!input) {
             return Promise.resolve();
         }
-        this.preparing ??= this.selectForPlayback(input).finally(() => (this.preparing = undefined));
-        return this.preparing;
+        return this.prepare(input);
+    }
+
+    hasChromecastInput(): boolean {
+        return this.config.chromecastInput !== undefined;
+    }
+
+    /** The same for the Chromecast (`AUD_AMPLIFIER_CHROMECAST_INPUT`), where nobody hears anything until the input is selected. */
+    prepareForChromecast(): Promise<void> {
+        const input = this.config.chromecastInput;
+        if (!input) {
+            throw new AppErrorV2({
+                statusCode: 400,
+                code: ErrorCodes.SERVICE_NOT_CONFIGURED,
+                message: "No amplifier input is set for the Chromecast",
+            });
+        }
+        return this.prepare(input);
+    }
+
+    /** A call for the input that is being selected joins that run, a call for another input waits for it. */
+    private prepare(input: string): Promise<void> {
+        if (this.preparing?.input === input) {
+            return this.preparing.done;
+        }
+        const run = { input, done: (this.preparing?.done ?? Promise.resolve()).then(() => this.selectForPlayback(input)) };
+        const clear = () => {
+            if (this.preparing === run) {
+                this.preparing = undefined;
+            }
+        };
+        void run.done.then(clear, clear);
+        this.preparing = run;
+        return run.done;
     }
 
     private async selectForPlayback(input: string) {
@@ -85,6 +129,7 @@ export class AmplifierService {
             }
             if (status.input !== input) {
                 await this.setInputWithRetry(input, wasOff ? INPUT_ATTEMPTS : 1);
+                this.noteInputChange(status.input, input);
             }
             if (wasOff || status.input !== input) {
                 void this.refresh();
@@ -140,7 +185,14 @@ export class AmplifierService {
             input,
             "input"
         );
-        return this.execute(() => this.client.setInput(input), { input });
+        const from = this.state.status?.input;
+        return this.execute(
+            async () => {
+                await this.client.setInput(input);
+                this.noteInputChange(from, input);
+            },
+            { input }
+        );
     }
 
     setSoundProgram(program: string) {
@@ -252,7 +304,13 @@ export class AmplifierService {
                 this.client.getCapabilities(),
                 this.readTunerStations(),
             ]);
-            return { inputs: this.selectInputs(amplifierInputs), playerInput: this.config.playerInput, tunerStations, ...capabilities };
+            return {
+                inputs: this.selectInputs(amplifierInputs),
+                playerInput: this.config.playerInput,
+                chromecastInput: this.config.chromecastInput,
+                tunerStations,
+                ...capabilities,
+            };
         } catch (error) {
             AppLogger.warn(undefined, { message: "Could not read the options of the amplifier", error });
             return undefined;

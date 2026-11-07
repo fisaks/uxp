@@ -8,6 +8,7 @@ import { useAppSelector } from "../../hooks";
 import { MENU_ITEMS } from "../../menu";
 import { selectAmplifierState } from "../amplifier/amplifierSelectors";
 import { useAmplifierCommand } from "../amplifier/useAmplifierCommand";
+import { selectChromecastActive, selectChromecastState } from "../chromecast/chromecastSelectors";
 import { dayAndTime } from "../history/historyFormat";
 import { AlbumCover } from "../library/AlbumCover";
 import { TrackCover } from "../library/TrackCover";
@@ -20,6 +21,8 @@ import { useRequest } from "../shared/useRequest";
 import { ScanLibraries } from "./ScanLibraries";
 
 const COVER_SIZE = 72;
+const CHROMECAST_PATH = "/chromecast";
+const CHROMECAST_ITEM = MENU_ITEMS.find((item) => item.path === CHROMECAST_PATH)!;
 const MOSAIC_COVERS = 4;
 
 type TileProps = {
@@ -110,6 +113,8 @@ export const HomePage: React.FC = () => {
     const amplifierLine = useAmplifierLine();
     const amplifier = useAppSelector(selectAmplifierState);
     const { send: sendAmplifier, error: amplifierError, clearError } = useAmplifierCommand();
+    const chromecast = useAppSelector(selectChromecastState);
+    const chromecastActive = useAppSelector(selectChromecastActive);
     const player = useAppSelector(selectPlayerState);
     const track = useAppSelector(selectCurrentTrack);
     const spotify = useAppSelector(selectSpotify);
@@ -127,19 +132,39 @@ export const HomePage: React.FC = () => {
         .sort((a, b) => b.lastPlayedAt!.localeCompare(a.lastPlayedAt!))[0];
     const changed = playlists?.length ? playlists.reduce((a, b) => (a.updatedAt > b.updatedAt ? a : b)) : undefined;
 
+    const chromecastContent: Pick<TileProps, "lines" | "picture"> = {
+        lines: !chromecast?.reachable
+            ? ["Cannot be reached"]
+            : chromecast.playback
+              ? [chromecast.playback.title, [chromecast.app, chromecast.playback.artist].filter(Boolean).join(" · ")]
+              : [chromecast.app ? `${chromecast.app} · nothing is playing` : "Idle"],
+        picture: chromecast?.playback?.coverUrl && (
+            <AlbumCover collection="music" albumId="" hasCover imageUrl={chromecast.playback.coverUrl} />
+        ),
+    };
+
     const content: Record<string, Pick<TileProps, "lines" | "picture">> = {
-        [NOW_PLAYING_PATH]: {
-            lines: spotify
-                ? [spotify.title, spotify.artist]
-                : player && track && player.currentIndex !== undefined
-                  ? (({ title, subtitle }) => [title, subtitle])(nowPlayingText(player.queue, player.currentIndex))
-                  : ["Nothing is playing"],
-            picture: spotify ? (
-                <AlbumCover collection="music" albumId="" hasCover={!!spotify.coverUrl} imageUrl={spotify.coverUrl} banner="Spotify" />
-            ) : (
-                track && <TrackCover track={track} />
-            ),
-        },
+        // While the amplifier is on the Chromecast, what is heard is what it plays.
+        [NOW_PLAYING_PATH]: chromecastActive
+            ? chromecastContent
+            : {
+                  lines: spotify
+                      ? [spotify.title, spotify.artist]
+                      : player && track && player.currentIndex !== undefined
+                        ? (({ title, subtitle }) => [title, subtitle])(nowPlayingText(player.queue, player.currentIndex))
+                        : ["Nothing is playing"],
+                  picture: spotify ? (
+                      <AlbumCover
+                          collection="music"
+                          albumId=""
+                          hasCover={!!spotify.coverUrl}
+                          imageUrl={spotify.coverUrl}
+                          banner="Spotify"
+                      />
+                  ) : (
+                      track && <TrackCover track={track} />
+                  ),
+              },
         "/amplifier": {
             lines: [amplifierLine, amplifier?.status?.tuner?.programService || undefined],
         },
@@ -188,7 +213,7 @@ export const HomePage: React.FC = () => {
     return (
         <>
             <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr", sm: "repeat(auto-fill, minmax(260px, 1fr))" }, gap: 1.5 }}>
-                {MENU_ITEMS.map((item) => {
+                {MENU_ITEMS.filter((item) => item.path !== CHROMECAST_PATH).map((item) => {
                     const { lines, picture } = content[item.path];
                     return (
                         <React.Fragment key={item.path}>
@@ -232,6 +257,9 @@ export const HomePage: React.FC = () => {
                         title="Search"
                         lines={[lastSearch ? `Last: ${lastSearch}` : "Artists, albums, tracks and books"]}
                     />
+                )}
+                {chromecast?.configured && (
+                    <Tile to={CHROMECAST_PATH} icon={CHROMECAST_ITEM.icon} title={CHROMECAST_ITEM.label} {...chromecastContent} />
                 )}
             </Box>
             <ScanLibraries />

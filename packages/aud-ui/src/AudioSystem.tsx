@@ -3,6 +3,8 @@ import React from "react";
 import { AudioSystemBrowserWebSocketManager } from "./app/AudioBrowserWebSocketManager";
 import AmplifierPage from "./features/amplifier/AmplifierPage";
 import { selectAmplifierOnPlayerInput } from "./features/amplifier/amplifierSelectors";
+import { selectChromecastActive } from "./features/chromecast/chromecastSelectors";
+import { ChromecastNowPlayingCard } from "./features/chromecast/ChromecastNowPlayingCard";
 import { NowPlayingCard } from "./features/player/NowPlayingCard";
 import { selectCurrentTrack, selectSpotify } from "./features/player/playerSelectors";
 import { useAppSelector } from "./hooks";
@@ -10,11 +12,13 @@ import { WebSocketConfig } from "./WebSocketConfig";
 
 const getWebSocket = () => AudioSystemBrowserWebSocketManager.getInstance();
 
-/** The now playing card, while the queue has tracks (or Spotify plays) and the amplifier is on the input the player's sound arrives on: on the tuner it is the station that is playing. */
+/** The now playing card of the Chromecast while the amplifier is on it, otherwise the one of the player: while the queue has tracks (or Spotify plays) and the amplifier is on the input the player's sound arrives on: on the tuner it is the station that is playing. */
 const PlayerSection: React.FC = () => {
     const onPlayerInput = useAppSelector(selectAmplifierOnPlayerInput);
     const track = useAppSelector(selectCurrentTrack);
     const spotify = useAppSelector(selectSpotify);
+    const chromecastActive = useAppSelector(selectChromecastActive);
+    if (chromecastActive) return <ChromecastNowPlayingCard />;
     if (!onPlayerInput || (!track && !spotify)) return null;
     return <NowPlayingCard />;
 };

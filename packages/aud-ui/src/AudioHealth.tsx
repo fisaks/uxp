@@ -1,6 +1,6 @@
 import { HealthItem } from "@uxp/common";
 import { getUxpWindow, WebSocketProvider } from "@uxp/ui-lib";
-import { AmplifierReachability, AudioAppActionPayloadRequestMap, AudioAppActionPayloadResponseMap, SearchReachability, SpotifyHealth } from "@aud/common";
+import { AmplifierReachability, AudioAppActionPayloadRequestMap, AudioAppActionPayloadResponseMap, ChromecastHealth, SearchReachability, SpotifyHealth } from "@aud/common";
 import React, { useCallback, useEffect, useMemo } from "react";
 import {
     AudioAppErrorHandler,
@@ -26,6 +26,10 @@ const SEARCH_OK: HealthItem = { id: "search", severity: "ok", message: "Search i
 
 const SPOTIFY_ERROR: HealthItem = { id: "spotify", severity: "error", message: "Spotify cannot be reached" };
 const SPOTIFY_OK: HealthItem = { id: "spotify", severity: "ok", message: "Spotify is running" };
+const CHROMECAST_OK: HealthItem = { id: "chromecast", severity: "ok", message: "The Chromecast is reachable" };
+// A Chromecast that reboots or sleeps is away for a minute or so; only a longer absence is a problem.
+const CHROMECAST_UNREACHABLE_SEC = 120;
+const CHROMECAST_WEAK_SIGNAL_DBM = -75;
 const DAY_MS = 24 * 3600 * 1000;
 // The monthly update and its retries leave a gap of at most a month and a few hours.
 const UPDATE_STALE_DAYS = 45;
@@ -70,12 +74,22 @@ const spotifyItem = ({ reachable, loggedIn, houseReachable, houseLoggedIn, expir
     return SPOTIFY_OK;
 };
 
+const chromecastItem = ({ reachable, unreachableSec, wifiSignalDbm }: ChromecastHealth): HealthItem => {
+    if (!reachable && (unreachableSec ?? 0) >= CHROMECAST_UNREACHABLE_SEC) {
+        return { id: "chromecast", severity: "error", message: "The Chromecast cannot be reached" };
+    }
+    if (reachable && wifiSignalDbm !== undefined && wifiSignalDbm < CHROMECAST_WEAK_SIGNAL_DBM) {
+        return { id: "chromecast", severity: "warn", message: `The Chromecast has a weak Wi-Fi signal (${wifiSignalDbm} dBm)` };
+    }
+    return CHROMECAST_OK;
+};
+
 // The page only asks questions; a failed check is what it reports, so there is nothing to listen to or to handle.
 const NO_LISTENERS: AudioAppWebSocketResponseListener = {};
 const IGNORE_ERROR: AudioAppErrorHandler = () => true;
 
 /**
- * Asks the audio server every 30 seconds whether it, the amplifier, search and Spotify answer, and reports it to UXP. The server cannot
+ * Asks the audio server every 30 seconds whether it, the amplifier, search, Spotify and the Chromecast answer, and reports it to UXP. The server cannot
  * report its own death, so a check that gets no answer is what tells that it is down; the amplifier is then not known.
  * The first check is made when the connection opens (and again after a reconnect), since a message cannot be sent before.
  * The items have no timestamp, so UXP only shows a notice when a severity or a message changes.
@@ -95,6 +109,9 @@ const AudioHealth: React.FC = () => {
             // Spotify is optional too.
             const spotify = (await ws.sendMessageAsync({ action: "spotify_check", payload: {} })).payload as SpotifyHealth | undefined;
             if (spotify?.enabled) items.push(spotifyItem(spotify));
+            // So is the Chromecast.
+            const chromecast = (await ws.sendMessageAsync({ action: "chromecast_check", payload: {} })).payload as ChromecastHealth | undefined;
+            if (chromecast?.enabled) items.push(chromecastItem(chromecast));
             report(items);
         } catch {
             report([AUDIO_SERVER_ERROR]);

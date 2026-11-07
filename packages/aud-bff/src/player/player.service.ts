@@ -1,4 +1,14 @@
-import { BookProgress, Collection, PLAYED_AFTER_SEC, PlayerState, PlayerStatus, QueueTrack, RepeatMode, SpotifyNowPlaying, SpotifyQueueEntry } from "@aud/common";
+import {
+    BookProgress,
+    Collection,
+    PLAYED_AFTER_SEC,
+    PlayerState,
+    PlayerStatus,
+    QueueTrack,
+    RepeatMode,
+    SpotifyNowPlaying,
+    SpotifyQueueEntry,
+} from "@aud/common";
 import { AppErrorV2, AppLogger, WebSocketDetails } from "@uxp/bff-common";
 import { ErrorCodes } from "@uxp/common";
 import { amplifierService } from "../amplifier/amplifier.service";
@@ -203,7 +213,8 @@ export class PlayerService {
             speed: this.playbackSpeed(),
             spotify: this.spotifyIsSource ? this.spotify.nowPlaying() : undefined,
             // What Spotify plays for the queue is the queue's, there is nothing to continue.
-            spotifyIdle: this.spotifyIsSource || (this.status !== "stopped" && this.currentSpotifyUri) ? undefined : this.spotify.nowPlaying(),
+            spotifyIdle:
+                this.spotifyIsSource || (this.status !== "stopped" && this.currentSpotifyUri) ? undefined : this.spotify.nowPlaying(),
         };
     }
 
@@ -272,7 +283,11 @@ export class PlayerService {
     enqueueSpotify(uris: string[], next = false): PlayerState {
         const found = this.spotify.find(uris);
         if (found.length === 0) {
-            throw new AppErrorV2({ statusCode: 404, code: ErrorCodes.NOT_FOUND, message: "Spotify does not play or have those tracks coming" });
+            throw new AppErrorV2({
+                statusCode: 404,
+                code: ErrorCodes.NOT_FOUND,
+                message: "Spotify does not play or have those tracks coming",
+            });
         }
         spotifyCatalog.add(found);
         return this.addToQueue(this.resolve(found.map((entry) => entry.uri)), next);
@@ -457,6 +472,14 @@ export class PlayerService {
         return this.publish();
     }
 
+    /** Something is cast to the Chromecast, which wins: the player and both Spotify players pause where they are. */
+    yieldToChromecast(): PlayerState {
+        AppLogger.info(undefined, { message: "Something is cast, the player pauses" });
+        this.spotify.pause();
+        this.pausePlayer();
+        return this.publish();
+    }
+
     /** What Spotify plays changed: the clients show it, as what the player shows or as what can be continued. */
     onSpotifyChanged() {
         const state = this.getState();
@@ -591,7 +614,11 @@ export class PlayerService {
     setGain(gainDb: number): PlayerState {
         const track = this.queue[this.currentIndex];
         if (!track || !this.hasGain(track)) {
-            throw new AppErrorV2({ statusCode: 409, code: ErrorCodes.INVALID_STATE, message: "The gain is set for a song of the library that is playing" });
+            throw new AppErrorV2({
+                statusCode: 409,
+                code: ErrorCodes.INVALID_STATE,
+                message: "The gain is set for a song of the library that is playing",
+            });
         }
         this.gains.set(track.id, `${track.artist} - ${track.title}`, gainDb);
         this.engine.setGain(gainDb);
@@ -784,7 +811,9 @@ export class PlayerService {
     }
 
     private currentPosition(): number {
-        return this.status === "playing" ? this.positionSec + ((Date.now() - this.positionAt) / 1000) * this.playbackSpeed() : this.positionSec;
+        return this.status === "playing"
+            ? this.positionSec + ((Date.now() - this.positionAt) / 1000) * this.playbackSpeed()
+            : this.positionSec;
     }
 
     private stopPlaying(): PlayerState {

@@ -1,3 +1,4 @@
+import CastIcon from "@mui/icons-material/Cast";
 import HistoryIcon from "@mui/icons-material/History";
 import LibraryMusicIcon from "@mui/icons-material/LibraryMusic";
 import MenuBookIcon from "@mui/icons-material/MenuBook";
@@ -15,6 +16,7 @@ export type MenuItem = { path: string; label: string; icon: React.ReactElement }
 export const MENU_ITEMS: MenuItem[] = [
     { path: NOW_PLAYING_PATH, label: "Now playing", icon: <PlayCircleOutlineIcon /> },
     { path: "/amplifier", label: "Amplifier", icon: <TuneIcon /> },
+    { path: "/chromecast", label: "Chromecast", icon: <CastIcon /> },
     { path: "/library", label: "Library", icon: <LibraryMusicIcon /> },
     { path: "/playlists", label: "Playlists", icon: <PlaylistPlayIcon /> },
     { path: "/audiobooks", label: "Audiobooks", icon: <MenuBookIcon /> },

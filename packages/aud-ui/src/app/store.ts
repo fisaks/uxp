@@ -2,6 +2,7 @@ import { configureStore } from "@reduxjs/toolkit";
 import { remoteAppReducer } from "@uxp/ui-lib";
 import { createLogger } from "redux-logger";
 import amplifierReducer from "../features/amplifier/amplifierSlice";
+import chromecastReducer from "../features/chromecast/chromecastSlice";
 import connectionReducer from "../features/connection/connectionSlice";
 import playerReducer from "../features/player/playerSlice";
 import requestCacheReducer from "../features/shared/requestCacheSlice";
@@ -16,6 +17,7 @@ export const createStore = () => {
         reducer: {
             remoteApp: remoteAppReducer,
             amplifier: amplifierReducer,
+            chromecast: chromecastReducer,
             connection: connectionReducer,
             player: playerReducer,
             requestCache: requestCacheReducer,

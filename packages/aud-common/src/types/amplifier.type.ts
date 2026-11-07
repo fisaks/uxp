@@ -32,6 +32,8 @@ export type AmplifierInfo = {
     inputs: AmplifierInput[];
     /** The input the sound of the player arrives on, when the server knows it (`AUD_AMPLIFIER_PLAYER_INPUT`). */
     playerInput?: string;
+    /** The input the Chromecast is on, when the server knows it (`AUD_AMPLIFIER_CHROMECAST_INPUT`). */
+    chromecastInput?: string;
     soundPrograms: string[];
     /** The stations from the station list file, in the order of the file. */
     tunerStations: TunerStation[];
