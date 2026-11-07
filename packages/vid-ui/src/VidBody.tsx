@@ -1,44 +1,32 @@
-import { Alert, Box, Typography } from "@mui/material";
-import { VidStatus } from "@vid/common";
+import { Alert, Snackbar } from "@mui/material";
 import { AppBodyContent } from "@uxp/ui-lib";
-import axios from "axios";
-import { useEffect, useState } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
-import { getBaseUrl } from "./config";
+import { ClipListPage } from "./features/home-video/ClipListPage";
+import { ClipPage } from "./features/home-video/ClipPage";
+import { HomeVideosProvider, useHomeVideos } from "./features/home-video/HomeVideosProvider";
 
 const HOME_PATH = "/";
 
-/** The first page: asks the server whether it can see the folder with the videos. */
-const HomePage = () => {
-    const [status, setStatus] = useState<VidStatus>();
-    const [failed, setFailed] = useState(false);
-    useEffect(() => {
-        axios
-            .get<VidStatus>(`${getBaseUrl().replace(/\/$/, "")}/api/status`)
-            .then(({ data }) => setStatus(data))
-            .catch(() => setFailed(true));
-    }, []);
-
+const SaveErrorNotice = () => {
+    const { saveError, clearSaveError } = useHomeVideos();
     return (
-        <Box sx={{ p: 2 }}>
-            <Typography variant="h5" gutterBottom>
-                Video
-            </Typography>
-            {failed && <Alert severity="error">The video server cannot be reached</Alert>}
-            {status && (
-                <Alert severity={status.mediaRootAvailable ? "success" : "warning"}>
-                    {status.mediaRootAvailable ? "The video server is running" : "The video server cannot read the folder with the videos"}
-                </Alert>
-            )}
-        </Box>
+        <Snackbar open={saveError !== undefined} autoHideDuration={6000} onClose={clearSaveError}>
+            <Alert severity="error" onClose={clearSaveError}>
+                {saveError}
+            </Alert>
+        </Snackbar>
     );
 };
 
 export const VidBody = () => (
     <AppBodyContent appHaveOwnLeftSideBar={false}>
-        <Routes>
-            <Route path={HOME_PATH} element={<HomePage />} />
-            <Route path="*" element={<Navigate to={HOME_PATH} replace={true} />} />
-        </Routes>
+        <HomeVideosProvider>
+            <Routes>
+                <Route path={HOME_PATH} element={<ClipListPage />} />
+                <Route path="/clips/:id" element={<ClipPage />} />
+                <Route path="*" element={<Navigate to={HOME_PATH} replace={true} />} />
+            </Routes>
+            <SaveErrorNotice />
+        </HomeVideosProvider>
     </AppBodyContent>
 );
