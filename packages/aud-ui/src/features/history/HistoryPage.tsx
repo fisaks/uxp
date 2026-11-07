@@ -29,6 +29,7 @@ const HistoryPage: React.FC = () => {
     const dispatch = useAppDispatch();
     const { sendMessageAsync } = useAudioWebSocket();
     const { data, error } = useRequest("history_get", {});
+    useRequest("playlist_list", {});
     const [saving, setSaving] = useState<string[] | undefined>(undefined);
     const [clearing, setClearing] = useState(false);
 
@@ -73,7 +74,7 @@ const HistoryPage: React.FC = () => {
                     <Typography variant="subtitle2" color="text.secondary">
                         Played
                     </Typography>
-                    <PlayedList plays={data.plays} />
+                    <PlayedList plays={data.plays} onAddToPlaylist={setSaving} />
                     {data.playCount > data.plays.length && (
                         <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 1 }}>
                             The latest {data.plays.length} of {data.playCount} are shown.
@@ -81,7 +82,11 @@ const HistoryPage: React.FC = () => {
                     )}
                 </>
             )}
-            <AddToPlaylistDialog trackIds={saving} title="Save the queue as a playlist" onClose={() => setSaving(undefined)} />
+            <AddToPlaylistDialog
+                trackIds={saving}
+                title={saving?.length === 1 ? "Add to a playlist" : "Save the queue as a playlist"}
+                onClose={() => setSaving(undefined)}
+            />
             <Dialog open={clearing} onClose={() => setClearing(false)} container={portalContainer.current}>
                 <DialogTitle>Clear the history</DialogTitle>
                 <DialogContent>

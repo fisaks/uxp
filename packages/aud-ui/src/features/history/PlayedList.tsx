@@ -1,9 +1,15 @@
 import PlaylistAddIcon from "@mui/icons-material/PlaylistAdd";
 import { Box, ListSubheader, Typography } from "@mui/material";
-import { HistoryPlay } from "@aud/common";
+import { HistoryPlay, QueueTrack } from "@aud/common";
 import React, { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAppSelector } from "../../hooks";
+import { SpotifyMark } from "../library/SpotifyMark";
+import { TrackMenu } from "../library/TrackMenu";
 import { usePlayerActions } from "../player/usePlayerActions";
+import { selectMostRecentPlaylist } from "../playlist/playlistSelectors";
+import { usePlaylistCommand } from "../playlist/usePlaylistCommand";
+import { searchPagePath } from "../search/searchPath";
 import { LabelledIconButton } from "../shared/LabelledIconButton";
 import { groupByDay, timeOf } from "./historyFormat";
 
@@ -11,12 +17,20 @@ const TIME_WIDTH = 52;
 
 type PlayedListProps = {
     plays: HistoryPlay[];
+    onAddToPlaylist: (trackIds: string[]) => void;
 };
 
-/** The tracks that were played, newest first, in a group for each day. Pressing one plays it, and the + puts it in the queue. */
-export const PlayedList: React.FC<PlayedListProps> = ({ plays }) => {
+/** The tracks that were played, newest first, in a group for each day. Pressing one plays it, the + puts it in the queue, and the menu has the rest. */
+export const PlayedList: React.FC<PlayedListProps> = ({ plays, onAddToPlaylist }) => {
     const navigate = useNavigate();
-    const { hadQueue, playTracks, playNow, enqueue } = usePlayerActions();
+    const { hadQueue, playTracks, playNow, enqueue, playNext, notify } = usePlayerActions();
+    const sendPlaylist = usePlaylistCommand();
+    const lastPlaylist = useAppSelector(selectMostRecentPlaylist);
+    const addToLastPlaylist = async (track: QueueTrack) => {
+        if (lastPlaylist && (await sendPlaylist("playlist_add_tracks", { id: lastPlaylist.id, trackIds: [track.id] }))) {
+            notify(`Added "${track.title}" to "${lastPlaylist.name}"`);
+        }
+    };
     const groups = useMemo(() => groupByDay(plays), [plays]);
     return (
         <>
@@ -52,13 +66,23 @@ export const PlayedList: React.FC<PlayedListProps> = ({ plays }) => {
                                         {book ? book.title : track ? track.title : play.name}
                                     </Typography>
                                     <Typography variant="body2" color={found ? "text.secondary" : "text.disabled"}>
+                                        {track?.spotify && <SpotifyMark />}
                                         {book ? `Audiobook · ${book.artist}` : track ? track.artist : "Missing from the library"}
                                     </Typography>
                                 </Box>
                                 {track && (
-                                    <LabelledIconButton label="Add to queue" onClick={() => enqueue([track.id])}>
-                                        <PlaylistAddIcon fontSize="small" />
-                                    </LabelledIconButton>
+                                    <>
+                                        <LabelledIconButton label="Add to queue" onClick={() => enqueue([track.id])}>
+                                            <PlaylistAddIcon fontSize="small" />
+                                        </LabelledIconButton>
+                                        <TrackMenu
+                                            onPlayNext={() => playNext([track.id])}
+                                            lastPlaylist={lastPlaylist}
+                                            onAddToLastPlaylist={() => addToLastPlaylist(track)}
+                                            onAddToPlaylist={() => onAddToPlaylist([track.id])}
+                                            moreFromArtist={{ name: track.artist, onChoose: () => navigate(searchPagePath(track.artist)) }}
+                                        />
+                                    </>
                                 )}
                             </Box>
                         );
