@@ -1,13 +1,12 @@
 import CloseIcon from "@mui/icons-material/Close";
-import GraphicEqIcon from "@mui/icons-material/GraphicEq";
 import LibraryAddIcon from "@mui/icons-material/LibraryAdd";
-import PauseIcon from "@mui/icons-material/Pause";
 import { alpha, Box, Button, IconButton, Stack, Tab, Tabs, Typography } from "@mui/material";
 import { QueueTrack, SpotifyNowPlaying } from "@aud/common";
 import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppSelector } from "../../hooks";
 import { formatDuration } from "../library/libraryFormat";
+import { PlayingBars } from "./PlayingBars";
 import { SpotifyMark } from "../library/SpotifyMark";
 import { TrackMenu } from "../library/TrackMenu";
 import { AddToPlaylistDialog } from "../playlist/AddToPlaylistDialog";
@@ -69,7 +68,7 @@ const BookQueue: React.FC = () => {
                         }}
                     >
                         <Box sx={{ width: 28, flexShrink: 0, display: "flex", justifyContent: "center" }}>
-                            {current && state.status === "playing" ? <GraphicEqIcon color="primary" fontSize="small" /> : null}
+                            {current && state.status === "playing" ? <PlayingBars playing /> : null}
                         </Box>
                         <Box sx={{ flex: 1, minWidth: 0 }}>
                             <Typography sx={{ fontWeight: current ? 600 : undefined }}>{names[index]}</Typography>
@@ -172,7 +171,7 @@ const SpotifyQueue: React.FC<{ spotify: SpotifyNowPlaying; active: boolean; onCo
                         </Typography>
                     </Box>
                     {row.current && active && spotify.status === "playing" ? (
-                        <GraphicEqIcon color="primary" fontSize="small" sx={{ mx: 1 }} />
+                        <PlayingBars playing marginX={1} />
                     ) : null}
                     <TrackMenu
                         lastPlaylist={lastPlaylist}
@@ -219,14 +218,14 @@ const QueuePage: React.FC = () => {
         send(to === "queue" ? "player_resume_queue" : "player_resume_spotify", {});
         setChosen(undefined);
     };
-    // The tab of the one that is the source shows it: the bars move while it plays, a pause sign when it is paused.
+    // The tab of the one that is the source shows it: the bars move while it plays and stand still as a diamond when it is paused.
     const sourcePlaying = state.spotify ? state.spotify.status === "playing" : state.status === "playing" || state.status === "starting";
     const sourcePaused = state.spotify ? state.spotify.status === "paused" : state.status === "paused";
     const sourceIcon = (tab: Source) =>
         tab !== source ? undefined : sourcePlaying ? (
-            <GraphicEqIcon color="primary" fontSize="small" />
+            <PlayingBars playing />
         ) : sourcePaused ? (
-            <PauseIcon color="primary" fontSize="small" />
+            <PlayingBars playing={false} />
         ) : undefined;
     // The Chromecast bar cannot play what the cast paused, so the queue page can.
     const continuable = source === "spotify" || (chromecastActive && sourcePaused);
@@ -305,7 +304,7 @@ const QueuePage: React.FC = () => {
                         >
                             {handle}
                             <Box sx={{ width: 28, flexShrink: 0, display: "flex", justifyContent: "center" }}>
-                                {current && state.status === "playing" ? <GraphicEqIcon color="primary" fontSize="small" /> : null}
+                                {current && state.status === "playing" ? <PlayingBars playing /> : null}
                             </Box>
                             <Box
                                 onClick={() => send("player_play_index", { index })}
