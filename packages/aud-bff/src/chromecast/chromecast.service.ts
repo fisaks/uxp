@@ -3,6 +3,7 @@ import {
     ChromecastHealth,
     ChromecastDevice,
     ChromecastPlayback,
+    ChromecastUpcoming,
     ChromecastPlaybackState,
     ChromecastState,
 } from "@aud/common";
@@ -53,6 +54,12 @@ type CastMediaStatus = {
     media?: {
         duration?: number;
         streamType?: string;
+        /** Spotify keeps its queue here; only `next_tracks` is read. */
+        customData?: {
+            playerPlaybackState?: {
+                track_window?: { next_tracks?: { name?: string; artists?: { name?: string }[] }[] };
+            };
+        };
         metadata?: {
             title?: string;
             artist?: string;
@@ -391,6 +398,9 @@ export class ChromecastService {
 
     /** The cast wins: the amplifier goes to the Chromecast (if set up for it) and what aud plays pauses. */
     private onStartsPlaying() {
+        if (this.state.app) {
+            this.update({ ...this.state, lastCast: { app: this.state.app, at: new Date().toISOString() } });
+        }
         if (!amplifierService.hasChromecastInput()) {
             return;
         }
@@ -435,7 +445,23 @@ export class ChromecastService {
             positionSec: status.currentTime ?? 0,
             durationSec: !isLive && status.media.duration ? Math.floor(status.media.duration) : undefined,
             commands: this.toCommands(commands),
+            upcoming: this.toUpcoming(status),
         };
+    }
+
+    private toUpcoming(status: CastMediaStatus): ChromecastUpcoming[] | undefined {
+        const next = status.media?.customData?.playerPlaybackState?.track_window?.next_tracks;
+        if (!next?.length) return undefined;
+        return next
+            .filter((track) => track.name)
+            .map((track) => ({
+                title: track.name as string,
+                artist:
+                    track.artists
+                        ?.map((artist) => artist.name)
+                        .filter(Boolean)
+                        .join(", ") || undefined,
+            }));
     }
 
     private toCommands(bits: number): ChromecastCommands {

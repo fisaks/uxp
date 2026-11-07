@@ -1,3 +1,4 @@
+import { CHROMECAST_WEAK_SIGNAL_DBM } from "./features/chromecast/chromecastText";
 import { HealthItem } from "@uxp/common";
 import { getUxpWindow, WebSocketProvider } from "@uxp/ui-lib";
 import { AmplifierReachability, AudioAppActionPayloadRequestMap, AudioAppActionPayloadResponseMap, ChromecastHealth, SearchReachability, SpotifyHealth } from "@aud/common";
@@ -29,7 +30,6 @@ const SPOTIFY_OK: HealthItem = { id: "spotify", severity: "ok", message: "Spotif
 const CHROMECAST_OK: HealthItem = { id: "chromecast", severity: "ok", message: "The Chromecast is reachable" };
 // A Chromecast that reboots or sleeps is away for a minute or so; only a longer absence is a problem.
 const CHROMECAST_UNREACHABLE_SEC = 120;
-const CHROMECAST_WEAK_SIGNAL_DBM = -75;
 const DAY_MS = 24 * 3600 * 1000;
 // The monthly update and its retries leave a gap of at most a month and a few hours.
 const UPDATE_STALE_DAYS = 45;

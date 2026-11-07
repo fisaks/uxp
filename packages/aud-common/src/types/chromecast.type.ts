@@ -21,6 +21,13 @@ export type ChromecastPlayback = {
     /** Missing for a live stream. */
     durationSec?: number;
     commands: ChromecastCommands;
+    /** The tracks the app says come next, as far as it tells (Spotify). Missing when it tells nothing. */
+    upcoming?: ChromecastUpcoming[];
+};
+
+export type ChromecastUpcoming = {
+    title: string;
+    artist?: string;
 };
 
 /** What the device reports about itself. Refreshed about once a minute, not on every push. */
@@ -44,6 +51,8 @@ export type ChromecastState = {
     playback: ChromecastPlayback | null;
     /** Missing until the first successful read. */
     device?: ChromecastDevice;
+    /** The app that last started to play and when (ISO time). Missing until something has been cast since the server started. */
+    lastCast?: { app: string; at: string };
 };
 
 /** The answer to the health check. */

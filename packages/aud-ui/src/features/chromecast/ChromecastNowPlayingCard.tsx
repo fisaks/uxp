@@ -5,6 +5,8 @@ import { AlbumCover } from "../library/AlbumCover";
 import { formatDuration } from "../library/libraryFormat";
 import { NowPlayingPanel } from "../shared/NowPlayingPanel";
 import { selectChromecastPlayback, selectChromecastState } from "./chromecastSelectors";
+import { songSubtitle } from "../player/nowPlayingText";
+import { UpNextLine } from "../player/UpNextLine";
 import { ChromecastTransport } from "./ChromecastTransport";
 import { CommandErrorSnackbar } from "./CommandErrorSnackbar";
 import { useChromecastCommand } from "./useChromecastCommand";
@@ -22,6 +24,7 @@ export const ChromecastNowPlayingCard: React.FC = () => {
     const position = useChromecastPosition();
     const { send, error, clearError } = useChromecastCommand();
     if (!playback) return null;
+    const next = playback.upcoming?.[0];
 
     const duration = playback.durationSec ?? 0;
     const shown = Math.min(position, duration || Infinity);
@@ -55,6 +58,9 @@ export const ChromecastNowPlayingCard: React.FC = () => {
                         </Typography>
                     </Stack>
                 )}
+                <Box sx={{ display: "flex", flexDirection: "column" }}>
+                    <UpNextLine text={next && songSubtitle(next.title, next.artist ?? "")} />
+                </Box>
                 <CommandErrorSnackbar error={error} onClose={clearError} />
             </CardContent>
         </Card>

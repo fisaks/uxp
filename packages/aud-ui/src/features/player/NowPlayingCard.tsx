@@ -7,9 +7,10 @@ import { NowPlayingPanel } from "../shared/NowPlayingPanel";
 import { AlbumCover } from "../library/AlbumCover";
 import { TrackCover } from "../library/TrackCover";
 import { formatDuration } from "../library/libraryFormat";
-import { nowPlayingText, songSubtitle } from "./nowPlayingText";
+import { nowPlayingText, playerUpNextText, songSubtitle } from "./nowPlayingText";
 import { PlayPauseButton } from "./PlayPauseButton";
 import { selectCurrentTrack, selectPlayerState, selectSpotify } from "./playerSelectors";
+import { UpNextLine } from "./UpNextLine";
 import { usePlayerCommand } from "./usePlayerCommand";
 import { usePlayerPosition } from "./usePlayerPosition";
 
@@ -78,6 +79,9 @@ export const NowPlayingCard: React.FC = () => {
                         </Typography>
                     </Stack>
                 )}
+                <Box sx={{ display: "flex", flexDirection: "column" }}>
+                    <UpNextLine text={playerUpNextText(state, spotify)} />
+                </Box>
             </CardContent>
         </Card>
     );

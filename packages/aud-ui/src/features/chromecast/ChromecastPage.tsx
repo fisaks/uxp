@@ -16,6 +16,7 @@ import React, { useEffect, useState } from "react";
 import { useAppSelector } from "../../hooks";
 import { selectAmplifierState } from "../amplifier/amplifierSelectors";
 import { selectChromecastState } from "./chromecastSelectors";
+import { CHROMECAST_WEAK_SIGNAL_DBM, wifiSignalText } from "./chromecastText";
 import { ChromecastNowPlaying, PAGE_WIDTH } from "./ChromecastNowPlaying";
 import { CommandErrorSnackbar } from "./CommandErrorSnackbar";
 import { useChromecastCommand } from "./useChromecastCommand";
@@ -24,6 +25,8 @@ const REBOOT_TIMEOUT_MS = 2 * 60 * 1000;
 const SECONDS_PER_MINUTE = 60;
 const SECONDS_PER_HOUR = 3600;
 const SECONDS_PER_DAY = 86400;
+// A device that restarted by itself shows as a short uptime.
+const RECENT_RESTART_SEC = 5 * SECONDS_PER_MINUTE;
 
 const uptimeText = (seconds: number): string => {
     if (seconds >= SECONDS_PER_DAY)
@@ -33,10 +36,10 @@ const uptimeText = (seconds: number): string => {
     return `${Math.floor(seconds / SECONDS_PER_MINUTE)} min`;
 };
 
-const StatusRow: React.FC<{ label: string; value: string }> = ({ label, value }) => (
+const StatusRow: React.FC<{ label: string; value: string; color?: string }> = ({ label, value, color }) => (
     <Stack direction="row" justifyContent="space-between" spacing={2}>
         <Typography color="text.secondary">{label}</Typography>
-        <Typography>{value}</Typography>
+        <Typography color={color}>{value}</Typography>
     </Stack>
 );
 
@@ -85,7 +88,12 @@ const ChromecastPage: React.FC = () => {
     if (!state.configured) return <Alert severity="info">No Chromecast is set up.</Alert>;
 
     const { device, playback } = state;
-    const canSelectAmplifier = amplifier?.info?.chromecastInput !== undefined;
+    const chromecastInput = amplifier?.info?.chromecastInput;
+    const canSelectAmplifier = chromecastInput !== undefined;
+    const amplifierStatus = amplifier?.status;
+    const amplifierOnChromecast = !!amplifierStatus?.power && amplifierStatus.input === chromecastInput;
+    const casting = playback !== null;
+    const weakSignal = device?.wifiSignalDbm !== undefined && device.wifiSignalDbm < CHROMECAST_WEAK_SIGNAL_DBM;
 
     return (
         <Stack spacing={2} sx={{ maxWidth: PAGE_WIDTH, mx: "auto" }}>
@@ -96,14 +104,22 @@ const ChromecastPage: React.FC = () => {
             ) : (
                 !state.reachable && <Alert severity="warning">The Chromecast cannot be reached.</Alert>
             )}
+            {device && device.uptimeSec < RECENT_RESTART_SEC && state.reachable && (
+                <Alert severity="info">The Chromecast restarted recently.</Alert>
+            )}
             <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
                 {canSelectAmplifier && (
-                    <Button fullWidth variant="outlined" disabled={!state.reachable} onClick={() => send("chromecast_select_amp", {})}>
+                    <Button
+                        fullWidth
+                        variant="outlined"
+                        disabled={!state.reachable || amplifierOnChromecast}
+                        onClick={() => send("chromecast_select_amp", {})}
+                    >
                         Switch amp
                     </Button>
                 )}
                 <Button fullWidth variant="outlined" disabled={!state.app} onClick={() => send("chromecast_stop_app", {})}>
-                    Stop app
+                    {casting ? "Stop casting" : "Stop app"}
                 </Button>
                 <Button
                     fullWidth
@@ -122,9 +138,36 @@ const ChromecastPage: React.FC = () => {
                             Status
                         </Typography>
                         <StatusRow label="Name" value={device.name} />
-                        <StatusRow label="Software" value={device.hasUpdate ? `${device.firmware} (update available)` : device.firmware} />
+                        <StatusRow
+                            label="Software"
+                            value={device.hasUpdate ? `${device.firmware} (update available, installs by itself)` : device.firmware}
+                        />
                         <StatusRow label="Running for" value={uptimeText(device.uptimeSec)} />
-                        {device.wifiSignalDbm !== undefined && <StatusRow label="Wi-Fi signal" value={`${device.wifiSignalDbm} dBm`} />}
+                        {device.wifiSignalDbm !== undefined && (
+                            <StatusRow
+                                label="Wi-Fi signal"
+                                value={wifiSignalText(device.wifiSignalDbm)}
+                                color={weakSignal ? "warning.main" : undefined}
+                            />
+                        )}
+                        {amplifierStatus && chromecastInput !== undefined && (
+                            <StatusRow
+                                label="Amplifier"
+                                value={
+                                    !amplifierStatus.power
+                                        ? "Off"
+                                        : amplifierOnChromecast
+                                          ? "On, on the Chromecast"
+                                          : `On, on ${amplifierStatus.input}`
+                                }
+                            />
+                        )}
+                        {state.lastCast && (
+                            <StatusRow
+                                label="Last cast"
+                                value={`${state.lastCast.app}, ${new Date(state.lastCast.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`}
+                            />
+                        )}
                         <StatusRow label="Address" value={device.ip} />
                     </CardContent>
                 </Card>
