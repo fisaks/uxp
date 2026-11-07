@@ -1,10 +1,12 @@
-import { Alert, Box, Chip, CircularProgress, IconButton, InputAdornment, MenuItem, Stack, TextField, Typography } from "@mui/material";
-import ClearIcon from "@mui/icons-material/Clear";
+import { Alert, Box, Chip, CircularProgress, MenuItem, Stack, TextField, Typography } from "@mui/material";
 import { HomeVideoClip } from "@vid/common";
 import { usePortalContainerRef } from "@uxp/ui-lib";
 import React, { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { searchClips } from "../../api/home-video-api";
+import { SEARCH_PARAM } from "../search/SearchBox";
+import { PAGE_WIDTH } from "../shared/pageWidth";
+import { useRestoreScroll } from "../shared/useRestoreScroll";
 import { ClipTile } from "./ClipTile";
 import { NO_DATE_LABEL, isUnlabelled, yearOf } from "./clipFormat";
 import { useHomeVideos } from "./HomeVideosProvider";
@@ -13,7 +15,6 @@ import { YEAR_SCROLL_MARGIN, YearBar, yearAnchorId } from "./YearBar";
 const ANY = "";
 const HIGHLIGHT_MS = 2000;
 const UNLABELLED_PARAM = "unlabelled";
-const SEARCH_PARAM = "q";
 const SEARCH_DEBOUNCE_MS = 250;
 
 type Filter = { year: string; person: string; tag: string; unlabelled: boolean; found: Set<string> | undefined };
@@ -82,10 +83,10 @@ const useFoundIds = (query: string) => {
 };
 
 export const ClipListPage: React.FC = () => {
-    const { clips, labels, searchAvailable, loadError } = useHomeVideos();
+    const { clips, labels, loadError } = useHomeVideos();
     // The filter is in the address, so it is still there when you come back from a clip.
     const [params, setParams] = useSearchParams();
-    // What is typed is kept here and put in the address as it is typed, so the page is the same after a reload.
+    // The words come from the search box of the top bar, through the address.
     const query = params.get(SEARCH_PARAM) ?? "";
     const found = useFoundIds(query.trim());
     const filter: Filter = {
@@ -118,32 +119,14 @@ export const ClipListPage: React.FC = () => {
         return () => clearTimeout(timer);
     }, [jumpedTo]);
 
+    useRestoreScroll(clips !== undefined);
+
     if (loadError) return <Alert severity="error">The clips could not be read.</Alert>;
     if (!clips) return <CircularProgress sx={{ display: "block", mx: "auto", mt: 4 }} />;
 
     return (
-        <Box sx={{ p: { xs: 0, sm: 2 } }}>
+        <Box sx={{ p: { xs: 0, sm: 2 }, maxWidth: PAGE_WIDTH, mx: "auto" }}>
             <Stack direction="row" flexWrap="wrap" alignItems="center" sx={{ gap: 1.5, mb: 2 }}>
-                {searchAvailable && (
-                    <TextField
-                        size="small"
-                        label="Search"
-                        value={query}
-                        onChange={(e) => setFilter(SEARCH_PARAM, e.target.value)}
-                        sx={{ minWidth: 200 }}
-                        slotProps={{
-                            input: {
-                                endAdornment: query && (
-                                    <InputAdornment position="end">
-                                        <IconButton size="small" aria-label="Clear search" onClick={() => setFilter(SEARCH_PARAM, "")}>
-                                            <ClearIcon fontSize="small" />
-                                        </IconButton>
-                                    </InputAdornment>
-                                ),
-                            },
-                        }}
-                    />
-                )}
                 <FilterSelect label="Year" value={filter.year} options={years} onChange={(v) => setFilter("year", v)} />
                 <FilterSelect label="Person" value={filter.person} options={labels.people} onChange={(v) => setFilter("person", v)} />
                 <FilterSelect label="Tag" value={filter.tag} options={labels.tags} onChange={(v) => setFilter("tag", v)} />

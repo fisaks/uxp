@@ -7,7 +7,7 @@ import { createStreamLink, streamUrl, thumbnailUrl } from "../../api/home-video-
 import { ClipForm } from "./ClipForm";
 import { clipPath } from "./ClipTile";
 import { clipName, formatDate } from "./clipFormat";
-import { PAGE_WIDTH } from "./pageWidth";
+import { PAGE_WIDTH } from "../shared/pageWidth";
 import { useHomeVideos } from "./HomeVideosProvider";
 
 // On a phone the buttons are only arrows, so the name of the clip has the room.

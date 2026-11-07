@@ -3,9 +3,10 @@ import { HomeVideoClip } from "@vid/common";
 import React from "react";
 import { Link } from "react-router-dom";
 import { thumbnailUrl } from "../../api/home-video-api";
+import { HOME_VIDEOS_PATH } from "../../menu";
 import { clipName, formatDate, formatDuration } from "./clipFormat";
 
-export const clipPath = (id: string) => `/clips/${id}`;
+export const clipPath = (id: string) => `${HOME_VIDEOS_PATH}/clips/${id}`;
 
 /** A poster frame with the length of the clip, and under it what the clip is called and when it was filmed. */
 export const ClipTile: React.FC<{ clip: HomeVideoClip }> = ({ clip }) => (

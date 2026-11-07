@@ -1,4 +1,4 @@
-import { Autocomplete, Chip, Stack, TextField, useTheme } from "@mui/material";
+import { Autocomplete, Box, Chip, Stack, TextField, useTheme } from "@mui/material";
 import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterLuxon } from "@mui/x-date-pickers/AdapterLuxon";
 import { HomeVideoClip, HomeVideoClipUpdate } from "@vid/common";
@@ -6,6 +6,10 @@ import { usePortalContainerRef } from "@uxp/ui-lib";
 import { DateTime } from "luxon";
 import React, { useState } from "react";
 import { useHomeVideos } from "./HomeVideosProvider";
+
+// Side by side from a tablet width up, one under the other on a phone.
+const DATE_ROW_COLUMNS = { xs: "1fr", sm: "1fr 200px" };
+const LABELS_ROW_COLUMNS = { xs: "1fr", sm: "1fr 1fr" };
 
 type LabelsFieldProps = { label: string; value: string[]; options: string[]; onChange: (value: string[]) => void };
 
@@ -63,33 +67,37 @@ export const ClipForm: React.FC<{ clip: HomeVideoClip }> = ({ clip }) => {
 
     return (
         <Stack sx={{ gap: 2 }}>
-            <TextField label="Title" size="small" value={title} onChange={(e) => setTitle(e.target.value)} onBlur={saveTitle} />
-            <LocalizationProvider dateAdapter={AdapterLuxon} adapterLocale="fi">
-                <DatePicker
-                    label="Date"
-                    format="d.M.yyyy"
-                    value={clip.date ? DateTime.fromISO(clip.date) : null}
-                    onChange={saveDate}
-                    slotProps={{
-                        textField: { size: "small" },
-                        field: { clearable: true },
-                        openPickerIcon: { sx: { color: theme.palette.primary.main } },
-                        popper: { container: portalContainer.current },
-                        dialog: { container: portalContainer.current },
-                    }}
-                />
-            </LocalizationProvider>
+            <Box sx={{ display: "grid", gap: 2, gridTemplateColumns: DATE_ROW_COLUMNS }}>
+                <TextField label="Title" size="small" value={title} onChange={(e) => setTitle(e.target.value)} onBlur={saveTitle} />
+                <LocalizationProvider dateAdapter={AdapterLuxon} adapterLocale="fi">
+                    <DatePicker
+                        label="Date"
+                        format="d.M.yyyy"
+                        value={clip.date ? DateTime.fromISO(clip.date) : null}
+                        onChange={saveDate}
+                        slotProps={{
+                            textField: { size: "small", fullWidth: true },
+                            field: { clearable: true },
+                            openPickerIcon: { sx: { color: theme.palette.primary.main } },
+                            popper: { container: portalContainer.current },
+                            dialog: { container: portalContainer.current },
+                        }}
+                    />
+                </LocalizationProvider>
+            </Box>
+            <Box sx={{ display: "grid", gap: 2, gridTemplateColumns: LABELS_ROW_COLUMNS, alignItems: "start" }}>
+                <LabelsField label="People" value={clip.people} options={labels.people} onChange={(people) => save({ people })} />
+                <LabelsField label="Tags" value={clip.tags} options={labels.tags} onChange={(tags) => save({ tags })} />
+            </Box>
             <TextField
                 label="Description"
                 size="small"
                 multiline
-                minRows={3}
+                minRows={8}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 onBlur={saveDescription}
             />
-            <LabelsField label="People" value={clip.people} options={labels.people} onChange={(people) => save({ people })} />
-            <LabelsField label="Tags" value={clip.tags} options={labels.tags} onChange={(tags) => save({ tags })} />
         </Stack>
     );
 };
