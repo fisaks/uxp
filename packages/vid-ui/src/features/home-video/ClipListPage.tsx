@@ -1,8 +1,10 @@
-import { Alert, Box, Chip, CircularProgress, MenuItem, Stack, TextField, Typography } from "@mui/material";
+import { Alert, Box, Chip, CircularProgress, IconButton, InputAdornment, MenuItem, Stack, TextField, Typography } from "@mui/material";
+import ClearIcon from "@mui/icons-material/Clear";
 import { HomeVideoClip } from "@vid/common";
 import { usePortalContainerRef } from "@uxp/ui-lib";
 import React, { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { searchClips } from "../../api/home-video-api";
 import { ClipTile } from "./ClipTile";
 import { NO_DATE_LABEL, isUnlabelled, yearOf } from "./clipFormat";
 import { useHomeVideos } from "./HomeVideosProvider";
@@ -11,10 +13,13 @@ import { YEAR_SCROLL_MARGIN, YearBar, yearAnchorId } from "./YearBar";
 const ANY = "";
 const HIGHLIGHT_MS = 2000;
 const UNLABELLED_PARAM = "unlabelled";
+const SEARCH_PARAM = "q";
+const SEARCH_DEBOUNCE_MS = 250;
 
-type Filter = { year: string; person: string; tag: string; unlabelled: boolean };
+type Filter = { year: string; person: string; tag: string; unlabelled: boolean; found: Set<string> | undefined };
 
 const matches = (clip: HomeVideoClip, f: Filter) =>
+    (!f.found || f.found.has(clip.id)) &&
     (!f.year || (yearOf(clip) ?? NO_DATE_LABEL) === f.year) &&
     (!f.person || clip.people.includes(f.person)) &&
     (!f.tag || clip.tags.includes(f.tag)) &&
@@ -54,11 +59,37 @@ const FilterSelect: React.FC<FilterSelectProps> = ({ label, value, options, onCh
     );
 };
 
+/** The ids of the clips that match the words, undefined while there are no words or no answer yet. A failed search shows all clips. */
+const useFoundIds = (query: string) => {
+    const [found, setFound] = useState<{ query: string; ids: Set<string> }>();
+    useEffect(() => {
+        if (!query) return;
+        let current = true;
+        const timer = setTimeout(
+            () =>
+                searchClips(query)
+                    .then((ids) => current && setFound({ query, ids: new Set(ids) }))
+                    .catch(() => undefined),
+            SEARCH_DEBOUNCE_MS
+        );
+        return () => {
+            current = false;
+            clearTimeout(timer);
+        };
+    }, [query]);
+    // The answer of an earlier query stays until the new one comes, so the list does not flash.
+    return query ? found?.ids : undefined;
+};
+
 export const ClipListPage: React.FC = () => {
-    const { clips, labels, loadError } = useHomeVideos();
+    const { clips, labels, searchAvailable, loadError } = useHomeVideos();
     // The filter is in the address, so it is still there when you come back from a clip.
     const [params, setParams] = useSearchParams();
+    // What is typed is kept here and put in the address as it is typed, so the page is the same after a reload.
+    const query = params.get(SEARCH_PARAM) ?? "";
+    const found = useFoundIds(query.trim());
     const filter: Filter = {
+        found,
         year: params.get("year") ?? ANY,
         person: params.get("person") ?? ANY,
         tag: params.get("tag") ?? ANY,
@@ -76,7 +107,7 @@ export const ClipListPage: React.FC = () => {
         );
 
     const years = useMemo(() => [...new Set((clips ?? []).map((c) => yearOf(c) ?? NO_DATE_LABEL))], [clips]);
-    const shown = useMemo(() => (clips ?? []).filter((c) => matches(c, filter)), [clips, filter.year, filter.person, filter.tag, filter.unlabelled]);
+    const shown = useMemo(() => (clips ?? []).filter((c) => matches(c, filter)), [clips, filter.found, filter.year, filter.person, filter.tag, filter.unlabelled]);
     const groups = useMemo(() => groupByYear(shown), [shown]);
 
     // The year that was jumped to is outlined for a moment, so it is clear where on the page it starts.
@@ -93,6 +124,26 @@ export const ClipListPage: React.FC = () => {
     return (
         <Box sx={{ p: { xs: 0, sm: 2 } }}>
             <Stack direction="row" flexWrap="wrap" alignItems="center" sx={{ gap: 1.5, mb: 2 }}>
+                {searchAvailable && (
+                    <TextField
+                        size="small"
+                        label="Search"
+                        value={query}
+                        onChange={(e) => setFilter(SEARCH_PARAM, e.target.value)}
+                        sx={{ minWidth: 200 }}
+                        slotProps={{
+                            input: {
+                                endAdornment: query && (
+                                    <InputAdornment position="end">
+                                        <IconButton size="small" aria-label="Clear search" onClick={() => setFilter(SEARCH_PARAM, "")}>
+                                            <ClearIcon fontSize="small" />
+                                        </IconButton>
+                                    </InputAdornment>
+                                ),
+                            },
+                        }}
+                    />
+                )}
                 <FilterSelect label="Year" value={filter.year} options={years} onChange={(v) => setFilter("year", v)} />
                 <FilterSelect label="Person" value={filter.person} options={labels.people} onChange={(v) => setFilter("person", v)} />
                 <FilterSelect label="Tag" value={filter.tag} options={labels.tags} onChange={(v) => setFilter("tag", v)} />

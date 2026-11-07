@@ -1,5 +1,5 @@
-import { Route } from "@uxp/bff-common";
-import { HomeVideoClip, HomeVideoClipParams, HomeVideoClipParamsSchema, HomeVideoClipUpdate, HomeVideoClipUpdateSchema, HomeVideoLabels, HomeVideoStreamLink, HomeVideoStreamQuery, HomeVideoStreamSchema } from "@vid/common";
+import { AppLogger, Route } from "@uxp/bff-common";
+import { HomeVideoClip, HomeVideoClipParams, HomeVideoClipParamsSchema, HomeVideoClipUpdate, HomeVideoClipUpdateSchema, HomeVideoLabels, HomeVideoSearchQuery, HomeVideoSearchResult, HomeVideoSearchSchema, HomeVideoStreamLink, HomeVideoStreamQuery, HomeVideoStreamSchema } from "@vid/common";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { createReadStream } from "fs";
 import { stat } from "fs/promises";
@@ -18,6 +18,20 @@ export class HomeVideoController {
     @Route("get", "/home-videos/labels", { authenticate: true })
     async getLabels(): Promise<HomeVideoLabels> {
         return homeVideoService.labels();
+    }
+
+    /** The ids of the clips that match the words, best match first. */
+    @Route("get", "/home-videos/search", { authenticate: true, schema: HomeVideoSearchSchema })
+    async search(req: FastifyRequest, reply: FastifyReply): Promise<HomeVideoSearchResult | void> {
+        if (!homeVideoService.search.available) {
+            return reply.status(503).send({ error: "Search is not available" });
+        }
+        try {
+            return { ids: await homeVideoService.search.find((req.query as HomeVideoSearchQuery).q) };
+        } catch (error) {
+            AppLogger.error(undefined, { message: "[Search] The search failed", error });
+            return reply.status(503).send({ error: "Search is not available" });
+        }
     }
 
     @Route("get", "/home-videos/clips/:id", { authenticate: true, schema: HomeVideoClipParamsSchema })

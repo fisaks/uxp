@@ -1,4 +1,4 @@
-import { HomeVideoClip, HomeVideoClipUpdate, HomeVideoLabels, HomeVideoStreamLink } from "@vid/common";
+import { HomeVideoClip, HomeVideoClipUpdate, HomeVideoLabels, HomeVideoSearchResult, HomeVideoStreamLink, VidStatus } from "@vid/common";
 import axiosInstance from "./axiosInstance";
 import { getBaseUrl } from "../config";
 
@@ -7,6 +7,13 @@ const apiUrl = (path: string) => `${getBaseUrl().replace(/\/$/, "")}/api/home-vi
 export const fetchClips = () => axiosInstance.get<HomeVideoClip[]>(apiUrl("clips")).then(({ data }) => data);
 
 export const fetchLabels = () => axiosInstance.get<HomeVideoLabels>(apiUrl("labels")).then(({ data }) => data);
+
+export const fetchSearchAvailable = () =>
+    axiosInstance.get<VidStatus>(`${getBaseUrl().replace(/\/$/, "")}/api/status`).then(({ data }) => data.searchAvailable);
+
+/** The ids of the clips that match the words, best match first. */
+export const searchClips = (q: string) =>
+    axiosInstance.get<HomeVideoSearchResult>(apiUrl("search"), { params: { q } }).then(({ data }) => data.ids);
 
 export const patchClip = (id: string, update: HomeVideoClipUpdate) =>
     axiosInstance.patch<HomeVideoClip>(apiUrl(`clips/${id}`), update).then(({ data }) => data);

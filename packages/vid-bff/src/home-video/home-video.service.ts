@@ -3,6 +3,7 @@ import { AppLogger, tryReadJsonFile, writeJsonFile } from "@uxp/bff-common";
 import path from "path";
 import { homeVideoConfig } from "./home-video.config";
 import { HomeVideoMetadataStore, HomeVideoMetadata } from "./home-video-metadata-store";
+import { HomeVideoSearch } from "./home-video-search";
 import { ScannedClip, scanFolder } from "./home-video-scanner";
 import { HomeVideoThumbnails } from "./home-video-thumbnails";
 
@@ -34,10 +35,16 @@ const toClip = (scanned: ScannedClip, metadata: HomeVideoMetadata | undefined): 
 export class HomeVideoService {
     private scanned = new Map<string, ScannedClip>();
     private readonly store = new HomeVideoMetadataStore(homeVideoConfig.metadataFile);
+    readonly search = new HomeVideoSearch(() => this.list(), {
+        url: process.env.MEILI_URL || undefined,
+        apiKey: process.env.MEILI_API_KEY || undefined,
+        masterKey: process.env.MEILI_MASTER_KEY || undefined,
+    });
     private readonly thumbnails = new HomeVideoThumbnails(path.join(homeVideoConfig.cacheDir, "home-video-thumbs"));
 
     async load(): Promise<void> {
         await this.store.load();
+        await this.search.start();
         const folder = homeVideoConfig.folder;
         if (!folder) {
             AppLogger.info(undefined, { message: "VID_MEDIA_ROOT is not set, the home video library is empty" });
@@ -53,6 +60,7 @@ export class HomeVideoService {
                 await writeJsonFile(cacheFile, clips, true);
             }
             AppLogger.info(undefined, { message: `Home videos: ${clips.length} clips` });
+            this.search.reindex();
         } catch (error) {
             AppLogger.warn(undefined, { message: "Could not scan the home video folder", error });
         }
@@ -81,6 +89,7 @@ export class HomeVideoService {
             throw new Error("The home video metadata cannot be saved");
         }
         this.store.updateMetadata(clip.file, change);
+        this.search.reindex();
         return this.get(id);
     }
 

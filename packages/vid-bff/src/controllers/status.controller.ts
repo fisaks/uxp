@@ -1,5 +1,6 @@
 import { Route } from "@uxp/bff-common";
 import { VidStatus } from "@vid/common";
+import { homeVideoService } from "../home-video/home-video.service";
 import { accessSync, constants } from "fs";
 
 /** The folder with the videos, set by VID_MEDIA_ROOT. Without it the library is empty. */
@@ -19,6 +20,6 @@ const mediaRootAvailable = (): boolean => {
 export class StatusController {
     @Route("get", "/status", { authenticate: true })
     async getStatus(): Promise<VidStatus> {
-        return { mediaRootAvailable: mediaRootAvailable() };
+        return { mediaRootAvailable: mediaRootAvailable(), searchAvailable: homeVideoService.search.available };
     }
 }

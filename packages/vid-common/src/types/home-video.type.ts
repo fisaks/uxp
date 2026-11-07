@@ -49,3 +49,27 @@ export interface HomeVideoStreamQuery {
     exp: number;
     sig: string;
 }
+
+export interface HomeVideoSearchQuery {
+    q: string;
+}
+
+/** The ids of the clips that match the words, best match first. */
+export interface HomeVideoSearchResult {
+    ids: string[];
+}
+
+/** The document of a clip in the search index. */
+export interface HomeVideoSearchDoc {
+    id: string;
+    title: string;
+    description: string;
+    people: string[];
+    tags: string[];
+    /** The ISO date, so a search for 2009-03 or 2009 finds the clips of that time. */
+    date: string;
+    year: string;
+}
+
+/** Name of the Meilisearch index of the home videos. */
+export const HOME_VIDEO_SEARCH_INDEX = "vid_home_videos";

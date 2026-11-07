@@ -1,12 +1,14 @@
 import { HomeVideoClip, HomeVideoClipUpdate, HomeVideoLabels } from "@vid/common";
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { fetchClips, fetchLabels, patchClip } from "../../api/home-video-api";
+import { fetchClips, fetchLabels, fetchSearchAvailable, patchClip } from "../../api/home-video-api";
 import { compareClips } from "./clipFormat";
 
 type HomeVideos = {
     /** The clips in the order of the timeline. Undefined until they are read. */
     clips: HomeVideoClip[] | undefined;
     labels: HomeVideoLabels;
+    /** The server can search the clips. */
+    searchAvailable: boolean;
     /** Why the clips could not be read, when they could not. */
     loadError: boolean;
     /** Why the last change was not saved. */
@@ -29,6 +31,7 @@ export const useHomeVideos = () => {
 export const HomeVideosProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
     const [clips, setClips] = useState<HomeVideoClip[]>();
     const [labels, setLabels] = useState(NO_LABELS);
+    const [searchAvailable, setSearchAvailable] = useState(false);
     const [loadError, setLoadError] = useState(false);
     const [saveError, setSaveError] = useState<string>();
 
@@ -43,6 +46,9 @@ export const HomeVideosProvider: React.FC<React.PropsWithChildren> = ({ children
             .catch(() => setLoadError(true));
         fetchLabels()
             .then(setLabels)
+            .catch(() => undefined);
+        fetchSearchAvailable()
+            .then(setSearchAvailable)
             .catch(() => undefined);
     }, []);
 
@@ -66,8 +72,8 @@ export const HomeVideosProvider: React.FC<React.PropsWithChildren> = ({ children
 
     const clearSaveError = useCallback(() => setSaveError(undefined), []);
     const value = useMemo(
-        () => ({ clips, labels, loadError, saveError, clearSaveError, updateClip }),
-        [clips, labels, loadError, saveError, clearSaveError, updateClip]
+        () => ({ clips, labels, searchAvailable, loadError, saveError, clearSaveError, updateClip }),
+        [clips, labels, searchAvailable, loadError, saveError, clearSaveError, updateClip]
     );
     return <HomeVideosContext.Provider value={value}>{children}</HomeVideosContext.Provider>;
 };

@@ -1,5 +1,5 @@
 import { SchemaValidate } from "@uxp/common";
-import { HomeVideoClipParams, HomeVideoClipUpdate, HomeVideoStreamQuery } from "../types/home-video.type";
+import { HomeVideoClipParams, HomeVideoClipUpdate, HomeVideoSearchQuery, HomeVideoStreamQuery } from "../types/home-video.type";
 
 const ID_PATTERN = "^[0-9a-f]{16}$";
 const LABELS_SCHEMA = { type: "array", items: { type: "string", minLength: 1, maxLength: 100 }, maxItems: 100 };
@@ -37,3 +37,12 @@ export const HomeVideoStreamSchema = {
         additionalProperties: false,
     },
 } as unknown as SchemaValidate<undefined, HomeVideoStreamQuery, HomeVideoClipParams>;
+
+export const HomeVideoSearchSchema: SchemaValidate<undefined, HomeVideoSearchQuery> = {
+    querystring: {
+        type: "object",
+        properties: { q: { type: "string", minLength: 1, maxLength: 200 } },
+        required: ["q"],
+        additionalProperties: false,
+    },
+};
