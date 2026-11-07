@@ -96,6 +96,8 @@ type HistoryRecorder = {
 
 // Position reports come twice a second: a longer gap (a stall, a pause) is not listening time.
 const LISTEN_GAP_MAX_MS = 2000;
+/** How often the listening to a track of Spotify is counted: the engine reports no position for it. */
+const SPOTIFY_LISTEN_INTERVAL_MS = 1000;
 
 /** How long a track has to be listened to for it to count as played: 30 seconds, or half of a short track. */
 const playedAfterSec = (track: QueueTrack) => Math.min(PLAYED_AFTER_SEC, (track.durationSec ?? 2 * PLAYED_AFTER_SEC) / 2);
@@ -140,6 +142,7 @@ export class PlayerService {
     /** How long the current track has really been listened to, and whether it has counted as played. */
     private listenedSec = 0;
     private lastListenAt?: number;
+    private spotifyListenTimer?: NodeJS.Timeout;
     private playCounted = false;
     private progressSavedAt = 0;
 
@@ -465,12 +468,27 @@ export class PlayerService {
         } else if (change === "playing" && (this.status === "starting" || this.status === "paused" || this.status === "stopped")) {
             this.status = "playing";
             this.setPosition(this.spotify.ownedPositionSec());
+            this.startCountingSpotify();
             this.publish();
         } else if (change === "paused" && this.status === "playing") {
             this.setPosition(this.currentPosition());
             this.status = "paused";
+            this.lastListenAt = undefined;
             this.publish();
         }
+    }
+
+    /** Counts the listening to the current track of Spotify until it no longer plays. */
+    private startCountingSpotify() {
+        this.lastListenAt = Date.now();
+        this.spotifyListenTimer ??= setInterval(() => {
+            if (this.status === "playing" && this.currentSpotifyUri) {
+                this.countListening();
+            } else {
+                clearInterval(this.spotifyListenTimer);
+                this.spotifyListenTimer = undefined;
+            }
+        }, SPOTIFY_LISTEN_INTERVAL_MS);
     }
 
     /**
