@@ -1,9 +1,10 @@
 import NavigateBeforeIcon from "@mui/icons-material/NavigateBefore";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import { Alert, Box, Button, CircularProgress, Stack, Typography } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { createStreamLink, streamUrl, thumbnailUrl } from "../../api/home-video-api";
+import { CastPicker } from "../cast/CastPicker";
 import { ClipForm } from "./ClipForm";
 import { clipPath } from "./ClipTile";
 import { clipName, formatDate } from "./clipFormat";
@@ -36,6 +37,7 @@ export const ClipPage: React.FC = () => {
     const { id = "" } = useParams();
     const { clips } = useHomeVideos();
     const { url, failed } = useStreamUrl(id);
+    const video = useRef<HTMLVideoElement>(null);
     const index = clips?.findIndex((c) => c.id === id) ?? -1;
     const clip = clips?.[index];
 
@@ -54,6 +56,7 @@ export const ClipPage: React.FC = () => {
                     url && (
                         <video
                             key={clip.id}
+                            ref={video}
                             src={url}
                             poster={thumbnailUrl(clip.id)}
                             controls
@@ -84,6 +87,16 @@ export const ClipPage: React.FC = () => {
                         {index + 1} of {clips.length}
                     </Typography>
                 </Box>
+                <CastPicker
+                    clipId={clip.id}
+                    getPosition={() => video.current?.currentTime ?? 0}
+                    onCasting={() => video.current?.pause()}
+                    onHandBack={(positionSec) => {
+                        if (!video.current) return;
+                        video.current.currentTime = positionSec;
+                        void video.current.play().catch(() => undefined);
+                    }}
+                />
                 <Button component={Link} to={next ? clipPath(next.id) : "#"} disabled={!next} aria-label="Next" sx={STEP_BUTTON_SX}>
                     <Box component="span" sx={STEP_LABEL_SX}>
                         Next

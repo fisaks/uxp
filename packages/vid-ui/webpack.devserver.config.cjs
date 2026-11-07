@@ -30,6 +30,14 @@ module.exports = merge(baseConfig, {
                 secure: false,
             },
             {
+                context: ["/vid/ws-api"],
+                target: "http://localhost:3051",
+                ws: true,
+                changeOrigin: true,
+                pathRewrite: { "^/vid/ws-api": "/ws-api" },
+                secure: false,
+            },
+            {
                 context: ["/vid/"],
                 target: "http://localhost:3050",
                 changeOrigin: true,
