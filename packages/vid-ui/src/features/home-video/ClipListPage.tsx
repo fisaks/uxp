@@ -3,8 +3,8 @@ import { HomeVideoClip } from "@vid/common";
 import { usePortalContainerRef } from "@uxp/ui-lib";
 import React, { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { searchClips } from "../../api/home-video-api";
 import { SEARCH_PARAM } from "../search/SearchBox";
+import { useClipSearch } from "../search/useClipSearch";
 import { PAGE_WIDTH } from "../shared/pageWidth";
 import { useRestoreScroll } from "../shared/useRestoreScroll";
 import { ClipTile } from "./ClipTile";
@@ -15,7 +15,6 @@ import { YEAR_SCROLL_MARGIN, YearBar, yearAnchorId } from "./YearBar";
 const ANY = "";
 const HIGHLIGHT_MS = 2000;
 const UNLABELLED_PARAM = "unlabelled";
-const SEARCH_DEBOUNCE_MS = 250;
 
 type Filter = { year: string; person: string; tag: string; unlabelled: boolean; found: Set<string> | undefined };
 
@@ -60,35 +59,14 @@ const FilterSelect: React.FC<FilterSelectProps> = ({ label, value, options, onCh
     );
 };
 
-/** The ids of the clips that match the words, undefined while there are no words or no answer yet. A failed search shows all clips. */
-const useFoundIds = (query: string) => {
-    const [found, setFound] = useState<{ query: string; ids: Set<string> }>();
-    useEffect(() => {
-        if (!query) return;
-        let current = true;
-        const timer = setTimeout(
-            () =>
-                searchClips(query)
-                    .then((ids) => current && setFound({ query, ids: new Set(ids) }))
-                    .catch(() => undefined),
-            SEARCH_DEBOUNCE_MS
-        );
-        return () => {
-            current = false;
-            clearTimeout(timer);
-        };
-    }, [query]);
-    // The answer of an earlier query stays until the new one comes, so the list does not flash.
-    return query ? found?.ids : undefined;
-};
-
 export const ClipListPage: React.FC = () => {
     const { clips, labels, loadError } = useHomeVideos();
     // The filter is in the address, so it is still there when you come back from a clip.
     const [params, setParams] = useSearchParams();
     // The words come from the search box of the top bar, through the address.
     const query = params.get(SEARCH_PARAM) ?? "";
-    const found = useFoundIds(query.trim());
+    const foundIds = useClipSearch(query.trim());
+    const found = useMemo(() => (foundIds ? new Set(foundIds) : undefined), [foundIds]);
     const filter: Filter = {
         found,
         year: params.get("year") ?? ANY,
@@ -108,7 +86,10 @@ export const ClipListPage: React.FC = () => {
         );
 
     const years = useMemo(() => [...new Set((clips ?? []).map((c) => yearOf(c) ?? NO_DATE_LABEL))], [clips]);
-    const shown = useMemo(() => (clips ?? []).filter((c) => matches(c, filter)), [clips, filter.found, filter.year, filter.person, filter.tag, filter.unlabelled]);
+    const shown = useMemo(
+        () => (clips ?? []).filter((c) => matches(c, filter)),
+        [clips, filter.found, filter.year, filter.person, filter.tag, filter.unlabelled]
+    );
     const groups = useMemo(() => groupByYear(shown), [shown]);
 
     // The year that was jumped to is outlined for a moment, so it is clear where on the page it starts.

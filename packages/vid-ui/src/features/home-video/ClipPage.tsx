@@ -51,11 +51,25 @@ export const ClipPage: React.FC = () => {
                 {failed ? (
                     <Alert severity="error">The video could not be opened.</Alert>
                 ) : (
-                    url && <video key={clip.id} src={url} poster={thumbnailUrl(clip.id)} controls style={{ display: "block", width: "100%", height: "100%" }} />
+                    url && (
+                        <video
+                            key={clip.id}
+                            src={url}
+                            poster={thumbnailUrl(clip.id)}
+                            controls
+                            style={{ display: "block", width: "100%", height: "100%" }}
+                        />
+                    )
                 )}
             </Box>
             <Stack direction="row" alignItems="center" sx={{ my: 1.5, gap: 1 }}>
-                <Button component={Link} to={previous ? clipPath(previous.id) : "#"} disabled={!previous} aria-label="Previous" sx={STEP_BUTTON_SX}>
+                <Button
+                    component={Link}
+                    to={previous ? clipPath(previous.id) : "#"}
+                    disabled={!previous}
+                    aria-label="Previous"
+                    sx={STEP_BUTTON_SX}
+                >
                     <NavigateBeforeIcon />
                     <Box component="span" sx={STEP_LABEL_SX}>
                         Previous

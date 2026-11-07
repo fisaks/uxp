@@ -18,7 +18,8 @@ export const searchClips = (q: string) =>
 export const patchClip = (id: string, update: HomeVideoClipUpdate) =>
     axiosInstance.patch<HomeVideoClip>(apiUrl(`clips/${id}`), update).then(({ data }) => data);
 
-export const createStreamLink = (id: string) => axiosInstance.post<HomeVideoStreamLink>(apiUrl(`clips/${id}/stream-link`)).then(({ data }) => data);
+export const createStreamLink = (id: string) =>
+    axiosInstance.post<HomeVideoStreamLink>(apiUrl(`clips/${id}/stream-link`)).then(({ data }) => data);
 
 export const thumbnailUrl = (id: string) => apiUrl(`clips/${id}/thumbnail`);
 

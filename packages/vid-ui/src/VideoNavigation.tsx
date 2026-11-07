@@ -64,7 +64,7 @@ export const VideoNavigation: React.FC = () => {
                 {searching && !wide ? (
                     <>
                         <Box sx={{ flex: 1, minWidth: 0 }}>
-                            <SearchBox autoFocus />
+                            <SearchBox autoFocus onDone={() => setSearching(false)} />
                         </Box>
                         <LabelledIconButton label="Close the search" onClick={() => setSearching(false)}>
                             <CloseIcon />

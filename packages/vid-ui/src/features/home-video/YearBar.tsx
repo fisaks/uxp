@@ -23,7 +23,17 @@ type YearBarProps = {
 
 /** A row of years that jump to the clips of that year. It scrolls sideways when it does not fit. */
 export const YearBar: React.FC<YearBarProps> = ({ years, onJump }) => (
-    <Box sx={{ position: "sticky", top: NAV_BAR_HEIGHT, zIndex: (t) => t.zIndex.appBar - 2, bgcolor: "background.default", display: "flex", overflowX: "auto", mb: 1 }}>
+    <Box
+        sx={{
+            position: "sticky",
+            top: NAV_BAR_HEIGHT,
+            zIndex: (t) => t.zIndex.appBar - 2,
+            bgcolor: "background.default",
+            display: "flex",
+            overflowX: "auto",
+            mb: 1,
+        }}
+    >
         {years.map((year) => (
             <ButtonBase
                 key={year}
@@ -32,7 +42,16 @@ export const YearBar: React.FC<YearBarProps> = ({ years, onJump }) => (
                     onJump(year);
                 }}
                 aria-label={`Jump to ${year}`}
-                sx={{ px: 1, minWidth: 48, height: BAR_HEIGHT, typography: "body2", fontWeight: 600, color: "primary.main", borderRadius: 1, whiteSpace: "nowrap" }}
+                sx={{
+                    px: 1,
+                    minWidth: 48,
+                    height: BAR_HEIGHT,
+                    typography: "body2",
+                    fontWeight: 600,
+                    color: "primary.main",
+                    borderRadius: 1,
+                    whiteSpace: "nowrap",
+                }}
             >
                 {year}
             </ButtonBase>

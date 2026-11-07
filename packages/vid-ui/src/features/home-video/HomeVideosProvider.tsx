@@ -35,10 +35,7 @@ export const HomeVideosProvider: React.FC<React.PropsWithChildren> = ({ children
     const [loadError, setLoadError] = useState(false);
     const [saveError, setSaveError] = useState<string>();
 
-    const replaceClip = useCallback(
-        (clip: HomeVideoClip) => setClips((current) => current?.map((c) => (c.id === clip.id ? clip : c))),
-        []
-    );
+    const replaceClip = useCallback((clip: HomeVideoClip) => setClips((current) => current?.map((c) => (c.id === clip.id ? clip : c))), []);
 
     useEffect(() => {
         fetchClips()
