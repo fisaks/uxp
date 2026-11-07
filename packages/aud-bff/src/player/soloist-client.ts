@@ -118,6 +118,12 @@ export class SoloistClient {
     private buildCache?: { at: number; expiresAt?: string };
     /** The URI of the track of the queue of the player that Soloist plays, while it is the one that plays. */
     private owned?: string;
+    /** Until `settle`: what Soloist plays when the player starts is not Spotify starting, it is decided once the queue is back. */
+    private unsettled = false;
+    /** Set by `settle`: the track of the restored queue that may be playing (null: none). Undefined until then. */
+    private settleUri?: string | null;
+    /** Whether Soloist has reported its playback since the connection was opened. */
+    private stateKnown = false;
 
     constructor(
         private readonly url: string | undefined,
@@ -131,6 +137,39 @@ export class SoloistClient {
     start() {
         if (this.url) {
             this.connect(this.url);
+        }
+    }
+
+    /** What Soloist plays at the start of the player waits for `settle`, as the player cannot tell it from a Spotify app starting it. */
+    holdAtStart() {
+        this.unsettled = true;
+    }
+
+    /**
+     * The queue of before the restart is back, with `uri` as its current track when that is one of Spotify: what Soloist plays at
+     * that moment is that track, which the player takes over, or something else, which is paused. Without a report yet, the first one decides.
+     */
+    settle(uri: string | undefined) {
+        if (!this.unsettled) {
+            return;
+        }
+        this.settleUri = uri ?? null;
+        if (this.stateKnown || !this.url) {
+            this.resolveStart();
+        }
+    }
+
+    private resolveStart() {
+        this.unsettled = false;
+        if (!this.playing) {
+            return;
+        }
+        if (this.settleUri && this.current?.uri === this.settleUri) {
+            this.owned = this.settleUri;
+            this.onOwnedChange("playing");
+        } else {
+            this.send("pause");
+            this.playing = false;
         }
     }
 
@@ -282,6 +321,7 @@ export class SoloistClient {
             });
             this.playing = false;
             this.owned = undefined;
+            this.stateKnown = false;
             this.upcoming = [];
             this.awaitingAnswerUntil = 0;
             this.setCurrent(undefined);
@@ -355,6 +395,14 @@ export class SoloistClient {
             this.setCurrent(current);
         }
         const playing = PLAYING_STATUSES.includes(message.status ?? "");
+        this.stateKnown = true;
+        if (this.unsettled) {
+            this.playing = playing;
+            if (this.settleUri !== undefined) {
+                this.resolveStart();
+            }
+            return;
+        }
         if (this.owned) {
             if (message.item?.uri === this.owned) {
                 this.playing = playing;

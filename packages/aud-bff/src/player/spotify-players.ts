@@ -42,8 +42,14 @@ export class SpotifyPlayers {
     }
 
     start() {
+        this.house.holdAtStart();
         this.pub.start();
         this.house.start();
+    }
+
+    /** The queue of before the restart is back: what the house player plays now is taken over when it is the current track, else paused. */
+    settleHouse(currentUri: string | undefined) {
+        this.house.settle(currentUri);
     }
 
     /** The one that the buttons and the shown Spotify are: the one a phone started, else the public one, which phones use. */

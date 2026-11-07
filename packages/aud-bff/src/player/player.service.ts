@@ -59,6 +59,8 @@ type SpotifyControl = {
     owns(uri: string): boolean;
     /** The track of the queue that Spotify plays is stopped. */
     releaseOwned(): void;
+    /** The queue is back after a restart: the track Spotify plays is taken over when it is the current one, else paused. */
+    settleHouse(currentUri: string | undefined): void;
     /** The tracks of the URIs that Spotify plays or has coming. */
     find(uris: string[]): SpotifyQueueEntry[];
 };
@@ -165,6 +167,14 @@ export class PlayerService {
      * and then every track would look missing: the saved queue is kept for the next start.
      */
     async restore(): Promise<void> {
+        try {
+            await this.restoreQueue();
+        } finally {
+            this.spotify.settleHouse(this.currentSpotifyUri);
+        }
+    }
+
+    private async restoreQueue(): Promise<void> {
         const saved = await this.storage.load();
         if (!saved || saved.tracks.length === 0 || !Object.values(this.libraries).some((library) => library.hasTracks())) {
             return;
@@ -452,7 +462,7 @@ export class PlayerService {
         }
         if (change === "ended") {
             void this.advance(true);
-        } else if (change === "playing" && (this.status === "starting" || this.status === "paused")) {
+        } else if (change === "playing" && (this.status === "starting" || this.status === "paused" || this.status === "stopped")) {
             this.status = "playing";
             this.setPosition(this.spotify.ownedPositionSec());
             this.publish();
