@@ -1,6 +1,6 @@
 import { AmplifierState, AudioAppActionPayloadRequestMap } from "@aud/common";
 import { ErrorCodeMessageMap, mapApiErrorCodeToMessage, WebSocketError, WebSocketTimeoutError } from "@uxp/ui-lib";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAudioWebSocket } from "../../app/AudioBrowserWebSocketManager";
 import { useAppDispatch } from "../../hooks";
 import { amplifierStateReceived } from "./amplifierSlice";
@@ -15,6 +15,8 @@ const ERROR_MESSAGES: ErrorCodeMessageMap = {
     DISCONNECTED: "The amplifier cannot be reached.",
     INVALID_STATE: "The amplifier did not accept the command. It may still be starting up.",
 };
+
+const ERROR_MS = 8000;
 
 const errorMessage = (error: unknown): string => {
     if (error instanceof WebSocketError) {
@@ -31,6 +33,13 @@ export const useAmplifierCommand = () => {
     const { sendMessageAsync } = useAudioWebSocket();
     const dispatch = useAppDispatch();
     const [error, setError] = useState<string | undefined>(undefined);
+
+    // A new message gets its own time, so one that comes while another is shown is not cut short.
+    useEffect(() => {
+        if (!error) return;
+        const timer = setTimeout(() => setError(undefined), ERROR_MS);
+        return () => clearTimeout(timer);
+    }, [error]);
 
     const send: SendAmplifierCommand = useCallback(
         async (action, payload) => {

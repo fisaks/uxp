@@ -1,4 +1,4 @@
-import { Alert, Box, CircularProgress, Snackbar, Stack } from "@mui/material";
+import { Alert, Box, CircularProgress, Stack } from "@mui/material";
 import React from "react";
 import { useAppSelector } from "../../hooks";
 import { selectAmplifierState } from "./amplifierSelectors";
@@ -35,17 +35,17 @@ const AmplifierPage: React.FC<AmplifierPageProps> = ({ compact = false, nowPlayi
 
     return (
         <Stack spacing={2} sx={compact ? { p: 2 } : undefined}>
+            {error && (
+                <Alert severity="error" onClose={clearError}>
+                    {error}
+                </Alert>
+            )}
             {!state.reachable && <Alert severity="warning">The amplifier cannot be reached. Showing the last known state.</Alert>}
             <PowerVolumeCard info={info} status={status} disabled={disabled} send={send} compact={compact} />
             <InputCard info={info} status={status} disabled={disabled} send={send} />
             {nowPlaying}
             {status.tuner && <TunerCard info={info} tuner={status.tuner} disabled={disabled} send={send} favoritesOnly={compact} />}
             {!compact && <AdvancedCard info={info} status={status} disabled={disabled} send={send} />}
-            <Snackbar open={error !== undefined} autoHideDuration={6000} onClose={clearError}>
-                <Alert severity="error" onClose={clearError}>
-                    {error}
-                </Alert>
-            </Snackbar>
         </Stack>
     );
 };
