@@ -8,6 +8,8 @@ const FILE = "spotify-cache.json";
 export const SPOTIFY_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 // The oldest are forgotten at this many of each.
 const MAX_ENTRIES = 2000;
+// The file is rewritten whole, which holds the event loop for a while on a small machine, so a change waits this long for others.
+const WRITE_DELAY_MS = 60_000;
 
 export type CachedArtist = { at: number; artist: LibraryArtist; albums: LibraryAlbum[] };
 /** `entries` are the tracks as the queue plays them, which the catalog must know again when the album is served from here. */
@@ -36,12 +38,14 @@ export class SpotifyCache {
     private albums = new Map<string, CachedAlbum>();
     private blocked = new Map<string, number>();
     private readonly writer?: SerializedJsonWriter;
+    private writeTimer?: NodeJS.Timeout;
+    private dirty = false;
 
     constructor(private readonly dataDir?: string) {
         this.writer =
             dataDir === undefined
                 ? undefined
-                : new SerializedJsonWriter(path.join(dataDir, FILE), (error) => AppLogger.warn(undefined, { message: "Could not save the Spotify cache", error }));
+                : new SerializedJsonWriter(path.join(dataDir, FILE), (error) => AppLogger.warn(undefined, { message: "Could not save the Spotify cache", error }), true);
     }
 
     async load() {
@@ -62,13 +66,13 @@ export class SpotifyCache {
     saveArtist(uri: string, artist: LibraryArtist, albums: LibraryAlbum[]) {
         this.artists.set(uri, { at: Date.now(), artist, albums });
         forgetOldest(this.artists);
-        this.write();
+        this.writeLater();
     }
 
     saveAlbum(uri: string, value: Omit<CachedAlbum, "at">) {
         this.albums.set(uri, { at: Date.now(), ...value });
         forgetOldest(this.albums);
-        this.write();
+        this.writeLater();
     }
 
     /** When the kind of call may be made again (epoch ms), or none when it may be made now. */
@@ -76,19 +80,41 @@ export class SpotifyCache {
         const until = this.blocked.get(call);
         if (until !== undefined && until <= Date.now()) {
             this.blocked.delete(call);
-            this.write();
+            this.writeLater();
             return undefined;
         }
         return until;
     }
 
+    /** Written at once, so that a restart inside the window does not forget what Spotify said. */
     block(call: string, until: number) {
         this.blocked.set(call, until);
-        this.write();
+        this.dirty = true;
+        void this.flush();
     }
 
-    private write() {
-        void this.writer?.write({
+    /** Writes what has changed and is not saved yet; also on a stop of the service. */
+    flush(): Promise<void> {
+        clearTimeout(this.writeTimer);
+        this.writeTimer = undefined;
+        return this.write();
+    }
+
+    private writeLater() {
+        this.dirty = true;
+        this.writeTimer ??= setTimeout(() => {
+            this.writeTimer = undefined;
+            void this.write();
+        }, WRITE_DELAY_MS);
+    }
+
+    private async write() {
+        if (!this.dirty) {
+            // A write that is on its way is waited for.
+            return this.writer?.idle();
+        }
+        this.dirty = false;
+        await this.writer?.write({
             artists: Object.fromEntries(this.artists),
             albums: Object.fromEntries(this.albums),
             blocked: Object.fromEntries(this.blocked),

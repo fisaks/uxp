@@ -10,10 +10,13 @@ export const readJsonFile = async <T>(file: string): Promise<T | undefined> => {
     }
 };
 
-/** Written pretty printed, so it can be read, and to a temporary file first, so a stop in the middle does not leave a damaged file. */
-export const writeJsonFile = async (file: string, data: unknown): Promise<void> => {
+/**
+ * Written pretty printed, so it can be read (`compact` leaves that out, for a file that is large and not for reading: it is faster
+ * to write), and to a temporary file first, so a stop in the middle does not leave a damaged file.
+ */
+export const writeJsonFile = async (file: string, data: unknown, compact = false): Promise<void> => {
     await mkdir(path.dirname(file), { recursive: true });
-    await writeFile(`${file}.tmp`, JSON.stringify(data, null, 2));
+    await writeFile(`${file}.tmp`, JSON.stringify(data, null, compact ? undefined : 2));
     await rename(`${file}.tmp`, file);
 };
 
@@ -23,11 +26,17 @@ export class SerializedJsonWriter {
 
     constructor(
         private readonly file: string,
-        private readonly onError: (error: unknown) => void
+        private readonly onError: (error: unknown) => void,
+        private readonly compact = false
     ) {}
 
+    /** Resolves when the writes made so far are done. */
+    idle(): Promise<void> {
+        return this.writing;
+    }
+
     write(data: unknown): Promise<void> {
-        this.writing = this.writing.then(() => writeJsonFile(this.file, data)).catch(this.onError);
+        this.writing = this.writing.then(() => writeJsonFile(this.file, data, this.compact)).catch(this.onError);
         return this.writing;
     }
 }

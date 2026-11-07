@@ -7,6 +7,7 @@ import path from "path";
 import { chromecastService } from "./chromecast/chromecast.service";
 import { audiobookService, libraryService } from "./library/library.service";
 import { createLogStream } from "./logging/log-stream";
+import { onShutdown } from "./shutdown";
 import { bookProgressStore } from "./player/book-progress";
 import { trackGainStore } from "./player/track-gain";
 import { playerService } from "./player/player.service";
@@ -39,6 +40,9 @@ registerLocalWebSocketHandlers({
 });
 
 const port = 3041;
+
+// Changes to the Spotify cache wait a while to be written, a stop of the service writes them.
+onShutdown(() => spotifyCatalog.cache.flush());
 
 // The playlists and the history are read before the first request, so that none is answered with an empty list.
 void Promise.all([playlistService.load(), historyService.load(), bookProgressStore.load(), trackGainStore.load(), spotifyCatalog.cache.load()]).then(() =>

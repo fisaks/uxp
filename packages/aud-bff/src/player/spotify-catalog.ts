@@ -10,7 +10,7 @@ const TOKEN_URL = "https://accounts.spotify.com/api/token";
 export const SEARCH_PAGE_SIZE = 10;
 // The tracks looked up or heard of are kept, so that a queue or a history entry that names one can be played again.
 // The oldest are forgotten at this many.
-const MAX_TRACKS = 2000;
+const MAX_TRACKS = 10000;
 // The cap is reported at most this often, with the number of tracks forgotten since, so that it can be tuned from the logs.
 const EVICTION_LOG_INTERVAL_MS = 60 * 60 * 1000;
 // A token is renewed this long before it expires.

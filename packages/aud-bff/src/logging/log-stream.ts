@@ -1,13 +1,13 @@
 import axios from "axios";
 import os from "os";
 import { Writable } from "stream";
+import { onShutdown } from "../shutdown";
 
 const FLUSH_INTERVAL_MS = 5000;
 const MAX_BATCH_LINES = 200;
 // While Loki cannot be reached the newest lines are kept up to this many, the oldest are dropped.
 const MAX_BUFFERED_LINES = 2000;
 const REQUEST_TIMEOUT_MS = 5000;
-const SHUTDOWN_FLUSH_MS = 2000;
 const WARN_EVERY_MS = 60_000;
 type LogEntry = [timestampNs: string, line: string];
 
@@ -96,12 +96,7 @@ export const createLogStream = (lokiUrl?: string): Writable => {
     const shipper = lokiUrl ? new LokiShipper(lokiUrl, { container: "aud-bff", stream: "stdout", host: os.hostname() }) : undefined;
     if (shipper) {
         // A stop of the service should not lose the last lines, which are the ones that tell why it stopped.
-        for (const signal of ["SIGTERM", "SIGINT"] as const) {
-            process.once(signal, () => {
-                const exit = () => process.exit(0);
-                void Promise.race([shipper.flush(), new Promise((resolve) => setTimeout(resolve, SHUTDOWN_FLUSH_MS))]).then(exit, exit);
-            });
-        }
+        onShutdown(() => shipper.flush());
     }
     return new Writable({
         write(chunk, _encoding, callback) {

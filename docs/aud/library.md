@@ -62,7 +62,8 @@ played from here as any other.
 
 What Spotify says about an artist (with its albums) and an album (with its tracks) is cached in `spotify-cache.json` in
 `AUD_DATA_DIR` for 24 hours (at most 2000 of each, the oldest are forgotten), so a visit asks Spotify once a day at most
-and a restart does not start over. When Spotify fails the stale copy is served. If Spotify answers 429 with a Retry-After
+and a restart does not start over. Changes are written at most once a minute (and when the service stops), a Retry-After
+at once. When Spotify fails the stale copy is served. If Spotify answers 429 with a Retry-After
 over 10 seconds, that kind of call is not made until then (also kept in the file, so it survives a restart). Without a
 copy the action fails with 503 and "Spotify limits this until HH:MM" or "Spotify does not answer". Every 429 is logged
 with `[Spotify]` and its Retry-After. Deleting the file is safe.
