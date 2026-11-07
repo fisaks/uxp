@@ -34,3 +34,18 @@ export interface HomeVideoLabels {
     people: string[];
     tags: string[];
 }
+
+/** Where a stream can be fetched without the login cookie, for a limited time. */
+export interface HomeVideoStreamLink {
+    /** Path on the BFF API, with the signature in the query. A Chromecast needs it made absolute with the address of this host. */
+    path: string;
+    expiresAt: string;
+}
+
+/** Where a clip is played. Switching target hands over the position. */
+export type PlaybackTarget = { kind: "browser" } | { kind: "cast"; deviceId: string };
+
+export interface HomeVideoStreamQuery {
+    exp: number;
+    sig: string;
+}

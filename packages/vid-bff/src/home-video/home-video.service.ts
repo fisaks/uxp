@@ -89,6 +89,12 @@ export class HomeVideoService {
         return { people: labelsByUse(metadata.map((entry) => entry.people ?? [])), tags: labelsByUse(metadata.map((entry) => entry.tags ?? [])) };
     }
 
+    /** The file of the clip on disk, undefined when there is no such clip. */
+    filePath(id: string): string | undefined {
+        const clip = this.scanned.get(id);
+        return clip && homeVideoConfig.folder ? path.join(homeVideoConfig.folder, clip.file) : undefined;
+    }
+
     /** The path of the poster frame of the clip, undefined when there is no such clip. */
     thumbnail(id: string): Promise<string> | undefined {
         const clip = this.scanned.get(id);
