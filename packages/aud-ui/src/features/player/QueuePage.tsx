@@ -92,8 +92,20 @@ const SpotifyQueue: React.FC<{ spotify: SpotifyNowPlaying; active: boolean; onCo
     active,
     onContinue,
 }) => {
+    const navigate = useNavigate();
+    const { notify } = usePlayerActions();
+    useRequest("playlist_list", {});
+    const sendPlaylist = usePlaylistCommand();
+    const lastPlaylist = useAppSelector(selectMostRecentPlaylist);
+    const [saving, setSaving] = useState<string[] | undefined>(undefined);
+    const addToLastPlaylist = async (uri: string, title: string) => {
+        if (lastPlaylist && (await sendPlaylist("playlist_add_tracks", { id: lastPlaylist.id, trackIds: [uri] }))) {
+            notify(`Added "${title}" to "${lastPlaylist.name}"`);
+        }
+    };
     const rows = [
         {
+            uri: spotify.uri,
             title: spotify.title,
             artist: spotify.artist,
             durationSec: spotify.durationSec,
@@ -149,8 +161,15 @@ const SpotifyQueue: React.FC<{ spotify: SpotifyNowPlaying; active: boolean; onCo
                     {row.current && active && spotify.status === "playing" ? (
                         <GraphicEqIcon color="primary" fontSize="small" sx={{ mx: 1 }} />
                     ) : null}
+                    <TrackMenu
+                        lastPlaylist={lastPlaylist}
+                        onAddToLastPlaylist={() => addToLastPlaylist(row.uri, row.title)}
+                        onAddToPlaylist={() => setSaving([row.uri])}
+                        moreFromArtist={{ name: row.artist, onChoose: () => navigate(searchPagePath(row.artist)) }}
+                    />
                 </Box>
             ))}
+            <AddToPlaylistDialog trackIds={saving} title="Add to a playlist" onClose={() => setSaving(undefined)} />
         </>
     );
 };

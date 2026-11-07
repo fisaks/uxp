@@ -9,6 +9,8 @@ export const SEARCH_PAGE_SIZE = 10;
 // The tracks looked up or heard of are kept, so that a queue or a history entry that names one can be played again.
 // The oldest are forgotten at this many.
 const MAX_TRACKS = 2000;
+// The cap is reported at most this often, with the number of tracks forgotten since, so that it can be tuned from the logs.
+const EVICTION_LOG_INTERVAL_MS = 60 * 60 * 1000;
 // A token is renewed this long before it expires.
 const TOKEN_MARGIN_MS = 60_000;
 const REQUEST_TIMEOUT_MS = 10_000;
@@ -65,6 +67,8 @@ export class SpotifyCatalog {
     private token?: { value: string; expiresAt: number };
     private tokenRequest?: Promise<string>;
     private lastOk?: boolean;
+    private forgotten = 0;
+    private lastEvictionLogAt = 0;
 
     private readonly http: AxiosInstance = axios.create({ timeout: REQUEST_TIMEOUT_MS });
 
@@ -94,8 +98,23 @@ export class SpotifyCatalog {
             this.entries.delete(entry.uri);
             this.entries.set(entry.uri, entry);
         }
-        for (const uri of [...this.entries.keys()].slice(0, Math.max(0, this.entries.size - MAX_TRACKS))) {
-            this.entries.delete(uri);
+        if (this.entries.size > MAX_TRACKS) {
+            const evict = [...this.entries.keys()].slice(0, this.entries.size - MAX_TRACKS);
+            for (const uri of evict) {
+                this.entries.delete(uri);
+            }
+            this.reportEviction(evict.length);
+        }
+    }
+
+    private reportEviction(count: number) {
+        this.forgotten += count;
+        if (this.forgotten > 0 && Date.now() - this.lastEvictionLogAt >= EVICTION_LOG_INTERVAL_MS) {
+            AppLogger.warn(undefined, {
+                message: `[Spotify] The catalog is at its limit of ${MAX_TRACKS} tracks, ${this.forgotten} forgotten since the last report`,
+            });
+            this.forgotten = 0;
+            this.lastEvictionLogAt = Date.now();
         }
     }
 

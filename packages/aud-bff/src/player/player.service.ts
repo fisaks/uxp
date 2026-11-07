@@ -459,7 +459,15 @@ export class PlayerService {
 
     /** What Spotify plays changed: the clients show it, as what the player shows or as what can be continued. */
     onSpotifyChanged() {
-        this.wsManager.broadcastToTopic(PLAYER_TOPIC, { action: "player_state", success: true, payload: this.getState() });
+        const state = this.getState();
+        // What Spotify shows in the queue page is known, so it can be put in a playlist from there.
+        for (const spotify of [state.spotify, state.spotifyIdle]) {
+            if (spotify) {
+                const { upcoming, uri, title, artist, album, durationSec, coverUrl } = spotify;
+                spotifyCatalog.add([{ uri, title, artist, album, durationSec, coverUrl }, ...upcoming]);
+            }
+        }
+        this.wsManager.broadcastToTopic(PLAYER_TOPIC, { action: "player_state", success: true, payload: state });
     }
 
     /** The user continues the queue, which Spotify may have been the source over: it is paused where it is. */
