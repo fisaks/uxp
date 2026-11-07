@@ -7,8 +7,9 @@ import { AppError, AppErrorV2 } from "./AppError";
 import { createErrorResponse } from "./errorResponse";
 
 export const errorHandler = (error: FastifyError, request: FastifyRequest, reply: FastifyReply) => {
-    // Log the error for debugging
-    AppLogger.error(request, { error: error, message: "GLOBAL ERROR HANDLER" + process.env.NODE_ENV });
+    // A request the client got wrong (4xx) is a warning, not a fault of the server.
+    const log = isClientError(error) ? AppLogger.warn.bind(AppLogger) : AppLogger.error.bind(AppLogger);
+    log(request, { error: error, message: "GLOBAL ERROR HANDLER" + process.env.NODE_ENV });
 
     if (error instanceof AppError || error instanceof AppErrorV2) {
         handleAppError(error, request, reply);
@@ -20,11 +21,13 @@ export const errorHandler = (error: FastifyError, request: FastifyRequest, reply
     }
 };
 
+const isClientError = (error: FastifyError) => error.statusCode !== undefined && error.statusCode >= 400 && error.statusCode < 500;
+
 const handleAJvError = (error: FastifyError & { validation?: ErrorObject[] }, request: FastifyRequest, reply: FastifyReply) => {
     const statusCode = error.statusCode ?? 500;
     const code = ErrorCodes.VALIDATION;
     const validation = error.validation ?? [];
-    AppLogger.error(request, { object: { RequestBody: request.body } });
+    AppLogger.warn(request, { object: { RequestBody: request.body } });
 
     const message = process.env.NODE_ENV === "development" ? validation.map((error) => error.message).join(", ") : undefined;
     const params = validation
