@@ -1,5 +1,5 @@
-import { CastState } from "@vid/common";
-import { WebSocketProvider } from "@uxp/ui-lib";
+import { CastState, VideoAppActionPayloadRequestMap, VideoAppActionPayloadResponseMap } from "@vid/common";
+import { BrowserWebSocketManager, WebSocketProvider } from "@uxp/ui-lib";
 import axios from "axios";
 import React, { createContext, useCallback, useContext, useMemo, useState } from "react";
 import { castPause, castPlay, castSeek, castStop, startCast } from "../../api/cast-api";
@@ -26,11 +26,17 @@ export const useCast = () => {
     return value;
 };
 
-const getWebSocket = () => VideoAppBrowserWebSocketManager.getInstance();
+const getPageWebSocket = () => VideoAppBrowserWebSocketManager.getInstance();
+
+type CastProviderProps = {
+    /** The connection to use: the one of the page (default) or the one of the System Center panel. */
+    getWebSocket?: () => BrowserWebSocketManager<VideoAppActionPayloadRequestMap, VideoAppActionPayloadResponseMap>;
+    children: React.ReactNode;
+};
 
 /** The casts of the page: live state from the BFF over the WebSocket, and the commands that change it. */
-export const CastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const ws = useMemo(getWebSocket, []);
+export const CastProvider: React.FC<CastProviderProps> = ({ getWebSocket = getPageWebSocket, children }) => {
+    const ws = useMemo(getWebSocket, [getWebSocket]);
     const [state, setState] = useState<CastState | undefined>(undefined);
     const [error, setError] = useState<string | undefined>(undefined);
 

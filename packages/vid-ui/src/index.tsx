@@ -5,8 +5,9 @@ import ReactDOM from "react-dom/client";
 import { Provider } from "react-redux";
 import { ShadowRootProvider } from "@uxp/ui-lib";
 import VidApp from "./VidApp";
+import VidSystem from "./VidSystem";
 import { createStore } from "./app/store";
-import { getUxpAppIdentifier, getUxpContentId, initializeConfig } from "./config";
+import { getAppOption, getUxpAppIdentifier, getUxpContentId, initializeConfig } from "./config";
 const styleInsert = require("../../tools/src/insert-function.cjs");
 
 declare const module: __WebpackModuleApi.Module;
@@ -51,10 +52,12 @@ export const initApplication = (documentRoot: ShadowRoot | Document) => {
             </React.StrictMode>
         );
     };
-    renderApp(VidApp);
+    // The page that is mounted is chosen by the data-app-option of the HTML page: index.html is the app, system.html the System Center panel.
+    const main = getAppOption<{ main?: "VidApp" | "SystemView" }>()?.main ?? "VidApp";
+    renderApp(main === "SystemView" ? VidSystem : VidApp);
     if (process.env.NODE_ENV === "development" && module.hot) {
-        module.hot.accept("./VidApp", () => {
-            renderApp(require("./VidApp").default);
+        module.hot.accept(["./VidApp", "./VidSystem"], () => {
+            renderApp(main === "SystemView" ? require("./VidSystem").default : require("./VidApp").default);
         });
     }
     return () => {
