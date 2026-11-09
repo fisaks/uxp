@@ -8,13 +8,13 @@ import { Alert, Box, ButtonBase, LinearProgress, Paper, Slider, Snackbar, Stack,
 import { CastSession } from "@vid/common";
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { useHomeVideos } from "../home-video/HomeVideosProvider";
+import { useGetClipsQuery } from "../home-video/home-video.api";
 import { thumbnailUrl } from "../../api/home-video-api";
 import { clipPath } from "../home-video/ClipTile";
 import { clipName, formatDuration } from "../home-video/clipFormat";
 import { LabelledIconButton } from "../shared/LabelledIconButton";
 import { PAGE_WIDTH } from "../shared/pageWidth";
-import { useCast } from "./CastProvider";
+import { useCast } from "./useCast";
 import { sessionPosition, sessionStateText } from "./castText";
 
 const SKIP_SECONDS = 30;
@@ -38,7 +38,7 @@ const useNow = (active: boolean) => {
 };
 
 const SessionRow: React.FC<{ session: CastSession; now: number; compact: boolean }> = ({ session, now, compact }) => {
-    const { clips } = useHomeVideos();
+    const { data: clips } = useGetClipsQuery();
     const { play, pause, stop, seek, restart } = useCast();
     const theme = useTheme();
     const wide = useMediaQuery(theme.breakpoints.up("md")) && !compact;
@@ -194,7 +194,7 @@ export const CastRows: React.FC<{ compact?: boolean }> = ({ compact = false }) =
 export const CastErrorNotice: React.FC = () => {
     const { error, clearError } = useCast();
     return (
-        <Snackbar open={error !== undefined} autoHideDuration={6000} onClose={clearError}>
+        <Snackbar open={error !== undefined} autoHideDuration={6000} onClose={(_event, reason) => reason !== "clickaway" && clearError()}>
             <Alert severity="error" onClose={clearError}>
                 {error}
             </Alert>

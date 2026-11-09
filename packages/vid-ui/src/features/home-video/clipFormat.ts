@@ -1,4 +1,6 @@
-import { HomeVideoClip } from "@vid/common";
+import { HomeVideoClip, HomeVideoLabels } from "@vid/common";
+
+export const NO_LABELS: HomeVideoLabels = { people: [], tags: [] };
 
 export const NO_DATE_LABEL = "No date";
 

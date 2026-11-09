@@ -9,7 +9,7 @@ import { ClipForm } from "./ClipForm";
 import { clipPath } from "./ClipTile";
 import { clipName, formatDate } from "./clipFormat";
 import { PAGE_WIDTH } from "../shared/pageWidth";
-import { useHomeVideos } from "./HomeVideosProvider";
+import { useGetClipsQuery } from "./home-video.api";
 
 // On a phone the buttons are only arrows, so the name of the clip has the room.
 const STEP_BUTTON_SX = { minWidth: 0, px: { xs: 0.5, sm: 1.5 } };
@@ -35,7 +35,7 @@ const useStreamUrl = (id: string) => {
 
 export const ClipPage: React.FC = () => {
     const { id = "" } = useParams();
-    const { clips } = useHomeVideos();
+    const { data: clips } = useGetClipsQuery();
     const { url, failed } = useStreamUrl(id);
     const video = useRef<HTMLVideoElement>(null);
     const index = clips?.findIndex((c) => c.id === id) ?? -1;

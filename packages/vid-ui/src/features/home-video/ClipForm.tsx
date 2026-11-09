@@ -5,7 +5,8 @@ import { HomeVideoClip, HomeVideoClipUpdate } from "@vid/common";
 import { usePortalContainerRef } from "@uxp/ui-lib";
 import { DateTime } from "luxon";
 import React, { useState } from "react";
-import { useHomeVideos } from "./HomeVideosProvider";
+import { useGetLabelsQuery, useUpdateClipMutation } from "./home-video.api";
+import { NO_LABELS } from "./clipFormat";
 
 // Side by side from a tablet width up, one under the other on a phone.
 const DATE_ROW_COLUMNS = { xs: "1fr", sm: "1fr 200px" };
@@ -40,13 +41,14 @@ const LabelsField: React.FC<LabelsFieldProps> = ({ label, value, options, onChan
 
 /** The fields of a clip. A text field is saved when you leave it, a list or the date when it changes; only what changed is sent. */
 export const ClipForm: React.FC<{ clip: HomeVideoClip }> = ({ clip }) => {
-    const { labels, updateClip } = useHomeVideos();
+    const labels = useGetLabelsQuery().data ?? NO_LABELS;
+    const [updateClip] = useUpdateClipMutation();
     const [title, setTitle] = useState(clip.title);
     const [description, setDescription] = useState(clip.description);
     const theme = useTheme();
     const portalContainer = usePortalContainerRef();
 
-    const save = (update: HomeVideoClipUpdate) => void updateClip(clip.id, update);
+    const save = (update: HomeVideoClipUpdate) => void updateClip({ id: clip.id, update });
     const saveTitle = () => {
         const next = title.trim();
         setTitle(next);

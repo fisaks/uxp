@@ -5,7 +5,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import { Box, Stack, Typography, useMediaQuery, useTheme } from "@mui/material";
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useHomeVideos } from "./features/home-video/HomeVideosProvider";
+import { useGetStatusQuery } from "./features/status/status.api";
 import { SearchBox } from "./features/search/SearchBox";
 import { LabelledIconButton } from "./features/shared/LabelledIconButton";
 import { PAGE_WIDTH } from "./features/shared/pageWidth";
@@ -32,7 +32,7 @@ export const VideoNavigation: React.FC = () => {
     const theme = useTheme();
     const wide = useMediaQuery(theme.breakpoints.up("sm"));
     const [searching, setSearching] = useState(false);
-    const { searchAvailable } = useHomeVideos();
+    const searchAvailable = useGetStatusQuery().data?.searchAvailable ?? false;
     const atHome = pathname === HOME_PATH;
     const section = sectionOf(pathname);
     // A page below the main page of its section, such as a clip, has the way up to that section.

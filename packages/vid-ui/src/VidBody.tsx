@@ -1,19 +1,29 @@
-import { Alert, Box, Snackbar } from "@mui/material";
+import { Alert, Box, Snackbar, SnackbarCloseReason } from "@mui/material";
+import React from "react";
 import { AppBodyContent } from "@uxp/ui-lib";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { CastBar, CAST_ROW_ROOM } from "./features/cast/CastBar";
-import { CastProvider, useCast } from "./features/cast/CastProvider";
+import { CastProvider } from "./features/cast/CastProvider";
+import { useCast } from "./features/cast/useCast";
 import { ClipListPage } from "./features/home-video/ClipListPage";
 import { ClipPage } from "./features/home-video/ClipPage";
-import { HomeVideosProvider, useHomeVideos } from "./features/home-video/HomeVideosProvider";
+import { saveErrorCleared } from "./features/home-video/saveErrorSlice";
+import { selectSaveErrorMessage } from "./features/home-video/saveErrorSelectors";
 import { HomePage } from "./features/home/HomePage";
+import { useAppDispatch, useAppSelector } from "./hooks";
 import { HOME_PATH, HOME_VIDEOS_PATH } from "./menu";
 import { VideoNavigation } from "./VideoNavigation";
 
 const SaveErrorNotice = () => {
-    const { saveError, clearSaveError } = useHomeVideos();
+    const dispatch = useAppDispatch();
+    const saveError = useAppSelector(selectSaveErrorMessage);
+    const clearSaveError = () => dispatch(saveErrorCleared());
+    // A click elsewhere is what blurs the field that was being saved, so it must not close the notice.
+    const closeNotice = (_event: React.SyntheticEvent | Event, reason?: SnackbarCloseReason) => {
+        if (reason !== "clickaway") clearSaveError();
+    };
     return (
-        <Snackbar open={saveError !== undefined} autoHideDuration={6000} onClose={clearSaveError}>
+        <Snackbar open={saveError !== undefined} autoHideDuration={6000} onClose={closeNotice}>
             <Alert severity="error" onClose={clearSaveError}>
                 {saveError}
             </Alert>
@@ -40,11 +50,9 @@ const Pages = () => {
 export const VidBody = () => (
     <AppBodyContent appHaveOwnLeftSideBar={false}>
         <CastProvider>
-            <HomeVideosProvider>
-                <Pages />
-                <CastBar />
-                <SaveErrorNotice />
-            </HomeVideosProvider>
+            <Pages />
+            <CastBar />
+            <SaveErrorNotice />
         </CastProvider>
     </AppBodyContent>
 );

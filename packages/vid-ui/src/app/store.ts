@@ -1,6 +1,9 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { remoteAppReducer } from "@uxp/ui-lib";
 import { createLogger } from "redux-logger";
+import { castReducer } from "../features/cast/castSlice";
+import { saveErrorReducer } from "../features/home-video/saveErrorSlice";
+import { vidApi } from "./vidApi";
 
 export const createStore = () => {
     const logger = createLogger({
@@ -11,9 +14,12 @@ export const createStore = () => {
     return configureStore({
         reducer: {
             remoteApp: remoteAppReducer,
+            [vidApi.reducerPath]: vidApi.reducer,
+            cast: castReducer,
+            saveError: saveErrorReducer,
         },
         devTools: process.env.NODE_ENV === "development",
-        middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(logger),
+        middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(vidApi.middleware, logger),
     });
 };
 

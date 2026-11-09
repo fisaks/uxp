@@ -6,7 +6,7 @@ import RefreshIcon from "@mui/icons-material/Refresh";
 import { CircularProgress, Divider, ListItemIcon, ListItemText, Menu, MenuItem, Tooltip, IconButton } from "@mui/material";
 import { usePortalContainerRef } from "@uxp/ui-lib";
 import React, { useEffect, useRef, useState } from "react";
-import { useCast } from "./CastProvider";
+import { useCast } from "./useCast";
 
 const SEARCH_SHOW_MS = 4000;
 

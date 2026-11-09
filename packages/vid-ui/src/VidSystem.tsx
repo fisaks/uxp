@@ -3,8 +3,8 @@ import { UxpTheme } from "@uxp/ui-lib";
 import React from "react";
 import { VideoSystemBrowserWebSocketManager } from "./app/VideoBrowserWebSocketManager";
 import { CastErrorNotice, CastRows } from "./features/cast/CastBar";
-import { CastProvider, useCast } from "./features/cast/CastProvider";
-import { HomeVideosProvider } from "./features/home-video/HomeVideosProvider";
+import { CastProvider } from "./features/cast/CastProvider";
+import { useCast } from "./features/cast/useCast";
 
 const getWebSocket = () => VideoSystemBrowserWebSocketManager.getInstance();
 
@@ -22,9 +22,7 @@ const Casts: React.FC = () => {
 const VidSystem: React.FC = () => (
     <UxpTheme>
         <CastProvider getWebSocket={getWebSocket}>
-            <HomeVideosProvider>
-                <Casts />
-            </HomeVideosProvider>
+            <Casts />
         </CastProvider>
     </UxpTheme>
 );

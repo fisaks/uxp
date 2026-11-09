@@ -8,8 +8,8 @@ import { useClipSearch } from "../search/useClipSearch";
 import { PAGE_WIDTH } from "../shared/pageWidth";
 import { useRestoreScroll } from "../shared/useRestoreScroll";
 import { ClipTile } from "./ClipTile";
-import { NO_DATE_LABEL, isUnlabelled, yearOf } from "./clipFormat";
-import { useHomeVideos } from "./HomeVideosProvider";
+import { NO_DATE_LABEL, NO_LABELS, isUnlabelled, yearOf } from "./clipFormat";
+import { useGetClipsQuery, useGetLabelsQuery } from "./home-video.api";
 import { YEAR_SCROLL_MARGIN, YearBar, yearAnchorId } from "./YearBar";
 
 const ANY = "";
@@ -60,7 +60,8 @@ const FilterSelect: React.FC<FilterSelectProps> = ({ label, value, options, onCh
 };
 
 export const ClipListPage: React.FC = () => {
-    const { clips, labels, loadError } = useHomeVideos();
+    const { data: clips, isError: loadError } = useGetClipsQuery();
+    const labels = useGetLabelsQuery().data ?? NO_LABELS;
     // The filter is in the address, so it is still there when you come back from a clip.
     const [params, setParams] = useSearchParams();
     // The words come from the search box of the top bar, through the address.

@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { HomeVideoClip } from "@vid/common";
 import { thumbnailUrl } from "../../api/home-video-api";
 import { MENU_ITEMS } from "../../menu";
-import { useHomeVideos } from "../home-video/HomeVideosProvider";
+import { useGetClipsQuery } from "../home-video/home-video.api";
 import { isUnlabelled } from "../home-video/clipFormat";
 import { PAGE_WIDTH } from "../shared/pageWidth";
 
@@ -81,7 +81,7 @@ const plural = (count: number, one: string) => `${count} ${one}${count === 1 ? "
 
 /** The tiles of the places of the app, each with what is in it. */
 export const HomePage: React.FC = () => {
-    const { clips } = useHomeVideos();
+    const { data: clips } = useGetClipsQuery();
     const homeVideos = MENU_ITEMS[0];
     const unlabelled = clips?.filter(isUnlabelled).length;
     const info = clips && [plural(clips.length, "clip"), unlabelled ? `${unlabelled} unlabelled` : undefined].filter(Boolean).join(" · ");

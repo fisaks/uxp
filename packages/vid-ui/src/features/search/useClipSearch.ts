@@ -1,26 +1,16 @@
 import { useEffect, useState } from "react";
-import { searchClips } from "../../api/home-video-api";
+import { useSearchClipsQuery } from "../home-video/home-video.api";
 
 const SEARCH_DEBOUNCE_MS = 250;
 
 /** The ids of the clips that match the words, best first. Undefined while there are no words or no answer yet; a failed search has no answer. */
 export const useClipSearch = (query: string) => {
-    const [found, setFound] = useState<{ query: string; ids: string[] }>();
+    const [settled, setSettled] = useState(query);
     useEffect(() => {
-        if (!query) return;
-        let current = true;
-        const timer = setTimeout(
-            () =>
-                searchClips(query)
-                    .then((ids) => current && setFound({ query, ids }))
-                    .catch(() => undefined),
-            SEARCH_DEBOUNCE_MS
-        );
-        return () => {
-            current = false;
-            clearTimeout(timer);
-        };
+        const timer = setTimeout(() => setSettled(query), SEARCH_DEBOUNCE_MS);
+        return () => clearTimeout(timer);
     }, [query]);
-    // The answer of an earlier query stays until the new one comes, so the list does not flash.
-    return query ? found?.ids : undefined;
+    // `data` is the answer of an earlier query until the new one comes, so the list does not flash.
+    const { data } = useSearchClipsQuery(settled, { skip: !settled });
+    return query ? data : undefined;
 };

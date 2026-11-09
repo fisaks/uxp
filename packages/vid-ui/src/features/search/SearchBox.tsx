@@ -21,7 +21,7 @@ import { thumbnailUrl } from "../../api/home-video-api";
 import { HOME_VIDEOS_PATH } from "../../menu";
 import { clipName, formatDate } from "../home-video/clipFormat";
 import { clipPath } from "../home-video/ClipTile";
-import { useHomeVideos } from "../home-video/HomeVideosProvider";
+import { useGetClipsQuery } from "../home-video/home-video.api";
 import { LabelledIconButton } from "../shared/LabelledIconButton";
 import { useClipSearch } from "./useClipSearch";
 
@@ -46,7 +46,7 @@ export const SearchBox: React.FC<SearchBoxProps> = ({ autoFocus, onDone }) => {
     const { pathname, search } = useLocation();
     const navigate = useNavigate();
     const portalContainer = usePortalContainerRef();
-    const { clips } = useHomeVideos();
+    const { data: clips } = useGetClipsQuery();
     const anchorRef = useRef<HTMLDivElement>(null);
     // On the list the box starts with the words of the page.
     const onList = pathname.replace(/\/$/, "") === HOME_VIDEOS_PATH;
