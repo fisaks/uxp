@@ -1,4 +1,4 @@
-import { CastSessionSnapshot } from "@vid/common";
+import { CastQueueRequest, CastSessionSnapshot } from "@vid/common";
 
 const STATE_TEXT: Record<CastSessionSnapshot["state"], string> = {
     PLAYING: "Playing",
@@ -19,3 +19,12 @@ export const sessionPosition = (session: CastSessionSnapshot, now: number) => {
     const position = session.positionSec + elapsed;
     return session.durationSec > 0 ? Math.min(position, session.durationSec) : position;
 };
+
+/** What the banner says when clips are put in a queue. */
+const QUEUED_TEXT: Partial<Record<CastQueueRequest["action"], string>> = {
+    next: "Plays next",
+    append: "Added to the queue",
+    replace: "Playing",
+};
+
+export const queuedText = (action: CastQueueRequest["action"]) => QUEUED_TEXT[action];

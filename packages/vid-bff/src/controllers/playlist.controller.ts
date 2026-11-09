@@ -20,8 +20,8 @@ export class PlaylistController {
 
     @Route("post", "/playlists", { authenticate: true, schema: PlaylistSaveSchema })
     async save(req: FastifyRequest<{ Body: PlaylistSaveRequest }>): Promise<Playlist[]> {
-        const { deviceId, name, replace } = req.body;
-        return playlistService.save(deviceId, name, replace ?? false);
+        const { name, replace, ...source } = req.body;
+        return playlistService.save(source, name, replace ?? false);
     }
 
     @Route("patch", "/playlists/:id", { authenticate: true, schema: PlaylistRenameSchema })

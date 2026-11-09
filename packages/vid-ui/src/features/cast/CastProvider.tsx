@@ -6,6 +6,7 @@ import {
     VideoAppErrorHandler,
     VideoAppWebSocketResponseListener,
 } from "../../app/VideoBrowserWebSocketManager";
+import { BrowserPlayerListener } from "../browser-player/BrowserPlayerListener";
 import { useAppDispatch } from "../../hooks";
 import { chromecastsReceived } from "../chromecast/chromecastSlice";
 import { castStateReceived } from "./castSlice";
@@ -18,7 +19,7 @@ type CastProviderProps = {
     children: React.ReactNode;
 };
 
-/** Keeps the cast state and the state of the Chromecasts in the store live: the BFF pushes it over the WebSocket. */
+/** Keeps the cast state and the state of the Chromecasts in the store live: the BFF pushes it over the WebSocket. The state of the player tab is kept live too. */
 export const CastProvider: React.FC<CastProviderProps> = ({ getWebSocket = getPageWebSocket, children }) => {
     const dispatch = useAppDispatch();
     const ws = useMemo(getWebSocket, [getWebSocket]);
@@ -49,6 +50,7 @@ export const CastProvider: React.FC<CastProviderProps> = ({ getWebSocket = getPa
 
     return (
         <WebSocketProvider wsInstance={ws} listeners={listeners} onError={onError} onConnect={onConnect}>
+            <BrowserPlayerListener />
             {children}
         </WebSocketProvider>
     );

@@ -6,6 +6,7 @@ import { HomeVideoClip } from "@vid/common";
 import { thumbnailUrl } from "../../api/home-video-api";
 import { CHROMECASTS_PATH, MENU_ITEMS, playerPath } from "../../menu";
 import { useAppSelector } from "../../hooks";
+import { PLAYER_TAB_ID } from "../browser-player/browserPlayerLink";
 import { useCast } from "../cast/useCast";
 import { selectChromecasts } from "../chromecast/chromecastSelectors";
 import { useGetPlaylistsQuery } from "../playlist/playlist.api";
@@ -99,12 +100,30 @@ export const HomePage: React.FC = () => {
             const nextTitle = titleOf(nextId);
             const art = playback?.clipId ? thumbnailUrl(playback.clipId) : playback?.imageUrl;
             return {
-                device,
+                id: device.id,
+                title: device.name,
                 to: session ? playerPath(device.id) : CHROMECASTS_PATH,
                 lines: [`Now: ${playback?.title}`, nextTitle && `Next: ${nextTitle}`],
                 picture: art && <Mosaic urls={[art]} />,
             };
         });
+    // The player tab of this browser plays like a Chromecast, with a tile of the same kind.
+    const tabSession = castState?.sessions.find((s) => s.deviceId === PLAYER_TAB_ID);
+    if (tabSession) {
+        const { queue } = tabSession;
+        const nextId = queue.clipIds[queue.index + 1] ?? (queue.repeat ? queue.clipIds[0] : undefined);
+        const titleOf = (id: string | undefined) => {
+            const clip = clips?.find((c) => c.id === id);
+            return clip ? clipName(clip) : undefined;
+        };
+        playingTiles.push({
+            id: PLAYER_TAB_ID,
+            title: tabSession.deviceName,
+            to: playerPath(PLAYER_TAB_ID),
+            lines: [`Now: ${titleOf(tabSession.clipId) ?? ""}`, titleOf(nextId) && `Next: ${titleOf(nextId)}`],
+            picture: <Mosaic urls={[thumbnailUrl(tabSession.clipId)]} />,
+        });
+    }
     const unlabelled = clips?.filter(isUnlabelled).length;
     const info = clips && [plural(clips.length, "clip"), unlabelled ? `${unlabelled} unlabelled` : undefined].filter(Boolean).join(" · ");
 
@@ -132,8 +151,8 @@ export const HomePage: React.FC = () => {
                     lines={[playlists && plural(playlists.length, "playlist")]}
                     picture={playlistPosters.length > 0 && <Mosaic urls={playlistPosters} />}
                 />
-                {playingTiles.map(({ device, to, lines, picture }) => (
-                    <Tile key={device.id} to={to} icon={<PlayCircleOutlineIcon />} title={device.name} lines={lines} picture={picture} />
+                {playingTiles.map(({ id, title, to, lines, picture }) => (
+                    <Tile key={id} to={to} icon={<PlayCircleOutlineIcon />} title={title} lines={lines} picture={picture} />
                 ))}
             </Box>
         </Box>

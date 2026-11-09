@@ -20,3 +20,6 @@ export const PLAYLISTS_PATH = MENU_ITEMS[2].path;
 
 export const PLAYER_PATH = "/player";
 export const playerPath = (deviceId: string) => `${PLAYER_PATH}/${encodeURIComponent(deviceId)}`;
+
+/** The page of the player tab, opened in a window of its own without the header and the menus of the app. */
+export const PLAYER_WINDOW_PATH = "/player-window";

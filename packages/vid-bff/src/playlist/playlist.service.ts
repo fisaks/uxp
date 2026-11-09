@@ -1,4 +1,4 @@
-import { Playlist } from "@vid/common";
+import { Playlist, PlaylistSource } from "@vid/common";
 import { AppErrorV2 } from "@uxp/bff-common";
 import { ErrorCodes } from "@uxp/common";
 import { randomBytes } from "crypto";
@@ -25,20 +25,17 @@ export class PlaylistService {
     }
 
     /**
-     * Saves the queue the device plays. An existing name is only taken over when `replace` says so: the caller may not know the
+     * Saves the queue the device plays, or the clips the caller sends from a queue that lives in a browser. An existing name is only taken over when `replace` says so: the caller may not know the
      * name is taken, so the server does not trust that it does.
      */
-    save(deviceId: string, name: string, replace: boolean): Playlist[] {
+    save(source: PlaylistSource, name: string, replace: boolean): Playlist[] {
         const trimmed = this.checkedName(name);
-        const queue = castService.queueOf(deviceId);
-        if (!queue) {
-            throw new AppErrorV2({ statusCode: 404, code: ErrorCodes.NOT_FOUND, message: "Nothing is queued on that Chromecast" });
-        }
+        const clipIds = this.clipsOf(source);
         const existing = this.store.all().find((p) => sameName(p.name, trimmed));
         if (existing && !replace) {
             throw this.nameTaken();
         }
-        this.store.put({ id: existing?.id ?? randomBytes(8).toString("hex"), name: trimmed, clipIds: [...queue.clipIds] });
+        this.store.put({ id: existing?.id ?? randomBytes(8).toString("hex"), name: trimmed, clipIds });
         return this.list();
     }
 
@@ -58,6 +55,17 @@ export class PlaylistService {
             throw this.notFound();
         }
         return this.list();
+    }
+
+    private clipsOf(source: PlaylistSource): string[] {
+        if ("clipIds" in source) {
+            return [...source.clipIds];
+        }
+        const queue = castService.queueOf(source.deviceId);
+        if (!queue) {
+            throw new AppErrorV2({ statusCode: 404, code: ErrorCodes.NOT_FOUND, message: "Nothing is queued on that Chromecast" });
+        }
+        return [...queue.clipIds];
     }
 
     private find(id: string): Playlist {

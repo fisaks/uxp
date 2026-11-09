@@ -2,6 +2,7 @@ import { Alert, Box, Snackbar, SnackbarCloseReason } from "@mui/material";
 import React from "react";
 import { AppBodyContent } from "@uxp/ui-lib";
 import { Navigate, Route, Routes } from "react-router-dom";
+import { BrowserPlayerPage } from "./features/browser-player/BrowserPlayerPage";
 import { CastBar, CAST_ROW_ROOM } from "./features/cast/CastBar";
 import { CastProvider } from "./features/cast/CastProvider";
 import { useBarSessions } from "./features/cast/useBarSessions";
@@ -14,7 +15,7 @@ import { selectSaveErrorMessage } from "./features/home-video/saveErrorSelectors
 import { PlaylistsPage } from "./features/playlist/PlaylistsPage";
 import { HomePage } from "./features/home/HomePage";
 import { useAppDispatch, useAppSelector } from "./hooks";
-import { CHROMECASTS_PATH, HOME_PATH, HOME_VIDEOS_PATH, PLAYER_PATH, PLAYLISTS_PATH } from "./menu";
+import { CHROMECASTS_PATH, HOME_PATH, HOME_VIDEOS_PATH, PLAYER_PATH, PLAYER_WINDOW_PATH, PLAYLISTS_PATH } from "./menu";
 import { VideoNavigation } from "./VideoNavigation";
 
 const SaveErrorNotice = () => {
@@ -53,12 +54,20 @@ const Pages = () => {
     );
 };
 
+const AppPages = () => (
+    <CastProvider>
+        <Pages />
+        <CastBar />
+        <SaveErrorNotice />
+    </CastProvider>
+);
+
+/** The player tab is a page of its own, without the pages and the bar of the app. */
 export const VidBody = () => (
     <AppBodyContent appHaveOwnLeftSideBar={false}>
-        <CastProvider>
-            <Pages />
-            <CastBar />
-            <SaveErrorNotice />
-        </CastProvider>
+        <Routes>
+            <Route path={PLAYER_WINDOW_PATH} element={<BrowserPlayerPage />} />
+            <Route path="*" element={<AppPages />} />
+        </Routes>
     </AppBodyContent>
 );

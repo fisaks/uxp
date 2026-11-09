@@ -1,6 +1,7 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { remoteAppReducer } from "@uxp/ui-lib";
 import { createLogger } from "redux-logger";
+import { browserPlayerReducer } from "../features/browser-player/browserPlayerSlice";
 import { castReducer } from "../features/cast/castSlice";
 import { chromecastReducer } from "../features/chromecast/chromecastSlice";
 import { saveErrorReducer } from "../features/home-video/saveErrorSlice";
@@ -17,6 +18,7 @@ export const createStore = () => {
             remoteApp: remoteAppReducer,
             [vidApi.reducerPath]: vidApi.reducer,
             cast: castReducer,
+            browserPlayer: browserPlayerReducer,
             chromecast: chromecastReducer,
             saveError: saveErrorReducer,
         },

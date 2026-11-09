@@ -1,6 +1,5 @@
-import CloseIcon from "@mui/icons-material/Close";
-import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import Forward30Icon from "@mui/icons-material/Forward30";
+import OpenInBrowserIcon from "@mui/icons-material/OpenInBrowser";
 import PauseIcon from "@mui/icons-material/Pause";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import RepeatIcon from "@mui/icons-material/Repeat";
@@ -16,21 +15,23 @@ import { clipPath } from "../home-video/ClipTile";
 import { useGetClipsQuery } from "../home-video/home-video.api";
 import { LabelledIconButton } from "../shared/LabelledIconButton";
 import { PAGE_WIDTH } from "../shared/pageWidth";
-import { SortableList, uniqueKeys } from "../shared/SortableList";
 import { SavePlaylistButton } from "../playlist/SavePlaylistButton";
 import { ToggleIconButton } from "../shared/ToggleIconButton";
+import { QueueList } from "./QueueList";
+import { PLAYER_TAB_ID } from "../browser-player/browserPlayerLink";
+import { useBrowserPlayer } from "../browser-player/useBrowserPlayer";
 import { sessionPosition, sessionStateText } from "./castText";
 import { useCast } from "./useCast";
 import { useNow } from "./useNow";
 
 const SKIP_SECONDS = 30;
-const QUEUE_POSTER = { width: 64, height: 36 };
 
 /** What one Chromecast plays: the clip big, the buttons and the position, and the queue to reorder, jump in and remove from. */
 export const PlayerPage: React.FC = () => {
     const { deviceId = "" } = useParams();
     const navigate = useNavigate();
     const { state, play, pause, stop, seek, next, editQueue } = useCast();
+    const { show: showPlayerTab } = useBrowserPlayer();
     const { data: clips } = useGetClipsQuery();
     const session = state?.sessions.find((s) => s.deviceId === deviceId);
     const now = useNow(session?.state === "PLAYING");
@@ -51,7 +52,6 @@ export const PlayerPage: React.FC = () => {
     const playing = session.state === "PLAYING" || session.state === "BUFFERING";
     const ended = session.state === "ENDED" || session.state === "FAILED";
     const inQueue = queue.clipIds.length > 1;
-    const clipOf = (id: string) => clips?.find((c) => c.id === id);
 
     const stopAndLeave = async () => {
         if (await stop(deviceId)) navigate(-1);
@@ -132,6 +132,11 @@ export const PlayerPage: React.FC = () => {
                     >
                         <RepeatIcon />
                     </ToggleIconButton>
+                    {deviceId === PLAYER_TAB_ID && (
+                        <LabelledIconButton label="Show the player tab" onClick={showPlayerTab}>
+                            <OpenInBrowserIcon />
+                        </LabelledIconButton>
+                    )}
                     <LabelledIconButton label="Stop" onClick={stopAndLeave}>
                         <StopIcon />
                     </LabelledIconButton>
@@ -144,71 +149,14 @@ export const PlayerPage: React.FC = () => {
                         <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
                             Queue
                         </Typography>
-                        <SavePlaylistButton deviceId={deviceId} />
+                        <SavePlaylistButton source={{ deviceId }} />
                     </Stack>
-                    <SortableList
-                        items={queue.clipIds}
-                        getKey={(_id, index) => uniqueKeys(queue.clipIds)[index]}
+                    <QueueList
+                        queue={queue}
+                        onJump={(index) => editQueue(deviceId, { action: "jump", index })}
+                        onRemove={(index) => editQueue(deviceId, { action: "remove", index })}
                         onMove={(from, to) => editQueue(deviceId, { action: "move", from, to })}
-                        renderItem={(id, index, handle) => {
-                            const item = clipOf(id);
-                            const current = index === queue.index;
-                            return (
-                                <Stack
-                                    direction="row"
-                                    alignItems="center"
-                                    spacing={1}
-                                    sx={{ py: 0.5, borderLeft: 3, borderColor: current ? "primary.main" : "transparent", pl: 0.5 }}
-                                >
-                                    {handle}
-                                    <ButtonBase
-                                        onClick={() => editQueue(deviceId, { action: "jump", index })}
-                                        sx={{
-                                            flex: 1,
-                                            minWidth: 0,
-                                            display: "flex",
-                                            justifyContent: "flex-start",
-                                            gap: 1.5,
-                                            textAlign: "left",
-                                        }}
-                                    >
-                                        <Box
-                                            component="img"
-                                            src={thumbnailUrl(id)}
-                                            alt=""
-                                            sx={{
-                                                ...QUEUE_POSTER,
-                                                flexShrink: 0,
-                                                objectFit: "cover",
-                                                borderRadius: 0.5,
-                                                bgcolor: "action.hover",
-                                            }}
-                                        />
-                                        <Box sx={{ minWidth: 0, flex: 1 }}>
-                                            <Typography noWrap sx={{ fontWeight: current ? 700 : 400 }}>
-                                                {item ? clipName(item) : "Missing clip"}
-                                            </Typography>
-                                            {item && (
-                                                <Typography noWrap variant="caption" color="text.secondary">
-                                                    {formatDuration(item.durationSeconds)}
-                                                </Typography>
-                                            )}
-                                        </Box>
-                                    </ButtonBase>
-                                    {item && (
-                                        <LabelledIconButton label="Open the clip page" onClick={() => navigate(clipPath(id))}>
-                                            <OpenInNewIcon />
-                                        </LabelledIconButton>
-                                    )}
-                                    <LabelledIconButton
-                                        label="Remove from the queue"
-                                        onClick={() => editQueue(deviceId, { action: "remove", index })}
-                                    >
-                                        <CloseIcon />
-                                    </LabelledIconButton>
-                                </Stack>
-                            );
-                        }}
+                        onOpenClip={(id) => navigate(clipPath(id))}
                     />
                 </Box>
             )}

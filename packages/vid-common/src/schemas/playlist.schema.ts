@@ -2,6 +2,7 @@ import { SchemaValidate } from "@uxp/common";
 import { PlaylistParams, PlaylistRenameRequest, PlaylistSaveRequest } from "../types/playlist.type";
 
 const DEVICE_ID_PATTERN = "^[0-9a-f]{32}$";
+const CLIP_ID_PATTERN = "^[0-9a-f]{16}$";
 const PLAYLIST_ID_PATTERN = "^[0-9a-f]{16}$";
 export const PLAYLIST_NAME_MAX_LENGTH = 100;
 
@@ -19,8 +20,14 @@ export const PlaylistParamsSchema: SchemaValidate<undefined, undefined, Playlist
 export const PlaylistSaveSchema = {
     body: {
         type: "object",
-        properties: { deviceId: { type: "string", pattern: DEVICE_ID_PATTERN }, name, replace: { type: "boolean" } },
-        required: ["deviceId", "name"],
+        properties: {
+            deviceId: { type: "string", pattern: DEVICE_ID_PATTERN },
+            clipIds: { type: "array", items: { type: "string", pattern: CLIP_ID_PATTERN }, minItems: 1, maxItems: 500 },
+            name,
+            replace: { type: "boolean" },
+        },
+        required: ["name"],
+        oneOf: [{ required: ["deviceId"] }, { required: ["clipIds"] }],
         additionalProperties: false,
     },
 } as unknown as SchemaValidate<PlaylistSaveRequest, undefined, undefined>;

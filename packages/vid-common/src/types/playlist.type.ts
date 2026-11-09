@@ -5,9 +5,11 @@ export type Playlist = {
     clipIds: string[];
 };
 
-/** Saves the queue of a Chromecast as a playlist. A name that is taken is refused unless `replace` is set, which keeps the id. */
-export type PlaylistSaveRequest = {
-    deviceId: string;
+/** What a playlist is saved from: the queue of a Chromecast, or the clips of the queue of the player tab of a browser. */
+export type PlaylistSource = { deviceId: string } | { clipIds: string[] };
+
+/** Saves a queue as a playlist. A name that is taken is refused unless `replace` is set, which keeps the id. */
+export type PlaylistSaveRequest = PlaylistSource & {
     name: string;
     /**
      * Says that the caller knows the name is taken and wants it overwritten. The UI sets it after it has shown the Replace

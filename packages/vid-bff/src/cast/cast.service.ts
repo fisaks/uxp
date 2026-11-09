@@ -1,4 +1,4 @@
-import { CastQueue, CastQueueRequest, CastState, HomeVideoClip } from "@vid/common";
+import { CastQueue, CastQueueRequest, CastState, editQueue, HomeVideoClip, nextIndex, QueueEditError } from "@vid/common";
 import { AppErrorV2, AppLogger } from "@uxp/bff-common";
 import { ErrorCodes } from "@uxp/common";
 import { WebSocket } from "ws";
@@ -7,7 +7,7 @@ import { signStreamQuery } from "../stream/signed-url";
 import { VideoServerWebSocketManager } from "../ws/VideoServerWebSocketManager";
 import { CastConfig, castConfig } from "./cast.config";
 import { CastDiscovery } from "./cast-discovery";
-import { CastQueueStore, editQueue, nextIndex, QueueEditError } from "./cast-queue";
+import { CastQueueStore } from "./cast-queue";
 import { CastSession } from "./cast-session";
 import { FoundDevice } from "./cast-discovery";
 import { ChromecastsService } from "./chromecasts.service";

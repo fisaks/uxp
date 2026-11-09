@@ -1,6 +1,7 @@
 import Forward30Icon from "@mui/icons-material/Forward30";
 import PauseIcon from "@mui/icons-material/Pause";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import OpenInBrowserIcon from "@mui/icons-material/OpenInBrowser";
 import RepeatIcon from "@mui/icons-material/Repeat";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import Replay30Icon from "@mui/icons-material/Replay30";
@@ -31,6 +32,8 @@ import { ToggleIconButton } from "../shared/ToggleIconButton";
 import { PAGE_WIDTH } from "../shared/pageWidth";
 import { useAppSelector } from "../../hooks";
 import { playerPath } from "../../menu";
+import { useBrowserPlayer } from "../browser-player/useBrowserPlayer";
+import { PLAYER_TAB_ID } from "../browser-player/browserPlayerLink";
 import { selectQueued } from "./castSelectors";
 import { useCast } from "./useCast";
 import { sessionPosition, sessionStateText } from "./castText";
@@ -49,6 +52,7 @@ const POSTER_NARROW = { width: 48, height: 27 };
 const SessionRow: React.FC<{ session: CastSessionSnapshot; now: number; compact: boolean }> = ({ session, now, compact }) => {
     const { data: clips } = useGetClipsQuery();
     const { play, pause, stop, seek, restart, next, editQueue } = useCast();
+    const { show: showPlayerTab } = useBrowserPlayer();
     const theme = useTheme();
     const wide = useMediaQuery(theme.breakpoints.up("md")) && !compact;
     const [dragging, setDragging] = useState<number | undefined>(undefined);
@@ -122,10 +126,16 @@ const SessionRow: React.FC<{ session: CastSessionSnapshot; now: number; compact:
                     <RepeatIcon />
                 </ToggleIconButton>
             )}
-            {!ended && (
-                <LabelledIconButton label="Restart the stream" onClick={() => restart(session.deviceId)}>
-                    <RestartAltIcon />
+            {session.deviceId === PLAYER_TAB_ID ? (
+                <LabelledIconButton label="Show the player tab" onClick={showPlayerTab}>
+                    <OpenInBrowserIcon />
                 </LabelledIconButton>
+            ) : (
+                !ended && (
+                    <LabelledIconButton label="Restart the stream" onClick={() => restart(session.deviceId)}>
+                        <RestartAltIcon />
+                    </LabelledIconButton>
+                )
             )}
             <LabelledIconButton label="Stop" onClick={() => stop(session.deviceId)}>
                 <StopIcon />
