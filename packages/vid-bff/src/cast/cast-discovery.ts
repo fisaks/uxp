@@ -15,7 +15,11 @@ export class CastDiscovery {
     private browser?: Browser;
     private requery?: NodeJS.Timeout;
 
-    constructor(private readonly onChange: () => void) {}
+    constructor(
+        private readonly onChange: () => void,
+        /** A device that is new, or came back at another address. */
+        private readonly onFound: (device: FoundDevice) => void
+    ) {}
 
     start() {
         this.bonjour = new Bonjour();
@@ -58,6 +62,9 @@ export class CastDiscovery {
         }
         if (!known || known.host !== host || known.name !== device.name) {
             this.onChange();
+        }
+        if (!known || known.host !== host) {
+            this.onFound(device);
         }
     }
 

@@ -11,7 +11,7 @@ export interface CastDevice {
 export type CastPlayerState = "PLAYING" | "PAUSED" | "BUFFERING" | "LOADING" | "IDLE" | "ENDED" | "FAILED";
 
 /** A clip loaded on one Chromecast. A device has at most one. */
-export interface CastSession {
+export interface CastSessionSnapshot {
     deviceId: string;
     deviceName: string;
     clipId: string;
@@ -29,7 +29,7 @@ export interface CastState {
     /** False when the BFF has no address that a Chromecast can fetch the streams from. */
     configured: boolean;
     devices: CastDevice[];
-    sessions: CastSession[];
+    sessions: CastSessionSnapshot[];
 }
 
 /** Starts a clip on each of the devices. A device that already has a session gets the new clip instead. */

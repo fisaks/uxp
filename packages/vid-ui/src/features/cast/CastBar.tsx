@@ -5,7 +5,7 @@ import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import Replay30Icon from "@mui/icons-material/Replay30";
 import StopIcon from "@mui/icons-material/Stop";
 import { Alert, Box, ButtonBase, LinearProgress, Paper, Slider, Snackbar, Stack, Typography, useMediaQuery, useTheme } from "@mui/material";
-import { CastSession } from "@vid/common";
+import { CastSessionSnapshot } from "@vid/common";
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useGetClipsQuery } from "../home-video/home-video.api";
@@ -37,7 +37,7 @@ const useNow = (active: boolean) => {
     return now;
 };
 
-const SessionRow: React.FC<{ session: CastSession; now: number; compact: boolean }> = ({ session, now, compact }) => {
+const SessionRow: React.FC<{ session: CastSessionSnapshot; now: number; compact: boolean }> = ({ session, now, compact }) => {
     const { data: clips } = useGetClipsQuery();
     const { play, pause, stop, seek, restart } = useCast();
     const theme = useTheme();

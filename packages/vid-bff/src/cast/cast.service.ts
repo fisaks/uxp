@@ -7,7 +7,8 @@ import { signStreamQuery } from "../stream/signed-url";
 import { VideoServerWebSocketManager } from "../ws/VideoServerWebSocketManager";
 import { CastConfig, castConfig } from "./cast.config";
 import { CastDiscovery } from "./cast-discovery";
-import { CastSessionRunner } from "./cast-session";
+import { CastSession } from "./cast-session";
+import { FoundDevice } from "./cast-discovery";
 
 const CAST_TOPIC = "cast";
 /** After a stop the Chromecast needs a moment before it takes a new app. */
@@ -29,8 +30,11 @@ const clipTitle = (clip: HomeVideoClip): string => {
 
 /** The Chromecasts on the network and the clips playing on them, one session per device. */
 export class CastService {
-    private readonly discovery = new CastDiscovery(() => this.publish());
-    private readonly runners = new Map<string, CastSessionRunner>();
+    private readonly discovery = new CastDiscovery(
+        () => this.publish(),
+        (device) => this.joinRunning(device)
+    );
+    private readonly sessions = new Map<string, CastSession>();
     private last = "";
 
     constructor(
@@ -44,14 +48,14 @@ export class CastService {
 
     stop() {
         this.discovery.stop();
-        this.runners.forEach((runner) => runner.release());
+        this.sessions.forEach((session) => session.release());
     }
 
     getState(): CastState {
         return {
             configured: this.config.baseUrl !== undefined,
             devices: this.discovery.list().map(({ id, name, model }) => ({ id, name, model })),
-            sessions: [...this.runners.values()].map((runner) => runner.session),
+            sessions: [...this.sessions.values()].filter((session) => session.visible).map((session) => session.snapshot),
         };
     }
 
@@ -97,62 +101,100 @@ export class CastService {
         const posterUrl = `${baseUrl}/api/home-videos/poster/${query}`;
         const title = clipTitle(clip);
         for (const device of devices) {
-            this.runners.get(device.id)?.release();
-            const runner = new CastSessionRunner({ device, clipId, title, url, posterUrl, positionSec }, () => this.onRunnerChange(device.id, runner));
-            this.runners.set(device.id, runner);
+            this.sessions.get(device.id)?.release();
+            const session = new CastSession(device, { kind: "load", clipId, title, url, posterUrl, positionSec }, () =>
+                this.onSessionChange(device.id, session)
+            );
+            this.sessions.set(device.id, session);
             AppLogger.info(undefined, { message: `[Cast] ${clip.file} on "${device.name}" from ${Math.round(positionSec)} s` });
-            runner.connect(connectDelayMs);
+            session.connect(connectDelayMs);
         }
         this.publish();
         return this.getState();
     }
 
     play(deviceId: string): CastState {
-        this.runner(deviceId).play();
+        this.session(deviceId).play();
         return this.getState();
     }
 
     pause(deviceId: string): CastState {
-        this.runner(deviceId).pause();
+        this.session(deviceId).pause();
         return this.getState();
     }
 
     seek(deviceId: string, positionSec: number): CastState {
-        this.runner(deviceId).seek(positionSec);
+        this.session(deviceId).seek(positionSec);
         return this.getState();
     }
 
     /** Takes the cast down on the Chromecast and casts the same clip again from where it was. */
     restart(deviceId: string): CastState {
-        const old = this.runner(deviceId);
-        const { clipId } = old.session;
+        const old = this.session(deviceId);
+        const { clipId } = old.snapshot;
         const position = old.currentPositionSec;
         old.takeDown();
         return this.startOn(clipId, [deviceId], position, RESTART_GAP_MS);
     }
 
     stopSession(deviceId: string): CastState {
-        this.runner(deviceId).stop();
+        this.session(deviceId).stop();
         return this.getState();
     }
 
-    private runner(deviceId: string): CastSessionRunner {
-        const runner = this.runners.get(deviceId);
-        if (!runner || runner.finished) {
-            throw new AppErrorV2({ statusCode: 404, code: ErrorCodes.NOT_FOUND, message: "Nothing is cast to that Chromecast" });
-        }
-        return runner;
-    }
-
-    private onRunnerChange(deviceId: string, runner: CastSessionRunner) {
-        // A session that was replaced does not report any more.
-        if (this.runners.get(deviceId) !== runner) {
+    /**
+     * A cast that outlived the server plays on, but the server has forgotten it. When a device shows up, look at what it plays
+     * and join a clip of ours as one more sender. A device with nothing playing is left alone.
+     */
+    private joinRunning(device: FoundDevice) {
+        const baseUrl = this.config.baseUrl;
+        if (!baseUrl || this.sessions.has(device.id)) {
             return;
         }
-        if (runner.finished) {
+        const streamPrefix = `${baseUrl}/api/home-videos/stream/`;
+        const session = new CastSession(
+            device,
+            {
+                kind: "join",
+                accept: (contentId) => {
+                    if (!contentId.startsWith(streamPrefix)) {
+                        return undefined;
+                    }
+                    const clip = homeVideoService.get(contentId.slice(streamPrefix.length).split("?")[0]);
+                    if (clip) {
+                        AppLogger.info(undefined, { message: `[Cast] Joined ${clip.file} playing on "${device.name}"` });
+                    }
+                    return clip && { clipId: clip.id, title: clipTitle(clip) };
+                },
+            },
+            () => this.onSessionChange(device.id, session)
+        );
+        this.sessions.set(device.id, session);
+        session.connect();
+    }
+
+    private session(deviceId: string): CastSession {
+        const session = this.sessions.get(deviceId);
+        if (!session || session.finished) {
+            throw new AppErrorV2({ statusCode: 404, code: ErrorCodes.NOT_FOUND, message: "Nothing is cast to that Chromecast" });
+        }
+        return session;
+    }
+
+    private onSessionChange(deviceId: string, session: CastSession) {
+        // A session that was replaced does not report any more.
+        if (this.sessions.get(deviceId) !== session) {
+            return;
+        }
+        if (!session.visible) {
+            // A joining session that found nothing of ours.
+            this.sessions.delete(deviceId);
+            return;
+        }
+        if (session.finished) {
             setTimeout(() => {
-                if (this.runners.get(deviceId) === runner) {
-                    this.runners.delete(deviceId);
+                if (this.sessions.get(deviceId) === session) {
+                    this.sessions.delete(deviceId);
                     this.publish();
                 }
             }, FINISHED_KEEP_MS);

@@ -1,4 +1,4 @@
-import { CastPlayerState, CastSession } from "@vid/common";
+import { CastPlayerState, CastSessionSnapshot } from "@vid/common";
 import { AppLogger } from "@uxp/bff-common";
 import { Channel, Client } from "castv2";
 import { FoundDevice } from "./cast-discovery";
@@ -27,11 +27,12 @@ type CastMediaStatus = {
     playerState?: string;
     idleReason?: string;
     currentTime?: number;
-    media?: { duration?: number };
+    media?: { contentId?: string; duration?: number };
 };
 
-export type CastSessionStart = {
-    device: FoundDevice;
+/** Plays a clip on the device: launches the receiver and loads the URL. */
+export type CastLoad = {
+    kind: "load";
     clipId: string;
     title: string;
     /** Where the Chromecast fetches the video, with the signature in the query. */
@@ -42,11 +43,21 @@ export type CastSessionStart = {
 };
 
 /**
+ * Joins what the device already plays as one more sender, without starting anything: for a cast that outlived the server.
+ * `accept` gets the address of the playing media and returns the clip if it is one of ours, else undefined and the session is
+ * dropped.
+ */
+export type CastJoin = {
+    kind: "join";
+    accept: (contentId: string) => { clipId: string; title: string } | undefined;
+};
+
+/**
  * One clip on one Chromecast. It has its own connection: it launches the Default Media Receiver, loads the URL and follows
  * the media status. It ends when the receiver stops, the clip finishes, or the connection is lost.
  */
-export class CastSessionRunner {
-    private snapshot: CastSession;
+export class CastSession {
+    private latest: CastSessionSnapshot;
     private client?: Client;
     private receiver?: Channel;
     private media?: Channel;
@@ -58,34 +69,41 @@ export class CastSessionRunner {
     private mediaSessionId?: number;
     private loaded = false;
     private closed = false;
+    private rejected = false;
 
     constructor(
-        private readonly start: CastSessionStart,
+        private readonly device: FoundDevice,
+        private readonly source: CastLoad | CastJoin,
         private readonly onChange: () => void
     ) {
-        this.snapshot = {
-            deviceId: start.device.id,
-            deviceName: start.device.name,
-            clipId: start.clipId,
-            title: start.title,
+        this.latest = {
+            deviceId: device.id,
+            deviceName: device.name,
+            clipId: source.kind === "load" ? source.clipId : "",
+            title: source.kind === "load" ? source.title : "",
             state: "LOADING",
-            positionSec: start.positionSec,
+            positionSec: source.kind === "load" ? source.positionSec : 0,
             durationSec: 0,
             updatedAt: Date.now(),
         };
     }
 
-    get session(): CastSession {
-        return this.snapshot;
+    get snapshot(): CastSessionSnapshot {
+        return this.latest;
+    }
+
+    /** False while a joining session has not found one of our clips, and for good when it did not. */
+    get visible(): boolean {
+        return !this.rejected && (this.source.kind === "load" || this.latest.clipId !== "");
     }
 
     get finished(): boolean {
-        return this.snapshot.state === "ENDED" || this.snapshot.state === "FAILED";
+        return this.latest.state === "ENDED" || this.latest.state === "FAILED";
     }
 
     /** Where the clip is now: the position of the last status, moved on by the time since then while it plays. */
     get currentPositionSec(): number {
-        const { state, positionSec, durationSec, updatedAt } = this.snapshot;
+        const { state, positionSec, durationSec, updatedAt } = this.latest;
         const position = positionSec + (state === "PLAYING" ? (Date.now() - updatedAt) / 1000 : 0);
         return durationSec > 0 ? Math.min(position, durationSec) : position;
     }
@@ -100,7 +118,7 @@ export class CastSessionRunner {
         this.client = client;
         client.on("error", (error) => this.fail("Could not reach the Chromecast", error));
         client.on("close", () => this.fail("The connection to the Chromecast closed"));
-        client.connect({ host: this.start.device.host, port: CAST_PORT }, () => this.open(client));
+        client.connect({ host: this.device.host, port: CAST_PORT }, () => this.open(client));
         this.loadTimer = setTimeout(() => this.fail("The Chromecast did not start the video"), LOAD_TIMEOUT_MS);
     }
 
@@ -167,6 +185,11 @@ export class CastSessionRunner {
             }, HEARTBEAT_INTERVAL_MS),
             setInterval(() => this.media && this.send(this.media, { type: "GET_STATUS" }), STATUS_POLL_MS)
         );
+        if (this.source.kind === "join") {
+            // Only asks what runs: a launch would start the receiver, and wake a TV, that has nothing to show.
+            this.send(receiver, { type: "GET_STATUS" });
+            return;
+        }
         // Launching an app that already runs joins it, and another app is replaced: what is cast wins.
         this.send(receiver, { type: "LAUNCH", appId: DEFAULT_MEDIA_RECEIVER });
     }
@@ -175,7 +198,9 @@ export class CastSessionRunner {
         const app = applications.find((a) => a.appId === DEFAULT_MEDIA_RECEIVER && a.transportId);
         if (!app) {
             // Something else took the Chromecast, or it was stopped from elsewhere. Before the launch has answered there is no app yet.
-            if (this.loaded) {
+            if (this.source.kind === "join" && !this.loaded) {
+                this.reject();
+            } else if (this.loaded) {
                 this.end("ENDED");
             }
             return;
@@ -192,15 +217,20 @@ export class CastSessionRunner {
         this.media = media;
         connection.send({ type: "CONNECT" });
         media.on("message", (data) => this.onMediaMessage(data));
+        const { source } = this;
+        if (source.kind === "join") {
+            this.send(media, { type: "GET_STATUS" });
+            return;
+        }
         this.send(media, {
             type: "LOAD",
             autoplay: true,
-            currentTime: this.start.positionSec,
+            currentTime: source.positionSec,
             media: {
-                contentId: this.start.url,
+                contentId: source.url,
                 contentType: "video/mp4",
                 streamType: "BUFFERED",
-                metadata: { metadataType: 0, title: this.start.title, images: [{ url: this.start.posterUrl }] },
+                metadata: { metadataType: 0, title: source.title, images: [{ url: source.posterUrl }] },
             },
         });
     }
@@ -219,6 +249,9 @@ export class CastSessionRunner {
         }
         this.mediaSessionId = status.mediaSessionId ?? this.mediaSessionId;
         const state = status.playerState as CastPlayerState | undefined;
+        if (this.source.kind === "join" && !this.loaded && !this.matchPlaying(status, state)) {
+            return;
+        }
         if (state === "IDLE") {
             // Idle before anything played is the receiver getting ready, not the end.
             if (this.loaded) {
@@ -236,9 +269,39 @@ export class CastSessionRunner {
         clearTimeout(this.loadTimer);
         this.set({
             state,
-            positionSec: status.currentTime ?? this.snapshot.positionSec,
-            durationSec: Math.floor(status.media?.duration ?? this.snapshot.durationSec),
+            positionSec: status.currentTime ?? this.latest.positionSec,
+            durationSec: Math.floor(status.media?.duration ?? this.latest.durationSec),
         });
+    }
+
+    /** For a joining session: follows the playing clip if it is ours, else lets go. False means not (yet) following. */
+    private matchPlaying(status: CastMediaStatus, state: string | undefined): boolean {
+        if (this.source.kind !== "join") {
+            return true;
+        }
+        if (!state || state === "IDLE") {
+            this.reject();
+            return false;
+        }
+        const contentId = status.media?.contentId;
+        if (!contentId) {
+            // The status without the media is not enough to tell; the next one has it, else the load timeout gives up.
+            return false;
+        }
+        const clip = this.source.accept(contentId);
+        if (!clip) {
+            this.reject();
+            return false;
+        }
+        this.latest = { ...this.latest, ...clip };
+        return true;
+    }
+
+    /** Lets go of the device: what plays there is not ours to show. */
+    private reject() {
+        this.rejected = true;
+        this.release();
+        this.onChange();
     }
 
     private mediaCommand(type: string, extra: object = {}) {
@@ -260,7 +323,12 @@ export class CastSessionRunner {
         if (this.finished || this.closed) {
             return;
         }
-        AppLogger.warn(undefined, { message: `[Cast] ${this.start.device.name}: ${error}`, error: cause });
+        if (this.source.kind === "join" && !this.loaded) {
+            // Nothing was cast by us, so there is nothing to report as failed.
+            this.reject();
+            return;
+        }
+        AppLogger.warn(undefined, { message: `[Cast] ${this.device.name}: ${error}`, error: cause });
         this.end("FAILED", error);
     }
 
@@ -286,8 +354,8 @@ export class CastSessionRunner {
         }
     }
 
-    private set(change: Partial<CastSession>) {
-        this.snapshot = { ...this.snapshot, ...change, updatedAt: Date.now() };
+    private set(change: Partial<CastSessionSnapshot>) {
+        this.latest = { ...this.latest, ...change, updatedAt: Date.now() };
         this.onChange();
     }
 }
