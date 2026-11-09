@@ -1,4 +1,4 @@
-import { CastQueueRequest, CastState, HomeVideoClip } from "@vid/common";
+import { CastQueue, CastQueueRequest, CastState, HomeVideoClip } from "@vid/common";
 import { AppErrorV2, AppLogger } from "@uxp/bff-common";
 import { ErrorCodes } from "@uxp/common";
 import { WebSocket } from "ws";
@@ -88,6 +88,12 @@ export class CastService {
     subscribe(socket: WebSocket): CastState {
         this.wsManager.joinTopic(socket, CAST_TOPIC);
         return this.getState();
+    }
+
+    /** The queue a device plays, a copy that can be kept. */
+    queueOf(deviceId: string): CastQueue | undefined {
+        const queue = this.queues.get(deviceId);
+        return queue && { ...queue, clipIds: [...queue.clipIds] };
     }
 
     /** Starts the clip on each device, as a queue of that one clip. A device that has a session gets the new clip in its place. */

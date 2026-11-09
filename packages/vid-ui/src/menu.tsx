@@ -1,4 +1,5 @@
 import CastIcon from "@mui/icons-material/Cast";
+import PlaylistPlayIcon from "@mui/icons-material/PlaylistPlay";
 import VideoLibraryIcon from "@mui/icons-material/VideoLibrary";
 import React from "react";
 
@@ -8,12 +9,14 @@ export type MenuItem = { path: string; label: string; icon: React.ReactElement }
 export const MENU_ITEMS: MenuItem[] = [
     { path: "/home-videos", label: "Home videos", icon: <VideoLibraryIcon /> },
     { path: "/chromecasts", label: "Chromecasts", icon: <CastIcon /> },
+    { path: "/playlists", label: "Playlists", icon: <PlaylistPlayIcon /> },
 ];
 
 export const HOME_PATH = "/";
 export const HOME_LABEL = "Video";
 export const HOME_VIDEOS_PATH = MENU_ITEMS[0].path;
 export const CHROMECASTS_PATH = MENU_ITEMS[1].path;
+export const PLAYLISTS_PATH = MENU_ITEMS[2].path;
 
 export const PLAYER_PATH = "/player";
 export const playerPath = (deviceId: string) => `${PLAYER_PATH}/${encodeURIComponent(deviceId)}`;

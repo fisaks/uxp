@@ -3,3 +3,5 @@ export * from "./types/home-video.type";
 export * from "./types/status.type";
 export * from "./schemas/cast.schema";
 export * from "./types/cast.type";
+export * from "./schemas/playlist.schema";
+export * from "./types/playlist.type";

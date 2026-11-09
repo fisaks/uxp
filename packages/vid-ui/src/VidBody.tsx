@@ -11,9 +11,10 @@ import { ClipListPage } from "./features/home-video/ClipListPage";
 import { ClipPage } from "./features/home-video/ClipPage";
 import { saveErrorCleared } from "./features/home-video/saveErrorSlice";
 import { selectSaveErrorMessage } from "./features/home-video/saveErrorSelectors";
+import { PlaylistsPage } from "./features/playlist/PlaylistsPage";
 import { HomePage } from "./features/home/HomePage";
 import { useAppDispatch, useAppSelector } from "./hooks";
-import { CHROMECASTS_PATH, HOME_PATH, HOME_VIDEOS_PATH, PLAYER_PATH } from "./menu";
+import { CHROMECASTS_PATH, HOME_PATH, HOME_VIDEOS_PATH, PLAYER_PATH, PLAYLISTS_PATH } from "./menu";
 import { VideoNavigation } from "./VideoNavigation";
 
 const SaveErrorNotice = () => {
@@ -44,6 +45,7 @@ const Pages = () => {
                 <Route path={HOME_VIDEOS_PATH} element={<ClipListPage />} />
                 <Route path={`${HOME_VIDEOS_PATH}/clips/:id`} element={<ClipPage />} />
                 <Route path={CHROMECASTS_PATH} element={<ChromecastsPage />} />
+                <Route path={PLAYLISTS_PATH} element={<PlaylistsPage />} />
                 <Route path={`${PLAYER_PATH}/:deviceId`} element={<PlayerPage />} />
                 <Route path="*" element={<Navigate to={HOME_PATH} replace={true} />} />
             </Routes>

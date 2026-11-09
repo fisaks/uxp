@@ -11,6 +11,8 @@ export const homeVideoConfig = {
     folder: mediaRoot ? path.join(mediaRoot, FOLDER_NAME) : undefined,
     /** Edits to the clips. It lives with the videos, so it is backed up and moves with them. */
     metadataFile: mediaRoot ? path.join(mediaRoot, FOLDER_NAME, "home-video-metadata.json") : undefined,
+    /** The saved playlists, beside the metadata for the same reason. */
+    playlistsFile: mediaRoot ? path.join(mediaRoot, FOLDER_NAME, "playlists.json") : undefined,
     /** What can be rebuilt (scan results, poster frames). Without VID_DATA_DIR it is in the temporary folder. */
     cacheDir: dataDir ?? path.join(os.tmpdir(), "vid-cache"),
 };

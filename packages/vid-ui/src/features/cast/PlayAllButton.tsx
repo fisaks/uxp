@@ -8,7 +8,7 @@ import { useCast } from "./useCast";
 const DONE_SHOW_MS = 1000;
 
 /** Plays the clips one after the other on a Chromecast, the one it is pressed for replacing what the device plays. */
-export const PlayAllButton: React.FC<{ clipIds: string[] }> = ({ clipIds }) => {
+export const PlayAllButton: React.FC<{ clipIds: string[]; label?: string }> = ({ clipIds, label = "Play all" }) => {
     const portalContainer = usePortalContainerRef();
     const { state, editQueue } = useCast();
     const [anchor, setAnchor] = useState<HTMLElement | null>(null);
@@ -30,7 +30,7 @@ export const PlayAllButton: React.FC<{ clipIds: string[] }> = ({ clipIds }) => {
     return (
         <>
             <Button size="small" startIcon={<PlaylistPlayIcon />} onClick={(e) => setAnchor(e.currentTarget)}>
-                Play all
+                {label}
             </Button>
             <Menu anchorEl={anchor} open={anchor !== null} onClose={() => setAnchor(null)} container={() => portalContainer.current}>
                 {state.devices.map((device) => (

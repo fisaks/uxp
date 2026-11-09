@@ -17,6 +17,7 @@ import { useGetClipsQuery } from "../home-video/home-video.api";
 import { LabelledIconButton } from "../shared/LabelledIconButton";
 import { PAGE_WIDTH } from "../shared/pageWidth";
 import { SortableList, uniqueKeys } from "../shared/SortableList";
+import { SavePlaylistButton } from "../playlist/SavePlaylistButton";
 import { ToggleIconButton } from "../shared/ToggleIconButton";
 import { sessionPosition, sessionStateText } from "./castText";
 import { useCast } from "./useCast";
@@ -139,9 +140,12 @@ export const PlayerPage: React.FC = () => {
 
             {inQueue && (
                 <Box sx={{ maxWidth: 720, mx: "auto", mt: 2 }}>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 0.5 }}>
-                        Queue
-                    </Typography>
+                    <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 0.5 }}>
+                        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                            Queue
+                        </Typography>
+                        <SavePlaylistButton deviceId={deviceId} />
+                    </Stack>
                     <SortableList
                         items={queue.clipIds}
                         getKey={(_id, index) => uniqueKeys(queue.clipIds)[index]}

@@ -14,6 +14,7 @@ import Fastify from "fastify";
 import path from "path";
 import { castService } from "./cast/cast.service";
 import { homeVideoService } from "./home-video/home-video.service";
+import { playlistService } from "./playlist/playlist.service";
 import { VideoServerWebSocketManager } from "./ws/VideoServerWebSocketManager";
 
 const fastify = Fastify({ logger: { level: process.env.LOG_LEVEL ?? "info" } });
@@ -34,9 +35,11 @@ registerLocalWebSocketHandlers({
 });
 
 onShutdown(() => homeVideoService.flush());
+onShutdown(() => playlistService.flush());
 onShutdown(async () => castService.stop());
 void castService.start();
 void homeVideoService.load();
+void playlistService.load();
 
 const port = 3051;
 
