@@ -1,4 +1,4 @@
-import { CastState } from "@vid/common";
+import { CastQueueRequest, CastState } from "@vid/common";
 import { apiUrl } from "../../api/home-video-api";
 import { vidApi } from "../../app/vidApi";
 import { castErrorCleared, castFailed, castStateReceived } from "./castSlice";
@@ -33,6 +33,11 @@ export const castApi = vidApi.injectEndpoints({
             pauseCast: castCommand<string>((deviceId) => sessionUrl(deviceId, "pause")),
             stopCast: castCommand<string>((deviceId) => sessionUrl(deviceId, "stop")),
             restartCast: castCommand<string>((deviceId) => sessionUrl(deviceId, "restart")),
+            nextCast: castCommand<string>((deviceId) => sessionUrl(deviceId, "next")),
+            editCastQueue: castCommand<{ deviceId: string; request: CastQueueRequest }>(({ deviceId, request }) => ({
+                url: apiUrl(`cast/players/${deviceId}/queue`),
+                data: request,
+            })),
             seekCast: castCommand<{ deviceId: string; positionSec: number }>(({ deviceId, positionSec }) => ({
                 ...sessionUrl(deviceId, "seek"),
                 data: { positionSec },
@@ -50,4 +55,6 @@ export const {
     useStopCastMutation,
     useRestartCastMutation,
     useSeekCastMutation,
+    useNextCastMutation,
+    useEditCastQueueMutation,
 } = castApi;

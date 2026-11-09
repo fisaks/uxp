@@ -3,6 +3,7 @@ import { HomeVideoClip } from "@vid/common";
 import { usePortalContainerRef } from "@uxp/ui-lib";
 import React, { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { PlayAllButton } from "../cast/PlayAllButton";
 import { SEARCH_PARAM } from "../search/SearchBox";
 import { useClipSearch } from "../search/useClipSearch";
 import { PAGE_WIDTH } from "../shared/pageWidth";
@@ -122,6 +123,7 @@ export const ClipListPage: React.FC = () => {
                 <Typography variant="body2" color="text.secondary">
                     {shown.length} of {clips.length} clips
                 </Typography>
+                <PlayAllButton clipIds={shown.map((c) => c.id)} />
             </Stack>
             <YearBar years={groups.map(([year]) => year)} onJump={setJumpedTo} />
             {groups.length === 0 && <Typography color="text.secondary">No clip matches.</Typography>}
