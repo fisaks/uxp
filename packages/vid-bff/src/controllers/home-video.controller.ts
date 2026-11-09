@@ -35,12 +35,12 @@ export class HomeVideoController {
 
     /** The ids of the clips that match the words, best match first. */
     @Route("get", "/home-videos/search", { authenticate: true, schema: HomeVideoSearchSchema })
-    async search(req: FastifyRequest, reply: FastifyReply): Promise<HomeVideoSearchResult | void> {
+    async search(req: FastifyRequest<{ Querystring: HomeVideoSearchQuery }>, reply: FastifyReply): Promise<HomeVideoSearchResult | void> {
         if (!homeVideoService.search.available) {
             return reply.status(503).send({ error: "Search is not available" });
         }
         try {
-            return { ids: await homeVideoService.search.find((req.query as HomeVideoSearchQuery).q) };
+            return { ids: await homeVideoService.search.find(req.query.q) };
         } catch (error) {
             AppLogger.error(undefined, { message: "[Search] The search failed", error });
             return reply.status(503).send({ error: "Search is not available" });
@@ -48,15 +48,15 @@ export class HomeVideoController {
     }
 
     @Route("get", "/home-videos/clips/:id", { authenticate: true, schema: HomeVideoClipParamsSchema })
-    async getClip(req: FastifyRequest, reply: FastifyReply) {
-        const clip = homeVideoService.get((req.params as HomeVideoClipParams).id);
+    async getClip(req: FastifyRequest<{ Params: HomeVideoClipParams }>, reply: FastifyReply) {
+        const clip = homeVideoService.get(req.params.id);
         return clip ?? reply.status(404).send({ error: "There is no such clip" });
     }
 
     @Route("patch", "/home-videos/clips/:id", { authenticate: true, schema: HomeVideoClipUpdateSchema })
-    async updateClip(req: FastifyRequest, reply: FastifyReply) {
+    async updateClip(req: FastifyRequest<{ Params: HomeVideoClipParams; Body: HomeVideoClipUpdate }>, reply: FastifyReply) {
         try {
-            const clip = homeVideoService.update((req.params as HomeVideoClipParams).id, req.body as HomeVideoClipUpdate);
+            const clip = homeVideoService.update(req.params.id, req.body);
             return clip ?? reply.status(404).send({ error: "There is no such clip" });
         } catch (error) {
             return reply.status(503).send({ error: (error as Error).message });
@@ -65,8 +65,8 @@ export class HomeVideoController {
 
     /** The poster frame of a clip. Found by clip id, so no path is ever taken from the request. */
     @Route("get", "/home-videos/clips/:id/thumbnail", { authenticate: true, schema: HomeVideoClipParamsSchema })
-    async getThumbnail(req: FastifyRequest, reply: FastifyReply) {
-        const made = homeVideoService.thumbnail((req.params as HomeVideoClipParams).id);
+    async getThumbnail(req: FastifyRequest<{ Params: HomeVideoClipParams }>, reply: FastifyReply) {
+        const made = homeVideoService.thumbnail(req.params.id);
         if (!made) {
             return reply.status(404).send({ error: "There is no such clip" });
         }
@@ -75,9 +75,9 @@ export class HomeVideoController {
 
     /** The poster frame for a Chromecast, which has no cookie. Allowed by the same signature as the stream. */
     @Route("get", "/home-videos/poster/:id", { authenticate: false, schema: HomeVideoStreamSchema })
-    async getSignedPoster(req: FastifyRequest, reply: FastifyReply) {
-        const { id } = req.params as HomeVideoClipParams;
-        const { exp, sig } = req.query as HomeVideoStreamQuery;
+    async getSignedPoster(req: FastifyRequest<{ Params: HomeVideoClipParams; Querystring: HomeVideoStreamQuery }>, reply: FastifyReply) {
+        const { id } = req.params;
+        const { exp, sig } = req.query;
         if (!isValidStreamQuery(id, exp, sig)) {
             return reply.status(403).send({ error: "The link is not valid or has expired" });
         }
@@ -99,8 +99,8 @@ export class HomeVideoController {
 
     /** A link to the stream that works without the cookie, for the browser player and for a Chromecast. */
     @Route("post", "/home-videos/clips/:id/stream-link", { authenticate: true, schema: HomeVideoClipParamsSchema })
-    async createStreamLink(req: FastifyRequest, reply: FastifyReply): Promise<HomeVideoStreamLink | void> {
-        const { id } = req.params as HomeVideoClipParams;
+    async createStreamLink(req: FastifyRequest<{ Params: HomeVideoClipParams }>, reply: FastifyReply): Promise<HomeVideoStreamLink | void> {
+        const { id } = req.params;
         if (!homeVideoService.get(id)) {
             return reply.status(404).send({ error: "There is no such clip" });
         }
@@ -110,9 +110,9 @@ export class HomeVideoController {
 
     /** The video itself, with range requests so it can be seeked. Allowed by the signature, not the cookie. */
     @Route("get", "/home-videos/stream/:id", { authenticate: false, schema: HomeVideoStreamSchema })
-    async stream(req: FastifyRequest, reply: FastifyReply) {
-        const { id } = req.params as HomeVideoClipParams;
-        const { exp, sig } = req.query as HomeVideoStreamQuery;
+    async stream(req: FastifyRequest<{ Params: HomeVideoClipParams; Querystring: HomeVideoStreamQuery }>, reply: FastifyReply) {
+        const { id } = req.params;
+        const { exp, sig } = req.query;
         if (!isValidStreamQuery(id, exp, sig)) {
             return reply.status(403).send({ error: "The link is not valid or has expired" });
         }

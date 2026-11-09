@@ -2,6 +2,8 @@ import { Route } from "@uxp/bff-common";
 import {
     CastDeviceParams,
     CastDeviceParamsSchema,
+    CastQueueRequest,
+    CastQueueSchema,
     CastSeekRequest,
     CastSeekSchema,
     CastStartRequest,
@@ -23,33 +25,43 @@ export class CastController {
     }
 
     @Route("post", "/cast/sessions", { authenticate: true, schema: CastStartSchema })
-    async start(req: FastifyRequest): Promise<CastState> {
-        const { clipId, deviceIds, positionSec } = req.body as CastStartRequest;
+    async start(req: FastifyRequest<{ Body: CastStartRequest }>): Promise<CastState> {
+        const { clipId, deviceIds, positionSec } = req.body;
         return castService.startOn(clipId, deviceIds, positionSec);
     }
 
     @Route("post", "/cast/sessions/:deviceId/play", { authenticate: true, schema: CastDeviceParamsSchema })
-    async play(req: FastifyRequest): Promise<CastState> {
-        return castService.play((req.params as CastDeviceParams).deviceId);
+    async play(req: FastifyRequest<{ Params: CastDeviceParams }>): Promise<CastState> {
+        return castService.play(req.params.deviceId);
     }
 
     @Route("post", "/cast/sessions/:deviceId/pause", { authenticate: true, schema: CastDeviceParamsSchema })
-    async pause(req: FastifyRequest): Promise<CastState> {
-        return castService.pause((req.params as CastDeviceParams).deviceId);
+    async pause(req: FastifyRequest<{ Params: CastDeviceParams }>): Promise<CastState> {
+        return castService.pause(req.params.deviceId);
     }
 
     @Route("post", "/cast/sessions/:deviceId/seek", { authenticate: true, schema: CastSeekSchema })
-    async seek(req: FastifyRequest): Promise<CastState> {
-        return castService.seek((req.params as CastDeviceParams).deviceId, (req.body as CastSeekRequest).positionSec);
+    async seek(req: FastifyRequest<{ Params: CastDeviceParams; Body: CastSeekRequest }>): Promise<CastState> {
+        return castService.seek(req.params.deviceId, req.body.positionSec);
     }
 
     @Route("post", "/cast/sessions/:deviceId/restart", { authenticate: true, schema: CastDeviceParamsSchema })
-    async restart(req: FastifyRequest): Promise<CastState> {
-        return castService.restart((req.params as CastDeviceParams).deviceId);
+    async restart(req: FastifyRequest<{ Params: CastDeviceParams }>): Promise<CastState> {
+        return castService.restart(req.params.deviceId);
+    }
+
+    @Route("post", "/cast/sessions/:deviceId/next", { authenticate: true, schema: CastDeviceParamsSchema })
+    async next(req: FastifyRequest<{ Params: CastDeviceParams }>): Promise<CastState> {
+        return castService.next(req.params.deviceId);
+    }
+
+    @Route("post", "/cast/players/:deviceId/queue", { authenticate: true, schema: CastQueueSchema })
+    async editQueue(req: FastifyRequest<{ Params: CastDeviceParams; Body: CastQueueRequest }>): Promise<CastState> {
+        return castService.editQueue(req.params.deviceId, req.body);
     }
 
     @Route("post", "/cast/sessions/:deviceId/stop", { authenticate: true, schema: CastDeviceParamsSchema })
-    async stop(req: FastifyRequest): Promise<CastState> {
-        return castService.stopSession((req.params as CastDeviceParams).deviceId);
+    async stop(req: FastifyRequest<{ Params: CastDeviceParams }>): Promise<CastState> {
+        return castService.stopSession(req.params.deviceId);
     }
 }

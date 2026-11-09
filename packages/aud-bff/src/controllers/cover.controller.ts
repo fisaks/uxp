@@ -12,8 +12,8 @@ const ONE_DAY_SECONDS = 24 * 60 * 60;
 export class CoverController {
     /** The cover picture of an album or an audiobook. Only files the scanner picked are served, found by collection and album id, so an id that is not an album is a 404 and no path is ever taken from the request. */
     @Route("get", "/cover/:collection/:albumId", { authenticate: true, schema: CoverSchema })
-    async getCover(req: FastifyRequest, reply: FastifyReply) {
-        const { collection, albumId } = req.params as CoverParams;
+    async getCover(req: FastifyRequest<{ Params: CoverParams }>, reply: FastifyReply) {
+        const { collection, albumId } = req.params;
         const file = LIBRARIES[collection].getCoverFile(albumId);
         if (!file) {
             return reply.status(404).send({ error: "The album has no cover" });

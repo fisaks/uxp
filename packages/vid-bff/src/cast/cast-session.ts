@@ -21,6 +21,9 @@ const STATUS_POLL_MS = 5000;
 // From the connection until the media is loaded and answers: a device that never does has failed.
 const LOAD_TIMEOUT_MS = 20000;
 
+/** What the session knows: the snapshot without the queue, which the service adds. */
+export type SessionSnapshot = Omit<CastSessionSnapshot, "queue">;
+
 /** The part of a media status that is used. */
 type CastMediaStatus = {
     mediaSessionId?: number;
@@ -57,7 +60,7 @@ export type CastJoin = {
  * the media status. It ends when the receiver stops, the clip finishes, or the connection is lost.
  */
 export class CastSession {
-    private latest: CastSessionSnapshot;
+    private latest: SessionSnapshot;
     private client?: Client;
     private receiver?: Channel;
     private media?: Channel;
@@ -70,6 +73,7 @@ export class CastSession {
     private loaded = false;
     private closed = false;
     private rejected = false;
+    private playedToEnd = false;
 
     constructor(
         private readonly device: FoundDevice,
@@ -88,13 +92,18 @@ export class CastSession {
         };
     }
 
-    get snapshot(): CastSessionSnapshot {
+    get snapshot(): SessionSnapshot {
         return this.latest;
     }
 
     /** False while a joining session has not found one of our clips, and for good when it did not. */
     get visible(): boolean {
         return !this.rejected && (this.source.kind === "load" || this.latest.clipId !== "");
+    }
+
+    /** True when the clip played to its end, as against a stop or a failure. */
+    get endedNaturally(): boolean {
+        return this.playedToEnd;
     }
 
     get finished(): boolean {
@@ -255,6 +264,7 @@ export class CastSession {
         if (state === "IDLE") {
             // Idle before anything played is the receiver getting ready, not the end.
             if (this.loaded) {
+                this.playedToEnd = status.idleReason === "FINISHED";
                 this.end(
                     status.idleReason === "ERROR" ? "FAILED" : "ENDED",
                     status.idleReason === "ERROR" ? "The Chromecast could not play the video" : undefined
@@ -354,7 +364,7 @@ export class CastSession {
         }
     }
 
-    private set(change: Partial<CastSessionSnapshot>) {
+    private set(change: Partial<SessionSnapshot>) {
         this.latest = { ...this.latest, ...change, updatedAt: Date.now() };
         this.onChange();
     }

@@ -1,17 +1,25 @@
 import { WebSocketAction, WebSocketMessage, WebSocketResponse } from "@uxp/common";
 
 /** A Chromecast found on the network. */
-export interface CastDevice {
+export type CastDevice = {
     /** Stable id of the device, from its mDNS record. */
     id: string;
     name: string;
     model: string;
-}
+};
 
 export type CastPlayerState = "PLAYING" | "PAUSED" | "BUFFERING" | "LOADING" | "IDLE" | "ENDED" | "FAILED";
 
-/** A clip loaded on one Chromecast. A device has at most one. */
-export interface CastSessionSnapshot {
+/** The clips a Chromecast plays one after the other. `index` is the clip that plays now. */
+export type CastQueue = {
+    clipIds: string[];
+    index: number;
+    /** Repeats the whole queue: after the last clip it starts over, else it stops. */
+    repeat: boolean;
+};
+
+/** A clip loaded on one Chromecast, and the queue it is part of. A device has at most one. */
+export type CastSessionSnapshot = {
     deviceId: string;
     deviceName: string;
     clipId: string;
@@ -23,30 +31,43 @@ export interface CastSessionSnapshot {
     updatedAt: number;
     /** Why a session failed, shown in the bar. */
     error?: string;
-}
+    queue: CastQueue;
+};
 
-export interface CastState {
+export type CastState = {
     /** False when the BFF has no address that a Chromecast can fetch the streams from. */
     configured: boolean;
     devices: CastDevice[];
     sessions: CastSessionSnapshot[];
-}
+};
 
 /** Starts a clip on each of the devices. A device that already has a session gets the new clip instead. */
-export interface CastStartRequest {
+export type CastStartRequest = {
     clipId: string;
     deviceIds: string[];
     /** Where to start, in seconds. Used for the handover from the browser. */
     positionSec?: number;
-}
+};
 
-export interface CastDeviceParams {
+/** Changes the queue of a device. `replace` starts the clips on the device, the others need a queue that plays. */
+export type CastQueueRequest =
+    | { action: "replace"; clipIds: string[] }
+    /** Puts the clips after the one that plays. */
+    | { action: "next"; clipIds: string[] }
+    | { action: "append"; clipIds: string[] }
+    | { action: "remove"; index: number }
+    | { action: "move"; from: number; to: number }
+    /** Plays the clip at the index. */
+    | { action: "jump"; index: number }
+    | { action: "repeat"; repeat: boolean };
+
+export type CastDeviceParams = {
     deviceId: string;
-}
+};
 
-export interface CastSeekRequest {
+export type CastSeekRequest = {
     positionSec: number;
-}
+};
 
 export type VideoAppRequestMessage<Action extends WebSocketAction<VideoAppActionPayloadRequestMap>> = WebSocketMessage<
     Action,
@@ -58,7 +79,7 @@ export type VideoAppResponseMessage<Action extends WebSocketAction<VideoAppActio
 >;
 
 /** What a Chromecast plays right now, whoever cast it. */
-export interface ChromecastPlayback {
+export type ChromecastPlayback = {
     state: "PLAYING" | "PAUSED" | "BUFFERING" | "IDLE";
     title: string;
     subtitle?: string;
@@ -71,10 +92,10 @@ export interface ChromecastPlayback {
     clipId?: string;
     /** When the position was read, epoch milliseconds, so the UI can move it on between the pushes. */
     updatedAt: number;
-}
+};
 
 /** A Chromecast with what is known of the device itself and of what runs on it. */
-export interface ChromecastInfo {
+export type ChromecastInfo = {
     id: string;
     name: string;
     model: string;
@@ -92,11 +113,11 @@ export interface ChromecastInfo {
     /** Name of the running app, null when only the backdrop shows. */
     app: string | null;
     playback: ChromecastPlayback | null;
-}
+};
 
-export interface ChromecastsState {
+export type ChromecastsState = {
     devices: ChromecastInfo[];
-}
+};
 
 export type VideoAppActionPayloadRequestMap = {
     /** Starts the live cast updates. The response is the current state. */

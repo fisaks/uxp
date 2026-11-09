@@ -35,7 +35,7 @@ registerLocalWebSocketHandlers({
 
 onShutdown(() => homeVideoService.flush());
 onShutdown(async () => castService.stop());
-castService.start();
+void castService.start();
 void homeVideoService.load();
 
 const port = 3051;
