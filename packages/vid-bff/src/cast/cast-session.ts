@@ -30,6 +30,7 @@ type CastMediaStatus = {
     playerState?: string;
     idleReason?: string;
     currentTime?: number;
+    playbackRate?: number;
     media?: { contentId?: string; duration?: number };
 };
 
@@ -112,8 +113,8 @@ export class CastSession {
 
     /** Where the clip is now: the position of the last status, moved on by the time since then while it plays. */
     get currentPositionSec(): number {
-        const { state, positionSec, durationSec, updatedAt } = this.latest;
-        const position = positionSec + (state === "PLAYING" ? (Date.now() - updatedAt) / 1000 : 0);
+        const { state, positionSec, durationSec, playbackRate, updatedAt } = this.latest;
+        const position = positionSec + (state === "PLAYING" ? ((Date.now() - updatedAt) / 1000) * (playbackRate ?? 1) : 0);
         return durationSec > 0 ? Math.min(position, durationSec) : position;
     }
 
@@ -142,6 +143,11 @@ export class CastSession {
     seek(positionSec: number) {
         this.mediaCommand("SEEK", { currentTime: positionSec });
         this.set({ positionSec });
+    }
+
+    /** The receiver answers with a status that carries the new rate. */
+    setRate(rate: number) {
+        this.mediaCommand("SET_PLAYBACK_RATE", { playbackRate: rate });
     }
 
     /** Stops the app on the Chromecast, which returns it to its backdrop, and ends the session. */
@@ -280,6 +286,7 @@ export class CastSession {
         this.set({
             state,
             positionSec: status.currentTime ?? this.latest.positionSec,
+            playbackRate: status.playbackRate ?? 1,
             durationSec: Math.floor(status.media?.duration ?? this.latest.durationSec),
         });
     }

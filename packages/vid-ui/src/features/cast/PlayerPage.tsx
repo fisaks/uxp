@@ -20,6 +20,8 @@ import { ToggleIconButton } from "../shared/ToggleIconButton";
 import { QueueList } from "./QueueList";
 import { PLAYER_TAB_ID } from "../browser-player/browserPlayerLink";
 import { useBrowserPlayer } from "../browser-player/useBrowserPlayer";
+import { CAST_PLAYBACK_RATES } from "@vid/common";
+import { RateButton } from "./RateButton";
 import { sessionPosition, sessionStateText } from "./castText";
 import { useCast } from "./useCast";
 import { useNow } from "./useNow";
@@ -30,7 +32,7 @@ const SKIP_SECONDS = 30;
 export const PlayerPage: React.FC = () => {
     const { deviceId = "" } = useParams();
     const navigate = useNavigate();
-    const { state, play, pause, stop, seek, next, editQueue } = useCast();
+    const { state, play, pause, stop, seek, next, editQueue, setRate } = useCast();
     const { show: showPlayerTab } = useBrowserPlayer();
     const { data: clips } = useGetClipsQuery();
     const session = state?.sessions.find((s) => s.deviceId === deviceId);
@@ -132,6 +134,13 @@ export const PlayerPage: React.FC = () => {
                     >
                         <RepeatIcon />
                     </ToggleIconButton>
+                    {deviceId !== PLAYER_TAB_ID && !ended && (
+                        <RateButton
+                            rates={CAST_PLAYBACK_RATES}
+                            rate={session.playbackRate ?? 1}
+                            onChange={(rate) => setRate(deviceId, rate)}
+                        />
+                    )}
                     {deviceId === PLAYER_TAB_ID && (
                         <LabelledIconButton label="Show the player tab" onClick={showPlayerTab}>
                             <OpenInBrowserIcon />

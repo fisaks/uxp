@@ -27,6 +27,8 @@ export type CastSessionSnapshot = {
     state: CastPlayerState;
     positionSec: number;
     durationSec: number;
+    /** Speed of the playback, 1 when missing. */
+    playbackRate?: number;
     /** When the position was read, so the UI can move it on between the pushes. Epoch milliseconds. */
     updatedAt: number;
     /** Why a session failed, shown in the bar. */
@@ -67,6 +69,16 @@ export type CastDeviceParams = {
 
 export type CastSeekRequest = {
     positionSec: number;
+};
+
+/** The speeds a cast can be set to. */
+export const CAST_PLAYBACK_RATES = [0.5, 1, 1.25, 1.5, 2];
+
+/** The speeds a browser video can be set to: a browser goes much faster than a Chromecast. */
+export const BROWSER_PLAYBACK_RATES = [0.5, 1, 1.25, 1.5, 2, 4, 8, 16];
+
+export type CastRateRequest = {
+    rate: number;
 };
 
 export type VideoAppRequestMessage<Action extends WebSocketAction<VideoAppActionPayloadRequestMap>> = WebSocketMessage<

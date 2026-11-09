@@ -4,6 +4,8 @@ import {
     CastDeviceParamsSchema,
     CastQueueRequest,
     CastQueueSchema,
+    CastRateRequest,
+    CastRateSchema,
     CastSeekRequest,
     CastSeekSchema,
     CastStartRequest,
@@ -43,6 +45,11 @@ export class CastController {
     @Route("post", "/cast/sessions/:deviceId/seek", { authenticate: true, schema: CastSeekSchema })
     async seek(req: FastifyRequest<{ Params: CastDeviceParams; Body: CastSeekRequest }>): Promise<CastState> {
         return castService.seek(req.params.deviceId, req.body.positionSec);
+    }
+
+    @Route("post", "/cast/sessions/:deviceId/rate", { authenticate: true, schema: CastRateSchema })
+    async setRate(req: FastifyRequest<{ Params: CastDeviceParams; Body: CastRateRequest }>): Promise<CastState> {
+        return castService.setRate(req.params.deviceId, req.body.rate);
     }
 
     @Route("post", "/cast/sessions/:deviceId/restart", { authenticate: true, schema: CastDeviceParamsSchema })

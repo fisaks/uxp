@@ -2,9 +2,11 @@ import NavigateBeforeIcon from "@mui/icons-material/NavigateBefore";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import { Alert, Box, Button, CircularProgress, Stack, Typography } from "@mui/material";
 import React, { useEffect, useRef, useState } from "react";
+import { BROWSER_PLAYBACK_RATES } from "@vid/common";
 import { Link, useParams } from "react-router-dom";
 import { createStreamLink, streamUrl, thumbnailUrl } from "../../api/home-video-api";
 import { CastPicker } from "../cast/CastPicker";
+import { RateButton } from "../cast/RateButton";
 import { ClipForm } from "./ClipForm";
 import { clipPath } from "./ClipTile";
 import { clipName, formatDate } from "./clipFormat";
@@ -38,6 +40,9 @@ export const ClipPage: React.FC = () => {
     const { data: clips } = useGetClipsQuery();
     const { url, failed } = useStreamUrl(id);
     const video = useRef<HTMLVideoElement>(null);
+    const [rate, setRate] = useState(1);
+    // A new clip starts at normal speed.
+    useEffect(() => setRate(1), [id]);
     const index = clips?.findIndex((c) => c.id === id) ?? -1;
     const clip = clips?.[index];
 
@@ -60,6 +65,9 @@ export const ClipPage: React.FC = () => {
                             src={url}
                             poster={thumbnailUrl(clip.id)}
                             controls
+                            onLoadedMetadata={(event) => {
+                                event.currentTarget.playbackRate = rate;
+                            }}
                             style={{ display: "block", width: "100%", height: "100%" }}
                         />
                     )
@@ -87,6 +95,14 @@ export const ClipPage: React.FC = () => {
                         {index + 1} of {clips.length}
                     </Typography>
                 </Box>
+                <RateButton
+                    rates={BROWSER_PLAYBACK_RATES}
+                    rate={rate}
+                    onChange={(value) => {
+                        setRate(value);
+                        if (video.current) video.current.playbackRate = value;
+                    }}
+                />
                 <CastPicker
                     clipId={clip.id}
                     getPosition={() => video.current?.currentTime ?? 0}

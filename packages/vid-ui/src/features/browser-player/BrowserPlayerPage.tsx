@@ -7,7 +7,7 @@ import Replay30Icon from "@mui/icons-material/Replay30";
 import SkipNextIcon from "@mui/icons-material/SkipNext";
 import StopIcon from "@mui/icons-material/Stop";
 import { Box, Stack, Typography } from "@mui/material";
-import { CastPlayerState, CastQueue, CastQueueRequest, editQueue, nextIndex, QueueEditError } from "@vid/common";
+import { BROWSER_PLAYBACK_RATES, CastPlayerState, CastQueue, CastQueueRequest, editQueue, nextIndex, QueueEditError } from "@vid/common";
 import React, { useEffect, useRef, useState } from "react";
 import { createStreamLink, streamUrl, thumbnailUrl } from "../../api/home-video-api";
 import { QueueList } from "../cast/QueueList";
@@ -15,6 +15,7 @@ import { clipName } from "../home-video/clipFormat";
 import { useGetClipsQuery } from "../home-video/home-video.api";
 import { SavePlaylistButton } from "../playlist/SavePlaylistButton";
 import { LabelledIconButton } from "../shared/LabelledIconButton";
+import { RateButton } from "../cast/RateButton";
 import { ToggleIconButton } from "../shared/ToggleIconButton";
 import { BrowserPlayerCommand, FromPlayerMessage, openChannel, showMainWindow, ToPlayerMessage } from "./browserPlayerLink";
 
@@ -60,6 +61,8 @@ export const BrowserPlayerPage: React.FC = () => {
     const [finished, setFinished] = useState<Extract<CastPlayerState, "ENDED" | "FAILED">>();
     const [playing, setPlaying] = useState(false);
     const video = useRef<HTMLVideoElement>(null);
+    // The speed stays for the next clip of the queue: it is picked to get through the clips.
+    const [rate, setRate] = useState(1);
     const channel = useRef<BroadcastChannel>();
     // What the handlers of the channel and the video need, kept by reference so that they always see the latest.
     const queueRef = useRef(queue);
@@ -232,6 +235,7 @@ export const BrowserPlayerPage: React.FC = () => {
                         playsInline
                         style={{ display: "block", width: "100%", height: "100%" }}
                         onLoadedMetadata={(event) => {
+                            event.currentTarget.playbackRate = rate;
                             if (startAt.current > 0) event.currentTarget.currentTime = startAt.current;
                             startAt.current = 0;
                         }}
@@ -279,6 +283,14 @@ export const BrowserPlayerPage: React.FC = () => {
                             <SkipNextIcon />
                         </LabelledIconButton>
                     )}
+                    <RateButton
+                        rates={BROWSER_PLAYBACK_RATES}
+                        rate={rate}
+                        onChange={(value) => {
+                            setRate(value);
+                            if (video.current) video.current.playbackRate = value;
+                        }}
+                    />
                     <ToggleIconButton
                         active={queue.repeat}
                         label={queue.repeat ? "Repeat the queue: on" : "Repeat the queue: off"}

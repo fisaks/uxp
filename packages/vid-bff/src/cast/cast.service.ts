@@ -269,6 +269,11 @@ export class CastService {
         return this.getState();
     }
 
+    setRate(deviceId: string, rate: number): CastState {
+        this.session(deviceId).setRate(rate);
+        return this.getState();
+    }
+
     /** Takes the cast down on the Chromecast and casts the same clip again from where it was. */
     restart(deviceId: string): CastState {
         const old = this.session(deviceId);

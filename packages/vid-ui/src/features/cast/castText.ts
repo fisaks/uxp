@@ -15,7 +15,7 @@ export const sessionStateText = (session: CastSessionSnapshot) =>
 
 /** Where the clip is now: the position of the last push, moved on by the time since then while it plays. */
 export const sessionPosition = (session: CastSessionSnapshot, now: number) => {
-    const elapsed = session.state === "PLAYING" ? (now - session.updatedAt) / 1000 : 0;
+    const elapsed = session.state === "PLAYING" ? ((now - session.updatedAt) / 1000) * (session.playbackRate ?? 1) : 0;
     const position = session.positionSec + elapsed;
     return session.durationSec > 0 ? Math.min(position, session.durationSec) : position;
 };

@@ -13,6 +13,7 @@ import {
     useRefreshCastMutation,
     useRestartCastMutation,
     useSeekCastMutation,
+    useRateCastMutation,
     useStartCastMutation,
     useStopCastMutation,
 } from "./cast.api";
@@ -38,6 +39,7 @@ export const useCast = () => {
     const [stopCast] = useStopCastMutation();
     const [restartCast] = useRestartCastMutation();
     const [seekCast] = useSeekCastMutation();
+    const [rateCast] = useRateCastMutation();
     const [nextCast] = useNextCastMutation();
     const [editCastQueue] = useEditCastQueueMutation();
     const [refreshCast] = useRefreshCastMutation();
@@ -96,12 +98,27 @@ export const useCast = () => {
                 }
                 return worked;
             },
+            /** Sets the playback speed of a Chromecast. The player tab keeps the speed of its video controls. */
+            setRate: (deviceId: string, rate: number) => ran(rateCast({ deviceId, rate })),
             seek: forPlayer(
                 (positionSec: number) => ({ action: "seek", positionSec }),
                 (deviceId, positionSec: number) => ran(seekCast({ deviceId, positionSec }))
             ),
         };
-    }, [startCast, playCast, pauseCast, stopCast, restartCast, seekCast, nextCast, editCastQueue, refreshCast, dispatch, state?.devices]);
+    }, [
+        startCast,
+        playCast,
+        pauseCast,
+        stopCast,
+        restartCast,
+        seekCast,
+        rateCast,
+        nextCast,
+        editCastQueue,
+        refreshCast,
+        dispatch,
+        state?.devices,
+    ]);
 
     return { state, error, clearError, ...commands };
 };

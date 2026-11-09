@@ -21,7 +21,7 @@ import {
     useMediaQuery,
     useTheme,
 } from "@mui/material";
-import { CastSessionSnapshot } from "@vid/common";
+import { CAST_PLAYBACK_RATES, CastSessionSnapshot } from "@vid/common";
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useGetClipsQuery } from "../home-video/home-video.api";
@@ -36,6 +36,7 @@ import { useBrowserPlayer } from "../browser-player/useBrowserPlayer";
 import { PLAYER_TAB_ID } from "../browser-player/browserPlayerLink";
 import { selectQueued } from "./castSelectors";
 import { useCast } from "./useCast";
+import { RateButton } from "./RateButton";
 import { sessionPosition, sessionStateText } from "./castText";
 import { useBarSessions } from "./useBarSessions";
 import { useNow } from "./useNow";
@@ -51,7 +52,7 @@ const POSTER_NARROW = { width: 48, height: 27 };
 
 const SessionRow: React.FC<{ session: CastSessionSnapshot; now: number; compact: boolean }> = ({ session, now, compact }) => {
     const { data: clips } = useGetClipsQuery();
-    const { play, pause, stop, seek, restart, next, editQueue } = useCast();
+    const { play, pause, stop, seek, restart, next, editQueue, setRate } = useCast();
     const { show: showPlayerTab } = useBrowserPlayer();
     const theme = useTheme();
     const wide = useMediaQuery(theme.breakpoints.up("md")) && !compact;
@@ -125,6 +126,13 @@ const SessionRow: React.FC<{ session: CastSessionSnapshot; now: number; compact:
                 >
                     <RepeatIcon />
                 </ToggleIconButton>
+            )}
+            {session.deviceId !== PLAYER_TAB_ID && !ended && (
+                <RateButton
+                    rates={CAST_PLAYBACK_RATES}
+                    rate={session.playbackRate ?? 1}
+                    onChange={(rate) => setRate(session.deviceId, rate)}
+                />
             )}
             {session.deviceId === PLAYER_TAB_ID ? (
                 <LabelledIconButton label="Show the player tab" onClick={showPlayerTab}>
