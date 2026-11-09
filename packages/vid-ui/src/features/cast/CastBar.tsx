@@ -25,18 +25,19 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useGetClipsQuery } from "../home-video/home-video.api";
 import { thumbnailUrl } from "../../api/home-video-api";
-import { clipPath } from "../home-video/ClipTile";
 import { clipName, formatDuration } from "../home-video/clipFormat";
 import { LabelledIconButton } from "../shared/LabelledIconButton";
 import { ToggleIconButton } from "../shared/ToggleIconButton";
 import { PAGE_WIDTH } from "../shared/pageWidth";
 import { useAppSelector } from "../../hooks";
+import { playerPath } from "../../menu";
 import { selectQueued } from "./castSelectors";
 import { useCast } from "./useCast";
 import { sessionPosition, sessionStateText } from "./castText";
+import { useBarSessions } from "./useBarSessions";
+import { useNow } from "./useNow";
 
 const SKIP_SECONDS = 30;
-const TICK_MS = 1000;
 /** The room the bar takes at the bottom of the page, per row, for the page to keep its end clear. */
 export const CAST_ROW_ROOM = 80;
 /** The line with the position below the row, where the row has no room for the slider. */
@@ -44,16 +45,6 @@ const POSITION_LINE_HEIGHT = 24;
 const POSTER_WIDE = { width: 64, height: 36 };
 /** Smaller where the buttons leave little room for the title. */
 const POSTER_NARROW = { width: 48, height: 27 };
-
-const useNow = (active: boolean) => {
-    const [now, setNow] = useState(Date.now());
-    useEffect(() => {
-        if (!active) return;
-        const timer = setInterval(() => setNow(Date.now()), TICK_MS);
-        return () => clearInterval(timer);
-    }, [active]);
-    return now;
-};
 
 const SessionRow: React.FC<{ session: CastSessionSnapshot; now: number; compact: boolean }> = ({ session, now, compact }) => {
     const { data: clips } = useGetClipsQuery();
@@ -151,7 +142,7 @@ const SessionRow: React.FC<{ session: CastSessionSnapshot; now: number; compact:
                 sx={{ minHeight: compact ? 56 : ownLine ? CAST_ROW_ROOM - POSITION_LINE_HEIGHT : CAST_ROW_ROOM }}
             >
                 <ButtonBase
-                    {...(compact ? {} : { component: Link, to: clipPath(session.clipId) })}
+                    {...(compact ? {} : { component: Link, to: playerPath(session.deviceId) })}
                     disabled={compact}
                     sx={{
                         minWidth: 0,
@@ -225,9 +216,7 @@ const SessionRow: React.FC<{ session: CastSessionSnapshot; now: number; compact:
 };
 
 /** One row for each device with a clip. Compact is for the narrow System Center panel: no link to the clip page, a progress bar that cannot be dragged. */
-export const CastRows: React.FC<{ compact?: boolean }> = ({ compact = false }) => {
-    const { state } = useCast();
-    const sessions = state?.sessions ?? [];
+export const CastRows: React.FC<{ compact?: boolean; sessions: CastSessionSnapshot[] }> = ({ compact = false, sessions }) => {
     const now = useNow(sessions.some((s) => s.state === "PLAYING"));
     return (
         <>
@@ -294,8 +283,8 @@ const QueuedBanner: React.FC = () => {
 
 /** What the Chromecasts play and the buttons for them. Only on the video pages. */
 export const CastBar: React.FC = () => {
-    const { state } = useCast();
-    const sessionCount = state?.sessions.length ?? 0;
+    const sessions = useBarSessions();
+    const sessionCount = sessions.length;
 
     return (
         <>
@@ -306,7 +295,7 @@ export const CastBar: React.FC = () => {
                 {sessionCount > 0 && (
                     <Paper elevation={6} square>
                         <Box sx={{ maxWidth: PAGE_WIDTH, mx: "auto", px: { xs: 1.5, sm: 2 } }}>
-                            <CastRows />
+                            <CastRows sessions={sessions} />
                         </Box>
                     </Paper>
                 )}

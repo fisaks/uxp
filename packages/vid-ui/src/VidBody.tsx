@@ -4,7 +4,8 @@ import { AppBodyContent } from "@uxp/ui-lib";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { CastBar, CAST_ROW_ROOM } from "./features/cast/CastBar";
 import { CastProvider } from "./features/cast/CastProvider";
-import { useCast } from "./features/cast/useCast";
+import { useBarSessions } from "./features/cast/useBarSessions";
+import { PlayerPage } from "./features/cast/PlayerPage";
 import { ChromecastsPage } from "./features/chromecast/ChromecastsPage";
 import { ClipListPage } from "./features/home-video/ClipListPage";
 import { ClipPage } from "./features/home-video/ClipPage";
@@ -12,7 +13,7 @@ import { saveErrorCleared } from "./features/home-video/saveErrorSlice";
 import { selectSaveErrorMessage } from "./features/home-video/saveErrorSelectors";
 import { HomePage } from "./features/home/HomePage";
 import { useAppDispatch, useAppSelector } from "./hooks";
-import { CHROMECASTS_PATH, HOME_PATH, HOME_VIDEOS_PATH } from "./menu";
+import { CHROMECASTS_PATH, HOME_PATH, HOME_VIDEOS_PATH, PLAYER_PATH } from "./menu";
 import { VideoNavigation } from "./VideoNavigation";
 
 const SaveErrorNotice = () => {
@@ -34,7 +35,7 @@ const SaveErrorNotice = () => {
 
 /** The page keeps its end clear of the cast bar, which is fixed to the bottom of the window. */
 const Pages = () => {
-    const sessionCount = useCast().state?.sessions.length ?? 0;
+    const sessionCount = useBarSessions().length;
     return (
         <Box sx={{ pb: `${sessionCount * CAST_ROW_ROOM}px` }}>
             <VideoNavigation />
@@ -43,6 +44,7 @@ const Pages = () => {
                 <Route path={HOME_VIDEOS_PATH} element={<ClipListPage />} />
                 <Route path={`${HOME_VIDEOS_PATH}/clips/:id`} element={<ClipPage />} />
                 <Route path={CHROMECASTS_PATH} element={<ChromecastsPage />} />
+                <Route path={`${PLAYER_PATH}/:deviceId`} element={<PlayerPage />} />
                 <Route path="*" element={<Navigate to={HOME_PATH} replace={true} />} />
             </Routes>
         </Box>

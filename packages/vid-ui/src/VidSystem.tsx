@@ -9,10 +9,14 @@ import { useCast } from "./features/cast/useCast";
 const getWebSocket = () => VideoSystemBrowserWebSocketManager.getInstance();
 
 const Casts: React.FC = () => {
-    const sessionCount = useCast().state?.sessions.length ?? 0;
+    const sessions = useCast().state?.sessions ?? [];
     return (
         <Box sx={{ p: 1.5 }}>
-            {sessionCount === 0 ? <Typography color="text.secondary">Nothing is casting</Typography> : <CastRows compact={true} />}
+            {sessions.length === 0 ? (
+                <Typography color="text.secondary">Nothing is casting</Typography>
+            ) : (
+                <CastRows compact={true} sessions={sessions} />
+            )}
             <CastErrorNotice />
         </Box>
     );

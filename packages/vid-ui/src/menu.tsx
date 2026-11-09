@@ -14,3 +14,6 @@ export const HOME_PATH = "/";
 export const HOME_LABEL = "Video";
 export const HOME_VIDEOS_PATH = MENU_ITEMS[0].path;
 export const CHROMECASTS_PATH = MENU_ITEMS[1].path;
+
+export const PLAYER_PATH = "/player";
+export const playerPath = (deviceId: string) => `${PLAYER_PATH}/${encodeURIComponent(deviceId)}`;

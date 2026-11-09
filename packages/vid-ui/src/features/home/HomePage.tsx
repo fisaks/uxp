@@ -1,13 +1,15 @@
+import PlayCircleOutlineIcon from "@mui/icons-material/PlayCircleOutline";
 import { Box, ButtonBase, Paper, Typography } from "@mui/material";
 import React from "react";
 import { Link } from "react-router-dom";
 import { HomeVideoClip } from "@vid/common";
 import { thumbnailUrl } from "../../api/home-video-api";
-import { MENU_ITEMS } from "../../menu";
+import { CHROMECASTS_PATH, MENU_ITEMS, playerPath } from "../../menu";
 import { useAppSelector } from "../../hooks";
+import { useCast } from "../cast/useCast";
 import { selectChromecasts } from "../chromecast/chromecastSelectors";
 import { useGetClipsQuery } from "../home-video/home-video.api";
-import { isUnlabelled } from "../home-video/clipFormat";
+import { clipName, isUnlabelled } from "../home-video/clipFormat";
 import { PAGE_WIDTH } from "../shared/pageWidth";
 
 const MOSAIC_SIZE = 88;
@@ -95,6 +97,28 @@ export const HomePage: React.FC = () => {
                 .filter((url): url is string => !!url)
         ),
     ].slice(0, MOSAIC_CLIPS);
+    const { state: castState } = useCast();
+    // One tile for each Chromecast that plays: what plays, what comes next, and its picture. Our own clips open their player page.
+    const playingTiles = (chromecasts ?? [])
+        .filter((device) => device.playback && device.playback.state !== "IDLE")
+        .map((device) => {
+            const { playback } = device;
+            const session = castState?.sessions.find((s) => s.deviceId === device.id);
+            const titleOf = (id: string | undefined) => {
+                const clip = clips?.find((c) => c.id === id);
+                return clip ? clipName(clip) : undefined;
+            };
+            const queue = session?.queue;
+            const nextId = queue && (queue.clipIds[queue.index + 1] ?? (queue.repeat ? queue.clipIds[0] : undefined));
+            const nextTitle = titleOf(nextId);
+            const art = playback?.clipId ? thumbnailUrl(playback.clipId) : playback?.imageUrl;
+            return {
+                device,
+                to: session ? playerPath(device.id) : CHROMECASTS_PATH,
+                lines: [`Now: ${playback?.title}`, nextTitle && `Next: ${nextTitle}`],
+                picture: art && <Mosaic urls={[art]} />,
+            };
+        });
     const unlabelled = clips?.filter(isUnlabelled).length;
     const info = clips && [plural(clips.length, "clip"), unlabelled ? `${unlabelled} unlabelled` : undefined].filter(Boolean).join(" · ");
 
@@ -115,6 +139,9 @@ export const HomePage: React.FC = () => {
                     lines={[chromecastInfo]}
                     picture={castArt.length > 0 && <Mosaic urls={castArt} />}
                 />
+                {playingTiles.map(({ device, to, lines, picture }) => (
+                    <Tile key={device.id} to={to} icon={<PlayCircleOutlineIcon />} title={device.name} lines={lines} picture={picture} />
+                ))}
             </Box>
         </Box>
     );
