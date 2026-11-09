@@ -1,7 +1,15 @@
 import "./env";
 import fastifyCookie from "@fastify/cookie";
 import fastifyWebsocket from "@fastify/websocket";
-import { AppLogger, errorHandler, HandlerRegistry, jwtPlugin, onShutdown, registerLocalWebSocketHandlers, registerRoutes } from "@uxp/bff-common";
+import {
+    AppLogger,
+    errorHandler,
+    HandlerRegistry,
+    jwtPlugin,
+    onShutdown,
+    registerLocalWebSocketHandlers,
+    registerRoutes,
+} from "@uxp/bff-common";
 import Fastify from "fastify";
 import path from "path";
 import { castService } from "./cast/cast.service";

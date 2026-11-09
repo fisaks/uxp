@@ -4,6 +4,8 @@ import { Link } from "react-router-dom";
 import { HomeVideoClip } from "@vid/common";
 import { thumbnailUrl } from "../../api/home-video-api";
 import { MENU_ITEMS } from "../../menu";
+import { useAppSelector } from "../../hooks";
+import { selectChromecasts } from "../chromecast/chromecastSelectors";
 import { useGetClipsQuery } from "../home-video/home-video.api";
 import { isUnlabelled } from "../home-video/clipFormat";
 import { PAGE_WIDTH } from "../shared/pageWidth";
@@ -11,34 +13,30 @@ import { PAGE_WIDTH } from "../shared/pageWidth";
 const MOSAIC_SIZE = 88;
 const MOSAIC_CLIPS = 4;
 
+/** Small pictures in a square: one fills it, more share it in two columns. */
+const Mosaic: React.FC<{ urls: string[] }> = ({ urls }) => (
+    <Box
+        sx={{
+            display: "grid",
+            gridTemplateColumns: urls.length === 1 ? "1fr" : "1fr 1fr",
+            gap: "2px",
+            width: MOSAIC_SIZE,
+            height: MOSAIC_SIZE,
+            borderRadius: 1,
+            overflow: "hidden",
+        }}
+    >
+        {urls.map((url) => (
+            <Box key={url} component="img" src={url} alt="" loading="lazy" sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        ))}
+    </Box>
+);
+
 /** Poster frames of clips spread over the whole timeline, so the tile shows the years and not only the first ones. */
-const MosaicOf: React.FC<{ clips: HomeVideoClip[] }> = ({ clips }) => {
+const spreadPosters = (clips: HomeVideoClip[]): string[] => {
     const step = clips.length / MOSAIC_CLIPS;
     const spread = clips.length < MOSAIC_CLIPS ? clips : Array.from({ length: MOSAIC_CLIPS }, (_, i) => clips[Math.floor(i * step)]);
-    return (
-        <Box
-            sx={{
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: "2px",
-                width: MOSAIC_SIZE,
-                height: MOSAIC_SIZE,
-                borderRadius: 1,
-                overflow: "hidden",
-            }}
-        >
-            {spread.map((clip) => (
-                <Box
-                    key={clip.id}
-                    component="img"
-                    src={thumbnailUrl(clip.id)}
-                    alt=""
-                    loading="lazy"
-                    sx={{ width: "100%", height: "100%", objectFit: "cover" }}
-                />
-            ))}
-        </Box>
-    );
+    return spread.map((clip) => thumbnailUrl(clip.id));
 };
 
 type TileProps = {
@@ -83,6 +81,20 @@ const plural = (count: number, one: string) => `${count} ${one}${count === 1 ? "
 export const HomePage: React.FC = () => {
     const { data: clips } = useGetClipsQuery();
     const homeVideos = MENU_ITEMS[0];
+    const chromecastsTile = MENU_ITEMS[1];
+    const chromecasts = useAppSelector(selectChromecasts)?.devices;
+    const casting = chromecasts?.filter((device) => device.playback && device.playback.state !== "IDLE").length;
+    const chromecastInfo =
+        chromecasts && [`${chromecasts.length} found`, casting ? `${casting} casting` : undefined].filter(Boolean).join(" · ");
+    // Our own clips show their poster frame from the library; what others cast shows the art the device reports.
+    const castArt = [
+        ...new Set(
+            chromecasts
+                ?.filter((device) => device.playback && device.playback.state !== "IDLE")
+                .map(({ playback }) => (playback?.clipId ? thumbnailUrl(playback.clipId) : playback?.imageUrl))
+                .filter((url): url is string => !!url)
+        ),
+    ].slice(0, MOSAIC_CLIPS);
     const unlabelled = clips?.filter(isUnlabelled).length;
     const info = clips && [plural(clips.length, "clip"), unlabelled ? `${unlabelled} unlabelled` : undefined].filter(Boolean).join(" · ");
 
@@ -94,7 +106,14 @@ export const HomePage: React.FC = () => {
                     icon={homeVideos.icon}
                     title={homeVideos.label}
                     lines={[info]}
-                    picture={clips && clips.length > 0 && <MosaicOf clips={clips} />}
+                    picture={clips && clips.length > 0 && <Mosaic urls={spreadPosters(clips)} />}
+                />
+                <Tile
+                    to={chromecastsTile.path}
+                    icon={chromecastsTile.icon}
+                    title={chromecastsTile.label}
+                    lines={[chromecastInfo]}
+                    picture={castArt.length > 0 && <Mosaic urls={castArt} />}
                 />
             </Box>
         </Box>

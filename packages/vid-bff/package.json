@@ -22,6 +22,7 @@
         "@uxp/bff-common": "workspace:*",
         "@uxp/common": "workspace:*",
         "@vid/common": "workspace:*",
+        "axios": "^1.7.9",
         "bonjour-service": "^1.3.0",
         "castv2": "^0.1.10",
         "dotenv": "^16.4.5",

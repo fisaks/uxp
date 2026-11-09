@@ -3,7 +3,9 @@ import { createHmac, timingSafeEqual } from "crypto";
 
 const LINK_LIFETIME_SECONDS = 12 * 60 * 60;
 // Derived from the JWT secret, so a stream signature can never pass as anything else.
-const key = createHmac("sha256", process.env.JWT_SECRET as string).update("vid-stream").digest();
+const key = createHmac("sha256", process.env.JWT_SECRET as string)
+    .update("vid-stream")
+    .digest();
 
 const sign = (clipId: string, expires: number): string => createHmac("sha256", key).update(`${clipId}.${expires}`).digest("hex");
 

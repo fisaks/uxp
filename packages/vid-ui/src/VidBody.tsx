@@ -5,13 +5,14 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { CastBar, CAST_ROW_ROOM } from "./features/cast/CastBar";
 import { CastProvider } from "./features/cast/CastProvider";
 import { useCast } from "./features/cast/useCast";
+import { ChromecastsPage } from "./features/chromecast/ChromecastsPage";
 import { ClipListPage } from "./features/home-video/ClipListPage";
 import { ClipPage } from "./features/home-video/ClipPage";
 import { saveErrorCleared } from "./features/home-video/saveErrorSlice";
 import { selectSaveErrorMessage } from "./features/home-video/saveErrorSelectors";
 import { HomePage } from "./features/home/HomePage";
 import { useAppDispatch, useAppSelector } from "./hooks";
-import { HOME_PATH, HOME_VIDEOS_PATH } from "./menu";
+import { CHROMECASTS_PATH, HOME_PATH, HOME_VIDEOS_PATH } from "./menu";
 import { VideoNavigation } from "./VideoNavigation";
 
 const SaveErrorNotice = () => {
@@ -41,6 +42,7 @@ const Pages = () => {
                 <Route path={HOME_PATH} element={<HomePage />} />
                 <Route path={HOME_VIDEOS_PATH} element={<ClipListPage />} />
                 <Route path={`${HOME_VIDEOS_PATH}/clips/:id`} element={<ClipPage />} />
+                <Route path={CHROMECASTS_PATH} element={<ChromecastsPage />} />
                 <Route path="*" element={<Navigate to={HOME_PATH} replace={true} />} />
             </Routes>
         </Box>

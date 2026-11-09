@@ -42,11 +42,17 @@ export class HomeVideoThumbnails {
             await execFileAsync(
                 "ffmpeg",
                 [
-                    "-v", "error", "-y",
-                    "-ss", String(Math.floor(durationSeconds * POSITION)),
-                    "-i", videoFile,
-                    "-frames:v", "1",
-                    "-vf", `scale=iw*sar:ih,setsar=1,scale=${WIDTH}:-2`,
+                    "-v",
+                    "error",
+                    "-y",
+                    "-ss",
+                    String(Math.floor(durationSeconds * POSITION)),
+                    "-i",
+                    videoFile,
+                    "-frames:v",
+                    "1",
+                    "-vf",
+                    `scale=iw*sar:ih,setsar=1,scale=${WIDTH}:-2`,
                     temporary,
                 ],
                 { timeout: TIMEOUT_MS }

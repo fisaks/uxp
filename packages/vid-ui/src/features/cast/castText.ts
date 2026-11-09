@@ -10,7 +10,8 @@ const STATE_TEXT: Record<CastSessionSnapshot["state"], string> = {
     FAILED: "Failed",
 };
 
-export const sessionStateText = (session: CastSessionSnapshot) => (session.state === "FAILED" && session.error ? session.error : STATE_TEXT[session.state]);
+export const sessionStateText = (session: CastSessionSnapshot) =>
+    session.state === "FAILED" && session.error ? session.error : STATE_TEXT[session.state];
 
 /** Where the clip is now: the position of the last push, moved on by the time since then while it plays. */
 export const sessionPosition = (session: CastSessionSnapshot, now: number) => {

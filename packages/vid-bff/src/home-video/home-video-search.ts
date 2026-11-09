@@ -103,7 +103,10 @@ export class HomeVideoSearch {
             await this.search?.replaceDocuments(HOME_VIDEO_SEARCH_INDEX, docs);
             AppLogger.info(undefined, { message: `[Search] Indexed ${docs.length} home video clips` });
         } catch (error) {
-            AppLogger.error(undefined, { message: "[Search] Could not index the home video clips, trying again at the next change", error });
+            AppLogger.error(undefined, {
+                message: "[Search] Could not index the home video clips, trying again at the next change",
+                error,
+            });
         }
     }
 

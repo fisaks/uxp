@@ -1,5 +1,18 @@
 import { AppLogger, Route } from "@uxp/bff-common";
-import { HomeVideoClip, HomeVideoClipParams, HomeVideoClipParamsSchema, HomeVideoClipUpdate, HomeVideoClipUpdateSchema, HomeVideoLabels, HomeVideoSearchQuery, HomeVideoSearchResult, HomeVideoSearchSchema, HomeVideoStreamLink, HomeVideoStreamQuery, HomeVideoStreamSchema } from "@vid/common";
+import {
+    HomeVideoClip,
+    HomeVideoClipParams,
+    HomeVideoClipParamsSchema,
+    HomeVideoClipUpdate,
+    HomeVideoClipUpdateSchema,
+    HomeVideoLabels,
+    HomeVideoSearchQuery,
+    HomeVideoSearchResult,
+    HomeVideoSearchSchema,
+    HomeVideoStreamLink,
+    HomeVideoStreamQuery,
+    HomeVideoStreamSchema,
+} from "@vid/common";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { createReadStream } from "fs";
 import { stat } from "fs/promises";
@@ -104,7 +117,11 @@ export class HomeVideoController {
             return reply.status(403).send({ error: "The link is not valid or has expired" });
         }
         const file = homeVideoService.filePath(id);
-        const size = file ? await stat(file).then((s) => s.size).catch(() => undefined) : undefined;
+        const size = file
+            ? await stat(file)
+                  .then((s) => s.size)
+                  .catch(() => undefined)
+            : undefined;
         if (!file || size === undefined) {
             return reply.status(404).send({ error: "There is no such clip" });
         }

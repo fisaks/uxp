@@ -21,7 +21,9 @@ export class HomeVideoMetadataStore {
 
     constructor(private readonly file?: string) {
         if (file) {
-            this.writer = new SerializedJsonWriter(file, (error) => AppLogger.warn(undefined, { message: "Could not save the home video metadata", error }));
+            this.writer = new SerializedJsonWriter(file, (error) =>
+                AppLogger.warn(undefined, { message: "Could not save the home video metadata", error })
+            );
         }
     }
 

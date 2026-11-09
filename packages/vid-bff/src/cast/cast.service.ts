@@ -9,6 +9,7 @@ import { CastConfig, castConfig } from "./cast.config";
 import { CastDiscovery } from "./cast-discovery";
 import { CastSession } from "./cast-session";
 import { FoundDevice } from "./cast-discovery";
+import { ChromecastsService } from "./chromecasts.service";
 
 const CAST_TOPIC = "cast";
 /** After a stop the Chromecast needs a moment before it takes a new app. */
@@ -32,8 +33,14 @@ const clipTitle = (clip: HomeVideoClip): string => {
 export class CastService {
     private readonly discovery = new CastDiscovery(
         () => this.publish(),
-        (device) => this.joinRunning(device)
+        (device) => {
+            this.joinRunning(device);
+            this.chromecasts.watch(device);
+        },
+        (deviceId) => this.chromecasts.unwatch(deviceId)
     );
+    /** Every Chromecast with what plays on it, whoever cast it. */
+    readonly chromecasts = new ChromecastsService(this.wsManager, (contentId) => this.clipOfStream(contentId)?.id);
     private readonly sessions = new Map<string, CastSession>();
     private last = "";
 
@@ -48,6 +55,7 @@ export class CastService {
 
     stop() {
         this.discovery.stop();
+        this.chromecasts.stop();
         this.sessions.forEach((session) => session.release());
     }
 
@@ -151,16 +159,12 @@ export class CastService {
         if (!baseUrl || this.sessions.has(device.id)) {
             return;
         }
-        const streamPrefix = `${baseUrl}/api/home-videos/stream/`;
         const session = new CastSession(
             device,
             {
                 kind: "join",
                 accept: (contentId) => {
-                    if (!contentId.startsWith(streamPrefix)) {
-                        return undefined;
-                    }
-                    const clip = homeVideoService.get(contentId.slice(streamPrefix.length).split("?")[0]);
+                    const clip = this.clipOfStream(contentId);
                     if (clip) {
                         AppLogger.info(undefined, { message: `[Cast] Joined ${clip.file} playing on "${device.name}"` });
                     }
@@ -171,6 +175,14 @@ export class CastService {
         );
         this.sessions.set(device.id, session);
         session.connect();
+    }
+
+    /** The clip when the address is a stream link of ours. */
+    private clipOfStream(contentId: string): HomeVideoClip | undefined {
+        const streamPrefix = `${this.config.baseUrl}/api/home-videos/stream/`;
+        return this.config.baseUrl && contentId.startsWith(streamPrefix)
+            ? homeVideoService.get(contentId.slice(streamPrefix.length).split("?")[0])
+            : undefined;
     }
 
     private session(deviceId: string): CastSession {

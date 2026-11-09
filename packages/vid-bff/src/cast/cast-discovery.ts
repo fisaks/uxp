@@ -18,7 +18,9 @@ export class CastDiscovery {
     constructor(
         private readonly onChange: () => void,
         /** A device that is new, or came back at another address. */
-        private readonly onFound: (device: FoundDevice) => void
+        private readonly onFound: (device: FoundDevice) => void,
+        /** A device that said goodbye. */
+        private readonly onLost: (deviceId: string) => void
     ) {}
 
     start() {
@@ -73,6 +75,7 @@ export class CastDiscovery {
         if (id && this.found.delete(id)) {
             AppLogger.info(undefined, { message: `[Cast] Lost the device ${id}` });
             this.onChange();
+            this.onLost(id);
         }
     }
 }
