@@ -1,4 +1,4 @@
-import { CastState } from "@vid/common";
+import { CastState, HomeVideoClip } from "@vid/common";
 import { AppErrorV2, AppLogger } from "@uxp/bff-common";
 import { ErrorCodes } from "@uxp/common";
 import { WebSocket } from "ws";
@@ -10,8 +10,22 @@ import { CastDiscovery } from "./cast-discovery";
 import { CastSessionRunner } from "./cast-session";
 
 const CAST_TOPIC = "cast";
+/** After a stop the Chromecast needs a moment before it takes a new app. */
+const RESTART_GAP_MS = 2000;
 /** An ended or failed session stays in the list this long, so the bar can say what happened before it goes. */
 const FINISHED_KEEP_MS = 5000;
+
+/** What the TV shows: the title, else the date as d.M.yyyy, else the file name, as the app names a clip. */
+const clipTitle = (clip: HomeVideoClip): string => {
+    if (clip.title) {
+        return clip.title;
+    }
+    if (clip.date) {
+        const [year, month, day] = clip.date.split("-").map(Number);
+        return `${day}.${month}.${year}`;
+    }
+    return clip.file;
+};
 
 /** The Chromecasts on the network and the clips playing on them, one session per device. */
 export class CastService {
@@ -41,13 +55,19 @@ export class CastService {
         };
     }
 
+    /** Asks the network which Chromecasts are there. New ones arrive as a pushed state. */
+    refresh(): CastState {
+        this.discovery.refresh();
+        return this.getState();
+    }
+
     subscribe(socket: WebSocket): CastState {
         this.wsManager.joinTopic(socket, CAST_TOPIC);
         return this.getState();
     }
 
     /** Starts the clip on each device. A device that has a session gets the new clip in its place. */
-    startOn(clipId: string, deviceIds: string[], positionSec = 0): CastState {
+    startOn(clipId: string, deviceIds: string[], positionSec = 0, connectDelayMs = 0): CastState {
         const baseUrl = this.config.baseUrl;
         if (!baseUrl) {
             throw new AppErrorV2({
@@ -72,14 +92,16 @@ export class CastService {
             return device;
         });
         const { exp, sig } = signStreamQuery(clipId);
-        const url = `${baseUrl}/api/home-videos/stream/${clipId}?exp=${exp}&sig=${sig}`;
-        const title = clip.title || clip.file;
+        const query = `${clipId}?exp=${exp}&sig=${sig}`;
+        const url = `${baseUrl}/api/home-videos/stream/${query}`;
+        const posterUrl = `${baseUrl}/api/home-videos/poster/${query}`;
+        const title = clipTitle(clip);
         for (const device of devices) {
             this.runners.get(device.id)?.release();
-            const runner = new CastSessionRunner({ device, clipId, title, url, positionSec }, () => this.onRunnerChange(device.id, runner));
+            const runner = new CastSessionRunner({ device, clipId, title, url, posterUrl, positionSec }, () => this.onRunnerChange(device.id, runner));
             this.runners.set(device.id, runner);
             AppLogger.info(undefined, { message: `[Cast] ${clip.file} on "${device.name}" from ${Math.round(positionSec)} s` });
-            runner.connect();
+            runner.connect(connectDelayMs);
         }
         this.publish();
         return this.getState();
@@ -98,6 +120,15 @@ export class CastService {
     seek(deviceId: string, positionSec: number): CastState {
         this.runner(deviceId).seek(positionSec);
         return this.getState();
+    }
+
+    /** Takes the cast down on the Chromecast and casts the same clip again from where it was. */
+    restart(deviceId: string): CastState {
+        const old = this.runner(deviceId);
+        const { clipId } = old.session;
+        const position = old.currentPositionSec;
+        old.takeDown();
+        return this.startOn(clipId, [deviceId], position, RESTART_GAP_MS);
     }
 
     stopSession(deviceId: string): CastState {

@@ -2,10 +2,13 @@ import CastIcon from "@mui/icons-material/Cast";
 import CastConnectedIcon from "@mui/icons-material/CastConnected";
 import CheckIcon from "@mui/icons-material/Check";
 import ComputerIcon from "@mui/icons-material/Computer";
-import { Divider, ListItemIcon, ListItemText, Menu, MenuItem, Tooltip, IconButton } from "@mui/material";
+import RefreshIcon from "@mui/icons-material/Refresh";
+import { CircularProgress, Divider, ListItemIcon, ListItemText, Menu, MenuItem, Tooltip, IconButton } from "@mui/material";
 import { usePortalContainerRef } from "@uxp/ui-lib";
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useCast } from "./CastProvider";
+
+const SEARCH_SHOW_MS = 4000;
 
 type CastPickerProps = {
     clipId: string;
@@ -23,9 +26,21 @@ type CastPickerProps = {
  */
 export const CastPicker: React.FC<CastPickerProps> = ({ clipId, getPosition, onHandBack, onCasting }) => {
     const portalContainer = usePortalContainerRef();
-    const { state, start, stop } = useCast();
+    const { state, start, stop, refresh } = useCast();
     const [anchor, setAnchor] = useState<HTMLElement | null>(null);
-    if (!state?.configured || state.devices.length === 0) return null;
+    const [searching, setSearching] = useState(false);
+    const searchTimer = useRef<ReturnType<typeof setTimeout>>();
+    useEffect(() => () => clearTimeout(searchTimer.current), []);
+    // The icon stays when no Chromecast is found, so the search can be started again from the menu.
+    if (!state?.configured) return null;
+
+    // The devices answer by themselves a moment later, so the item only shows that it is looking.
+    const search = async () => {
+        setSearching(true);
+        clearTimeout(searchTimer.current);
+        searchTimer.current = setTimeout(() => setSearching(false), SEARCH_SHOW_MS);
+        await refresh();
+    };
 
     const onThisClip = state.sessions.filter((s) => s.clipId === clipId);
     const casting = onThisClip.length > 0;
@@ -48,8 +63,15 @@ export const CastPicker: React.FC<CastPickerProps> = ({ clipId, getPosition, onH
 
     return (
         <>
-            <Tooltip title={casting ? "Casting this clip" : "Play on a Chromecast"} PopperProps={{ container: () => portalContainer.current }}>
-                <IconButton color={casting ? "primary" : "default"} onClick={(e) => setAnchor(e.currentTarget)} aria-label="Play on a Chromecast">
+            <Tooltip
+                title={casting ? "Casting this clip" : "Play on a Chromecast"}
+                slotProps={{ popper: { container: portalContainer.current } }}
+            >
+                <IconButton
+                    color={casting ? "primary" : "default"}
+                    onClick={(e) => setAnchor(e.currentTarget)}
+                    aria-label="Play on a Chromecast"
+                >
                     {casting ? <CastConnectedIcon /> : <CastIcon />}
                 </IconButton>
             </Tooltip>
@@ -67,6 +89,16 @@ export const CastPicker: React.FC<CastPickerProps> = ({ clipId, getPosition, onH
                         <ListItemText secondary={device.model}>{device.name}</ListItemText>
                     </MenuItem>
                 ))}
+                {state.devices.length === 0 && (
+                    <MenuItem disabled>
+                        <ListItemText>No Chromecast found</ListItemText>
+                    </MenuItem>
+                )}
+                <Divider />
+                <MenuItem onClick={search} disabled={searching}>
+                    <ListItemIcon>{searching ? <CircularProgress size={20} /> : <RefreshIcon color="primary" />}</ListItemIcon>
+                    <ListItemText>{searching ? "Looking..." : "Refresh"}</ListItemText>
+                </MenuItem>
             </Menu>
         </>
     );

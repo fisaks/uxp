@@ -36,6 +36,8 @@ export type CastSessionStart = {
     title: string;
     /** Where the Chromecast fetches the video, with the signature in the query. */
     url: string;
+    /** The poster frame, fetched the same way. */
+    posterUrl: string;
     positionSec: number;
 };
 
@@ -81,7 +83,19 @@ export class CastSessionRunner {
         return this.snapshot.state === "ENDED" || this.snapshot.state === "FAILED";
     }
 
-    connect() {
+    /** Where the clip is now: the position of the last status, moved on by the time since then while it plays. */
+    get currentPositionSec(): number {
+        const { state, positionSec, durationSec, updatedAt } = this.snapshot;
+        const position = positionSec + (state === "PLAYING" ? (Date.now() - updatedAt) / 1000 : 0);
+        return durationSec > 0 ? Math.min(position, durationSec) : position;
+    }
+
+    /** Connects at once, or after the delay, which gives a Chromecast that was just stopped time to let go of its app. */
+    connect(delayMs = 0) {
+        if (delayMs > 0) {
+            this.timers.push(setTimeout(() => this.connect(), delayMs));
+            return;
+        }
         const client = new Client();
         this.client = client;
         client.on("error", (error) => this.fail("Could not reach the Chromecast", error));
@@ -105,10 +119,20 @@ export class CastSessionRunner {
 
     /** Stops the app on the Chromecast, which returns it to its backdrop, and ends the session. */
     stop() {
+        this.stopApp();
+        this.end("ENDED");
+    }
+
+    /** Stops the app on the Chromecast and lets go, without ending the session: a new one takes its place. */
+    takeDown() {
+        this.stopApp();
+        this.release();
+    }
+
+    private stopApp() {
         if (this.receiver && this.appSessionId) {
             this.send(this.receiver, { type: "STOP", sessionId: this.appSessionId });
         }
-        this.end("ENDED");
     }
 
     /** Lets go of the Chromecast without stopping what plays: a new session takes its place, or the server shuts down. */
@@ -176,7 +200,7 @@ export class CastSessionRunner {
                 contentId: this.start.url,
                 contentType: "video/mp4",
                 streamType: "BUFFERED",
-                metadata: { metadataType: 0, title: this.start.title },
+                metadata: { metadataType: 0, title: this.start.title, images: [{ url: this.start.posterUrl }] },
             },
         });
     }

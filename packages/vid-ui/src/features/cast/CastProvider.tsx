@@ -2,8 +2,12 @@ import { CastState, VideoAppActionPayloadRequestMap, VideoAppActionPayloadRespon
 import { BrowserWebSocketManager, WebSocketProvider } from "@uxp/ui-lib";
 import axios from "axios";
 import React, { createContext, useCallback, useContext, useMemo, useState } from "react";
-import { castPause, castPlay, castSeek, castStop, startCast } from "../../api/cast-api";
-import { VideoAppBrowserWebSocketManager, VideoAppErrorHandler, VideoAppWebSocketResponseListener } from "../../app/VideoBrowserWebSocketManager";
+import { castPause, castPlay, castRefresh, castRestart, castSeek, castStop, startCast } from "../../api/cast-api";
+import {
+    VideoAppBrowserWebSocketManager,
+    VideoAppErrorHandler,
+    VideoAppWebSocketResponseListener,
+} from "../../app/VideoBrowserWebSocketManager";
 
 type CastContextValue = {
     /** Undefined until the first state has arrived. */
@@ -11,10 +15,14 @@ type CastContextValue = {
     /** The text of the last command that failed. */
     error: string | undefined;
     clearError: () => void;
+    /** Asks the network for Chromecasts again. New ones arrive through the live state. */
+    refresh: () => Promise<boolean>;
     start: (clipId: string, deviceIds: string[], positionSec?: number) => Promise<boolean>;
     play: (deviceId: string) => Promise<boolean>;
     pause: (deviceId: string) => Promise<boolean>;
     stop: (deviceId: string) => Promise<boolean>;
+    /** Takes the cast down on the Chromecast and casts the clip again from the same place. */
+    restart: (deviceId: string) => Promise<boolean>;
     seek: (deviceId: string, positionSec: number) => Promise<boolean>;
 };
 
@@ -75,10 +83,12 @@ export const CastProvider: React.FC<CastProviderProps> = ({ getWebSocket = getPa
             state,
             error,
             clearError: () => setError(undefined),
+            refresh: () => command(castRefresh),
             start: (clipId, deviceIds, positionSec) => command(() => startCast(clipId, deviceIds, positionSec)),
             play: (deviceId) => command(() => castPlay(deviceId)),
             pause: (deviceId) => command(() => castPause(deviceId)),
             stop: (deviceId) => command(() => castStop(deviceId)),
+            restart: (deviceId) => command(() => castRestart(deviceId)),
             seek: (deviceId, positionSec) => command(() => castSeek(deviceId, positionSec)),
         }),
         [state, error, command]

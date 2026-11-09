@@ -17,6 +17,11 @@ export class CastController {
         return castService.getState();
     }
 
+    @Route("post", "/cast/refresh", { authenticate: true })
+    async refresh(): Promise<CastState> {
+        return castService.refresh();
+    }
+
     @Route("post", "/cast/sessions", { authenticate: true, schema: CastStartSchema })
     async start(req: FastifyRequest): Promise<CastState> {
         const { clipId, deviceIds, positionSec } = req.body as CastStartRequest;
@@ -36,6 +41,11 @@ export class CastController {
     @Route("post", "/cast/sessions/:deviceId/seek", { authenticate: true, schema: CastSeekSchema })
     async seek(req: FastifyRequest): Promise<CastState> {
         return castService.seek((req.params as CastDeviceParams).deviceId, (req.body as CastSeekRequest).positionSec);
+    }
+
+    @Route("post", "/cast/sessions/:deviceId/restart", { authenticate: true, schema: CastDeviceParamsSchema })
+    async restart(req: FastifyRequest): Promise<CastState> {
+        return castService.restart((req.params as CastDeviceParams).deviceId);
     }
 
     @Route("post", "/cast/sessions/:deviceId/stop", { authenticate: true, schema: CastDeviceParamsSchema })

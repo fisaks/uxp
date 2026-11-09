@@ -3,6 +3,8 @@ import { AppLogger } from "@uxp/bff-common";
 import Bonjour, { Browser, Service } from "bonjour-service";
 
 const SERVICE_TYPE = "googlecast";
+// A device that did not hear the first question, or was asleep, would stay unlisted: ask again now and then.
+const REQUERY_MS = 30000;
 
 export type FoundDevice = CastDevice & { host: string };
 
@@ -11,6 +13,7 @@ export class CastDiscovery {
     private readonly found = new Map<string, FoundDevice>();
     private bonjour?: Bonjour;
     private browser?: Browser;
+    private requery?: NodeJS.Timeout;
 
     constructor(private readonly onChange: () => void) {}
 
@@ -18,11 +21,18 @@ export class CastDiscovery {
         this.bonjour = new Bonjour();
         this.browser = this.bonjour.find({ type: SERVICE_TYPE }, (service) => this.add(service));
         this.browser.on("down", (service: Service) => this.remove(service));
+        this.requery = setInterval(() => this.refresh(), REQUERY_MS);
     }
 
     stop() {
+        clearInterval(this.requery);
         this.browser?.stop();
         this.bonjour?.destroy();
+    }
+
+    /** Asks the network again. Devices that answer show up through the change callback. */
+    refresh() {
+        this.browser?.update();
     }
 
     list(): FoundDevice[] {

@@ -57,6 +57,22 @@ export class HomeVideoController {
         if (!made) {
             return reply.status(404).send({ error: "There is no such clip" });
         }
+        return this.sendPoster(reply, made);
+    }
+
+    /** The poster frame for a Chromecast, which has no cookie. Allowed by the same signature as the stream. */
+    @Route("get", "/home-videos/poster/:id", { authenticate: false, schema: HomeVideoStreamSchema })
+    async getSignedPoster(req: FastifyRequest, reply: FastifyReply) {
+        const { id } = req.params as HomeVideoClipParams;
+        const { exp, sig } = req.query as HomeVideoStreamQuery;
+        if (!isValidStreamQuery(id, exp, sig)) {
+            return reply.status(403).send({ error: "The link is not valid or has expired" });
+        }
+        const made = homeVideoService.thumbnail(id);
+        return made ? this.sendPoster(reply, made) : reply.status(404).send({ error: "There is no such clip" });
+    }
+
+    private async sendPoster(reply: FastifyReply, made: Promise<string>) {
         let file: string;
         try {
             file = await made;

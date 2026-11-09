@@ -1,6 +1,7 @@
 import Forward30Icon from "@mui/icons-material/Forward30";
 import PauseIcon from "@mui/icons-material/Pause";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import Replay30Icon from "@mui/icons-material/Replay30";
 import StopIcon from "@mui/icons-material/Stop";
 import { Alert, Box, ButtonBase, LinearProgress, Paper, Slider, Snackbar, Stack, Typography, useMediaQuery, useTheme } from "@mui/material";
@@ -8,6 +9,7 @@ import { CastSession } from "@vid/common";
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useHomeVideos } from "../home-video/HomeVideosProvider";
+import { thumbnailUrl } from "../../api/home-video-api";
 import { clipPath } from "../home-video/ClipTile";
 import { clipName, formatDuration } from "../home-video/clipFormat";
 import { LabelledIconButton } from "../shared/LabelledIconButton";
@@ -21,6 +23,9 @@ const TICK_MS = 1000;
 export const CAST_ROW_ROOM = 80;
 /** The line with the position below the row, where the row has no room for the slider. */
 const POSITION_LINE_HEIGHT = 24;
+const POSTER_WIDE = { width: 64, height: 36 };
+/** Smaller where the buttons leave little room for the title. */
+const POSTER_NARROW = { width: 48, height: 27 };
 
 const useNow = (active: boolean) => {
     const [now, setNow] = useState(Date.now());
@@ -34,7 +39,7 @@ const useNow = (active: boolean) => {
 
 const SessionRow: React.FC<{ session: CastSession; now: number; compact: boolean }> = ({ session, now, compact }) => {
     const { clips } = useHomeVideos();
-    const { play, pause, stop, seek } = useCast();
+    const { play, pause, stop, seek, restart } = useCast();
     const theme = useTheme();
     const wide = useMediaQuery(theme.breakpoints.up("md")) && !compact;
     const [dragging, setDragging] = useState<number | undefined>(undefined);
@@ -59,14 +64,31 @@ const SessionRow: React.FC<{ session: CastSession; now: number; compact: boolean
                 <ButtonBase
                     {...(compact ? {} : { component: Link, to: clipPath(session.clipId) })}
                     disabled={compact}
-                    sx={{ minWidth: 0, flex: wide ? "0 0 30%" : 1, display: "block", textAlign: "left" }}
+                    sx={{
+                        minWidth: 0,
+                        // Wide: a column of its own, so poster and title start at the same place on every row. Narrow: all the room the buttons leave.
+                        flex: wide ? "0 0 40%" : 1,
+                        display: "flex",
+                        justifyContent: "flex-start",
+                        alignItems: "center",
+                        gap: 1.5,
+                        textAlign: "left",
+                    }}
                 >
-                    <Typography noWrap sx={{ fontWeight: 600 }}>
-                        {title}
-                    </Typography>
-                    <Typography noWrap variant="body2" color="text.secondary">
-                        {session.deviceName} · {sessionStateText(session)}
-                    </Typography>
+                    <Box
+                        component="img"
+                        src={thumbnailUrl(session.clipId)}
+                        alt=""
+                        sx={{ ...(wide ? POSTER_WIDE : POSTER_NARROW), flexShrink: 0, objectFit: "cover", borderRadius: 0.5 }}
+                    />
+                    <Box sx={{ minWidth: 0, flex: 1 }}>
+                        <Typography noWrap sx={{ fontWeight: 600 }}>
+                            {title}
+                        </Typography>
+                        <Typography noWrap variant="body2" color="text.secondary">
+                            {session.deviceName} · {sessionStateText(session)}
+                        </Typography>
+                    </Box>
                 </ButtonBase>
                 {!ended && (
                     <>
@@ -112,6 +134,11 @@ const SessionRow: React.FC<{ session: CastSession; now: number; compact: boolean
                             </Stack>
                         )}
                     </>
+                )}
+                {!ended && (
+                    <LabelledIconButton label="Restart the stream" onClick={() => restart(session.deviceId)}>
+                        <RestartAltIcon />
+                    </LabelledIconButton>
                 )}
                 <LabelledIconButton label="Stop" onClick={() => stop(session.deviceId)}>
                     <StopIcon />
