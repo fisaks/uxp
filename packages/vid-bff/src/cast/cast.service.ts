@@ -10,7 +10,7 @@ import { CastDiscovery } from "./cast-discovery";
 import { CastQueueStore } from "./cast-queue";
 import { CastSession } from "./cast-session";
 import { FoundDevice } from "./cast-discovery";
-import { ChromecastsService } from "./chromecasts.service";
+import { ChromecastMonitor } from "./chromecast-monitor";
 
 const CAST_TOPIC = "cast";
 /** After a stop the Chromecast needs a moment before it takes a new app. */
@@ -34,18 +34,21 @@ const clipTitle = (clip: HomeVideoClip): string => {
     return clip.file;
 };
 
-/** The Chromecasts on the network and the clips playing on them, one session per device. */
+/**
+ * VID's own casting: discovers the Chromecasts, runs one CastSession and queue per device for clips cast from this app,
+ * and switches a TV on and off around a cast. Owns `monitor`, which covers casts made by other apps.
+ */
 export class CastService {
     private readonly discovery = new CastDiscovery(
         () => this.publish(),
         (device) => {
             this.joinRunning(device);
-            void this.chromecasts.watch(device);
+            void this.monitor.watch(device);
         },
-        (deviceId) => this.chromecasts.unwatch(deviceId)
+        (deviceId) => this.monitor.unwatch(deviceId)
     );
     /** Every Chromecast with what plays on it, whoever cast it. */
-    readonly chromecasts = new ChromecastsService(this.wsManager, (contentId) => this.clipOfStream(contentId)?.id);
+    readonly monitor = new ChromecastMonitor(this.wsManager, (contentId) => this.clipOfStream(contentId)?.id);
     private readonly sessions = new Map<string, CastSession>();
     private readonly queues = new CastQueueStore(this.config.queuesFile);
     /** Clips in a row that failed on a device, to stop a queue where none plays. */
@@ -72,7 +75,7 @@ export class CastService {
 
     async stop() {
         this.discovery.stop();
-        this.chromecasts.stop();
+        this.monitor.stop();
         this.sessions.forEach((session) => session.release());
         this.powerOffTimers.forEach(clearTimeout);
         this.powerOffTimers.clear();
@@ -260,7 +263,7 @@ export class CastService {
         this.cancelPowerOff(device.id);
         // Read before the launch, which wakes the TV. The first clip of a run decides, the following ones find a TV that is on.
         if (!this.wokenByCast.has(device.id)) {
-            this.wokenByCast.set(device.id, this.chromecasts.isStandBy(device.id));
+            this.wokenByCast.set(device.id, this.monitor.isStandBy(device.id));
             this.castActivities.set(device.id, new Set());
         }
         const session = new CastSession(
@@ -432,14 +435,14 @@ export class CastService {
 
     /** Remembers the app in front while a clip plays, which is the Cast receiver. */
     private async noteActivity(deviceId: string) {
-        const activity = await this.chromecasts.currentActivity(deviceId);
+        const activity = await this.monitor.currentActivity(deviceId);
         if (activity) {
             this.castActivities.get(deviceId)?.add(activity);
         }
     }
 
     private async readBaseline(deviceId: string, timer: NodeJS.Timeout) {
-        const activity = await this.chromecasts.currentActivity(deviceId);
+        const activity = await this.monitor.currentActivity(deviceId);
         // A new cast cancelled the power-off while the TV was read.
         if (this.powerOffTimers.get(deviceId) !== timer) {
             return;
@@ -464,7 +467,7 @@ export class CastService {
         this.wokenByCast.delete(deviceId);
         this.castActivities.delete(deviceId);
         try {
-            if (await this.chromecasts.standByIfIdle(deviceId, known)) {
+            if (await this.monitor.standByIfIdle(deviceId, known)) {
                 AppLogger.info(undefined, {
                     message: `[Cast] Switched off "${this.discovery.get(deviceId)?.name ?? deviceId}" after the cast`,
                 });

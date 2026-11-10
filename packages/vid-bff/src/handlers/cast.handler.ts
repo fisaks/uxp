@@ -9,6 +9,6 @@ export class CastHandler {
 
     @WebSocketAction("chromecasts_subscribe", { authenticate: true })
     public subscribeChromecasts(wsDetails: WebSocketDetails) {
-        return castService.chromecasts.subscribe(wsDetails.socket);
+        return castService.monitor.subscribe(wsDetails.socket);
     }
 }

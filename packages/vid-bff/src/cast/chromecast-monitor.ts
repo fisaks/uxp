@@ -11,8 +11,12 @@ import { TvPower } from "./tv-power";
 
 const CHROMECASTS_TOPIC = "chromecasts";
 
-/** Every Chromecast that is found on the network, watched, with what plays on it whoever cast it. */
-export class ChromecastsService {
+/**
+ * Every Chromecast found on the network, watched with what plays on it whoever cast it (Spotify, YouTube, VID).
+ * Status, play/pause/seek/stop, reboot and TV power pairing. Knows nothing of sessions or queues; CastService owns it
+ * and is the one that decides when a cast wakes or switches off a TV.
+ */
+export class ChromecastMonitor {
     private readonly watchers = new Map<string, ChromecastWatcher>();
     private last = "";
     private readonly tvPower = new TvPower(castConfig.tvPairingsFile);
