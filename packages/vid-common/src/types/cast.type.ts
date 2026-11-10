@@ -122,9 +122,24 @@ export type ChromecastInfo = {
      * so a device that reports a Wi-Fi signal does. Undefined until the device info has been read.
      */
     canRestart?: boolean;
+    /**
+     * Power control of a Philips TV through its own network interface: "unavailable" when the device has none (the field is then
+     * left out of the UI), "unpaired" until the TV has been paired with a PIN, "paired" after.
+     */
+    powerControl?: "unavailable" | "unpaired" | "paired";
+    /** What a paired TV says about itself, read now and then. */
+    powerState?: "On" | "Standby";
     /** Name of the running app, null when only the backdrop shows. */
     app: string | null;
     playback: ChromecastPlayback | null;
+};
+
+export type TvPairConfirmRequest = {
+    pin: string;
+};
+
+export type TvPowerRequest = {
+    state: "On" | "Standby";
 };
 
 export type ChromecastsState = {

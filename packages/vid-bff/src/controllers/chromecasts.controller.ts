@@ -1,5 +1,15 @@
 import { Route } from "@uxp/bff-common";
-import { CastDeviceParams, CastDeviceParamsSchema, CastSeekRequest, CastSeekSchema, ChromecastsState } from "@vid/common";
+import {
+    CastDeviceParams,
+    CastDeviceParamsSchema,
+    CastSeekRequest,
+    CastSeekSchema,
+    ChromecastsState,
+    TvPairConfirmRequest,
+    TvPairConfirmSchema,
+    TvPowerRequest,
+    TvPowerSchema,
+} from "@vid/common";
 import { FastifyRequest } from "fastify";
 import { castService } from "../cast/cast.service";
 
@@ -33,5 +43,25 @@ export class ChromecastsController {
     @Route("post", "/chromecasts/:deviceId/reboot", { authenticate: true, schema: CastDeviceParamsSchema })
     async reboot(req: FastifyRequest<{ Params: CastDeviceParams }>): Promise<ChromecastsState> {
         return castService.chromecasts.reboot(req.params.deviceId);
+    }
+
+    @Route("post", "/chromecasts/:deviceId/tv-pairing/start", { authenticate: true, schema: CastDeviceParamsSchema })
+    async startTvPairing(req: FastifyRequest<{ Params: CastDeviceParams }>): Promise<ChromecastsState> {
+        return castService.chromecasts.startTvPairing(req.params.deviceId);
+    }
+
+    @Route("post", "/chromecasts/:deviceId/tv-pairing/confirm", { authenticate: true, schema: TvPairConfirmSchema })
+    async confirmTvPairing(req: FastifyRequest<{ Params: CastDeviceParams; Body: TvPairConfirmRequest }>): Promise<ChromecastsState> {
+        return castService.chromecasts.confirmTvPairing(req.params.deviceId, req.body.pin);
+    }
+
+    @Route("post", "/chromecasts/:deviceId/tv-pairing/forget", { authenticate: true, schema: CastDeviceParamsSchema })
+    async forgetTvPairing(req: FastifyRequest<{ Params: CastDeviceParams }>): Promise<ChromecastsState> {
+        return castService.chromecasts.forgetTvPairing(req.params.deviceId);
+    }
+
+    @Route("post", "/chromecasts/:deviceId/tv-power", { authenticate: true, schema: TvPowerSchema })
+    async setTvPower(req: FastifyRequest<{ Params: CastDeviceParams; Body: TvPowerRequest }>): Promise<ChromecastsState> {
+        return castService.chromecasts.setTvPower(req.params.deviceId, req.body.state);
     }
 }

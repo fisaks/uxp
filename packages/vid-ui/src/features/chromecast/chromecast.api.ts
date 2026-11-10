@@ -29,6 +29,16 @@ export const chromecastApi = vidApi.injectEndpoints({
             pauseChromecast: command<string>((deviceId) => deviceUrl(deviceId, "pause")),
             stopChromecast: command<string>((deviceId) => deviceUrl(deviceId, "stop")),
             rebootChromecast: command<string>((deviceId) => deviceUrl(deviceId, "reboot")),
+            startTvPairing: command<string>((deviceId) => deviceUrl(deviceId, "tv-pairing/start")),
+            confirmTvPairing: command<{ deviceId: string; pin: string }>(({ deviceId, pin }) => ({
+                ...deviceUrl(deviceId, "tv-pairing/confirm"),
+                data: { pin },
+            })),
+            forgetTvPairing: command<string>((deviceId) => deviceUrl(deviceId, "tv-pairing/forget")),
+            setTvPower: command<{ deviceId: string; state: "On" | "Standby" }>(({ deviceId, state }) => ({
+                ...deviceUrl(deviceId, "tv-power"),
+                data: { state },
+            })),
             seekChromecast: command<{ deviceId: string; positionSec: number }>(({ deviceId, positionSec }) => ({
                 ...deviceUrl(deviceId, "seek"),
                 data: { positionSec },
@@ -44,4 +54,8 @@ export const {
     useStopChromecastMutation,
     useRebootChromecastMutation,
     useSeekChromecastMutation,
+    useStartTvPairingMutation,
+    useConfirmTvPairingMutation,
+    useForgetTvPairingMutation,
+    useSetTvPowerMutation,
 } = chromecastApi;

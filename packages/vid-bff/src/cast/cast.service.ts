@@ -17,6 +17,10 @@ const CAST_TOPIC = "cast";
 const RESTART_GAP_MS = 2000;
 /** An ended or failed session stays in the list this long, so the bar can say what happened before it goes. */
 const FINISHED_KEEP_MS = 5000;
+/** After the last cast ended, a TV that the cast woke stays on this long, so that the next cast or a look at the TV can follow. */
+const POWER_OFF_DELAY_MS = 60000;
+/** The app in front is read this long after the cast ended, when the receiver has let go. */
+const POWER_OFF_BASELINE_MS = 10000;
 
 /** What the TV shows: the title, else the date as d.M.yyyy, else the file name, as the app names a clip. */
 const clipTitle = (clip: HomeVideoClip): string => {
@@ -36,7 +40,7 @@ export class CastService {
         () => this.publish(),
         (device) => {
             this.joinRunning(device);
-            this.chromecasts.watch(device);
+            void this.chromecasts.watch(device);
         },
         (deviceId) => this.chromecasts.unwatch(deviceId)
     );
@@ -46,6 +50,13 @@ export class CastService {
     private readonly queues = new CastQueueStore(this.config.queuesFile);
     /** Clips in a row that failed on a device, to stop a queue where none plays. */
     private readonly failures = new Map<string, number>();
+    /** Per device that has a cast going: whether the cast woke it from standby. Only such a TV is switched off afterwards. */
+    private readonly wokenByCast = new Map<string, boolean>();
+    /** The apps that were in front on such a device while the cast played and after it: any other app was started by someone. */
+    private readonly castActivities = new Map<string, Set<string>>();
+    /** Sessions whose app in front has been read. */
+    private readonly sampled = new WeakSet<CastSession>();
+    private readonly powerOffTimers = new Map<string, NodeJS.Timeout>();
     private last = "";
 
     constructor(
@@ -63,6 +74,8 @@ export class CastService {
         this.discovery.stop();
         this.chromecasts.stop();
         this.sessions.forEach((session) => session.release());
+        this.powerOffTimers.forEach(clearTimeout);
+        this.powerOffTimers.clear();
         await this.queues.flush();
     }
 
@@ -244,6 +257,12 @@ export class CastService {
         const url = `${baseUrl}/api/home-videos/stream/${query}`;
         const posterUrl = `${baseUrl}/api/home-videos/poster/${query}`;
         this.sessions.get(device.id)?.release();
+        this.cancelPowerOff(device.id);
+        // Read before the launch, which wakes the TV. The first clip of a run decides, the following ones find a TV that is on.
+        if (!this.wokenByCast.has(device.id)) {
+            this.wokenByCast.set(device.id, this.chromecasts.isStandBy(device.id));
+            this.castActivities.set(device.id, new Set());
+        }
         const session = new CastSession(
             device,
             { kind: "load", clipId: clip.id, title: clipTitle(clip), url, posterUrl, positionSec },
@@ -354,11 +373,16 @@ export class CastService {
         }
         if (session.snapshot.state === "PLAYING") {
             this.failures.delete(deviceId);
+            if (this.wokenByCast.get(deviceId) === true && !this.sampled.has(session)) {
+                this.sampled.add(session);
+                void this.noteActivity(deviceId);
+            }
         }
         if (session.finished && this.advance(deviceId, session)) {
             return;
         }
         if (session.finished) {
+            this.schedulePowerOff(deviceId);
             setTimeout(() => {
                 if (this.sessions.get(deviceId) === session) {
                     this.sessions.delete(deviceId);
@@ -392,6 +416,62 @@ export class CastService {
         this.queues.delete(deviceId);
         this.failures.delete(deviceId);
         return false;
+    }
+
+    /** The run of casts on the device is over: a TV that the cast woke is switched off after a while, any other is left alone. */
+    private schedulePowerOff(deviceId: string) {
+        this.cancelPowerOff(deviceId);
+        if (this.wokenByCast.get(deviceId) !== true) {
+            this.wokenByCast.delete(deviceId);
+            this.castActivities.delete(deviceId);
+            return;
+        }
+        const timer = setTimeout(() => void this.readBaseline(deviceId, timer), POWER_OFF_BASELINE_MS);
+        this.powerOffTimers.set(deviceId, timer);
+    }
+
+    /** Remembers the app in front while a clip plays, which is the Cast receiver. */
+    private async noteActivity(deviceId: string) {
+        const activity = await this.chromecasts.currentActivity(deviceId);
+        if (activity) {
+            this.castActivities.get(deviceId)?.add(activity);
+        }
+    }
+
+    private async readBaseline(deviceId: string, timer: NodeJS.Timeout) {
+        const activity = await this.chromecasts.currentActivity(deviceId);
+        // A new cast cancelled the power-off while the TV was read.
+        if (this.powerOffTimers.get(deviceId) !== timer) {
+            return;
+        }
+        if (activity) {
+            this.castActivities.get(deviceId)?.add(activity);
+        }
+        const known = new Set(this.castActivities.get(deviceId));
+        this.powerOffTimers.set(
+            deviceId,
+            setTimeout(() => void this.powerOff(deviceId, known), POWER_OFF_DELAY_MS - POWER_OFF_BASELINE_MS)
+        );
+    }
+
+    private cancelPowerOff(deviceId: string) {
+        clearTimeout(this.powerOffTimers.get(deviceId));
+        this.powerOffTimers.delete(deviceId);
+    }
+
+    private async powerOff(deviceId: string, known: ReadonlySet<string>) {
+        this.powerOffTimers.delete(deviceId);
+        this.wokenByCast.delete(deviceId);
+        this.castActivities.delete(deviceId);
+        try {
+            if (await this.chromecasts.standByIfIdle(deviceId, known)) {
+                AppLogger.info(undefined, {
+                    message: `[Cast] Switched off "${this.discovery.get(deviceId)?.name ?? deviceId}" after the cast`,
+                });
+            }
+        } catch (error) {
+            AppLogger.warn(undefined, { message: `[Cast] Could not switch off "${deviceId}" after the cast`, error });
+        }
     }
 
     /** Pushes the state when it differs from the last push. */

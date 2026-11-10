@@ -1,16 +1,20 @@
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import PauseIcon from "@mui/icons-material/Pause";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import PowerSettingsNewIcon from "@mui/icons-material/PowerSettingsNew";
 import {
     Alert,
     Box,
     Button,
     Card,
+    CircularProgress,
     CardContent,
     Dialog,
     DialogActions,
     DialogContent,
     DialogContentText,
     DialogTitle,
+    TextField,
     Slider,
     Stack,
     Typography,
@@ -26,7 +30,11 @@ import {
     usePauseChromecastMutation,
     usePlayChromecastMutation,
     useRebootChromecastMutation,
+    useConfirmTvPairingMutation,
+    useForgetTvPairingMutation,
     useSeekChromecastMutation,
+    useSetTvPowerMutation,
+    useStartTvPairingMutation,
     useStopChromecastMutation,
 } from "./chromecast.api";
 import { selectChromecasts } from "./chromecastSelectors";
@@ -160,6 +168,111 @@ const useRebootWait = (reachable: boolean) => {
     return { waiting, timedOut, start };
 };
 
+/** Pairing with a Philips TV: the TV shows a PIN, which is typed here. Needs someone at the TV. */
+const TvPairing: React.FC<{ device: ChromecastInfo }> = ({ device }) => {
+    const [start, { isLoading: starting }] = useStartTvPairingMutation();
+    const [confirm, { isLoading: confirming }] = useConfirmTvPairingMutation();
+    const [forget] = useForgetTvPairingMutation();
+    const [setPower, { isLoading: switching }] = useSetTvPowerMutation();
+    const portalContainer = usePortalContainerRef();
+    const [asking, setAsking] = useState(false);
+    const [pin, setPin] = useState("");
+    const paired = device.powerControl === "paired";
+
+    const close = () => {
+        setAsking(false);
+        setPin("");
+    };
+
+    return (
+        <>
+            <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2}>
+                <Typography color="text.secondary">Power control</Typography>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                    {paired && <CheckCircleIcon color="success" fontSize="small" />}
+                    <Typography color={paired ? "success.main" : undefined} sx={{ fontWeight: paired ? 600 : undefined }}>
+                        {paired ? `Paired${device.powerState ? ` · ${device.powerState === "On" ? "on" : "standby"}` : ""}` : "Not paired"}
+                    </Typography>
+                    {paired ? (
+                        <>
+                            <Button
+                                size="small"
+                                variant="outlined"
+                                disabled={switching}
+                                startIcon={switching ? <CircularProgress size={16} color="inherit" /> : <PowerSettingsNewIcon />}
+                                onClick={() =>
+                                    void setPower({ deviceId: device.id, state: device.powerState === "Standby" ? "On" : "Standby" })
+                                }
+                            >
+                                {device.powerState === "Standby" ? "Switch on" : "Switch off"}
+                            </Button>
+                            <Button size="small" variant="outlined" onClick={() => void forget(device.id)}>
+                                Forget
+                            </Button>
+                        </>
+                    ) : (
+                        <Button
+                            size="small"
+                            variant="contained"
+                            disabled={!device.reachable || starting}
+                            startIcon={starting ? <CircularProgress size={16} color="inherit" /> : undefined}
+                            onClick={async () => {
+                                if (
+                                    await start(device.id)
+                                        .unwrap()
+                                        .then(
+                                            () => true,
+                                            () => false
+                                        )
+                                )
+                                    setAsking(true);
+                            }}
+                        >
+                            {starting ? "Asking the TV…" : "Pair"}
+                        </Button>
+                    )}
+                </Stack>
+            </Stack>
+            <Dialog open={asking} container={portalContainer.current} onClose={close}>
+                <DialogTitle>Pair {device.name}</DialogTitle>
+                <DialogContent>
+                    <DialogContentText sx={{ mb: 2 }}>Type the PIN that the TV shows.</DialogContentText>
+                    <TextField
+                        autoFocus
+                        fullWidth
+                        label="PIN"
+                        value={pin}
+                        onChange={(event) => setPin(event.target.value.replace(/\D/g, ""))}
+                        slotProps={{ htmlInput: { inputMode: "numeric", maxLength: 8 } }}
+                    />
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={close} disabled={confirming}>
+                        Cancel
+                    </Button>
+                    <Button
+                        disabled={pin.length < 4 || confirming}
+                        startIcon={confirming ? <CircularProgress size={16} color="inherit" /> : undefined}
+                        onClick={async () => {
+                            if (
+                                await confirm({ deviceId: device.id, pin })
+                                    .unwrap()
+                                    .then(
+                                        () => true,
+                                        () => false
+                                    )
+                            )
+                                close();
+                        }}
+                    >
+                        {confirming ? "Pairing…" : "Pair"}
+                    </Button>
+                </DialogActions>
+            </Dialog>
+        </>
+    );
+};
+
 const DeviceCard: React.FC<{ device: ChromecastInfo }> = ({ device }) => {
     const [stop] = useStopChromecastMutation();
     const [reboot] = useRebootChromecastMutation();
@@ -205,6 +318,7 @@ const DeviceCard: React.FC<{ device: ChromecastInfo }> = ({ device }) => {
                                 color={weakSignal ? "warning.main" : undefined}
                             />
                         )}
+                        {device.powerControl && device.powerControl !== "unavailable" && <TvPairing device={device} />}
                     </Box>
                     <Stack direction="row" spacing={1}>
                         <Button

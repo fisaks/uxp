@@ -5,7 +5,9 @@ import axios from "axios";
 import { WebSocket } from "ws";
 import { VideoServerWebSocketManager } from "../ws/VideoServerWebSocketManager";
 import { FoundDevice } from "./cast-discovery";
+import { castConfig } from "./cast.config";
 import { ChromecastWatcher } from "./chromecast-watcher";
+import { TvPower } from "./tv-power";
 
 const CHROMECASTS_TOPIC = "chromecasts";
 
@@ -13,6 +15,8 @@ const CHROMECASTS_TOPIC = "chromecasts";
 export class ChromecastsService {
     private readonly watchers = new Map<string, ChromecastWatcher>();
     private last = "";
+    private readonly tvPower = new TvPower(castConfig.tvPairingsFile);
+    private tvPowerLoaded?: Promise<void>;
 
     constructor(
         private readonly wsManager: VideoServerWebSocketManager,
@@ -25,9 +29,11 @@ export class ChromecastsService {
     }
 
     /** Starts watching the device, or again after it came back at another address. */
-    watch(device: FoundDevice) {
+    async watch(device: FoundDevice) {
         this.watchers.get(device.id)?.stop();
-        const watcher = new ChromecastWatcher(device, this.clipOf, () => this.publish());
+        this.tvPowerLoaded ??= this.tvPower.load();
+        await this.tvPowerLoaded;
+        const watcher = new ChromecastWatcher(device, this.clipOf, () => this.publish(), this.tvPower);
         this.watchers.set(device.id, watcher);
         watcher.start();
         this.publish();
@@ -92,6 +98,68 @@ export class ChromecastsService {
         }
         AppLogger.info(undefined, { message: `[Cast] Restarting "${watcher.device.name}"` });
         return this.getState();
+    }
+
+    /** Makes the TV show a PIN. */
+    async startTvPairing(deviceId: string): Promise<ChromecastsState> {
+        const watcher = this.watcher(deviceId);
+        await this.tvPowerAction(watcher, "start the pairing", () => this.tvPower.start(deviceId, watcher.device.host));
+        return this.getState();
+    }
+
+    async confirmTvPairing(deviceId: string, pin: string): Promise<ChromecastsState> {
+        const watcher = this.watcher(deviceId);
+        await this.tvPowerAction(watcher, "pair", () => this.tvPower.confirm(deviceId, watcher.device.host, pin));
+        AppLogger.info(undefined, { message: `[Cast] Paired power control of "${watcher.device.name}"` });
+        await watcher.refreshPower();
+        return this.getState();
+    }
+
+    async forgetTvPairing(deviceId: string): Promise<ChromecastsState> {
+        const watcher = this.watcher(deviceId);
+        await this.tvPower.forget(deviceId);
+        AppLogger.info(undefined, { message: `[Cast] Forgot the power control pairing of "${watcher.device.name}"` });
+        await watcher.refreshPower();
+        return this.getState();
+    }
+
+    /** True when the device reports standby now, so a cast that starts wakes it. */
+    isStandBy(deviceId: string): boolean {
+        return this.watchers.get(deviceId)?.isStandBy === true;
+    }
+
+    /** The app in front of a paired TV. */
+    async currentActivity(deviceId: string): Promise<string | undefined> {
+        return this.watchers.get(deviceId)?.currentActivity();
+    }
+
+    /** Switches a paired TV to standby when no other app was started on it than the `known` ones. False when it was left as it was. */
+    async standByIfIdle(deviceId: string, known: ReadonlySet<string>): Promise<boolean> {
+        const watcher = this.watchers.get(deviceId);
+        return watcher ? watcher.standByIfIdle(known) : false;
+    }
+
+    async setTvPower(deviceId: string, state: "On" | "Standby"): Promise<ChromecastsState> {
+        const watcher = this.watcher(deviceId);
+        await this.tvPowerAction(watcher, state === "On" ? "switch on" : "switch off", () => watcher.setPower(state));
+        AppLogger.info(undefined, {
+            message: `[Cast] Power control: "${watcher.device.name}" ${state === "On" ? "switched on" : "switched off"}`,
+        });
+        return this.getState();
+    }
+
+    private async tvPowerAction(watcher: ChromecastWatcher, what: string, run: () => Promise<void>) {
+        try {
+            await run();
+        } catch (error) {
+            AppLogger.warn(undefined, { message: `[Cast] "${watcher.device.name}" did not ${what}`, error });
+            throw new AppErrorV2({
+                statusCode: 409,
+                code: ErrorCodes.INVALID_STATE,
+                message: `The TV did not ${what}. ${(error as Error).message}`,
+                originalError: error as Error,
+            });
+        }
     }
 
     private watcher(deviceId: string): ChromecastWatcher {

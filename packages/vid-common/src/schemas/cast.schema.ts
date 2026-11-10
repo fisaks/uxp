@@ -6,6 +6,8 @@ import {
     CastRateRequest,
     CastSeekRequest,
     CastStartRequest,
+    TvPairConfirmRequest,
+    TvPowerRequest,
 } from "../types/cast.type";
 
 const ID_PATTERN = "^[0-9a-f]{16}$";
@@ -80,3 +82,23 @@ export const CastQueueSchema = {
         additionalProperties: false,
     },
 } as unknown as SchemaValidate<CastQueueRequest, undefined, CastDeviceParams>;
+
+export const TvPairConfirmSchema = {
+    params: CastDeviceParamsSchema.params,
+    body: {
+        type: "object",
+        properties: { pin: { type: "string", pattern: "^[0-9]{4,8}$" } },
+        required: ["pin"],
+        additionalProperties: false,
+    },
+} as unknown as SchemaValidate<TvPairConfirmRequest, undefined, CastDeviceParams>;
+
+export const TvPowerSchema = {
+    params: CastDeviceParamsSchema.params,
+    body: {
+        type: "object",
+        properties: { state: { type: "string", enum: ["On", "Standby"] } },
+        required: ["state"],
+        additionalProperties: false,
+    },
+} as unknown as SchemaValidate<TvPowerRequest, undefined, CastDeviceParams>;

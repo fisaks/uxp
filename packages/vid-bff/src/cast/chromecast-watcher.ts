@@ -3,6 +3,8 @@ import { AppLogger } from "@uxp/bff-common";
 import axios from "axios";
 import { Channel, Client } from "castv2";
 import { FoundDevice } from "./cast-discovery";
+import { isPhilipsTv, readActivity, readPowerState, writePowerState } from "./philips-tv";
+import { TvPower } from "./tv-power";
 
 const CAST_PORT = 8009;
 const HTTP_PORT = 8008;
@@ -22,6 +24,9 @@ const RECONNECT_MIN_MS = 2000;
 const RECONNECT_MAX_MS = 60000;
 const DEVICE_REFRESH_MS = 60000;
 const DEVICE_TIMEOUT_MS = 3000;
+const POWER_SETTLE_MS = 2000;
+// What the receiver calls the app that a cast of ours runs, which sits open and empty when a clip has ended.
+const CAST_APP_NAME = "Default Media Receiver";
 // The device goes down about 15 s after the reboot call and is back after about 40 s.
 const REBOOT_TIMEOUT_MS = 5000;
 
@@ -82,11 +87,14 @@ export class ChromecastWatcher {
     private stopped = false;
     /** A status after a pause or a seek leaves out the media, which has not changed: the last one of the same session is kept. */
     private lastMedia?: { mediaSessionId?: number; media: CastMediaStatus["media"] };
+    /** What the receiver last said about standby; unknown without a connection. */
+    private standBy?: boolean;
 
     constructor(
         readonly device: FoundDevice,
         private readonly clipOf: (contentId: string) => string | undefined,
-        private readonly onChange: () => void
+        private readonly onChange: () => void,
+        private readonly tvPower: TvPower
     ) {
         this.info = {
             id: device.id,
@@ -105,6 +113,11 @@ export class ChromecastWatcher {
 
     start() {
         this.connect();
+    }
+
+    /** True when the receiver says the device sleeps, so that a cast that starts now wakes it. */
+    get isStandBy(): boolean {
+        return this.standBy === true;
     }
 
     stop() {
@@ -159,6 +172,7 @@ export class ChromecastWatcher {
             if (connection) {
                 this.drop(connection);
             }
+            this.standBy = undefined;
             this.update({ reachable: false, app: null, playback: null });
             this.reconnectTimer = setTimeout(() => this.connect(), this.reconnectDelay);
             this.reconnectDelay = Math.min(this.reconnectDelay * 2, RECONNECT_MAX_MS);
@@ -189,6 +203,7 @@ export class ChromecastWatcher {
         });
         receiver.on("message", (data) => {
             if (data?.type === "RECEIVER_STATUS") {
+                this.standBy = data.status?.isStandBy;
                 this.onReceiverStatus(connection, data.status?.applications ?? []);
             }
         });
@@ -340,10 +355,85 @@ export class ChromecastWatcher {
         } catch (error) {
             AppLogger.debug(undefined, { message: `[Cast] Could not read the device info of "${this.device.name}": ${error}` });
         }
+        await this.refreshPower();
         clearTimeout(this.deviceTimer);
         if (!this.stopped) {
             this.deviceTimer = setTimeout(() => void this.refreshDevice(), DEVICE_REFRESH_MS);
         }
+    }
+
+    /** Whether the device is a Philips TV with power control, and what a paired one says. A TV that sleeps may not answer: it stays what it was. */
+    async refreshPower() {
+        if (this.info.powerControl === undefined || this.info.powerControl === "unavailable") {
+            if (!(await isPhilipsTv(this.device.host))) {
+                this.update({ powerControl: "unavailable" });
+                return;
+            }
+        }
+        const credentials = this.tvPower.credentials(this.device.id);
+        if (!credentials) {
+            this.update({ powerControl: "unpaired", powerState: undefined });
+            return;
+        }
+        this.update({ powerControl: "paired" });
+        try {
+            this.update({ powerState: await readPowerState(this.device.host, credentials) });
+        } catch (error) {
+            AppLogger.debug(undefined, { message: `[Cast] Could not read the power state of "${this.device.name}": ${error}` });
+        }
+    }
+
+    /** Switches a paired TV on or off, then reads what it says now. */
+    async setPower(state: "On" | "Standby") {
+        const credentials = this.tvPower.credentials(this.device.id);
+        if (!credentials) {
+            throw new Error("The TV is not paired");
+        }
+        await writePowerState(this.device.host, credentials, state);
+        // The TV takes a moment to change state.
+        await new Promise((resolve) => setTimeout(resolve, POWER_SETTLE_MS));
+        await this.refreshPower();
+    }
+
+    /** The app in front on a paired TV, undefined when it cannot be read. */
+    async currentActivity(): Promise<string | undefined> {
+        const credentials = this.tvPower.credentials(this.device.id);
+        if (!credentials) {
+            return undefined;
+        }
+        try {
+            return await readActivity(this.device.host, credentials);
+        } catch (error) {
+            AppLogger.debug(undefined, { message: `[Cast] Could not read the app in front of "${this.device.name}": ${error}` });
+            return undefined;
+        }
+    }
+
+    /**
+     * Switches a paired TV to standby when it is on and the app in front is one of `known`, those that were in front while the cast
+     * played and after it. The Cast receiver does not see native apps, so the app in front is what tells. A TV that cannot be read is
+     * left on. False when it was left as it was. The power state is read afresh: the last reading can be a minute old.
+     */
+    async standByIfIdle(known: ReadonlySet<string>): Promise<boolean> {
+        await this.refreshPower();
+        const { reachable, powerControl, powerState, app, playback } = this.info;
+        const playing = playback !== null && playback.state !== "IDLE";
+        const otherApp = app !== null && app !== CAST_APP_NAME;
+        if (!reachable || powerControl !== "paired" || powerState !== "On" || playing || otherApp) {
+            return false;
+        }
+        const activity = await this.currentActivity();
+        if (activity === undefined || !known.has(activity)) {
+            AppLogger.info(undefined, {
+                message: `[Cast] "${this.device.name}" is left on: the app in front is ${activity ?? "unknown"}, during and after the cast it was ${[...known].join(", ") || "unknown"}`,
+            });
+            return false;
+        }
+        AppLogger.info(undefined, {
+            message: `[Cast] Switching off "${this.device.name}": the app in front is ${activity}, app ${app ?? "none"}, playback ${playback?.state ?? "none"}`,
+        });
+        await this.setPower("Standby");
+        return true;
     }
 
     private update(change: Partial<ChromecastInfo>) {
