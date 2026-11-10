@@ -9,6 +9,7 @@ import { useAppSelector } from "../../hooks";
 import { PLAYER_TAB_ID } from "../browser-player/browserPlayerLink";
 import { useCast } from "../cast/useCast";
 import { selectChromecasts } from "../chromecast/chromecastSelectors";
+import { useGetCastGroupsQuery } from "../cast-group/castGroup.api";
 import { useGetPlaylistsQuery } from "../playlist/playlist.api";
 import { useGetClipsQuery } from "../home-video/home-video.api";
 import { clipName, isUnlabelled } from "../home-video/clipFormat";
@@ -68,6 +69,8 @@ export const HomePage: React.FC = () => {
     const homeVideos = MENU_ITEMS[0];
     const chromecastsTile = MENU_ITEMS[1];
     const playlistsTile = MENU_ITEMS[2];
+    const groupsTile = MENU_ITEMS[3];
+    const { data: castGroups } = useGetCastGroupsQuery();
     const { data: playlists } = useGetPlaylistsQuery();
     // The first clip of some playlists, so the tile shows what is in them.
     const playlistPosters = [...new Set(playlists?.map((p) => p.clipIds[0]).filter(Boolean))].slice(0, MOSAIC_CLIPS).map(thumbnailUrl);
@@ -86,8 +89,11 @@ export const HomePage: React.FC = () => {
     ].slice(0, MOSAIC_CLIPS);
     const { state: castState } = useCast();
     // One tile for each Chromecast that plays: what plays, what comes next, and its picture. Our own clips open their player page.
+    // The Chromecasts of a group that plays are shown by the tile of the group.
+    const runningGroups = (castGroups ?? []).filter((g) => castState?.sessions.some((s) => s.deviceId === g.id));
+    const groupMemberIds = new Set(runningGroups.flatMap((g) => g.deviceIds));
     const playingTiles = (chromecasts ?? [])
-        .filter((device) => device.playback && device.playback.state !== "IDLE")
+        .filter((device) => device.playback && device.playback.state !== "IDLE" && !groupMemberIds.has(device.id))
         .map((device) => {
             const { playback } = device;
             const session = castState?.sessions.find((s) => s.deviceId === device.id);
@@ -107,23 +113,29 @@ export const HomePage: React.FC = () => {
                 picture: art && <Mosaic urls={[art]} />,
             };
         });
-    // The player tab of this browser plays like a Chromecast, with a tile of the same kind.
-    const tabSession = castState?.sessions.find((s) => s.deviceId === PLAYER_TAB_ID);
-    if (tabSession) {
-        const { queue } = tabSession;
+    // The player tab of this browser and each group that plays are players like a Chromecast, with a tile of the same kind.
+    const ownPlayers = [...runningGroups.map((g) => ({ id: g.id, title: g.name })), { id: PLAYER_TAB_ID, title: "Player tab" }];
+    for (const { id, title } of ownPlayers) {
+        const session = castState?.sessions.find((s) => s.deviceId === id);
+        if (!session) continue;
+        const { queue } = session;
         const nextId = queue.clipIds[queue.index + 1] ?? (queue.repeat ? queue.clipIds[0] : undefined);
-        const titleOf = (id: string | undefined) => {
-            const clip = clips?.find((c) => c.id === id);
+        const titleOf = (clipId: string | undefined) => {
+            const clip = clips?.find((c) => c.id === clipId);
             return clip ? clipName(clip) : undefined;
         };
         playingTiles.push({
-            id: PLAYER_TAB_ID,
-            title: tabSession.deviceName,
-            to: playerPath(PLAYER_TAB_ID),
-            lines: [`Now: ${titleOf(tabSession.clipId) ?? ""}`, titleOf(nextId) && `Next: ${titleOf(nextId)}`],
-            picture: <Mosaic urls={[thumbnailUrl(tabSession.clipId)]} />,
+            id,
+            title,
+            to: playerPath(id),
+            lines: [`Now: ${titleOf(session.clipId) ?? ""}`, titleOf(nextId) && `Next: ${titleOf(nextId)}`],
+            picture: <Mosaic urls={[thumbnailUrl(session.clipId)]} />,
         });
     }
+    const playingGroups = castGroups?.filter((g) => castState?.sessions.some((s) => s.deviceId === g.id && s.state !== "ENDED")).length;
+    const groupsInfo =
+        castGroups &&
+        [plural(castGroups.length, "group"), playingGroups ? `${playingGroups} playing` : undefined].filter(Boolean).join(" · ");
     const unlabelled = clips?.filter(isUnlabelled).length;
     const info = clips && [plural(clips.length, "clip"), unlabelled ? `${unlabelled} unlabelled` : undefined].filter(Boolean).join(" · ");
 
@@ -151,6 +163,7 @@ export const HomePage: React.FC = () => {
                     lines={[playlists && plural(playlists.length, "playlist")]}
                     picture={playlistPosters.length > 0 && <Mosaic urls={playlistPosters} />}
                 />
+                <Tile to={groupsTile.path} icon={groupsTile.icon} title={groupsTile.label} lines={[groupsInfo]} />
                 {playingTiles.map(({ id, title, to, lines, picture }) => (
                     <Tile key={id} to={to} icon={<PlayCircleOutlineIcon />} title={title} lines={lines} picture={picture} />
                 ))}

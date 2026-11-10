@@ -15,6 +15,7 @@ import {
     useSeekCastMutation,
     useRateCastMutation,
     useStartCastMutation,
+    useStartCastGroupMutation,
     useStopCastMutation,
 } from "./cast.api";
 import { castErrorCleared, clipsQueued } from "./castSlice";
@@ -30,10 +31,12 @@ export const useCast = () => {
     // The player tab is one more player among the Chromecasts.
     const state = useMemo(() => {
         const session = browserPlayerSession(tab, tabReceivedAt);
-        return castState && session ? { ...castState, sessions: [...castState.sessions, session] } : castState;
+        // A tab that plays along with a group is part of the group row.
+        return castState && session && !tab?.followGroupId ? { ...castState, sessions: [...castState.sessions, session] } : castState;
     }, [castState, tab, tabReceivedAt]);
     const error = useAppSelector(selectCastError);
     const [startCast] = useStartCastMutation();
+    const [startCastGroup] = useStartCastGroupMutation();
     const [playCast] = usePlayCastMutation();
     const [pauseCast] = usePauseCastMutation();
     const [stopCast] = useStopCastMutation();
@@ -68,6 +71,8 @@ export const useCast = () => {
             /** Asks the network for Chromecasts again. New ones arrive through the live state. */
             refresh: () => ran(refreshCast()),
             start: (clipId: string, deviceIds: string[], positionSec?: number) => ran(startCast({ clipId, deviceIds, positionSec })),
+            /** Plays the clip on all the Chromecasts of the group, in sync. */
+            startGroup: (groupId: string, clipId: string, positionSec?: number) => ran(startCastGroup({ groupId, clipId, positionSec })),
             play: forPlayer(
                 () => ({ action: "play" }),
                 (deviceId) => ran(playCast(deviceId))
@@ -107,6 +112,7 @@ export const useCast = () => {
         };
     }, [
         startCast,
+        startCastGroup,
         playCast,
         pauseCast,
         stopCast,

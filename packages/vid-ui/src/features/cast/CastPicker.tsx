@@ -7,8 +7,10 @@ import RefreshIcon from "@mui/icons-material/Refresh";
 import { CircularProgress, Divider, ListItemIcon, ListItemText, Menu, MenuItem, Tooltip, IconButton } from "@mui/material";
 import { usePortalContainerRef } from "@uxp/ui-lib";
 import React, { useEffect, useRef, useState } from "react";
+import { useGetCastGroupsQuery } from "../cast-group/castGroup.api";
 import { PLAYER_TAB_ID } from "../browser-player/browserPlayerLink";
 import { useBrowserPlayer } from "../browser-player/useBrowserPlayer";
+import { groupMembersText } from "./castText";
 import { useCast } from "./useCast";
 
 const SEARCH_SHOW_MS = 4000;
@@ -31,7 +33,8 @@ type CastPickerProps = {
  */
 export const CastPicker: React.FC<CastPickerProps> = ({ clipId, getPosition, onHandBack, onCasting }) => {
     const portalContainer = usePortalContainerRef();
-    const { state, start, stop, refresh, editQueue } = useCast();
+    const { state, start, startGroup, stop, refresh, editQueue } = useCast();
+    const { data: groups = [] } = useGetCastGroupsQuery();
     const { player: playerTab, send: sendToPlayerTab } = useBrowserPlayer();
     // The device that plays another clip and is asked what to do with this one.
     const [choosing, setChoosing] = useState<string>();
@@ -66,6 +69,13 @@ export const CastPicker: React.FC<CastPickerProps> = ({ clipId, getPosition, onH
             active: playerTab?.clipIds[playerTab.index] === clipId,
             busy: playerTab !== undefined,
         },
+        ...groups.map((group) => ({
+            id: group.id,
+            name: group.name,
+            secondary: groupMembersText(group),
+            active: onThisClip.some((s) => s.deviceId === group.id),
+            busy: sessions.some((s) => s.deviceId === group.id),
+        })),
         ...devices.map((device) => ({
             id: device.id,
             name: device.name,
@@ -74,6 +84,15 @@ export const CastPicker: React.FC<CastPickerProps> = ({ clipId, getPosition, onH
             busy: sessions.some((s) => s.deviceId === device.id),
         })),
     ];
+
+    // A group starts the clip on all its Chromecasts, which then play in sync.
+    // A group with the player tab asks for the tab first, from the click, which then plays along with the group.
+    const startOn = (id: string) => {
+        const group = groups.find((g) => g.id === id);
+        if (!group) return start(clipId, [id], position());
+        if (group.browser) sendToPlayerTab({ action: "replace", clipIds: [clipId], positionSec: position(), follow: id });
+        return startGroup(id, clipId, position());
+    };
 
     // The tab opens from the click, so the first thing these do is ask for it, before anything is waited for.
     const castTo = async (target: (typeof targets)[number]) => {
@@ -89,7 +108,7 @@ export const CastPicker: React.FC<CastPickerProps> = ({ clipId, getPosition, onH
             sendToPlayerTab({ action: "replace", clipIds: [clipId], positionSec: getPosition() });
             onCasting();
             setAnchor(null);
-        } else if (await start(clipId, [target.id], position())) onCasting();
+        } else if (await startOn(target.id)) onCasting();
     };
 
     const playNow = async (id: string) => {
@@ -98,7 +117,7 @@ export const CastPicker: React.FC<CastPickerProps> = ({ clipId, getPosition, onH
             sendToPlayerTab({ action: "replace", clipIds: [clipId], positionSec: getPosition() });
             onCasting();
             setAnchor(null);
-        } else if (await start(clipId, [id], position())) onCasting();
+        } else if (await startOn(id)) onCasting();
     };
 
     const queueClip = async (id: string, action: "next" | "append") => {

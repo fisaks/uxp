@@ -1,4 +1,15 @@
-import { CastQueue, CastQueueRequest, CastState, editQueue, HomeVideoClip, nextIndex, QueueEditError } from "@vid/common";
+import {
+    CastGroup,
+    CastGroupRun,
+    CastQueue,
+    CastQueueRequest,
+    CastSessionSnapshot,
+    CastState,
+    editQueue,
+    HomeVideoClip,
+    nextIndex,
+    QueueEditError,
+} from "@vid/common";
 import { AppErrorV2, AppLogger } from "@uxp/bff-common";
 import { ErrorCodes } from "@uxp/common";
 import { WebSocket } from "ws";
@@ -8,6 +19,8 @@ import { VideoServerWebSocketManager } from "../ws/VideoServerWebSocketManager";
 import { CastConfig, castConfig } from "./cast.config";
 import { CastDiscovery } from "./cast-discovery";
 import { CastQueueStore } from "./cast-queue";
+import { castGroupService } from "./cast-group.service";
+import { CastGroupSession, GroupOutcome } from "./cast-group-session";
 import { CastSession } from "./cast-session";
 import { FoundDevice } from "./cast-discovery";
 import { ChromecastMonitor } from "./chromecast-monitor";
@@ -59,6 +72,8 @@ export class CastService {
     private readonly castActivities = new Map<string, Set<string>>();
     /** Sessions whose app in front has been read. */
     private readonly sampled = new WeakSet<CastSession>();
+    /** The groups that play, by group id. */
+    private readonly groupSessions = new Map<string, CastGroupSession>();
     private readonly powerOffTimers = new Map<string, NodeJS.Timeout>();
     private last = "";
 
@@ -76,6 +91,7 @@ export class CastService {
     async stop() {
         this.discovery.stop();
         this.monitor.stop();
+        this.groupSessions.forEach((group) => group.release());
         this.sessions.forEach((session) => session.release());
         this.powerOffTimers.forEach(clearTimeout);
         this.powerOffTimers.clear();
@@ -86,12 +102,35 @@ export class CastService {
         return {
             configured: this.config.baseUrl !== undefined,
             devices: this.discovery.list().map(({ id, name, model }) => ({ id, name, model })),
-            sessions: [...this.sessions.values()]
-                .filter((session) => session.visible)
-                .map(({ snapshot }) => ({
-                    ...snapshot,
-                    queue: this.queues.get(snapshot.deviceId) ?? { clipIds: [snapshot.clipId], index: 0, repeat: false },
-                })),
+            sessions: [
+                ...[...this.sessions.values()]
+                    .filter((session) => session.visible && !this.inGroupRun(session))
+                    .map(({ snapshot }) => ({
+                        ...snapshot,
+                        queue: this.queues.get(snapshot.deviceId) ?? { clipIds: [snapshot.clipId], index: 0, repeat: false },
+                    })),
+                ...[...this.groupSessions.values()].map((run) => this.groupRow(run)),
+            ],
+        };
+    }
+
+    /** True for the session of a member while its group plays, or just after: the group's row stands for it. */
+    private inGroupRun(session: CastSession): boolean {
+        return [...this.groupSessions.values()].some((run) => run.holds(session));
+    }
+
+    /** A group of Chromecasts as one session: the member furthest behind, under the id of the group. */
+    private groupRow(run: CastGroupSession): CastSessionSnapshot {
+        const snapshot = run.referenceSession.snapshot;
+        const phase = run.phaseNow;
+        return {
+            ...snapshot,
+            deviceId: run.groupId,
+            deviceName: castGroupService.get(run.groupId)?.name ?? "Group",
+            // Until every member plays, the position of the first to start means little.
+            state: phase === "LOADING" ? "LOADING" : phase === "STARTING" ? "BUFFERING" : snapshot.state,
+            queue: this.queues.get(run.groupId) ?? { clipIds: [run.clipId], index: 0, repeat: false },
+            members: run.snapshot.members,
         };
     }
 
@@ -117,6 +156,7 @@ export class CastService {
         this.requireClips([clipId]);
         const devices = deviceIds.map((id) => this.device(id));
         for (const device of devices) {
+            this.leaveGroupOf(device.id);
             this.queues.set(device.id, { clipIds: [clipId], index: 0, repeat: false });
             this.startQueued(device, positionSec);
         }
@@ -128,10 +168,13 @@ export class CastService {
     editQueue(deviceId: string, request: CastQueueRequest): CastState {
         if (request.action === "replace") {
             this.requireClips(request.clipIds);
-            const device = this.device(deviceId);
+            this.requireTarget(deviceId);
+            if (!castGroupService.get(deviceId)) {
+                this.leaveGroupOf(deviceId);
+            }
             // Keeps the repeat of the queue that is replaced.
             this.queues.set(deviceId, { clipIds: [...request.clipIds], index: 0, repeat: this.queues.get(deviceId)?.repeat ?? false });
-            this.startQueued(device);
+            this.playQueue(deviceId);
             this.publish();
             return this.getState();
         }
@@ -161,9 +204,9 @@ export class CastService {
         this.queues.set(deviceId, queue);
         if (playChanged) {
             if (queue.clipIds.length === 0) {
-                this.sessions.get(deviceId)?.stop();
+                this.stopPlayer(deviceId);
             } else {
-                this.startQueued(this.device(deviceId));
+                this.playQueue(deviceId);
             }
         }
         this.publish();
@@ -172,7 +215,7 @@ export class CastService {
 
     /** Skips to the next clip of the queue, or to the first when it repeats. At the end of one that does not, it stops. */
     next(deviceId: string): CastState {
-        this.session(deviceId);
+        this.playerSession(deviceId);
         const queue = this.queues.get(deviceId);
         const index = queue && nextIndex(queue);
         if (!queue || index === undefined) {
@@ -180,7 +223,7 @@ export class CastService {
         }
         queue.index = index;
         this.queues.set(deviceId, queue);
-        this.startQueued(this.device(deviceId));
+        this.playQueue(deviceId);
         this.publish();
         return this.getState();
     }
@@ -220,12 +263,79 @@ export class CastService {
         return device;
     }
 
+    /** A group or a device that is on the network, else not found. */
+    private requireTarget(id: string) {
+        if (!castGroupService.get(id)) {
+            this.device(id);
+        }
+    }
+
+    /** Plays the queue of the id, which is a group or a device, from its clip. */
+    private playQueue(id: string, positionSec = 0) {
+        const group = castGroupService.get(id);
+        if (group) {
+            this.startGroupQueued(group, positionSec);
+        } else {
+            this.startQueued(this.device(id), positionSec);
+        }
+    }
+
+    private stopPlayer(id: string) {
+        if (castGroupService.get(id)) {
+            this.stopGroup(id);
+        } else {
+            this.sessions.get(id)?.stop();
+        }
+    }
+
+    /** A group of the id that plays; a clip that has just ended there is not playing any more. */
+    private runningGroup(id: string): CastGroupSession | undefined {
+        const run = this.groupSessions.get(id);
+        return run && !run.ended ? run : undefined;
+    }
+
+    /** True when the group plays: it cannot be edited or deleted then. */
+    isGroupRunning(groupId: string): boolean {
+        return this.runningGroup(groupId) !== undefined;
+    }
+
+    /** Throws when the group plays: it is edited or deleted after it is stopped. */
+    requireGroupIdle(groupId: string) {
+        if (this.isGroupRunning(groupId)) {
+            throw new AppErrorV2({ statusCode: 409, code: ErrorCodes.INVALID_STATE, message: "The group plays, stop it first" });
+        }
+    }
+
+    /** A cast of one device that is a member of a group that plays ends that group: the device cannot do both. */
+    private leaveGroupOf(deviceId: string, exceptGroupId?: string) {
+        for (const [groupId, run] of this.groupSessions) {
+            if (groupId !== exceptGroupId && !run.ended && run.snapshot.members.some((member) => member.deviceId === deviceId)) {
+                AppLogger.info(undefined, { message: `[CastGroup] ${groupId} stops: a member is cast to on its own` });
+                this.stopGroup(groupId);
+            }
+        }
+    }
+
     /**
-     * Plays the clip the queue is at on the device, in the place of what plays there. A clip that is no longer in the library is
-     * skipped. False, and the queue is gone, when nothing in it can play.
+     * The clip the queue is at, moving the queue past clips that are no longer in the library. `skipped` is true when the first
+     * clips had to be passed. Undefined when nothing in the queue can play.
      */
-    private startQueued(device: FoundDevice, positionSec = 0, connectDelayMs = 0): boolean {
-        const queue = this.queues.get(device.id);
+    private playableClip(queue: CastQueue): { clip: HomeVideoClip; skipped: boolean } | undefined {
+        for (let tried = 0; tried < queue.clipIds.length; tried++) {
+            const clip = homeVideoService.get(queue.clipIds[queue.index]);
+            if (clip) {
+                return { clip, skipped: tried > 0 };
+            }
+            const index = nextIndex(queue);
+            if (index === undefined) {
+                break;
+            }
+            queue.index = index;
+        }
+        return undefined;
+    }
+
+    private requireBaseUrl(): string {
         const baseUrl = this.config.baseUrl;
         if (!baseUrl) {
             throw new AppErrorV2({
@@ -234,27 +344,37 @@ export class CastService {
                 message: "Casting is not set up: VID_PUBLIC_BASE_URL is missing",
             });
         }
+        return baseUrl;
+    }
+
+    /**
+     * Plays the clip the queue is at on the device, in the place of what plays there. A clip that is no longer in the library is
+     * skipped. False, and the queue is gone, when nothing in it can play.
+     */
+    private startQueued(device: FoundDevice, positionSec = 0, connectDelayMs = 0): boolean {
+        const queue = this.queues.get(device.id);
+        const baseUrl = this.requireBaseUrl();
         if (!queue) {
             return false;
         }
-        for (let tried = 0; tried < queue.clipIds.length; tried++) {
-            const clip = homeVideoService.get(queue.clipIds[queue.index]);
-            if (clip) {
-                this.queues.set(device.id, queue);
-                this.startClip(device, baseUrl, clip, tried === 0 ? positionSec : 0, connectDelayMs);
-                return true;
-            }
-            const index = nextIndex(queue);
-            if (index === undefined) {
-                break;
-            }
-            queue.index = index;
+        const playable = this.playableClip(queue);
+        if (playable) {
+            this.queues.set(device.id, queue);
+            this.startClip(device, baseUrl, playable.clip, playable.skipped ? 0 : positionSec, connectDelayMs);
+            return true;
         }
         this.queues.delete(device.id);
         return false;
     }
 
-    private startClip(device: FoundDevice, baseUrl: string, clip: HomeVideoClip, positionSec: number, connectDelayMs: number) {
+    private startClip(
+        device: FoundDevice,
+        baseUrl: string,
+        clip: HomeVideoClip,
+        positionSec: number,
+        connectDelayMs: number,
+        autoplay = true
+    ): CastSession {
         const { exp, sig } = signStreamQuery(clip.id);
         const query = `${clip.id}?exp=${exp}&sig=${sig}`;
         const url = `${baseUrl}/api/home-videos/stream/${query}`;
@@ -268,36 +388,201 @@ export class CastService {
         }
         const session = new CastSession(
             device,
-            { kind: "load", clipId: clip.id, title: clipTitle(clip), url, posterUrl, positionSec },
+            { kind: "load", clipId: clip.id, title: clipTitle(clip), url, posterUrl, positionSec, autoplay },
             () => this.onSessionChange(device.id, session)
         );
         this.sessions.set(device.id, session);
         AppLogger.info(undefined, { message: `[Cast] ${clip.file} on "${device.name}" from ${Math.round(positionSec)} s` });
         session.connect(connectDelayMs);
+        return session;
+    }
+
+    /**
+     * Plays the clip on every device of the group, as a queue of that one clip. See `startGroupQueued`. A group that already plays
+     * gets the clip in its place.
+     */
+    startGroup(groupId: string, clipId: string, positionSec = 0): CastGroupRun {
+        if (!castGroupService.get(groupId)) {
+            throw new AppErrorV2({ statusCode: 404, code: ErrorCodes.NOT_FOUND, message: "There is no such group" });
+        }
+        this.requireClips([clipId]);
+        this.queues.set(groupId, { clipIds: [clipId], index: 0, repeat: false });
+        this.playQueue(groupId, positionSec);
+        this.publish();
+        return this.groupRun(groupId);
+    }
+
+    /**
+     * Plays the clip the queue of the group is at on every device of the group: loaded paused and started together, then kept in
+     * sync. A device of the group that cannot be found is left out; at least one must be there. What plays on the group is replaced.
+     */
+    private startGroupQueued(group: CastGroup, positionSec = 0): boolean {
+        const queue = this.queues.get(group.id);
+        const baseUrl = this.requireBaseUrl();
+        if (!queue) {
+            return false;
+        }
+        const devices = group.deviceIds.flatMap((id) => this.discovery.get(id) ?? []);
+        if (devices.length === 0) {
+            throw new AppErrorV2({ statusCode: 404, code: ErrorCodes.NOT_FOUND, message: "No Chromecast of the group is on the network" });
+        }
+        const playable = this.playableClip(queue);
+        if (!playable) {
+            this.queues.delete(group.id);
+            return false;
+        }
+        this.queues.set(group.id, queue);
+        devices.forEach((device) => this.leaveGroupOf(device.id, group.id));
+        this.groupSessions.get(group.id)?.release();
+        const members = devices.map((device) => {
+            // A member has no queue of its own, the group has it.
+            this.queues.delete(device.id);
+            return {
+                deviceId: device.id,
+                name: device.name,
+                session: this.startClip(device, baseUrl, playable.clip, playable.skipped ? 0 : positionSec, 0, false),
+            };
+        });
+        const run: CastGroupSession = new CastGroupSession(
+            group.id,
+            playable.clip.id,
+            members,
+            () => this.onGroupChange(run),
+            (member) => this.sessions.get(member.deviceId) === member.session,
+            (outcome) => this.onGroupFinished(run, outcome)
+        );
+        this.groupSessions.set(group.id, run);
+        run.start();
+        return true;
+    }
+
+    groupRun(groupId: string): CastGroupRun {
+        const run = this.groupSessions.get(groupId);
+        if (!run) {
+            throw new AppErrorV2({ statusCode: 404, code: ErrorCodes.NOT_FOUND, message: "That group does not play" });
+        }
+        return run.snapshot;
+    }
+
+    /** Stops the group's members and lets the group go, with its queue. Nothing happens when it does not play. */
+    stopGroup(groupId: string) {
+        const run = this.runningGroup(groupId);
+        if (!run) {
+            return;
+        }
+        this.queues.delete(groupId);
+        this.failures.delete(groupId);
+        run.release();
+        for (const { deviceId } of run.snapshot.members) {
+            const session = this.sessions.get(deviceId);
+            if (session && run.holds(session) && !session.finished) {
+                session.stop();
+            }
+        }
+        this.forgetRunLater(run);
+        this.publish();
+    }
+
+    /** The row of a run that is over stays a moment, as that of a single session does, then goes. */
+    private forgetRunLater(run: CastGroupSession) {
+        setTimeout(() => {
+            if (this.groupSessions.get(run.groupId) === run) {
+                this.groupSessions.delete(run.groupId);
+                this.publish();
+            }
+        }, FINISHED_KEEP_MS);
+    }
+
+    private onGroupChange(run: CastGroupSession) {
+        if (this.groupSessions.get(run.groupId) !== run) {
+            return;
+        }
+        // Playing together means the clip is good: the run of failures is broken.
+        if (run.phaseNow === "SYNCING" || run.phaseNow === "PLAYING") {
+            this.failures.delete(run.groupId);
+        }
+        this.publish();
+    }
+
+    /** After the clip of the group is over, goes on to the next of its queue, as a single device does, else lets the group go. */
+    private onGroupFinished(run: CastGroupSession, outcome: GroupOutcome) {
+        if (this.groupSessions.get(run.groupId) !== run) {
+            return;
+        }
+        const { groupId } = run;
+        const queue = this.queues.get(groupId);
+        const group = castGroupService.get(groupId);
+        if (queue && group && outcome !== "gone") {
+            const failures = outcome === "failed" ? (this.failures.get(groupId) ?? 0) + 1 : 0;
+            const index = nextIndex(queue);
+            if (index !== undefined && failures < queue.clipIds.length) {
+                this.failures.set(groupId, failures);
+                queue.index = index;
+                try {
+                    if (this.startGroupQueued(group)) {
+                        this.publish();
+                        return;
+                    }
+                } catch (error) {
+                    AppLogger.warn(undefined, { message: `[CastGroup] ${groupId} could not go on to the next clip`, error });
+                }
+            }
+        }
+        this.queues.delete(groupId);
+        this.failures.delete(groupId);
+        this.forgetRunLater(run);
+        this.publish();
     }
 
     play(deviceId: string): CastState {
-        this.session(deviceId).play();
+        const run = this.runningGroup(deviceId);
+        if (run) {
+            run.play();
+        } else {
+            this.session(deviceId).play();
+        }
         return this.getState();
     }
 
     pause(deviceId: string): CastState {
-        this.session(deviceId).pause();
+        const run = this.runningGroup(deviceId);
+        if (run) {
+            run.pause();
+        } else {
+            this.session(deviceId).pause();
+        }
         return this.getState();
     }
 
     seek(deviceId: string, positionSec: number): CastState {
-        this.session(deviceId).seek(positionSec);
+        const run = this.runningGroup(deviceId);
+        if (run) {
+            run.seek(positionSec);
+        } else {
+            this.session(deviceId).seek(positionSec);
+        }
         return this.getState();
     }
 
     setRate(deviceId: string, rate: number): CastState {
-        this.session(deviceId).setRate(rate);
+        const run = this.runningGroup(deviceId);
+        if (run) {
+            run.setRate(rate);
+        } else {
+            this.session(deviceId).setRate(rate);
+        }
         return this.getState();
     }
 
     /** Takes the cast down on the Chromecast and casts the same clip again from where it was. */
     restart(deviceId: string): CastState {
+        if (this.runningGroup(deviceId)) {
+            throw new AppErrorV2({
+                statusCode: 400,
+                code: ErrorCodes.INVALID_STATE,
+                message: "A group cannot be restarted, play the clip again",
+            });
+        }
         const old = this.session(deviceId);
         const device = this.device(deviceId);
         const position = old.currentPositionSec;
@@ -309,6 +594,10 @@ export class CastService {
     }
 
     stopSession(deviceId: string): CastState {
+        if (this.runningGroup(deviceId)) {
+            this.stopGroup(deviceId);
+            return this.getState();
+        }
         const session = this.session(deviceId);
         this.queues.delete(deviceId);
         session.stop();
@@ -361,6 +650,12 @@ export class CastService {
             throw new AppErrorV2({ statusCode: 404, code: ErrorCodes.NOT_FOUND, message: "Nothing is cast to that Chromecast" });
         }
         return session;
+    }
+
+    /** The session that stands for the player of the id: that of a device, or for a group the member furthest behind. */
+    private playerSession(id: string): CastSession {
+        const run = this.runningGroup(id);
+        return run ? run.referenceSession : this.session(id);
     }
 
     private onSessionChange(deviceId: string, session: CastSession) {

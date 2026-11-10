@@ -1,4 +1,4 @@
-import { CastQueueRequest, CastState } from "@vid/common";
+import { CastGroupRun, CastGroupStartRequest, CastQueueRequest, CastState } from "@vid/common";
 import { apiUrl } from "../../api/home-video-api";
 import { vidApi } from "../../app/vidApi";
 import { castErrorCleared, castFailed, castStateReceived } from "./castSlice";
@@ -29,6 +29,18 @@ export const castApi = vidApi.injectEndpoints({
                 url: apiUrl("cast/sessions"),
                 data,
             })),
+            /** The state of the casts arrives through the live state; the answer is only the start of the run. */
+            startCastGroup: builder.mutation<CastGroupRun, { groupId: string } & CastGroupStartRequest>({
+                query: ({ groupId, ...data }) => ({ method: "POST", url: apiUrl(`cast/groups/${groupId}/start`), data }),
+                onQueryStarted: async (_arg, { dispatch, queryFulfilled }) => {
+                    dispatch(castErrorCleared());
+                    try {
+                        await queryFulfilled;
+                    } catch (e) {
+                        dispatch(castFailed((e as { error?: { message?: string } }).error?.message || CAST_FAILED_TEXT));
+                    }
+                },
+            }),
             playCast: castCommand<string>((deviceId) => sessionUrl(deviceId, "play")),
             pauseCast: castCommand<string>((deviceId) => sessionUrl(deviceId, "pause")),
             stopCast: castCommand<string>((deviceId) => sessionUrl(deviceId, "stop")),
@@ -54,6 +66,7 @@ export const castApi = vidApi.injectEndpoints({
 export const {
     useRefreshCastMutation,
     useStartCastMutation,
+    useStartCastGroupMutation,
     usePlayCastMutation,
     usePauseCastMutation,
     useStopCastMutation,

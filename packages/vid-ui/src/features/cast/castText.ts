@@ -28,3 +28,16 @@ const QUEUED_TEXT: Partial<Record<CastQueueRequest["action"], string>> = {
 };
 
 export const queuedText = (action: CastQueueRequest["action"]) => QUEUED_TEXT[action];
+
+/** Where the members of a group are: "2 in sync" while they all do the same, else the ones that differ. */
+export const membersText = (session: CastSessionSnapshot) => {
+    const { members = [] } = session;
+    const apart = members.filter((m) => m.state !== session.state);
+    return apart.length === 0
+        ? `${members.length} in sync`
+        : apart.map((m) => `${m.name} ${(STATE_TEXT[m.state as CastSessionSnapshot["state"]] ?? m.state).toLowerCase()}`).join(", ");
+};
+
+/** What a group is made of, for a card or a menu: the number of Chromecasts, and the player tab when it plays along. */
+export const groupMembersText = (group: { deviceIds: string[]; browser: boolean }) =>
+    `${group.deviceIds.length} Chromecasts${group.browser ? " + player tab" : ""} in sync`;

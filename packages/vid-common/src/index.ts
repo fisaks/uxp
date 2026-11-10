@@ -6,3 +6,5 @@ export * from "./types/cast.type";
 export * from "./schemas/playlist.schema";
 export * from "./types/playlist.type";
 export * from "./queue/queue-edit";
+export * from "./schemas/cast-group.schema";
+export * from "./types/cast-group.type";

@@ -7,6 +7,7 @@ import { CastBar, CAST_ROW_ROOM } from "./features/cast/CastBar";
 import { CastProvider } from "./features/cast/CastProvider";
 import { useBarSessions } from "./features/cast/useBarSessions";
 import { PlayerPage } from "./features/cast/PlayerPage";
+import { CastGroupsPage } from "./features/cast-group/CastGroupsPage";
 import { ChromecastsPage } from "./features/chromecast/ChromecastsPage";
 import { ClipListPage } from "./features/home-video/ClipListPage";
 import { ClipPage } from "./features/home-video/ClipPage";
@@ -15,7 +16,7 @@ import { selectSaveErrorMessage } from "./features/home-video/saveErrorSelectors
 import { PlaylistsPage } from "./features/playlist/PlaylistsPage";
 import { HomePage } from "./features/home/HomePage";
 import { useAppDispatch, useAppSelector } from "./hooks";
-import { CHROMECASTS_PATH, HOME_PATH, HOME_VIDEOS_PATH, PLAYER_PATH, PLAYER_WINDOW_PATH, PLAYLISTS_PATH } from "./menu";
+import { CAST_GROUPS_PATH, CHROMECASTS_PATH, HOME_PATH, HOME_VIDEOS_PATH, PLAYER_PATH, PLAYER_WINDOW_PATH, PLAYLISTS_PATH } from "./menu";
 import { VideoNavigation } from "./VideoNavigation";
 
 const SaveErrorNotice = () => {
@@ -47,6 +48,7 @@ const Pages = () => {
                 <Route path={`${HOME_VIDEOS_PATH}/clips/:id`} element={<ClipPage />} />
                 <Route path={CHROMECASTS_PATH} element={<ChromecastsPage />} />
                 <Route path={PLAYLISTS_PATH} element={<PlaylistsPage />} />
+                <Route path={CAST_GROUPS_PATH} element={<CastGroupsPage />} />
                 <Route path={`${PLAYER_PATH}/:deviceId`} element={<PlayerPage />} />
                 <Route path="*" element={<Navigate to={HOME_PATH} replace={true} />} />
             </Routes>

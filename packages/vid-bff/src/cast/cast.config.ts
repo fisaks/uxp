@@ -8,6 +8,8 @@ export const castConfig = {
     baseUrl,
     /** The queues of the Chromecasts, so they survive a restart. */
     queuesFile: path.join(homeVideoConfig.cacheDir, "cast-queues.json"),
+    /** The saved groups of Chromecasts that play in sync. */
+    groupsFile: path.join(homeVideoConfig.cacheDir, "cast-groups.json"),
     /** The pairings with the TVs that can be switched on and off from here. */
     tvPairingsFile: path.join(homeVideoConfig.cacheDir, "tv-pairings.json"),
 };

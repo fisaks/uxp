@@ -22,7 +22,8 @@ import { PLAYER_TAB_ID } from "../browser-player/browserPlayerLink";
 import { useBrowserPlayer } from "../browser-player/useBrowserPlayer";
 import { CAST_PLAYBACK_RATES } from "@vid/common";
 import { RateButton } from "./RateButton";
-import { sessionPosition, sessionStateText } from "./castText";
+import { membersText, sessionPosition, sessionStateText } from "./castText";
+import { useGetCastGroupsQuery } from "../cast-group/castGroup.api";
 import { useCast } from "./useCast";
 import { useNow } from "./useNow";
 
@@ -34,6 +35,7 @@ export const PlayerPage: React.FC = () => {
     const navigate = useNavigate();
     const { state, play, pause, stop, seek, next, editQueue, setRate } = useCast();
     const { show: showPlayerTab } = useBrowserPlayer();
+    const { data: castGroups } = useGetCastGroupsQuery();
     const { data: clips } = useGetClipsQuery();
     const session = state?.sessions.find((s) => s.deviceId === deviceId);
     const now = useNow(session?.state === "PLAYING");
@@ -80,6 +82,7 @@ export const PlayerPage: React.FC = () => {
                 <Typography variant="body2" color="text.secondary" noWrap>
                     {session.deviceName} · {sessionStateText(session)}
                     {inQueue && ` · ${queue.index + 1} / ${queue.clipIds.length}`}
+                    {session.members && ` · ${membersText(session)}`}
                 </Typography>
                 <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mt: 1 }}>
                     <Typography variant="caption" color="text.secondary" sx={{ minWidth: 36, textAlign: "right" }}>
@@ -141,7 +144,7 @@ export const PlayerPage: React.FC = () => {
                             onChange={(rate) => setRate(deviceId, rate)}
                         />
                     )}
-                    {deviceId === PLAYER_TAB_ID && (
+                    {(deviceId === PLAYER_TAB_ID || castGroups?.some((g) => g.id === deviceId && g.browser)) && (
                         <LabelledIconButton label="Show the player tab" onClick={showPlayerTab}>
                             <OpenInBrowserIcon />
                         </LabelledIconButton>

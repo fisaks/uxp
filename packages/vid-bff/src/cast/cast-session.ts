@@ -44,6 +44,8 @@ export type CastLoad = {
     /** The poster frame, fetched the same way. */
     posterUrl: string;
     positionSec: number;
+    /** False loads the clip paused at `positionSec`, for a group that starts all its members together. Default true. */
+    autoplay?: boolean;
 };
 
 /**
@@ -145,6 +147,13 @@ export class CastSession {
         this.set({ positionSec });
     }
 
+    /** Asks for the status now, for a group that follows the position closely. The answer arrives as a status. */
+    requestStatus() {
+        if (this.media) {
+            this.send(this.media, { type: "GET_STATUS" });
+        }
+    }
+
     /** The receiver answers with a status that carries the new rate. */
     setRate(rate: number) {
         this.mediaCommand("SET_PLAYBACK_RATE", { playbackRate: rate });
@@ -239,7 +248,7 @@ export class CastSession {
         }
         this.send(media, {
             type: "LOAD",
-            autoplay: true,
+            autoplay: source.autoplay ?? true,
             currentTime: source.positionSec,
             media: {
                 contentId: source.url,

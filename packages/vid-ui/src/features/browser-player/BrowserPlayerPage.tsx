@@ -1,4 +1,5 @@
 import Forward30Icon from "@mui/icons-material/Forward30";
+import FullscreenIcon from "@mui/icons-material/Fullscreen";
 import HomeIcon from "@mui/icons-material/Home";
 import PauseIcon from "@mui/icons-material/Pause";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
@@ -7,9 +8,25 @@ import Replay30Icon from "@mui/icons-material/Replay30";
 import SkipNextIcon from "@mui/icons-material/SkipNext";
 import StopIcon from "@mui/icons-material/Stop";
 import { Box, Stack, Typography } from "@mui/material";
-import { BROWSER_PLAYBACK_RATES, CastPlayerState, CastQueue, CastQueueRequest, editQueue, nextIndex, QueueEditError } from "@vid/common";
+import {
+    BROWSER_PLAYBACK_RATES,
+    CastPlayerState,
+    CastQueue,
+    CastQueueRequest,
+    CastSessionSnapshot,
+    editQueue,
+    nextIndex,
+    QueueEditError,
+} from "@vid/common";
 import React, { useEffect, useRef, useState } from "react";
 import { createStreamLink, streamUrl, thumbnailUrl } from "../../api/home-video-api";
+import {
+    useEditCastQueueMutation,
+    useNextCastMutation,
+    usePauseCastMutation,
+    usePlayCastMutation,
+    useSeekCastMutation,
+} from "../cast/cast.api";
 import { QueueList } from "../cast/QueueList";
 import { clipName } from "../home-video/clipFormat";
 import { useGetClipsQuery } from "../home-video/home-video.api";
@@ -18,6 +35,8 @@ import { LabelledIconButton } from "../shared/LabelledIconButton";
 import { RateButton } from "../cast/RateButton";
 import { ToggleIconButton } from "../shared/ToggleIconButton";
 import { BrowserPlayerCommand, FromPlayerMessage, openChannel, showMainWindow, ToPlayerMessage } from "./browserPlayerLink";
+import { followAction } from "./followSkew";
+import { GroupFollower } from "./GroupFollower";
 
 const SKIP_SECONDS = 30;
 /** The state is sent on the progress of the video at this pace at most. */
@@ -44,6 +63,28 @@ const writeSaved = (saved: Saved | undefined) => {
         // A tab that cannot keep its queue just does not survive a reload.
     }
 };
+
+/** How often the video is brought in line with the group it follows. */
+const FOLLOW_EVERY_MS = 250;
+/** A tab that follows a group that never shows up lets go after this long. */
+const FOLLOW_WAIT_MS = 30000;
+
+/** The group the tab plays along with, and the latest row of it. */
+type Following = {
+    groupId: string;
+    row: CastSessionSnapshot | undefined;
+    /** Has the row been seen: when it is gone after that, the group is over. */
+    seen: boolean;
+    since: number;
+    /** How far the clock of this browser is ahead of the clock of the server, the least of what the rows showed (the delay of a row is never negative). */
+    offsetMs: number;
+};
+
+const sameQueue = (a: CastQueue, b: CastQueue) =>
+    a.index === b.index &&
+    a.repeat === b.repeat &&
+    a.clipIds.length === b.clipIds.length &&
+    a.clipIds.every((id, i) => id === b.clipIds[i]);
 
 const EMPTY_QUEUE: CastQueue = { clipIds: [], index: 0, repeat: false };
 
@@ -73,6 +114,15 @@ export const BrowserPlayerPage: React.FC = () => {
     const startPaused = useRef(false);
     const failedInARow = useRef(0);
     const lastReport = useRef(0);
+    // Set while the tab plays along with a group of Chromecasts: the group then decides the clip, the place and play or pause.
+    const [followGroup, setFollowGroup] = useState<string>();
+    const following = useRef<Following>();
+    // While the tab follows a group, what the user does here goes to the group; the video then follows the group.
+    const [playGroup] = usePlayCastMutation();
+    const [pauseGroup] = usePauseCastMutation();
+    const [seekGroup] = useSeekCastMutation();
+    const [nextGroup] = useNextCastMutation();
+    const [editGroupQueue] = useEditCastQueueMutation();
 
     const clipId = queue.clipIds[queue.index];
     const clip = clips?.find((c) => c.id === clipId);
@@ -94,6 +144,7 @@ export const BrowserPlayerPage: React.FC = () => {
                 state,
                 positionSec: position,
                 durationSec: element?.duration || 0,
+                followGroupId: following.current?.groupId,
             },
         } satisfies FromPlayerMessage);
         lastReport.current = Date.now();
@@ -113,12 +164,18 @@ export const BrowserPlayerPage: React.FC = () => {
         }
     };
 
-    const replace = (clipIds: string[], positionSec?: number) => {
+    const replace = (clipIds: string[], positionSec?: number, follow?: string) => {
         failedInARow.current = 0;
+        following.current = follow ? { groupId: follow, row: undefined, seen: false, since: Date.now(), offsetMs: Infinity } : undefined;
+        setFollowGroup(follow);
         apply({ clipIds: [...clipIds], index: 0, repeat: queueRef.current.repeat }, true, positionSec);
     };
 
     const edit = (request: CastQueueRequest): boolean => {
+        if (following.current) {
+            void editGroupQueue({ deviceId: following.current.groupId, request });
+            return true;
+        }
         const edited = { ...queueRef.current, clipIds: [...queueRef.current.clipIds] };
         try {
             const { playChanged } = editQueue(edited, request);
@@ -142,31 +199,51 @@ export const BrowserPlayerPage: React.FC = () => {
         apply({ ...current, index }, true);
     };
 
+    const play = () => {
+        if (following.current) void playGroup(following.current.groupId);
+        else void video.current?.play().catch(() => undefined);
+    };
+
+    const pause = () => {
+        if (following.current) void pauseGroup(following.current.groupId);
+        else video.current?.pause();
+    };
+
+    const seekTo = (positionSec: number) => {
+        if (following.current) void seekGroup({ deviceId: following.current.groupId, positionSec });
+        else if (video.current) video.current.currentTime = positionSec;
+    };
+
+    const nextClip = () => {
+        if (following.current) void nextGroup(following.current.groupId);
+        else if (nextIndex(queueRef.current) !== undefined) advance(false);
+    };
+
     const handleCommand = (command: BrowserPlayerCommand) => {
         switch (command.action) {
             case "play":
-                void video.current?.play().catch(() => undefined);
+                play();
                 return;
             case "pause":
-                video.current?.pause();
+                pause();
                 return;
             case "seek":
-                if (video.current) video.current.currentTime = command.positionSec;
+                seekTo(command.positionSec);
                 return;
             case "next-clip":
-                if (nextIndex(queueRef.current) !== undefined) advance(false);
+                nextClip();
                 return;
             case "stop":
                 writeSaved(undefined);
                 window.close();
                 return;
             case "replace":
-                replace(command.clipIds, command.positionSec);
+                replace(command.clipIds, command.positionSec, command.follow);
                 return;
             case "next":
             case "append":
                 // A queue that has nothing more to play starts over with the clips.
-                if (finishedRef.current || queueRef.current.clipIds.length === 0) replace(command.clipIds);
+                if (!following.current && (finishedRef.current || queueRef.current.clipIds.length === 0)) replace(command.clipIds);
                 else edit(command);
                 return;
             default:
@@ -174,8 +251,59 @@ export const BrowserPlayerPage: React.FC = () => {
         }
     };
 
-    const latest = useRef({ report, handleCommand, advance });
-    latest.current = { report, handleCommand, advance };
+    const stopFollowing = () => {
+        following.current = undefined;
+        setFollowGroup(undefined);
+        video.current?.pause();
+        if (video.current) video.current.playbackRate = rate;
+        setFinished("ENDED");
+    };
+
+    /** The row of the group arrived (or the group has none): the clip and the queue are the group's, the position is kept by `follow`. */
+    const groupRowReceived = (row: CastSessionSnapshot | undefined, receivedAt: number) => {
+        const current = following.current;
+        if (!current) return;
+        if (!row) {
+            if (current.seen || receivedAt - current.since > FOLLOW_WAIT_MS) stopFollowing();
+            return;
+        }
+        current.row = row;
+        current.seen = true;
+        current.offsetMs = Math.min(current.offsetMs, receivedAt - row.updatedAt);
+        const queueNow = queueRef.current;
+        const groupQueue = { ...row.queue, clipIds: [...row.queue.clipIds] };
+        if (row.clipId !== queueNow.clipIds[queueNow.index]) apply(groupQueue, true, 0, true);
+        else if (!sameQueue(queueNow, groupQueue)) apply(groupQueue, false);
+    };
+
+    /** Brings the video in line with the group: plays or pauses as it does, and catches up with it by a jump or a small change of speed. */
+    const follow = () => {
+        const row = following.current?.row;
+        const element = video.current;
+        if (
+            !row ||
+            !element ||
+            element.readyState === 0 ||
+            element.seeking ||
+            row.clipId !== queueRef.current.clipIds[queueRef.current.index]
+        )
+            return;
+        if (row.state === "PLAYING") {
+            if (element.paused) void element.play().catch(() => undefined);
+        } else if (!element.paused) element.pause();
+        const action = followAction(row, following.current?.offsetMs ?? 0, Date.now(), element.currentTime, element.playbackRate);
+        if (action && "seekTo" in action) element.currentTime = action.seekTo;
+        else if (action) element.playbackRate = action.rate;
+    };
+
+    const latest = useRef({ report, handleCommand, advance, follow, groupRowReceived });
+    latest.current = { report, handleCommand, advance, follow, groupRowReceived };
+
+    useEffect(() => {
+        if (!followGroup) return;
+        const timer = setInterval(() => latest.current.follow(), FOLLOW_EVERY_MS);
+        return () => clearInterval(timer);
+    }, [followGroup]);
 
     // Declared before the effects that report, which would otherwise find an empty queue and forget the saved one.
     useEffect(() => {
@@ -218,11 +346,14 @@ export const BrowserPlayerPage: React.FC = () => {
     useEffect(report, [queue, url, finished]);
 
     const skip = (seconds: number) => {
-        if (video.current) video.current.currentTime = Math.max(0, video.current.currentTime + seconds);
+        if (video.current) seekTo(Math.max(0, video.current.currentTime + seconds));
     };
 
     return (
         <Box sx={{ p: { xs: 0, sm: 2 }, maxWidth: PLAYER_MAX_WIDTH, mx: "auto" }}>
+            {followGroup && (
+                <GroupFollower groupId={followGroup} onRow={(row, receivedAt) => latest.current.groupRowReceived(row, receivedAt)} />
+            )}
             <Box sx={{ bgcolor: "common.black", borderRadius: 1, overflow: "hidden", aspectRatio: "16 / 9" }}>
                 {url && (
                     <video
@@ -230,7 +361,7 @@ export const BrowserPlayerPage: React.FC = () => {
                         ref={video}
                         src={url}
                         poster={clipId ? thumbnailUrl(clipId) : undefined}
-                        controls
+                        controls={!followGroup}
                         autoPlay={!startPaused.current}
                         playsInline
                         style={{ display: "block", width: "100%", height: "100%" }}
@@ -250,8 +381,9 @@ export const BrowserPlayerPage: React.FC = () => {
                         }}
                         onWaiting={report}
                         onTimeUpdate={() => Date.now() - lastReport.current >= REPORT_EVERY_MS && report()}
-                        onEnded={() => advance(false)}
-                        onError={() => advance(true)}
+                        // The group moves on to the next clip when it is time, and the tab follows.
+                        onEnded={() => !following.current && advance(false)}
+                        onError={() => !following.current && advance(true)}
                     />
                 )}
             </Box>
@@ -259,6 +391,11 @@ export const BrowserPlayerPage: React.FC = () => {
                 <Typography variant="h6" noWrap>
                     {clip ? clipName(clip) : clipId ? "" : "Nothing to play"}
                 </Typography>
+                {followGroup && (
+                    <Typography variant="body2" color="text.secondary" noWrap>
+                        Playing along with a group of Chromecasts: the buttons control the group
+                    </Typography>
+                )}
                 {queue.clipIds.length > 1 && (
                     <Typography variant="body2" color="text.secondary" noWrap>
                         {finished === "FAILED" ? "Could not play the clips · " : finished === "ENDED" ? "Finished · " : ""}
@@ -269,28 +406,27 @@ export const BrowserPlayerPage: React.FC = () => {
                     <LabelledIconButton label={`Back ${SKIP_SECONDS} s`} onClick={() => skip(-SKIP_SECONDS)}>
                         <Replay30Icon />
                     </LabelledIconButton>
-                    <LabelledIconButton
-                        label={playing ? "Pause" : "Play"}
-                        onClick={() => (playing ? video.current?.pause() : void video.current?.play().catch(() => undefined))}
-                    >
+                    <LabelledIconButton label={playing ? "Pause" : "Play"} onClick={playing ? pause : play}>
                         {playing ? <PauseIcon /> : <PlayArrowIcon />}
                     </LabelledIconButton>
                     <LabelledIconButton label={`Forward ${SKIP_SECONDS} s`} onClick={() => skip(SKIP_SECONDS)}>
                         <Forward30Icon />
                     </LabelledIconButton>
                     {next !== undefined && (
-                        <LabelledIconButton label="Next clip" onClick={() => advance(false)}>
+                        <LabelledIconButton label="Next clip" onClick={nextClip}>
                             <SkipNextIcon />
                         </LabelledIconButton>
                     )}
-                    <RateButton
-                        rates={BROWSER_PLAYBACK_RATES}
-                        rate={rate}
-                        onChange={(value) => {
-                            setRate(value);
-                            if (video.current) video.current.playbackRate = value;
-                        }}
-                    />
+                    {!followGroup && (
+                        <RateButton
+                            rates={BROWSER_PLAYBACK_RATES}
+                            rate={rate}
+                            onChange={(value) => {
+                                setRate(value);
+                                if (video.current) video.current.playbackRate = value;
+                            }}
+                        />
+                    )}
                     <ToggleIconButton
                         active={queue.repeat}
                         label={queue.repeat ? "Repeat the queue: on" : "Repeat the queue: off"}
@@ -298,6 +434,9 @@ export const BrowserPlayerPage: React.FC = () => {
                     >
                         <RepeatIcon />
                     </ToggleIconButton>
+                    <LabelledIconButton label="Full screen" onClick={() => void video.current?.requestFullscreen().catch(() => undefined)}>
+                        <FullscreenIcon />
+                    </LabelledIconButton>
                     <LabelledIconButton label="Show the video app" onClick={showMainWindow}>
                         <HomeIcon />
                     </LabelledIconButton>

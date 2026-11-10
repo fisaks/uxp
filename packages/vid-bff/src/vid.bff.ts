@@ -12,6 +12,7 @@ import {
 } from "@uxp/bff-common";
 import Fastify from "fastify";
 import path from "path";
+import { castGroupService } from "./cast/cast-group.service";
 import { castService } from "./cast/cast.service";
 import { homeVideoService } from "./home-video/home-video.service";
 import { playlistService } from "./playlist/playlist.service";
@@ -36,10 +37,12 @@ registerLocalWebSocketHandlers({
 
 onShutdown(() => homeVideoService.flush());
 onShutdown(() => playlistService.flush());
+onShutdown(() => castGroupService.flush());
 onShutdown(async () => castService.stop());
 void castService.start();
 void homeVideoService.load();
 void playlistService.load();
+void castGroupService.load();
 
 const port = 3051;
 

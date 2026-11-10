@@ -37,7 +37,7 @@ import { PLAYER_TAB_ID } from "../browser-player/browserPlayerLink";
 import { selectQueued } from "./castSelectors";
 import { useCast } from "./useCast";
 import { RateButton } from "./RateButton";
-import { sessionPosition, sessionStateText } from "./castText";
+import { membersText, sessionPosition, sessionStateText } from "./castText";
 import { useBarSessions } from "./useBarSessions";
 import { useNow } from "./useNow";
 
@@ -139,7 +139,8 @@ const SessionRow: React.FC<{ session: CastSessionSnapshot; now: number; compact:
                     <OpenInBrowserIcon />
                 </LabelledIconButton>
             ) : (
-                !ended && (
+                !ended &&
+                !session.members && (
                     <LabelledIconButton label="Restart the stream" onClick={() => restart(session.deviceId)}>
                         <RestartAltIcon />
                     </LabelledIconButton>
@@ -186,6 +187,7 @@ const SessionRow: React.FC<{ session: CastSessionSnapshot; now: number; compact:
                         <Typography noWrap variant="body2" color="text.secondary">
                             {session.deviceName} · {sessionStateText(session)}
                             {inQueue && ` · ${queue.index + 1} / ${queue.clipIds.length}`}
+                            {session.members && ` · ${membersText(session)}`}
                         </Typography>
                     </Box>
                 </ButtonBase>

@@ -4,7 +4,9 @@ import { usePortalContainerRef } from "@uxp/ui-lib";
 import CheckIcon from "@mui/icons-material/Check";
 import OpenInBrowserIcon from "@mui/icons-material/OpenInBrowser";
 import React, { useEffect, useRef, useState } from "react";
+import { useGetCastGroupsQuery } from "../cast-group/castGroup.api";
 import { useBrowserPlayer } from "../browser-player/useBrowserPlayer";
+import { groupMembersText } from "./castText";
 import { useCast } from "./useCast";
 
 const DONE_SHOW_MS = 1000;
@@ -13,6 +15,7 @@ const DONE_SHOW_MS = 1000;
 export const PlayAllButton: React.FC<{ clipIds: string[]; label?: string }> = ({ clipIds, label = "Play all" }) => {
     const portalContainer = usePortalContainerRef();
     const { state, editQueue } = useCast();
+    const { data: groups = [] } = useGetCastGroupsQuery();
     const { send: sendToPlayerTab } = useBrowserPlayer();
     const [anchor, setAnchor] = useState<HTMLElement | null>(null);
     // The device that was started, shown in the menu for a moment before it closes.
@@ -27,6 +30,8 @@ export const PlayAllButton: React.FC<{ clipIds: string[]; label?: string }> = ({
     };
 
     const playOn = async (deviceId: string) => {
+        // A group with the player tab asks for the tab first, from the click, which then plays along with the group.
+        if (groups.some((g) => g.id === deviceId && g.browser)) sendToPlayerTab({ action: "replace", clipIds, follow: deviceId });
         if (!(await editQueue(deviceId, { action: "replace", clipIds }))) return setAnchor(null);
         setStartedOn(deviceId);
         timer.current = setTimeout(() => {
@@ -47,6 +52,16 @@ export const PlayAllButton: React.FC<{ clipIds: string[]; label?: string }> = ({
                     </ListItemIcon>
                     <ListItemText secondary="A tab of this browser">Player tab</ListItemText>
                 </MenuItem>
+                {groups.map((group) => (
+                    <MenuItem
+                        key={group.id}
+                        onClick={() => playOn(group.id)}
+                        sx={startedOn === undefined ? undefined : { pointerEvents: "none" }}
+                    >
+                        <ListItemIcon>{startedOn === group.id && <CheckIcon color="primary" />}</ListItemIcon>
+                        <ListItemText secondary={startedOn === group.id ? "Playing" : groupMembersText(group)}>{group.name}</ListItemText>
+                    </MenuItem>
+                ))}
                 {state?.devices.map((device) => (
                     <MenuItem
                         key={device.id}

@@ -1,4 +1,5 @@
 import { WebSocketAction, WebSocketMessage, WebSocketResponse } from "@uxp/common";
+import { CastGroupMemberRun } from "./cast-group.type";
 
 /** A Chromecast found on the network. */
 export type CastDevice = {
@@ -34,6 +35,8 @@ export type CastSessionSnapshot = {
     /** Why a session failed, shown in the bar. */
     error?: string;
     queue: CastQueue;
+    /** Set on the row of a group of Chromecasts: the state of each member. The position and state of the row itself are those of the member furthest behind, which the others are kept in line with. */
+    members?: CastGroupMemberRun[];
 };
 
 export type CastState = {

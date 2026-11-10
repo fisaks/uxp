@@ -18,10 +18,10 @@ export const PLAYER_PING_MS = 2000;
 /** The id the player tab has among the players of the app, where a Chromecast has its device id. Not 32 hex digits, so no device has it. */
 export const PLAYER_TAB_ID = "player-tab";
 
-/** What the app asks the tab to do: the same as it asks of a Chromecast, and `replace` can start in the middle of the clip. */
+/** What the app asks the tab to do: the same as it asks of a Chromecast, and `replace` can start in the middle of the clip, and with `follow` (a group id) the tab plays along with that group. */
 export type BrowserPlayerCommand =
     | Exclude<CastQueueRequest, { action: "replace" }>
-    | { action: "replace"; clipIds: string[]; positionSec?: number }
+    | { action: "replace"; clipIds: string[]; positionSec?: number; follow?: string }
     | { action: "play" | "pause" | "next-clip" | "stop" }
     | { action: "seek"; positionSec: number };
 
@@ -33,6 +33,8 @@ export type BrowserPlayerState = {
     state: CastPlayerState;
     positionSec: number;
     durationSec: number;
+    /** Set while the tab plays along with this group: the group row shows it, not a row of its own. */
+    followGroupId?: string;
 };
 
 export type ToPlayerMessage = { type: "command"; command: BrowserPlayerCommand } | { type: "ping" };
