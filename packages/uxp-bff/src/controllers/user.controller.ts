@@ -1,4 +1,4 @@
-import { AppError, AppLogger, REFRESH_TOKEN, Route, sendErrorResponse, Token, UseQueryRunner } from "@uxp/bff-common";
+import { AppErrorV2, AppLogger, REFRESH_TOKEN, Route, sendErrorResponse, Token, UseQueryRunner } from "@uxp/bff-common";
 import {
     ErrorCodes,
     LockUserPayload,
@@ -277,7 +277,7 @@ export class UserController {
             reply.status(204).send();
         } catch (err) {
             AppLogger.error(req, { error: err as Error });
-            if (err instanceof AppError) {
+            if (err instanceof AppErrorV2) {
                 if (err.code === ErrorCodes.INVALID_REFRESH_TOKEN) {
                     clearAuthCookies(reply);
                 }

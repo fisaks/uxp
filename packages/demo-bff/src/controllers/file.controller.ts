@@ -1,4 +1,4 @@
-import { AppError, AppLogger, handleMultipartUpload, Route, sendErrorResponse } from "@uxp/bff-common";
+import { AppErrorV2, AppLogger, handleMultipartUpload, Route, sendErrorResponse } from "@uxp/bff-common";
 import { getPublicFileName, SchemaValidate } from "@uxp/common";
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { fromFile } from "file-type";
@@ -60,7 +60,7 @@ export class FileController {
                 })
             );
 
-            throw new AppError(500, "INTERNAL_SERVER_ERROR", "File upload failed", undefined, error as Error);
+            throw new AppErrorV2({ statusCode: 500, code: "INTERNAL_SERVER_ERROR", message: "File upload failed", originalError: error as Error });
         }
 
         return response.length === 1 ? { publicId: response[0].publicId, fileName: response[0].fileName } : response;

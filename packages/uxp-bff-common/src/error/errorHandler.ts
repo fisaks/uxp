@@ -3,15 +3,15 @@ import { ErrorCode, ErrorCodes } from "@uxp/common";
 import { ErrorObject } from "ajv";
 import { FastifyError, FastifyReply, FastifyRequest } from "fastify";
 import { AppLogger } from "../utils/AppLogger";
-import { AppError, AppErrorV2 } from "./AppError";
-import { createErrorResponse } from "./errorResponse";
+import { AppErrorV2 } from "./AppError";
+import { createErrorResponse, toErrorDetail } from "./errorResponse";
 
 export const errorHandler = (error: FastifyError, request: FastifyRequest, reply: FastifyReply) => {
     // A request the client got wrong (4xx) is a warning, not a fault of the server.
     const log = isClientError(error) ? AppLogger.warn.bind(AppLogger) : AppLogger.error.bind(AppLogger);
     log(request, { error: error, message: "GLOBAL ERROR HANDLER" + process.env.NODE_ENV });
 
-    if (error instanceof AppError || error instanceof AppErrorV2) {
+    if (error instanceof AppErrorV2) {
         handleAppError(error, request, reply);
 
     } else if (error.code === "FST_ERR_VALIDATION") {
@@ -57,23 +57,8 @@ const handleAJvError = (error: FastifyError & { validation?: ErrorObject[] }, re
     );
 };
 
-const handleAppError = (error: AppError | AppErrorV2, request: FastifyRequest, reply: FastifyReply) => {
-    const statusCode = error.statusCode ?? 500;
-    const code = error.code ?? "INTERNAL_SERVER_ERROR";
-    const params = error.params;
-
-    reply.status(statusCode).send(
-        createErrorResponse(
-            [
-                {
-                    code,
-                    message: process.env.NODE_ENV === "development" ? error.message : undefined,
-                    params,
-                },
-            ],
-            request
-        )
-    );
+const handleAppError = (error: AppErrorV2, request: FastifyRequest, reply: FastifyReply) => {
+    reply.status(error.statusCode ?? 500).send(createErrorResponse([toErrorDetail(error)], request));
 };
 const handleGeneralError = (error: FastifyError, request: FastifyRequest, reply: FastifyReply) => {
     const statusCode = error.statusCode || 500;

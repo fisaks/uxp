@@ -1,6 +1,7 @@
 import { FastifyReply, FastifyRequest } from "fastify";
 import { ErrorCode, ErrorDetail } from "@uxp/common";
-import { createErrorResponse } from "./errorResponse";
+import { createErrorResponse, toErrorDetail } from "./errorResponse";
+import { AppErrorV2 } from "./AppError";
 import { AppLogger } from "../utils/AppLogger";
 
 interface ErrorResponseOptions {
@@ -14,5 +15,5 @@ interface ErrorResponseOptions {
 
 export function sendErrorResponse({ reply, req, code, message, params, statusCode = 400 }: ErrorResponseOptions): FastifyReply {
     AppLogger.error(req, { object: { code, message, params } });
-    return reply.status(statusCode).send(createErrorResponse([{ code, message, params }], req));
+    return reply.status(statusCode).send(createErrorResponse([toErrorDetail(new AppErrorV2({ statusCode, code, message, params }))], req));
 }

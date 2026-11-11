@@ -9,7 +9,7 @@ import { HandlerConstructor } from "../decorator/handler.registry";
 import { getUseQueryRunnerOptions, UseQueryRunnerOptions } from "../decorator/queryrunner.decorator";
 import { hasRequiredRoles, validateMessagePayload, withQueryRunner } from "../decorator/request-utils";
 import { getWebSocketActions, WebSocketActionMetadata } from "../decorator/websocket.decorator";
-import { createErrorMessageResponse } from "../error/errorResponse";
+import { createErrorMessageResponse, toErrorDetail } from "../error/errorResponse";
 import { Token } from "../types/token.types";
 import { AppLogger, RequestMetaData } from "../utils/AppLogger";
 import { GenericServerWebSocketManager, WebSocketDetails } from "./ServerWebSocketManager";
@@ -298,17 +298,14 @@ const handleWebSocketMessage = async ({ actionMap, socketDetails, message, dataS
         });
     } catch (err: any) {
         const isAppError = err instanceof AppErrorV2;
-        // A request the client got wrong (an unknown id, a command that does not fit the state) is a warning, not a fault of the server.
-        const log = isAppError && err.statusCode < 500 ? AppLogger.warn.bind(AppLogger) : AppLogger.error.bind(AppLogger);
-        log(requestMeta, { message: "Error in WebSocket message", error: err });
         sendWebSocketMessage({
             socket,
             message: createErrorMessageResponse(requestMeta, action,
-                isAppError ? err :
+                isAppError ? toErrorDetail(err) :
                     {
                         code: ErrorCodes.INTERNAL_SERVER_ERROR,
                         message: "An unexpected error occurred",
-                    }, messageId)
+                    }, messageId, undefined, err)
         });
     }
 
