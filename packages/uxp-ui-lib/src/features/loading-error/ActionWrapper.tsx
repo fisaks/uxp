@@ -13,8 +13,6 @@ const ERROR_MESSAGES: Partial<Record<ErrorCode, string>> = {
     VALIDATION: "One or more fields contain invalid data. Please check and try again.",
     NOT_FOUND: "The requested resource could not be found.",
     INVALID_REFRESH_TOKEN: "Your session has expired or is invalid. Please log in again.",
-    RESOURCE_NOT_FOUND: "The requested resource could not be found.",
-    PATCH_VERSION_CONFLICT: "Version conflict detected.",
 };
 
 interface ActionWrapperProps<Returned, Payload, RootState> {

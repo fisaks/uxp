@@ -102,7 +102,7 @@ class BlueprintService extends EventEmitter<BlueprintEventMap> {
         const toDeactivate = await BlueprintRepository.findByIdentifierAndVersion(identifier, version);
         if (!toDeactivate) {
             this.emit("noActiveBlueprint");
-            throw new AppErrorV2({ statusCode: 404, code: "RESOURCE_NOT_FOUND", message: `Blueprint ${identifier} v${version} not found` });
+            throw new AppErrorV2({ statusCode: 404, code: "NOT_FOUND", message: `Blueprint ${identifier} v${version} not found`, params: { resource: "blueprint" } });
         }
 
         if (toDeactivate.active === false) {
@@ -143,7 +143,7 @@ class BlueprintService extends EventEmitter<BlueprintEventMap> {
         this.emit("blueprintActivating", identifier, version, activatedBy);
         const toActivate = await BlueprintRepository.findByIdentifierAndVersion(identifier, version);
         if (!toActivate) {
-            throw new AppErrorV2({ statusCode: 404, code: "RESOURCE_NOT_FOUND", message: `Blueprint ${identifier} v${version} not found` });
+            throw new AppErrorV2({ statusCode: 404, code: "NOT_FOUND", message: `Blueprint ${identifier} v${version} not found`, params: { resource: "blueprint" } });
         }
 
         const currentlyActive = await BlueprintRepository.findActive();
@@ -349,7 +349,8 @@ class BlueprintService extends EventEmitter<BlueprintEventMap> {
         if (!blueprint) {
             throw new AppErrorV2({
                 statusCode: 404,
-                code: "RESOURCE_NOT_FOUND",
+                code: "NOT_FOUND",
+                params: { resource: "blueprint" },
                 message: `Blueprint ${identifier} v${version} not found`,
             });
         }
@@ -371,7 +372,8 @@ class BlueprintService extends EventEmitter<BlueprintEventMap> {
         if (!blueprint) {
             throw new AppErrorV2({
                 statusCode: 404,
-                code: "RESOURCE_NOT_FOUND",
+                code: "NOT_FOUND",
+                params: { resource: "blueprint" },
                 message: `Blueprint ${identifier} v${version} not found`,
             });
         }
@@ -383,7 +385,7 @@ class BlueprintService extends EventEmitter<BlueprintEventMap> {
         const blueprint = await BlueprintRepository.findByIdentifierAndVersion(identifier, version);
 
         if (!blueprint) {
-            throw new AppErrorV2({ statusCode: 404, code: "RESOURCE_NOT_FOUND", message: `Blueprint ${identifier} v${version} not found` });
+            throw new AppErrorV2({ statusCode: 404, code: "NOT_FOUND", message: `Blueprint ${identifier} v${version} not found`, params: { resource: "blueprint" } });
         }
 
         return {

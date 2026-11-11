@@ -108,7 +108,7 @@ async function removeActiveBlueprint() {
 
 async function getBlueprintStream(blueprintZipPath: string) {
     if (!(await pathExists(blueprintZipPath))) {
-        throw new AppErrorV2({ statusCode: 404, code: "RESOURCE_NOT_FOUND", message: `Blueprint file ${blueprintZipPath} not found on disk` });
+        throw new AppErrorV2({ statusCode: 404, code: "NOT_FOUND", message: `Blueprint file ${blueprintZipPath} not found on disk`, params: { resource: "blueprint file" } });
     }
     return fs.createReadStream(blueprintZipPath)
 }

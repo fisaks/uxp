@@ -41,7 +41,8 @@ export class UserSettingController {
                 statusCode: 500,
                 reply,
                 req,
-                code: ErrorCodes.USER_NOT_FOUND,
+                code: ErrorCodes.NOT_FOUND,
+                params: { resource: "user" },
                 message: "User was not found can't update settings",
             });
         }

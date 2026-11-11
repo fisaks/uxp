@@ -10,7 +10,7 @@ async function getRemoteAppConfigurationForContent(contentUuid: string) {
     if (!pageApps) {
         AppLogger.warn({ message: "Page app not found %s", args: [contentUuid] });
         throw new AppErrorV2(
-            { statusCode: 404, code: "RESOURCE_NOT_FOUND", message: "Page app not found" });
+            { statusCode: 404, code: "NOT_FOUND", message: "Page app not found", params: { resource: "app" } });
     }
 
     const config: AppConfigData = {
@@ -32,7 +32,7 @@ async function getRemoteAppConfiguration(identifier: string) {
     if (!app) {
         AppLogger.warn({ message: "Remote app not found %s", args: [identifier] });
         throw new AppErrorV2(
-            { statusCode: 404, code: "RESOURCE_NOT_FOUND", message: "Remote app not found" });
+            { statusCode: 404, code: "NOT_FOUND", message: "Remote app not found", params: { resource: "app" } });
     }
 
     const { baseUrl, identifier: appIdentifier } = app;
@@ -110,7 +110,7 @@ async function fetchRemoteAppResource({
     const app = await RemoteAppRepository.getAppByIdentifier(appIdentifier);
     if (!app) {
         AppLogger.info({ message: "App not found %s", args: [appIdentifier] });
-        throw new AppErrorV2({ statusCode: 404, code: "RESOURCE_NOT_FOUND", message: "App not found" });
+        throw new AppErrorV2({ statusCode: 404, code: "NOT_FOUND", message: "App not found", params: { resource: "app" } });
     }
     const fullPath = req.raw.url!.replace(`/api/content/resource/${appIdentifier}/`, "");
     const [resourcePath, rawQuery] = fullPath.split("?", 2); // Split on first '?'

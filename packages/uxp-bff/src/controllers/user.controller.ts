@@ -190,9 +190,9 @@ export class UserController {
             return sendErrorResponse({
                 reply,
                 req,
-                code: ErrorCodes.USER_NOT_FOUND,
+                code: ErrorCodes.NOT_FOUND,
                 message: "User not found",
-                params: { uuid: loggedInUser.uuid },
+                params: { uuid: loggedInUser.uuid, resource: "user" },
             });
         }
         if (user.uuid !== uuid && !adminRole) {
@@ -301,7 +301,8 @@ export class UserController {
             return sendErrorResponse({
                 reply,
                 req,
-                code: ErrorCodes.USER_NOT_FOUND,
+                code: ErrorCodes.NOT_FOUND,
+                params: { resource: "user" },
                 message: "User not found",
                 statusCode: 404,
             });
@@ -338,7 +339,8 @@ export class UserController {
             return sendErrorResponse({
                 reply,
                 req,
-                code: ErrorCodes.USER_NOT_FOUND,
+                code: ErrorCodes.NOT_FOUND,
+                params: { resource: "user" },
                 message: "User not found",
             });
         }
@@ -361,7 +363,8 @@ export class UserController {
             return sendErrorResponse({
                 reply,
                 req,
-                code: ErrorCodes.USER_NOT_FOUND,
+                code: ErrorCodes.NOT_FOUND,
+                params: { resource: "user" },
                 message: "User not found",
             });
         }
@@ -394,7 +397,8 @@ export class UserController {
             return sendErrorResponse({
                 reply,
                 req,
-                code: ErrorCodes.USER_NOT_FOUND,
+                code: ErrorCodes.NOT_FOUND,
+                params: { resource: "user" },
                 message: "User not found",
             });
         }
@@ -421,7 +425,8 @@ export class UserController {
             return sendErrorResponse({
                 reply,
                 req,
-                code: ErrorCodes.USER_NOT_FOUND,
+                code: ErrorCodes.NOT_FOUND,
+                params: { resource: "user" },
                 message: "User not found",
             });
         }

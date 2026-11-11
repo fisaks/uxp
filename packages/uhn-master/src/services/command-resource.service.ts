@@ -39,7 +39,7 @@ export class CommandsResourceService {
     async executeResourceCommand(resourceId: string, command: UhnResourceCommand): Promise<void> {
         const resource = blueprintResourceService.getResourceById(resourceId);
         if (!resource) {
-            throw new AppErrorV2({ statusCode: 404, code: "RESOURCE_NOT_FOUND", message: `Resource with id ${resourceId} not found` });
+            throw new AppErrorV2({ statusCode: 404, code: "NOT_FOUND", message: `Resource with id ${resourceId} not found`, params: { resource: "resource" } });
         }
         this.validateResourceAddressability(resource);
         this.validateCommandForResource(resource, command);

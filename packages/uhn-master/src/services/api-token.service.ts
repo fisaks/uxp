@@ -72,7 +72,7 @@ async function verifyToken(bearerToken: string): Promise<ApiTokenEntity> {
 async function revokeToken(id: number): Promise<void> {
     const entity = await ApiTokenRepository.findById(id);
     if (!entity) {
-        throw new AppErrorV2({ statusCode: 404, code: "RESOURCE_NOT_FOUND", message: `API token with id ${id} not found` });
+        throw new AppErrorV2({ statusCode: 404, code: "NOT_FOUND", message: `API token with id ${id} not found`, params: { resource: "API token" } });
     }
 
     entity.revokedAt = DateTime.now();
