@@ -1,5 +1,6 @@
 import { SerializedError } from "@reduxjs/toolkit";
-import { ApiErrorResponse, ErrorCode, ErrorMessages } from "@uxp/common";
+import { ApiErrorResponse, ErrorCode } from "@uxp/common";
+import { ErrorMessages } from "./errorMessages";
 
 export type ErrorParams = Record<string, string | number>;
 /** A fixed text, or a text made from the params the server sent with the error (undefined when it sent none). */
