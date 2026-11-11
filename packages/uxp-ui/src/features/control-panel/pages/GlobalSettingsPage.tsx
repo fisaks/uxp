@@ -55,14 +55,12 @@ const GlobalSettingsPage: React.FC = () => {
 
     const fieldErrorHandler = useCallback(
         (error: ApiErrorResponse, payload: GlobalConfigPayload) => {
-            error.errors.forEach((error) => {
-                if (error.code === ErrorCodes.VALIDATION) {
-                    const keyword = error.params?.value as keyof ValidationErrorMessages;
-                    updateFieldError(payload.key, fieldErrorMessages[keyword]?.[payload.key as keyof GlobalConfigPublic] ?? "Invalid value.");
-                } else {
-                    updateFieldError(payload.key, globalErrorMessages.internalServerError);
-                }
-            });
+            if (error.error.code === ErrorCodes.VALIDATION) {
+                const keyword = error.error.params?.value as keyof ValidationErrorMessages;
+                updateFieldError(payload.key, fieldErrorMessages[keyword]?.[payload.key as keyof GlobalConfigPublic] ?? "Invalid value.");
+            } else {
+                updateFieldError(payload.key, globalErrorMessages.internalServerError);
+            }
         },
         [updateFieldError]
     );

@@ -20,36 +20,26 @@ export class AxiosUtil {
         }
         if (this.isAxiosError(error) && !error.response) {
             const timedOut = error.code === AxiosError.ECONNABORTED || error.code === AxiosError.ETIMEDOUT;
-            return { errors: [{ code: timedOut ? ErrorCodes.TIMEOUT : ErrorCodes.DISCONNECTED }] } as ApiErrorResponse;
+            return { error: { code: timedOut ? ErrorCodes.TIMEOUT : ErrorCodes.DISCONNECTED } };
         }
         console.warn("Unsupported error response", this.isAxiosError(error) ? `${error.code} ${error.response?.status}` : error);
-        return { errors: [{ code: ErrorCodes.INTERNAL_SERVER_ERROR }] } as ApiErrorResponse;
+        return { error: { code: ErrorCodes.INTERNAL_SERVER_ERROR } };
     }
 
     static isErrorResponse(data: unknown): data is ApiErrorResponse {
         return (
             typeof data === "object" &&
             data !== null &&
-            "errors" in data &&
-            Array.isArray((data as ApiErrorResponse).errors) &&
-            (data as ApiErrorResponse).errors.every((error) => typeof error.code === "string")
+            "error" in data &&
+            typeof (data as ApiErrorResponse).error?.code === "string"
         );
     }
 
     static isAxiosErrorWithErrorResponse(error: unknown): error is AxiosError<ApiErrorResponse> {
-        if (this.isAxiosError(error)) {
-            const data = error.response?.data;
-            return (
-                typeof data === "object" &&
-                data !== null &&
-                "errors" in data &&
-                Array.isArray((data as ApiErrorResponse).errors) &&
-                (data as ApiErrorResponse).errors.every((error) => typeof error.code === "string")
-            );
-        }
-        return false;
+        return this.isAxiosError(error) && this.isErrorResponse(error.response?.data);
     }
+
     static getMainErrorCode(error: unknown): ErrorCode {
-        return this.getErrorResponse(error).errors[0]?.code || ErrorCodes.INTERNAL_SERVER_ERROR;
+        return this.getErrorResponse(error).error.code;
     }
 }

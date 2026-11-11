@@ -113,8 +113,8 @@ export async function applyConfig(opts: ApplyOptions): Promise<void> {
         let message = `Apply failed (HTTP ${response.status})`;
         try {
             const body = await response.json() as any;
-            if (body.errors?.[0]?.message) {
-                message = body.errors[0].message;
+            if (body.error?.message) {
+                message = body.error.message;
             } else if (body.message) {
                 message = body.message;
             }

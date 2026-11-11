@@ -29,7 +29,7 @@ export const useInitializeApp = () => {
                 async (_, payload) => {
                     console.log("Error", payload);
                     if (payload !== "Action already in progress") {
-                        if (payload?.errors?.length > 0 && payload.errors[0].code === "INVALID_REFRESH_TOKEN") {
+                        if (payload?.error?.code === "INVALID_REFRESH_TOKEN") {
                             await dispatch(fetchNavigation({}));
                         }
                         setLoading(false);

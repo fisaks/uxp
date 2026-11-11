@@ -7,14 +7,12 @@ export interface ErrorDetail {
     params?: Record<string, string | number>; // Optional parameters for the UI
 }
 
+/** The body of a failed REST request. A WebSocket error response carries the same `error`. */
 export interface ApiErrorResponse {
-    errors: ErrorDetail[];
+    error: ErrorDetail;
     details?: {
         timestamp: string;
         path: string;
         correlationId: string;
     };
 }
-export type MessageErrorResponse = {
-    error: ErrorDetail;
-};

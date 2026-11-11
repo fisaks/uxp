@@ -44,21 +44,12 @@ const handleAJvError = (error: FastifyError & { validation?: ErrorObject[] }, re
         );
 
     reply.status(statusCode).send(
-        createErrorResponse(
-            [
-                {
-                    code,
-                    message,
-                    params,
-                },
-            ],
-            request
-        )
+        createErrorResponse({ code, message, params }, request)
     );
 };
 
 const handleAppError = (error: AppErrorV2, request: FastifyRequest, reply: FastifyReply) => {
-    reply.status(error.statusCode ?? 500).send(createErrorResponse([toErrorDetail(error)], request));
+    reply.status(error.statusCode ?? 500).send(createErrorResponse(toErrorDetail(error), request));
 };
 const handleGeneralError = (error: FastifyError, request: FastifyRequest, reply: FastifyReply) => {
     const statusCode = error.statusCode || 500;
@@ -67,13 +58,11 @@ const handleGeneralError = (error: FastifyError, request: FastifyRequest, reply:
 
     // Create a structured error response
     const response = createErrorResponse(
-        [
-            {
-                code,
-                message: process.env.NODE_ENV === "development" ? error.message : undefined,
-                params,
-            },
-        ],
+        {
+            code,
+            message: process.env.NODE_ENV === "development" ? error.message : undefined,
+            params,
+        },
         request
     );
 

@@ -22,9 +22,9 @@ export const toErrorDetail = (error: unknown): ErrorDetail => {
     };
 };
 
-export const createErrorResponse = (errors: ErrorDetail[], request: FastifyRequest): ApiErrorResponse => {
+export const createErrorResponse = (error: ErrorDetail, request: FastifyRequest): ApiErrorResponse => {
     return {
-        errors,
+        error,
         details: {
             timestamp: DateTime.utc().toISO(),
             path: request.url,

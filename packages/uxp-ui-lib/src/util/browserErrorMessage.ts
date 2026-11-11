@@ -20,47 +20,17 @@ export function mapApiErrorCodeToMessage(
 }
 
 
-export function mapApiErrorsToMessageString(
-  response: unknown,
-  overrides?: ErrorCodeMessageMap,
-  separator = '\n'
-): string {
-
-  // Multi-error case
-  if (isErrorsCodeResponse(response)) {
-    if (!response.errors || response.errors.length === 0) {
-      return 'An unknown error occurred.';
-    }
-
-    return response.errors
-      .map((error) => mapApiErrorCodeToMessage(error.code, overrides, error.params))
-      .join(separator);
-  }
-
-  // Single error case
+export function mapApiErrorsToMessageString(response: unknown, overrides?: ErrorCodeMessageMap): string {
   if (isErrorCodeResponse(response)) {
     return mapApiErrorCodeToMessage(response.error.code, overrides, response.error.params);
   }
-  if(typeof response === 'string'){
+  if (typeof response === 'string') {
     return response;
   }
-
-  // Fallback
   return 'An unknown error occurred.';
-
 }
 
-// Checks if it's a response with multiple error codes
-export function isErrorsCodeResponse(data: unknown): data is ApiErrorResponse {
-  return (
-    typeof data === "object" &&
-    data !== null &&
-    "errors" in data &&
-    Array.isArray((data as ApiErrorResponse).errors) &&
-    (data as ApiErrorResponse).errors.every((error) => typeof error.code === "string")
-  );
-}
-// Checks if it's a response with a single error code object
+// Checks if it's a response with a single error code object (REST body or WebSocketError)
 export function isErrorCodeResponse(data: unknown): data is { error: { code: ErrorCode; params?: ErrorParams } } {
   return (
     typeof data === "object" &&
@@ -71,7 +41,7 @@ export function isErrorCodeResponse(data: unknown): data is { error: { code: Err
 }
 
 export function extractErrorCodeResponse(data: unknown): ApiErrorResponse | undefined {
-  if (isErrorCodeResponse(data) || isErrorsCodeResponse(data)) {
+  if (isErrorCodeResponse(data)) {
     return data as ApiErrorResponse
   }
   return undefined;

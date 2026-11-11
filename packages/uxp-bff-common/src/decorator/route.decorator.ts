@@ -122,7 +122,7 @@ export function registerRoutes({ fastify, dataSource, controllers, basePath = "/
                                 await request.jwtVerify();
                             } catch (err) {
                                 AppLogger.error(request, { message: "Failed to verify access token", error: err });
-                                reply.code(401).send(createErrorResponse([{ code: ErrorCodes.UNAUTHORIZED }], request));
+                                reply.code(401).send(createErrorResponse({ code: ErrorCodes.UNAUTHORIZED }, request));
                                 return;
                             }
                             const user = request.user as Token;
@@ -133,7 +133,7 @@ export function registerRoutes({ fastify, dataSource, controllers, basePath = "/
                                     message: "User does not have the required role to access this route",
                                     object: { url, roles: user?.roles },
                                 });
-                                reply.code(403).send(createErrorResponse([{ code: ErrorCodes.FORBIDDEN }], request));
+                                reply.code(403).send(createErrorResponse({ code: ErrorCodes.FORBIDDEN }, request));
                                 return;
                             }
                         }
@@ -142,7 +142,7 @@ export function registerRoutes({ fastify, dataSource, controllers, basePath = "/
                 handler: async (request, reply) => {
                     // Optional validation
                     if (validate && !validate(request)) {
-                        reply.code(400).send(createErrorResponse([{ code: ErrorCodes.VALIDATION }], request));
+                        reply.code(400).send(createErrorResponse({ code: ErrorCodes.VALIDATION }, request));
                         return;
                     }
                     const queryRunnerOptions = getUseQueryRunnerOptions(ControllerClass.prototype, handlerName);

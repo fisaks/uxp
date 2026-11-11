@@ -38,7 +38,7 @@ const ActionWrapper = <Returned, Payload = void, RootState = any>({
 
     const errorMessage = useMemo(() => {
         if (error) {
-            return error.errors.map((err) => ERROR_MESSAGES[err.code] || ERROR_MESSAGES["INTERNAL_SERVER_ERROR"]).join("\n");
+            return ERROR_MESSAGES[error.error.code] || ERROR_MESSAGES["INTERNAL_SERVER_ERROR"];
         }
         return "";
     }, [error]);

@@ -1,18 +1,16 @@
 import { Alert, Typography } from "@mui/material";
 import { ApiErrorResponse } from "@uxp/common";
 import { mapApiErrorCodeToMessage } from "@uxp/ui-lib";
-import React, { useMemo } from "react";
+import React from "react";
 
 // Error code to message mapping
 
 
 type ServerErrorTileProps = {
-    apiError: ApiErrorResponse; // Array of error codes
+    apiError: ApiErrorResponse;
 };
 
 export const ServerErrorTile: React.FC<ServerErrorTileProps> = ({ apiError }) => {
-    const errors = useMemo(() => apiError.errors, [apiError]);
-
     return (
         <Alert
             severity="error"
@@ -23,11 +21,7 @@ export const ServerErrorTile: React.FC<ServerErrorTileProps> = ({ apiError }) =>
             <Typography variant="h6" component="h2" tabIndex={-1} sx={{ fontWeight: "bold", mb: 1 }}>
                 An error occurred
             </Typography>
-            <ul style={{ margin: 0, paddingLeft: "1.5rem" }}>
-                {errors.map((error) => (
-                    <li key={error.code}>{mapApiErrorCodeToMessage(error.code, undefined, error.params)}</li>
-                ))}
-            </ul>
+            <Typography variant="body2">{mapApiErrorCodeToMessage(apiError.error.code, undefined, apiError.error.params)}</Typography>
         </Alert>
     );
 };

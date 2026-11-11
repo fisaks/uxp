@@ -15,5 +15,5 @@ interface ErrorResponseOptions {
 
 export function sendErrorResponse({ reply, req, code, message, params, statusCode = 400 }: ErrorResponseOptions): FastifyReply {
     AppLogger.error(req, { object: { code, message, params } });
-    return reply.status(statusCode).send(createErrorResponse([toErrorDetail(new AppErrorV2({ statusCode, code, message, params }))], req));
+    return reply.status(statusCode).send(createErrorResponse(toErrorDetail(new AppErrorV2({ statusCode, code, message, params })), req));
 }
