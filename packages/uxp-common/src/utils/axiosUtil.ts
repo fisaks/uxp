@@ -17,10 +17,13 @@ export class AxiosUtil {
     static getErrorResponse(error: unknown): ApiErrorResponse {
         if (this.isAxiosError(error) && this.isErrorResponse(error.response?.data)) {
             return error.response.data;
-        } else {
-            console.log("No supprted error", error);
-            return { errors: [{ code: ErrorCodes.INTERNAL_SERVER_ERROR }] } as ApiErrorResponse;
         }
+        if (this.isAxiosError(error) && !error.response) {
+            const timedOut = error.code === AxiosError.ECONNABORTED || error.code === AxiosError.ETIMEDOUT;
+            return { errors: [{ code: timedOut ? ErrorCodes.TIMEOUT : ErrorCodes.DISCONNECTED }] } as ApiErrorResponse;
+        }
+        console.warn("Unsupported error response", this.isAxiosError(error) ? `${error.code} ${error.response?.status}` : error);
+        return { errors: [{ code: ErrorCodes.INTERNAL_SERVER_ERROR }] } as ApiErrorResponse;
     }
 
     static isErrorResponse(data: unknown): data is ApiErrorResponse {

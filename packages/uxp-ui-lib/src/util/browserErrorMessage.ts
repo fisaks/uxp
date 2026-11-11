@@ -38,10 +38,7 @@ export function mapApiErrorsToMessageString(
 
   // Single error case
   if (isErrorCodeResponse(response)) {
-    return mapApiErrorCodeToMessage(response.error.code, overrides);
-  }
-  if(isSerializedError(response)){
-    return response.message ?? 'An unknown error occurred.';
+    return mapApiErrorCodeToMessage(response.error.code, overrides, response.error.params);
   }
   if(typeof response === 'string'){
     return response;
@@ -63,7 +60,7 @@ export function isErrorsCodeResponse(data: unknown): data is ApiErrorResponse {
   );
 }
 // Checks if it's a response with a single error code object
-export function isErrorCodeResponse(data: unknown): data is { error: { code: ErrorCode } } {
+export function isErrorCodeResponse(data: unknown): data is { error: { code: ErrorCode; params?: ErrorParams } } {
   return (
     typeof data === "object" &&
     data !== null &&

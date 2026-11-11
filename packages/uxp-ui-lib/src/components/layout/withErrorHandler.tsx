@@ -20,7 +20,7 @@ export const withErrorHandler = <T extends object>(WrappedComponent: React.Compo
                 <Box sx={{ textAlign: "center", mt: 4 }}>
                     <Typography color="error" sx={{ mb: 2 }}>
                         {apiError && mapApiErrorsToMessageString(apiError,errorOverrides)}
-                        {sError && sError.message}
+                        {sError && !apiError && mapApiErrorsToMessageString(sError, errorOverrides)}
                         {!apiError && !sError && sMesseage}
                     </Typography>
                     {retryAction && (
