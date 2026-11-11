@@ -70,7 +70,7 @@ export class MovieController {
         const { id } = req.params;
         const { exp, sig } = req.query;
         if (!isValidStreamQuery(id, exp, sig)) {
-            return reply.status(403).send({ error: "The link is not valid or has expired" });
+            throw new AppErrorV2({ statusCode: 403, code: ErrorCodes.FORBIDDEN, message: "The link is not valid or has expired" });
         }
         return sendVideoFile(req, reply, movieService.filePath(id));
     }

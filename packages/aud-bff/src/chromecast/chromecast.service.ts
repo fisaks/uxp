@@ -291,13 +291,14 @@ export class ChromecastService {
         const joined = connection.joined;
         const playback = this.state.playback;
         if (!joined || joined.mediaSessionId === undefined || !playback) {
-            throw new AppErrorV2({ statusCode: 409, code: ErrorCodes.INVALID_STATE, message: "Nothing is playing on the Chromecast" });
+            throw new AppErrorV2({ statusCode: 409, code: ErrorCodes.INVALID_STATE, message: "Nothing is playing on the Chromecast", params: { reason: "nothing-playing" } });
         }
         if (supported && !playback.commands[supported]) {
             throw new AppErrorV2({
                 statusCode: 409,
                 code: ErrorCodes.INVALID_STATE,
                 message: `${this.state.app ?? "The app"} does not support ${supported}`,
+                params: { reason: "unsupported", app: this.state.app ?? "" },
             });
         }
         this.send(connection, joined.media, { type, mediaSessionId: joined.mediaSessionId, ...extra });
@@ -328,7 +329,12 @@ export class ChromecastService {
     private requireConnection(): Connection {
         this.requireHost();
         if (!this.current) {
-            throw new AppErrorV2({ statusCode: 409, code: ErrorCodes.INVALID_STATE, message: "The Chromecast is not reachable" });
+            throw new AppErrorV2({
+                statusCode: 503,
+                code: ErrorCodes.UNREACHABLE,
+                message: "The Chromecast is not reachable",
+                params: { resource: "Chromecast" },
+            });
         }
         return this.current;
     }

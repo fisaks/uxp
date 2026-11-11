@@ -1,9 +1,9 @@
 import { AudioAppActionPayloadRequestMap, AudioAppActionPayloadResponseMap } from "@aud/common";
-import { WebSocketError } from "@uxp/ui-lib";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAudioWebSocket } from "../../app/AudioBrowserWebSocketManager";
 import { useAppDispatch, useAppSelector } from "../../hooks";
 import { selectConnected } from "../connection/connectionSelectors";
+import { errorText } from "./errorText";
 import { requestKey, RequestAction } from "./requestKey";
 import { selectCachedAnswer, selectContentVersion } from "./requestCacheSelectors";
 import { ContentTopic, requestAnswered } from "./requestCacheSlice";
@@ -34,7 +34,7 @@ export const useRequest = <A extends RequestAction>(action: A, payload: AudioApp
             dispatch(requestAnswered({ key, data: response.payload }));
             setError(undefined);
         } catch (e) {
-            setError(e instanceof WebSocketError && e.error.code === "NOT_FOUND" ? "Not found." : "It could not be read.");
+            setError(errorText(e, "It could not be read."));
         }
     }, [sendMessageAsync, dispatch, action, payloadKey, key]);
 

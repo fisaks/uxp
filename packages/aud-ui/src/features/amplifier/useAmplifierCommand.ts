@@ -1,8 +1,9 @@
 import { AmplifierState, AudioAppActionPayloadRequestMap } from "@aud/common";
-import { ErrorCodeMessageMap, mapApiErrorCodeToMessage, WebSocketError, WebSocketTimeoutError } from "@uxp/ui-lib";
+import { ErrorCodeMessageMap, WebSocketTimeoutError } from "@uxp/ui-lib";
 import { useCallback, useEffect, useState } from "react";
 import { useAudioWebSocket } from "../../app/AudioBrowserWebSocketManager";
 import { useAppDispatch } from "../../hooks";
+import { errorText } from "../shared/errorText";
 import { amplifierStateReceived } from "./amplifierSlice";
 
 export type AmplifierCommandAction = Extract<keyof AudioAppActionPayloadRequestMap, `amplifier_set_${string}`>;
@@ -19,13 +20,8 @@ const ERROR_MESSAGES: ErrorCodeMessageMap = {
 const ERROR_MS = 8000;
 
 const errorMessage = (error: unknown): string => {
-    if (error instanceof WebSocketError) {
-        return mapApiErrorCodeToMessage(error.error.code, ERROR_MESSAGES);
-    }
-    if (error instanceof WebSocketTimeoutError) {
-        return "The amplifier did not answer in time.";
-    }
-    return "The command could not be sent.";
+    if (error instanceof WebSocketTimeoutError) return "The amplifier did not answer in time.";
+    return errorText(error, "The command could not be sent.", ERROR_MESSAGES);
 };
 
 /** Sends commands to the amplifier and keeps track of why one failed. The server sends them to the amplifier one at a time. */

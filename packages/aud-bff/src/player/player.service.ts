@@ -358,7 +358,7 @@ export class PlayerService {
     async undoQueue(): Promise<PlayerState> {
         const snapshot = this.replaced;
         if (!snapshot) {
-            throw new AppErrorV2({ statusCode: 409, code: ErrorCodes.INVALID_STATE, message: "There is no queue to bring back" });
+            throw new AppErrorV2({ statusCode: 409, code: ErrorCodes.INVALID_STATE, message: "There is no queue to bring back", params: { reason: "no-undo" } });
         }
         this.replaced = undefined;
         this.queue = snapshot.queue;
@@ -648,6 +648,7 @@ export class PlayerService {
                 statusCode: 409,
                 code: ErrorCodes.INVALID_STATE,
                 message: "The gain is set for a song of the library that is playing",
+                params: { reason: "gain" },
             });
         }
         this.gains.set(track.id, `${track.artist} - ${track.title}`, gainDb);
@@ -904,6 +905,7 @@ export class PlayerService {
                 statusCode: 409,
                 code: ErrorCodes.INVALID_STATE,
                 message: "The queue is an audiobook, it cannot be changed",
+                params: { reason: "audiobook" },
             });
         }
     }

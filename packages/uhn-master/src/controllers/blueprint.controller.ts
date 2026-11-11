@@ -146,7 +146,7 @@ export class BlueprintController {
     async downloadActiveBlueprint(req: FastifyRequest, reply: FastifyReply) {
         const blueprint = await blueprintService.getActiveSignedBlueprint();
         if (!blueprint) {
-            return reply.status(404).send({ error: "No active blueprint found" });
+            throw new AppErrorV2({ statusCode: 404, code: "NOT_FOUND", message: "No active blueprint found" });
         }
 
         reply.header("Content-Type", "application/zip");
