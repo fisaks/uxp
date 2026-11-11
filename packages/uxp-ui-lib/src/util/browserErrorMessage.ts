@@ -1,14 +1,19 @@
 import { SerializedError } from "@reduxjs/toolkit";
 import { ApiErrorResponse, ErrorCode, ErrorMessages } from "@uxp/common";
 
-export type ErrorCodeMessageMap = Partial<Record<ErrorCode, string>>;
+export type ErrorParams = Record<string, string | number>;
+/** A fixed text, or a text made from the params the server sent with the error (undefined when it sent none). */
+export type ErrorMessage = string | ((params: ErrorParams | undefined) => string);
+export type ErrorCodeMessageMap = Partial<Record<ErrorCode, ErrorMessage>>;
 
 
 export function mapApiErrorCodeToMessage(
   code: ErrorCode,
-  overrides?: ErrorCodeMessageMap
+  overrides?: ErrorCodeMessageMap,
+  params?: ErrorParams
 ): string {
-  if (overrides?.[code]) return overrides[code];
+  const override = overrides?.[code];
+  if (override) return typeof override === 'function' ? override(params) : override;
   const message = ErrorMessages[code];
   return message ?? 'An unknown error occurred.';
 }
@@ -27,7 +32,7 @@ export function mapApiErrorsToMessageString(
     }
 
     return response.errors
-      .map((error) => mapApiErrorCodeToMessage(error.code, overrides))
+      .map((error) => mapApiErrorCodeToMessage(error.code, overrides, error.params))
       .join(separator);
   }
 

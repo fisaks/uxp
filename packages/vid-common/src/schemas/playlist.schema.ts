@@ -1,8 +1,9 @@
 import { SchemaValidate } from "@uxp/common";
+import { VIDEO_ID_PATTERN } from "../types/video-id";
 import { PlaylistParams, PlaylistRenameRequest, PlaylistSaveRequest } from "../types/playlist.type";
 
 const DEVICE_ID_PATTERN = "^[0-9a-f]{32}$";
-const CLIP_ID_PATTERN = "^[0-9a-f]{16}$";
+const CLIP_ID_PATTERN = VIDEO_ID_PATTERN;
 const PLAYLIST_ID_PATTERN = "^[0-9a-f]{16}$";
 export const PLAYLIST_NAME_MAX_LENGTH = 100;
 

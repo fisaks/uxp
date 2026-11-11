@@ -1,5 +1,6 @@
 import { HomeVideoClip, HomeVideoClipUpdate, HomeVideoLabels } from "@vid/common";
-import { AppLogger, tryReadJsonFile, writeJsonFile } from "@uxp/bff-common";
+import { AppErrorV2, AppLogger, tryReadJsonFile, writeJsonFile } from "@uxp/bff-common";
+import { ErrorCodes } from "@uxp/common";
 import path from "path";
 import { homeVideoConfig } from "./home-video.config";
 import { HomeVideoMetadataStore, HomeVideoMetadata } from "./home-video-metadata-store";
@@ -79,18 +80,18 @@ export class HomeVideoService {
         return clip && toClip(clip, this.store.getMetadata(clip.file));
     }
 
-    /** The clip with the change made, undefined when there is no such clip. Throws when the change cannot be kept. */
-    update(id: string, change: HomeVideoClipUpdate): HomeVideoClip | undefined {
+    /** The clip with the change made. Throws when there is no such clip or the change cannot be kept. */
+    update(id: string, change: HomeVideoClipUpdate): HomeVideoClip {
         const clip = this.scanned.get(id);
         if (!clip) {
-            return undefined;
+            throw new AppErrorV2({ statusCode: 404, code: ErrorCodes.NOT_FOUND, message: "There is no such clip", params: { resource: "clip" } });
         }
         if (!this.store.canSave()) {
-            throw new Error("The home video metadata cannot be saved");
+            throw new AppErrorV2({ statusCode: 503, code: ErrorCodes.INVALID_STATE, message: "The home video metadata cannot be saved right now" });
         }
         this.store.updateMetadata(clip.file, change);
         this.search.reindex();
-        return this.get(id);
+        return toClip(clip, this.store.getMetadata(clip.file));
     }
 
     labels(): HomeVideoLabels {

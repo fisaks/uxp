@@ -33,7 +33,7 @@ export class PlaylistService {
         const clipIds = this.clipsOf(source);
         const existing = this.store.all().find((p) => sameName(p.name, trimmed));
         if (existing && !replace) {
-            throw this.nameTaken();
+            throw this.nameTaken(trimmed);
         }
         this.store.put({ id: existing?.id ?? randomBytes(8).toString("hex"), name: trimmed, clipIds });
         return this.list();
@@ -43,7 +43,7 @@ export class PlaylistService {
         const trimmed = this.checkedName(name);
         const playlist = this.find(id);
         if (this.store.all().some((p) => p.id !== id && sameName(p.name, trimmed))) {
-            throw this.nameTaken();
+            throw this.nameTaken(trimmed);
         }
         this.store.put({ ...playlist, name: trimmed });
         return this.list();
@@ -63,7 +63,7 @@ export class PlaylistService {
         }
         const queue = castService.queueOf(source.deviceId);
         if (!queue) {
-            throw new AppErrorV2({ statusCode: 404, code: ErrorCodes.NOT_FOUND, message: "Nothing is queued on that Chromecast" });
+            throw new AppErrorV2({ statusCode: 404, code: ErrorCodes.NOT_FOUND, message: "Nothing is queued on that Chromecast", params: { resource: "queue" } });
         }
         return [...queue.clipIds];
     }
@@ -96,12 +96,17 @@ export class PlaylistService {
         }
     }
 
-    private nameTaken() {
-        return new AppErrorV2({ statusCode: 409, code: ErrorCodes.INVALID_STATE, message: "A playlist with that name exists" });
+    private nameTaken(name: string) {
+        return new AppErrorV2({
+            statusCode: 409,
+            code: ErrorCodes.ALREADY_EXISTS,
+            message: "A playlist with that name exists",
+            params: { resource: "playlist", name },
+        });
     }
 
     private notFound() {
-        return new AppErrorV2({ statusCode: 404, code: ErrorCodes.NOT_FOUND, message: "There is no such playlist" });
+        return new AppErrorV2({ statusCode: 404, code: ErrorCodes.NOT_FOUND, message: "There is no such playlist", params: { resource: "playlist" } });
     }
 }
 

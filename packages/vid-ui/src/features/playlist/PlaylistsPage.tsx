@@ -15,9 +15,9 @@ import {
     Typography,
 } from "@mui/material";
 import { usePortalContainerRef } from "@uxp/ui-lib";
+import { errorText } from "../../api/errorText";
 import { Playlist, PLAYLIST_NAME_MAX_LENGTH } from "@vid/common";
 import React, { useState } from "react";
-import { errorMessage } from "../../api/axiosBaseQuery";
 import { thumbnailUrl } from "../../api/home-video-api";
 import { PlayAllButton } from "../cast/PlayAllButton";
 import { formatDuration } from "../home-video/clipFormat";
@@ -29,7 +29,6 @@ import { useDeletePlaylistMutation, useGetPlaylistsQuery, useRenamePlaylistMutat
 import { byName, WARNING_SX, samePlaylistName } from "./playlistText";
 
 const MOSAIC_CLIPS = 4;
-const CHANGE_FAILED_TEXT = "That could not be done.";
 
 const RenameDialog: React.FC<{ playlist: Playlist; onClose: () => void }> = ({ playlist, onClose }) => {
     const portalContainer = usePortalContainerRef();
@@ -43,7 +42,7 @@ const RenameDialog: React.FC<{ playlist: Playlist; onClose: () => void }> = ({ p
     const submit = async () => {
         const result = await rename({ id: playlist.id, name: trimmed });
         if ("error" in result)
-            return setError(errorMessage(result.error) ?? (result.error as { message?: string }).message ?? CHANGE_FAILED_TEXT);
+            return setError(errorText(result.error));
         onClose();
     };
 
@@ -82,7 +81,7 @@ const DeleteDialog: React.FC<{ playlist: Playlist; onClose: () => void }> = ({ p
     const submit = async () => {
         const result = await remove(playlist.id);
         if ("error" in result)
-            return setError(errorMessage(result.error) ?? (result.error as { message?: string }).message ?? CHANGE_FAILED_TEXT);
+            return setError(errorText(result.error));
         onClose();
     };
 

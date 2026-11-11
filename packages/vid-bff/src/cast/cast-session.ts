@@ -41,8 +41,8 @@ export type CastLoad = {
     title: string;
     /** Where the Chromecast fetches the video, with the signature in the query. */
     url: string;
-    /** The poster frame, fetched the same way. */
-    posterUrl: string;
+    /** The poster frame, fetched the same way. Undefined when the video has none. */
+    posterUrl?: string;
     positionSec: number;
     /** False loads the clip paused at `positionSec`, for a group that starts all its members together. Default true. */
     autoplay?: boolean;
@@ -254,7 +254,7 @@ export class CastSession {
                 contentId: source.url,
                 contentType: "video/mp4",
                 streamType: "BUFFERED",
-                metadata: { metadataType: 0, title: source.title, images: [{ url: source.posterUrl }] },
+                metadata: { metadataType: 0, title: source.title, images: source.posterUrl ? [{ url: source.posterUrl }] : [] },
             },
         });
     }

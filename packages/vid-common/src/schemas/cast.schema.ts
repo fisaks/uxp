@@ -1,4 +1,5 @@
 import { SchemaValidate } from "@uxp/common";
+import { VIDEO_ID_PATTERN } from "../types/video-id";
 import {
     CAST_PLAYBACK_RATES,
     CastDeviceParams,
@@ -10,7 +11,7 @@ import {
     TvPowerRequest,
 } from "../types/cast.type";
 
-const ID_PATTERN = "^[0-9a-f]{16}$";
+const ID_PATTERN = VIDEO_ID_PATTERN;
 /** A Chromecast announces a UUID without dashes as its id. */
 const DEVICE_ID_PATTERN = "^[0-9a-f]{32}$";
 

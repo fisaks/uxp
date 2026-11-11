@@ -21,18 +21,16 @@ import {
     Typography,
 } from "@mui/material";
 import { usePortalContainerRef } from "@uxp/ui-lib";
+import { errorText } from "../../api/errorText";
 import { CAST_GROUP_MIN_MEMBERS, CAST_GROUP_NAME_MAX_LENGTH, CastGroup, CastGroupRequest } from "@vid/common";
 import React, { useState } from "react";
-import { errorMessage } from "../../api/axiosBaseQuery";
 import { useCast } from "../cast/useCast";
 import { LabelledIconButton } from "../shared/LabelledIconButton";
 import { PAGE_WIDTH } from "../shared/pageWidth";
 import { samePlaylistName, WARNING_SX } from "../playlist/playlistText";
 import { useCreateCastGroupMutation, useDeleteCastGroupMutation, useGetCastGroupsQuery, useUpdateCastGroupMutation } from "./castGroup.api";
 
-const CHANGE_FAILED_TEXT = "That could not be done.";
 
-const failureText = (error: unknown) => errorMessage(error) ?? (error as { message?: string }).message ?? CHANGE_FAILED_TEXT;
 
 /** The group to change, or a new one when there is none. */
 const GroupDialog: React.FC<{ group?: CastGroup; onClose: () => void }> = ({ group, onClose }) => {
@@ -57,7 +55,7 @@ const GroupDialog: React.FC<{ group?: CastGroup; onClose: () => void }> = ({ gro
     const submit = async () => {
         const request: CastGroupRequest = { name: trimmed, deviceIds, browser };
         const result = group ? await update({ id: group.id, ...request }) : await create(request);
-        if ("error" in result) return setError(failureText(result.error));
+        if ("error" in result) return setError(errorText(result.error));
         onClose();
     };
 
@@ -114,7 +112,7 @@ const DeleteDialog: React.FC<{ group: CastGroup; onClose: () => void }> = ({ gro
 
     const submit = async () => {
         const result = await remove(group.id);
-        if ("error" in result) return setError(failureText(result.error));
+        if ("error" in result) return setError(errorText(result.error));
         onClose();
     };
 

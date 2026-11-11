@@ -1,13 +1,12 @@
 import PlaylistAddIcon from "@mui/icons-material/PlaylistAdd";
 import { Autocomplete, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField } from "@mui/material";
 import { usePortalContainerRef } from "@uxp/ui-lib";
+import { errorText } from "../../api/errorText";
 import { PLAYLIST_NAME_MAX_LENGTH, PlaylistSource } from "@vid/common";
 import React, { useState } from "react";
-import { errorMessage } from "../../api/axiosBaseQuery";
 import { useGetPlaylistsQuery, useSavePlaylistMutation } from "./playlist.api";
 import { WARNING_SX, samePlaylistName } from "./playlistText";
 
-const SAVE_FAILED_TEXT = "The playlist could not be saved.";
 
 /** Saves a queue, of a Chromecast or of the player tab, as a playlist. A name that is taken is replaced, which the button says before it is pressed. */
 export const SavePlaylistButton: React.FC<{ source: PlaylistSource }> = ({ source }) => {
@@ -28,7 +27,7 @@ export const SavePlaylistButton: React.FC<{ source: PlaylistSource }> = ({ sourc
     const submit = async () => {
         const result = await save({ ...source, name: trimmed, replace: replaces });
         if ("error" in result)
-            return setError(errorMessage(result.error) ?? (result.error as { message?: string }).message ?? SAVE_FAILED_TEXT);
+            return setError(errorText(result.error));
         close();
     };
 

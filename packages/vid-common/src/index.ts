@@ -8,3 +8,6 @@ export * from "./types/playlist.type";
 export * from "./queue/queue-edit";
 export * from "./schemas/cast-group.schema";
 export * from "./types/cast-group.type";
+export * from "./types/video-id";
+export * from "./types/movie.type";
+export * from "./schemas/movie.schema";

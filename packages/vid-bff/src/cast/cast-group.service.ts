@@ -71,13 +71,16 @@ export class CastGroupService {
             throw new AppErrorV2({ statusCode: 400, code: ErrorCodes.VALIDATION, message: "A group needs a name" });
         }
         if (this.store.all().some((g) => g.id !== ownId && sameName(g.name, trimmed))) {
-            throw new AppErrorV2({ statusCode: 409, code: ErrorCodes.INVALID_STATE, message: "A group with that name exists" });
+            throw new AppErrorV2({ statusCode: 409, code: ErrorCodes.ALREADY_EXISTS,
+                message: "A group with that name exists",
+                params: { resource: "group", name: trimmed },
+            });
         }
         return trimmed;
     }
 
     private notFound() {
-        return new AppErrorV2({ statusCode: 404, code: ErrorCodes.NOT_FOUND, message: "There is no such group" });
+        return new AppErrorV2({ statusCode: 404, code: ErrorCodes.NOT_FOUND, message: "There is no such group", params: { resource: "group" } });
     }
 }
 

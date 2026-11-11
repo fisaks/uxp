@@ -1,10 +1,9 @@
 import { ChromecastsState } from "@vid/common";
 import { apiUrl } from "../../api/home-video-api";
+import { rejectionText } from "../../api/errorText";
 import { vidApi } from "../../app/vidApi";
 import { castErrorCleared, castFailed } from "../cast/castSlice";
 import { chromecastsReceived } from "./chromecastSlice";
-
-const CHROMECAST_FAILED_TEXT = "The Chromecast could not do that.";
 
 const deviceUrl = (deviceId: string, action: string) => ({ url: apiUrl(`chromecasts/${deviceId}/${action}`) });
 
@@ -19,7 +18,7 @@ export const chromecastApi = vidApi.injectEndpoints({
                     try {
                         dispatch(chromecastsReceived((await queryFulfilled).data));
                     } catch (e) {
-                        dispatch(castFailed((e as { error?: { message?: string } }).error?.message || CHROMECAST_FAILED_TEXT));
+                        dispatch(castFailed(rejectionText(e)));
                     }
                 },
             });

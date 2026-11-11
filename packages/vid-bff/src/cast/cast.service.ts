@@ -6,14 +6,12 @@ import {
     CastSessionSnapshot,
     CastState,
     editQueue,
-    HomeVideoClip,
     nextIndex,
     QueueEditError,
 } from "@vid/common";
 import { AppErrorV2, AppLogger } from "@uxp/bff-common";
 import { ErrorCodes } from "@uxp/common";
 import { WebSocket } from "ws";
-import { homeVideoService } from "../home-video/home-video.service";
 import { signStreamQuery } from "../stream/signed-url";
 import { VideoServerWebSocketManager } from "../ws/VideoServerWebSocketManager";
 import { CastConfig, castConfig } from "./cast.config";
@@ -24,6 +22,7 @@ import { CastGroupSession, GroupOutcome } from "./cast-group-session";
 import { CastSession } from "./cast-session";
 import { FoundDevice } from "./cast-discovery";
 import { ChromecastMonitor } from "./chromecast-monitor";
+import { findPlayable, Playable, playableOfStream } from "./playable";
 
 const CAST_TOPIC = "cast";
 /** After a stop the Chromecast needs a moment before it takes a new app. */
@@ -34,18 +33,6 @@ const FINISHED_KEEP_MS = 5000;
 const POWER_OFF_DELAY_MS = 60000;
 /** The app in front is read this long after the cast ended, when the receiver has let go. */
 const POWER_OFF_BASELINE_MS = 10000;
-
-/** What the TV shows: the title, else the date as d.M.yyyy, else the file name, as the app names a clip. */
-const clipTitle = (clip: HomeVideoClip): string => {
-    if (clip.title) {
-        return clip.title;
-    }
-    if (clip.date) {
-        const [year, month, day] = clip.date.split("-").map(Number);
-        return `${day}.${month}.${year}`;
-    }
-    return clip.file;
-};
 
 /**
  * VID's own casting: discovers the Chromecasts, runs one CastSession and queue per device for clips cast from this app,
@@ -180,7 +167,7 @@ export class CastService {
         }
         const queue = this.queues.get(deviceId);
         if (!queue) {
-            throw new AppErrorV2({ statusCode: 404, code: ErrorCodes.NOT_FOUND, message: "Nothing is cast to that Chromecast" });
+            throw new AppErrorV2({ statusCode: 404, code: ErrorCodes.NOT_FOUND, message: "Nothing is cast to that Chromecast", params: { resource: "cast" } });
         }
         const clipIds = "clipIds" in request ? request.clipIds : [];
         this.requireClips(clipIds);
@@ -246,8 +233,8 @@ export class CastService {
     }
 
     private requireClips(clipIds: string[]) {
-        if (clipIds.some((id) => !homeVideoService.get(id))) {
-            throw new AppErrorV2({ statusCode: 404, code: ErrorCodes.NOT_FOUND, message: "There is no such clip" });
+        if (clipIds.some((id) => !findPlayable(id))) {
+            throw new AppErrorV2({ statusCode: 404, code: ErrorCodes.NOT_FOUND, message: "There is no such clip", params: { resource: "clip" } });
         }
     }
 
@@ -257,7 +244,7 @@ export class CastService {
             throw new AppErrorV2({
                 statusCode: 404,
                 code: ErrorCodes.NOT_FOUND,
-                message: "There is no such Chromecast on the network",
+                message: "There is no such Chromecast on the network", params: { resource: "Chromecast" },
             });
         }
         return device;
@@ -302,7 +289,10 @@ export class CastService {
     /** Throws when the group plays: it is edited or deleted after it is stopped. */
     requireGroupIdle(groupId: string) {
         if (this.isGroupRunning(groupId)) {
-            throw new AppErrorV2({ statusCode: 409, code: ErrorCodes.INVALID_STATE, message: "The group plays, stop it first" });
+            throw new AppErrorV2({ statusCode: 409, code: ErrorCodes.CONFLICT,
+                message: "The group plays, stop it first",
+                params: { resource: "group" },
+            });
         }
     }
 
@@ -320,9 +310,9 @@ export class CastService {
      * The clip the queue is at, moving the queue past clips that are no longer in the library. `skipped` is true when the first
      * clips had to be passed. Undefined when nothing in the queue can play.
      */
-    private playableClip(queue: CastQueue): { clip: HomeVideoClip; skipped: boolean } | undefined {
+    private playableClip(queue: CastQueue): { clip: Playable; skipped: boolean } | undefined {
         for (let tried = 0; tried < queue.clipIds.length; tried++) {
-            const clip = homeVideoService.get(queue.clipIds[queue.index]);
+            const clip = findPlayable(queue.clipIds[queue.index]);
             if (clip) {
                 return { clip, skipped: tried > 0 };
             }
@@ -370,15 +360,15 @@ export class CastService {
     private startClip(
         device: FoundDevice,
         baseUrl: string,
-        clip: HomeVideoClip,
+        clip: Playable,
         positionSec: number,
         connectDelayMs: number,
         autoplay = true
     ): CastSession {
         const { exp, sig } = signStreamQuery(clip.id);
         const query = `${clip.id}?exp=${exp}&sig=${sig}`;
-        const url = `${baseUrl}/api/home-videos/stream/${query}`;
-        const posterUrl = `${baseUrl}/api/home-videos/poster/${query}`;
+        const url = `${baseUrl}${clip.streamRoute}${query}`;
+        const posterUrl = clip.posterRoute && `${baseUrl}${clip.posterRoute}${query}`;
         this.sessions.get(device.id)?.release();
         this.cancelPowerOff(device.id);
         // Read before the launch, which wakes the TV. The first clip of a run decides, the following ones find a TV that is on.
@@ -388,7 +378,7 @@ export class CastService {
         }
         const session = new CastSession(
             device,
-            { kind: "load", clipId: clip.id, title: clipTitle(clip), url, posterUrl, positionSec, autoplay },
+            { kind: "load", clipId: clip.id, title: clip.title, url, posterUrl, positionSec, autoplay },
             () => this.onSessionChange(device.id, session)
         );
         this.sessions.set(device.id, session);
@@ -403,7 +393,7 @@ export class CastService {
      */
     startGroup(groupId: string, clipId: string, positionSec = 0): CastGroupRun {
         if (!castGroupService.get(groupId)) {
-            throw new AppErrorV2({ statusCode: 404, code: ErrorCodes.NOT_FOUND, message: "There is no such group" });
+            throw new AppErrorV2({ statusCode: 404, code: ErrorCodes.NOT_FOUND, message: "There is no such group", params: { resource: "group" } });
         }
         this.requireClips([clipId]);
         this.queues.set(groupId, { clipIds: [clipId], index: 0, repeat: false });
@@ -424,7 +414,7 @@ export class CastService {
         }
         const devices = group.deviceIds.flatMap((id) => this.discovery.get(id) ?? []);
         if (devices.length === 0) {
-            throw new AppErrorV2({ statusCode: 404, code: ErrorCodes.NOT_FOUND, message: "No Chromecast of the group is on the network" });
+            throw new AppErrorV2({ statusCode: 404, code: ErrorCodes.NOT_FOUND, message: "No Chromecast of the group is on the network", params: { resource: "Chromecast" } });
         }
         const playable = this.playableClip(queue);
         if (!playable) {
@@ -459,7 +449,7 @@ export class CastService {
     groupRun(groupId: string): CastGroupRun {
         const run = this.groupSessions.get(groupId);
         if (!run) {
-            throw new AppErrorV2({ statusCode: 404, code: ErrorCodes.NOT_FOUND, message: "That group does not play" });
+            throw new AppErrorV2({ statusCode: 404, code: ErrorCodes.NOT_FOUND, message: "That group does not play", params: { resource: "playing group" } });
         }
         return run.snapshot;
     }
@@ -627,7 +617,7 @@ export class CastService {
                         }
                         AppLogger.info(undefined, { message: `[Cast] Joined ${clip.file} playing on "${device.name}"` });
                     }
-                    return clip && { clipId: clip.id, title: clipTitle(clip) };
+                    return clip && { clipId: clip.id, title: clip.title };
                 },
             },
             () => this.onSessionChange(device.id, session)
@@ -637,17 +627,14 @@ export class CastService {
     }
 
     /** The clip when the address is a stream link of ours. */
-    private clipOfStream(contentId: string): HomeVideoClip | undefined {
-        const streamPrefix = `${this.config.baseUrl}/api/home-videos/stream/`;
-        return this.config.baseUrl && contentId.startsWith(streamPrefix)
-            ? homeVideoService.get(contentId.slice(streamPrefix.length).split("?")[0])
-            : undefined;
+    private clipOfStream(contentId: string): Playable | undefined {
+        return this.config.baseUrl ? playableOfStream(this.config.baseUrl, contentId) : undefined;
     }
 
     private session(deviceId: string): CastSession {
         const session = this.sessions.get(deviceId);
         if (!session || session.finished) {
-            throw new AppErrorV2({ statusCode: 404, code: ErrorCodes.NOT_FOUND, message: "Nothing is cast to that Chromecast" });
+            throw new AppErrorV2({ statusCode: 404, code: ErrorCodes.NOT_FOUND, message: "Nothing is cast to that Chromecast", params: { resource: "cast" } });
         }
         return session;
     }

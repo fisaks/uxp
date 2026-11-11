@@ -1,4 +1,5 @@
 import { SchemaValidate } from "@uxp/common";
+import { VIDEO_ID_PATTERN } from "../types/video-id";
 import { CastGroupParams, CastGroupRequest, CastGroupStartRequest } from "../types/cast-group.type";
 
 /** The same pattern as a device id: a group is played with the routes of a device. */
@@ -46,7 +47,7 @@ export const CastGroupStartSchema = {
     body: {
         type: "object",
         properties: {
-            clipId: { type: "string", pattern: "^[0-9a-f]{16}$" },
+            clipId: { type: "string", pattern: VIDEO_ID_PATTERN },
             positionSec: { type: "number", minimum: 0 },
         },
         required: ["clipId"],

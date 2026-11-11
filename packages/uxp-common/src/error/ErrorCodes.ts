@@ -36,7 +36,10 @@ export const ErrorCodes = {
     API_TOKEN_REVOKED: "API_TOKEN_REVOKED",
     API_TOKEN_IDENTIFIER_MISMATCH: "API_TOKEN_IDENTIFIER_MISMATCH",
     API_TOKEN_LABEL_EXISTS: "API_TOKEN_LABEL_EXISTS",
-    SERVICE_NOT_CONFIGURED:"SERVICE_NOT_CONFIGURED"
+    SERVICE_NOT_CONFIGURED:"SERVICE_NOT_CONFIGURED",
+    ALREADY_EXISTS: "ALREADY_EXISTS",
+    CONFLICT: "CONFLICT",
+    UNREACHABLE: "UNREACHABLE"
     // Add more error codes as needed
 } as const;
 
@@ -77,7 +80,10 @@ export const ErrorMessages: Record<ErrorCode, string> = {
     API_TOKEN_REVOKED: "The provided API token has been revoked.",
     API_TOKEN_IDENTIFIER_MISMATCH: "The API token is not authorized for this blueprint identifier.",
     API_TOKEN_LABEL_EXISTS: "An API token with this label already exists for this blueprint identifier.",
-    SERVICE_NOT_CONFIGURED:"Service is not configured"
+    SERVICE_NOT_CONFIGURED:"Service is not configured",
+    ALREADY_EXISTS: "That already exists.",
+    CONFLICT: "That cannot be done in the current state.",
+    UNREACHABLE: "The device or service could not be reached."
     // Add more error mappings as needed
 };
 export type ErrorCode = keyof typeof ErrorCodes;

@@ -1,9 +1,8 @@
 import { CastGroupRun, CastGroupStartRequest, CastQueueRequest, CastState } from "@vid/common";
 import { apiUrl } from "../../api/home-video-api";
+import { rejectionText } from "../../api/errorText";
 import { vidApi } from "../../app/vidApi";
 import { castErrorCleared, castFailed, castStateReceived } from "./castSlice";
-
-const CAST_FAILED_TEXT = "The Chromecast could not do that.";
 
 const sessionUrl = (deviceId: string, action: string) => ({ url: apiUrl(`cast/sessions/${deviceId}/${action}`) });
 
@@ -18,7 +17,7 @@ export const castApi = vidApi.injectEndpoints({
                     try {
                         dispatch(castStateReceived((await queryFulfilled).data));
                     } catch (e) {
-                        dispatch(castFailed((e as { error?: { message?: string } }).error?.message || CAST_FAILED_TEXT));
+                        dispatch(castFailed(rejectionText(e)));
                     }
                 },
             });
@@ -37,7 +36,7 @@ export const castApi = vidApi.injectEndpoints({
                     try {
                         await queryFulfilled;
                     } catch (e) {
-                        dispatch(castFailed((e as { error?: { message?: string } }).error?.message || CAST_FAILED_TEXT));
+                        dispatch(castFailed(rejectionText(e)));
                     }
                 },
             }),

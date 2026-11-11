@@ -159,7 +159,8 @@ export class ChromecastMonitor {
             AppLogger.warn(undefined, { message: `[Cast] "${watcher.device.name}" did not ${what}`, error });
             throw new AppErrorV2({
                 statusCode: 409,
-                code: ErrorCodes.INVALID_STATE,
+                code: ErrorCodes.UNREACHABLE,
+                params: { resource: "TV" },
                 message: `The TV did not ${what}. ${(error as Error).message}`,
                 originalError: error as Error,
             });
@@ -169,7 +170,7 @@ export class ChromecastMonitor {
     private watcher(deviceId: string): ChromecastWatcher {
         const watcher = this.watchers.get(deviceId);
         if (!watcher) {
-            throw new AppErrorV2({ statusCode: 404, code: ErrorCodes.NOT_FOUND, message: "There is no such Chromecast on the network" });
+            throw new AppErrorV2({ statusCode: 404, code: ErrorCodes.NOT_FOUND, message: "There is no such Chromecast on the network", params: { resource: "Chromecast" } });
         }
         return watcher;
     }
@@ -177,14 +178,18 @@ export class ChromecastMonitor {
     private command(deviceId: string, run: (watcher: ChromecastWatcher) => void): ChromecastsState {
         const watcher = this.watcher(deviceId);
         if (!watcher.snapshot.reachable) {
-            throw new AppErrorV2({ statusCode: 409, code: ErrorCodes.INVALID_STATE, message: "The Chromecast cannot be reached" });
+            throw new AppErrorV2({ statusCode: 409, code: ErrorCodes.UNREACHABLE,
+                message: "The Chromecast cannot be reached",
+                params: { resource: "Chromecast" },
+            });
         }
         try {
             run(watcher);
         } catch (error) {
             throw new AppErrorV2({
                 statusCode: 409,
-                code: ErrorCodes.INVALID_STATE,
+                code: ErrorCodes.UNREACHABLE,
+                params: { resource: "Chromecast" },
                 message: (error as Error).message,
                 originalError: error as Error,
             });

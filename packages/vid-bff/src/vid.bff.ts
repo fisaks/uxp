@@ -15,6 +15,7 @@ import path from "path";
 import { castGroupService } from "./cast/cast-group.service";
 import { castService } from "./cast/cast.service";
 import { homeVideoService } from "./home-video/home-video.service";
+import { movieService } from "./movie/movie.service";
 import { playlistService } from "./playlist/playlist.service";
 import { VideoServerWebSocketManager } from "./ws/VideoServerWebSocketManager";
 
@@ -36,11 +37,13 @@ registerLocalWebSocketHandlers({
 });
 
 onShutdown(() => homeVideoService.flush());
+onShutdown(() => movieService.flush());
 onShutdown(() => playlistService.flush());
 onShutdown(() => castGroupService.flush());
 onShutdown(async () => castService.stop());
 void castService.start();
 void homeVideoService.load();
+void movieService.load();
 void playlistService.load();
 void castGroupService.load();
 
