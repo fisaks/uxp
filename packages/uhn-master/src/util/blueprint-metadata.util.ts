@@ -18,7 +18,6 @@ function validateBlueprintMetadata(data: unknown): BlueprintMetadata {
         });
 
         throw new AppErrorV2({
-            statusCode: 400,
             code: "BLUEPRINT_JSON_VALIDATION_FAILED",
             message: `Invalid blueprint metadata: ${errorText}`,
             params: { errors: errorText }
@@ -33,7 +32,6 @@ async function readBlueprintMetadataFromZip(zipPath: string): Promise<BlueprintM
     const content = await BlueprintFileUtil.extractFileFromZip(zipPath, 'blueprint.json');
     if (!content) {
         throw new AppErrorV2({
-            statusCode: 400,
             code: "MISSING_BLUEPRINT_JSON",
             message: 'Missing blueprint.json in blueprint zip'
         });
@@ -44,7 +42,6 @@ async function readBlueprintMetadataFromZip(zipPath: string): Promise<BlueprintM
         raw = JSON.parse(content.toString("utf-8"));
     } catch (err) {
         throw new AppErrorV2({
-            statusCode: 400,
             code: "BLUEPRINT_JSON_INVALID",
             message: "blueprint.json is not valid JSON",
         });

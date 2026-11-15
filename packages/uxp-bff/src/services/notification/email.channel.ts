@@ -64,7 +64,7 @@ export class EmailChannel implements NotificationChannel<EmailChannelConfig> {
     async sendEmail(body: SendEmailBody): Promise<void> {
         const recipients = body.to ?? this.recipients;
         if (recipients.length === 0) {
-            throw new AppErrorV2({ statusCode: 400, code: "VALIDATION", message: "No recipients configured" });
+            throw new AppErrorV2({code: "VALIDATION", message: "No recipients configured" });
         }
 
         await this.transport!.sendMail({
@@ -80,7 +80,7 @@ export class EmailChannel implements NotificationChannel<EmailChannelConfig> {
 
     async sendTestEmail(): Promise<void> {
         if (!this.transport) {
-            throw new AppErrorV2({ statusCode: 400, code: "SERVICE_NOT_CONFIGURED", message: "SMTP not configured" });
+            throw new AppErrorV2({code: "SERVICE_NOT_CONFIGURED", message: "SMTP not configured" });
         }
 
         await this.transport.sendMail({

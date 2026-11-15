@@ -49,7 +49,7 @@ export class SystemConfigService extends EventEmitter<SystemConfigEventMap> {
     getConfig(): SystemConfigEntity {
 
         if (!this.config) {
-            throw new AppErrorV2({ statusCode: 500, code: "INTERNAL_SERVER_ERROR", message: "System config not initialized" });
+            throw new AppErrorV2({code: "INTERNAL_SERVER_ERROR", message: "System config not initialized" });
         }
 
         return this.config;
@@ -80,7 +80,7 @@ export class SystemConfigService extends EventEmitter<SystemConfigEventMap> {
         debugPort: number
     ): Promise<SystemConfigEntity> {
         if (debugPort < 9240 || debugPort > 9250) {
-            throw new AppErrorV2({ statusCode: 400, code: "VALIDATION", message: `Debug port must be in range 9240-9250 (got ${debugPort})` });
+            throw new AppErrorV2({code: "VALIDATION", message: `Debug port must be in range 9240-9250 (got ${debugPort})` });
         }
         const config = this.getConfig();
 

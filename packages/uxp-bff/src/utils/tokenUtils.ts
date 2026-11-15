@@ -45,6 +45,6 @@ export const verifyRefreshToken = (fastify: FastifyInstance, refreshToken: strin
         return fastify.jwt.verify(refreshToken) as RefreshToken;
     } catch (err: unknown) {
         AppLogger.error(undefined, { error: err as Error });
-        throw new AppErrorV2({ statusCode: 401, code: ErrorCodes.INVALID_REFRESH_TOKEN, message: "Invalid or expired refresh token", originalError: err as Error });
+        throw new AppErrorV2({code: ErrorCodes.INVALID_REFRESH_TOKEN, message: "Invalid or expired refresh token", originalError: err as Error });
     }
 };

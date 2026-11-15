@@ -25,7 +25,7 @@ function toApiTokenInfo(entity: ApiTokenEntity): ApiTokenInfo {
 async function createToken(label: string, blueprintIdentifier: string, createdBy: string): Promise<Omit<ApiTokenCreateResponse, "url">> {
     const existing = await ApiTokenRepository.findActiveByLabelAndIdentifier(label, blueprintIdentifier);
     if (existing) {
-        throw new AppErrorV2({ statusCode: 409, code: "API_TOKEN_LABEL_EXISTS", message: "An API token with this label already exists for this blueprint identifier." });
+        throw new AppErrorV2({code: "API_TOKEN_LABEL_EXISTS", message: "An API token with this label already exists for this blueprint identifier." });
     }
 
     const plainToken = randomBytes(32).toString("hex");
@@ -59,11 +59,11 @@ async function verifyToken(bearerToken: string): Promise<ApiTokenEntity> {
     const entity = await ApiTokenRepository.findByTokenHash(tokenHash);
 
     if (!entity) {
-        throw new AppErrorV2({ statusCode: 401, code: "INVALID_API_TOKEN", message: "The provided API token is invalid." });
+        throw new AppErrorV2({code: "INVALID_API_TOKEN", message: "The provided API token is invalid." });
     }
 
     if (entity.revokedAt) {
-        throw new AppErrorV2({ statusCode: 401, code: "API_TOKEN_REVOKED", message: "The provided API token has been revoked." });
+        throw new AppErrorV2({code: "API_TOKEN_REVOKED", message: "The provided API token has been revoked." });
     }
 
     return entity;
@@ -72,7 +72,7 @@ async function verifyToken(bearerToken: string): Promise<ApiTokenEntity> {
 async function revokeToken(id: number): Promise<void> {
     const entity = await ApiTokenRepository.findById(id);
     if (!entity) {
-        throw new AppErrorV2({ statusCode: 404, code: "NOT_FOUND", message: `API token with id ${id} not found`, params: { resource: "API token" } });
+        throw new AppErrorV2({code: "NOT_FOUND", message: `API token with id ${id} not found`, params: { resource: "API token" } });
     }
 
     entity.revokedAt = DateTime.now();

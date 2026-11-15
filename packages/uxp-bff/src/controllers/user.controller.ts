@@ -57,7 +57,6 @@ export class UserController {
                 return sendErrorResponse({
                     reply,
                     req,
-                    statusCode: 400,
                     code: ErrorCodes.ALREADY_REGISTERED,
                     message: "Only admins can register new users while logged in.",
                 });
@@ -96,7 +95,6 @@ export class UserController {
             return sendErrorResponse({
                 reply,
                 req,
-                statusCode: 500,
                 code: ErrorCodes.INTERNAL_SERVER_ERROR,
                 message: "Could not find created user",
                 params: { username },
@@ -178,7 +176,6 @@ export class UserController {
             return sendErrorResponse({
                 reply,
                 req,
-                statusCode: 401,
                 code: ErrorCodes.UNAUTHORIZED,
                 message: "No a logged in user",
             });
@@ -199,7 +196,6 @@ export class UserController {
             return sendErrorResponse({
                 reply,
                 req,
-                statusCode: 400,
                 code: ErrorCodes.VALIDATION,
                 message: "Logged in user trying to update other user",
                 params: { uuid: loggedInUser.uuid },
@@ -214,7 +210,6 @@ export class UserController {
                 return sendErrorResponse({
                     reply,
                     req,
-                    statusCode: 400,
                     code: ErrorCodes.USER_OLD_PASSWORD_NOT_MATCH,
                     message: "Users old password don't match",
                 });
@@ -248,7 +243,6 @@ export class UserController {
                     req,
                     code: ErrorCodes.INVALID_REFRESH_TOKEN,
                     message: "Refresh token missing from cookies",
-                    statusCode: 401,
                 });
             }
 
@@ -262,7 +256,6 @@ export class UserController {
                     req,
                     code: ErrorCodes.INVALID_REFRESH_TOKEN,
                     message: "Invalid refresh token",
-                    statusCode: 401,
                 });
             }
 
@@ -287,7 +280,6 @@ export class UserController {
                 reply,
                 req,
                 code: ErrorCodes.UNAUTHORIZED,
-                statusCode: 401,
             });
         }
     }
@@ -304,7 +296,6 @@ export class UserController {
                 code: ErrorCodes.NOT_FOUND,
                 params: { resource: "user" },
                 message: "User not found",
-                statusCode: 404,
             });
         }
         reply.send({ user: UserService.toUserPublic(user) } as WhoAmIResponse);
@@ -374,7 +365,6 @@ export class UserController {
             return sendErrorResponse({
                 reply,
                 req,
-                statusCode: 500,
                 code: ErrorCodes.INTERNAL_SERVER_ERROR,
                 message: "User Can't lock himself",
             });

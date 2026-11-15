@@ -25,7 +25,7 @@ import { SEARCH_PAGE_SIZE, isSpotifyAlbumId, isSpotifyArtistId, SpotifyUnavailab
 import { librarySearch } from "../search/library-search";
 import { searchIndexer } from "../search/search-indexer";
 
-const notFound = (what: string) => new AppErrorV2({ statusCode: 404, code: ErrorCodes.NOT_FOUND, message: `Unknown ${what}` });
+const notFound = (what: string) => new AppErrorV2({code: ErrorCodes.NOT_FOUND, message: `Unknown ${what}` });
 
 const statusOf = (library: LibraryService): LibraryStatus => ({
     ...library.getStatus(),
@@ -66,7 +66,7 @@ const fromSpotify = async <T>(what: string, ask: () => Promise<T | undefined>): 
             throw error;
         }
         AppLogger.warn(undefined, { message: `[Spotify] ${error.message}` });
-        throw new AppErrorV2({ statusCode: 503, code: ErrorCodes.INTERNAL_SERVER_ERROR, message: error.until ? `Spotify limits this until ${new Date(error.until).toLocaleTimeString("fi-FI", { hour: "2-digit", minute: "2-digit" })}` : "Spotify does not answer, try again in a moment" });
+        throw new AppErrorV2({code: ErrorCodes.NOT_READY, message: error.until ? `Spotify limits this until ${new Date(error.until).toLocaleTimeString("fi-FI", { hour: "2-digit", minute: "2-digit" })}` : "Spotify does not answer, try again in a moment" });
     }
 };
 
@@ -119,13 +119,13 @@ export class LibraryHandler {
     public async search(_wsDetails: WebSocketDetails, message: AudioAppRequestMessage<"library_search">): Promise<LibrarySearchResponse> {
         const client = searchIndexer.client;
         if (!client) {
-            throw new AppErrorV2({ statusCode: 503, code: ErrorCodes.SERVICE_NOT_CONFIGURED, message: "Search is not available" });
+            throw new AppErrorV2({code: ErrorCodes.SERVICE_NOT_CONFIGURED, message: "Search is not available" });
         }
         try {
             return await librarySearch(client, message.payload);
         } catch (error) {
             AppLogger.error(undefined, { message: "[Search] The search failed", error });
-            throw new AppErrorV2({ statusCode: 503, code: ErrorCodes.INTERNAL_SERVER_ERROR, message: "Search is not available" });
+            throw new AppErrorV2({code: ErrorCodes.NOT_READY, message: "Search is not available" });
         }
     }
 

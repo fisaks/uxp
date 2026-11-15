@@ -129,7 +129,7 @@ export class DocumentService {
             });
 
             if (!docVersion) {
-                throw new AppErrorV2({ statusCode: 404, code: "NOT_FOUND", message: `Document not found by id ${documentId} and version ${versionId}` });
+                throw new AppErrorV2({code: "NOT_FOUND", message: `Document not found by id ${documentId} and version ${versionId}` });
 
             }
 
@@ -157,7 +157,7 @@ export class DocumentService {
             order: { id: "DESC" },
         });
         if (!docVersions || docVersions.length === 0) {
-            throw new AppErrorV2({ statusCode: 404, code: "NOT_FOUND", message: `No document version found by id ${documentId} ` });
+            throw new AppErrorV2({code: "NOT_FOUND", message: `No document version found by id ${documentId} ` });
         }
         const versions: DocumentVersionEntry[] = docVersions.map((docVersion) => ({
             version: docVersion.id,
@@ -182,7 +182,7 @@ export class DocumentService {
 
 
         if (!latestDoc) {
-            throw new AppErrorV2({ statusCode: 404, code: "NOT_FOUND", message: `Document not found by id ${documentId} ` });
+            throw new AppErrorV2({code: "NOT_FOUND", message: `Document not found by id ${documentId} ` });
 
         }
 
@@ -271,7 +271,7 @@ export class DocumentService {
         });
 
         if (!docVersion || !docVersion.content) {
-            throw new AppErrorV2({ statusCode: 404, code: "NOT_FOUND", message: `Document not found by id ${documentId} and version ${versionId}` });
+            throw new AppErrorV2({code: "NOT_FOUND", message: `Document not found by id ${documentId} and version ${versionId}` });
         }
         const newVersion = documentRepo.create({
             documentId,

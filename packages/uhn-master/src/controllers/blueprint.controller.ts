@@ -146,7 +146,7 @@ export class BlueprintController {
     async downloadActiveBlueprint(req: FastifyRequest, reply: FastifyReply) {
         const blueprint = await blueprintService.getActiveSignedBlueprint();
         if (!blueprint) {
-            throw new AppErrorV2({ statusCode: 404, code: "NOT_FOUND", message: "No active blueprint found" });
+            throw new AppErrorV2({code: "NOT_FOUND", message: "No active blueprint found" });
         }
 
         reply.header("Content-Type", "application/zip");
@@ -164,7 +164,7 @@ export class BlueprintController {
     async cliUploadBlueprint(req: FastifyRequest<{ Querystring: { activate?: boolean } }>, _reply: FastifyReply) {
         const authHeader = req.headers["authorization"];
         if (!authHeader || !authHeader.startsWith("Bearer ")) {
-            throw new AppErrorV2({ statusCode: 401, code: "INVALID_API_TOKEN", message: "Missing or malformed Authorization header." });
+            throw new AppErrorV2({code: "INVALID_API_TOKEN", message: "Missing or malformed Authorization header." });
         }
         const apiToken = await apiTokenService.verifyToken(authHeader.slice("Bearer ".length));
 

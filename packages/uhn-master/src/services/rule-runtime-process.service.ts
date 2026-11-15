@@ -506,15 +506,13 @@ class RuleRuntimeProcessService extends EventEmitter<RuleRuntimeProcessEventMap>
     ): RuleRuntimeCommandMap[K]["response"] {
         if (!this.ready) {
             throw new AppErrorV2({
-                statusCode: 503,
-                code: "INTERNAL_SERVER_ERROR",
+                code: "NOT_READY",
                 message: "Rule runtime process is not ready",
             });
         }
 
         if (!this.process || !this.process.stdin?.writable) {
             throw new AppErrorV2({
-                statusCode: 500,
                 code: "INTERNAL_SERVER_ERROR",
                 message: "Rule runtime process is not running",
             });

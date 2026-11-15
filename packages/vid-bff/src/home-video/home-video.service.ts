@@ -84,10 +84,10 @@ export class HomeVideoService {
     update(id: string, change: HomeVideoClipUpdate): HomeVideoClip {
         const clip = this.scanned.get(id);
         if (!clip) {
-            throw new AppErrorV2({ statusCode: 404, code: ErrorCodes.NOT_FOUND, message: "There is no such clip", params: { resource: "clip" } });
+            throw new AppErrorV2({code: ErrorCodes.NOT_FOUND, message: "There is no such clip", params: { resource: "clip" } });
         }
         if (!this.store.canSave()) {
-            throw new AppErrorV2({ statusCode: 503, code: ErrorCodes.INVALID_STATE, message: "The home video metadata cannot be saved right now" });
+            throw new AppErrorV2({code: ErrorCodes.NOT_READY, message: "The home video metadata cannot be saved right now" });
         }
         this.store.updateMetadata(clip.file, change);
         this.search.reindex();

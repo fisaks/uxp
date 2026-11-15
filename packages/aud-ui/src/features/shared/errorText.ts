@@ -11,6 +11,7 @@ const INVALID_STATE_TEXT: Record<string, string> = {
 /** The wording of the errors AUD answers with. What the server sends in `params` makes the text say what it is about. */
 const AUD_ERROR_MESSAGES: ErrorCodeMessageMap = {
     NOT_FOUND: "Not found.",
+    NOT_READY: "Not ready yet, try again in a moment.",
     UNREACHABLE: (params) => (params?.resource ? `The ${params.resource} cannot be reached.` : "It cannot be reached."),
     INVALID_STATE: (params) => {
         if (params?.reason === "unsupported") return params.app ? `${params.app} does not support that.` : "The app does not support that.";

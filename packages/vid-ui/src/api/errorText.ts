@@ -7,6 +7,7 @@ const VID_ERROR_MESSAGES: ErrorCodeMessageMap = {
     CONFLICT: (params) => (params?.resource ? `That cannot be done while the ${params.resource} plays.` : "That cannot be done right now."),
     UNREACHABLE: (params) => (params?.resource ? `The ${params.resource} could not be reached.` : "It could not be reached."),
     INVALID_STATE: "That cannot be done right now.",
+    NOT_READY: "That cannot be done right now.",
 };
 
 /** The text for an error the BFF answered with. */

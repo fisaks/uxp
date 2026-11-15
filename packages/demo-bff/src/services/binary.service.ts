@@ -14,7 +14,7 @@ export class BinaryService {
 
 
         if (responseType === "error") {
-            throw new AppErrorV2({ statusCode: 404, code: "NOT_FOUND", message: "The file was not found" });
+            throw new AppErrorV2({code: "NOT_FOUND", message: "The file was not found" });
 
         }
         const filePath = path.resolve(__dirname, "small-image.jpg");

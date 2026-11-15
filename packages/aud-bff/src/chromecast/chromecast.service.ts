@@ -271,8 +271,7 @@ export class ChromecastService {
             await axios.post(`http://${host}:${HTTP_PORT}/setup/reboot`, { params: "now" }, { timeout: REBOOT_TIMEOUT_MS });
         } catch (error) {
             throw new AppErrorV2({
-                statusCode: 502,
-                code: ErrorCodes.INTERNAL_SERVER_ERROR,
+                code: ErrorCodes.UNREACHABLE,
                 message: "The Chromecast did not accept the reboot",
                 originalError: error as Error,
             });
@@ -291,11 +290,10 @@ export class ChromecastService {
         const joined = connection.joined;
         const playback = this.state.playback;
         if (!joined || joined.mediaSessionId === undefined || !playback) {
-            throw new AppErrorV2({ statusCode: 409, code: ErrorCodes.INVALID_STATE, message: "Nothing is playing on the Chromecast", params: { reason: "nothing-playing" } });
+            throw new AppErrorV2({code: ErrorCodes.INVALID_STATE, message: "Nothing is playing on the Chromecast", params: { reason: "nothing-playing" } });
         }
         if (supported && !playback.commands[supported]) {
             throw new AppErrorV2({
-                statusCode: 409,
                 code: ErrorCodes.INVALID_STATE,
                 message: `${this.state.app ?? "The app"} does not support ${supported}`,
                 params: { reason: "unsupported", app: this.state.app ?? "" },
@@ -311,8 +309,7 @@ export class ChromecastService {
         } catch (error) {
             connection.client.emit("error", error);
             throw new AppErrorV2({
-                statusCode: 502,
-                code: ErrorCodes.INTERNAL_SERVER_ERROR,
+                code: ErrorCodes.UNREACHABLE,
                 message: "The Chromecast did not take the command",
                 originalError: error as Error,
             });
@@ -321,7 +318,7 @@ export class ChromecastService {
 
     private requireHost(): string {
         if (!this.config.host) {
-            throw new AppErrorV2({ statusCode: 400, code: ErrorCodes.SERVICE_NOT_CONFIGURED, message: "No Chromecast is configured" });
+            throw new AppErrorV2({code: ErrorCodes.SERVICE_NOT_CONFIGURED, message: "No Chromecast is configured" });
         }
         return this.config.host;
     }
@@ -330,7 +327,6 @@ export class ChromecastService {
         this.requireHost();
         if (!this.current) {
             throw new AppErrorV2({
-                statusCode: 503,
                 code: ErrorCodes.UNREACHABLE,
                 message: "The Chromecast is not reachable",
                 params: { resource: "Chromecast" },

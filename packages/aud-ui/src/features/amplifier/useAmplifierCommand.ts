@@ -15,6 +15,7 @@ export type SendAmplifierCommand = <A extends AmplifierCommandAction>(
 const ERROR_MESSAGES: ErrorCodeMessageMap = {
     DISCONNECTED: "The amplifier cannot be reached.",
     INVALID_STATE: "The amplifier did not accept the command. It may still be starting up.",
+    NOT_READY: "The amplifier did not accept the command. It may still be starting up.",
 };
 
 const ERROR_MS = 8000;

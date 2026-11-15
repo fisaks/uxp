@@ -60,7 +60,7 @@ export class FileController {
                 })
             );
 
-            throw new AppErrorV2({ statusCode: 500, code: "INTERNAL_SERVER_ERROR", message: "File upload failed", originalError: error as Error });
+            throw new AppErrorV2({code: "INTERNAL_SERVER_ERROR", message: "File upload failed", originalError: error as Error });
         }
 
         return response.length === 1 ? { publicId: response[0].publicId, fileName: response[0].fileName } : response;
@@ -78,7 +78,6 @@ export class FileController {
             return sendErrorResponse({
                 reply,
                 req,
-                statusCode: 404,
                 code: "NOT_FOUND",
                 message: `File not found ${publicId}`,
             });
@@ -87,7 +86,6 @@ export class FileController {
             return sendErrorResponse({
                 reply,
                 req,
-                statusCode: 400,
                 code: "VALIDATION",
                 message: `Invalid file path`,
             });

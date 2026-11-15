@@ -192,7 +192,7 @@ export class MovieService {
     async searchEntries(id: string, query: string): Promise<MovieMatchCandidate[]> {
         const item = this.requireItem(id);
         if (!tmdbClient.available()) {
-            throw new AppErrorV2({ statusCode: 503, code: ErrorCodes.INVALID_STATE, message: "TMDB is not set up" });
+            throw new AppErrorV2({code: ErrorCodes.SERVICE_NOT_CONFIGURED, message: "TMDB is not set up" });
         }
         const results = await this.callTmdb(() => tmdbClient.search(kindOf(item), query));
         return results.slice(0, 10).map((entry) => ({ tmdbId: entry.id, title: entry.title, year: entry.year, overview: entry.overview, posterPath: entry.posterPath }));
@@ -202,14 +202,14 @@ export class MovieService {
     async setMatch(id: string, tmdbId: number | null): Promise<MovieItem> {
         const item = this.requireItem(id);
         if (!this.matches.canSave()) {
-            throw new AppErrorV2({ statusCode: 503, code: ErrorCodes.INVALID_STATE, message: "The movie matches cannot be saved right now" });
+            throw new AppErrorV2({code: ErrorCodes.NOT_READY, message: "The movie matches cannot be saved right now" });
         }
         const key = matchKey(item);
         if (tmdbId === null) {
             this.matches.updateMetadata(key, { tmdbId: null, overview: null, rating: null, posterFile: null });
         } else {
             if (!tmdbClient.available()) {
-                throw new AppErrorV2({ statusCode: 503, code: ErrorCodes.INVALID_STATE, message: "TMDB is not set up" });
+                throw new AppErrorV2({code: ErrorCodes.SERVICE_NOT_CONFIGURED, message: "TMDB is not set up" });
             }
             const entry = await this.callTmdb(() => tmdbClient.get(kindOf(item), tmdbId));
             await this.callTmdb(() => this.keepMatch(key, kindOf(item), entry));
@@ -222,14 +222,14 @@ export class MovieService {
             return await call();
         } catch (error) {
             AppLogger.warn(undefined, { message: "TMDB call failed", error });
-            throw new AppErrorV2({ statusCode: 502, code: ErrorCodes.UNREACHABLE, message: "TMDB could not be reached" });
+            throw new AppErrorV2({code: ErrorCodes.UNREACHABLE, message: "TMDB could not be reached" });
         }
     }
 
     private requireItem(id: string): ScannedItem {
         const item = this.scanned.get(id);
         if (!item) {
-            throw new AppErrorV2({ statusCode: 404, code: ErrorCodes.NOT_FOUND, message: "There is no such item", params: { resource: "item" } });
+            throw new AppErrorV2({code: ErrorCodes.NOT_FOUND, message: "There is no such item", params: { resource: "item" } });
         }
         return item;
     }
@@ -260,7 +260,7 @@ export class MovieService {
     update(id: string, change: MovieItemUpdate): MovieItem {
         const item = this.requireItem(id);
         if (!this.store.canSave()) {
-            throw new AppErrorV2({ statusCode: 503, code: ErrorCodes.INVALID_STATE, message: "The movie metadata cannot be saved right now" });
+            throw new AppErrorV2({code: ErrorCodes.NOT_READY, message: "The movie metadata cannot be saved right now" });
         }
         this.store.updateMetadata(`${item.category}/${item.file}`, change);
         return this.toMovieItem(item);

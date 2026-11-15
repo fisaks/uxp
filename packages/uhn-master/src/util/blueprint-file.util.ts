@@ -20,15 +20,15 @@ async function handleAndValidateUpload(request: FastifyRequest)
     const files = await handleMultipartUpload<UhnFileType>(request, PreFlightFolder, BlueprintFileTypes);
 
     if (files.files.length === 0) {
-        throw new AppErrorV2({ statusCode: 400, code: "NO_FILES_UPLOADED", message: "No blueprint files uploaded" });
+        throw new AppErrorV2({code: "NO_FILES_UPLOADED", message: "No blueprint files uploaded" });
     }
     if (files.files.length > 1) {
-        throw new AppErrorV2({ statusCode: 400, code: "ONLY_SINGLE_FILE_ALLOWED", message: "Multiple blueprint files uploaded, only one is allowed" });
+        throw new AppErrorV2({code: "ONLY_SINGLE_FILE_ALLOWED", message: "Multiple blueprint files uploaded, only one is allowed" });
     }
 
     const file = files.files[0];
     if (file.mimetype !== "application/zip") {
-        throw new AppErrorV2({ statusCode: 400, code: "INVALID_FILE_TYPE", message: "Invalid blueprint file type, only zip files are allowed" });
+        throw new AppErrorV2({code: "INVALID_FILE_TYPE", message: "Invalid blueprint file type, only zip files are allowed" });
     }
     return {
         zipPath: path.join(PreFlightFolder, file.filename),
@@ -63,7 +63,6 @@ async function extractBlueprintToDir(
             error: err,
         });
         throw new AppErrorV2({
-            statusCode: 500,
             code: "BLUEPRINT_ACTIVATION_FAILED",
             message: `Failed to extract blueprint zip to folder`,
         });
@@ -99,7 +98,6 @@ async function removeActiveBlueprint() {
             error: err,
         });
         throw new AppErrorV2({
-            statusCode: 500,
             code: "BLUEPRINT_DEACTIVATION_FAILED",
             message: `Failed to remove active blueprint folder`,
         });
@@ -108,7 +106,7 @@ async function removeActiveBlueprint() {
 
 async function getBlueprintStream(blueprintZipPath: string) {
     if (!(await pathExists(blueprintZipPath))) {
-        throw new AppErrorV2({ statusCode: 404, code: "NOT_FOUND", message: `Blueprint file ${blueprintZipPath} not found on disk`, params: { resource: "blueprint file" } });
+        throw new AppErrorV2({code: "NOT_FOUND", message: `Blueprint file ${blueprintZipPath} not found on disk`, params: { resource: "blueprint file" } });
     }
     return fs.createReadStream(blueprintZipPath)
 }

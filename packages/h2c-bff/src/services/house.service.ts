@@ -100,7 +100,7 @@ export class HouseService {
         const house = await this.findOneHouse(uuid);
 
         if (!house) {
-            throw new AppErrorV2({ statusCode: 404, code: "NOT_FOUND", message: `House not found by uuid ${uuid}` });
+            throw new AppErrorV2({code: "NOT_FOUND", message: `House not found by uuid ${uuid}` });
         }
 
         await this.ensureHouseData(house);
@@ -143,7 +143,7 @@ export class HouseService {
     async findOneHouse(uuid: string): Promise<HouseEntity> {
         const house = await this.findHouseByUuid(uuid, false);
         if (!house) {
-            throw new AppErrorV2({ statusCode: 404, code: "NOT_FOUND", message: `House not found by uuid ${uuid}` });
+            throw new AppErrorV2({code: "NOT_FOUND", message: `House not found by uuid ${uuid}` });
         }
         return house;
 
@@ -210,7 +210,7 @@ export class HouseService {
         const houseVersionRepo = this.queryRunner.manager.getRepository(HouseVersionEntity);
         const house = await this.findOneHouse(uuid);
         if (house.removed) {
-            throw new AppErrorV2({ statusCode: 400, code: "INVALID_STATE", message: `Cannot create version of a removed house (${uuid})` });
+            throw new AppErrorV2({code: "INVALID_STATE", message: `Cannot create version of a removed house (${uuid})` });
         }
         const docService = new DocumentService(this.requestMeta, this.queryRunner);
 
@@ -260,7 +260,7 @@ export class HouseService {
             where: { id: version, uuid },
         });
         if (!houseVersion) {
-            throw new AppErrorV2({ statusCode: 404, code: "NOT_FOUND", message: `House version ${version} not found by uuid ${uuid}` });
+            throw new AppErrorV2({code: "NOT_FOUND", message: `House version ${version} not found by uuid ${uuid}` });
         }
 
         return houseVersion;

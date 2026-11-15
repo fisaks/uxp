@@ -16,7 +16,7 @@ export class GlobalConfigController {
         const result = await GlobalConfigService.getPublicConfig();
 
         if (!result) {
-            throw new AppErrorV2({ statusCode: 404, code: "NOT_FOUND", message: "No existing configuration found" });
+            throw new AppErrorV2({code: "NOT_FOUND", message: "No existing configuration found" });
         }
 
         reply.send(result as PublicGlobalConfigResponse);
@@ -28,7 +28,7 @@ export class GlobalConfigController {
         const result = await GlobalConfigService.getFullConfig();
 
         if (!result) {
-            throw new AppErrorV2({ statusCode: 404, code: "NOT_FOUND", message: "No existing configuration found" });
+            throw new AppErrorV2({code: "NOT_FOUND", message: "No existing configuration found" });
         }
 
         reply.send(result as FullGlobalConfigResponse);

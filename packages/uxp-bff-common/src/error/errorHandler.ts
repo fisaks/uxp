@@ -49,7 +49,7 @@ const handleAJvError = (error: FastifyError & { validation?: ErrorObject[] }, re
 };
 
 const handleAppError = (error: AppErrorV2, request: FastifyRequest, reply: FastifyReply) => {
-    reply.status(error.statusCode ?? 500).send(createErrorResponse(toErrorDetail(error), request));
+    reply.status(error.statusCode).send(createErrorResponse(toErrorDetail(error), request));
 };
 const handleGeneralError = (error: FastifyError, request: FastifyRequest, reply: FastifyReply) => {
     const statusCode = error.statusCode || 500;

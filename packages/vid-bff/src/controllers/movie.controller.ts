@@ -27,7 +27,7 @@ import { isValidStreamQuery, signStreamQuery } from "../stream/signed-url";
 
 const ONE_DAY_SECONDS = 24 * 60 * 60;
 
-const notFound = (what: string) => new AppErrorV2({ statusCode: 404, code: ErrorCodes.NOT_FOUND, message: `There is no such ${what}`, params: { resource: what } });
+const notFound = (what: string) => new AppErrorV2({code: ErrorCodes.NOT_FOUND, message: `There is no such ${what}`, params: { resource: what } });
 
 export class MovieController {
     @Route("get", "/movies/items", { authenticate: true, schema: MovieItemsSchema })
@@ -73,7 +73,7 @@ export class MovieController {
         const { id } = req.params;
         const { exp, sig } = req.query;
         if (!isValidStreamQuery(id, exp, sig)) {
-            throw new AppErrorV2({ statusCode: 403, code: ErrorCodes.FORBIDDEN, message: "The link is not valid or has expired" });
+            throw new AppErrorV2({code: ErrorCodes.FORBIDDEN, message: "The link is not valid or has expired" });
         }
         return this.sendPoster(reply, movieService.posterPath(id));
     }
@@ -115,7 +115,7 @@ export class MovieController {
         const { id } = req.params;
         const { exp, sig } = req.query;
         if (!isValidStreamQuery(id, exp, sig)) {
-            throw new AppErrorV2({ statusCode: 403, code: ErrorCodes.FORBIDDEN, message: "The link is not valid or has expired" });
+            throw new AppErrorV2({code: ErrorCodes.FORBIDDEN, message: "The link is not valid or has expired" });
         }
         return sendVideoFile(req, reply, movieService.filePath(id));
     }

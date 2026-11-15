@@ -4,7 +4,7 @@ import { UserLocationItemOrderEntity } from "../db/entities/UserLocationItemOrde
 function getRepo() {
     const { queryRunner } = getRequestContext(true);
     if (!queryRunner) {
-        throw new AppErrorV2({ statusCode: 500, code: "INTERNAL_SERVER_ERROR", message: "QueryRunner is missing in request context" });
+        throw new AppErrorV2({code: "INTERNAL_SERVER_ERROR", message: "QueryRunner is missing in request context" });
     }
     return queryRunner.manager.getRepository(UserLocationItemOrderEntity);
 }

@@ -21,7 +21,7 @@ import { requireApiKey } from "../utils/requireApiKey";
 function getEmailChannel(): EmailChannel {
     const channel = notificationChannelService.getChannel("email") as EmailChannel | undefined;
     if (!channel?.isConfigured()) {
-        throw new AppErrorV2({ statusCode: 400, code: "SERVICE_NOT_CONFIGURED", message: "Email notifications are not configured" });
+        throw new AppErrorV2({code: "SERVICE_NOT_CONFIGURED", message: "Email notifications are not configured" });
     }
     return channel;
 }

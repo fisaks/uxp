@@ -74,7 +74,7 @@ export class AppLogger {
     public static extractMetadata(request?: FastifyRequest | RequestMetaData, required = false): RequestMetaData | undefined {
         if (!request) {
             if (required) {
-                throw new AppErrorV2({ statusCode: 500, code: "INTERNAL_SERVER_ERROR", message: "Request metadata is required" });
+                throw new AppErrorV2({code: "INTERNAL_SERVER_ERROR", message: "Request metadata is required" });
             }
             return undefined;
         }

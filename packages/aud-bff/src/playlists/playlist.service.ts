@@ -201,7 +201,7 @@ export class PlaylistService extends EventEmitter<PlaylistEventMap> {
     private require(id: string): StoredPlaylist {
         const playlist = this.playlists.find((candidate) => candidate.id === id);
         if (!playlist) {
-            throw new AppErrorV2({ statusCode: 404, code: ErrorCodes.NOT_FOUND, message: "Unknown playlist" });
+            throw new AppErrorV2({code: ErrorCodes.NOT_FOUND, message: "Unknown playlist" });
         }
         return playlist;
     }
@@ -210,7 +210,6 @@ export class PlaylistService extends EventEmitter<PlaylistEventMap> {
         const trimmed = name.trim();
         if (trimmed === "" || trimmed.length > MAX_PLAYLIST_NAME_LENGTH) {
             throw new AppErrorV2({
-                statusCode: 400,
                 code: ErrorCodes.VALIDATION,
                 message: "A playlist needs a name of 1 to 100 characters",
             });
@@ -220,7 +219,7 @@ export class PlaylistService extends EventEmitter<PlaylistEventMap> {
 
     private requireIndex(playlist: StoredPlaylist, index: number) {
         if (index >= playlist.tracks.length) {
-            throw new AppErrorV2({ statusCode: 400, code: ErrorCodes.VALIDATION, message: `There is no track ${index} in the playlist` });
+            throw new AppErrorV2({code: ErrorCodes.VALIDATION, message: `There is no track ${index} in the playlist` });
         }
     }
 }

@@ -22,9 +22,9 @@ import { isValidStreamQuery, signStreamQuery } from "../stream/signed-url";
 
 const ONE_DAY_SECONDS = 24 * 60 * 60;
 
-const noSuchClip = () => new AppErrorV2({ statusCode: 404, code: ErrorCodes.NOT_FOUND, message: "There is no such clip", params: { resource: "clip" } });
-const searchUnavailable = () => new AppErrorV2({ statusCode: 503, code: ErrorCodes.SERVICE_NOT_CONFIGURED, message: "Search is not available" });
-const invalidLink = () => new AppErrorV2({ statusCode: 403, code: ErrorCodes.FORBIDDEN, message: "The link is not valid or has expired" });
+const noSuchClip = () => new AppErrorV2({code: ErrorCodes.NOT_FOUND, message: "There is no such clip", params: { resource: "clip" } });
+const searchUnavailable = () => new AppErrorV2({code: ErrorCodes.SERVICE_NOT_CONFIGURED, message: "Search is not available" });
+const invalidLink = () => new AppErrorV2({code: ErrorCodes.FORBIDDEN, message: "The link is not valid or has expired" });
 
 export class HomeVideoController {
     @Route("get", "/home-videos/clips", { authenticate: true })
@@ -95,7 +95,7 @@ export class HomeVideoController {
         try {
             file = await made;
         } catch {
-            throw new AppErrorV2({ statusCode: 500, code: ErrorCodes.INTERNAL_SERVER_ERROR, message: "The poster frame could not be made" });
+            throw new AppErrorV2({code: ErrorCodes.INTERNAL_SERVER_ERROR, message: "The poster frame could not be made" });
         }
         reply.header("Content-Type", "image/jpeg");
         reply.header("Cache-Control", `private, max-age=${ONE_DAY_SECONDS}`);

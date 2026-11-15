@@ -94,8 +94,7 @@ export class ChromecastMonitor {
                 error,
             });
             throw new AppErrorV2({
-                statusCode: 502,
-                code: ErrorCodes.INTERNAL_SERVER_ERROR,
+                code: ErrorCodes.UNREACHABLE,
                 message: "The Chromecast did not accept the restart",
                 originalError: error as Error,
             });
@@ -158,7 +157,6 @@ export class ChromecastMonitor {
         } catch (error) {
             AppLogger.warn(undefined, { message: `[Cast] "${watcher.device.name}" did not ${what}`, error });
             throw new AppErrorV2({
-                statusCode: 409,
                 code: ErrorCodes.UNREACHABLE,
                 params: { resource: "TV" },
                 message: `The TV did not ${what}. ${(error as Error).message}`,
@@ -170,7 +168,7 @@ export class ChromecastMonitor {
     private watcher(deviceId: string): ChromecastWatcher {
         const watcher = this.watchers.get(deviceId);
         if (!watcher) {
-            throw new AppErrorV2({ statusCode: 404, code: ErrorCodes.NOT_FOUND, message: "There is no such Chromecast on the network", params: { resource: "Chromecast" } });
+            throw new AppErrorV2({code: ErrorCodes.NOT_FOUND, message: "There is no such Chromecast on the network", params: { resource: "Chromecast" } });
         }
         return watcher;
     }
@@ -178,7 +176,7 @@ export class ChromecastMonitor {
     private command(deviceId: string, run: (watcher: ChromecastWatcher) => void): ChromecastsState {
         const watcher = this.watcher(deviceId);
         if (!watcher.snapshot.reachable) {
-            throw new AppErrorV2({ statusCode: 409, code: ErrorCodes.UNREACHABLE,
+            throw new AppErrorV2({code: ErrorCodes.UNREACHABLE,
                 message: "The Chromecast cannot be reached",
                 params: { resource: "Chromecast" },
             });
@@ -187,7 +185,6 @@ export class ChromecastMonitor {
             run(watcher);
         } catch (error) {
             throw new AppErrorV2({
-                statusCode: 409,
                 code: ErrorCodes.UNREACHABLE,
                 params: { resource: "Chromecast" },
                 message: (error as Error).message,

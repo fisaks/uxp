@@ -94,7 +94,6 @@ export class AmplifierService {
         const input = this.config.chromecastInput;
         if (!input) {
             throw new AppErrorV2({
-                statusCode: 400,
                 code: ErrorCodes.SERVICE_NOT_CONFIGURED,
                 message: "No amplifier input is set for the Chromecast",
             });
@@ -362,8 +361,7 @@ export class AmplifierService {
     private requireInfo(): AmplifierInfo {
         if (!this.state.info) {
             throw new AppErrorV2({
-                statusCode: 503,
-                code: ErrorCodes.INVALID_STATE,
+                code: ErrorCodes.NOT_READY,
                 message: "The amplifier options are not available yet",
             });
         }
@@ -372,16 +370,16 @@ export class AmplifierService {
 
     private requireOption(options: string[], value: string, what: string) {
         if (!options.includes(value)) {
-            throw new AppErrorV2({ statusCode: 400, code: ErrorCodes.VALIDATION, message: `Unknown ${what} "${value}"` });
+            throw new AppErrorV2({code: ErrorCodes.VALIDATION, message: `Unknown ${what} "${value}"` });
         }
     }
 
     private toAppError(error: unknown): unknown {
         if (error instanceof YamahaUnreachableError) {
-            return new AppErrorV2({ statusCode: 503, code: ErrorCodes.DISCONNECTED, message: error.message, originalError: error });
+            return new AppErrorV2({code: ErrorCodes.DISCONNECTED, message: error.message, originalError: error });
         }
         if (error instanceof YamahaCommandError) {
-            return new AppErrorV2({ statusCode: 409, code: ErrorCodes.INVALID_STATE, message: error.message, originalError: error });
+            return new AppErrorV2({code: ErrorCodes.INVALID_STATE, message: error.message, originalError: error });
         }
         return error;
     }

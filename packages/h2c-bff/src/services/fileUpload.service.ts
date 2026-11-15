@@ -55,7 +55,7 @@ export class FileUploadService {
                 error: error,
             });
             await this.rollbackUploadedFiles(movedFiles);
-            throw new AppErrorV2({ statusCode: 500, code: "INTERNAL_SERVER_ERROR", message: "File upload failed", originalError: error as Error });
+            throw new AppErrorV2({code: "INTERNAL_SERVER_ERROR", message: "File upload failed", originalError: error as Error });
         }
 
         return response.length === 1 ? response[0] : response
@@ -78,7 +78,6 @@ export class FileUploadService {
         const fileEntity = await fileRepo.findOne({ where: { publicId } });
         if (!fileEntity) {
             throw new AppErrorV2({
-                statusCode: 404,
                 code: "NOT_FOUND",
                 message: `File not found ${publicId}`,
             });
@@ -87,7 +86,6 @@ export class FileUploadService {
         // 🔎 Check if file exists
         if (!(await fs.pathExists(fileEntity.filePath))) {
             throw new AppErrorV2({
-                statusCode: 404,
                 code: "NOT_FOUND",
                 message: `File not found on disk ${publicId}`,
             });

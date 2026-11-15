@@ -75,7 +75,7 @@ class ScheduleMuteService {
         const blueprintId = this.getActiveBlueprintId();
         const entity = await ScheduleMuteRepository.findByScheduleId(blueprintId, scheduleId);
         if (!entity) {
-            throw new AppErrorV2({ statusCode: 404, code: "NOT_FOUND", message: `No mute found for schedule "${scheduleId}"` });
+            throw new AppErrorV2({code: "NOT_FOUND", message: `No mute found for schedule "${scheduleId}"` });
         }
 
         await ScheduleMuteRepository.remove(entity);
@@ -85,7 +85,7 @@ class ScheduleMuteService {
     private getActiveBlueprintId(): string {
         const identifier = blueprintService.getRunningBlueprintIdentifier();
         if (!identifier) {
-            throw new AppErrorV2({ statusCode: 400, code: "VALIDATION", message: "No blueprint is currently active" });
+            throw new AppErrorV2({code: "VALIDATION", message: "No blueprint is currently active" });
         }
         return identifier;
     }

@@ -25,7 +25,7 @@ async function getLocationSectionOrder(username: string): Promise<UserLocationSe
 async function saveLocationSectionOrder(username: string, locationIds: string[]): Promise<UserLocationSectionOrder> {
     const blueprintIdentifier = await getActiveBlueprintIdentifier();
     if (!blueprintIdentifier) {
-        throw new AppErrorV2({ statusCode: 400, code: "NOT_FOUND", message: "No active blueprint" });
+        throw new AppErrorV2({code: "NOT_FOUND", message: "No active blueprint" });
     }
 
     let entity = await UserLocationSectionOrderRepository.findByUser(blueprintIdentifier, username);

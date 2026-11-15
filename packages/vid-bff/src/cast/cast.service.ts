@@ -167,14 +167,13 @@ export class CastService {
         }
         const queue = this.queues.get(deviceId);
         if (!queue) {
-            throw new AppErrorV2({ statusCode: 404, code: ErrorCodes.NOT_FOUND, message: "Nothing is cast to that Chromecast", params: { resource: "cast" } });
+            throw new AppErrorV2({code: ErrorCodes.NOT_FOUND, message: "Nothing is cast to that Chromecast", params: { resource: "cast" } });
         }
         const clipIds = "clipIds" in request ? request.clipIds : [];
         this.requireClips(clipIds);
         const missingField = this.missingField(request);
         if (missingField) {
             throw new AppErrorV2({
-                statusCode: 400,
                 code: ErrorCodes.VALIDATION,
                 message: `The ${request.action} action needs ${missingField}`,
             });
@@ -184,7 +183,7 @@ export class CastService {
             ({ playChanged } = editQueue(queue, request));
         } catch (error) {
             if (error instanceof QueueEditError) {
-                throw new AppErrorV2({ statusCode: 400, code: ErrorCodes.VALIDATION, message: error.message });
+                throw new AppErrorV2({code: ErrorCodes.VALIDATION, message: error.message });
             }
             throw error;
         }
@@ -234,7 +233,7 @@ export class CastService {
 
     private requireClips(clipIds: string[]) {
         if (clipIds.some((id) => !findPlayable(id))) {
-            throw new AppErrorV2({ statusCode: 404, code: ErrorCodes.NOT_FOUND, message: "There is no such clip", params: { resource: "clip" } });
+            throw new AppErrorV2({code: ErrorCodes.NOT_FOUND, message: "There is no such clip", params: { resource: "clip" } });
         }
     }
 
@@ -242,7 +241,6 @@ export class CastService {
         const device = this.discovery.get(deviceId);
         if (!device) {
             throw new AppErrorV2({
-                statusCode: 404,
                 code: ErrorCodes.NOT_FOUND,
                 message: "There is no such Chromecast on the network", params: { resource: "Chromecast" },
             });
@@ -289,7 +287,7 @@ export class CastService {
     /** Throws when the group plays: it is edited or deleted after it is stopped. */
     requireGroupIdle(groupId: string) {
         if (this.isGroupRunning(groupId)) {
-            throw new AppErrorV2({ statusCode: 409, code: ErrorCodes.CONFLICT,
+            throw new AppErrorV2({code: ErrorCodes.CONFLICT,
                 message: "The group plays, stop it first",
                 params: { resource: "group" },
             });
@@ -329,7 +327,6 @@ export class CastService {
         const baseUrl = this.config.baseUrl;
         if (!baseUrl) {
             throw new AppErrorV2({
-                statusCode: 400,
                 code: ErrorCodes.SERVICE_NOT_CONFIGURED,
                 message: "Casting is not set up: VID_PUBLIC_BASE_URL is missing",
             });
@@ -393,7 +390,7 @@ export class CastService {
      */
     startGroup(groupId: string, clipId: string, positionSec = 0): CastGroupRun {
         if (!castGroupService.get(groupId)) {
-            throw new AppErrorV2({ statusCode: 404, code: ErrorCodes.NOT_FOUND, message: "There is no such group", params: { resource: "group" } });
+            throw new AppErrorV2({code: ErrorCodes.NOT_FOUND, message: "There is no such group", params: { resource: "group" } });
         }
         this.requireClips([clipId]);
         this.queues.set(groupId, { clipIds: [clipId], index: 0, repeat: false });
@@ -414,7 +411,7 @@ export class CastService {
         }
         const devices = group.deviceIds.flatMap((id) => this.discovery.get(id) ?? []);
         if (devices.length === 0) {
-            throw new AppErrorV2({ statusCode: 404, code: ErrorCodes.NOT_FOUND, message: "No Chromecast of the group is on the network", params: { resource: "Chromecast" } });
+            throw new AppErrorV2({code: ErrorCodes.NOT_FOUND, message: "No Chromecast of the group is on the network", params: { resource: "Chromecast" } });
         }
         const playable = this.playableClip(queue);
         if (!playable) {
@@ -449,7 +446,7 @@ export class CastService {
     groupRun(groupId: string): CastGroupRun {
         const run = this.groupSessions.get(groupId);
         if (!run) {
-            throw new AppErrorV2({ statusCode: 404, code: ErrorCodes.NOT_FOUND, message: "That group does not play", params: { resource: "playing group" } });
+            throw new AppErrorV2({code: ErrorCodes.NOT_FOUND, message: "That group does not play", params: { resource: "playing group" } });
         }
         return run.snapshot;
     }
@@ -568,7 +565,6 @@ export class CastService {
     restart(deviceId: string): CastState {
         if (this.runningGroup(deviceId)) {
             throw new AppErrorV2({
-                statusCode: 400,
                 code: ErrorCodes.INVALID_STATE,
                 message: "A group cannot be restarted, play the clip again",
             });
@@ -634,7 +630,7 @@ export class CastService {
     private session(deviceId: string): CastSession {
         const session = this.sessions.get(deviceId);
         if (!session || session.finished) {
-            throw new AppErrorV2({ statusCode: 404, code: ErrorCodes.NOT_FOUND, message: "Nothing is cast to that Chromecast", params: { resource: "cast" } });
+            throw new AppErrorV2({code: ErrorCodes.NOT_FOUND, message: "Nothing is cast to that Chromecast", params: { resource: "cast" } });
         }
         return session;
     }

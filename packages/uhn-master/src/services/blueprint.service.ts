@@ -46,7 +46,6 @@ class BlueprintService extends EventEmitter<BlueprintEventMap> {
 
         if (requiredIdentifier && requiredIdentifier !== metadata.identifier) {
             throw new AppErrorV2({
-                statusCode: 403,
                 code: "API_TOKEN_IDENTIFIER_MISMATCH",
                 message: `The API token is authorized for blueprint "${requiredIdentifier}" but the uploaded blueprint has identifier "${metadata.identifier}".`,
             });
@@ -102,7 +101,7 @@ class BlueprintService extends EventEmitter<BlueprintEventMap> {
         const toDeactivate = await BlueprintRepository.findByIdentifierAndVersion(identifier, version);
         if (!toDeactivate) {
             this.emit("noActiveBlueprint");
-            throw new AppErrorV2({ statusCode: 404, code: "NOT_FOUND", message: `Blueprint ${identifier} v${version} not found`, params: { resource: "blueprint" } });
+            throw new AppErrorV2({code: "NOT_FOUND", message: `Blueprint ${identifier} v${version} not found`, params: { resource: "blueprint" } });
         }
 
         if (toDeactivate.active === false) {
@@ -143,7 +142,7 @@ class BlueprintService extends EventEmitter<BlueprintEventMap> {
         this.emit("blueprintActivating", identifier, version, activatedBy);
         const toActivate = await BlueprintRepository.findByIdentifierAndVersion(identifier, version);
         if (!toActivate) {
-            throw new AppErrorV2({ statusCode: 404, code: "NOT_FOUND", message: `Blueprint ${identifier} v${version} not found`, params: { resource: "blueprint" } });
+            throw new AppErrorV2({code: "NOT_FOUND", message: `Blueprint ${identifier} v${version} not found`, params: { resource: "blueprint" } });
         }
 
         const currentlyActive = await BlueprintRepository.findActive();
@@ -292,7 +291,6 @@ class BlueprintService extends EventEmitter<BlueprintEventMap> {
             } catch (error) {
 
                 throw new AppErrorV2({
-                    statusCode: 500,
                     code: "BLUEPRINT_ACTIVATION_FAILED",
                     message: `Failed to start blueprint runtime for active blueprint ${active.identifier} v${active.version}`,
                     originalError: error instanceof Error ? error : undefined,
@@ -313,7 +311,7 @@ class BlueprintService extends EventEmitter<BlueprintEventMap> {
             return { identifier, version }
         }
         if (blueprint.active) {
-            throw new AppErrorV2({ statusCode: 400, code: "ACTIVE_BLUEPRINT_DELETE_FORBIDDEN", message: "Cannot delete active blueprint version" });
+            throw new AppErrorV2({code: "ACTIVE_BLUEPRINT_DELETE_FORBIDDEN", message: "Cannot delete active blueprint version" });
         }
 
         await BlueprintFileUtil.deleteBlueprintZip(blueprint.zipPath);
@@ -348,7 +346,6 @@ class BlueprintService extends EventEmitter<BlueprintEventMap> {
         const blueprint = await BlueprintRepository.findByIdentifierAndVersion(identifier, version);
         if (!blueprint) {
             throw new AppErrorV2({
-                statusCode: 404,
                 code: "NOT_FOUND",
                 params: { resource: "blueprint" },
                 message: `Blueprint ${identifier} v${version} not found`,
@@ -371,7 +368,6 @@ class BlueprintService extends EventEmitter<BlueprintEventMap> {
         const blueprint = await BlueprintRepository.findByIdentifierAndVersion(identifier, version);
         if (!blueprint) {
             throw new AppErrorV2({
-                statusCode: 404,
                 code: "NOT_FOUND",
                 params: { resource: "blueprint" },
                 message: `Blueprint ${identifier} v${version} not found`,
@@ -385,7 +381,7 @@ class BlueprintService extends EventEmitter<BlueprintEventMap> {
         const blueprint = await BlueprintRepository.findByIdentifierAndVersion(identifier, version);
 
         if (!blueprint) {
-            throw new AppErrorV2({ statusCode: 404, code: "NOT_FOUND", message: `Blueprint ${identifier} v${version} not found`, params: { resource: "blueprint" } });
+            throw new AppErrorV2({code: "NOT_FOUND", message: `Blueprint ${identifier} v${version} not found`, params: { resource: "blueprint" } });
         }
 
         return {

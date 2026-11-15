@@ -13,7 +13,7 @@ export const sendVideoFile = async (req: FastifyRequest, reply: FastifyReply, fi
               .catch(() => undefined)
         : undefined;
     if (!file || size === undefined) {
-        throw new AppErrorV2({ statusCode: 404, code: ErrorCodes.NOT_FOUND, message: "There is no such video", params: { resource: "video" } });
+        throw new AppErrorV2({code: ErrorCodes.NOT_FOUND, message: "There is no such video", params: { resource: "video" } });
     }
     reply.header("Content-Type", "video/mp4");
     reply.header("Accept-Ranges", "bytes");

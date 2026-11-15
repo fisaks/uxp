@@ -40,7 +40,7 @@ export class PlatformHealthController {
         if (key === "tls-cert") {
             const config = await PlatformHealthService.getTlsCertConfig();
             if (!config?.enabled) {
-                throw new AppErrorV2({ statusCode: 400, code: "SERVICE_NOT_CONFIGURED", message: "TLS cert check is not enabled" });
+                throw new AppErrorV2({code: "SERVICE_NOT_CONFIGURED", message: "TLS cert check is not enabled" });
             }
             const result = await runTlsCertCheck(config);
             await PlatformHealthService.upsert(key, result.severity, result.message, result.details, result.source, true);

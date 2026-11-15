@@ -20,7 +20,6 @@ class CommandSceneService {
         const scene = blueprintSceneService.getSceneById(sceneId);
         if (!scene) {
             throw new AppErrorV2({
-                statusCode: 404,
                 code: "NOT_FOUND",
                 message: `Scene with id "${sceneId}" not found`,
             });

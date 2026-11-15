@@ -34,7 +34,6 @@ export class SystemController {
         if (!targetUrl) {
             AppLogger.warn(req, { message: `No ${type} entry configured for remote app ${appIdentifier}` });
             throw new AppErrorV2({
-                statusCode: 404,
                 code: "NOT_FOUND",
                 message: `No ${type} entry configured for remote app`
             });

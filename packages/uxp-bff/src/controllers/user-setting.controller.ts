@@ -38,7 +38,6 @@ export class UserSettingController {
         });
         if (!user) {
             return sendErrorResponse({
-                statusCode: 500,
                 reply,
                 req,
                 code: ErrorCodes.NOT_FOUND,

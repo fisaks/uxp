@@ -13,6 +13,7 @@ export * from "./decorator/websocket.decorator";
 export * from "./error/AppError";
 
 export * from "./error/errorHandler";
+export * from "./error/errorStatus";
 export * from "./error/errorResponse";
 export * from "./error/errorUtils";
 export { default as jwtPlugin } from "./plugins/jwt";

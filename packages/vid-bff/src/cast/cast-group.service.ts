@@ -56,7 +56,6 @@ export class CastGroupService {
     private checkedRequest({ name, deviceIds, browser = false }: CastGroupRequest, ownId?: string): Omit<CastGroup, "id"> {
         if (deviceIds.length + (browser ? 1 : 0) < CAST_GROUP_MIN_MEMBERS) {
             throw new AppErrorV2({
-                statusCode: 400,
                 code: ErrorCodes.VALIDATION,
                 message: `A group needs at least ${CAST_GROUP_MIN_MEMBERS} members, counting the player tab`,
             });
@@ -68,10 +67,10 @@ export class CastGroupService {
     private checkedName(name: string, ownId?: string): string {
         const trimmed = name.trim();
         if (trimmed === "") {
-            throw new AppErrorV2({ statusCode: 400, code: ErrorCodes.VALIDATION, message: "A group needs a name" });
+            throw new AppErrorV2({code: ErrorCodes.VALIDATION, message: "A group needs a name" });
         }
         if (this.store.all().some((g) => g.id !== ownId && sameName(g.name, trimmed))) {
-            throw new AppErrorV2({ statusCode: 409, code: ErrorCodes.ALREADY_EXISTS,
+            throw new AppErrorV2({code: ErrorCodes.ALREADY_EXISTS,
                 message: "A group with that name exists",
                 params: { resource: "group", name: trimmed },
             });
@@ -80,7 +79,7 @@ export class CastGroupService {
     }
 
     private notFound() {
-        return new AppErrorV2({ statusCode: 404, code: ErrorCodes.NOT_FOUND, message: "There is no such group", params: { resource: "group" } });
+        return new AppErrorV2({code: ErrorCodes.NOT_FOUND, message: "There is no such group", params: { resource: "group" } });
     }
 }
 

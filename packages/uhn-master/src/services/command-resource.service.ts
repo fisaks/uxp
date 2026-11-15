@@ -39,7 +39,7 @@ export class CommandsResourceService {
     async executeResourceCommand(resourceId: string, command: UhnResourceCommand): Promise<void> {
         const resource = blueprintResourceService.getResourceById(resourceId);
         if (!resource) {
-            throw new AppErrorV2({ statusCode: 404, code: "NOT_FOUND", message: `Resource with id ${resourceId} not found`, params: { resource: "resource" } });
+            throw new AppErrorV2({code: "NOT_FOUND", message: `Resource with id ${resourceId} not found`, params: { resource: "resource" } });
         }
         this.validateResourceAddressability(resource);
         this.validateCommandForResource(resource, command);
@@ -277,14 +277,14 @@ export class CommandsResourceService {
     private validateResourceAddressability(resource: RuntimeResource) {
         if (isLogicalResource(resource)) {
             if (!resource.host) {
-                throw new AppErrorV2({ statusCode: 400, code: "RESOURCE_NOT_ADDRESSABLE", message: `${resource.type} resource ${resource.id} has no host` });
+                throw new AppErrorV2({code: "RESOURCE_NOT_ADDRESSABLE", message: `${resource.type} resource ${resource.id} has no host` });
             }
             return;
         }
 
         if (isPhysicalResource(resource)) {
             if (!resource.edge || !resource.device || resource.pin == null) {
-                throw new AppErrorV2({ statusCode: 400, code: "RESOURCE_NOT_ADDRESSABLE", message: `Resource ${resource.id} is not addressable` });
+                throw new AppErrorV2({code: "RESOURCE_NOT_ADDRESSABLE", message: `Resource ${resource.id} is not addressable` });
             }
         }
     }
@@ -292,21 +292,21 @@ export class CommandsResourceService {
     private validateCommandForResource(resource: RuntimeResource, command: UhnResourceCommand) {
         if (resource.type === "timer") {
             if (command.type !== "clearTimer") {
-                throw new AppErrorV2({ statusCode: 400, code: "INVALID_RESOURCE_COMMAND", message: `Invalid command type ${command.type} for timer resource` });
+                throw new AppErrorV2({code: "INVALID_RESOURCE_COMMAND", message: `Invalid command type ${command.type} for timer resource` });
             }
             return;
         }
 
         if (resource.type === "digitalOutput") {
             if (command.type !== "toggle" && command.type !== "set") {
-                throw new AppErrorV2({ statusCode: 400, code: "INVALID_RESOURCE_COMMAND", message: `Invalid command type ${command.type} for digitalOutput resource` });
+                throw new AppErrorV2({code: "INVALID_RESOURCE_COMMAND", message: `Invalid command type ${command.type} for digitalOutput resource` });
             }
             return;
         }
 
         if (resource.type === "analogOutput") {
             if (command.type !== "setAnalog") {
-                throw new AppErrorV2({ statusCode: 400, code: "INVALID_RESOURCE_COMMAND", message: `Invalid command type ${command.type} for analogOutput resource` });
+                throw new AppErrorV2({code: "INVALID_RESOURCE_COMMAND", message: `Invalid command type ${command.type} for analogOutput resource` });
             }
             return;
         }
@@ -315,17 +315,17 @@ export class CommandsResourceService {
             const inputResource = resource as RuntimeDigitalInputResource;
 
             if (inputResource.inputType === "push" && !["press", "release", "tap", "longPress"].includes(command.type)) {
-                throw new AppErrorV2({ statusCode: 400, code: "INVALID_RESOURCE_COMMAND", message: `Invalid command type ${command.type} for digitalInput push resource` });
+                throw new AppErrorV2({code: "INVALID_RESOURCE_COMMAND", message: `Invalid command type ${command.type} for digitalInput push resource` });
             }
             if (inputResource.inputType === "toggle" && command.type !== "toggle") {
-                throw new AppErrorV2({ statusCode: 400, code: "INVALID_RESOURCE_COMMAND", message: `Invalid command type ${command.type} for digitalInput toggle resource` });
+                throw new AppErrorV2({code: "INVALID_RESOURCE_COMMAND", message: `Invalid command type ${command.type} for digitalInput toggle resource` });
             }
             return;
         }
 
         if (resource.type === "complex") {
             if (command.type !== "tap") {
-                throw new AppErrorV2({ statusCode: 400, code: "INVALID_RESOURCE_COMMAND", message: `Invalid command type ${command.type} for complex resource` });
+                throw new AppErrorV2({code: "INVALID_RESOURCE_COMMAND", message: `Invalid command type ${command.type} for complex resource` });
             }
             return;
         }
@@ -333,36 +333,36 @@ export class CommandsResourceService {
         if (resource.type === "virtualDigitalInput") {
             const viResource = resource as RuntimeVirtualDigitalInputResource;
             if (viResource.inputType === "push" && command.type !== "tap") {
-                throw new AppErrorV2({ statusCode: 400, code: "INVALID_RESOURCE_COMMAND", message: `Invalid command type ${command.type} for virtualDigitalInput push resource` });
+                throw new AppErrorV2({code: "INVALID_RESOURCE_COMMAND", message: `Invalid command type ${command.type} for virtualDigitalInput push resource` });
             }
             if (viResource.inputType === "toggle" && command.type !== "toggle") {
-                throw new AppErrorV2({ statusCode: 400, code: "INVALID_RESOURCE_COMMAND", message: `Invalid command type ${command.type} for virtualDigitalInput toggle resource` });
+                throw new AppErrorV2({code: "INVALID_RESOURCE_COMMAND", message: `Invalid command type ${command.type} for virtualDigitalInput toggle resource` });
             }
             return;
         }
 
         if (resource.type === "virtualAnalogOutput") {
             if (command.type !== "setAnalog") {
-                throw new AppErrorV2({ statusCode: 400, code: "INVALID_RESOURCE_COMMAND", message: `Invalid command type ${command.type} for virtualAnalogOutput resource` });
+                throw new AppErrorV2({code: "INVALID_RESOURCE_COMMAND", message: `Invalid command type ${command.type} for virtualAnalogOutput resource` });
             }
             return;
         }
 
         if (resource.type === "actionInput") {
             if (command.type !== "action") {
-                throw new AppErrorV2({ statusCode: 400, code: "INVALID_RESOURCE_COMMAND", message: `Invalid command type ${command.type} for actionInput resource` });
+                throw new AppErrorV2({code: "INVALID_RESOURCE_COMMAND", message: `Invalid command type ${command.type} for actionInput resource` });
             }
             return;
         }
 
         if (resource.type === "actionOutput") {
             if (command.type !== "setActionOutput") {
-                throw new AppErrorV2({ statusCode: 400, code: "INVALID_RESOURCE_COMMAND", message: `Invalid command type ${command.type} for actionOutput resource` });
+                throw new AppErrorV2({code: "INVALID_RESOURCE_COMMAND", message: `Invalid command type ${command.type} for actionOutput resource` });
             }
             return;
         }
 
-        throw new AppErrorV2({ statusCode: 400, code: "INVALID_RESOURCE_TYPE", message: `Resource type ${resource.type} does not support commands` });
+        throw new AppErrorV2({code: "INVALID_RESOURCE_TYPE", message: `Resource type ${resource.type} does not support commands` });
     }
 }
 

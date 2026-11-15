@@ -9,13 +9,13 @@ import env, { OptionalKeys } from "../config/env";
 export function requireApiKey(req: FastifyRequest, envKey: OptionalKeys): void {
     const apiKey = env[envKey];
     if (!apiKey) {
-        throw new AppErrorV2({ statusCode: 500, code: "INTERNAL_SERVER_ERROR", message: `${envKey} is not configured` });
+        throw new AppErrorV2({code: "INTERNAL_SERVER_ERROR", message: `${envKey} is not configured` });
     }
     const authHeader = req.headers["authorization"];
     if (!authHeader?.startsWith("Bearer ")) {
-        throw new AppErrorV2({ statusCode: 401, code: "UNAUTHORIZED", message: "Missing Authorization header" });
+        throw new AppErrorV2({code: "UNAUTHORIZED", message: "Missing Authorization header" });
     }
     if (authHeader.slice("Bearer ".length) !== apiKey) {
-        throw new AppErrorV2({ statusCode: 401, code: "UNAUTHORIZED", message: "Invalid API key" });
+        throw new AppErrorV2({code: "UNAUTHORIZED", message: "Invalid API key" });
     }
 }

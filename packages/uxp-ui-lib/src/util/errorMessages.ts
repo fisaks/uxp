@@ -15,6 +15,7 @@ export const ErrorMessages: Record<ErrorCode, string> = {
     DISCONNECTED: "You have been disconnected from the server. Please try again later.",
     TIMEOUT: "The request timed out. Please check your connection and try again.",
     INVALID_STATE: "The application is in an invalid state. Please refresh the page.",
+    NOT_READY: "Not ready yet. Please try again in a moment.",
     FILE_TOO_LARGE: "The uploaded file is too large.",
     NO_FILES_UPLOADED: "No files were uploaded.",
     ONLY_SINGLE_FILE_ALLOWED: "Only a single file is allowed for this upload.",

@@ -58,10 +58,10 @@ export const handleMultipartUpload = async <FileTypes>(
     for await (const part of parts) {
         if (part.type === "file") {
             if (!part.file.readable || part.file.readableLength === 0) {
-                throw new AppErrorV2({ statusCode: 400, code: "VALIDATION", message: `File "${part.filename}" is empty and cannot be uploaded.` });
+                throw new AppErrorV2({code: "VALIDATION", message: `File "${part.filename}" is empty and cannot be uploaded.` });
             }
             if (BlockedMimeTypes.includes(part.mimetype)) {
-                throw new AppErrorV2({ statusCode: 400, code: "VALIDATION", message: `Blocked file type: ${part.mimetype}` });
+                throw new AppErrorV2({code: "VALIDATION", message: `Blocked file type: ${part.mimetype}` });
             }
 
             const safeFilename = safeNormalizeFilename(part.filename);
@@ -76,7 +76,7 @@ export const handleMultipartUpload = async <FileTypes>(
             const { size } = await fs.stat(filePath);
             if (size === 0) {
                 await removeFile(filePath); // Delete empty file
-                throw new AppErrorV2({ statusCode: 400, code: "VALIDATION", message: "File is empty after processing." });
+                throw new AppErrorV2({code: "VALIDATION", message: "File is empty after processing." });
             }
 
             const detectedFileType = await readMimeTypeFromFile(req, filePath);
@@ -85,7 +85,7 @@ export const handleMultipartUpload = async <FileTypes>(
 
             if (BlockedMimeTypes.includes(fileMimeType)) {
                 await removeFile(filePath); // Delete empty file
-                throw new AppErrorV2({ statusCode: 400, code: "VALIDATION", message: `Blocked file type: ${fileMimeType}` });
+                throw new AppErrorV2({code: "VALIDATION", message: `Blocked file type: ${fileMimeType}` });
             }
 
             files.push({ filePath, filename: uniqueFilename, publicId, mimetype: fileMimeType });
@@ -97,7 +97,7 @@ export const handleMultipartUpload = async <FileTypes>(
         for await (const file of files) {
             await removeFile(file.filePath);
         }
-        throw new AppErrorV2({ statusCode: 400, code: "VALIDATION", message: "File type not set." });
+        throw new AppErrorV2({code: "VALIDATION", message: "File type not set." });
     }
 
     return { files, fileType };

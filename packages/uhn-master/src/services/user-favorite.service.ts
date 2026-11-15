@@ -28,7 +28,7 @@ async function listFavorites(username: string): Promise<UserFavorite[]> {
 async function addFavorite(username: string, itemKind: UserLocationItemKind, itemRefId: string): Promise<UserFavorite> {
     const blueprintIdentifier = await getActiveBlueprintIdentifier();
     if (!blueprintIdentifier) {
-        throw new AppErrorV2({ statusCode: 400, code: "NOT_FOUND", message: "No active blueprint" });
+        throw new AppErrorV2({code: "NOT_FOUND", message: "No active blueprint" });
     }
     const existing = await UserFavoriteRepository.findByUserAndItem(blueprintIdentifier, username, itemKind, itemRefId);
     if (existing) {

@@ -270,7 +270,7 @@ export class PlayerService {
             "audiobooks"
         );
         if (parts.length === 0) {
-            throw new AppErrorV2({ statusCode: 404, code: ErrorCodes.NOT_FOUND, message: "Unknown book" });
+            throw new AppErrorV2({code: ErrorCodes.NOT_FOUND, message: "Unknown book" });
         }
         const saved = this.progress.get(albumId);
         const startId = partId ?? saved?.partId;
@@ -299,7 +299,6 @@ export class PlayerService {
         const found = this.spotify.find(uris);
         if (found.length === 0) {
             throw new AppErrorV2({
-                statusCode: 404,
                 code: ErrorCodes.NOT_FOUND,
                 message: "Spotify does not play or have those tracks coming",
             });
@@ -358,7 +357,7 @@ export class PlayerService {
     async undoQueue(): Promise<PlayerState> {
         const snapshot = this.replaced;
         if (!snapshot) {
-            throw new AppErrorV2({ statusCode: 409, code: ErrorCodes.INVALID_STATE, message: "There is no queue to bring back", params: { reason: "no-undo" } });
+            throw new AppErrorV2({code: ErrorCodes.INVALID_STATE, message: "There is no queue to bring back", params: { reason: "no-undo" } });
         }
         this.replaced = undefined;
         this.queue = snapshot.queue;
@@ -645,7 +644,6 @@ export class PlayerService {
         const track = this.queue[this.currentIndex];
         if (!track || !this.hasGain(track)) {
             throw new AppErrorV2({
-                statusCode: 409,
                 code: ErrorCodes.INVALID_STATE,
                 message: "The gain is set for a song of the library that is playing",
                 params: { reason: "gain" },
@@ -902,7 +900,6 @@ export class PlayerService {
     private requireMusicQueue() {
         if (this.isBookQueue()) {
             throw new AppErrorV2({
-                statusCode: 409,
                 code: ErrorCodes.INVALID_STATE,
                 message: "The queue is an audiobook, it cannot be changed",
                 params: { reason: "audiobook" },
@@ -970,7 +967,7 @@ export class PlayerService {
 
     private requireIndex(index: number): number {
         if (index >= this.queue.length) {
-            throw new AppErrorV2({ statusCode: 400, code: ErrorCodes.VALIDATION, message: `There is no track ${index} in the queue` });
+            throw new AppErrorV2({code: ErrorCodes.VALIDATION, message: `There is no track ${index} in the queue` });
         }
         return index;
     }

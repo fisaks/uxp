@@ -1,20 +1,23 @@
 import { ErrorCode } from "@uxp/common";
+import { statusOf } from "./errorStatus";
 
 export class AppErrorV2 extends Error {
-    statusCode: number;
     code: ErrorCode;
     params?: Record<string, string | number>;
     // The underlying error. Not enumerable, so it is never serialized into a response (it can carry request config, credentials).
     declare readonly cause?: Error;
 
+    /** The HTTP status of the code, for REST and for the log level. */
+    get statusCode(): number {
+        return statusOf(this.code);
+    }
+
     constructor({
-        statusCode = 500,
         code,
         message,
         params,
         originalError
     }: {
-        statusCode?: number;
         code: ErrorCode;
         message?: string;
         params?: Record<string, string | number>;
@@ -22,7 +25,6 @@ export class AppErrorV2 extends Error {
     }) {
         super(message);
 
-        this.statusCode = statusCode;
         this.code = code;
         this.params = params;
         if (originalError) {

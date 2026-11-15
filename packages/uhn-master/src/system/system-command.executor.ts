@@ -25,7 +25,6 @@ export class SystemCommandExecutor {
     ) {
         if (this.running) {
             throw new AppErrorV2({
-                statusCode: 409,
                 code: "SYSTEM_BUSY",
                 message: "System is already executing a command",
             });

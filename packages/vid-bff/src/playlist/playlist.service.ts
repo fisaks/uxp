@@ -63,7 +63,7 @@ export class PlaylistService {
         }
         const queue = castService.queueOf(source.deviceId);
         if (!queue) {
-            throw new AppErrorV2({ statusCode: 404, code: ErrorCodes.NOT_FOUND, message: "Nothing is queued on that Chromecast", params: { resource: "queue" } });
+            throw new AppErrorV2({code: ErrorCodes.NOT_FOUND, message: "Nothing is queued on that Chromecast", params: { resource: "queue" } });
         }
         return [...queue.clipIds];
     }
@@ -80,7 +80,7 @@ export class PlaylistService {
         this.checkSaving();
         const trimmed = name.trim();
         if (trimmed === "") {
-            throw new AppErrorV2({ statusCode: 400, code: ErrorCodes.VALIDATION, message: "A playlist needs a name" });
+            throw new AppErrorV2({code: ErrorCodes.VALIDATION, message: "A playlist needs a name" });
         }
         return trimmed;
     }
@@ -89,8 +89,7 @@ export class PlaylistService {
     private checkSaving() {
         if (!this.store.canSave()) {
             throw new AppErrorV2({
-                statusCode: 503,
-                code: ErrorCodes.INVALID_STATE,
+                code: ErrorCodes.NOT_READY,
                 message: "The playlists cannot be saved right now",
             });
         }
@@ -98,7 +97,6 @@ export class PlaylistService {
 
     private nameTaken(name: string) {
         return new AppErrorV2({
-            statusCode: 409,
             code: ErrorCodes.ALREADY_EXISTS,
             message: "A playlist with that name exists",
             params: { resource: "playlist", name },
@@ -106,7 +104,7 @@ export class PlaylistService {
     }
 
     private notFound() {
-        return new AppErrorV2({ statusCode: 404, code: ErrorCodes.NOT_FOUND, message: "There is no such playlist", params: { resource: "playlist" } });
+        return new AppErrorV2({code: ErrorCodes.NOT_FOUND, message: "There is no such playlist", params: { resource: "playlist" } });
     }
 }
 
