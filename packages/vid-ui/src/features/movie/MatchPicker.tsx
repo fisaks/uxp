@@ -13,7 +13,7 @@ import {
     TextField,
     Typography,
 } from "@mui/material";
-import { MovieItem } from "@vid/common";
+import { MovieItem, MovieTmdbKind } from "@vid/common";
 import { usePortalContainerRef } from "@uxp/ui-lib";
 import React, { useState } from "react";
 import { rejectionText } from "../../api/errorText";
@@ -30,9 +30,9 @@ export const MatchPicker: React.FC<MatchPickerProps> = ({ item, onClose }) => {
     const { data: candidates, isFetching, isError } = useSearchMovieMatchesQuery({ id: item.id, q }, { skip: !q.trim() });
     const [setMatch, { isLoading: saving, error }] = useSetMovieMatchMutation();
 
-    const pick = async (tmdbId: number | null) => {
+    const pick = async (tmdbId: number | null, kind?: MovieTmdbKind) => {
         if (
-            !(await setMatch({ id: item.id, tmdbId })
+            !(await setMatch({ id: item.id, tmdbId, kind })
                 .unwrap()
                 .then(
                     () => true,
@@ -77,10 +77,10 @@ export const MatchPicker: React.FC<MatchPickerProps> = ({ item, onClose }) => {
                     {!isFetching &&
                         candidates?.map((candidate) => (
                             <ListItemButton
-                                key={candidate.tmdbId}
+                                key={`${candidate.kind}-${candidate.tmdbId}`}
                                 disabled={saving}
-                                selected={candidate.tmdbId === item.tmdbId}
-                                onClick={() => void pick(candidate.tmdbId)}
+                                selected={candidate.tmdbId === item.tmdbId && candidate.kind === item.tmdbKind}
+                                onClick={() => void pick(candidate.tmdbId, candidate.kind)}
                                 sx={{ gap: 1.5, alignItems: "flex-start" }}
                             >
                                 <Box
@@ -105,6 +105,7 @@ export const MatchPicker: React.FC<MatchPickerProps> = ({ item, onClose }) => {
                                 <Box sx={{ minWidth: 0 }}>
                                     <Typography variant="subtitle2">
                                         {candidate.year ? `${candidate.title} (${candidate.year})` : candidate.title}
+                                        {candidate.kind === "tv" && item.kind === "movie" && " · TV"}
                                     </Typography>
                                     <Typography
                                         variant="caption"

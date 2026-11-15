@@ -33,7 +33,7 @@ export const SeriesPage: React.FC = () => {
     if (!series) return <Alert severity="warning">There is no such series.</Alert>;
     // The episodes share the entry of the series, so the first one stands for it.
     const first = series.episodes[0];
-    const { tmdbId } = first;
+    const { tmdbId, tmdbKind } = first;
     const rating = formatRating(first.rating);
     const watching = series.episodes.find((e) => e.id === watchingId);
 
@@ -94,7 +94,7 @@ export const SeriesPage: React.FC = () => {
                                 variant="outlined"
                                 startIcon={refreshing ? <CircularProgress size={16} /> : <RefreshIcon />}
                                 disabled={refreshing}
-                                onClick={() => void setMatch({ id: first.id, tmdbId })}
+                                onClick={() => void setMatch({ id: first.id, tmdbId, kind: tmdbKind ?? undefined })}
                             >
                                 Refresh from TMDB
                             </Button>

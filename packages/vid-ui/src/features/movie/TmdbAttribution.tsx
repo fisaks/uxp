@@ -20,7 +20,7 @@ export const TmdbAttribution: React.FC = () => (
             />
         </Box>
         <Typography variant="caption" color="text.secondary">
-            This product uses the TMDB API but is not endorsed or certified by TMDB.
+            This application uses the TMDB API but is not endorsed or certified by TMDB.
         </Typography>
     </Box>
 );

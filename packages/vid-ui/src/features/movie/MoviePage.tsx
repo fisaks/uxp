@@ -32,7 +32,7 @@ export const MoviePage: React.FC<{ category: MovieSectionCategory }> = ({ catego
     if (!items) return <CircularProgress sx={{ display: "block", mx: "auto", mt: 4 }} />;
     if (!item) return <Alert severity="warning">There is no such film.</Alert>;
     const rating = formatRating(item.rating);
-    const { tmdbId } = item;
+    const { tmdbId, tmdbKind } = item;
 
     return (
         <Box sx={{ p: { xs: 0, sm: 2 }, maxWidth: PAGE_WIDTH, mx: "auto" }}>
@@ -99,7 +99,7 @@ export const MoviePage: React.FC<{ category: MovieSectionCategory }> = ({ catego
                                 variant="outlined"
                                 startIcon={refreshing ? <CircularProgress size={16} /> : <RefreshIcon />}
                                 disabled={refreshing}
-                                onClick={() => void setMatch({ id: item.id, tmdbId })}
+                                onClick={() => void setMatch({ id: item.id, tmdbId, kind: tmdbKind ?? undefined })}
                             >
                                 Refresh from TMDB
                             </Button>

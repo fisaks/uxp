@@ -3,7 +3,10 @@
  * everything else is converted to h264/aac mp4, split films (CD01/CD02) are merged, text subtitles become WebVTT.
  * Originals are not kept with the movies. Rerunning skips what is already done.
  *
- *   tsx src/movie/convert-movies.ts --category movies --source ~/media/Movies --dest /movies/Movies [--dry-run] [--only "Mad Max"]
+ *   tsx src/movie/convert-movies.ts --category movies --source ~/media/Movies --dest /movies/Movies [--dry-run] [--only "Mad Max"] [--original-language kor]
+ *
+ * `--original-language` (three letters) is the language of the film: that audio track is kept and made the default. Use it with `--only`, as it
+ * counts for every film of the run. Without it the first audio track of each file is taken for the original.
  */
 import { MovieCategory } from "@vid/common";
 import fs from "fs";
@@ -32,9 +35,10 @@ const main = async () => {
     const source = argument("source");
     const dest = argument("dest");
     const only = argument("only")?.toLowerCase();
+    const originalLanguage = argument("original-language");
     const dryRun = process.argv.includes("--dry-run");
     if (!category || !CATEGORIES.includes(category) || !source || !dest) {
-        console.error(`Usage: convert-movies --category ${CATEGORIES.join("|")} --source <folder> --dest <folder> [--only <title>] [--dry-run]`);
+        console.error(`Usage: convert-movies --category ${CATEGORIES.join("|")} --source <folder> --dest <folder> [--only <title>] [--original-language <kor>] [--dry-run]`);
         process.exit(1);
     }
 
@@ -75,6 +79,7 @@ const main = async () => {
                 inputs: job.inputs.map((file) => path.join(source, file)),
                 output: job.output,
                 subtitleFiles: job.subtitleFiles.map((file) => path.join(source, file)),
+                originalLanguage,
                 dryRun,
                 log: (message) => process.env.VERBOSE && console.log(`  ${message}`),
             });

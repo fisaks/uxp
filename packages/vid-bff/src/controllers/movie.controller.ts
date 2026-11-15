@@ -1,4 +1,4 @@
-import { AppErrorV2, Route } from "@uxp/bff-common";
+import { AppErrorV2, AppLogger, Route } from "@uxp/bff-common";
 import { ErrorCodes } from "@uxp/common";
 import {
     HomeVideoStreamQuery,
@@ -14,6 +14,9 @@ import {
     MovieMatchSearchSchema,
     MovieMatchUpdate,
     MovieMatchUpdateSchema,
+    MovieSearchQuery,
+    MovieSearchResult,
+    MovieSearchSchema,
     MovieStreamLink,
     MovieStreamSchema,
     MovieSubtitleParams,
@@ -29,10 +32,26 @@ const ONE_DAY_SECONDS = 24 * 60 * 60;
 
 const notFound = (what: string) => new AppErrorV2({code: ErrorCodes.NOT_FOUND, message: `There is no such ${what}`, params: { resource: what } });
 
+const searchUnavailable = () => new AppErrorV2({ code: ErrorCodes.SERVICE_NOT_CONFIGURED, message: "Search is not available" });
+
 export class MovieController {
     @Route("get", "/movies/items", { authenticate: true, schema: MovieItemsSchema })
     async getItems(req: FastifyRequest<{ Querystring: MovieItemsQuery }>): Promise<MovieItem[]> {
         return movieService.list(req.query.category);
+    }
+
+    /** The ids of the items that match the words, best first. */
+    @Route("get", "/movies/search", { authenticate: true, schema: MovieSearchSchema })
+    async search(req: FastifyRequest<{ Querystring: MovieSearchQuery }>): Promise<MovieSearchResult> {
+        if (!movieService.search.available) {
+            throw searchUnavailable();
+        }
+        try {
+            return { ids: await movieService.search.find(req.query.q) };
+        } catch (error) {
+            AppLogger.error(undefined, { message: "[Search] The movie search failed", error });
+            throw searchUnavailable();
+        }
     }
 
     @Route("get", "/movies/items/:id", { authenticate: true, schema: MovieItemParamsSchema })
@@ -58,7 +77,7 @@ export class MovieController {
     /** Sets the TMDB entry of an item (of its series for an episode). A null id says there is none. */
     @Route("put", "/movies/items/:id/match", { authenticate: true, schema: MovieMatchUpdateSchema })
     async updateMatch(req: FastifyRequest<{ Params: MovieItemParams; Body: MovieMatchUpdate }>): Promise<MovieItem> {
-        return movieService.setMatch(req.params.id, req.body.tmdbId);
+        return movieService.setMatch(req.params.id, req.body.tmdbId, req.body.kind);
     }
 
     /** The poster of an item. Found by item id, so no path is ever taken from the request. */

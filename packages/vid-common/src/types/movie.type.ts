@@ -1,6 +1,9 @@
 /** Which folder of the media root an item is in. */
 export type MovieCategory = "movies" | "kids" | "tv";
 
+/** Where TMDB keeps an entry: a film or a series. A TV film or a miniseries can be a series there. */
+export type MovieTmdbKind = "movie" | "tv";
+
 /** A subtitle file next to a video. */
 export type MovieSubtitle = {
     /** Names the subtitle in the API: its place in the list of the item. */
@@ -32,6 +35,8 @@ export type MovieItem = {
     subtitles: MovieSubtitle[];
     /** The TMDB entry of the film, or of the series for an episode. Null when there is no match. */
     tmdbId: number | null;
+    /** Which TMDB list the entry is in, null when there is no match. */
+    tmdbKind: MovieTmdbKind | null;
     /** From TMDB, in English. */
     overview: string | null;
     /** From TMDB, 0 to 10. */
@@ -49,6 +54,7 @@ export type MovieItemUpdate = {
 /** A TMDB entry the user can pick for an item. */
 export type MovieMatchCandidate = {
     tmdbId: number;
+    kind: MovieTmdbKind;
     title: string;
     year: number | null;
     overview: string | null;
@@ -63,6 +69,8 @@ export type MovieMatchQuery = {
 /** The TMDB entry the user picks for an item. Null says there is no match, and it is not looked up again. */
 export type MovieMatchUpdate = {
     tmdbId: number | null;
+    /** Where the entry is. Left out, it is the kind the item has now (a series for an episode, else a film). */
+    kind?: MovieTmdbKind;
 };
 
 export type MovieItemParams = {
@@ -83,3 +91,25 @@ export type MovieStreamLink = {
     path: string;
     expiresAt: string;
 };
+
+export type MovieSearchQuery = {
+    q: string;
+};
+
+/** The ids of the items that match the words, best match first. An episode is found by its series name too. */
+export type MovieSearchResult = {
+    ids: string[];
+};
+
+/** The document of an item in the search index. */
+export type MovieSearchDoc = {
+    id: string;
+    title: string;
+    /** The series of an episode, else empty. */
+    series: string;
+    year: string;
+    overview: string;
+};
+
+/** Name of the Meilisearch index of the movies. */
+export const MOVIE_SEARCH_INDEX = "vid_movies";

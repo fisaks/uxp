@@ -9,6 +9,7 @@ import {
     ListItemAvatar,
     ListItemButton,
     ListItemText,
+    ListSubheader,
     Paper,
     Popper,
     TextField,
@@ -18,18 +19,27 @@ import { usePortalContainerRef } from "@uxp/ui-lib";
 import React, { useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { thumbnailUrl } from "../../api/home-video-api";
+import { MovieItem } from "@vid/common";
 import { HOME_VIDEOS_PATH } from "../../menu";
 import { clipName, formatDate } from "../home-video/clipFormat";
 import { clipPath } from "../home-video/ClipTile";
 import { useGetClipsQuery } from "../home-video/home-video.api";
+import { moviePath, MovieSectionCategory, seriesPath } from "../movie/movieSections";
+import { posterUrl } from "../movie/movieUrls";
 import { LabelledIconButton } from "../shared/LabelledIconButton";
 import { useClipSearch } from "./useClipSearch";
+import { useMovieSearch } from "./useMovieSearch";
 
 export const SEARCH_PARAM = "q";
 
 const DROPDOWN_MAX_HEIGHT = "70vh";
 const DROPDOWN_HITS = 8;
 const POSTER_WIDTH = 64;
+const FILM_POSTER_WIDTH = 40;
+
+/** Where a film or a series is: an episode is shown on the page of its series. */
+const moviePathOf = (item: MovieItem) =>
+    item.series ? seriesPath(item.series) : moviePath(item.category as MovieSectionCategory, item.id);
 
 type SearchBoxProps = {
     /** Puts the cursor in the box when it is shown, for a box that was opened by pressing the search icon. */
@@ -39,7 +49,7 @@ type SearchBoxProps = {
 };
 
 /**
- * The search box of the app: while typing, a dropdown shows the best few clips, and Enter or "Show all results" opens the
+ * The search box of the app: while typing, a dropdown shows the best few clips and the best few films and series, and Enter or "Show all results" opens the
  * home videos list with the words in its address, where the clips that match are shown together with the other filters.
  */
 export const SearchBox: React.FC<SearchBoxProps> = ({ autoFocus, onDone }) => {
@@ -54,6 +64,7 @@ export const SearchBox: React.FC<SearchBoxProps> = ({ autoFocus, onDone }) => {
     const [open, setOpen] = useState(false);
     const trimmed = query.trim();
     const ids = useClipSearch(trimmed);
+    const movieHits = useMovieSearch(trimmed) ?? [];
     const hits = useMemo(() => {
         const byId = new Map((clips ?? []).map((clip) => [clip.id, clip]));
         return (ids ?? []).flatMap((id) => byId.get(id) ?? []);
@@ -119,12 +130,13 @@ export const SearchBox: React.FC<SearchBoxProps> = ({ autoFocus, onDone }) => {
                     sx={{ zIndex: (theme) => theme.zIndex.modal, width: anchorRef.current?.clientWidth }}
                 >
                     <Paper elevation={8} sx={{ mt: 0.5, maxHeight: DROPDOWN_MAX_HEIGHT, overflowY: "auto", minWidth: 280 }}>
-                        {hits.length === 0 ? (
+                        {hits.length === 0 && movieHits.length === 0 ? (
                             <Typography color="text.secondary" sx={{ p: 1.5 }}>
                                 Nothing found.
                             </Typography>
                         ) : (
                             <List dense disablePadding>
+                                {hits.length > 0 && movieHits.length > 0 && <ListSubheader disableSticky>Home videos</ListSubheader>}
                                 {hits.slice(0, DROPDOWN_HITS).map((clip) => (
                                     <ListItemButton
                                         key={clip.id}
@@ -155,11 +167,50 @@ export const SearchBox: React.FC<SearchBoxProps> = ({ autoFocus, onDone }) => {
                                         />
                                     </ListItemButton>
                                 ))}
-                                <Box sx={{ p: 0.5 }}>
-                                    <Button size="small" onClick={() => showAll()}>
-                                        {hits.length > DROPDOWN_HITS ? `Show all ${hits.length} results` : "Show on the list"}
-                                    </Button>
-                                </Box>
+                                {hits.length > 0 && (
+                                    <Box sx={{ p: 0.5 }}>
+                                        <Button size="small" onClick={() => showAll()}>
+                                            {hits.length > DROPDOWN_HITS ? `Show all ${hits.length} results` : "Show on the list"}
+                                        </Button>
+                                    </Box>
+                                )}
+                                {movieHits.length > 0 && <ListSubheader disableSticky>Films and series</ListSubheader>}
+                                {movieHits.slice(0, DROPDOWN_HITS).map((item) => (
+                                    <ListItemButton
+                                        key={item.id}
+                                        onClick={() => {
+                                            setOpen(false);
+                                            navigate(moviePathOf(item));
+                                            onDone?.();
+                                        }}
+                                    >
+                                        <ListItemAvatar sx={{ minWidth: POSTER_WIDTH + 12 }}>
+                                            <Box
+                                                sx={{
+                                                    width: FILM_POSTER_WIDTH,
+                                                    aspectRatio: "2 / 3",
+                                                    bgcolor: "action.hover",
+                                                    borderRadius: 0.5,
+                                                    overflow: "hidden",
+                                                }}
+                                            >
+                                                {item.hasPoster && (
+                                                    <Box
+                                                        component="img"
+                                                        src={posterUrl(item.id)}
+                                                        alt=""
+                                                        sx={{ display: "block", width: "100%", height: "100%", objectFit: "cover" }}
+                                                    />
+                                                )}
+                                            </Box>
+                                        </ListItemAvatar>
+                                        <ListItemText
+                                            primary={item.series ?? item.title}
+                                            secondary={item.series ? "Series" : item.year ? String(item.year) : undefined}
+                                            slotProps={{ primary: { noWrap: true } }}
+                                        />
+                                    </ListItemButton>
+                                ))}
                             </List>
                         )}
                     </Paper>
