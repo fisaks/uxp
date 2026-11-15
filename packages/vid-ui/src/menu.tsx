@@ -1,4 +1,6 @@
+import ChildCareIcon from "@mui/icons-material/ChildCare";
 import CastIcon from "@mui/icons-material/Cast";
+import MovieIcon from "@mui/icons-material/Movie";
 import SpeakerGroupIcon from "@mui/icons-material/SpeakerGroup";
 import PlaylistPlayIcon from "@mui/icons-material/PlaylistPlay";
 import VideoLibraryIcon from "@mui/icons-material/VideoLibrary";
@@ -12,6 +14,8 @@ export const MENU_ITEMS: MenuItem[] = [
     { path: "/chromecasts", label: "Chromecasts", icon: <CastIcon /> },
     { path: "/playlists", label: "Playlists", icon: <PlaylistPlayIcon /> },
     { path: "/cast-groups", label: "Cast groups", icon: <SpeakerGroupIcon /> },
+    { path: "/movies", label: "Movies", icon: <MovieIcon /> },
+    { path: "/kids", label: "Kids", icon: <ChildCareIcon /> },
 ];
 
 export const HOME_PATH = "/";
@@ -20,6 +24,8 @@ export const HOME_VIDEOS_PATH = MENU_ITEMS[0].path;
 export const CHROMECASTS_PATH = MENU_ITEMS[1].path;
 export const PLAYLISTS_PATH = MENU_ITEMS[2].path;
 export const CAST_GROUPS_PATH = MENU_ITEMS[3].path;
+export const MOVIES_PATH = MENU_ITEMS[4].path;
+export const KIDS_PATH = MENU_ITEMS[5].path;
 
 export const PLAYER_PATH = "/player";
 export const playerPath = (deviceId: string) => `${PLAYER_PATH}/${encodeURIComponent(deviceId)}`;

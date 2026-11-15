@@ -4,6 +4,6 @@ import { axiosBaseQuery } from "../api/axiosBaseQuery";
 export const vidApi = createApi({
     reducerPath: "vidApi",
     baseQuery: axiosBaseQuery(),
-    tagTypes: ["Labels"],
+    tagTypes: ["Labels", "Movies"],
     endpoints: () => ({}), // Empty, features inject their endpoints
 });

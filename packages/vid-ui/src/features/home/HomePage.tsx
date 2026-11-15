@@ -2,7 +2,7 @@ import PlayCircleOutlineIcon from "@mui/icons-material/PlayCircleOutline";
 import { Box, ButtonBase, Paper, Typography } from "@mui/material";
 import React from "react";
 import { Link } from "react-router-dom";
-import { HomeVideoClip } from "@vid/common";
+import { HomeVideoClip, MovieItem } from "@vid/common";
 import { thumbnailUrl } from "../../api/home-video-api";
 import { CHROMECASTS_PATH, MENU_ITEMS, playerPath } from "../../menu";
 import { useAppSelector } from "../../hooks";
@@ -13,6 +13,8 @@ import { useGetCastGroupsQuery } from "../cast-group/castGroup.api";
 import { useGetPlaylistsQuery } from "../playlist/playlist.api";
 import { useGetClipsQuery } from "../home-video/home-video.api";
 import { clipName, isUnlabelled } from "../home-video/clipFormat";
+import { useGetMovieItemsQuery } from "../movie/movie.api";
+import { posterUrl } from "../movie/movieUrls";
 import { Mosaic } from "../shared/Mosaic";
 import { PAGE_WIDTH } from "../shared/pageWidth";
 
@@ -61,6 +63,12 @@ const Tile: React.FC<TileProps> = ({ to, icon, title, lines, picture }) => (
     </Paper>
 );
 
+const filmPosters = (items: MovieItem[]) =>
+    items
+        .filter((i) => i.hasPoster)
+        .slice(0, MOSAIC_CLIPS)
+        .map((i) => posterUrl(i.id));
+
 const plural = (count: number, one: string) => `${count} ${one}${count === 1 ? "" : "s"}`;
 
 /** The tiles of the places of the app, each with what is in it. */
@@ -70,6 +78,10 @@ export const HomePage: React.FC = () => {
     const chromecastsTile = MENU_ITEMS[1];
     const playlistsTile = MENU_ITEMS[2];
     const groupsTile = MENU_ITEMS[3];
+    const moviesTile = MENU_ITEMS[4];
+    const kidsTile = MENU_ITEMS[5];
+    const { data: movies } = useGetMovieItemsQuery("movies");
+    const { data: kids } = useGetMovieItemsQuery("kids");
     const { data: castGroups } = useGetCastGroupsQuery();
     const { data: playlists } = useGetPlaylistsQuery();
     // The first clip of some playlists, so the tile shows what is in them.
@@ -148,6 +160,20 @@ export const HomePage: React.FC = () => {
                     title={homeVideos.label}
                     lines={[info]}
                     picture={clips && clips.length > 0 && <Mosaic urls={spreadPosters(clips)} />}
+                />
+                <Tile
+                    to={moviesTile.path}
+                    icon={moviesTile.icon}
+                    title={moviesTile.label}
+                    lines={[movies && plural(movies.length, "film")]}
+                    picture={movies && filmPosters(movies).length > 0 && <Mosaic urls={filmPosters(movies)} />}
+                />
+                <Tile
+                    to={kidsTile.path}
+                    icon={kidsTile.icon}
+                    title={kidsTile.label}
+                    lines={[kids && plural(kids.length, "film")]}
+                    picture={kids && filmPosters(kids).length > 0 && <Mosaic urls={filmPosters(kids)} />}
                 />
                 <Tile
                     to={chromecastsTile.path}
