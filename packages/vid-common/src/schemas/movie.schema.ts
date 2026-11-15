@@ -1,6 +1,6 @@
 import { SchemaValidate } from "@uxp/common";
 import { HomeVideoStreamQuery } from "../types/home-video.type";
-import { MovieItemParams, MovieItemsQuery, MovieItemUpdate, MovieSubtitleParams } from "../types/movie.type";
+import { MovieItemParams, MovieItemsQuery, MovieItemUpdate, MovieMatchQuery, MovieMatchUpdate, MovieSubtitleParams } from "../types/movie.type";
 import { MOVIE_ID_PATTERN } from "../types/video-id";
 
 export const MovieItemParamsSchema: SchemaValidate<undefined, undefined, MovieItemParams> = {
@@ -50,3 +50,23 @@ export const MovieStreamSchema = {
         additionalProperties: false,
     },
 } as unknown as SchemaValidate<undefined, HomeVideoStreamQuery, MovieItemParams>;
+
+export const MovieMatchSearchSchema = {
+    params: MovieItemParamsSchema.params,
+    querystring: {
+        type: "object",
+        properties: { q: { type: "string", minLength: 1, maxLength: 200 } },
+        required: ["q"],
+        additionalProperties: false,
+    },
+} as unknown as SchemaValidate<undefined, MovieMatchQuery, MovieItemParams>;
+
+export const MovieMatchUpdateSchema = {
+    params: MovieItemParamsSchema.params,
+    body: {
+        type: "object",
+        properties: { tmdbId: { type: ["integer", "null"], minimum: 1, nullable: true } },
+        required: ["tmdbId"],
+        additionalProperties: false,
+    },
+} as unknown as SchemaValidate<MovieMatchUpdate, undefined, MovieItemParams>;

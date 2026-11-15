@@ -9,6 +9,11 @@ import {
     MovieItemsSchema,
     MovieItemUpdate,
     MovieItemUpdateSchema,
+    MovieMatchCandidate,
+    MovieMatchQuery,
+    MovieMatchSearchSchema,
+    MovieMatchUpdate,
+    MovieMatchUpdateSchema,
     MovieStreamLink,
     MovieStreamSchema,
     MovieSubtitleParams,
@@ -19,6 +24,8 @@ import { createReadStream } from "fs";
 import { movieService } from "../movie/movie.service";
 import { sendVideoFile } from "../stream/send-video-file";
 import { isValidStreamQuery, signStreamQuery } from "../stream/signed-url";
+
+const ONE_DAY_SECONDS = 24 * 60 * 60;
 
 const notFound = (what: string) => new AppErrorV2({ statusCode: 404, code: ErrorCodes.NOT_FOUND, message: `There is no such ${what}`, params: { resource: what } });
 
@@ -40,6 +47,44 @@ export class MovieController {
     @Route("patch", "/movies/items/:id", { authenticate: true, schema: MovieItemUpdateSchema })
     async updateItem(req: FastifyRequest<{ Params: MovieItemParams; Body: MovieItemUpdate }>): Promise<MovieItem> {
         return movieService.update(req.params.id, req.body);
+    }
+
+    /** The TMDB entries for a text, for picking the right one for an item. */
+    @Route("get", "/movies/items/:id/tmdb-search", { authenticate: true, schema: MovieMatchSearchSchema })
+    async searchMatch(req: FastifyRequest<{ Params: MovieItemParams; Querystring: MovieMatchQuery }>): Promise<MovieMatchCandidate[]> {
+        return movieService.searchEntries(req.params.id, req.query.q);
+    }
+
+    /** Sets the TMDB entry of an item (of its series for an episode). A null id says there is none. */
+    @Route("put", "/movies/items/:id/match", { authenticate: true, schema: MovieMatchUpdateSchema })
+    async updateMatch(req: FastifyRequest<{ Params: MovieItemParams; Body: MovieMatchUpdate }>): Promise<MovieItem> {
+        return movieService.setMatch(req.params.id, req.body.tmdbId);
+    }
+
+    /** The poster of an item. Found by item id, so no path is ever taken from the request. */
+    @Route("get", "/movies/items/:id/poster", { authenticate: true, schema: MovieItemParamsSchema })
+    async getPoster(req: FastifyRequest<{ Params: MovieItemParams }>, reply: FastifyReply) {
+        return this.sendPoster(reply, movieService.posterPath(req.params.id));
+    }
+
+    /** The poster for a Chromecast, which has no cookie. Allowed by the same signature as the stream. */
+    @Route("get", "/movies/poster/:id", { authenticate: false, schema: MovieStreamSchema })
+    async getSignedPoster(req: FastifyRequest<{ Params: MovieItemParams; Querystring: HomeVideoStreamQuery }>, reply: FastifyReply) {
+        const { id } = req.params;
+        const { exp, sig } = req.query;
+        if (!isValidStreamQuery(id, exp, sig)) {
+            throw new AppErrorV2({ statusCode: 403, code: ErrorCodes.FORBIDDEN, message: "The link is not valid or has expired" });
+        }
+        return this.sendPoster(reply, movieService.posterPath(id));
+    }
+
+    private sendPoster(reply: FastifyReply, file: string | undefined) {
+        if (!file) {
+            throw notFound("poster");
+        }
+        reply.header("Content-Type", "image/jpeg");
+        reply.header("Cache-Control", `private, max-age=${ONE_DAY_SECONDS}`);
+        return reply.send(createReadStream(file));
     }
 
     /** A subtitle file as WebVTT. Found by item id and number, so no path is ever taken from the request. */

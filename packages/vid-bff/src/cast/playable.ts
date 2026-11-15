@@ -43,6 +43,7 @@ export const findPlayable = (id: string): Playable | undefined => {
                 title: item.kind === "episode" ? episodeTitle(item) : item.title,
                 file: item.file,
                 streamRoute: MOVIE_STREAM,
+                posterRoute: item.hasPoster ? "/api/movies/poster/" : undefined,
             }
         );
     }
