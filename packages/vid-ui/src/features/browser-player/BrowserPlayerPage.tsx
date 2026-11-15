@@ -19,7 +19,7 @@ import {
     QueueEditError,
 } from "@vid/common";
 import React, { useEffect, useRef, useState } from "react";
-import { createStreamLink, streamUrl, thumbnailUrl } from "../../api/home-video-api";
+import { createStreamLink, streamUrl } from "../../api/home-video-api";
 import {
     useEditCastQueueMutation,
     useNextCastMutation,
@@ -28,8 +28,8 @@ import {
     useSeekCastMutation,
 } from "../cast/cast.api";
 import { QueueList } from "../cast/QueueList";
-import { clipName } from "../home-video/clipFormat";
-import { useGetClipsQuery } from "../home-video/home-video.api";
+import { SubtitleTracks } from "../video/SubtitleTracks";
+import { useVideos } from "../video/useVideos";
 import { SavePlaylistButton } from "../playlist/SavePlaylistButton";
 import { LabelledIconButton } from "../shared/LabelledIconButton";
 import { RateButton } from "../cast/RateButton";
@@ -93,7 +93,7 @@ const EMPTY_QUEUE: CastQueue = { clipIds: [], index: 0, repeat: false };
  * more and shows where it is. The queue lives here only: it is gone when the tab is closed.
  */
 export const BrowserPlayerPage: React.FC = () => {
-    const { data: clips } = useGetClipsQuery();
+    const findVideo = useVideos();
     const [queue, setQueue] = useState<CastQueue>(EMPTY_QUEUE);
     // Counts the clips that are started, so that the clip that is already playing can be started again.
     const [playToken, setPlayToken] = useState(0);
@@ -125,7 +125,7 @@ export const BrowserPlayerPage: React.FC = () => {
     const [editGroupQueue] = useEditCastQueueMutation();
 
     const clipId = queue.clipIds[queue.index];
-    const clip = clips?.find((c) => c.id === clipId);
+    const info = findVideo(clipId);
     const next = nextIndex(queue);
 
     const report = () => {
@@ -360,7 +360,7 @@ export const BrowserPlayerPage: React.FC = () => {
                         key={playToken}
                         ref={video}
                         src={url}
-                        poster={clipId ? thumbnailUrl(clipId) : undefined}
+                        poster={info?.imageUrl}
                         controls={!followGroup}
                         autoPlay={!startPaused.current}
                         playsInline
@@ -384,12 +384,14 @@ export const BrowserPlayerPage: React.FC = () => {
                         // The group moves on to the next clip when it is time, and the tab follows.
                         onEnded={() => !following.current && advance(false)}
                         onError={() => !following.current && advance(true)}
-                    />
+                    >
+                        <SubtitleTracks id={clipId} subtitles={info?.subtitles ?? []} />
+                    </video>
                 )}
             </Box>
             <Box sx={{ mt: 1.5 }}>
                 <Typography variant="h6" noWrap>
-                    {clip ? clipName(clip) : clipId ? "" : "Nothing to play"}
+                    {info ? info.name : clipId ? "" : "Nothing to play"}
                 </Typography>
                 {followGroup && (
                     <Typography variant="body2" color="text.secondary" noWrap>

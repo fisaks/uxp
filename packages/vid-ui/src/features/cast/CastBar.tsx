@@ -24,9 +24,8 @@ import {
 import { CAST_PLAYBACK_RATES, CastSessionSnapshot } from "@vid/common";
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { useGetClipsQuery } from "../home-video/home-video.api";
-import { thumbnailUrl } from "../../api/home-video-api";
-import { clipName, formatDuration } from "../home-video/clipFormat";
+import { formatDuration } from "../home-video/clipFormat";
+import { useVideos } from "../video/useVideos";
 import { LabelledIconButton } from "../shared/LabelledIconButton";
 import { ToggleIconButton } from "../shared/ToggleIconButton";
 import { PAGE_WIDTH } from "../shared/pageWidth";
@@ -51,14 +50,14 @@ const POSTER_WIDE = { width: 64, height: 36 };
 const POSTER_NARROW = { width: 48, height: 27 };
 
 const SessionRow: React.FC<{ session: CastSessionSnapshot; now: number; compact: boolean }> = ({ session, now, compact }) => {
-    const { data: clips } = useGetClipsQuery();
+    const findVideo = useVideos();
     const { play, pause, stop, seek, restart, next, editQueue, setRate } = useCast();
     const { show: showPlayerTab } = useBrowserPlayer();
     const theme = useTheme();
     const wide = useMediaQuery(theme.breakpoints.up("md")) && !compact;
     const [dragging, setDragging] = useState<number | undefined>(undefined);
-    const clip = clips?.find((c) => c.id === session.clipId);
-    const title = clip ? clipName(clip) : session.title;
+    const video = findVideo(session.clipId);
+    const title = video ? video.name : session.title;
     const duration = session.durationSec;
     const position = Math.min(dragging ?? sessionPosition(session, now), duration || Infinity);
     const playing = session.state === "PLAYING" || session.state === "BUFFERING";
@@ -176,7 +175,7 @@ const SessionRow: React.FC<{ session: CastSessionSnapshot; now: number; compact:
                 >
                     <Box
                         component="img"
-                        src={thumbnailUrl(session.clipId)}
+                        src={video?.imageUrl}
                         alt=""
                         sx={{ ...(wide ? POSTER_WIDE : POSTER_NARROW), flexShrink: 0, objectFit: "cover", borderRadius: 0.5 }}
                     />
@@ -264,7 +263,7 @@ const BANNER_SHOW_MS = 2500;
 /** The clips just put in a queue, flying in above the bar and out again. The same place on screen as the bar, where the eye is. */
 const QueuedBanner: React.FC = () => {
     const queued = useAppSelector(selectQueued);
-    const { data: clips } = useGetClipsQuery();
+    const findVideo = useVideos();
     const [open, setOpen] = useState(false);
     useEffect(() => {
         if (!queued) return;
@@ -273,7 +272,7 @@ const QueuedBanner: React.FC = () => {
         return () => clearTimeout(timer);
     }, [queued?.id]);
 
-    const clip = clips?.find((c) => c.id === queued?.clipIds[0]);
+    const video = findVideo(queued?.clipIds[0]);
     const count = queued?.clipIds.length ?? 0;
     return (
         <Slide in={open} direction="up" mountOnEnter unmountOnExit>
@@ -282,14 +281,14 @@ const QueuedBanner: React.FC = () => {
                     {queued && (
                         <Box
                             component="img"
-                            src={thumbnailUrl(queued.clipIds[0])}
+                            src={video?.imageUrl}
                             alt=""
                             sx={{ ...POSTER_WIDE, flexShrink: 0, objectFit: "cover", borderRadius: 0.5 }}
                         />
                     )}
                     <Box sx={{ minWidth: 0 }}>
                         <Typography noWrap sx={{ fontWeight: 600 }}>
-                            {count > 1 ? `${count} clips` : clip ? clipName(clip) : ""}
+                            {count > 1 ? `${count} clips` : video ? video.name : ""}
                         </Typography>
                         <Typography noWrap variant="body2" color="text.secondary">
                             {queued?.text}

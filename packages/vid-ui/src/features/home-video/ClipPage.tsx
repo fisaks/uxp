@@ -4,36 +4,19 @@ import { Alert, Box, Button, CircularProgress, Stack, Typography } from "@mui/ma
 import React, { useEffect, useRef, useState } from "react";
 import { BROWSER_PLAYBACK_RATES } from "@vid/common";
 import { Link, useParams } from "react-router-dom";
-import { createStreamLink, streamUrl, thumbnailUrl } from "../../api/home-video-api";
+import { thumbnailUrl } from "../../api/home-video-api";
 import { CastPicker } from "../cast/CastPicker";
 import { RateButton } from "../cast/RateButton";
 import { ClipForm } from "./ClipForm";
 import { clipPath } from "./ClipTile";
 import { clipName, formatDate } from "./clipFormat";
 import { PAGE_WIDTH } from "../shared/pageWidth";
+import { useStreamUrl } from "../video/useStreamUrl";
 import { useGetClipsQuery } from "./home-video.api";
 
 // On a phone the buttons are only arrows, so the name of the clip has the room.
 const STEP_BUTTON_SX = { minWidth: 0, px: { xs: 0.5, sm: 1.5 } };
 const STEP_LABEL_SX = { display: { xs: "none", sm: "inline" } };
-
-/** The link to the stream is made when the page opens, and again for the next clip. */
-const useStreamUrl = (id: string) => {
-    const [url, setUrl] = useState<string>();
-    const [failed, setFailed] = useState(false);
-    useEffect(() => {
-        let current = true;
-        setUrl(undefined);
-        setFailed(false);
-        createStreamLink(id)
-            .then((link) => current && setUrl(streamUrl(link)))
-            .catch(() => current && setFailed(true));
-        return () => {
-            current = false;
-        };
-    }, [id]);
-    return { url, failed };
-};
 
 export const ClipPage: React.FC = () => {
     const { id = "" } = useParams();

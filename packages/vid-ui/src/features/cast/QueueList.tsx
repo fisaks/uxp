@@ -3,11 +3,10 @@ import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import { Box, ButtonBase, Stack, Typography } from "@mui/material";
 import { CastQueue } from "@vid/common";
 import React from "react";
-import { thumbnailUrl } from "../../api/home-video-api";
-import { clipName, formatDuration } from "../home-video/clipFormat";
-import { useGetClipsQuery } from "../home-video/home-video.api";
+import { formatDuration } from "../home-video/clipFormat";
 import { LabelledIconButton } from "../shared/LabelledIconButton";
 import { SortableList, uniqueKeys } from "../shared/SortableList";
+import { useVideos } from "../video/useVideos";
 
 const QUEUE_POSTER = { width: 64, height: 36 };
 
@@ -23,7 +22,7 @@ type QueueListProps = {
 
 /** The clips of a queue, the one that plays marked: drag to reorder, click to play one, a button to remove one. */
 export const QueueList: React.FC<QueueListProps> = ({ queue, onJump, onRemove, onMove, onOpenClip }) => {
-    const { data: clips } = useGetClipsQuery();
+    const findVideo = useVideos();
     const keys = uniqueKeys(queue.clipIds);
     return (
         <SortableList
@@ -31,7 +30,7 @@ export const QueueList: React.FC<QueueListProps> = ({ queue, onJump, onRemove, o
             getKey={(_id, index) => keys[index]}
             onMove={onMove}
             renderItem={(id, index, handle) => {
-                const item = clips?.find((c) => c.id === id);
+                const item = findVideo(id);
                 const current = index === queue.index;
                 return (
                     <Stack
@@ -47,13 +46,13 @@ export const QueueList: React.FC<QueueListProps> = ({ queue, onJump, onRemove, o
                         >
                             <Box
                                 component="img"
-                                src={thumbnailUrl(id)}
+                                src={item?.imageUrl}
                                 alt=""
                                 sx={{ ...QUEUE_POSTER, flexShrink: 0, objectFit: "cover", borderRadius: 0.5, bgcolor: "action.hover" }}
                             />
                             <Box sx={{ minWidth: 0, flex: 1 }}>
                                 <Typography noWrap sx={{ fontWeight: current ? 700 : 400 }}>
-                                    {item ? clipName(item) : "Missing clip"}
+                                    {item ? item.name : "Missing clip"}
                                 </Typography>
                                 {item && (
                                     <Typography noWrap variant="caption" color="text.secondary">
@@ -62,7 +61,7 @@ export const QueueList: React.FC<QueueListProps> = ({ queue, onJump, onRemove, o
                                 )}
                             </Box>
                         </ButtonBase>
-                        {item && onOpenClip && (
+                        {item?.path && onOpenClip && (
                             <LabelledIconButton label="Open the clip page" onClick={() => onOpenClip(id)}>
                                 <OpenInNewIcon />
                             </LabelledIconButton>

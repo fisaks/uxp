@@ -6,8 +6,8 @@ import { posterBumped } from "./movieUrls";
 
 export const movieApi = vidApi.injectEndpoints({
     endpoints: (builder) => ({
-        /** The items of a category, by title. */
-        getMovieItems: builder.query<MovieItem[], MovieCategory>({
+        /** The items of a category, by title. Without a category, the items of all of them. */
+        getMovieItems: builder.query<MovieItem[], MovieCategory | undefined>({
             query: (category) => ({ url: apiUrl("movies/items"), params: { category } }),
             transformResponse: (all: MovieItem[]) => [...all].sort(compareMovies),
             providesTags: ["Movies"],

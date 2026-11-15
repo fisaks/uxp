@@ -15,3 +15,6 @@ export const posterUrl = (id: string) => {
 
 /** A picture of TMDB, for a candidate the user can pick. Nothing of it is kept here. */
 export const tmdbPosterUrl = (posterPath: string) => `https://image.tmdb.org/t/p/w92${posterPath}`;
+
+/** A subtitle as WebVTT. The route takes the cookie, which the browser sends to the same address as the rest of the API. */
+export const subtitleUrl = (id: string, index: number) => moviesUrl(`items/${id}/subtitles/${index}`);

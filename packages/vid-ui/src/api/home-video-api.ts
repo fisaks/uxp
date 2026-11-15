@@ -1,4 +1,4 @@
-import { HomeVideoStreamLink } from "@vid/common";
+import { HomeVideoStreamLink, isMovieId, MovieStreamLink } from "@vid/common";
 import axiosInstance from "./axiosInstance";
 import { getBaseUrl } from "../config";
 
@@ -7,11 +7,15 @@ export const apiUrl = (path: string) => `${getBaseUrl().replace(/\/$/, "")}/api/
 
 const homeVideosUrl = (path: string) => apiUrl(`home-videos/${path}`);
 
-/** A stream link is made for one playback and runs out, so it is not cached like the data of the pages. */
+/** A stream link is made for one playback and runs out, so it is not cached like the data of the pages. The id tells a clip from a film. */
 export const createStreamLink = (id: string) =>
-    axiosInstance.post<HomeVideoStreamLink>(homeVideosUrl(`clips/${id}/stream-link`)).then(({ data }) => data);
+    axiosInstance
+        .post<
+            HomeVideoStreamLink | MovieStreamLink
+        >(apiUrl(isMovieId(id) ? `movies/items/${id}/stream-link` : `home-videos/clips/${id}/stream-link`))
+        .then(({ data }) => data);
 
 export const thumbnailUrl = (id: string) => homeVideosUrl(`clips/${id}/thumbnail`);
 
 /** The stream link is a path on the API; the browser plays it from the same address as the rest of the API. */
-export const streamUrl = (link: HomeVideoStreamLink) => `${getBaseUrl().replace(/\/$/, "")}${link.path}`;
+export const streamUrl = (link: HomeVideoStreamLink | MovieStreamLink) => `${getBaseUrl().replace(/\/$/, "")}${link.path}`;

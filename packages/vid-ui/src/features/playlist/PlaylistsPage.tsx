@@ -18,10 +18,11 @@ import { usePortalContainerRef } from "@uxp/ui-lib";
 import { errorText } from "../../api/errorText";
 import { Playlist, PLAYLIST_NAME_MAX_LENGTH } from "@vid/common";
 import React, { useState } from "react";
-import { thumbnailUrl } from "../../api/home-video-api";
 import { PlayAllButton } from "../cast/PlayAllButton";
 import { formatDuration } from "../home-video/clipFormat";
 import { useGetClipsQuery } from "../home-video/home-video.api";
+import { useGetMovieItemsQuery } from "../movie/movie.api";
+import { useVideos } from "../video/useVideos";
 import { Mosaic } from "../shared/Mosaic";
 import { LabelledIconButton } from "../shared/LabelledIconButton";
 import { PAGE_WIDTH } from "../shared/pageWidth";
@@ -41,8 +42,7 @@ const RenameDialog: React.FC<{ playlist: Playlist; onClose: () => void }> = ({ p
 
     const submit = async () => {
         const result = await rename({ id: playlist.id, name: trimmed });
-        if ("error" in result)
-            return setError(errorText(result.error));
+        if ("error" in result) return setError(errorText(result.error));
         onClose();
     };
 
@@ -80,8 +80,7 @@ const DeleteDialog: React.FC<{ playlist: Playlist; onClose: () => void }> = ({ p
 
     const submit = async () => {
         const result = await remove(playlist.id);
-        if ("error" in result)
-            return setError(errorText(result.error));
+        if ("error" in result) return setError(errorText(result.error));
         onClose();
     };
 
@@ -104,17 +103,20 @@ const DeleteDialog: React.FC<{ playlist: Playlist; onClose: () => void }> = ({ p
 };
 
 const PlaylistCard: React.FC<{ playlist: Playlist }> = ({ playlist }) => {
-    const { data: clips } = useGetClipsQuery();
+    const findVideo = useVideos();
+    const { isSuccess: clipsLoaded } = useGetClipsQuery();
+    const { isSuccess: moviesLoaded } = useGetMovieItemsQuery(undefined);
+    const loaded = clipsLoaded && moviesLoaded;
     const [renaming, setRenaming] = useState(false);
     const [deleting, setDeleting] = useState(false);
 
-    // A clip that is no longer in the library is left out when playing, and counted here.
-    const playable = clips ? playlist.clipIds.filter((id) => clips.some((c) => c.id === id)) : playlist.clipIds;
+    // A video that is no longer in the library is left out when playing, and counted here.
+    const playable = loaded ? playlist.clipIds.filter((id) => findVideo(id)) : playlist.clipIds;
     const missing = playlist.clipIds.length - playable.length;
-    const totalSeconds = clips ? playable.reduce((sum, id) => sum + (clips.find((c) => c.id === id)?.durationSeconds ?? 0), 0) : 0;
+    const totalSeconds = loaded ? playable.reduce((sum, id) => sum + (findVideo(id)?.durationSeconds ?? 0), 0) : 0;
     const info = [
         `${playlist.clipIds.length} ${playlist.clipIds.length === 1 ? "clip" : "clips"}`,
-        clips && totalSeconds > 0 ? formatDuration(totalSeconds) : undefined,
+        loaded && totalSeconds > 0 ? formatDuration(totalSeconds) : undefined,
         missing > 0 ? `${missing} missing` : undefined,
     ]
         .filter(Boolean)
@@ -123,7 +125,7 @@ const PlaylistCard: React.FC<{ playlist: Playlist }> = ({ playlist }) => {
     return (
         <Card variant="outlined">
             <CardContent sx={{ display: "flex", gap: 1.5, alignItems: "center" }}>
-                <Mosaic urls={playable.slice(0, MOSAIC_CLIPS).map(thumbnailUrl)} />
+                <Mosaic urls={playable.slice(0, MOSAIC_CLIPS).flatMap((id) => findVideo(id)?.imageUrl ?? [])} />
                 <Box sx={{ flex: 1, minWidth: 0 }}>
                     <Typography variant="subtitle1" noWrap sx={{ fontWeight: 600 }}>
                         {playlist.name}

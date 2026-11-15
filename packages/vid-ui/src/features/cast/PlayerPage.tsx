@@ -9,10 +9,8 @@ import StopIcon from "@mui/icons-material/Stop";
 import { Box, ButtonBase, Slider, Stack, Typography } from "@mui/material";
 import React, { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { thumbnailUrl } from "../../api/home-video-api";
-import { clipName, formatDuration } from "../home-video/clipFormat";
-import { clipPath } from "../home-video/ClipTile";
-import { useGetClipsQuery } from "../home-video/home-video.api";
+import { formatDuration } from "../home-video/clipFormat";
+import { useVideos } from "../video/useVideos";
 import { LabelledIconButton } from "../shared/LabelledIconButton";
 import { PAGE_WIDTH } from "../shared/pageWidth";
 import { SavePlaylistButton } from "../playlist/SavePlaylistButton";
@@ -36,7 +34,7 @@ export const PlayerPage: React.FC = () => {
     const { state, play, pause, stop, seek, next, editQueue, setRate } = useCast();
     const { show: showPlayerTab } = useBrowserPlayer();
     const { data: castGroups } = useGetCastGroupsQuery();
-    const { data: clips } = useGetClipsQuery();
+    const findVideo = useVideos();
     const session = state?.sessions.find((s) => s.deviceId === deviceId);
     const now = useNow(session?.state === "PLAYING");
     const [dragging, setDragging] = useState<number | undefined>(undefined);
@@ -50,7 +48,7 @@ export const PlayerPage: React.FC = () => {
     }
 
     const { queue } = session;
-    const clip = clips?.find((c) => c.id === session.clipId);
+    const video = findVideo(session.clipId);
     const duration = session.durationSec;
     const position = Math.min(dragging ?? sessionPosition(session, now), duration || Infinity);
     const playing = session.state === "PLAYING" || session.state === "BUFFERING";
@@ -65,19 +63,26 @@ export const PlayerPage: React.FC = () => {
         <Box sx={{ p: { xs: 0, sm: 2 }, maxWidth: PAGE_WIDTH, mx: "auto" }}>
             <ButtonBase
                 component={Link}
-                to={clipPath(session.clipId)}
+                to={video?.path ?? "#"}
+                disabled={!video?.path}
                 sx={{ display: "block", width: "100%", maxWidth: 720, mx: "auto", borderRadius: 1, overflow: "hidden" }}
             >
                 <Box
                     component="img"
-                    src={thumbnailUrl(session.clipId)}
+                    src={video?.imageUrl}
                     alt=""
-                    sx={{ display: "block", width: "100%", aspectRatio: "16 / 9", objectFit: "cover", bgcolor: "action.hover" }}
+                    sx={{
+                        display: "block",
+                        width: "100%",
+                        aspectRatio: "16 / 9",
+                        objectFit: video?.portrait ? "contain" : "cover",
+                        bgcolor: "action.hover",
+                    }}
                 />
             </ButtonBase>
             <Box sx={{ maxWidth: 720, mx: "auto", mt: 1.5 }}>
                 <Typography variant="h6" noWrap>
-                    {clip ? clipName(clip) : session.title}
+                    {video ? video.name : session.title}
                 </Typography>
                 <Typography variant="body2" color="text.secondary" noWrap>
                     {session.deviceName} · {sessionStateText(session)}
@@ -168,7 +173,7 @@ export const PlayerPage: React.FC = () => {
                         onJump={(index) => editQueue(deviceId, { action: "jump", index })}
                         onRemove={(index) => editQueue(deviceId, { action: "remove", index })}
                         onMove={(from, to) => editQueue(deviceId, { action: "move", from, to })}
-                        onOpenClip={(id) => navigate(clipPath(id))}
+                        onOpenClip={(id) => navigate(findVideo(id)?.path ?? "#")}
                     />
                 </Box>
             )}

@@ -12,7 +12,8 @@ import { selectChromecasts } from "../chromecast/chromecastSelectors";
 import { useGetCastGroupsQuery } from "../cast-group/castGroup.api";
 import { useGetPlaylistsQuery } from "../playlist/playlist.api";
 import { useGetClipsQuery } from "../home-video/home-video.api";
-import { clipName, isUnlabelled } from "../home-video/clipFormat";
+import { isUnlabelled } from "../home-video/clipFormat";
+import { useVideos } from "../video/useVideos";
 import { useGetMovieItemsQuery } from "../movie/movie.api";
 import { posterUrl } from "../movie/movieUrls";
 import { Mosaic } from "../shared/Mosaic";
@@ -74,6 +75,7 @@ const plural = (count: number, one: string) => `${count} ${one}${count === 1 ? "
 /** The tiles of the places of the app, each with what is in it. */
 export const HomePage: React.FC = () => {
     const { data: clips } = useGetClipsQuery();
+    const findVideo = useVideos();
     const homeVideos = MENU_ITEMS[0];
     const chromecastsTile = MENU_ITEMS[1];
     const playlistsTile = MENU_ITEMS[2];
@@ -85,7 +87,9 @@ export const HomePage: React.FC = () => {
     const { data: castGroups } = useGetCastGroupsQuery();
     const { data: playlists } = useGetPlaylistsQuery();
     // The first clip of some playlists, so the tile shows what is in them.
-    const playlistPosters = [...new Set(playlists?.map((p) => p.clipIds[0]).filter(Boolean))].slice(0, MOSAIC_CLIPS).map(thumbnailUrl);
+    const playlistPosters = [
+        ...new Set(playlists?.map((p) => findVideo(p.clipIds[0])?.imageUrl).filter((url): url is string => !!url)),
+    ].slice(0, MOSAIC_CLIPS);
     const chromecasts = useAppSelector(selectChromecasts)?.devices;
     const casting = chromecasts?.filter((device) => device.playback && device.playback.state !== "IDLE").length;
     const chromecastInfo =
@@ -95,7 +99,7 @@ export const HomePage: React.FC = () => {
         ...new Set(
             chromecasts
                 ?.filter((device) => device.playback && device.playback.state !== "IDLE")
-                .map(({ playback }) => (playback?.clipId ? thumbnailUrl(playback.clipId) : playback?.imageUrl))
+                .map(({ playback }) => (playback?.clipId ? findVideo(playback.clipId)?.imageUrl : playback?.imageUrl))
                 .filter((url): url is string => !!url)
         ),
     ].slice(0, MOSAIC_CLIPS);
@@ -109,14 +113,11 @@ export const HomePage: React.FC = () => {
         .map((device) => {
             const { playback } = device;
             const session = castState?.sessions.find((s) => s.deviceId === device.id);
-            const titleOf = (id: string | undefined) => {
-                const clip = clips?.find((c) => c.id === id);
-                return clip ? clipName(clip) : undefined;
-            };
+            const titleOf = (id: string | undefined) => findVideo(id)?.name;
             const queue = session?.queue;
             const nextId = queue && (queue.clipIds[queue.index + 1] ?? (queue.repeat ? queue.clipIds[0] : undefined));
             const nextTitle = titleOf(nextId);
-            const art = playback?.clipId ? thumbnailUrl(playback.clipId) : playback?.imageUrl;
+            const art = playback?.clipId ? findVideo(playback.clipId)?.imageUrl : playback?.imageUrl;
             return {
                 id: device.id,
                 title: device.name,
@@ -132,16 +133,14 @@ export const HomePage: React.FC = () => {
         if (!session) continue;
         const { queue } = session;
         const nextId = queue.clipIds[queue.index + 1] ?? (queue.repeat ? queue.clipIds[0] : undefined);
-        const titleOf = (clipId: string | undefined) => {
-            const clip = clips?.find((c) => c.id === clipId);
-            return clip ? clipName(clip) : undefined;
-        };
+        const titleOf = (clipId: string | undefined) => findVideo(clipId)?.name;
+        const art = findVideo(session.clipId)?.imageUrl;
         playingTiles.push({
             id,
             title,
             to: playerPath(id),
             lines: [`Now: ${titleOf(session.clipId) ?? ""}`, titleOf(nextId) && `Next: ${titleOf(nextId)}`],
-            picture: <Mosaic urls={[thumbnailUrl(session.clipId)]} />,
+            picture: art && <Mosaic urls={[art]} />,
         });
     }
     const playingGroups = castGroups?.filter((g) => castState?.sessions.some((s) => s.deviceId === g.id && s.state !== "ENDED")).length;
