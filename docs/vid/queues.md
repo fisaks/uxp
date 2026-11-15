@@ -32,6 +32,7 @@ A bad index is a 400 `VALIDATION`. `POST /api/cast/sessions/:id/next` skips to t
 - Clip page and Play all (the home video list, for the clips shown, in timeline order): choose a player.
   If the player already plays something, choose **Play now**, **Play next** or **Add to queue**. A short banner
   above the cast bar confirms.
+- Film and series pages work the same: **Play all** and **Play season** queue the episodes in order (`movies.md`).
 - The player page shows the poster, transport, position, speed, a queue list (drag to reorder, click to jump,
   remove, open the clip page) and Repeat.
 

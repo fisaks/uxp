@@ -1,8 +1,8 @@
 # VID Home Video Library
 
 VID is the video remote app. It lists a folder of home videos, lets you label them in the browser and plays
-them in the browser, in a separate player tab or on Chromecasts. Movies, TV series and children's films are
-not built yet.
+them in the browser, in a separate player tab or on Chromecasts. Films, TV series and children's films are
+described in `movies.md`.
 
 ## Configuration (BFF environment)
 
@@ -19,7 +19,7 @@ ffprobe and ffmpeg must be installed on the host.
 ## The files
 
 - Only `.m4v` and `.mp4` files are listed, because those are what a browser and a Chromecast can play.
-  Other formats are converted first (not built yet).
+  Other formats must be converted first (the converter of `movies.md` makes films and episodes; it is not used for home videos).
 - Clips may be in sub folders. The date is read from the folder name, then from the file name
   (`2005_06_28`, `2009-03-26`, `2005_06_28-01.m4v`). A clip without a date in either has no date until you set one.
 - A clip's `id` is the first 16 hex characters of the SHA-1 of its path inside the `HomeVideos` folder.
@@ -65,6 +65,7 @@ home video list with `?q=`, where it is combined with the list's own filters (ye
 | `/` | Home: tiles for Home videos, Chromecasts, Playlists, Cast groups and one tile per player that is playing |
 | `/home-videos` | The clips by year, with filters |
 | `/home-videos/clips/:id` | One clip: video, previous and next, label form, cast picker |
+| `/movies`, `/kids`, `/tv` | See `movies.md` |
 | `/chromecasts`, `/playlists`, `/cast-groups` | See `casting.md`, `queues.md`, `groups.md` |
 | `/player/:deviceId` | The player page of a Chromecast, a group or the player tab |
 | `/player-window` | The player tab itself, see `player-tab.md` |

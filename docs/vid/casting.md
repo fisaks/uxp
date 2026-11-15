@@ -6,7 +6,9 @@ control of a Philips TV.
 
 ## Stream links
 
-A Chromecast fetches the video itself and has no login cookie. The BFF therefore signs the address:
+A Chromecast fetches the video itself and has no login cookie. The BFF therefore signs the address. Films and
+episodes work the same way below `/api/movies` (`POST /api/movies/items/:id/stream-link`, `GET /api/movies/stream/:id`,
+`GET /api/movies/poster/:id`, see `movies.md`). The cast picker sends no subtitle tracks. For home videos:
 
 - `POST /api/home-videos/clips/:id/stream-link` (logged in) returns `{path, expiresAt}`.
 - `GET /api/home-videos/stream/:id?exp=...&sig=...` needs no login. `sig` is an HMAC-SHA256 of `id.exp`.
