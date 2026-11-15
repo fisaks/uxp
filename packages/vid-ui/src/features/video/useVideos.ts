@@ -6,7 +6,7 @@ import { clipName } from "../home-video/clipFormat";
 import { useGetClipsQuery } from "../home-video/home-video.api";
 import { useGetMovieItemsQuery } from "../movie/movie.api";
 import { movieName } from "../movie/movieFormat";
-import { MOVIE_SECTION_PATHS, moviePath } from "../movie/movieSections";
+import { MOVIE_SECTION_PATHS, moviePath, seriesPath } from "../movie/movieSections";
 import { posterUrl } from "../movie/movieUrls";
 
 /** What the queues, the cast bar and the player need to show of a video, whether it is a clip of the home videos or an item of the movies. */
@@ -17,7 +17,7 @@ export type VideoInfo = {
     /** A poster is a portrait picture, which a wide box shows whole instead of cropped. */
     portrait: boolean;
     durationSeconds: number;
-    /** The page of the video. Undefined where there is no page yet (the episodes). */
+    /** The page of the video: the series page for an episode. */
     path?: string;
     subtitles: MovieSubtitle[];
 };
@@ -49,7 +49,11 @@ export const useVideos = (): ((id: string | undefined) => VideoInfo | undefined)
                 imageUrl: item.hasPoster ? posterUrl(id) : undefined,
                 portrait: true,
                 durationSeconds: item.durationSeconds,
-                path: item.category in MOVIE_SECTION_PATHS ? moviePath(item.category as keyof typeof MOVIE_SECTION_PATHS, id) : undefined,
+                path: item.series
+                    ? seriesPath(item.series)
+                    : item.category in MOVIE_SECTION_PATHS
+                      ? moviePath(item.category as keyof typeof MOVIE_SECTION_PATHS, id)
+                      : undefined,
                 subtitles: item.subtitles,
             };
         },

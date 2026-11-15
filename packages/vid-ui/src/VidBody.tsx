@@ -14,6 +14,8 @@ import { ClipPage } from "./features/home-video/ClipPage";
 import { saveErrorCleared } from "./features/home-video/saveErrorSlice";
 import { selectSaveErrorMessage } from "./features/home-video/saveErrorSelectors";
 import { MovieListPage } from "./features/movie/MovieListPage";
+import { SeriesListPage } from "./features/movie/SeriesListPage";
+import { SeriesPage } from "./features/movie/SeriesPage";
 import { MoviePage } from "./features/movie/MoviePage";
 import { PlaylistsPage } from "./features/playlist/PlaylistsPage";
 import { HomePage } from "./features/home/HomePage";
@@ -25,6 +27,7 @@ import {
     HOME_VIDEOS_PATH,
     KIDS_PATH,
     MOVIES_PATH,
+    TV_PATH,
     PLAYER_PATH,
     PLAYER_WINDOW_PATH,
     PLAYLISTS_PATH,
@@ -62,6 +65,8 @@ const Pages = () => {
                 <Route path={`${MOVIES_PATH}/items/:id`} element={<MoviePage category="movies" />} />
                 <Route path={KIDS_PATH} element={<MovieListPage category="kids" />} />
                 <Route path={`${KIDS_PATH}/items/:id`} element={<MoviePage category="kids" />} />
+                <Route path={TV_PATH} element={<SeriesListPage />} />
+                <Route path={`${TV_PATH}/series/:name`} element={<SeriesPage />} />
                 <Route path={CHROMECASTS_PATH} element={<ChromecastsPage />} />
                 <Route path={PLAYLISTS_PATH} element={<PlaylistsPage />} />
                 <Route path={CAST_GROUPS_PATH} element={<CastGroupsPage />} />

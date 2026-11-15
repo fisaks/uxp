@@ -16,6 +16,7 @@ import { isUnlabelled } from "../home-video/clipFormat";
 import { useVideos } from "../video/useVideos";
 import { useGetMovieItemsQuery } from "../movie/movie.api";
 import { posterUrl } from "../movie/movieUrls";
+import { groupSeries } from "../movie/series";
 import { Mosaic } from "../shared/Mosaic";
 import { PAGE_WIDTH } from "../shared/pageWidth";
 
@@ -82,8 +83,11 @@ export const HomePage: React.FC = () => {
     const groupsTile = MENU_ITEMS[3];
     const moviesTile = MENU_ITEMS[4];
     const kidsTile = MENU_ITEMS[5];
+    const tvTile = MENU_ITEMS[6];
     const { data: movies } = useGetMovieItemsQuery("movies");
     const { data: kids } = useGetMovieItemsQuery("kids");
+    const { data: tv } = useGetMovieItemsQuery("tv");
+    const tvSeries = tv && groupSeries(tv);
     const { data: castGroups } = useGetCastGroupsQuery();
     const { data: playlists } = useGetPlaylistsQuery();
     // The first clip of some playlists, so the tile shows what is in them.
@@ -173,6 +177,18 @@ export const HomePage: React.FC = () => {
                     title={kidsTile.label}
                     lines={[kids && plural(kids.length, "film")]}
                     picture={kids && filmPosters(kids).length > 0 && <Mosaic urls={filmPosters(kids)} />}
+                />
+                <Tile
+                    to={tvTile.path}
+                    icon={tvTile.icon}
+                    title={tvTile.label}
+                    lines={[tvSeries && plural(tvSeries.length, "series")]}
+                    picture={
+                        tvSeries &&
+                        filmPosters(tvSeries.map((s) => s.episodes[0])).length > 0 && (
+                            <Mosaic urls={filmPosters(tvSeries.map((s) => s.episodes[0]))} />
+                        )
+                    }
                 />
                 <Tile
                     to={chromecastsTile.path}

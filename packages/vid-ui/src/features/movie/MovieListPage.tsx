@@ -3,7 +3,7 @@ import React from "react";
 import { PAGE_WIDTH } from "../shared/pageWidth";
 import { useRestoreScroll } from "../shared/useRestoreScroll";
 import { useGetMovieItemsQuery } from "./movie.api";
-import { MovieSectionCategory } from "./movieSections";
+import { MovieSectionCategory, moviePath } from "./movieSections";
 import { MovieTile } from "./MovieTile";
 import { TmdbAttribution } from "./TmdbAttribution";
 
@@ -22,7 +22,7 @@ export const MovieListPage: React.FC<{ category: MovieSectionCategory }> = ({ ca
             </Typography>
             <Box sx={{ display: "grid", gap: 2, gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))" }}>
                 {items.map((item) => (
-                    <MovieTile key={item.id} item={item} category={category} />
+                    <MovieTile key={item.id} item={item} to={moviePath(category, item.id)} />
                 ))}
             </Box>
             <TmdbAttribution />

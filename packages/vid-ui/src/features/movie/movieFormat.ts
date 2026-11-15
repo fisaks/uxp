@@ -10,7 +10,13 @@ export const formatRuntime = (totalSeconds: number) => {
     return h > 0 ? `${h} h ${minutes % 60} min` : `${minutes} min`;
 };
 
-/** The title with its year, as the tile and the page call a film. */
-export const movieName = (item: MovieItem) => (item.year ? `${item.title} (${item.year})` : item.title);
+const pad = (n: number | null) => String(n ?? 0).padStart(2, "0");
+
+/** S01E02. */
+export const episodeCode = (item: MovieItem) => `S${pad(item.season)}E${pad(item.episode)}`;
+
+/** The title with its year as the tile and the page call a film, and the series with the code and the title for an episode. */
+export const movieName = (item: MovieItem) =>
+    item.kind === "episode" ? `${item.series} ${episodeCode(item)} ${item.title}` : item.year ? `${item.title} (${item.year})` : item.title;
 
 export const compareMovies = (a: MovieItem, b: MovieItem) => a.title.localeCompare(b.title) || (a.year ?? 0) - (b.year ?? 0);
