@@ -17,6 +17,7 @@ import { castService } from "./cast/cast.service";
 import { homeVideoService } from "./home-video/home-video.service";
 import { movieService } from "./movie/movie.service";
 import { playlistService } from "./playlist/playlist.service";
+import { uploadService } from "./upload/upload.service";
 import { VideoServerWebSocketManager } from "./ws/VideoServerWebSocketManager";
 
 const fastify = Fastify({ logger: { level: process.env.LOG_LEVEL ?? "info" } });
@@ -25,6 +26,8 @@ fastify.setErrorHandler(errorHandler);
 fastify.register(fastifyWebsocket);
 fastify.register(fastifyCookie);
 fastify.register(jwtPlugin);
+// An upload chunk is handed to the route as the raw stream, so it is written to the disk and not held in memory.
+fastify.addContentTypeParser("application/octet-stream", (_req, payload, done) => done(null, payload));
 
 HandlerRegistry.discoverHandlers([path.join(__dirname, "./controllers"), path.join(__dirname, "./handlers")]);
 
@@ -45,6 +48,7 @@ void castService.start();
 void homeVideoService.load();
 void movieService.load();
 void playlistService.load();
+void uploadService.start();
 void castGroupService.load();
 
 const port = 3051;

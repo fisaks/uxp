@@ -70,6 +70,8 @@ function setRaw(req: FastifyRequest, _payload: any, done: any) {
     done();
 }
 fastify.addContentTypeParser("multipart/form-data", setRaw);
+// A chunk of a resumable upload (VID) is streamed to the app the same way.
+fastify.addContentTypeParser("application/octet-stream", setRaw);
 // Log incoming request payloads
 if (!IsProd) {
     fastify.addHook("preHandler", async (request, _reply) => {

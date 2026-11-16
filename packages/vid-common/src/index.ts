@@ -11,3 +11,5 @@ export * from "./types/cast-group.type";
 export * from "./types/video-id";
 export * from "./types/movie.type";
 export * from "./schemas/movie.schema";
+export * from "./schemas/upload.schema";
+export * from "./types/upload.type";
