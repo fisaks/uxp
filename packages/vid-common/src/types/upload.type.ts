@@ -8,7 +8,12 @@ export type UploadCreateRequest = {
     sizeBytes: number;
     /** What the phone calls the file. Only a hint for a title, never used as a path. */
     originalName?: string;
+    /** The date of the clip (YYYY-MM-DD). null means no date; left out means the server takes it from the file. */
+    date?: string | null;
 };
+
+/** `uploading` until the last chunk is in, then `processing` while the file is checked and made ready, then `done` or `failed`. */
+export type UploadState = "uploading" | "processing" | "done" | "failed";
 
 /** An upload in progress. `offset` is how many bytes the server has, the next chunk starts there. */
 export type UploadSession = {
@@ -17,6 +22,11 @@ export type UploadSession = {
     offset: number;
     /** All bytes are here. */
     complete: boolean;
+    state: UploadState;
+    /** The clip that was made, when the state is `done`. */
+    clipId?: string;
+    /** An `ErrorCodes` value that says why the state is `failed`. */
+    errorCode?: string;
 };
 
 export type UploadParams = {

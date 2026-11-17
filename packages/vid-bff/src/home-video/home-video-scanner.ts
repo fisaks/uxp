@@ -3,7 +3,7 @@ import { createHash } from "crypto";
 import { readdir, stat } from "fs/promises";
 import path from "path";
 import { promisify } from "util";
-import { VIDEO_EXTENSIONS } from "./home-video.config";
+import { HIDDEN_FOLDER_PREFIX, VIDEO_EXTENSIONS } from "./home-video.config";
 
 const execFileAsync = promisify(execFile);
 
@@ -63,6 +63,10 @@ const listVideoFiles = async (folder: string, relative = ""): Promise<string[]> 
     for (const entry of await readdir(path.join(folder, relative), { withFileTypes: true })) {
         const child = relative ? `${relative}/${entry.name}` : entry.name;
         if (entry.isDirectory()) {
+            // A folder that starts with `_` is not library: unfinished uploads and the trash.
+            if (entry.name.startsWith(HIDDEN_FOLDER_PREFIX)) {
+                continue;
+            }
             files.push(...(await listVideoFiles(folder, child)));
         } else if (entry.isFile() && VIDEO_EXTENSIONS.has(path.extname(entry.name).toLowerCase())) {
             files.push(child);

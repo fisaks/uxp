@@ -27,6 +27,11 @@ export class HomeVideoThumbnails {
         return promise;
     }
 
+    /** Removes the poster frame of the clip, if there is one. */
+    remove(id: string): Promise<void> {
+        return rm(path.join(this.dir, `${id}.jpg`), { force: true });
+    }
+
     private async make(id: string, videoFile: string, durationSeconds: number): Promise<string> {
         const target = path.join(this.dir, `${id}.jpg`);
         try {

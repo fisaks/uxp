@@ -66,6 +66,15 @@ export class MetadataStore<T> {
         this.timer = setTimeout(() => void this.flush(), SAVE_DELAY_MS);
     }
 
+    /** Removes the entry of the file, and returns it. */
+    deleteMetadata(file: string): T | undefined {
+        const removed = this.metadata[file];
+        delete this.metadata[file];
+        clearTimeout(this.timer);
+        this.timer = setTimeout(() => void this.flush(), SAVE_DELAY_MS);
+        return removed;
+    }
+
     /** Saves at once what has not been saved yet. */
     async flush(): Promise<void> {
         if (!this.timer || !this.writer) {

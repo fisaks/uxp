@@ -24,7 +24,7 @@ export class UploadController {
 
     @Route("post", "/uploads", { authenticate: true, schema: UploadCreateSchema })
     async create(req: FastifyRequest<{ Body: UploadCreateRequest }>): Promise<UploadSession> {
-        return uploadService.create(ownerOf(req), req.body);
+        return uploadService.create(ownerOf(req), (req.user as Token).uuid, req.body);
     }
 
     /** Where the upload is, for resuming after a break. */
@@ -33,7 +33,7 @@ export class UploadController {
         return uploadService.get(ownerOf(req), req.params.id);
     }
 
-    /** One chunk, as the raw body (`application/octet-stream`), written at `offset`. */
+    /** One chunk, as the raw body (`application/octet-stream`), written at `offset`. The last chunk starts the making of the clip: the answer is then `processing`, and the result is pushed as `upload_state`. */
     @Route("put", "/uploads/:id", { authenticate: true, schema: UploadChunkSchema })
     async putChunk(req: FastifyRequest<{ Params: UploadParams; Querystring: UploadChunkQuery }>): Promise<UploadSession> {
         return uploadService.append(ownerOf(req), req.params.id, req.query.offset, req.body as Readable);

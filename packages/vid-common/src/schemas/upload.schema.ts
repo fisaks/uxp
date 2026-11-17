@@ -19,6 +19,7 @@ export const UploadCreateSchema = {
         properties: {
             sizeBytes: { type: "integer", minimum: 1 },
             originalName: { type: "string", maxLength: 255 },
+            date: { type: ["string", "null"], pattern: "^\\d{4}-\\d{2}-\\d{2}$", nullable: true },
         },
         required: ["sizeBytes"],
         additionalProperties: false,

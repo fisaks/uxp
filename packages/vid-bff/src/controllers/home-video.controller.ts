@@ -17,6 +17,7 @@ import {
 import { FastifyReply, FastifyRequest } from "fastify";
 import { createReadStream } from "fs";
 import { homeVideoService } from "../home-video/home-video.service";
+import { playlistService } from "../playlist/playlist.service";
 import { sendVideoFile } from "../stream/send-video-file";
 import { isValidStreamQuery, signStreamQuery } from "../stream/signed-url";
 
@@ -63,6 +64,14 @@ export class HomeVideoController {
     @Route("patch", "/home-videos/clips/:id", { authenticate: true, schema: HomeVideoClipUpdateSchema })
     async updateClip(req: FastifyRequest<{ Params: HomeVideoClipParams; Body: HomeVideoClipUpdate }>): Promise<HomeVideoClip> {
         return homeVideoService.update(req.params.id, req.body);
+    }
+
+    /** Deletes a clip that was uploaded: its file goes to the trash for 30 days. Other clips cannot be deleted. */
+    @Route("delete", "/home-videos/clips/:id", { authenticate: true, schema: HomeVideoClipParamsSchema })
+    async deleteClip(req: FastifyRequest<{ Params: HomeVideoClipParams }>, reply: FastifyReply) {
+        await homeVideoService.remove(req.params.id);
+        playlistService.removeClip(req.params.id);
+        return reply.code(204).send();
     }
 
     /** The poster frame of a clip. Found by clip id, so no path is ever taken from the request. */

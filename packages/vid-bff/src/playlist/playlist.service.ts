@@ -57,6 +57,15 @@ export class PlaylistService {
         return this.list();
     }
 
+    /** Takes a clip that is deleted out of the playlists that have it. */
+    removeClip(clipId: string): void {
+        for (const playlist of this.store.all()) {
+            if (playlist.clipIds.includes(clipId)) {
+                this.store.put({ ...playlist, clipIds: playlist.clipIds.filter((id) => id !== clipId) });
+            }
+        }
+    }
+
     private clipsOf(source: PlaylistSource): string[] {
         if ("clipIds" in source) {
             return [...source.clipIds];

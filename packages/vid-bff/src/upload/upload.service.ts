@@ -1,22 +1,38 @@
 import { AppErrorV2, AppLogger } from "@uxp/bff-common";
 import { ErrorCodes } from "@uxp/common";
-import { UPLOAD_CHUNK_BYTES, UPLOAD_MAX_FILE_BYTES, UploadCreateRequest, UploadSession, UploadStatus } from "@vid/common";
+import { UPLOAD_CHUNK_BYTES, UPLOAD_MAX_FILE_BYTES, UploadCreateRequest, UploadSession, UploadState, UploadStatus } from "@vid/common";
 import { randomBytes } from "crypto";
 import { createWriteStream } from "fs";
-import { mkdir, readdir, readFile, rm, stat, statfs, writeFile } from "fs/promises";
+import { mkdir, readdir, readFile, rename, rm, stat, statfs, writeFile } from "fs/promises";
 import path from "path";
 import { Readable, Transform } from "stream";
 import { pipeline } from "stream/promises";
+import { homeVideoConfig, UPLOADS_FOLDER } from "../home-video/home-video.config";
+import { homeVideoService } from "../home-video/home-video.service";
+import { filmedDate, makeMp4, probeUpload } from "./upload-converter";
+import { VideoServerWebSocketManager } from "../ws/VideoServerWebSocketManager";
 import { CLEANUP_INTERVAL_MS, MAX_SESSIONS_PER_USER, STALE_UPLOAD_MS, UPLOAD_FREE_SPACE_FACTOR, uploadConfig } from "./upload.config";
 
 /** What is kept about an upload beside its bytes. The owner comes from the token, never from the client. */
 type UploadMeta = {
     id: string;
     owner: string;
+    ownerUuid: string;
     sizeBytes: number;
     originalName?: string;
+    /** The date asked for when the upload was made. Absent means the server takes it from the file. */
+    date?: string | null;
     createdAt: string;
 };
+
+/** What became of an upload that was finished. It is kept in memory, the files are gone by then. */
+type Job = { owner: string; ownerUuid: string; sizeBytes: number; state: UploadState; clipId?: string; errorCode?: string; finishedAt?: number };
+
+/** How long the result of a finished upload can be asked for: 24 hours (86 400 s, 86 400 000 ms). */
+const JOB_KEEP_MS = 24 * 60 * 60 * 1000;
+
+/** The file a conversion writes, which is not `.mp4` so nothing takes it for a clip before it is moved into place. */
+const OUTPUT_EXTENSION = ".out";
 
 const notFound = () => new AppErrorV2({ code: ErrorCodes.NOT_FOUND, message: "There is no such upload", params: { resource: "upload" } });
 
@@ -40,9 +56,15 @@ const limitBytes = (max: number) => {
  * the offset, so what the server says is always what is on the disk, also after a restart or a broken request.
  */
 export class UploadService {
+    constructor(private readonly wsManager: VideoServerWebSocketManager) {}
+
     /** Uploads that are being written to right now, so two requests cannot append to one file. */
     private readonly writing = new Set<string>();
     private timer?: NodeJS.Timeout;
+    /** Uploads that are finished: waiting for their turn, being made ready, done or failed. */
+    private readonly jobs = new Map<string, Job>();
+    /** Conversions run one at a time, as a conversion uses all the processors it can get. */
+    private queue: Promise<void> = Promise.resolve();
 
     async start(): Promise<void> {
         if (!uploadConfig.folder) {
@@ -50,7 +72,17 @@ export class UploadService {
             return;
         }
         await mkdir(uploadConfig.folder, { recursive: true });
+        // Nothing is being converted just after a start, so a file of a conversion is left from one that was cut off.
+        for (const name of (await readdir(uploadConfig.folder)).filter((entry) => entry.endsWith(OUTPUT_EXTENSION))) {
+            await rm(path.join(uploadConfig.folder, name), { force: true });
+        }
         await this.removeStale();
+        // An upload that was complete when the server stopped has nobody to start it: take it in hand again.
+        for (const meta of await this.allMeta()) {
+            if ((await this.offsetOf(meta.id).catch(() => 0)) >= meta.sizeBytes) {
+                this.startProcessing(meta);
+            }
+        }
         this.timer = setInterval(() => void this.removeStale(), CLEANUP_INTERVAL_MS);
         this.timer.unref();
     }
@@ -65,7 +97,7 @@ export class UploadService {
         };
     }
 
-    async create(owner: string, request: UploadCreateRequest): Promise<UploadSession> {
+    async create(owner: string, ownerUuid: string, request: UploadCreateRequest): Promise<UploadSession> {
         const folder = this.folder();
         if (request.sizeBytes > UPLOAD_MAX_FILE_BYTES) {
             throw new AppErrorV2({ code: ErrorCodes.FILE_TOO_LARGE, message: "The file is larger than the upload allows", params: { maxBytes: UPLOAD_MAX_FILE_BYTES } });
@@ -80,17 +112,23 @@ export class UploadService {
         const meta: UploadMeta = {
             id: randomBytes(8).toString("hex"),
             owner,
+            ownerUuid,
             sizeBytes: request.sizeBytes,
             originalName: request.originalName,
+            date: request.date,
             createdAt: new Date().toISOString(),
         };
         await writeFile(this.partFile(folder, meta.id), "");
         await writeFile(this.metaFile(folder, meta.id), JSON.stringify(meta));
-        return { id: meta.id, sizeBytes: meta.sizeBytes, offset: 0, complete: false };
+        return this.session(meta, 0);
     }
 
-    /** Where the upload is. The client asks this to resume after a break. */
+    /** Where the upload is. The client asks this to resume after a break, and to see how a finished upload is going. */
     async get(owner: string, id: string): Promise<UploadSession> {
+        const job = this.ownedJob(owner, id);
+        if (job) {
+            return this.jobSession(id, job);
+        }
         const meta = await this.ownedMeta(owner, id);
         return this.session(meta, await this.offsetOf(meta.id));
     }
@@ -118,13 +156,31 @@ export class UploadService {
                 AppLogger.warn(undefined, { message: `[Upload] The chunk of ${id} was not completed`, error });
                 throw new AppErrorV2({ code: ErrorCodes.INTERNAL_SERVER_ERROR, message: "The chunk could not be written" });
             }
-            return this.session(meta, await this.offsetOf(id));
+            const written = await this.offsetOf(id);
+            if (written >= meta.sizeBytes) {
+                if (!homeVideoService.canSave()) {
+                    throw new AppErrorV2({ code: ErrorCodes.NOT_READY, message: "The home video metadata cannot be saved right now" });
+                }
+                return this.jobSession(id, this.startProcessing(meta));
+            }
+            return this.session(meta, written);
         } finally {
             this.writing.delete(id);
         }
     }
 
+    /** Takes the clip in hand when all its bytes are here: it is checked and made ready one conversion at a time. */
+    private startProcessing(meta: UploadMeta): Job {
+        const job: Job = { owner: meta.owner, ownerUuid: meta.ownerUuid, sizeBytes: meta.sizeBytes, state: "processing" };
+        this.jobs.set(meta.id, job);
+        this.queue = this.queue.then(() => this.process(meta, job));
+        return job;
+    }
+
     async abort(owner: string, id: string): Promise<void> {
+        if (this.ownedJob(owner, id)?.state === "processing") {
+            throw new AppErrorV2({ code: ErrorCodes.CONFLICT, message: "The upload is being made ready" });
+        }
         const meta = await this.ownedMeta(owner, id);
         if (this.writing.has(id)) {
             throw new AppErrorV2({ code: ErrorCodes.CONFLICT, message: "The upload is being written to" });
@@ -133,7 +189,47 @@ export class UploadService {
     }
 
     private session(meta: UploadMeta, offset: number): UploadSession {
-        return { id: meta.id, sizeBytes: meta.sizeBytes, offset, complete: offset >= meta.sizeBytes };
+        return { id: meta.id, sizeBytes: meta.sizeBytes, offset, complete: offset >= meta.sizeBytes, state: "uploading" };
+    }
+
+    private jobSession(id: string, job: Job): UploadSession {
+        return { id, sizeBytes: job.sizeBytes, offset: job.sizeBytes, complete: true, state: job.state, clipId: job.clipId, errorCode: job.errorCode };
+    }
+
+    private ownedJob(owner: string, id: string): Job | undefined {
+        const job = this.jobs.get(id);
+        if (job && job.owner !== owner) {
+            throw notFound();
+        }
+        return job;
+    }
+
+    /** Checks the file, makes the MP4, puts it in place and adds the clip. On a failure the upload is removed: the same file would fail again. */
+    private async process(meta: UploadMeta, job: Job): Promise<void> {
+        const folder = this.folder();
+        const part = this.partFile(folder, meta.id);
+        const output = path.join(folder, `${meta.id}${OUTPUT_EXTENSION}`);
+        try {
+            const info = await probeUpload(part);
+            const date = meta.date !== undefined ? meta.date : filmedDate(info);
+            const converted = await makeMp4(part, output, info);
+            const file = `${UPLOADS_FOLDER}/${meta.id}.mp4`;
+            const target = path.join(homeVideoConfig.folder ?? "", file);
+            await mkdir(path.dirname(target), { recursive: true });
+            await rename(output, target);
+            const clip = await homeVideoService.addClip(file, meta.owner, date);
+            job.clipId = clip.id;
+            job.state = "done";
+            AppLogger.info(undefined, { message: `[Upload] ${meta.id} is the clip ${clip.id}${converted ? " (converted)" : ""}` });
+        } catch (error) {
+            job.state = "failed";
+            job.errorCode = error instanceof AppErrorV2 ? error.code : ErrorCodes.INTERNAL_SERVER_ERROR;
+            AppLogger.warn(undefined, { message: `[Upload] ${meta.id} failed`, error });
+            await rm(output, { force: true });
+        }
+        job.finishedAt = Date.now();
+        await this.remove(meta.id);
+        this.wsManager.broadcastToUsers([job.ownerUuid], { action: "upload_state", success: true, payload: this.jobSession(meta.id, job) });
     }
 
     private folder(): string {
@@ -202,6 +298,11 @@ export class UploadService {
      * that is being made right now.
      */
     private async removeStale(): Promise<void> {
+        for (const [id, job] of this.jobs) {
+            if (job.finishedAt !== undefined && Date.now() - job.finishedAt > JOB_KEEP_MS) {
+                this.jobs.delete(id);
+            }
+        }
         try {
             const folder = this.folder();
             const ids = new Set((await readdir(folder)).filter((name) => name.endsWith(".part")).map((name) => name.slice(0, -".part".length)));
@@ -209,7 +310,7 @@ export class UploadService {
                 ids.add(meta.id);
             }
             for (const id of ids) {
-                if (this.writing.has(id)) {
+                if (this.writing.has(id) || this.jobs.get(id)?.state === "processing") {
                     continue;
                 }
                 const lastWrite = (await stat(this.partFile(folder, id)).catch(() => undefined))?.mtimeMs;
@@ -224,4 +325,4 @@ export class UploadService {
     }
 }
 
-export const uploadService = new UploadService();
+export const uploadService = new UploadService(VideoServerWebSocketManager.getInstance());

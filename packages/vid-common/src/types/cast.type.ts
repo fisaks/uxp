@@ -1,5 +1,6 @@
 import { WebSocketAction, WebSocketMessage, WebSocketResponse } from "@uxp/common";
 import { CastGroupMemberRun } from "./cast-group.type";
+import { UploadSession } from "./upload.type";
 
 /** A Chromecast found on the network. */
 export type CastDevice = {
@@ -163,4 +164,6 @@ export type VideoAppActionPayloadResponseMap = {
     chromecasts_subscribe: ChromecastsState;
     /** Pushed to subscribers whenever something but the position of a Chromecast changes. */
     chromecasts_state: ChromecastsState;
+    /** Pushed to the user who uploaded when their finished upload is `done` or `failed`. No subscribing: it goes to every connection of that user. */
+    upload_state: UploadSession;
 };

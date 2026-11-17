@@ -19,12 +19,12 @@ type ProbeStream = {
     channels?: number;
     /** Frames per second as a fraction, such as `25/1`. */
     r_frame_rate?: string;
-    tags?: { language?: string };
+    tags?: { language?: string; creation_time?: string };
 };
 
 export type ProbeResult = {
     streams: ProbeStream[];
-    format: { format_name: string; duration?: string };
+    format: { format_name: string; duration?: string; tags?: { creation_time?: string } };
 };
 
 export const probe = async (file: string): Promise<ProbeResult> => {

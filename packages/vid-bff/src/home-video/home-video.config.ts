@@ -19,3 +19,11 @@ export const homeVideoConfig = {
 
 /** Only what a browser and a Chromecast can play. Other formats are converted to MP4 first, and the converted file is what the library lists. */
 export const VIDEO_EXTENSIONS = new Set([".m4v", ".mp4"]);
+
+/** Folders that start with this are not scanned: `_incoming` (unfinished uploads) and `_trash`. */
+export const HIDDEN_FOLDER_PREFIX = "_";
+/** Uploaded clips are kept here, as `<upload id>.mp4`, in the home video folder. The path is chosen once and never changes, as the clip id is made from it. */
+export const UPLOADS_FOLDER = "uploads";
+export const TRASH_FOLDER = "_trash";
+/** A deleted clip is kept in the trash for 30 days (2 592 000 s, 2 592 000 000 ms), then removed for good. */
+export const TRASH_KEEP_MS = 30 * 24 * 60 * 60 * 1000;

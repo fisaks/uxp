@@ -14,6 +14,8 @@ export type HomeVideoClip = {
     description: string;
     people: string[];
     tags: string[];
+    /** Who uploaded the clip, from the login at the time. null for a clip that was in the folder already; only uploaded clips can be deleted. */
+    uploadedBy: string | null;
 };
 
 /** The fields of a clip that can be edited. Only the fields that are present change. */
