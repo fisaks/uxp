@@ -12,8 +12,8 @@ export type UploadCreateRequest = {
     date?: string | null;
 };
 
-/** `uploading` until the last chunk is in, then `processing` while the file is checked and made ready, then `done` or `failed`. */
-export type UploadState = "uploading" | "processing" | "done" | "failed";
+/** `uploading` until the last chunk is in, then `queued` until it is its turn, `processing` while the file is checked and made ready, then `done` or `failed`. */
+export type UploadState = "uploading" | "queued" | "processing" | "done" | "failed";
 
 /** An upload in progress. `offset` is how many bytes the server has, the next chunk starts there. */
 export type UploadSession = {
@@ -23,6 +23,10 @@ export type UploadSession = {
     /** All bytes are here. */
     complete: boolean;
     state: UploadState;
+    /** When the state is `queued`: 1 is the next one to be made ready. */
+    queuePosition?: number;
+    /** When the state is `processing`: how far the conversion is, 0 to 100. Absent while it is not known. */
+    percent?: number;
     /** The clip that was made, when the state is `done`. */
     clipId?: string;
     /** An `ErrorCodes` value that says why the state is `failed`. */

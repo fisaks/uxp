@@ -36,7 +36,8 @@ const phaseText = (item: UploadItem): string => {
         case "paused":
             return item.errorCode === ErrorCodes.SYSTEM_BUSY ? errorText({ error: { code: item.errorCode } }) : "Stopped, the server cannot be reached. Resume when it is back.";
         case "processing":
-            return "Making it ready…";
+            if (item.queuePosition !== undefined) return `Waiting to be made ready (${item.queuePosition}. in the queue)`;
+            return item.percent !== undefined ? `Making it ready ${item.percent} %` : "Making it ready…";
         case "done":
             return "Done";
         case "failed":
@@ -108,8 +109,8 @@ const UploadRow: React.FC<{ item: UploadItem }> = ({ item }) => {
             )}
             {(item.phase === "uploading" || item.phase === "paused" || item.phase === "processing") && (
                 <LinearProgress
-                    variant={item.phase === "processing" ? "indeterminate" : "determinate"}
-                    value={(item.sent / item.sizeBytes) * 100}
+                    variant={item.phase === "processing" && item.percent === undefined ? "indeterminate" : "determinate"}
+                    value={item.phase === "processing" ? (item.percent ?? 0) : (item.sent / item.sizeBytes) * 100}
                     sx={{ mt: 1.5 }}
                 />
             )}

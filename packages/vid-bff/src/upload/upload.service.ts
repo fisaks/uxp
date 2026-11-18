@@ -26,13 +26,16 @@ type UploadMeta = {
 };
 
 /** What became of an upload that was finished. It is kept in memory, the files are gone by then. */
-type Job = { owner: string; ownerUuid: string; sizeBytes: number; state: UploadState; clipId?: string; errorCode?: string; finishedAt?: number };
+type Job = { owner: string; ownerUuid: string; sizeBytes: number; state: UploadState; percent?: number; clipId?: string; errorCode?: string; finishedAt?: number };
 
 /** How long the result of a finished upload can be asked for: 24 hours (86 400 s, 86 400 000 ms). */
 const JOB_KEEP_MS = 24 * 60 * 60 * 1000;
 
 /** The file a conversion writes, which is not `.mp4` so nothing takes it for a clip before it is moved into place. */
 const OUTPUT_EXTENSION = ".out";
+
+/** How often the progress of a conversion is pushed at most: 2 s (2 000 ms). */
+const PROGRESS_PUSH_MS = 2000;
 
 const notFound = () => new AppErrorV2({ code: ErrorCodes.NOT_FOUND, message: "There is no such upload", params: { resource: "upload" } });
 
@@ -65,6 +68,8 @@ export class UploadService {
     private readonly jobs = new Map<string, Job>();
     /** Conversions run one at a time, as a conversion uses all the processors it can get. */
     private queue: Promise<void> = Promise.resolve();
+    /** The ids of the uploads that wait for their turn, the next one first. */
+    private readonly waiting: string[] = [];
 
     async start(): Promise<void> {
         if (!uploadConfig.folder) {
@@ -171,14 +176,16 @@ export class UploadService {
 
     /** Takes the clip in hand when all its bytes are here: it is checked and made ready one conversion at a time. */
     private startProcessing(meta: UploadMeta): Job {
-        const job: Job = { owner: meta.owner, ownerUuid: meta.ownerUuid, sizeBytes: meta.sizeBytes, state: "processing" };
+        const job: Job = { owner: meta.owner, ownerUuid: meta.ownerUuid, sizeBytes: meta.sizeBytes, state: "queued" };
         this.jobs.set(meta.id, job);
+        this.waiting.push(meta.id);
         this.queue = this.queue.then(() => this.process(meta, job));
         return job;
     }
 
     async abort(owner: string, id: string): Promise<void> {
-        if (this.ownedJob(owner, id)?.state === "processing") {
+        const state = this.ownedJob(owner, id)?.state;
+        if (state === "queued" || state === "processing") {
             throw new AppErrorV2({ code: ErrorCodes.CONFLICT, message: "The upload is being made ready" });
         }
         const meta = await this.ownedMeta(owner, id);
@@ -193,7 +200,18 @@ export class UploadService {
     }
 
     private jobSession(id: string, job: Job): UploadSession {
-        return { id, sizeBytes: job.sizeBytes, offset: job.sizeBytes, complete: true, state: job.state, clipId: job.clipId, errorCode: job.errorCode };
+        const position = this.waiting.indexOf(id) + 1;
+        return {
+            id,
+            sizeBytes: job.sizeBytes,
+            offset: job.sizeBytes,
+            complete: true,
+            state: job.state,
+            queuePosition: job.state === "queued" && position > 0 ? position : undefined,
+            percent: job.state === "processing" ? job.percent : undefined,
+            clipId: job.clipId,
+            errorCode: job.errorCode,
+        };
     }
 
     private ownedJob(owner: string, id: string): Job | undefined {
@@ -206,13 +224,28 @@ export class UploadService {
 
     /** Checks the file, makes the MP4, puts it in place and adds the clip. On a failure the upload is removed: the same file would fail again. */
     private async process(meta: UploadMeta, job: Job): Promise<void> {
+        this.waiting.splice(this.waiting.indexOf(meta.id), 1);
+        job.state = "processing";
+        this.push(meta.id, job);
+        // The ones behind this one have moved up.
+        for (const id of this.waiting) {
+            const other = this.jobs.get(id);
+            if (other) this.push(id, other);
+        }
         const folder = this.folder();
         const part = this.partFile(folder, meta.id);
         const output = path.join(folder, `${meta.id}${OUTPUT_EXTENSION}`);
         try {
             const info = await probeUpload(part);
             const date = meta.date !== undefined ? meta.date : filmedDate(info);
-            const converted = await makeMp4(part, output, info);
+            let lastPush = 0;
+            const converted = await makeMp4(part, output, info, (percent) => {
+                if (percent !== job.percent && Date.now() - lastPush >= PROGRESS_PUSH_MS) {
+                    lastPush = Date.now();
+                    job.percent = percent;
+                    this.push(meta.id, job);
+                }
+            });
             const file = `${UPLOADS_FOLDER}/${meta.id}.mp4`;
             const target = path.join(homeVideoConfig.folder ?? "", file);
             await mkdir(path.dirname(target), { recursive: true });
@@ -229,7 +262,12 @@ export class UploadService {
         }
         job.finishedAt = Date.now();
         await this.remove(meta.id);
-        this.wsManager.broadcastToUsers([job.ownerUuid], { action: "upload_state", success: true, payload: this.jobSession(meta.id, job) });
+        this.push(meta.id, job);
+    }
+
+    /** Tells the uploader, and nobody else, where the upload is. */
+    private push(id: string, job: Job): void {
+        this.wsManager.broadcastToUsers([job.ownerUuid], { action: "upload_state", success: true, payload: this.jobSession(id, job) });
     }
 
     private folder(): string {
@@ -310,7 +348,7 @@ export class UploadService {
                 ids.add(meta.id);
             }
             for (const id of ids) {
-                if (this.writing.has(id) || this.jobs.get(id)?.state === "processing") {
+                if (this.writing.has(id) || ["queued", "processing"].includes(this.jobs.get(id)?.state ?? "")) {
                     continue;
                 }
                 const lastWrite = (await stat(this.partFile(folder, id)).catch(() => undefined))?.mtimeMs;

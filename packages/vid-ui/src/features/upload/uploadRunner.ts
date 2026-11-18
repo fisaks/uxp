@@ -3,7 +3,7 @@ import { AxiosUtil, ErrorCodes } from "@uxp/common";
 import axios from "axios";
 import { AppDispatch, RootState } from "../../app/store";
 import { createUpload, deleteUpload, getUpload, putChunk } from "./upload.api";
-import { phaseSet, progressed, sessionCreated } from "./uploadSlice";
+import { phaseSet, progressed, serverStateReceived, sessionCreated } from "./uploadSlice";
 
 type Thunk = (dispatch: AppDispatch, getState: () => RootState) => Promise<void>;
 
@@ -66,8 +66,12 @@ const send = async (key: string, dispatch: AppDispatch, getState: () => RootStat
             failures = 0;
             offset = answer.offset;
             dispatch(progressed({ key, sent: offset }));
-            if (answer.state === "processing") {
-                dispatch(phaseSet({ key, phase: "processing" }));
+            if (answer.complete) {
+                // The push of the server can be here before this answer, and a quick copy can even be done: only an item still sending is taken on.
+                if (itemOf(getState, key)?.phase === "uploading") {
+                    dispatch(phaseSet({ key, phase: "processing" }));
+                    dispatch(serverStateReceived(answer));
+                }
                 return;
             }
         } catch (error) {

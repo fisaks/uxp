@@ -1,10 +1,7 @@
 import { AppErrorV2 } from "@uxp/bff-common";
 import { ErrorCodes } from "@uxp/common";
-import { execFile } from "child_process";
-import { promisify } from "util";
+import { spawn } from "child_process";
 import { ProbeResult, probe } from "../movie/movie-converter";
-
-const execFileAsync = promisify(execFile);
 
 const VIDEO_CODEC = "h264";
 const AUDIO_CODEC = "aac";
@@ -30,20 +27,41 @@ const canCopy = (info: ProbeResult): boolean => {
     return video?.codec_name === VIDEO_CODEC && audio.every((stream) => stream.codec_name === AUDIO_CODEC);
 };
 
+/** Runs ffmpeg and tells how many seconds of the clip are done from its `-progress` lines. Fails when ffmpeg ends with an error. */
+const runFfmpeg = (args: string[], onSeconds?: (seconds: number) => void): Promise<void> =>
+    new Promise((resolve, reject) => {
+        const child = spawn("ffmpeg", args, { stdio: ["ignore", "pipe", "pipe"] });
+        let pending = "";
+        child.stdout.on("data", (data: Buffer) => {
+            const lines = (pending + data.toString()).split("\n");
+            pending = lines.pop() ?? "";
+            for (const line of lines) {
+                // out_time_us is in microseconds, it is "N/A" before the first frame.
+                const match = /^out_time_us=(\d+)$/.exec(line);
+                if (match) onSeconds?.(Number(match[1]) / 1_000_000);
+            }
+        });
+        let errors = "";
+        child.stderr.on("data", (data: Buffer) => (errors = (errors + data.toString()).slice(-4000)));
+        child.on("error", reject);
+        child.on("close", (code) => (code === 0 ? resolve() : reject(new Error(`ffmpeg ended with ${code}: ${errors}`))));
+    });
+
 /**
  * Makes an MP4 that a browser and a Chromecast can play. A clip that is h264/aac is copied (fast, no loss) with the index first, so it can
  * be played while it loads. Anything else, such as HEVC from a phone, is converted. `output` is written whole, and ends in no `.mp4`, so
- * the caller moves it into place when this is done. Returns whether the clip was converted.
+ * the caller moves it into place when this is done. `onProgress` gets 0 to 100 as ffmpeg goes on, when the length of the clip is known.
+ * Returns whether the clip was converted.
  */
-export const makeMp4 = async (input: string, output: string, info: ProbeResult): Promise<boolean> => {
+export const makeMp4 = async (input: string, output: string, info: ProbeResult, onProgress?: (percent: number) => void): Promise<boolean> => {
     const copy = canCopy(info);
     const codec = copy ? ["-c", "copy"] : ["-vf", "scale=trunc(iw/2)*2:trunc(ih/2)*2,format=yuv420p", "-c:v", "libx264", "-preset", "medium", "-crf", "20", "-c:a", "aac", "-b:a", "160k"];
     // The first video track and every audio track. Data and subtitle tracks of phones are not played and can break the copy.
     const maps = ["-map", "0:v:0", "-map", "0:a?"];
+    const duration = Number(info.format.duration);
+    const args = ["-hide_banner", "-loglevel", "error", "-nostdin", "-nostats", "-progress", "pipe:1", "-y", "-i", input, ...maps, ...codec, "-movflags", "+faststart", "-f", "mp4", output];
     try {
-        await execFileAsync("ffmpeg", ["-hide_banner", "-loglevel", "error", "-nostdin", "-y", "-i", input, ...maps, ...codec, "-movflags", "+faststart", "-f", "mp4", output], {
-            maxBuffer: 16 * 1024 * 1024,
-        });
+        await runFfmpeg(args, duration > 0 ? (seconds) => onProgress?.(Math.min(100, Math.floor((seconds / duration) * 100))) : undefined);
     } catch {
         throw new AppErrorV2({ code: ErrorCodes.INVALID_FILE_TYPE, message: "The video could not be converted" });
     }

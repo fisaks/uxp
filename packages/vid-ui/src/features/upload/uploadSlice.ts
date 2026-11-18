@@ -20,6 +20,10 @@ export type UploadItem = {
     sessionId?: string;
     /** An `ErrorCodes` value that says why the phase is `paused` or `failed`. */
     errorCode?: string;
+    /** While `processing`: 1 is the next in the queue of the server, absent once it is being converted. */
+    queuePosition?: number;
+    /** While `processing`: how far the conversion is, 0 to 100. */
+    percent?: number;
     clipId?: string;
 };
 
@@ -57,9 +61,11 @@ const uploadSlice = createSlice({
         },
         /** What the BFF pushes when the file has been made ready, or could not be. */
         serverStateReceived: (slice, action: PayloadAction<UploadSession>) => {
-            const { id, state, clipId, errorCode } = action.payload;
+            const { id, state, clipId, errorCode, queuePosition, percent } = action.payload;
             const item = slice.items.find((i) => i.sessionId === id);
-            if (!item) return;
+            // A push that comes late must not take a finished item back.
+            if (!item || item.phase === "done" || item.phase === "failed") return;
+            if (state === "queued" || state === "processing") Object.assign(item, { phase: "processing", queuePosition, percent });
             if (state === "done") Object.assign(item, { phase: "done", clipId, errorCode: undefined });
             if (state === "failed") Object.assign(item, { phase: "failed", errorCode });
         },
