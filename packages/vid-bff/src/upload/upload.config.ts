@@ -14,3 +14,5 @@ export const MAX_SESSIONS_PER_USER = 3;
 export const STALE_UPLOAD_MS = 48 * 60 * 60 * 1000;
 /** How often stale uploads are looked for: 1 hour (3 600 s, 3 600 000 ms). */
 export const CLEANUP_INTERVAL_MS = 60 * 60 * 1000;
+/** An upload that was written to this recently is taken to be sent right now, by another device or tab: 15 s (15 000 ms). More than the longest pause between chunks, the 10 s retry delay of the client. */
+export const ACTIVE_UPLOAD_MS = 15 * 1000;

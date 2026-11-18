@@ -11,22 +11,22 @@ import { homeVideoConfig, UPLOADS_FOLDER } from "../home-video/home-video.config
 import { homeVideoService } from "../home-video/home-video.service";
 import { filmedDate, makeMp4, probeUpload } from "./upload-converter";
 import { VideoServerWebSocketManager } from "../ws/VideoServerWebSocketManager";
-import { CLEANUP_INTERVAL_MS, MAX_SESSIONS_PER_USER, STALE_UPLOAD_MS, UPLOAD_FREE_SPACE_FACTOR, uploadConfig } from "./upload.config";
+import { ACTIVE_UPLOAD_MS, CLEANUP_INTERVAL_MS, MAX_SESSIONS_PER_USER, STALE_UPLOAD_MS, UPLOAD_FREE_SPACE_FACTOR, uploadConfig } from "./upload.config";
 
 /** What is kept about an upload beside its bytes. The owner comes from the token, never from the client. */
 type UploadMeta = {
     id: string;
     owner: string;
-    ownerUuid: string;
     sizeBytes: number;
     originalName?: string;
+    fingerprint?: string;
     /** The date asked for when the upload was made. Absent means the server takes it from the file. */
     date?: string | null;
     createdAt: string;
 };
 
 /** What became of an upload that was finished. It is kept in memory, the files are gone by then. */
-type Job = { owner: string; ownerUuid: string; sizeBytes: number; state: UploadState; percent?: number; clipId?: string; errorCode?: string; finishedAt?: number };
+type Job = { owner: string; name?: string; sizeBytes: number; state: UploadState; percent?: number; clipId?: string; errorCode?: string; finishedAt?: number };
 
 /** How long the result of a finished upload can be asked for: 24 hours (86 400 s, 86 400 000 ms). */
 const JOB_KEEP_MS = 24 * 60 * 60 * 1000;
@@ -61,8 +61,8 @@ const limitBytes = (max: number) => {
 export class UploadService {
     constructor(private readonly wsManager: VideoServerWebSocketManager) {}
 
-    /** Uploads that are being written to right now, so two requests cannot append to one file. */
-    private readonly writing = new Set<string>();
+    /** Uploads that are being written to right now, so two requests cannot append to one file. `finished` settles when the write is over. */
+    private readonly writing = new Map<string, { body: Readable; finished: Promise<void> }>();
     private timer?: NodeJS.Timeout;
     /** Uploads that are finished: waiting for their turn, being made ready, done or failed. */
     private readonly jobs = new Map<string, Job>();
@@ -70,6 +70,8 @@ export class UploadService {
     private queue: Promise<void> = Promise.resolve();
     /** The ids of the uploads that wait for their turn, the next one first. */
     private readonly waiting: string[] = [];
+    /** One per upload that was written to: it fires when the upload has been quiet for a while, and tells the uploader it is no longer active. */
+    private readonly idleTimers = new Map<string, NodeJS.Timeout>();
 
     async start(): Promise<void> {
         if (!uploadConfig.folder) {
@@ -102,7 +104,7 @@ export class UploadService {
         };
     }
 
-    async create(owner: string, ownerUuid: string, request: UploadCreateRequest): Promise<UploadSession> {
+    async create(owner: string, request: UploadCreateRequest): Promise<UploadSession> {
         const folder = this.folder();
         if (request.sizeBytes > UPLOAD_MAX_FILE_BYTES) {
             throw new AppErrorV2({ code: ErrorCodes.FILE_TOO_LARGE, message: "The file is larger than the upload allows", params: { maxBytes: UPLOAD_MAX_FILE_BYTES } });
@@ -110,22 +112,64 @@ export class UploadService {
         if (!(await this.status()).enabled) {
             throw new AppErrorV2({ code: ErrorCodes.NOT_READY, message: "There is not enough free space for an upload" });
         }
-        const open = (await this.allMeta()).filter((meta) => meta.owner === owner);
+        const all = (await this.allMeta()).filter((meta) => meta.owner === owner);
+        // The same file again, after a reload or from another device: go on with the stopped upload instead of starting over.
+        const same = request.fingerprint
+            ? all.find(
+                  (meta) =>
+                      !this.jobs.has(meta.id) &&
+                      meta.fingerprint === request.fingerprint &&
+                      meta.sizeBytes === request.sizeBytes &&
+                      meta.originalName === request.originalName
+              )
+            : undefined;
+        if (same) {
+            if (await this.isActive(same.id)) {
+                throw new AppErrorV2({ code: ErrorCodes.CONFLICT, message: "The upload is being written to" });
+            }
+            same.date = request.date;
+            await writeFile(this.metaFile(folder, same.id), JSON.stringify(same));
+            const session = this.session(same, await this.offsetOf(same.id));
+            this.pushOpen(same, session.offset);
+            return session;
+        }
+        const open = all;
         if (open.length >= MAX_SESSIONS_PER_USER) {
             throw new AppErrorV2({ code: ErrorCodes.SYSTEM_BUSY, message: "There are too many uploads open", params: { max: MAX_SESSIONS_PER_USER } });
         }
         const meta: UploadMeta = {
             id: randomBytes(8).toString("hex"),
             owner,
-            ownerUuid,
             sizeBytes: request.sizeBytes,
             originalName: request.originalName,
+            fingerprint: request.fingerprint,
             date: request.date,
             createdAt: new Date().toISOString(),
         };
         await writeFile(this.partFile(folder, meta.id), "");
         await writeFile(this.metaFile(folder, meta.id), JSON.stringify(meta));
+        this.pushOpen(meta, 0);
         return this.session(meta, 0);
+    }
+
+    /** The uploads of all users that are not done. Finished ones are left out: the clip list shows them. */
+    async list(): Promise<UploadSession[]> {
+        const sessions: UploadSession[] = [];
+        for (const [id, job] of this.jobs) {
+            if (job.state !== "done") {
+                sessions.push(this.jobSession(id, job));
+            }
+        }
+        for (const meta of await this.allMeta()) {
+            if (this.jobs.has(meta.id)) {
+                continue;
+            }
+            const offset = await this.offsetOf(meta.id).catch(() => undefined);
+            if (offset !== undefined) {
+                sessions.push({ ...this.session(meta, offset), active: await this.isActive(meta.id) });
+            }
+        }
+        return sessions;
     }
 
     /** Where the upload is. The client asks this to resume after a break, and to see how a finished upload is going. */
@@ -144,7 +188,8 @@ export class UploadService {
         if (this.writing.has(id)) {
             throw new AppErrorV2({ code: ErrorCodes.CONFLICT, message: "The upload is being written to" });
         }
-        this.writing.add(id);
+        let finish: () => void = () => undefined;
+        this.writing.set(id, { body, finished: new Promise<void>((resolve) => (finish = resolve)) });
         try {
             const current = await this.offsetOf(id);
             if (offset !== current) {
@@ -168,42 +213,76 @@ export class UploadService {
                 }
                 return this.jobSession(id, this.startProcessing(meta));
             }
+            this.pushOpen(meta, written);
             return this.session(meta, written);
         } finally {
             this.writing.delete(id);
+            finish();
         }
     }
 
     /** Takes the clip in hand when all its bytes are here: it is checked and made ready one conversion at a time. */
     private startProcessing(meta: UploadMeta): Job {
-        const job: Job = { owner: meta.owner, ownerUuid: meta.ownerUuid, sizeBytes: meta.sizeBytes, state: "queued" };
+        this.clearIdle(meta.id);
+        const job: Job = { owner: meta.owner, name: meta.originalName, sizeBytes: meta.sizeBytes, state: "queued" };
         this.jobs.set(meta.id, job);
         this.waiting.push(meta.id);
         this.queue = this.queue.then(() => this.process(meta, job));
         return job;
     }
 
-    async abort(owner: string, id: string): Promise<void> {
-        const state = this.ownedJob(owner, id)?.state;
+    /** Takes an upload that is not finished away, or the record of one that failed: its owner can, and an admin can for one that nobody sends. A write that is running is cut. */
+    async abort(owner: string, isAdmin: boolean, id: string): Promise<void> {
+        const failed = this.jobs.get(id);
+        if (failed?.state === "failed") {
+            // Its files are gone, only the record of the failure is left.
+            if (failed.owner !== owner && !isAdmin) {
+                throw notFound();
+            }
+            this.jobs.delete(id);
+            this.wsManager.broadcast({
+                action: "upload_state",
+                success: true,
+                payload: { id, owner: failed.owner, sizeBytes: failed.sizeBytes, offset: 0, complete: false, state: "removed" },
+            });
+            return;
+        }
+        const meta = await this.readMeta(id);
+        if (!meta || (meta.owner !== owner && !isAdmin)) {
+            throw notFound();
+        }
+        const state = this.jobs.get(id)?.state;
         if (state === "queued" || state === "processing") {
             throw new AppErrorV2({ code: ErrorCodes.CONFLICT, message: "The upload is being made ready" });
         }
-        const meta = await this.ownedMeta(owner, id);
-        if (this.writing.has(id)) {
+        if (meta.owner !== owner && (await this.isActive(id))) {
             throw new AppErrorV2({ code: ErrorCodes.CONFLICT, message: "The upload is being written to" });
         }
+        const writer = this.writing.get(id);
+        if (writer) {
+            writer.body.destroy();
+            await writer.finished;
+        }
+        this.clearIdle(meta.id);
         await this.remove(meta.id);
+        this.wsManager.broadcast({
+            action: "upload_state",
+            success: true,
+            payload: { id: meta.id, owner: meta.owner, sizeBytes: meta.sizeBytes, offset: 0, complete: false, state: "removed" },
+        });
     }
 
     private session(meta: UploadMeta, offset: number): UploadSession {
-        return { id: meta.id, sizeBytes: meta.sizeBytes, offset, complete: offset >= meta.sizeBytes, state: "uploading" };
+        return { id: meta.id, owner: meta.owner, sizeBytes: meta.sizeBytes, name: meta.originalName, offset, complete: offset >= meta.sizeBytes, state: "uploading" };
     }
 
     private jobSession(id: string, job: Job): UploadSession {
         const position = this.waiting.indexOf(id) + 1;
         return {
             id,
+            owner: job.owner,
             sizeBytes: job.sizeBytes,
+            name: job.name,
             offset: job.sizeBytes,
             complete: true,
             state: job.state,
@@ -265,9 +344,36 @@ export class UploadService {
         this.push(meta.id, job);
     }
 
-    /** Tells the uploader, and nobody else, where the upload is. */
+    /** Tells everyone that the upload is open and was just written to, and starts the wait after which it is told it is quiet. */
+    private pushOpen(meta: UploadMeta, offset: number): void {
+        this.clearIdle(meta.id);
+        this.wsManager.broadcast({
+            action: "upload_state",
+            success: true,
+            payload: { ...this.session(meta, offset), active: true },
+        });
+        const timer = setTimeout(() => {
+            this.idleTimers.delete(meta.id);
+            if (!this.writing.has(meta.id) && !this.jobs.has(meta.id)) {
+                this.wsManager.broadcast({
+                    action: "upload_state",
+                    success: true,
+                    payload: { ...this.session(meta, offset), active: false },
+                });
+            }
+        }, ACTIVE_UPLOAD_MS);
+        timer.unref();
+        this.idleTimers.set(meta.id, timer);
+    }
+
+    private clearIdle(id: string): void {
+        clearTimeout(this.idleTimers.get(id));
+        this.idleTimers.delete(id);
+    }
+
+    /** Tells everyone connected where the upload is. */
     private push(id: string, job: Job): void {
-        this.wsManager.broadcastToUsers([job.ownerUuid], { action: "upload_state", success: true, payload: this.jobSession(id, job) });
+        this.wsManager.broadcast({ action: "upload_state", success: true, payload: this.jobSession(id, job) });
     }
 
     private folder(): string {
@@ -279,6 +385,15 @@ export class UploadService {
 
     private partFile = (folder: string, id: string) => path.join(folder, `${id}.part`);
     private metaFile = (folder: string, id: string) => path.join(folder, `${id}.json`);
+
+    /** Whether someone is writing to the upload, or did a moment ago. */
+    private async isActive(id: string): Promise<boolean> {
+        if (this.writing.has(id)) {
+            return true;
+        }
+        const lastWrite = (await stat(this.partFile(this.folder(), id)).catch(() => undefined))?.mtimeMs;
+        return lastWrite !== undefined && Date.now() - lastWrite < ACTIVE_UPLOAD_MS;
+    }
 
     private async offsetOf(id: string): Promise<number> {
         return (await stat(this.partFile(this.folder(), id))).size;

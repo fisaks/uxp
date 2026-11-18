@@ -2,12 +2,16 @@ import { UPLOAD_CHUNK_BYTES } from "@vid/common";
 import { AxiosUtil, ErrorCodes } from "@uxp/common";
 import axios from "axios";
 import { AppDispatch, RootState } from "../../app/store";
-import { createUpload, deleteUpload, getUpload, putChunk } from "./upload.api";
-import { phaseSet, progressed, serverStateReceived, sessionCreated } from "./uploadSlice";
+import { createUpload, deleteUpload, getUpload, listUploads, putChunk } from "./upload.api";
+import { phaseSet, progressed, serverStateReceived, serverUploadsLoaded, sessionCreated } from "./uploadSlice";
 
 type Thunk = (dispatch: AppDispatch, getState: () => RootState) => Promise<void>;
 
 const RETRY_DELAYS_MS = [2000, 5000, 10000];
+/** How many answers in a row may say the server has another offset: more means someone else writes to the same upload. */
+const MAX_RESYNCS = 3;
+/** How much of the start and the end of a file is read to tell the file again: 1 MB (1 048 576 bytes). */
+const FINGERPRINT_BYTES = 1024 * 1024;
 
 /** The files are not in the store, they cannot be serialized. */
 const files = new Map<string, File>();
@@ -40,6 +44,17 @@ const wait = (ms: number, signal: AbortSignal) =>
         );
     });
 
+/** sha1 of the first and the last megabyte, as 40 hex digits. Cheap to read from a file of gigabytes, and enough to tell the same file again. */
+const fingerprintOf = async (file: File): Promise<string> => {
+    const head = await file.slice(0, FINGERPRINT_BYTES).arrayBuffer();
+    const tail = await file.slice(Math.max(0, file.size - FINGERPRINT_BYTES)).arrayBuffer();
+    const bytes = new Uint8Array(head.byteLength + tail.byteLength);
+    bytes.set(new Uint8Array(head));
+    bytes.set(new Uint8Array(tail), head.byteLength);
+    const digest = await crypto.subtle.digest("SHA-1", bytes);
+    return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
+};
+
 const itemOf = (getState: () => RootState, key: string) => getState().upload.items.find((i) => i.key === key);
 
 /** Sends the file from where the server has it. Returns when the last chunk is in, or the upload is paused or failed. */
@@ -52,18 +67,27 @@ const send = async (key: string, dispatch: AppDispatch, getState: () => RootStat
     if (sessionId) {
         offset = (await getUpload(sessionId)).offset;
     } else {
-        const session = await createUpload({ sizeBytes: file.size, originalName: file.name, ...(item.date ? { date: item.date } : {}) });
+        // The server goes on with a stopped upload of the same file, so the offset can be more than 0.
+        const session = await createUpload({
+            sizeBytes: file.size,
+            originalName: file.name,
+            fingerprint: await fingerprintOf(file),
+            ...(item.date ? { date: item.date } : {}),
+        });
         sessionId = session.id;
-        dispatch(sessionCreated({ key, sessionId }));
+        offset = session.offset;
+        dispatch(sessionCreated({ key, sessionId, sent: offset }));
     }
     dispatch(progressed({ key, sent: offset }));
     let failures = 0;
+    let resyncs = 0;
     while (offset < file.size) {
         try {
             const answer = await putChunk(sessionId, offset, file.slice(offset, offset + UPLOAD_CHUNK_BYTES), signal, (sent) =>
                 dispatch(progressed({ key, sent }))
             );
             failures = 0;
+            resyncs = 0;
             offset = answer.offset;
             dispatch(progressed({ key, sent: offset }));
             if (answer.complete) {
@@ -78,6 +102,7 @@ const send = async (key: string, dispatch: AppDispatch, getState: () => RootStat
             if (signal.aborted) return;
             const { code, params } = AxiosUtil.getErrorResponse(error).error;
             if (code === ErrorCodes.CONFLICT && typeof params?.offset === "number") {
+                if (++resyncs > MAX_RESYNCS) throw error;
                 offset = params.offset; // the server has more or less than we thought: go on from where it is
                 continue;
             }
@@ -121,3 +146,8 @@ export const cancelUpload =
         const sessionId = itemOf(getState, key)?.sessionId;
         if (sessionId) await deleteUpload(sessionId).catch(() => undefined);
     };
+
+/** Takes in what the server has for the user: stopped uploads, files being made ready, failed ones. Run when the page opens. */
+export const loadServerUploads: Thunk = async (dispatch) => {
+    dispatch(serverUploadsLoaded(await listUploads()));
+};

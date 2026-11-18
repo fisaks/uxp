@@ -1,4 +1,5 @@
 import AddIcon from "@mui/icons-material/Add";
+import RefreshIcon from "@mui/icons-material/Refresh";
 import CloseIcon from "@mui/icons-material/Close";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import UploadIcon from "@mui/icons-material/Upload";
@@ -6,16 +7,16 @@ import { Alert, Box, Button, IconButton, LinearProgress, Paper, Stack, Typograph
 import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterLuxon } from "@mui/x-date-pickers/AdapterLuxon";
 import { ErrorCodes } from "@uxp/common";
-import { usePortalContainerRef } from "@uxp/ui-lib";
+import { selectCurrentUser, usePortalContainerRef } from "@uxp/ui-lib";
 import { DateTime } from "luxon";
-import React, { useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { errorText } from "../../api/errorText";
 import { useAppDispatch, useAppSelector } from "../../hooks";
 import { clipPath } from "../home-video/ClipTile";
 import { PAGE_WIDTH } from "../shared/pageWidth";
 import { useGetUploadStatusQuery } from "./upload.api";
-import { cancelUpload, dropFile, holdFile, sendQueued } from "./uploadRunner";
+import { cancelUpload, dropFile, holdFile, loadServerUploads, sendQueued } from "./uploadRunner";
 import { selectSending, selectUploads } from "./uploadSelectors";
 import { dateSet, finishedCleared, itemRemoved, itemsAdded, phaseSet, UploadItem } from "./uploadSlice";
 import { useWakeLock } from "./useWakeLock";
@@ -25,7 +26,7 @@ const GB = 1024 * MB;
 
 const formatSize = (bytes: number) => (bytes >= GB ? `${(bytes / GB).toFixed(1)} GB` : `${Math.max(1, Math.round(bytes / MB))} MB`);
 
-const phaseText = (item: UploadItem): string => {
+const phaseText = (item: UploadItem, mine: boolean): string => {
     switch (item.phase) {
         case "ready":
             return "Ready";
@@ -38,6 +39,9 @@ const phaseText = (item: UploadItem): string => {
         case "processing":
             if (item.queuePosition !== undefined) return `Waiting to be made ready (${item.queuePosition}. in the queue)`;
             return item.percent !== undefined ? `Making it ready ${item.percent} %` : "Making it ready…";
+        case "stopped":
+            if (item.active) return mine ? "Being sent from another device or tab" : "Being sent";
+            return `Stopped at ${Math.round((item.sent / item.sizeBytes) * 100)} %${mine ? ". Add the same file to continue, or remove it." : ""}`;
         case "done":
             return "Done";
         case "failed":
@@ -48,7 +52,14 @@ const phaseText = (item: UploadItem): string => {
 const UploadRow: React.FC<{ item: UploadItem }> = ({ item }) => {
     const dispatch = useAppDispatch();
     const portalContainer = usePortalContainerRef();
+    const user = useAppSelector(selectCurrentUser);
+    const mine = item.owner === user?.username;
     const inProgress = item.phase === "queued" || item.phase === "uploading";
+    // Rows of others are read only, except that an admin removes a stopped one and anyone clears a failed one from the list. A row someone sends elsewhere is stopped there, not here.
+    const removable =
+        item.phase === "stopped"
+            ? !item.active && (mine || (user?.roles.includes("admin") ?? false))
+            : item.phase === "failed" || (item.phase !== "processing" && item.phase !== "done" && mine);
     const remove = () => {
         void dispatch(cancelUpload(item.key));
         dropFile(item.key);
@@ -67,7 +78,9 @@ const UploadRow: React.FC<{ item: UploadItem }> = ({ item }) => {
                         {item.name}
                     </Typography>
                     <Typography variant="caption" color={item.phase === "failed" ? "error" : "text.secondary"} component="div">
-                        {formatSize(item.sizeBytes)} · {phaseText(item)}
+                        {formatSize(item.sizeBytes)} · {phaseText(item, mine)}
+                        {!mine && ` · ${item.owner}`}
+                        {item.sessionId && ` · ${item.sessionId}`}
                     </Typography>
                 </Box>
                 {item.phase === "paused" && (
@@ -80,7 +93,7 @@ const UploadRow: React.FC<{ item: UploadItem }> = ({ item }) => {
                         Open
                     </Button>
                 )}
-                {item.phase !== "processing" && item.phase !== "done" && (
+                {removable && (
                     <IconButton aria-label={inProgress ? "Cancel" : "Remove"} onClick={remove}>
                         <CloseIcon />
                     </IconButton>
@@ -107,7 +120,7 @@ const UploadRow: React.FC<{ item: UploadItem }> = ({ item }) => {
                     </LocalizationProvider>
                 </Box>
             )}
-            {(item.phase === "uploading" || item.phase === "paused" || item.phase === "processing") && (
+            {(item.phase === "uploading" || item.phase === "paused" || item.phase === "processing" || item.phase === "stopped") && (
                 <LinearProgress
                     variant={item.phase === "processing" && item.percent === undefined ? "indeterminate" : "determinate"}
                     value={item.phase === "processing" ? (item.percent ?? 0) : (item.sent / item.sizeBytes) * 100}
@@ -124,10 +137,14 @@ let nextKey = 0;
 export const UploadPage: React.FC = () => {
     const dispatch = useAppDispatch();
     const items = useAppSelector(selectUploads);
+    const user = useAppSelector(selectCurrentUser);
     const sending = useAppSelector(selectSending);
     const { data: status, isError: statusFailed } = useGetUploadStatusQuery();
     const input = useRef<HTMLInputElement>(null);
     useWakeLock(sending);
+    useEffect(() => {
+        void dispatch(loadServerUploads).catch(() => undefined); // the list is a help: the page works without it
+    }, [dispatch]);
 
     const add = (picked: FileList | null) => {
         if (!picked || !status) return;
@@ -137,6 +154,7 @@ export const UploadPage: React.FC = () => {
             const tooLarge = file.size > status.maxFileBytes;
             return {
                 key,
+                owner: user?.username ?? "",
                 name: file.name,
                 sizeBytes: file.size,
                 date: null,
@@ -171,6 +189,9 @@ export const UploadPage: React.FC = () => {
                 <Button variant="contained" startIcon={<UploadIcon />} disabled={ready === 0} onClick={start}>
                     Upload {ready > 0 ? ready : ""}
                 </Button>
+                <IconButton aria-label="Refresh" onClick={() => void dispatch(loadServerUploads).catch(() => undefined)}>
+                    <RefreshIcon />
+                </IconButton>
                 {finished > 0 && <Button onClick={() => dispatch(finishedCleared())}>Clear done</Button>}
             </Stack>
             <input ref={input} type="file" accept="video/*" multiple hidden onChange={(e) => add(e.target.files)} />

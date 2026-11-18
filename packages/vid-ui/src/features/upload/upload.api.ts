@@ -21,6 +21,8 @@ export const { useGetUploadStatusQuery } = uploadApi;
 export const createUpload = (request: UploadCreateRequest) =>
     axiosInstance.post<UploadSession>(apiUrl("uploads"), request).then(({ data }) => data);
 
+export const listUploads = () => axiosInstance.get<UploadSession[]>(apiUrl("uploads")).then(({ data }) => data);
+
 export const getUpload = (id: string) => axiosInstance.get<UploadSession>(apiUrl(`uploads/${id}`)).then(({ data }) => data);
 
 export const putChunk = (id: string, offset: number, chunk: Blob, signal: AbortSignal, onProgress: (sent: number) => void) =>
