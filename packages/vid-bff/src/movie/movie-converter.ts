@@ -76,20 +76,23 @@ const keptAudio = (info: ProbeResult, originalLanguage?: string): ProbeStream[] 
 /** The most channels a track keeps (7.1). More is downmixed to this. */
 const MAX_AUDIO_CHANNELS = 8;
 
-/** The `-map` and codec arguments of the kept tracks. Stereo stays stereo at 160k; surround keeps its channels (at most 7.1), 5.1 at
- * 384k and 7.1 at 512k, so a film with surround sound is not downmixed. */
+/** The `-map` and codec arguments that make audio track `index` of the source output track `out`. Stereo stays stereo at 160k; surround
+ * keeps its channels (at most 7.1), 5.1 at 384k and 7.1 at 512k, so it is not downmixed. */
+export const aacTrackArgs = (stream: ProbeStream, index: number, out: number): string[] => {
+    const channels = stream.channels ?? 2;
+    return [
+        "-map", `0:a:${index}`,
+        "-c:a:" + out, "aac",
+        "-disposition:a:" + out, out === 0 ? "default" : "0",
+        "-b:a:" + out, channels > 6 ? "512k" : channels > 2 ? "384k" : "160k",
+        ...(channels > 2 ? ["-ac:" + out, String(Math.min(channels, MAX_AUDIO_CHANNELS))] : []),
+    ];
+};
+
+/** The audio arguments of the kept tracks. */
 const audioArgs = (info: ProbeResult, originalLanguage?: string): string[] => {
     const audio = info.streams.filter((stream) => stream.codec_type === "audio");
-    return keptAudio(info, originalLanguage).flatMap((stream, out) => {
-        const channels = stream.channels ?? 2;
-        return [
-            "-map", `0:a:${audio.indexOf(stream)}`,
-            "-c:a:" + out, "aac",
-            "-disposition:a:" + out, out === 0 ? "default" : "0",
-            "-b:a:" + out, channels > 6 ? "512k" : channels > 2 ? "384k" : "160k",
-            ...(channels > 2 ? ["-ac:" + out, String(Math.min(channels, MAX_AUDIO_CHANNELS))] : []),
-        ];
-    });
+    return keptAudio(info, originalLanguage).flatMap((stream, out) => aacTrackArgs(stream, audio.indexOf(stream), out));
 };
 
 export type ConvertMode = "copy" | "transcode";

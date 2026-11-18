@@ -1,7 +1,7 @@
 import { AppErrorV2 } from "@uxp/bff-common";
 import { ErrorCodes } from "@uxp/common";
 import { spawn } from "child_process";
-import { ProbeResult, probe } from "../movie/movie-converter";
+import { ProbeResult, aacTrackArgs, probe } from "../movie/movie-converter";
 
 const VIDEO_CODEC = "h264";
 const AUDIO_CODEC = "aac";
@@ -55,11 +55,13 @@ const runFfmpeg = (args: string[], onSeconds?: (seconds: number) => void): Promi
  */
 export const makeMp4 = async (input: string, output: string, info: ProbeResult, onProgress?: (percent: number) => void): Promise<boolean> => {
     const copy = canCopy(info);
-    const codec = copy ? ["-c", "copy"] : ["-vf", "scale=trunc(iw/2)*2:trunc(ih/2)*2,format=yuv420p", "-c:v", "libx264", "-preset", "medium", "-crf", "20", "-c:a", "aac", "-b:a", "160k"];
-    // The first video track and every audio track. Data and subtitle tracks of phones are not played and can break the copy.
-    const maps = ["-map", "0:v:0", "-map", "0:a?"];
+    // Data and subtitle tracks of phones are not played and can break the copy, so only the first video track and the audio tracks come along.
+    // A converted clip keeps every audio track and its channels (cameras record 4 or 5.1 channels), like a film does.
+    const audio = info.streams.filter((stream) => stream.codec_type === "audio");
+    const video = ["-vf", "scale=trunc(iw/2)*2:trunc(ih/2)*2,format=yuv420p", "-c:v", "libx264", "-preset", "medium", "-crf", "20"];
+    const codec = copy ? ["-map", "0:v:0", "-map", "0:a?", "-c", "copy"] : ["-map", "0:v:0", ...video, ...audio.flatMap((stream, index) => aacTrackArgs(stream, index, index))];
     const duration = Number(info.format.duration);
-    const args = ["-hide_banner", "-loglevel", "error", "-nostdin", "-nostats", "-progress", "pipe:1", "-y", "-i", input, ...maps, ...codec, "-movflags", "+faststart", "-f", "mp4", output];
+    const args = ["-hide_banner", "-loglevel", "error", "-nostdin", "-nostats", "-progress", "pipe:1", "-y", "-i", input, ...codec, "-movflags", "+faststart", "-f", "mp4", output];
     try {
         await runFfmpeg(args, duration > 0 ? (seconds) => onProgress?.(Math.min(100, Math.floor((seconds / duration) * 100))) : undefined);
     } catch {
