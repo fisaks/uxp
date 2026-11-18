@@ -19,6 +19,8 @@ type ProbeStream = {
     channels?: number;
     /** Frames per second as a fraction, such as `25/1`. */
     r_frame_rate?: string;
+    /** Transfer curve of the video, `arib-std-b67` is HLG and `smpte2084` is PQ (both HDR). */
+    color_transfer?: string;
     tags?: { language?: string; creation_time?: string };
 };
 

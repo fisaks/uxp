@@ -5,6 +5,11 @@ import { ProbeResult, aacTrackArgs, probe } from "../movie/movie-converter";
 
 const VIDEO_CODEC = "h264";
 const AUDIO_CODEC = "aac";
+/** A TV or a Chromecast shows 60 frames a second at most, so more (phone slow motion is 120 or 240) is only cost. */
+const MAX_FPS = 60;
+const HDR_TRANSFERS = new Set(["arib-std-b67", "smpte2084"]);
+/** HDR (BT.2020, HLG or PQ) to SDR BT.709: without it the picture is grey and flat in a browser. */
+const TONE_MAP = "zscale=t=linear:npl=100,format=gbrpf32le,zscale=p=bt709,tonemap=hable:desat=0,zscale=t=bt709:m=bt709:r=tv";
 
 /** The file is a video that ffprobe can read, or the upload is refused with a code the UI can show. */
 export const probeUpload = async (file: string): Promise<ProbeResult> => {
@@ -25,6 +30,19 @@ const canCopy = (info: ProbeResult): boolean => {
     const video = info.streams.find((stream) => stream.codec_type === "video");
     const audio = info.streams.filter((stream) => stream.codec_type === "audio");
     return video?.codec_name === VIDEO_CODEC && audio.every((stream) => stream.codec_name === AUDIO_CODEC);
+};
+
+/** The video filters of a converted clip: frame rate cap first (fewer frames to tone map), then HDR to SDR, then even size and 8 bit. */
+const videoFilter = (info: ProbeResult): string => {
+    const video = info.streams.find((stream) => stream.codec_type === "video");
+    const [num, den] = (video?.r_frame_rate ?? "").split("/").map(Number);
+    const fps = den > 0 ? num / den : 0;
+    return [
+        ...(fps > MAX_FPS ? [`fps=${MAX_FPS}`] : []),
+        ...(HDR_TRANSFERS.has(video?.color_transfer ?? "") ? [TONE_MAP] : []),
+        "scale=trunc(iw/2)*2:trunc(ih/2)*2",
+        "format=yuv420p",
+    ].join(",");
 };
 
 /** Runs ffmpeg and tells how many seconds of the clip are done from its `-progress` lines. Fails when ffmpeg ends with an error. */
@@ -58,7 +76,7 @@ export const makeMp4 = async (input: string, output: string, info: ProbeResult, 
     // Data and subtitle tracks of phones are not played and can break the copy, so only the first video track and the audio tracks come along.
     // A converted clip keeps every audio track and its channels (cameras record 4 or 5.1 channels), like a film does.
     const audio = info.streams.filter((stream) => stream.codec_type === "audio");
-    const video = ["-vf", "scale=trunc(iw/2)*2:trunc(ih/2)*2,format=yuv420p", "-c:v", "libx264", "-preset", "medium", "-crf", "20"];
+    const video = ["-vf", videoFilter(info), "-c:v", "libx264", "-preset", "medium", "-crf", "20"];
     const codec = copy ? ["-map", "0:v:0", "-map", "0:a?", "-c", "copy"] : ["-map", "0:v:0", ...video, ...audio.flatMap((stream, index) => aacTrackArgs(stream, index, index))];
     const duration = Number(info.format.duration);
     const args = ["-hide_banner", "-loglevel", "error", "-nostdin", "-nostats", "-progress", "pipe:1", "-y", "-i", input, ...codec, "-movflags", "+faststart", "-f", "mp4", output];
