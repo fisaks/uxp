@@ -70,8 +70,10 @@ function setRaw(req: FastifyRequest, _payload: any, done: any) {
     done();
 }
 fastify.addContentTypeParser("multipart/form-data", setRaw);
-// A chunk of a resumable upload (VID) is streamed to the app the same way.
-fastify.addContentTypeParser("application/octet-stream", setRaw);
+// A chunk of a resumable upload (VID) is streamed to the app the same way. Only this content type may be larger than the
+// 1 MB that Fastify takes by default.
+const RAW_CHUNK_LIMIT_BYTES = 16 * 1024 * 1024;
+fastify.addContentTypeParser("application/octet-stream", { bodyLimit: RAW_CHUNK_LIMIT_BYTES }, setRaw);
 // Log incoming request payloads
 if (!IsProd) {
     fastify.addHook("preHandler", async (request, _reply) => {

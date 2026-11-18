@@ -10,6 +10,7 @@ export const homeVideoApi = vidApi.injectEndpoints({
         getClips: builder.query<HomeVideoClip[], void>({
             query: () => ({ url: apiUrl("home-videos/clips") }),
             transformResponse: (all: HomeVideoClip[]) => [...all].sort(compareClips),
+            providesTags: ["Clips"],
         }),
         getLabels: builder.query<HomeVideoLabels, void>({
             query: () => ({ url: apiUrl("home-videos/labels") }),
@@ -41,8 +42,13 @@ export const homeVideoApi = vidApi.injectEndpoints({
                 }
             },
         }),
+        /** Deletes an uploaded clip: the server moves its file to the trash. */
+        deleteClip: builder.mutation<void, string>({
+            query: (id) => ({ url: apiUrl(`home-videos/clips/${id}`), method: "DELETE" }),
+            invalidatesTags: ["Clips", "Labels"],
+        }),
     }),
     overrideExisting: false,
 });
 
-export const { useGetClipsQuery, useGetLabelsQuery, useSearchClipsQuery, useUpdateClipMutation } = homeVideoApi;
+export const { useDeleteClipMutation, useGetClipsQuery, useGetLabelsQuery, useSearchClipsQuery, useUpdateClipMutation } = homeVideoApi;

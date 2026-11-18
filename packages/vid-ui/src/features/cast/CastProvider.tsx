@@ -9,6 +9,8 @@ import {
 import { BrowserPlayerListener } from "../browser-player/BrowserPlayerListener";
 import { useAppDispatch } from "../../hooks";
 import { chromecastsReceived } from "../chromecast/chromecastSlice";
+import { homeVideoApi } from "../home-video/home-video.api";
+import { serverStateReceived } from "../upload/uploadSlice";
 import { castStateReceived } from "./castSlice";
 
 const getPageWebSocket = () => VideoAppBrowserWebSocketManager.getInstance();
@@ -19,7 +21,7 @@ type CastProviderProps = {
     children: React.ReactNode;
 };
 
-/** Keeps the cast state and the state of the Chromecasts in the store live: the BFF pushes it over the WebSocket. The state of the player tab is kept live too. */
+/** Keeps the cast state and the state of the Chromecasts in the store live: the BFF pushes it over the WebSocket, and tells the uploader when an upload is done. The state of the player tab is kept live too. */
 export const CastProvider: React.FC<CastProviderProps> = ({ getWebSocket = getPageWebSocket, children }) => {
     const dispatch = useAppDispatch();
     const ws = useMemo(getWebSocket, [getWebSocket]);
@@ -30,6 +32,12 @@ export const CastProvider: React.FC<CastProviderProps> = ({ getWebSocket = getPa
             cast_state: (message) => message.payload && dispatch(castStateReceived(message.payload)),
             chromecasts_subscribe: (message) => message.payload && dispatch(chromecastsReceived(message.payload)),
             chromecasts_state: (message) => message.payload && dispatch(chromecastsReceived(message.payload)),
+            upload_state: (message) => {
+                if (!message.payload) return;
+                dispatch(serverStateReceived(message.payload));
+                // The clip that was made is in the list of the clips.
+                if (message.payload.state === "done") dispatch(homeVideoApi.util.invalidateTags(["Clips", "Labels"]));
+            },
         }),
         [dispatch]
     );

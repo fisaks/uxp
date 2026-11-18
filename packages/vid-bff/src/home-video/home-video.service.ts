@@ -32,6 +32,8 @@ const toClip = (scanned: ScannedClip, metadata: HomeVideoMetadata | undefined): 
     people: metadata?.people ?? [],
     tags: metadata?.tags ?? [],
     uploadedBy: metadata?.uploadedBy ?? null,
+    originalName: metadata?.originalName ?? null,
+    uploadedAt: metadata?.uploadedAt ?? null,
 });
 
 /** The home videos: what the scan finds in the home video folder, with the metadata the user has set. */
@@ -97,14 +99,14 @@ export class HomeVideoService {
      * Adds a file that is already in the home video folder as a clip, without scanning the folder again. The file must be where it stays: the
      * clip id is made from its path. `date` is only kept when it is given (null is a clip with no date).
      */
-    async addClip(file: string, uploadedBy: string, date: string | null | undefined): Promise<HomeVideoClip> {
+    async addClip(file: string, upload: { uploadedBy: string; originalName?: string }, date: string | null | undefined): Promise<HomeVideoClip> {
         const folder = this.folderOrThrow();
         const full = path.join(folder, file);
         const { size, mtimeMs } = await stat(full);
         const { durationSeconds, width, height } = await probe(full);
         const scanned: ScannedClip = { id: clipId(file), file, durationSeconds, width, height, sizeBytes: size, mtimeMs, parsedDate: parseDate(file) };
         this.scanned.set(scanned.id, scanned);
-        this.store.updateMetadata(file, { uploadedBy, ...(date !== undefined && { date }) });
+        this.store.updateMetadata(file, { ...upload, uploadedAt: new Date().toISOString(), ...(date !== undefined && { date }) });
         this.search.reindex();
         return toClip(scanned, this.store.getMetadata(file));
     }

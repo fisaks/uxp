@@ -1,8 +1,10 @@
-import { Alert, Box, Chip, CircularProgress, MenuItem, Stack, TextField, Typography } from "@mui/material";
+import UploadIcon from "@mui/icons-material/Upload";
+import { Alert, Box, Button, Chip, CircularProgress, MenuItem, Stack, TextField, Typography } from "@mui/material";
 import { HomeVideoClip } from "@vid/common";
 import { usePortalContainerRef } from "@uxp/ui-lib";
 import React, { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
+import { UPLOAD_PATH } from "../../menu";
 import { PlayAllButton } from "../cast/PlayAllButton";
 import { SEARCH_PARAM } from "../search/SearchBox";
 import { useClipSearch } from "../search/useClipSearch";
@@ -124,6 +126,9 @@ export const ClipListPage: React.FC = () => {
                     {shown.length} of {clips.length} clips
                 </Typography>
                 <PlayAllButton clipIds={shown.map((c) => c.id)} />
+                <Button component={Link} to={UPLOAD_PATH} size="small" startIcon={<UploadIcon />}>
+                    Upload
+                </Button>
             </Stack>
             <YearBar years={groups.map(([year]) => year)} onJump={setJumpedTo} />
             {groups.length === 0 && <Typography color="text.secondary">No clip matches.</Typography>}

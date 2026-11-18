@@ -7,6 +7,7 @@ import { Link, useParams } from "react-router-dom";
 import { thumbnailUrl } from "../../api/home-video-api";
 import { CastPicker } from "../cast/CastPicker";
 import { RateButton } from "../cast/RateButton";
+import { ClipDelete } from "./ClipDelete";
 import { ClipForm } from "./ClipForm";
 import { clipPath } from "./ClipTile";
 import { clipName, formatDate } from "./clipFormat";
@@ -104,6 +105,7 @@ export const ClipPage: React.FC = () => {
                 </Button>
             </Stack>
             <ClipForm key={clip.id} clip={clip} />
+            <ClipDelete clip={clip} />
         </Box>
     );
 };

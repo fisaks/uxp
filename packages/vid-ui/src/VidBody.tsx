@@ -28,10 +28,12 @@ import {
     KIDS_PATH,
     MOVIES_PATH,
     TV_PATH,
+    UPLOAD_PATH,
     PLAYER_PATH,
     PLAYER_WINDOW_PATH,
     PLAYLISTS_PATH,
 } from "./menu";
+import { UploadPage } from "./features/upload/UploadPage";
 import { VideoNavigation } from "./VideoNavigation";
 
 const SaveErrorNotice = () => {
@@ -60,6 +62,7 @@ const Pages = () => {
             <Routes>
                 <Route path={HOME_PATH} element={<HomePage />} />
                 <Route path={HOME_VIDEOS_PATH} element={<ClipListPage />} />
+                <Route path={UPLOAD_PATH} element={<UploadPage />} />
                 <Route path={`${HOME_VIDEOS_PATH}/clips/:id`} element={<ClipPage />} />
                 <Route path={MOVIES_PATH} element={<MovieListPage category="movies" />} />
                 <Route path={`${MOVIES_PATH}/items/:id`} element={<MoviePage category="movies" />} />

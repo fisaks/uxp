@@ -1,10 +1,11 @@
+import UploadIcon from "@mui/icons-material/Upload";
 import PlayCircleOutlineIcon from "@mui/icons-material/PlayCircleOutline";
 import { Box, ButtonBase, Paper, Typography } from "@mui/material";
 import React from "react";
 import { Link } from "react-router-dom";
 import { HomeVideoClip, MovieItem } from "@vid/common";
 import { thumbnailUrl } from "../../api/home-video-api";
-import { CHROMECASTS_PATH, MENU_ITEMS, playerPath } from "../../menu";
+import { CHROMECASTS_PATH, MENU_ITEMS, playerPath, UPLOAD_PATH } from "../../menu";
 import { useAppSelector } from "../../hooks";
 import { PLAYER_TAB_ID } from "../browser-player/browserPlayerLink";
 import { useCast } from "../cast/useCast";
@@ -13,6 +14,7 @@ import { useGetCastGroupsQuery } from "../cast-group/castGroup.api";
 import { useGetPlaylistsQuery } from "../playlist/playlist.api";
 import { useGetClipsQuery } from "../home-video/home-video.api";
 import { isUnlabelled } from "../home-video/clipFormat";
+import { selectUploads } from "../upload/uploadSelectors";
 import { useVideos } from "../video/useVideos";
 import { useGetMovieItemsQuery } from "../movie/movie.api";
 import { posterUrl } from "../movie/movieUrls";
@@ -151,6 +153,9 @@ export const HomePage: React.FC = () => {
     const groupsInfo =
         castGroups &&
         [plural(castGroups.length, "group"), playingGroups ? `${playingGroups} playing` : undefined].filter(Boolean).join(" · ");
+    const uploads = useAppSelector(selectUploads);
+    const sendingCount = uploads.filter((u) => ["queued", "uploading", "processing"].includes(u.phase)).length;
+    const uploadInfo = sendingCount > 0 ? `${sendingCount} in progress` : "Send videos from this device";
     const unlabelled = clips?.filter(isUnlabelled).length;
     const info = clips && [plural(clips.length, "clip"), unlabelled ? `${unlabelled} unlabelled` : undefined].filter(Boolean).join(" · ");
 
@@ -164,6 +169,7 @@ export const HomePage: React.FC = () => {
                     lines={[info]}
                     picture={clips && clips.length > 0 && <Mosaic urls={spreadPosters(clips)} />}
                 />
+                <Tile to={UPLOAD_PATH} icon={<UploadIcon />} title="Upload" lines={[uploadInfo]} />
                 <Tile
                     to={moviesTile.path}
                     icon={moviesTile.icon}

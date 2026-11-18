@@ -23,6 +23,7 @@ export const MENU_ITEMS: MenuItem[] = [
 export const HOME_PATH = "/";
 export const HOME_LABEL = "Video";
 export const HOME_VIDEOS_PATH = MENU_ITEMS[0].path;
+export const UPLOAD_PATH = `${HOME_VIDEOS_PATH}/upload`;
 export const CHROMECASTS_PATH = MENU_ITEMS[1].path;
 export const PLAYLISTS_PATH = MENU_ITEMS[2].path;
 export const CAST_GROUPS_PATH = MENU_ITEMS[3].path;

@@ -217,7 +217,7 @@ export class UploadService {
             const target = path.join(homeVideoConfig.folder ?? "", file);
             await mkdir(path.dirname(target), { recursive: true });
             await rename(output, target);
-            const clip = await homeVideoService.addClip(file, meta.owner, date);
+            const clip = await homeVideoService.addClip(file, { uploadedBy: meta.owner, originalName: meta.originalName }, date);
             job.clipId = clip.id;
             job.state = "done";
             AppLogger.info(undefined, { message: `[Upload] ${meta.id} is the clip ${clip.id}${converted ? " (converted)" : ""}` });

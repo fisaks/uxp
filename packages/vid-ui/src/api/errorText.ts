@@ -8,6 +8,11 @@ const VID_ERROR_MESSAGES: ErrorCodeMessageMap = {
     UNREACHABLE: (params) => (params?.resource ? `The ${params.resource} could not be reached.` : "It could not be reached."),
     INVALID_STATE: "That cannot be done right now.",
     NOT_READY: "That cannot be done right now.",
+    INVALID_FILE_TYPE: "That is not a video that can be used.",
+    SYSTEM_BUSY: "Too many uploads at once. Try again when one is done.",
+    DISCONNECTED: "The connection broke. Resume when it is back.",
+    TIMEOUT: "The connection broke. Resume when it is back.",
+    FORBIDDEN: "That clip cannot be deleted.",
 };
 
 /** The text for an error the BFF answered with. */

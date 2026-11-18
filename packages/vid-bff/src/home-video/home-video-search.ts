@@ -4,7 +4,7 @@ import { LibrarySearch, meiliEnv } from "../search/library-search";
 
 const SETTINGS: SearchIndexSettings = {
     primaryKey: "id",
-    searchableAttributes: ["title", "description", "people", "tags", "date", "year"],
+    searchableAttributes: ["title", "description", "people", "tags", "date", "year", "originalName", "uploadedBy", "uploadedAt"],
 };
 
 const toDoc = (clip: HomeVideoClip): HomeVideoSearchDoc => ({
@@ -15,6 +15,9 @@ const toDoc = (clip: HomeVideoClip): HomeVideoSearchDoc => ({
     tags: clip.tags,
     date: clip.date ?? "",
     year: clip.date?.slice(0, 4) ?? "",
+    uploadedBy: clip.uploadedBy ?? "",
+    originalName: clip.originalName ?? "",
+    uploadedAt: clip.uploadedAt?.slice(0, 10) ?? "",
 });
 
 /** The search of the home videos, which are the truth for their index. */

@@ -16,6 +16,10 @@ export type HomeVideoClip = {
     tags: string[];
     /** Who uploaded the clip, from the login at the time. null for a clip that was in the folder already; only uploaded clips can be deleted. */
     uploadedBy: string | null;
+    /** What the phone called the file when it was uploaded. null for a clip that was in the folder already. */
+    originalName: string | null;
+    /** When the clip was uploaded, as an ISO date and time (UTC). null for a clip that was in the folder already. */
+    uploadedAt: string | null;
 };
 
 /** The fields of a clip that can be edited. Only the fields that are present change. */
@@ -71,6 +75,11 @@ export type HomeVideoSearchDoc = {
     /** The ISO date, so a search for 2009-03 or 2009 finds the clips of that time. */
     date: string;
     year: string;
+    /** Who uploaded the clip, and what the phone called the file; empty for a clip that was in the folder already. */
+    uploadedBy: string;
+    originalName: string;
+    /** The ISO date of the upload, so a search for 2026-11 finds what was uploaded then. */
+    uploadedAt: string;
 };
 
 /** Name of the Meilisearch index of the home videos. */

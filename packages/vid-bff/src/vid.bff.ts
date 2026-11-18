@@ -10,6 +10,7 @@ import {
     registerLocalWebSocketHandlers,
     registerRoutes,
 } from "@uxp/bff-common";
+import { UPLOAD_CHUNK_BYTES } from "@vid/common";
 import Fastify from "fastify";
 import path from "path";
 import { castGroupService } from "./cast/cast-group.service";
@@ -26,8 +27,9 @@ fastify.setErrorHandler(errorHandler);
 fastify.register(fastifyWebsocket);
 fastify.register(fastifyCookie);
 fastify.register(jwtPlugin);
-// An upload chunk is handed to the route as the raw stream, so it is written to the disk and not held in memory.
-fastify.addContentTypeParser("application/octet-stream", (_req, payload, done) => done(null, payload));
+// An upload chunk is handed to the route as the raw stream, so it is written to the disk and not held in memory. Only this
+// content type may be larger than the 1 MB that Fastify takes by default.
+fastify.addContentTypeParser("application/octet-stream", { bodyLimit: UPLOAD_CHUNK_BYTES }, (_req, payload, done) => done(null, payload));
 
 HandlerRegistry.discoverHandlers([path.join(__dirname, "./controllers"), path.join(__dirname, "./handlers")]);
 

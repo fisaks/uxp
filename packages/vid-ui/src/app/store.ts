@@ -5,6 +5,7 @@ import { browserPlayerReducer } from "../features/browser-player/browserPlayerSl
 import { castReducer } from "../features/cast/castSlice";
 import { chromecastReducer } from "../features/chromecast/chromecastSlice";
 import { saveErrorReducer } from "../features/home-video/saveErrorSlice";
+import { uploadReducer } from "../features/upload/uploadSlice";
 import { vidApi } from "./vidApi";
 
 export const createStore = () => {
@@ -21,6 +22,7 @@ export const createStore = () => {
             browserPlayer: browserPlayerReducer,
             chromecast: chromecastReducer,
             saveError: saveErrorReducer,
+            upload: uploadReducer,
         },
         devTools: process.env.NODE_ENV === "development",
         middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(vidApi.middleware, logger),

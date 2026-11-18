@@ -12,7 +12,7 @@ export const formatDuration = (totalSeconds: number) => {
     return h > 0 ? `${h}:${String(m).padStart(2, "0")}:${s}` : `${m}:${s}`;
 };
 
-const LOCALE = "fi-FI";
+export const LOCALE = "fi-FI";
 
 /** A date such as 26.3.2009. The date is shown as it is stored, without a time zone moving it. */
 export const formatDate = (isoDate: string) => {
