@@ -19,7 +19,7 @@ ffprobe and ffmpeg must be installed on the host.
 ## The files
 
 - Only `.m4v` and `.mp4` files are listed, because those are what a browser and a Chromecast can play.
-  Other formats must be converted first (the converter of `movies.md` makes films and episodes; it is not used for home videos).
+  Other formats must be converted first (the converter of `movies.md` makes films and episodes; it is not used for home videos). Uploads from a phone are converted for you, see `upload.md`.
 - Clips may be in sub folders. The date is read from the folder name, then from the file name
   (`2005_06_28`, `2009-03-26`, `2005_06_28-01.m4v`). A clip without a date in either has no date until you set one.
 - A clip's `id` is the first 16 hex characters of the SHA-1 of its path inside the `HomeVideos` folder.
@@ -64,6 +64,7 @@ home video list with `?q=`, where it is combined with the list's own filters (ye
 |---|---|
 | `/` | Home: tiles for Home videos, Chromecasts, Playlists, Cast groups and one tile per player that is playing |
 | `/home-videos` | The clips by year, with filters |
+| `/home-videos/upload` | Upload from a phone, see `upload.md` |
 | `/home-videos/clips/:id` | One clip: video, previous and next, label form, cast picker |
 | `/movies`, `/kids`, `/tv` | See `movies.md` |
 | `/chromecasts`, `/playlists`, `/cast-groups` | See `casting.md`, `queues.md`, `groups.md` |
