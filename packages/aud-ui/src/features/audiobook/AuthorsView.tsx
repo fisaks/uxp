@@ -12,7 +12,6 @@ import {
 } from "@mui/material";
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { usePlayerActions } from "../player/usePlayerActions";
 import { AlbumCover } from "../library/AlbumCover";
 import { ArtistGrid } from "../library/ArtistGrid";
 import { useRequest } from "../shared/useRequest";
@@ -23,7 +22,6 @@ const COVER_SIZE = 48;
 
 export const AuthorsView: React.FC = () => {
     const navigate = useNavigate();
-    const { playBook } = usePlayerActions();
     const { data, error, reload } = useRequest("audiobook_get_authors", {});
     const scanning = data?.status.scanning;
     useRestoreScroll(data !== undefined);
@@ -57,7 +55,7 @@ export const AuthorsView: React.FC = () => {
                     }
                 >
                     {data.continueListening.map(({ album, artist, listenedSec, totalSec }) => (
-                        <ListItemButton key={album.id} onClick={() => playBook(album.id)}>
+                        <ListItemButton key={album.id} onClick={() => navigate(`/audiobooks/book/${album.id}`)}>
                             <ListItemIcon sx={{ minWidth: COVER_SIZE + 16 }}>
                                 <Box sx={{ width: COVER_SIZE }}>
                                     <AlbumCover collection="audiobooks" albumId={album.id} hasCover={album.hasCover} />

@@ -47,7 +47,7 @@ export const BookView: React.FC = () => {
                                 .filter(Boolean)
                                 .join(" · ")}
                         </Typography>
-                        <Stack direction="row" spacing={1} sx={{ mt: 1.5 }}>
+                        <Stack direction="row" spacing={1} useFlexGap sx={{ mt: 1.5, flexWrap: "wrap" }}>
                             <Button variant="contained" startIcon={<PlayArrowIcon />} onClick={() => playBook(album.id)}>
                                 {progress ? "Continue" : "Play"}
                             </Button>
