@@ -1,3 +1,4 @@
+import HeadphonesIcon from "@mui/icons-material/Headphones";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import ReplayIcon from "@mui/icons-material/Replay";
 import { Alert, Button, CircularProgress, List, ListItem, ListItemButton, ListItemText, Stack, Typography } from "@mui/material";
@@ -6,6 +7,7 @@ import { useParams } from "react-router-dom";
 import { useAppSelector } from "../../hooks";
 import { AlbumPage } from "../library/AlbumPage";
 import { formatDuration } from "../library/libraryFormat";
+import { LISTEN_WINDOW_NAME, listenWindowUrl } from "../listen/listenPath";
 import { selectCurrentTrackId } from "../player/playerSelectors";
 import { usePlayerActions } from "../player/usePlayerActions";
 import { useRequest } from "../shared/useRequest";
@@ -54,6 +56,13 @@ export const BookView: React.FC = () => {
                                     Start over
                                 </Button>
                             )}
+                            <Button
+                                variant="outlined"
+                                startIcon={<HeadphonesIcon />}
+                                onClick={() => window.open(listenWindowUrl(album.id), LISTEN_WINDOW_NAME)}
+                            >
+                                Listen on this device
+                            </Button>
                         </Stack>
                         {progress && (
                             <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>

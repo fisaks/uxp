@@ -8,6 +8,7 @@ import { chromecastService } from "./chromecast/chromecast.service";
 import { audiobookService, libraryService } from "./library/library.service";
 import { createLogStream } from "./logging/log-stream";
 import { bookProgressStore } from "./player/book-progress";
+import { userBookProgressStore } from "./player/user-book-progress";
 import { trackGainStore } from "./player/track-gain";
 import { playerService } from "./player/player.service";
 import { spotifyCatalog } from "./player/spotify-catalog";
@@ -44,7 +45,7 @@ const port = 3041;
 onShutdown(() => spotifyCatalog.cache.flush());
 
 // The playlists and the history are read before the first request, so that none is answered with an empty list.
-void Promise.all([playlistService.load(), historyService.load(), bookProgressStore.load(), trackGainStore.load(), spotifyCatalog.cache.load()]).then(() =>
+void Promise.all([playlistService.load(), historyService.load(), bookProgressStore.load(), userBookProgressStore.load(), trackGainStore.load(), spotifyCatalog.cache.load()]).then(() =>
     fastify.listen({ port, host: "0.0.0.0" }, (err, address) => {
         if (err) throw err;
         console.log(`AUD BFF is running at address ${address}`);

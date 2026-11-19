@@ -223,6 +223,9 @@ importers:
       '@uxp/ui-lib':
         specifier: workspace:*
         version: link:../uxp-ui-lib
+      axios:
+        specifier: ^1.7.8
+        version: 1.8.4
       react:
         specifier: ^18.0.0
         version: 18.3.1

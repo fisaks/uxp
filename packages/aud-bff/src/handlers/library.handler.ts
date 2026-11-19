@@ -1,7 +1,9 @@
 import {
     AudioAppRequestMessage,
     AudiobookAuthorsResponse,
+    AudiobookClearUserProgressSchema,
     AudiobookPartsResponse,
+    AudiobookSaveUserProgressSchema,
     LibraryAlbumsResponse,
     LibraryArtistsResponse,
     LibraryGetAlbumsSchema,
@@ -20,6 +22,7 @@ import { ErrorCodes } from "@uxp/common";
 import { listeningService } from "../audiobook/listening.service";
 import { LibraryService, audiobookService, libraryService } from "../library/library.service";
 import { bookProgressStore } from "../player/book-progress";
+import { userBookProgressStore } from "../player/user-book-progress";
 import { trackGainStore } from "../player/track-gain";
 import { SEARCH_PAGE_SIZE, isSpotifyAlbumId, isSpotifyArtistId, SpotifyUnavailableError, spotifyCatalog, spotifyTrack } from "../player/spotify-catalog";
 import { librarySearch } from "../search/library-search";
@@ -145,9 +148,26 @@ export class LibraryHandler {
     }
 
     @WebSocketAction("audiobook_get_parts", { authenticate: true, schema: LibraryGetTracksSchema })
-    public getParts(_wsDetails: WebSocketDetails, message: AudioAppRequestMessage<"audiobook_get_parts">): AudiobookPartsResponse {
+    public getParts(wsDetails: WebSocketDetails, message: AudioAppRequestMessage<"audiobook_get_parts">): AudiobookPartsResponse {
         const book = getTracks(audiobookService, message.payload.albumId);
-        return { ...book, progress: bookProgressStore.get(book.album.id) };
+        const userProgress = wsDetails.user && userBookProgressStore.get(wsDetails.user.uuid, book.album.id);
+        return { ...book, progress: bookProgressStore.get(book.album.id), userProgress };
+    }
+
+    @WebSocketAction("audiobook_save_user_progress", { authenticate: true, schema: AudiobookSaveUserProgressSchema })
+    public saveUserProgress(wsDetails: WebSocketDetails, message: AudioAppRequestMessage<"audiobook_save_user_progress">): Record<string, never> {
+        const { albumId, partId, positionSec } = message.payload;
+        if (!audiobookService.getTracks(albumId).some((part) => part.id === partId)) {
+            throw notFound("part");
+        }
+        userBookProgressStore.save(wsDetails.user!.uuid, albumId, { partId, positionSec });
+        return {};
+    }
+
+    @WebSocketAction("audiobook_clear_user_progress", { authenticate: true, schema: AudiobookClearUserProgressSchema })
+    public clearUserProgress(wsDetails: WebSocketDetails, message: AudioAppRequestMessage<"audiobook_clear_user_progress">): Record<string, never> {
+        userBookProgressStore.clear(wsDetails.user!.uuid, message.payload.albumId);
+        return {};
     }
 
     @WebSocketAction("audiobook_scan", { authenticate: true })

@@ -67,6 +67,10 @@ export type AudioAppActionPayloadRequestMap = {
     audiobook_get_authors: Record<string, never>;
     audiobook_get_books: { artistId: string };
     audiobook_get_parts: { albumId: string };
+    /** Saves where the requesting user is in a book in the browser player. The house player's place is not touched. */
+    audiobook_save_user_progress: { albumId: string; partId: string; positionSec: number };
+    /** Forgets the requesting user's place in a book, when it was heard to its end. */
+    audiobook_clear_user_progress: { albumId: string };
     /** Scans the audiobook folder again. */
     audiobook_scan: Record<string, never>;
     /** Scans the music folder again. The response is the status, which has `scanning: true` until it is done. */
@@ -174,6 +178,8 @@ export type AudioAppActionPayloadResponseMap = {
     audiobook_get_authors: AudiobookAuthorsResponse;
     audiobook_get_books: LibraryAlbumsResponse;
     audiobook_get_parts: AudiobookPartsResponse;
+    audiobook_save_user_progress: Record<string, never>;
+    audiobook_clear_user_progress: Record<string, never>;
     audiobook_scan: LibraryStatus;
     library_scan: LibraryStatus;
     player_subscribe: PlayerState;

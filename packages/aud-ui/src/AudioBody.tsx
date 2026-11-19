@@ -9,6 +9,8 @@ import ChromecastPage from "./features/chromecast/ChromecastPage";
 import HistoryPage from "./features/history/HistoryPage";
 import { HomePage } from "./features/home/HomePage";
 import LibraryPage from "./features/library/LibraryPage";
+import { ListenPage } from "./features/listen/ListenPage";
+import { LISTEN_PATH } from "./features/listen/listenPath";
 import { NOW_PLAYING_PATH } from "./features/player/nowPlayingPath";
 import { BottomDock, DOCK_ROOM } from "./features/player/BottomDock";
 import PlaylistsPage from "./features/playlist/PlaylistsPage";
@@ -30,6 +32,16 @@ export const AudioBody = () => {
             root.style.scrollbarGutter = before;
         };
     }, []);
+    // The listen tab is a page of its own, without the bar and the dock.
+    if (pathname.startsWith(`${LISTEN_PATH}/`)) {
+        return (
+            <AppBodyContent appHaveOwnLeftSideBar={false}>
+                <Routes>
+                    <Route path={`${LISTEN_PATH}/:albumId`} element={<ListenPage />} />
+                </Routes>
+            </AppBodyContent>
+        );
+    }
     return (
         <AppBodyContent appHaveOwnLeftSideBar={false}>
             <Box sx={{ pb: pathname === NOW_PLAYING_PATH ? 0 : DOCK_ROOM }}>

@@ -1,6 +1,6 @@
 // JSON schemas that validate the payloads of the library WebSocket actions and the parameters of the cover route
 import { SchemaValidate } from "@uxp/common";
-import { BookParams, BookStreamParams, BookStreamQuery, CoverParams } from "../types/library.type";
+import { BookParams, BookStreamQuery, CoverParams } from "../types/library.type";
 
 const ID_PATTERN = "^[0-9a-f]{16}$";
 const ID_SCHEMA = { type: "string", pattern: ID_PATTERN };
@@ -19,6 +19,20 @@ export const LibraryGetAlbumsSchema = {
 export const LibraryGetTracksSchema = {
     type: "object",
     properties: { albumId: ALBUM_REF_SCHEMA },
+    required: ["albumId"],
+    additionalProperties: false,
+};
+
+export const AudiobookSaveUserProgressSchema = {
+    type: "object",
+    properties: { albumId: ID_SCHEMA, partId: ID_SCHEMA, positionSec: { type: "number", minimum: 0 } },
+    required: ["albumId", "partId", "positionSec"],
+    additionalProperties: false,
+};
+
+export const AudiobookClearUserProgressSchema = {
+    type: "object",
+    properties: { albumId: ID_SCHEMA },
     required: ["albumId"],
     additionalProperties: false,
 };
@@ -42,19 +56,14 @@ export const BookStreamLinkSchema = {
 } as unknown as SchemaValidate<undefined, undefined, BookParams>;
 
 export const BookStreamSchema = {
-    params: {
-        type: "object",
-        properties: { albumId: ID_SCHEMA, partId: ID_SCHEMA },
-        required: ["albumId", "partId"],
-        additionalProperties: false,
-    },
+    params: BookStreamLinkSchema.params,
     querystring: {
         type: "object",
         properties: { exp: { type: "integer" }, sig: { type: "string", pattern: "^[0-9a-f]{64}$" } },
         required: ["exp", "sig"],
         additionalProperties: false,
     },
-} as unknown as SchemaValidate<undefined, BookStreamQuery, BookStreamParams>;
+} as unknown as SchemaValidate<undefined, BookStreamQuery, BookParams>;
 
 export const LibrarySearchSchema = {
     type: "object",
