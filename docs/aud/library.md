@@ -116,4 +116,4 @@ pressing one plays it from where it was left (the queue is replaced, with Undo).
 its end. The Audiobooks tab has the authors (with a button that scans again), the books of an author, and a book page with the
 cover or a book icon, **Play** (or **Continue** and **Start over** when there is progress), and the parts, which can be pressed to
 play from their start. Parts are named "Part 3", "Disc 2 · Part 3" when the book has several discs, or "Whole book" for one
-file. A cover is `GET /api/cover/audiobooks/:albumId`. How a book is played, and its progress, is in player.md.
+file. A cover is `GET /api/cover/audiobooks/:albumId`. How a book is played, and its progress, is in player.md; listening on the device that shows the page is in listen.md.
