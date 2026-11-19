@@ -100,3 +100,27 @@ export type AudiobookPartsResponse = LibraryTracksResponse & {
     /** Where the household was in the book, missing when it has not been listened to or was listened to to its end. */
     progress?: BookProgress;
 };
+
+/** The parameters of the path of the stream-link route: `/audiobooks/:albumId/stream-link`. */
+export type BookParams = {
+    albumId: string;
+};
+
+/** The parameters of the path of the book stream route: `/audiobooks/stream/:albumId/:partId`. */
+export type BookStreamParams = {
+    albumId: string;
+    partId: string;
+};
+
+/** The signature in the query of the book stream route. */
+export type BookStreamQuery = {
+    exp: number;
+    sig: string;
+};
+
+/** What a browser needs to play the parts of a book: the URL of a part is `${streamPath}/${partId}?${query}`. */
+export type BookStreamLink = {
+    streamPath: string;
+    query: string;
+    expiresAt: string;
+};

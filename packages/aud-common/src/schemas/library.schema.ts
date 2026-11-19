@@ -1,6 +1,6 @@
 // JSON schemas that validate the payloads of the library WebSocket actions and the parameters of the cover route
 import { SchemaValidate } from "@uxp/common";
-import { CoverParams } from "../types/library.type";
+import { BookParams, BookStreamParams, BookStreamQuery, CoverParams } from "../types/library.type";
 
 const ID_PATTERN = "^[0-9a-f]{16}$";
 const ID_SCHEMA = { type: "string", pattern: ID_PATTERN };
@@ -31,6 +31,30 @@ export const CoverSchema: SchemaValidate<undefined, undefined, CoverParams> = {
         additionalProperties: false,
     },
 };
+
+export const BookStreamLinkSchema = {
+    params: {
+        type: "object",
+        properties: { albumId: ID_SCHEMA },
+        required: ["albumId"],
+        additionalProperties: false,
+    },
+} as unknown as SchemaValidate<undefined, undefined, BookParams>;
+
+export const BookStreamSchema = {
+    params: {
+        type: "object",
+        properties: { albumId: ID_SCHEMA, partId: ID_SCHEMA },
+        required: ["albumId", "partId"],
+        additionalProperties: false,
+    },
+    querystring: {
+        type: "object",
+        properties: { exp: { type: "integer" }, sig: { type: "string", pattern: "^[0-9a-f]{64}$" } },
+        required: ["exp", "sig"],
+        additionalProperties: false,
+    },
+} as unknown as SchemaValidate<undefined, BookStreamQuery, BookStreamParams>;
 
 export const LibrarySearchSchema = {
     type: "object",
