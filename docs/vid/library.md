@@ -26,7 +26,8 @@ ffprobe and ffmpeg must be installed on the host.
   Renaming or moving a file therefore makes it a new clip, and its labels stay behind in the metadata file.
 - The folder is scanned when the BFF starts. There is no rescan: restart the BFF after adding files.
 - The scan result (duration, size, width, height) is cached in `VID_DATA_DIR`. ffprobe runs only for files
-  that are new or changed.
+  that are new or changed. What the folders say now (file names, subtitle files) always wins over the cache, so
+  a renamed subtitle shows after a restart.
 - Whether the moov atom is at the start or the end of the file makes no measurable difference to the start time,
   so files are not remuxed.
 

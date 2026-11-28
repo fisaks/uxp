@@ -8,7 +8,9 @@ control of a Philips TV.
 
 A Chromecast fetches the video itself and has no login cookie. The BFF therefore signs the address. Films and
 episodes work the same way below `/api/movies` (`POST /api/movies/items/:id/stream-link`, `GET /api/movies/stream/:id`,
-`GET /api/movies/poster/:id`, see `movies.md`). The cast picker sends no subtitle tracks. For home videos:
+`GET /api/movies/poster/:id`, `GET /api/movies/subtitle/:id/:index`, see `movies.md`). The stream takes `&audio=N`
+for another audio track, which the BFF adds to the cast address from the kept audio track of the film. The
+signature covers the id only, so the same one fits the stream, the poster and the subtitles of that film. For home videos:
 
 - `POST /api/home-videos/clips/:id/stream-link` (logged in) returns `{path, expiresAt}`.
 - `GET /api/home-videos/stream/:id?exp=...&sig=...` needs no login. `sig` is an HMAC-SHA256 of `id.exp`.
@@ -35,7 +37,9 @@ Chromecast connect to the BFF port.
 - Chromecasts are found with mDNS (`_googlecast._tcp`). The network is queried again every 30 s. A saved group keeps a device that is not found in its list.
 - A **session** is one clip on one device. `CastSession` connects to the device (port 8009), starts the
   Default Media Receiver, sends LOAD with the signed link, title and poster, and follows the media status
-  (state, position, rate) and the heartbeat. It reconnects with backoff.
+  (state, position, rate) and the heartbeat. It reconnects with backoff. For a film LOAD also lists its subtitles
+  as text tracks (WebVTT from the signed subtitle route, which allows any origin as the receiver fetches it from
+  its own) and starts the kept one, if there is one.
 - The BFF's **`ChromecastWatcher`** keeps a passive connection to every discovered device and sends no LAUNCH,
   so an idle TV is not woken. It follows what plays, whoever started it. A session this BFF owns is recognised
   by its stream address, so after a BFF restart a running cast is picked up again with its queue.
@@ -46,6 +50,12 @@ Chromecast connect to the BFF port.
 - Playback speed: 0.5x to 2x (the Chromecast refuses more). The position keeps running at the chosen rate.
   Some devices keep the rate over a new clip, so the BFF sets it again when the device reports another one.
   The browser player has its own speeds, up to 16x.
+- Subtitles: `POST /cast/sessions/:id/subtitle {subtitle: index|null}` shows a subtitle at once (`EDIT_TRACKS_INFO`,
+  no reload) and keeps it with the film. The active track comes back in the media status, so a change made
+  from a phone shows too. A group has no subtitle button: its members start with the kept subtitle.
+- Audio: a Chromecast cannot switch the audio of an MP4, so the audio button of the player page sets the kept audio track
+  (`movies.md`) and the BFF loads the film again on the device with the track, from where it is. A cast that this
+  BFF only joined after a restart, and a group, are left as they are.
 
 ## Where the controls are
 
@@ -58,6 +68,7 @@ device supports it.
 | `GET /cast`, `POST /cast/refresh` | State, rediscover |
 | `POST /cast/sessions {clipId, deviceIds[], positionSec?}` | Cast a clip to one or more devices (each a queue of one) |
 | `POST /cast/sessions/:id/play\|pause\|seek\|rate\|next\|restart\|stop` | Transport. `:id` is a device or a group |
+| `POST /cast/sessions/:id/subtitle {subtitle}` | Subtitle of a film on a device, `null` for none. Not for a group |
 | `POST /cast/players/:id/queue` | Queue actions, see `queues.md` |
 | `GET /chromecasts` | Every device with its details and what plays |
 | `POST /chromecasts/:id/play\|pause\|seek\|stop\|reboot` | Control of any device |

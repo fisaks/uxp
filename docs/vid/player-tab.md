@@ -20,7 +20,8 @@ Home button that raises the main tab (`vid-main`) and Stop closes the tab.
 - the queue `{clipIds, index, repeat}`, built with the shared edit rules (`queues.md`);
 - advance on `ended`, wrap when repeating, skip a clip that fails, stop after a full round of failures;
 - a stream link per clip (`casting.md`);
-- the browser's native video controls (seek, volume, fullscreen) and a speed button, 0.5x to 16x.
+- the browser's native video controls (seek, volume, fullscreen), a speed button, 0.5x to 16x, and for a film a
+  subtitle button and, with several audio tracks, an audio button (`movies.md`).
 
 The queue is kept per tab in `sessionStorage` (`vid-browser-player`) with the position and the paused
 state, so a reload picks up where it was (autoplay may need a press on play) and closing the tab forgets it.
@@ -30,14 +31,17 @@ state, so a reload picks up where it was (autoplay may need a press on play) and
 A `BroadcastChannel` (`vid-browser-player`) joins the two:
 
 - Main to tab: `command` (`replace` with an optional start position and an optional group to follow, `next`,
-  `append`, and the transport and queue commands), `ping`.
+  `append`, `subtitle` with an index or null, and the transport and queue commands), `ping`.
 - Tab to main: `ready` (the tab is loaded, a command that waited is then delivered), `state` (clip, index,
-  count, playing or paused, position, about once a second), `closed`.
+  count, playing or paused, position, the subtitle that shows, about once a second), `closed`.
 
 `BrowserPlayerListener` in the main tab pings every 2 s and treats the tab as gone after 5 s without a
 state, which also works while the tab is in the background and its timers are throttled. The state becomes a
 session in the cast state with the device id `player-tab`, so all the cast UI works on it unchanged. The
 tab's row disappears about 5 s after the tab is closed.
+
+The subtitle that shows is read from the text tracks of the video, so a subtitle picked in the menu of the video
+is reported and kept with the film like one picked with the subtitle button of the main tab.
 
 ## Playing along with a group
 

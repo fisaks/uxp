@@ -14,8 +14,9 @@ The variables of `library.md` apply. In addition:
 |---|---|---|
 | `VID_TMDB_TOKEN` | no | The TMDB read access token (themoviedb.org, Settings, API). Sent as a bearer token. Without it nothing is looked up and the items have no poster or overview. |
 
-Set `VID_DATA_DIR` on a real host. The posters are cached in `<VID_DATA_DIR>/posters`, and without it they are
-fetched again after each time the temporary folder is cleared.
+Set `VID_DATA_DIR` on a real host. The posters are cached in `<VID_DATA_DIR>/posters` and the copies of films
+with another audio track in `<VID_DATA_DIR>/audio-remux` (see Audio tracks), and without it they are made again
+after each time the temporary folder is cleared.
 
 ## The folders
 
@@ -43,12 +44,42 @@ files a browser and a Chromecast can play (h264 and aac in `.mp4` or `.m4v`). Th
 ## Subtitles
 
 A subtitle is a WebVTT file next to the video whose name starts with the video's name: `Film.vtt`, `Film.1.vtt`,
-`Film.en.vtt`. A language code in the name gives the label ("English"), else the label is "Subtitles" (numbered
-when there are several). `GET /api/movies/items/:id/subtitles/:index` returns one as `text/vtt`.
+`Film.sv.vtt`. A language code in the name gives the label ("Swedish"; two or three letters), else the label is
+"Subtitles" (numbered when there are several), so name a file with its language to get a useful label.
+`GET /api/movies/items/:id/subtitles/:index` returns one as `text/vtt`. The index is the place of the subtitle in
+the list of the item, sorted by file name. Picture subtitles (DVD, VobSub) cannot be shown and are not converted.
 
-No subtitle is on by default. The browser player lists them in its own menu, and the browser's own cast button
-passes them on to a Chromecast. The VID cast picker loads only the video, so a film cast from it has no
-subtitles. Picture subtitles (DVD, VobSub) cannot be shown and are not converted.
+**The kept subtitle.** An item has one kept subtitle (`subtitle` in the item, an index or null for none), shared by
+every place the film is played. A film starts with it, and a pick in any of them replaces it:
+
+- the page player, its subtitle button or the menu of the video;
+- the player tab, the same two, or the subtitle button of the player page in the main tab (`player-tab.md`);
+- a Chromecast, the subtitle button of the player page (`casting.md`).
+
+`PUT /api/movies/items/:id/subtitle {subtitle: index|null}` sets it. It is stored with the item (see Edits). A
+subtitle that is not on the item any more (a file was removed) counts as none.
+
+## Audio tracks
+
+The scan lists the audio tracks of each file (`audioTracks`, with a label such as `English (5.1)`,
+`Swedish`, or `Track 2` when the file names no language; stereo has no suffix). A browser plays the first track of
+an MP4 and cannot switch, and neither can a Chromecast, so the track is chosen in the stream:
+
+- `GET /api/movies/stream/:id?exp=...&sig=...&audio=N` streams track `N` (from 0). Without `audio`, or with 0, it is
+  the file as it is. Another track is streamed from a copy of the film that holds only that track (`ffmpeg -c copy`,
+  the first video stream and the one audio stream), made the first time and kept in
+  `<VID_DATA_DIR>/audio-remux/<id>.<track>.<size of the file>.mp4`. A copy takes seconds, as nothing is encoded, and
+  costs about the size of the film on disk. Two requests for the same copy share one ffmpeg run. A track the file
+  does not have is a 404. A copy of a file that was changed stays in the folder: empty it now and then.
+- `PUT /api/movies/items/:id/audio {audio: index}` sets the **kept audio track** (`audio` in the item, 0 until one
+  is chosen), used by every place the film is played. It makes the copy first, so the next player does not wait,
+  and then saves the choice. A Chromecast that plays the film from its own queue loads it again with the new
+  track, from where it is. A group plays the film out on the track it had.
+- The page player and the player tab have an audio button when the film has more than one track. It reloads the
+  video on the new track at the same place. The player page of a Chromecast has one too.
+
+The converter keeps the tracks it keeps (see Converting), so a film made from a source with several languages has
+them here.
 
 ## Converting
 
@@ -100,8 +131,8 @@ stops at the first TMDB error.
 
 ## Edits
 
-A title or year can be edited (`PATCH /api/movies/items/:id`). Only what was edited is stored, in
-`movie-metadata.json` in the media root. It is written like the labels of the home videos: debounced, atomic,
+A title or year can be edited (`PATCH /api/movies/items/:id`), and the kept audio track and subtitle are set with
+their own routes. Only what was edited or chosen is stored, in `movie-metadata.json` in the media root. It is written like the labels of the home videos: debounced, atomic,
 flushed on shutdown, and never written when it could not be read.
 
 ## Search
@@ -124,7 +155,8 @@ results page for films, only the dropdown.
 | `/tv` | A poster grid of the series |
 | `/tv/series/:name` | A series: overview, **Play all**, and the seasons in order, each with **Play season** and its episodes |
 
-The player on a page starts at once, has a speed button and the subtitles menu. **Play all** and **Play season**
+The player on a page starts at once and has a subtitle button, an audio button (when the film has more than one
+track) and a speed button, besides the controls of the video. **Play all** and **Play season**
 ask for a player and queue the episodes in order (see `queues.md`). Films and episodes can be added to queues and
 playlists like clips, and a queue can mix both.
 
@@ -141,6 +173,9 @@ All routes need the login cookie unless noted. Everything is below `/api`.
 | `PUT /movies/items/:id/match` | `{tmdbId, kind?}`: pick an entry, fetch it again, or `null` for no match |
 | `GET /movies/items/:id/poster` | The poster (cached for a day by the browser) |
 | `GET /movies/items/:id/subtitles/:index` | A subtitle as WebVTT |
+| `PUT /movies/items/:id/audio` | `{audio}`: the kept audio track, a Chromecast that plays the film loads it again |
+| `PUT /movies/items/:id/subtitle` | `{subtitle}`: the kept subtitle, an index or `null` |
 | `GET /movies/search?q=` | See above |
 | `POST /movies/items/:id/stream-link` | A signed link for playing the item, see `casting.md` |
-| `GET /movies/stream/:id`, `GET /movies/poster/:id` | No login, signed link, see `casting.md` |
+| `GET /movies/stream/:id?audio=` | No login, signed link, see `casting.md`. `audio` picks the track, see Audio tracks |
+| `GET /movies/poster/:id`, `GET /movies/subtitle/:id/:index` | No login, signed link, see `casting.md` |
