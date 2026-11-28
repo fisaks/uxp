@@ -24,7 +24,12 @@ ffprobe and ffmpeg must be installed on the host.
   (`2005_06_28`, `2009-03-26`, `2005_06_28-01.m4v`). A clip without a date in either has no date until you set one.
 - A clip's `id` is the first 16 hex characters of the SHA-1 of its path inside the `HomeVideos` folder.
   Renaming or moving a file therefore makes it a new clip, and its labels stay behind in the metadata file.
-- The folder is scanned when the BFF starts. There is no rescan: restart the BFF after adding files.
+- The folder is scanned when the BFF starts, and again when the button "Scan the media folders again" on the home page is
+  pressed (`POST /library/scan`). That scans the films, series and children's films too. The request answers at once; the scan
+  runs in the background, and a scan that already runs is not started twice. The server tells every connection over the
+  WebSocket when a scan starts and when it ends (`library_state { scanning }`), and a page gets the current state with
+  `library_subscribe`. The button shows a spinner while any scan runs, and the lists reload when it ends. The new files
+  appear all at once at the end of the scan.
 - The scan result (duration, size, width, height) is cached in `VID_DATA_DIR`. ffprobe runs only for files
   that are new or changed. What the folders say now (file names, subtitle files) always wins over the cache, so
   a renamed subtitle shows after a restart.
@@ -80,6 +85,7 @@ All routes need the login cookie unless noted. Everything is below `/api`.
 | Route | Purpose |
 |---|---|
 | `GET /status` | `mediaRootAvailable`, `searchAvailable` |
+| `POST /library/scan` | Starts a scan of all the media folders, see above |
 | `GET /home-videos/clips`, `GET .../clips/:id` | The clips with their labels |
 | `PATCH /home-videos/clips/:id` | Partial label update |
 | `GET /home-videos/labels` | People and tags in use, for the autocomplete |

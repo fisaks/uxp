@@ -34,7 +34,7 @@ files a browser and a Chromecast can play (h264 and aac in `.mp4` or `.m4v`). Th
   played in order, and several files without part numbers are skipped, not guessed.
 - An episode needs the `SxxEyy` marker. The series is the top folder.
 - A `Sample` folder, and files that are not video or subtitles (`.rar`, `.txt`, `.jpg`), are ignored.
-- The scan runs when the BFF starts. There is no rescan: restart the BFF after adding files.
+- The scan runs when the BFF starts, and when the scan button on the home page is pressed, see `library.md`.
 - The scan result (duration, size, width, height) is cached in `VID_DATA_DIR/movie-scan.json`. ffprobe runs only for
   files that are new or changed. An empty scan is never saved, so an unmounted drive keeps the cache.
 - An item's `id` is `m` and the first 16 hex characters of the SHA-1 of its category and path. The `m` tells a film
