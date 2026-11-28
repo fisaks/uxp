@@ -6,6 +6,7 @@ import {
     CastQueueRequest,
     CastRateRequest,
     CastSeekRequest,
+    CastSubtitleRequest,
     CastStartRequest,
     TvPairConfirmRequest,
     TvPowerRequest,
@@ -62,6 +63,16 @@ export const CastRateSchema = {
         additionalProperties: false,
     },
 } as unknown as SchemaValidate<CastRateRequest, undefined, CastDeviceParams>;
+
+export const CastSubtitleSchema = {
+    params: CastDeviceParamsSchema.params,
+    body: {
+        type: "object",
+        properties: { subtitle: { type: ["integer", "null"], minimum: 0, maximum: 99 } },
+        required: ["subtitle"],
+        additionalProperties: false,
+    },
+} as unknown as SchemaValidate<CastSubtitleRequest, undefined, CastDeviceParams>;
 
 const clipIds = { type: "array", items: { type: "string", pattern: ID_PATTERN }, minItems: 1, maxItems: 500 };
 const queueIndex = { type: "integer", minimum: 0 };

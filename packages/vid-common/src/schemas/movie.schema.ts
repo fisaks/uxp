@@ -1,6 +1,6 @@
 import { SchemaValidate } from "@uxp/common";
 import { HomeVideoStreamQuery } from "../types/home-video.type";
-import { MovieItemParams, MovieItemsQuery, MovieItemUpdate, MovieMatchQuery, MovieMatchUpdate, MovieSearchQuery, MovieSubtitleParams } from "../types/movie.type";
+import { MovieAudioUpdate, MovieItemParams, MovieItemsQuery, MovieItemUpdate, MovieMatchQuery, MovieMatchUpdate, MovieSearchQuery, MovieStreamQuery, MovieSubtitleParams, MovieSubtitleUpdate } from "../types/movie.type";
 import { MOVIE_ID_PATTERN } from "../types/video-id";
 
 export const MovieItemParamsSchema: SchemaValidate<undefined, undefined, MovieItemParams> = {
@@ -32,6 +32,16 @@ export const MovieItemUpdateSchema = {
     },
 } as unknown as SchemaValidate<MovieItemUpdate, undefined, MovieItemParams>;
 
+export const MovieAudioUpdateSchema = {
+    params: MovieItemParamsSchema.params,
+    body: {
+        type: "object",
+        properties: { audio: { type: "integer", minimum: 0, maximum: 31 } },
+        required: ["audio"],
+        additionalProperties: false,
+    },
+} as unknown as SchemaValidate<MovieAudioUpdate, undefined, MovieItemParams>;
+
 export const MovieSubtitleSchema = {
     params: {
         type: "object",
@@ -40,6 +50,26 @@ export const MovieSubtitleSchema = {
         additionalProperties: false,
     },
 } as unknown as SchemaValidate<undefined, undefined, MovieSubtitleParams>;
+
+export const MovieSubtitleUpdateSchema = {
+    params: MovieItemParamsSchema.params,
+    body: {
+        type: "object",
+        properties: { subtitle: { type: ["integer", "null"], minimum: 0, maximum: 99 } },
+        required: ["subtitle"],
+        additionalProperties: false,
+    },
+} as unknown as SchemaValidate<MovieSubtitleUpdate, undefined, MovieItemParams>;
+
+export const MovieSignedSubtitleSchema = {
+    params: MovieSubtitleSchema.params,
+    querystring: {
+        type: "object",
+        properties: { exp: { type: "integer" }, sig: { type: "string", pattern: "^[0-9a-f]{64}$" } },
+        required: ["exp", "sig"],
+        additionalProperties: false,
+    },
+} as unknown as SchemaValidate<undefined, HomeVideoStreamQuery, MovieSubtitleParams>;
 
 export const MovieStreamSchema = {
     params: MovieItemParamsSchema.params,
@@ -50,6 +80,16 @@ export const MovieStreamSchema = {
         additionalProperties: false,
     },
 } as unknown as SchemaValidate<undefined, HomeVideoStreamQuery, MovieItemParams>;
+
+export const MovieVideoStreamSchema = {
+    params: MovieItemParamsSchema.params,
+    querystring: {
+        type: "object",
+        properties: { exp: { type: "integer" }, sig: { type: "string", pattern: "^[0-9a-f]{64}$" }, audio: { type: "integer", minimum: 0, maximum: 31 } },
+        required: ["exp", "sig"],
+        additionalProperties: false,
+    },
+} as unknown as SchemaValidate<undefined, MovieStreamQuery, MovieItemParams>;
 
 export const MovieMatchSearchSchema = {
     params: MovieItemParamsSchema.params,

@@ -6,6 +6,8 @@ import {
     CastQueueSchema,
     CastRateRequest,
     CastRateSchema,
+    CastSubtitleRequest,
+    CastSubtitleSchema,
     CastSeekRequest,
     CastSeekSchema,
     CastStartRequest,
@@ -50,6 +52,11 @@ export class CastController {
     @Route("post", "/cast/sessions/:deviceId/rate", { authenticate: true, schema: CastRateSchema })
     async setRate(req: FastifyRequest<{ Params: CastDeviceParams; Body: CastRateRequest }>): Promise<CastState> {
         return castService.setRate(req.params.deviceId, req.body.rate);
+    }
+
+    @Route("post", "/cast/sessions/:deviceId/subtitle", { authenticate: true, schema: CastSubtitleSchema })
+    async setSubtitle(req: FastifyRequest<{ Params: CastDeviceParams; Body: CastSubtitleRequest }>): Promise<CastState> {
+        return castService.setSubtitle(req.params.deviceId, req.body.subtitle);
     }
 
     @Route("post", "/cast/sessions/:deviceId/restart", { authenticate: true, schema: CastDeviceParamsSchema })

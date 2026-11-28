@@ -1,4 +1,4 @@
-import { isMovieId, MovieSubtitle } from "@vid/common";
+import { isMovieId, MovieAudioTrack, MovieSubtitle } from "@vid/common";
 import { useCallback } from "react";
 import { thumbnailUrl } from "../../api/home-video-api";
 import { clipPath } from "../home-video/ClipTile";
@@ -20,6 +20,12 @@ export type VideoInfo = {
     /** The page of the video: the series page for an episode. */
     path?: string;
     subtitles: MovieSubtitle[];
+    /** The audio tracks of a film, none for a clip. */
+    audioTracks: MovieAudioTrack[];
+    /** The index of the audio track that plays. */
+    audio: number;
+    /** The index of the subtitle that shows when the film is played, null for none. */
+    subtitle: number | null;
 };
 
 /** Finds a video by its id among the clips and the movie items. It is undefined until the library has loaded, or when the video is gone. */
@@ -39,6 +45,9 @@ export const useVideos = (): ((id: string | undefined) => VideoInfo | undefined)
                         durationSeconds: clip.durationSeconds,
                         path: clipPath(id),
                         subtitles: [],
+                        audioTracks: [],
+                        audio: 0,
+                        subtitle: null,
                     }
                 );
             }
@@ -55,6 +64,9 @@ export const useVideos = (): ((id: string | undefined) => VideoInfo | undefined)
                       ? moviePath(item.category as keyof typeof MOVIE_SECTION_PATHS, id)
                       : undefined,
                 subtitles: item.subtitles,
+                audioTracks: item.audioTracks,
+                audio: item.audio,
+                subtitle: item.subtitle,
             };
         },
         [clips, movies]

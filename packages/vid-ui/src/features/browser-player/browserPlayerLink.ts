@@ -23,7 +23,9 @@ export type BrowserPlayerCommand =
     | Exclude<CastQueueRequest, { action: "replace" }>
     | { action: "replace"; clipIds: string[]; positionSec?: number; follow?: string }
     | { action: "play" | "pause" | "next-clip" | "stop" }
-    | { action: "seek"; positionSec: number };
+    | { action: "seek"; positionSec: number }
+    /** Shows the subtitle with the index (its place in the subtitles of the film), none with null. */
+    | { action: "subtitle"; subtitle: number | null };
 
 /** Where the tab is: the queue, and the clip that plays in it. */
 export type BrowserPlayerState = {
@@ -33,6 +35,8 @@ export type BrowserPlayerState = {
     state: CastPlayerState;
     positionSec: number;
     durationSec: number;
+    /** The index of the subtitle that shows, null for none. */
+    subtitle: number | null;
     /** Set while the tab plays along with this group: the group row shows it, not a row of its own. */
     followGroupId?: string;
 };

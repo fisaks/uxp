@@ -13,6 +13,7 @@ export const browserPlayerSession = (player: BrowserPlayerState | undefined, rec
         state: player.state,
         positionSec: player.positionSec,
         durationSec: player.durationSec,
+        subtitle: player.subtitle,
         updatedAt: receivedAt,
         queue: { clipIds: player.clipIds, index: player.index, repeat: player.repeat },
     };

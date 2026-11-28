@@ -1,12 +1,13 @@
 import { AppErrorV2, AppLogger, tryReadJsonFile, writeJsonFile } from "@uxp/bff-common";
 import { ErrorCodes } from "@uxp/common";
-import { MovieCategory, MovieItem, MovieItemUpdate, MovieMatchCandidate, MovieSubtitle } from "@vid/common";
+import { MovieAudioTrack, MovieCategory, MovieItem, MovieItemUpdate, MovieMatchCandidate, MovieSubtitle } from "@vid/common";
 import { readdir } from "fs/promises";
 import path from "path";
 import { homeVideoConfig } from "../home-video/home-video.config";
 import { MetadataStore } from "../metadata-store";
 import { movieConfig } from "./movie.config";
 import { pickMatch } from "./movie-matcher";
+import { audioTrackFile } from "./audio-remux";
 import { movieSearch } from "./movie-search";
 import { ScannedItem, scanCategory } from "./movie-scanner";
 import { posterFileName, TmdbEntry, tmdbClient, TmdbKind } from "./tmdb-client";
@@ -14,7 +15,7 @@ import { posterFileName, TmdbEntry, tmdbClient, TmdbKind } from "./tmdb-client";
 const SCAN_CACHE_FILE = "movie-scan.json";
 
 /** The metadata the user has set on an item. `year` null is a year the user cleared. */
-type MovieMetadata = { title?: string; year?: number | null };
+type MovieMetadata = { title?: string; year?: number | null; audio?: number; subtitle?: number | null };
 
 /**
  * The TMDB entry of a film or a series. A null `tmdbId` is a "no match" the user has chosen, which is not looked up again.
@@ -71,6 +72,23 @@ const subtitlesOf = (scanned: ScannedItem): MovieSubtitle[] => {
     });
 };
 
+const CHANNEL_LAYOUTS: Record<number, string> = { 1: "mono", 6: "5.1", 8: "7.1" };
+
+const audioTracksOf = (scanned: ScannedItem): MovieAudioTrack[] =>
+    scanned.audioTracks.map(({ language, channels }, index) => {
+        let name = `Track ${index + 1}`;
+        if (language) {
+            try {
+                name = languageNames.of(language) ?? language;
+            } catch {
+                name = language;
+            }
+        }
+        // Stereo is what is expected, so only the other layouts are said.
+        const layout = CHANNEL_LAYOUTS[channels];
+        return { index, label: layout ? `${name} (${layout})` : name };
+    });
+
 const toItem = (
     scanned: ScannedItem,
     metadata: MovieMetadata | undefined,
@@ -91,6 +109,10 @@ const toItem = (
     height: scanned.height,
     sizeBytes: scanned.sizeBytes,
     subtitles: subtitlesOf(scanned),
+    audioTracks: audioTracksOf(scanned),
+    // A track the file no longer has is the first one.
+    audio: metadata?.audio !== undefined && metadata.audio < scanned.audioTracks.length ? metadata.audio : 0,
+    subtitle: metadata?.subtitle != null && metadata.subtitle < scanned.subtitleFiles.length ? metadata.subtitle : null,
     tmdbId: match?.tmdbId ?? null,
     tmdbKind: match?.tmdbId != null ? matchKind(scanned, match) : null,
     overview: match?.overview ?? null,
@@ -318,11 +340,50 @@ export class MovieService {
         return this.toMovieItem(item);
     }
 
+    /**
+     * Sets the audio track that plays from now on. The copy of the film with that track is made first, so that the next player that
+     * asks for it does not wait. Throws when there is no such item or track, or the choice cannot be kept.
+     */
+    async setAudio(id: string, audio: number): Promise<MovieItem> {
+        const item = this.requireItem(id);
+        if (audio >= item.audioTracks.length) {
+            throw new AppErrorV2({ code: ErrorCodes.NOT_FOUND, message: "There is no such audio track", params: { resource: "audio track" } });
+        }
+        if (!this.store.canSave()) {
+            throw new AppErrorV2({ code: ErrorCodes.NOT_READY, message: "The movie metadata cannot be saved right now" });
+        }
+        const file = this.filePath(id);
+        if (audio > 0 && file) {
+            await audioTrackFile(file, id, audio, item.sizeBytes);
+        }
+        this.store.updateMetadata(`${item.category}/${item.file}`, { audio });
+        return this.toMovieItem(item);
+    }
+
+    /** Sets the subtitle a Chromecast shows, null for none. Throws when there is no such item or subtitle, or the choice cannot be kept. */
+    setSubtitle(id: string, subtitle: number | null): MovieItem {
+        const item = this.requireItem(id);
+        if (subtitle !== null && subtitle >= item.subtitleFiles.length) {
+            throw new AppErrorV2({ code: ErrorCodes.NOT_FOUND, message: "There is no such subtitle", params: { resource: "subtitle" } });
+        }
+        if (!this.store.canSave()) {
+            throw new AppErrorV2({ code: ErrorCodes.NOT_READY, message: "The movie metadata cannot be saved right now" });
+        }
+        this.store.updateMetadata(`${item.category}/${item.file}`, { subtitle });
+        return this.toMovieItem(item);
+    }
+
     /** The file of the item on disk, undefined when there is no such item. */
     filePath(id: string): string | undefined {
         const item = this.scanned.get(id);
         const folder = item && movieConfig.folder(item.category);
         return item && folder ? path.join(folder, item.file) : undefined;
+    }
+
+    /** The size of the file of the item and the number of its audio tracks, undefined when there is no such item. */
+    audioInfo(id: string): { sizeBytes: number; trackCount: number } | undefined {
+        const item = this.scanned.get(id);
+        return item && { sizeBytes: item.sizeBytes, trackCount: item.audioTracks.length };
     }
 
     /** The subtitle file with the number, undefined when the item has no such one. */

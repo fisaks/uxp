@@ -2,6 +2,8 @@ import { AppErrorV2, AppLogger, Route } from "@uxp/bff-common";
 import { ErrorCodes } from "@uxp/common";
 import {
     HomeVideoStreamQuery,
+    MovieAudioUpdate,
+    MovieAudioUpdateSchema,
     MovieItem,
     MovieItemParams,
     MovieItemParamsSchema,
@@ -17,13 +19,20 @@ import {
     MovieSearchQuery,
     MovieSearchResult,
     MovieSearchSchema,
+    MovieSignedSubtitleSchema,
     MovieStreamLink,
+    MovieStreamQuery,
     MovieStreamSchema,
     MovieSubtitleParams,
     MovieSubtitleSchema,
+    MovieSubtitleUpdate,
+    MovieSubtitleUpdateSchema,
+    MovieVideoStreamSchema,
 } from "@vid/common";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { createReadStream } from "fs";
+import { castService } from "../cast/cast.service";
+import { audioTrackFile } from "../movie/audio-remux";
 import { movieService } from "../movie/movie.service";
 import { sendVideoFile } from "../stream/send-video-file";
 import { isValidStreamQuery, signStreamQuery } from "../stream/signed-url";
@@ -66,6 +75,20 @@ export class MovieController {
     @Route("patch", "/movies/items/:id", { authenticate: true, schema: MovieItemUpdateSchema })
     async updateItem(req: FastifyRequest<{ Params: MovieItemParams; Body: MovieItemUpdate }>): Promise<MovieItem> {
         return movieService.update(req.params.id, req.body);
+    }
+
+    /** Sets the audio track of a film. A Chromecast that plays the film loads it again with the new track, from where it is. */
+    @Route("put", "/movies/items/:id/audio", { authenticate: true, schema: MovieAudioUpdateSchema })
+    async updateAudio(req: FastifyRequest<{ Params: MovieItemParams; Body: MovieAudioUpdate }>): Promise<MovieItem> {
+        const item = await movieService.setAudio(req.params.id, req.body.audio);
+        castService.reloadClip(req.params.id);
+        return item;
+    }
+
+    /** Sets the subtitle that shows when the film is played, null for none. A player that is playing the film keeps what it shows. */
+    @Route("put", "/movies/items/:id/subtitle", { authenticate: true, schema: MovieSubtitleUpdateSchema })
+    async updateSubtitle(req: FastifyRequest<{ Params: MovieItemParams; Body: MovieSubtitleUpdate }>): Promise<MovieItem> {
+        return movieService.setSubtitle(req.params.id, req.body.subtitle);
     }
 
     /** The TMDB entries for a text, for picking the right one for an item. */
@@ -117,6 +140,23 @@ export class MovieController {
         return reply.send(createReadStream(file));
     }
 
+    /** A subtitle file for a Chromecast, which has no cookie. Allowed by the same signature as the stream. The receiver fetches it from another origin, so it may be read from any. */
+    @Route("get", "/movies/subtitle/:id/:index", { authenticate: false, schema: MovieSignedSubtitleSchema })
+    async getSignedSubtitle(req: FastifyRequest<{ Params: MovieSubtitleParams; Querystring: HomeVideoStreamQuery }>, reply: FastifyReply) {
+        const { id, index } = req.params;
+        const { exp, sig } = req.query;
+        if (!isValidStreamQuery(id, exp, sig)) {
+            throw new AppErrorV2({code: ErrorCodes.FORBIDDEN, message: "The link is not valid or has expired" });
+        }
+        const file = movieService.subtitlePath(id, index);
+        if (!file) {
+            throw notFound("subtitle");
+        }
+        reply.header("Content-Type", "text/vtt; charset=utf-8");
+        reply.header("Access-Control-Allow-Origin", "*");
+        return reply.send(createReadStream(file));
+    }
+
     /** A link to the stream that works without the cookie, for the browser player and for a Chromecast. */
     @Route("post", "/movies/items/:id/stream-link", { authenticate: true, schema: MovieItemParamsSchema })
     async createStreamLink(req: FastifyRequest<{ Params: MovieItemParams }>): Promise<MovieStreamLink> {
@@ -128,14 +168,25 @@ export class MovieController {
         return { path: `/api/movies/stream/${id}?exp=${exp}&sig=${sig}`, expiresAt: new Date(exp * 1000).toISOString() };
     }
 
-    /** The video itself, with range requests so it can be seeked. Allowed by the signature, not the cookie. */
-    @Route("get", "/movies/stream/:id", { authenticate: false, schema: MovieStreamSchema })
-    async stream(req: FastifyRequest<{ Params: MovieItemParams; Querystring: HomeVideoStreamQuery }>, reply: FastifyReply) {
+    /**
+     * The video itself, with range requests so it can be seeked. Allowed by the signature, not the cookie.
+     * `audio` picks an audio track other than the first: the video is then streamed from a copy that has only that track.
+     */
+    @Route("get", "/movies/stream/:id", { authenticate: false, schema: MovieVideoStreamSchema })
+    async stream(req: FastifyRequest<{ Params: MovieItemParams; Querystring: MovieStreamQuery }>, reply: FastifyReply) {
         const { id } = req.params;
-        const { exp, sig } = req.query;
+        const { exp, sig, audio } = req.query;
         if (!isValidStreamQuery(id, exp, sig)) {
             throw new AppErrorV2({code: ErrorCodes.FORBIDDEN, message: "The link is not valid or has expired" });
         }
-        return sendVideoFile(req, reply, movieService.filePath(id));
+        const file = movieService.filePath(id);
+        const info = movieService.audioInfo(id);
+        if (!audio || !file || !info) {
+            return sendVideoFile(req, reply, file);
+        }
+        if (audio >= info.trackCount) {
+            throw notFound("audio track");
+        }
+        return sendVideoFile(req, reply, await audioTrackFile(file, id, audio, info.sizeBytes));
     }
 }

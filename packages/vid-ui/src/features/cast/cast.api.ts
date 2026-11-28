@@ -53,6 +53,10 @@ export const castApi = vidApi.injectEndpoints({
                 ...sessionUrl(deviceId, "rate"),
                 data: { rate },
             })),
+            subtitleCast: castCommand<{ deviceId: string; subtitle: number | null }>(({ deviceId, subtitle }) => ({
+                ...sessionUrl(deviceId, "subtitle"),
+                data: { subtitle },
+            })),
             seekCast: castCommand<{ deviceId: string; positionSec: number }>(({ deviceId, positionSec }) => ({
                 ...sessionUrl(deviceId, "seek"),
                 data: { positionSec },
@@ -72,6 +76,7 @@ export const {
     useRestartCastMutation,
     useSeekCastMutation,
     useRateCastMutation,
+    useSubtitleCastMutation,
     useNextCastMutation,
     useEditCastQueueMutation,
 } = castApi;

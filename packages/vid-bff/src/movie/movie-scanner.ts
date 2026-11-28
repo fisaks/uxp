@@ -3,7 +3,7 @@ import { createHash } from "crypto";
 import { readdir, stat } from "fs/promises";
 import path from "path";
 import { VIDEO_EXTENSIONS } from "../home-video/home-video.config";
-import { probe } from "../home-video/home-video-scanner";
+import { ProbedAudioTrack, probe } from "../home-video/home-video-scanner";
 import { ParsedEpisode, ParsedMovie, parseMovieFiles } from "./movie-name-parser";
 
 export type ScannedItem = {
@@ -24,10 +24,12 @@ export type ScannedItem = {
     height: number;
     sizeBytes: number;
     mtimeMs: number;
+    /** The audio tracks of the file, in the order of the file. */
+    audioTracks: ProbedAudioTrack[];
 };
 
 /** The probe results of an item, which are kept while the file is unchanged. */
-type Cached = Pick<ScannedItem, "durationSeconds" | "width" | "height" | "sizeBytes" | "mtimeMs">;
+type Cached = Pick<ScannedItem, "durationSeconds" | "width" | "height" | "sizeBytes" | "mtimeMs" | "audioTracks">;
 export type ScanCache = Map<string, Cached>;
 
 /** The id starts with the movie prefix, so the kind of video is known from the id. */
@@ -71,7 +73,8 @@ export const scanCategory = async (category: MovieCategory, folder: string, prev
         const { size, mtimeMs } = await stat(path.join(folder, file));
         const known = previous.get(`${category}/${file}`);
         const cached: Cached =
-            known && known.sizeBytes === size && known.mtimeMs === mtimeMs
+            // A cache from before the audio tracks were probed has none, so the file is probed again.
+            known && known.audioTracks && known.sizeBytes === size && known.mtimeMs === mtimeMs
                 ? known
                 : { ...(await probe(path.join(folder, file))), sizeBytes: size, mtimeMs };
         items.push({

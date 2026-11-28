@@ -14,6 +14,7 @@ import {
     useRestartCastMutation,
     useSeekCastMutation,
     useRateCastMutation,
+    useSubtitleCastMutation,
     useStartCastMutation,
     useStartCastGroupMutation,
     useStopCastMutation,
@@ -43,6 +44,7 @@ export const useCast = () => {
     const [restartCast] = useRestartCastMutation();
     const [seekCast] = useSeekCastMutation();
     const [rateCast] = useRateCastMutation();
+    const [subtitleCast] = useSubtitleCastMutation();
     const [nextCast] = useNextCastMutation();
     const [editCastQueue] = useEditCastQueueMutation();
     const [refreshCast] = useRefreshCastMutation();
@@ -105,6 +107,11 @@ export const useCast = () => {
             },
             /** Sets the playback speed of a Chromecast. The player tab keeps the speed of its video controls. */
             setRate: (deviceId: string, rate: number) => ran(rateCast({ deviceId, rate })),
+            /** Shows a subtitle of the film on a Chromecast or in the player tab, or none with null. The film is not loaded again. */
+            setSubtitle: forPlayer(
+                (subtitle: number | null) => ({ action: "subtitle", subtitle }),
+                (deviceId, subtitle: number | null) => ran(subtitleCast({ deviceId, subtitle }))
+            ),
             seek: forPlayer(
                 (positionSec: number) => ({ action: "seek", positionSec }),
                 (deviceId, positionSec: number) => ran(seekCast({ deviceId, positionSec }))

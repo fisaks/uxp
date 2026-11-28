@@ -1,4 +1,12 @@
-import { MovieCategory, MovieItem, MovieMatchCandidate, MovieSearchResult, MovieTmdbKind } from "@vid/common";
+import {
+    MovieAudioUpdate,
+    MovieCategory,
+    MovieItem,
+    MovieMatchCandidate,
+    MovieSearchResult,
+    MovieSubtitleUpdate,
+    MovieTmdbKind,
+} from "@vid/common";
 import { apiUrl } from "../../api/home-video-api";
 import { vidApi } from "../../app/vidApi";
 import { compareMovies } from "./movieFormat";
@@ -34,8 +42,25 @@ export const movieApi = vidApi.injectEndpoints({
                 }
             },
         }),
+        /** Sets the audio track of a film. The BFF has a Chromecast that plays the film load it again with the track. */
+        setMovieAudio: builder.mutation<MovieItem, { id: string } & MovieAudioUpdate>({
+            query: ({ id, audio }) => ({ url: apiUrl(`movies/items/${id}/audio`), method: "PUT", data: { audio } }),
+            invalidatesTags: ["Movies"],
+        }),
+        /** Sets the subtitle that shows when the film is played, null for none. */
+        setMovieSubtitle: builder.mutation<MovieItem, { id: string } & MovieSubtitleUpdate>({
+            query: ({ id, subtitle }) => ({ url: apiUrl(`movies/items/${id}/subtitle`), method: "PUT", data: { subtitle } }),
+            invalidatesTags: ["Movies"],
+        }),
     }),
     overrideExisting: false,
 });
 
-export const { useGetMovieItemsQuery, useSearchMoviesQuery, useSearchMovieMatchesQuery, useSetMovieMatchMutation } = movieApi;
+export const {
+    useGetMovieItemsQuery,
+    useSearchMoviesQuery,
+    useSearchMovieMatchesQuery,
+    useSetMovieMatchMutation,
+    useSetMovieAudioMutation,
+    useSetMovieSubtitleMutation,
+} = movieApi;

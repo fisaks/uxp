@@ -32,7 +32,21 @@ type CastMediaStatus = {
     currentTime?: number;
     playbackRate?: number;
     media?: { contentId?: string; duration?: number };
+    /** The numbers of the text tracks that show. Missing when the media has none. */
+    activeTrackIds?: number[];
 };
+
+/** A subtitle for the receiver, which fetches the WebVTT file from `url`. */
+export type CastSubtitle = {
+    /** Names the subtitle for the app: the number of the subtitle in the movie item. */
+    index: number;
+    label: string;
+    language: string | null;
+    url: string;
+};
+
+/** The receiver numbers its tracks itself: the subtitle with the index n is the track n + 1, since 0 is not a track number. */
+const trackId = (index: number) => index + 1;
 
 /** Plays a clip on the device: launches the receiver and loads the URL. */
 export type CastLoad = {
@@ -46,6 +60,9 @@ export type CastLoad = {
     positionSec: number;
     /** False loads the clip paused at `positionSec`, for a group that starts all its members together. Default true. */
     autoplay?: boolean;
+    subtitles?: CastSubtitle[];
+    /** The index of the subtitle that shows from the start, null for none. */
+    activeSubtitle?: number | null;
 };
 
 /**
@@ -159,6 +176,12 @@ export class CastSession {
         this.mediaCommand("SET_PLAYBACK_RATE", { playbackRate: rate });
     }
 
+    /** Shows the subtitle with the index, or none with null. The receiver answers with a status that carries the active tracks. */
+    setSubtitle(subtitle: number | null) {
+        this.mediaCommand("EDIT_TRACKS_INFO", { activeTrackIds: subtitle === null ? [] : [trackId(subtitle)] });
+        this.set({ subtitle });
+    }
+
     /** Stops the app on the Chromecast, which returns it to its backdrop, and ends the session. */
     stop() {
         this.stopApp();
@@ -250,11 +273,21 @@ export class CastSession {
             type: "LOAD",
             autoplay: source.autoplay ?? true,
             currentTime: source.positionSec,
+            activeTrackIds: source.activeSubtitle != null ? [trackId(source.activeSubtitle)] : [],
             media: {
                 contentId: source.url,
                 contentType: "video/mp4",
                 streamType: "BUFFERED",
                 metadata: { metadataType: 0, title: source.title, images: source.posterUrl ? [{ url: source.posterUrl }] : [] },
+                tracks: (source.subtitles ?? []).map(({ index, label, language, url }) => ({
+                    trackId: trackId(index),
+                    type: "TEXT",
+                    subtype: "SUBTITLES",
+                    trackContentId: url,
+                    trackContentType: "text/vtt",
+                    name: label,
+                    language: language ?? undefined,
+                })),
             },
         });
     }
@@ -293,6 +326,7 @@ export class CastSession {
         this.loaded = true;
         clearTimeout(this.loadTimer);
         this.set({
+            ...(status.activeTrackIds && { subtitle: status.activeTrackIds.length > 0 ? status.activeTrackIds[0] - 1 : null }),
             state,
             positionSec: status.currentTime ?? this.latest.positionSec,
             playbackRate: status.playbackRate ?? 1,

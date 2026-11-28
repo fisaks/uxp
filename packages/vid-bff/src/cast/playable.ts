@@ -1,4 +1,4 @@
-import { isMovieId, MovieItem } from "@vid/common";
+import { isMovieId, MovieItem, MovieSubtitle } from "@vid/common";
 import { homeVideoService } from "../home-video/home-video.service";
 import { movieService } from "../movie/movie.service";
 
@@ -13,10 +13,18 @@ export type Playable = {
     streamRoute: string;
     /** The path of the signed poster route, without the id and the query. Undefined when the video has no poster. */
     posterRoute?: string;
+    /** The audio track to stream, 0 for the first. Only films have more than one. */
+    audio: number;
+    /** The path of the signed subtitle route, without the id, the number and the query. Only films have subtitles. */
+    subtitleRoute: string;
+    subtitles: MovieSubtitle[];
+    /** The index of the subtitle that shows when the film starts, null for none. */
+    subtitle: number | null;
 };
 
 const HOME_VIDEO_STREAM = "/api/home-videos/stream/";
 const MOVIE_STREAM = "/api/movies/stream/";
+const MOVIE_SUBTITLE = "/api/movies/subtitle/";
 
 /** The title as the app names a clip: the title, else the date as d.M.yyyy, else the file name. */
 const clipTitle = (title: string, date: string | null, file: string): string => {
@@ -44,6 +52,10 @@ export const findPlayable = (id: string): Playable | undefined => {
                 file: item.file,
                 streamRoute: MOVIE_STREAM,
                 posterRoute: item.hasPoster ? "/api/movies/poster/" : undefined,
+                audio: item.audio,
+                subtitleRoute: MOVIE_SUBTITLE,
+                subtitles: item.subtitles,
+                subtitle: item.subtitle,
             }
         );
     }
@@ -55,6 +67,10 @@ export const findPlayable = (id: string): Playable | undefined => {
             file: clip.file,
             streamRoute: HOME_VIDEO_STREAM,
             posterRoute: "/api/home-videos/poster/",
+            audio: 0,
+            subtitleRoute: MOVIE_SUBTITLE,
+            subtitles: [],
+            subtitle: null,
         }
     );
 };

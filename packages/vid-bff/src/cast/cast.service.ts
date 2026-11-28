@@ -6,12 +6,14 @@ import {
     CastSessionSnapshot,
     CastState,
     editQueue,
+    isMovieId,
     nextIndex,
     QueueEditError,
 } from "@vid/common";
 import { AppErrorV2, AppLogger } from "@uxp/bff-common";
 import { ErrorCodes } from "@uxp/common";
 import { WebSocket } from "ws";
+import { movieService } from "../movie/movie.service";
 import { signStreamQuery } from "../stream/signed-url";
 import { VideoServerWebSocketManager } from "../ws/VideoServerWebSocketManager";
 import { CastConfig, castConfig } from "./cast.config";
@@ -364,8 +366,14 @@ export class CastService {
     ): CastSession {
         const { exp, sig } = signStreamQuery(clip.id);
         const query = `${clip.id}?exp=${exp}&sig=${sig}`;
-        const url = `${baseUrl}${clip.streamRoute}${query}`;
+        const url = `${baseUrl}${clip.streamRoute}${query}${clip.audio > 0 ? `&audio=${clip.audio}` : ""}`;
         const posterUrl = clip.posterRoute && `${baseUrl}${clip.posterRoute}${query}`;
+        const subtitles = clip.subtitles.map(({ index, label, language }) => ({
+            index,
+            label,
+            language,
+            url: `${baseUrl}${clip.subtitleRoute}${clip.id}/${index}?exp=${exp}&sig=${sig}`,
+        }));
         this.sessions.get(device.id)?.release();
         this.cancelPowerOff(device.id);
         // Read before the launch, which wakes the TV. The first clip of a run decides, the following ones find a TV that is on.
@@ -375,7 +383,7 @@ export class CastService {
         }
         const session = new CastSession(
             device,
-            { kind: "load", clipId: clip.id, title: clip.title, url, posterUrl, positionSec, autoplay },
+            { kind: "load", clipId: clip.id, title: clip.title, url, posterUrl, positionSec, autoplay, subtitles, activeSubtitle: clip.subtitle },
             () => this.onSessionChange(device.id, session)
         );
         this.sessions.set(device.id, session);
@@ -551,6 +559,31 @@ export class CastService {
         return this.getState();
     }
 
+    /**
+     * Shows a subtitle of the film on the Chromecast, or none with null, without loading the film again. The choice is kept with the film,
+     * so the next time it is cast it starts with the same subtitle. A group has none to set: its members start with the kept one.
+     */
+    setSubtitle(deviceId: string, subtitle: number | null): CastState {
+        if (this.runningGroup(deviceId)) {
+            throw new AppErrorV2({ code: ErrorCodes.INVALID_STATE, message: "The subtitle of a group cannot be set" });
+        }
+        const session = this.session(deviceId);
+        const { clipId } = session.snapshot;
+        const item = isMovieId(clipId) ? movieService.get(clipId) : undefined;
+        if (subtitle !== null && (!item || subtitle >= item.subtitles.length)) {
+            throw new AppErrorV2({ code: ErrorCodes.NOT_FOUND, message: "There is no such subtitle", params: { resource: "subtitle" } });
+        }
+        session.setSubtitle(subtitle);
+        if (item) {
+            try {
+                movieService.setSubtitle(clipId, subtitle);
+            } catch (error) {
+                AppLogger.warn(undefined, { message: "[Cast] The subtitle shows but could not be kept with the film", error });
+            }
+        }
+        return this.getState();
+    }
+
     setRate(deviceId: string, rate: number): CastState {
         const run = this.runningGroup(deviceId);
         if (run) {
@@ -559,6 +592,25 @@ export class CastService {
             this.session(deviceId).setRate(rate);
         }
         return this.getState();
+    }
+
+    /**
+     * Casts the clip again, from where it is, on each device that plays it from its own queue: the audio track of a film is chosen in
+     * the stream, so the TV has to load the stream of the new track. A group is left to play the clip out, and a cast that the server
+     * only joined is not ours to restart.
+     */
+    reloadClip(clipId: string) {
+        for (const [deviceId, session] of this.sessions) {
+            const queue = this.queues.get(deviceId);
+            if (!queue || queue.clipIds[queue.index] !== clipId || session.snapshot.clipId !== clipId || session.finished) {
+                continue;
+            }
+            try {
+                this.restart(deviceId);
+            } catch (error) {
+                AppLogger.warn(undefined, { message: `[Cast] Could not load the new audio track on ${deviceId}`, error });
+            }
+        }
     }
 
     /** Takes the cast down on the Chromecast and casts the same clip again from where it was. */

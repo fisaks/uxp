@@ -1,3 +1,5 @@
+import { HomeVideoStreamQuery } from "./home-video.type";
+
 /** Which folder of the media root an item is in. */
 export type MovieCategory = "movies" | "kids" | "tv";
 
@@ -12,6 +14,14 @@ export type MovieSubtitle = {
     label: string;
     /** The language code in the file name, when there is one. */
     language: string | null;
+};
+
+/** An audio track of a video file. */
+export type MovieAudioTrack = {
+    /** Names the track in the stream route: its place among the audio tracks of the file, from 0. Track 0 is what the file plays by default. */
+    index: number;
+    /** What the player shows: the language when the file has one, else "Track N", with the channel layout when there are more than two channels. */
+    label: string;
 };
 
 /** A film or an episode. */
@@ -33,6 +43,11 @@ export type MovieItem = {
     height: number;
     sizeBytes: number;
     subtitles: MovieSubtitle[];
+    audioTracks: MovieAudioTrack[];
+    /** The index of the audio track that plays, chosen by the user. 0, the first track, until one is chosen. */
+    audio: number;
+    /** The index of the subtitle a Chromecast shows, null for none. Set where the user picks it on a cast, and used when the film is cast again. */
+    subtitle: number | null;
     /** The TMDB entry of the film, or of the series for an episode. Null when there is no match. */
     tmdbId: number | null;
     /** Which TMDB list the entry is in, null when there is no match. */
@@ -113,3 +128,18 @@ export type MovieSearchDoc = {
 
 /** Name of the Meilisearch index of the movies. */
 export const MOVIE_SEARCH_INDEX = "vid_movies";
+
+/** The audio track to play from now on, wherever the film is played. */
+export type MovieAudioUpdate = {
+    audio: number;
+};
+
+/** The subtitle to show from now on when the film is played, null for none. */
+export type MovieSubtitleUpdate = {
+    subtitle: number | null;
+};
+
+/** The query of the movie stream route: the signature, and the audio track to play when it is not the first. */
+export type MovieStreamQuery = HomeVideoStreamQuery & {
+    audio?: number;
+};

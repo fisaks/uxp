@@ -33,6 +33,8 @@ export type CastSessionSnapshot = {
     playbackRate?: number;
     /** When the position was read, so the UI can move it on between the pushes. Epoch milliseconds. */
     updatedAt: number;
+    /** The index of the subtitle the Chromecast shows (the number of the subtitle in the movie item), null for none. Missing when not known. */
+    subtitle?: number | null;
     /** Why a session failed, shown in the bar. */
     error?: string;
     queue: CastQueue;
@@ -80,6 +82,11 @@ export const CAST_PLAYBACK_RATES = [0.5, 1, 1.25, 1.5, 2];
 
 /** The speeds a browser video can be set to: a browser goes much faster than a Chromecast. */
 export const BROWSER_PLAYBACK_RATES = [0.5, 1, 1.25, 1.5, 2, 4, 8, 16];
+
+export type CastSubtitleRequest = {
+    /** The index of the subtitle of the film, null for none. */
+    subtitle: number | null;
+};
 
 export type CastRateRequest = {
     rate: number;

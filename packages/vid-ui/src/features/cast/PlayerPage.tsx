@@ -20,7 +20,10 @@ import { QueueList } from "./QueueList";
 import { PLAYER_TAB_ID } from "../browser-player/browserPlayerLink";
 import { useBrowserPlayer } from "../browser-player/useBrowserPlayer";
 import { CAST_PLAYBACK_RATES } from "@vid/common";
+import { AudioButton } from "../movie/AudioButton";
+import { useSetMovieAudioMutation } from "../movie/movie.api";
 import { RateButton } from "./RateButton";
+import { SubtitleButton } from "./SubtitleButton";
 import { membersText, sessionPosition, sessionStateText } from "./castText";
 import { useGetCastGroupsQuery } from "../cast-group/castGroup.api";
 import { useCast } from "./useCast";
@@ -32,10 +35,11 @@ const SKIP_SECONDS = 30;
 export const PlayerPage: React.FC = () => {
     const { deviceId = "" } = useParams();
     const navigate = useNavigate();
-    const { state, play, pause, stop, seek, restart, next, editQueue, setRate } = useCast();
+    const { state, play, pause, stop, seek, restart, next, editQueue, setRate, setSubtitle } = useCast();
     const { show: showPlayerTab } = useBrowserPlayer();
     const { data: castGroups } = useGetCastGroupsQuery();
     const findVideo = useVideos();
+    const [setMovieAudio] = useSetMovieAudioMutation();
     const session = state?.sessions.find((s) => s.deviceId === deviceId);
     const now = useNow(session?.state === "PLAYING");
     const [dragging, setDragging] = useState<number | undefined>(undefined);
@@ -143,6 +147,23 @@ export const PlayerPage: React.FC = () => {
                     >
                         <RepeatIcon />
                     </ToggleIconButton>
+                    {/* The BFF loads the film again on the TV with the track. The player tab has its own button, and a group plays the film out. */}
+                    {deviceId !== PLAYER_TAB_ID && !ended && !session.members && video && video.audioTracks.length > 1 && (
+                        <AudioButton
+                            tracks={video.audioTracks}
+                            selected={video.audio}
+                            compact
+                            onChange={(audio) => void setMovieAudio({ id: session.clipId, audio })}
+                        />
+                    )}
+                    {/* The subtitle shows at once, on the TV or in the player tab. A group's members start with the kept one. */}
+                    {!ended && !session.members && video && video.subtitles.length > 0 && (
+                        <SubtitleButton
+                            subtitles={video.subtitles}
+                            selected={session.subtitle ?? null}
+                            onChange={(subtitle) => void setSubtitle(deviceId, subtitle)}
+                        />
+                    )}
                     {deviceId !== PLAYER_TAB_ID && !ended && (
                         <RateButton
                             rates={CAST_PLAYBACK_RATES}
