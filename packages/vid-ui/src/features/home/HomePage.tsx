@@ -21,6 +21,7 @@ import { posterUrl } from "../movie/movieUrls";
 import { groupSeries } from "../movie/series";
 import { Mosaic } from "../shared/Mosaic";
 import { PAGE_WIDTH } from "../shared/pageWidth";
+import { ScanLibrary } from "./ScanLibrary";
 
 const MOSAIC_CLIPS = 4;
 
@@ -215,6 +216,7 @@ export const HomePage: React.FC = () => {
                     <Tile key={id} to={to} icon={<PlayCircleOutlineIcon />} title={title} lines={lines} picture={picture} />
                 ))}
             </Box>
+            <ScanLibrary />
         </Box>
     );
 };

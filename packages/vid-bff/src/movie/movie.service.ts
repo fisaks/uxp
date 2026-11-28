@@ -11,6 +11,7 @@ import { audioTrackFile } from "./audio-remux";
 import { movieSearch } from "./movie-search";
 import { ScannedItem, scanCategory } from "./movie-scanner";
 import { posterFileName, TmdbEntry, tmdbClient, TmdbKind } from "./tmdb-client";
+import { scanTracker } from "../library/scan-tracker";
 
 const SCAN_CACHE_FILE = "movie-scan.json";
 
@@ -193,6 +194,25 @@ export class MovieService {
             AppLogger.info(undefined, { message: "VID_MEDIA_ROOT is not set, the movies are empty" });
             return;
         }
+        await this.scan();
+    }
+
+    private scanning = false;
+
+    /** Looks at the folders of the categories again, which is what finds new files. A scan that is already running is not started twice. */
+    async scan(): Promise<void> {
+        if (this.scanning) {
+            return;
+        }
+        this.scanning = true;
+        try {
+            await scanTracker.track(() => this.scanFolders());
+        } finally {
+            this.scanning = false;
+        }
+    }
+
+    private async scanFolders(): Promise<void> {
         const cacheFile = path.join(homeVideoConfig.cacheDir, SCAN_CACHE_FILE);
         const cached = (await tryReadJsonFile<ScannedItem[]>(cacheFile)) ?? [];
         const previous = new Map(cached.map((item) => [`${item.category}/${item.file}`, item]));

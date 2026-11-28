@@ -1,5 +1,6 @@
 import { WebSocketAction, WebSocketMessage, WebSocketResponse } from "@uxp/common";
 import { CastGroupMemberRun } from "./cast-group.type";
+import { LibraryState } from "./status.type";
 import { UploadSession } from "./upload.type";
 
 /** A Chromecast found on the network. */
@@ -162,6 +163,8 @@ export type VideoAppActionPayloadRequestMap = {
     cast_subscribe: Record<string, never>;
     /** Starts the live updates of the Chromecast page. The response is the current state. */
     chromecasts_subscribe: Record<string, never>;
+    /** Starts the live updates of the library scan. The response is the current state. */
+    library_subscribe: Record<string, never>;
 };
 
 export type VideoAppActionPayloadResponseMap = {
@@ -173,4 +176,7 @@ export type VideoAppActionPayloadResponseMap = {
     chromecasts_state: ChromecastsState;
     /** Pushed to the user who uploaded when their finished upload is `done` or `failed`. No subscribing: it goes to every connection of that user. */
     upload_state: UploadSession;
+    library_subscribe: LibraryState;
+    /** Pushed to every connection when a scan of the media folders starts and when it is done. */
+    library_state: LibraryState;
 };

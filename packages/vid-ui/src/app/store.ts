@@ -3,6 +3,7 @@ import { remoteAppReducer } from "@uxp/ui-lib";
 import { createLogger } from "redux-logger";
 import { browserPlayerReducer } from "../features/browser-player/browserPlayerSlice";
 import { castReducer } from "../features/cast/castSlice";
+import { libraryReducer } from "../features/library/librarySlice";
 import { chromecastReducer } from "../features/chromecast/chromecastSlice";
 import { saveErrorReducer } from "../features/home-video/saveErrorSlice";
 import { uploadReducer } from "../features/upload/uploadSlice";
@@ -21,6 +22,7 @@ export const createStore = () => {
             cast: castReducer,
             browserPlayer: browserPlayerReducer,
             chromecast: chromecastReducer,
+            library: libraryReducer,
             saveError: saveErrorReducer,
             upload: uploadReducer,
         },

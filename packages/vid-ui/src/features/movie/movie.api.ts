@@ -20,6 +20,10 @@ export const movieApi = vidApi.injectEndpoints({
             transformResponse: (all: MovieItem[]) => [...all].sort(compareMovies),
             providesTags: ["Movies"],
         }),
+        /** Starts a scan of the media folders. The status tells when it is done. */
+        scanLibrary: builder.mutation<void, void>({
+            query: () => ({ url: apiUrl("library/scan"), method: "POST" }),
+        }),
         /** The ids of the items that match the words, best first. */
         searchMovies: builder.query<string[], string>({
             query: (q) => ({ url: apiUrl("movies/search"), params: { q } }),
@@ -57,6 +61,7 @@ export const movieApi = vidApi.injectEndpoints({
 });
 
 export const {
+    useScanLibraryMutation,
     useGetMovieItemsQuery,
     useSearchMoviesQuery,
     useSearchMovieMatchesQuery,

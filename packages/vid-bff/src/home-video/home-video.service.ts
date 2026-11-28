@@ -8,6 +8,7 @@ import { HomeVideoMetadataStore, HomeVideoMetadata } from "./home-video-metadata
 import { homeVideoSearch } from "./home-video-search";
 import { clipId, parseDate, probe, ScannedClip, scanFolder } from "./home-video-scanner";
 import { HomeVideoThumbnails } from "./home-video-thumbnails";
+import { scanTracker } from "../library/scan-tracker";
 
 const SCAN_CACHE_FILE = "home-video-scan.json";
 
@@ -46,6 +47,25 @@ export class HomeVideoService {
     async load(): Promise<void> {
         await this.store.load();
         await this.search.start();
+        await this.scan();
+    }
+
+    private scanning = false;
+
+    /** Looks at the home video folder again, which is what finds new files. A scan that is already running is not started twice. */
+    async scan(): Promise<void> {
+        if (this.scanning) {
+            return;
+        }
+        this.scanning = true;
+        try {
+            await scanTracker.track(() => this.scanFolders());
+        } finally {
+            this.scanning = false;
+        }
+    }
+
+    private async scanFolders(): Promise<void> {
         const folder = homeVideoConfig.folder;
         if (!folder) {
             AppLogger.info(undefined, { message: "VID_MEDIA_ROOT is not set, the home video library is empty" });

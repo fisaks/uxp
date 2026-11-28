@@ -6,6 +6,8 @@ import {
     VideoAppErrorHandler,
     VideoAppWebSocketResponseListener,
 } from "../../app/VideoBrowserWebSocketManager";
+import { vidApi } from "../../app/vidApi";
+import { libraryReceived } from "../library/librarySlice";
 import { BrowserPlayerListener } from "../browser-player/BrowserPlayerListener";
 import { useAppDispatch } from "../../hooks";
 import { chromecastsReceived } from "../chromecast/chromecastSlice";
@@ -32,6 +34,13 @@ export const CastProvider: React.FC<CastProviderProps> = ({ getWebSocket = getPa
             cast_state: (message) => message.payload && dispatch(castStateReceived(message.payload)),
             chromecasts_subscribe: (message) => message.payload && dispatch(chromecastsReceived(message.payload)),
             chromecasts_state: (message) => message.payload && dispatch(chromecastsReceived(message.payload)),
+            library_subscribe: (message) => message.payload && dispatch(libraryReceived(message.payload)),
+            library_state: (message) => {
+                if (!message.payload) return;
+                dispatch(libraryReceived(message.payload));
+                // What the scan found is in the lists.
+                if (!message.payload.scanning) dispatch(vidApi.util.invalidateTags(["Movies", "Clips", "Labels"]));
+            },
             upload_state: (message) => {
                 if (!message.payload) return;
                 dispatch(serverStateReceived(message.payload));
@@ -53,6 +62,7 @@ export const CastProvider: React.FC<CastProviderProps> = ({ getWebSocket = getPa
         setTimeout(() => {
             ws.sendMessage({ action: "cast_subscribe", payload: {} });
             ws.sendMessage({ action: "chromecasts_subscribe", payload: {} });
+            ws.sendMessage({ action: "library_subscribe", payload: {} });
         }, 500);
     }, [ws]);
 

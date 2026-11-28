@@ -5,3 +5,8 @@ export type VidStatus = {
     /** The search index is set up, so the search endpoint answers. */
     searchAvailable: boolean;
 };
+
+/** Whether the media folders are being scanned, so the lists may be out of date. */
+export type LibraryState = {
+    scanning: boolean;
+};
