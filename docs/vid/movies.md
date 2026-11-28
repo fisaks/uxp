@@ -61,8 +61,11 @@ subtitle that is not on the item any more (a file was removed) counts as none.
 
 ## Audio tracks
 
-The scan lists the audio tracks of each file (`audioTracks`, with a label such as `English (5.1)`,
-`Swedish`, or `Track 2` when the file names no language; stereo has no suffix). A browser plays the first track of
+The scan lists the audio tracks of each file (`audioTracks`). The label is the language and the title the file gives
+the track (`Swedish`, `Swedish · Director's commentary`), with the channel layout when it is not stereo
+(`English (5.1)`). A track that names neither is `Unknown language (stereo)`, with its layout always, and tracks
+with the same label are numbered (`Swedish 1`, `Swedish 2`). An MP4 keeps a language for a track but not a
+title, so titles only show for files whose container has them. A browser plays the first track of
 an MP4 and cannot switch, and neither can a Chromecast, so the track is chosen in the stream:
 
 - `GET /api/movies/stream/:id?exp=...&sig=...&audio=N` streams track `N` (from 0). Without `audio`, or with 0, it is
@@ -151,7 +154,7 @@ results page for films, only the dropdown.
 |---|---|
 | `/` | The home page has a tile each for Movies, TV and Kids, with a poster mosaic and a count |
 | `/movies`, `/kids` | A poster grid of the category, sorted by title |
-| `/movies/items/:id`, `/kids/items/:id` | A film: poster, year, runtime, rating, overview, player, cast picker, TMDB buttons |
+| `/movies/items/:id`, `/kids/items/:id` | A film: poster, year, runtime, rating, the audio tracks and subtitles it has, overview, player, cast picker, TMDB buttons |
 | `/tv` | A poster grid of the series |
 | `/tv/series/:name` | A series: overview, **Play all**, and the seasons in order, each with **Play season** and its episodes |
 

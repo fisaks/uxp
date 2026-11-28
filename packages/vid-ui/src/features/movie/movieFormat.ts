@@ -20,3 +20,12 @@ export const movieName = (item: MovieItem) =>
     item.kind === "episode" ? `${item.series} ${episodeCode(item)} ${item.title}` : item.year ? `${item.title} (${item.year})` : item.title;
 
 export const compareMovies = (a: MovieItem, b: MovieItem) => a.title.localeCompare(b.title) || (a.year ?? 0) - (b.year ?? 0);
+
+/** The audio tracks and the subtitles of a film for a line of the page, such as `Audio: Swedish, English · Subtitles: Swedish`. */
+export const formatTracks = ({ audioTracks, subtitles }: MovieItem) =>
+    [
+        audioTracks.length > 0 && `Audio: ${audioTracks.map(({ label }) => label).join(", ")}`,
+        `Subtitles: ${subtitles.length > 0 ? subtitles.map(({ label }) => label).join(", ") : "none"}`,
+    ]
+        .filter(Boolean)
+        .join(" · ");

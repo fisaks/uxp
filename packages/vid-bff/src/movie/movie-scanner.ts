@@ -73,8 +73,8 @@ export const scanCategory = async (category: MovieCategory, folder: string, prev
         const { size, mtimeMs } = await stat(path.join(folder, file));
         const known = previous.get(`${category}/${file}`);
         const cached: Cached =
-            // A cache from before the audio tracks were probed has none, so the file is probed again.
-            known && known.audioTracks && known.sizeBytes === size && known.mtimeMs === mtimeMs
+            // A cache from before the audio tracks, or their titles, were probed does not have them, so the file is probed again.
+            known && known.audioTracks?.every((track) => track.title !== undefined) && known.sizeBytes === size && known.mtimeMs === mtimeMs
                 ? known
                 : { ...(await probe(path.join(folder, file))), sizeBytes: size, mtimeMs };
         items.push({

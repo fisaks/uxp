@@ -44,11 +44,17 @@ export const parseDate = (file: string): string | null => {
 /** The part of the JSON that `ffprobe -print_format json -show_format -show_streams` prints that the scanner reads. */
 type FfprobeOutput = {
     format?: { duration?: string };
-    streams?: Array<{ codec_type?: string; width?: number; height?: number; channels?: number; tags?: { language?: string } }>;
+    streams?: Array<{
+        codec_type?: string;
+        width?: number;
+        height?: number;
+        channels?: number;
+        tags?: { language?: string; title?: string };
+    }>;
 };
 
-/** An audio track as the probe finds it. The language is the code in the file, null when it has none or says `und`. */
-export type ProbedAudioTrack = { language: string | null; channels: number };
+/** An audio track as the probe finds it. The language is the code in the file, null when it has none or says `und`. The title is the one the file gives the track, such as "Commentary", null when it has none. */
+export type ProbedAudioTrack = { language: string | null; channels: number; title: string | null };
 
 type Probe = { durationSeconds: number; width: number; height: number; audioTracks: ProbedAudioTrack[] };
 
@@ -60,7 +66,11 @@ export const probe = async (file: string): Promise<Probe> => {
     const video = info.streams?.find((stream) => stream.codec_type === "video");
     const audioTracks = (info.streams ?? [])
         .filter((stream) => stream.codec_type === "audio")
-        .map(({ channels, tags }) => ({ language: tags?.language && tags.language !== "und" ? tags.language : null, channels: channels ?? 2 }));
+        .map(({ channels, tags }) => ({
+            language: tags?.language && tags.language !== "und" ? tags.language : null,
+            channels: channels ?? 2,
+            title: tags?.title?.trim() || null,
+        }));
     return { durationSeconds: Number(info.format?.duration) || 0, width: video?.width ?? 0, height: video?.height ?? 0, audioTracks };
 };
 

@@ -10,7 +10,7 @@ import { PAGE_WIDTH } from "../shared/pageWidth";
 import { FilmPlayer } from "./FilmPlayer";
 import { MatchPicker } from "./MatchPicker";
 import { useGetMovieItemsQuery, useSetMovieMatchMutation } from "./movie.api";
-import { formatRating, formatRuntime } from "./movieFormat";
+import { formatRating, formatRuntime, formatTracks } from "./movieFormat";
 import { MovieSectionCategory } from "./movieSections";
 import { posterUrl } from "./movieUrls";
 import { TmdbAttribution } from "./TmdbAttribution";
@@ -64,8 +64,11 @@ export const MoviePage: React.FC<{ category: MovieSectionCategory }> = ({ catego
                 </Box>
                 <Box sx={{ minWidth: 0, flex: 1 }}>
                     <Typography variant="h5">{item.title}</Typography>
-                    <Typography color="text.secondary" sx={{ mb: 2 }}>
+                    <Typography color="text.secondary" sx={{ mb: 0.5 }}>
                         {[item.year, formatRuntime(item.durationSeconds), rating && `★ ${rating}`].filter(Boolean).join(" · ")}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                        {formatTracks(item)}
                     </Typography>
                     {item.overview && <Typography sx={{ mb: 2 }}>{item.overview}</Typography>}
                     {!tmdbId && (

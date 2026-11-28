@@ -72,22 +72,35 @@ const subtitlesOf = (scanned: ScannedItem): MovieSubtitle[] => {
     });
 };
 
-const CHANNEL_LAYOUTS: Record<number, string> = { 1: "mono", 6: "5.1", 8: "7.1" };
+const CHANNEL_LAYOUTS: Record<number, string> = { 1: "mono", 2: "stereo", 6: "5.1", 8: "7.1" };
 
-const audioTracksOf = (scanned: ScannedItem): MovieAudioTrack[] =>
-    scanned.audioTracks.map(({ language, channels }, index) => {
-        let name = `Track ${index + 1}`;
-        if (language) {
-            try {
-                name = languageNames.of(language) ?? language;
-            } catch {
-                name = language;
-            }
-        }
-        // Stereo is what is expected, so only the other layouts are said.
-        const layout = CHANNEL_LAYOUTS[channels];
-        return { index, label: layout ? `${name} (${layout})` : name };
+const languageName = (code: string): string => {
+    try {
+        return languageNames.of(code) ?? code;
+    } catch {
+        return code;
+    }
+};
+
+/**
+ * What the player shows for each audio track: the language and the title the file gives it ("Swedish · Commentary"). A track that
+ * names neither is "Unknown language", as a number says nothing. The channel layout is added when it is not stereo, and always to
+ * a track that names neither. Tracks that end up with the same label are numbered.
+ */
+const audioTracksOf = (scanned: ScannedItem): MovieAudioTrack[] => {
+    const labels = scanned.audioTracks.map(({ language, channels, title }) => {
+        const name = [language && languageName(language), title].filter(Boolean).join(" · ") || "Unknown language";
+        const layout = CHANNEL_LAYOUTS[channels] ?? `${channels} ch`;
+        const named = language !== null || title !== null;
+        return named && channels === 2 ? name : `${name} (${layout})`;
     });
+    return labels.map((label, index) => {
+        const sameLabel = (other: string) => other === label;
+        // The place among the tracks with this label, from 1.
+        const place = labels.slice(0, index + 1).filter(sameLabel).length;
+        return { index, label: labels.filter(sameLabel).length > 1 ? `${label} ${place}` : label };
+    });
+};
 
 const toItem = (
     scanned: ScannedItem,
@@ -347,7 +360,11 @@ export class MovieService {
     async setAudio(id: string, audio: number): Promise<MovieItem> {
         const item = this.requireItem(id);
         if (audio >= item.audioTracks.length) {
-            throw new AppErrorV2({ code: ErrorCodes.NOT_FOUND, message: "There is no such audio track", params: { resource: "audio track" } });
+            throw new AppErrorV2({
+                code: ErrorCodes.NOT_FOUND,
+                message: "There is no such audio track",
+                params: { resource: "audio track" },
+            });
         }
         if (!this.store.canSave()) {
             throw new AppErrorV2({ code: ErrorCodes.NOT_READY, message: "The movie metadata cannot be saved right now" });
