@@ -13,7 +13,7 @@ import { MatchPicker } from "./MatchPicker";
 import { useGetMovieItemsQuery, useSetMovieMatchMutation } from "./movie.api";
 import { formatRating, formatRuntime } from "./movieFormat";
 import { posterUrl } from "./movieUrls";
-import { groupSeries } from "./series";
+import { formatSeriesTracks, groupSeries, missingTracks } from "./series";
 import { TmdbAttribution } from "./TmdbAttribution";
 
 const POSTER_WIDTH = 280;
@@ -75,6 +75,9 @@ export const SeriesPage: React.FC = () => {
                         ]
                             .filter(Boolean)
                             .join(" · ")}
+                    </Typography>
+                    <Typography color="text.secondary" sx={{ mb: 2 }}>
+                        {formatSeriesTracks(series)}
                     </Typography>
                     {first.overview && <Typography sx={{ mb: 2 }}>{first.overview}</Typography>}
                     {!tmdbId && (
@@ -141,7 +144,7 @@ export const SeriesPage: React.FC = () => {
                                 </IconButton>
                                 <ListItemText
                                     primary={`${e.episode ?? ""}${e.episode === null ? "" : ". "}${e.title}`}
-                                    secondary={formatRuntime(e.durationSeconds)}
+                                    secondary={[formatRuntime(e.durationSeconds), missingTracks(series, e)].filter(Boolean).join(" · ")}
                                 />
                             </ListItem>
                         ))}

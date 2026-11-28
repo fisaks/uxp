@@ -14,8 +14,19 @@ import { posterFileName, TmdbEntry, tmdbClient, TmdbKind } from "./tmdb-client";
 
 const SCAN_CACHE_FILE = "movie-scan.json";
 
-/** The metadata the user has set on an item. `year` null is a year the user cleared. */
-type MovieMetadata = { title?: string; year?: number | null; audio?: number; subtitle?: number | null };
+/**
+ * The metadata the user has set on an item. `year` null is a year the user cleared. The entry of a series (key `series:<name>`)
+ * keeps the audio and subtitle language of all its episodes: `subtitleLanguage` null is "Off", undefined is never chosen.
+ * `audio` and `subtitle` of an episode are only set for a track that names no language, which cannot be kept per series.
+ */
+type MovieMetadata = {
+    title?: string;
+    year?: number | null;
+    audio?: number;
+    subtitle?: number | null;
+    audioLanguage?: string;
+    subtitleLanguage?: string | null;
+};
 
 /**
  * The TMDB entry of a film or a series. A null `tmdbId` is a "no match" the user has chosen, which is not looked up again.
@@ -41,7 +52,9 @@ const kindOf = (item: ScannedItem): TmdbKind => (item.kind === "episode" ? "tv" 
 const matchKind = (item: ScannedItem, match: MovieMatch | undefined): TmdbKind => match?.kind ?? kindOf(item);
 
 /** An episode has the match of its series, so all its episodes share one entry. */
-const matchKey = (item: ScannedItem): string => (item.kind === "episode" ? `series:${item.series}` : `movie:${item.category}/${item.file}`);
+const matchKey = (item: ScannedItem): string => (item.kind === "episode" ? seriesKey(item.series as string) : `movie:${item.category}/${item.file}`);
+
+const seriesKey = (series: string): string => `series:${series}`;
 
 const languageNames = new Intl.DisplayNames(["en"], { type: "language" });
 
@@ -102,9 +115,39 @@ const audioTracksOf = (scanned: ScannedItem): MovieAudioTrack[] => {
     });
 };
 
+/** Whether two language codes are the same language, as `swe` of a track and `sv` of a subtitle file are. */
+const sameLanguage = (a: string, b: string): boolean => languageName(a) === languageName(b);
+
+/** The audio track that plays: the one chosen for the item, else the one in the language chosen for the series, else the first. */
+const audioOf = (scanned: ScannedItem, metadata: MovieMetadata | undefined, series: MovieMetadata | undefined): number => {
+    // A track the file no longer has is not used.
+    if (metadata?.audio !== undefined && metadata.audio < scanned.audioTracks.length) {
+        return metadata.audio;
+    }
+    const language = series?.audioLanguage;
+    const index = language ? scanned.audioTracks.findIndex((track) => track.language && sameLanguage(track.language, language)) : -1;
+    return Math.max(index, 0);
+};
+
+/** The subtitle that shows: the one chosen for the item, else the one in the language chosen for the series, else none. */
+const subtitleOf = (scanned: ScannedItem, metadata: MovieMetadata | undefined, series: MovieMetadata | undefined): number | null => {
+    if (metadata?.subtitle != null && metadata.subtitle < scanned.subtitleFiles.length) {
+        return metadata.subtitle;
+    }
+    const language = series?.subtitleLanguage;
+    const index = language
+        ? scanned.subtitleFiles.findIndex((file) => {
+              const fileLanguage = languageOf(file, scanned.file);
+              return fileLanguage && sameLanguage(fileLanguage, language);
+          })
+        : -1;
+    return index >= 0 ? index : null;
+};
+
 const toItem = (
     scanned: ScannedItem,
     metadata: MovieMetadata | undefined,
+    series: MovieMetadata | undefined,
     match: MovieMatch | undefined,
     posters: Set<string>
 ): MovieItem => ({
@@ -123,9 +166,8 @@ const toItem = (
     sizeBytes: scanned.sizeBytes,
     subtitles: subtitlesOf(scanned),
     audioTracks: audioTracksOf(scanned),
-    // A track the file no longer has is the first one.
-    audio: metadata?.audio !== undefined && metadata.audio < scanned.audioTracks.length ? metadata.audio : 0,
-    subtitle: metadata?.subtitle != null && metadata.subtitle < scanned.subtitleFiles.length ? metadata.subtitle : null,
+    audio: audioOf(scanned, metadata, series),
+    subtitle: subtitleOf(scanned, metadata, series),
     tmdbId: match?.tmdbId ?? null,
     tmdbKind: match?.tmdbId != null ? matchKind(scanned, match) : null,
     overview: match?.overview ?? null,
@@ -321,6 +363,7 @@ export class MovieService {
         return toItem(
             item,
             this.store.getMetadata(`${item.category}/${item.file}`),
+            item.kind === "episode" ? this.store.getMetadata(seriesKey(item.series as string)) : undefined,
             this.matches.getMetadata(matchKey(item)),
             this.posters
         );
@@ -373,7 +416,14 @@ export class MovieService {
         if (audio > 0 && file) {
             await audioTrackFile(file, id, audio, item.sizeBytes);
         }
-        this.store.updateMetadata(`${item.category}/${item.file}`, { audio });
+        const language = item.audioTracks[audio].language;
+        if (item.kind === "episode" && language) {
+            // The episodes of the series play this language, each in the track that has it.
+            this.store.updateMetadata(seriesKey(item.series as string), { audioLanguage: language });
+            this.store.updateMetadata(`${item.category}/${item.file}`, { audio: undefined });
+        } else {
+            this.store.updateMetadata(`${item.category}/${item.file}`, { audio });
+        }
         return this.toMovieItem(item);
     }
 
@@ -386,7 +436,15 @@ export class MovieService {
         if (!this.store.canSave()) {
             throw new AppErrorV2({ code: ErrorCodes.NOT_READY, message: "The movie metadata cannot be saved right now" });
         }
-        this.store.updateMetadata(`${item.category}/${item.file}`, { subtitle });
+        const file = subtitle === null ? undefined : item.subtitleFiles[subtitle];
+        const language = file === undefined ? null : languageOf(file, item.file);
+        if (item.kind === "episode" && (subtitle === null || language)) {
+            // The episodes of the series show this language, or none: each in the file that has it.
+            this.store.updateMetadata(seriesKey(item.series as string), { subtitleLanguage: language });
+            this.store.updateMetadata(`${item.category}/${item.file}`, { subtitle: undefined });
+        } else {
+            this.store.updateMetadata(`${item.category}/${item.file}`, { subtitle });
+        }
         return this.toMovieItem(item);
     }
 

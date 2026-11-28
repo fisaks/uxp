@@ -28,3 +28,32 @@ export const groupSeries = (items: MovieItem[]): Series[] => {
         })
         .sort((a, b) => a.name.localeCompare(b.name));
 };
+
+type TrackKind = "audioTracks" | "subtitles";
+
+/** The labels of the tracks of the episodes, the ones in most episodes first. */
+const labelsByCount = (episodes: MovieItem[], kind: TrackKind): [string, number][] => {
+    const counts = new Map<string, number>();
+    episodes.forEach((e) => new Set(e[kind].map(({ label }) => label)).forEach((label) => counts.set(label, (counts.get(label) ?? 0) + 1)));
+    return [...counts.entries()].sort((a, b) => b[1] - a[1]);
+};
+
+/** The audio tracks and the subtitles that exist in the episodes of a series, such as `Audio: English, Swedish · Subtitles: Swedish`. */
+export const formatSeriesTracks = ({ episodes }: Series) => {
+    const names = (kind: TrackKind) => labelsByCount(episodes, kind).map(([label]) => label);
+    const audio = names("audioTracks");
+    const subtitles = names("subtitles");
+    return [audio.length > 0 && `Audio: ${audio.join(", ")}`, `Subtitles: ${subtitles.length > 0 ? subtitles.join(", ") : "none"}`]
+        .filter(Boolean)
+        .join(" · ");
+};
+
+/** What an episode lacks that most episodes of the series have, such as `no Swedish subtitles`. Nothing for a normal episode. */
+export const missingTracks = ({ episodes }: Series, episode: MovieItem): string | undefined => {
+    const lacking = (kind: TrackKind, text: (label: string) => string) =>
+        labelsByCount(episodes, kind)
+            .filter(([label, count]) => count > episodes.length / 2 && !episode[kind].some((t) => t.label === label))
+            .map(([label]) => text(label));
+    const missing = [...lacking("audioTracks", (label) => `no ${label} audio`), ...lacking("subtitles", (label) => `no ${label} subtitles`)];
+    return missing.length > 0 ? missing.join(", ") : undefined;
+};

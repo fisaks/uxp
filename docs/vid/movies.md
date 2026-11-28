@@ -59,6 +59,8 @@ every place the film is played. A film starts with it, and a pick in any of them
 `PUT /api/movies/items/:id/subtitle {subtitle: index|null}` sets it. It is stored with the item (see Edits). A
 subtitle that is not on the item any more (a file was removed) counts as none.
 
+**Episodes.** For a TV series the choice is kept per series, not per episode (see Series choice below).
+
 ## Audio tracks
 
 The scan lists the audio tracks of each file (`audioTracks`). The label is the language and the title the file gives
@@ -83,6 +85,21 @@ an MP4 and cannot switch, and neither can a Chromecast, so the track is chosen i
 
 The converter keeps the tracks it keeps (see Converting), so a film made from a source with several languages has
 them here.
+
+### Series choice
+
+The kept audio track and subtitle of an episode are stored with its **series**, as a language, not an index
+(`audioLanguage`, `subtitleLanguage` on the entry `series:<name>` in `movie-metadata.json`). The same two routes are
+used (`PUT .../audio`, `PUT .../subtitle` with an index): for an episode the BFF turns the index into the language of
+that track and stores it on the series, so one pick in one episode applies to the whole series.
+
+- Each episode takes the first track with that language (compared by language name, so the audio code `swe` and the
+  subtitle file code `sv` match). If an episode has none, it plays the first audio track and no subtitles.
+- Subtitle Off is kept for the series too (`subtitleLanguage: null`).
+- A track without a language (`Unknown language`, or a plain `Episode.vtt` labelled "Subtitles") cannot be matched, so a
+  pick of such a track is stored per episode, as for a film. Name subtitle files with a language (`.sv.vtt`) to get the
+  series behaviour.
+- An episode's own stored index is used only when the series has no language for that kind.
 
 ## Converting
 
@@ -156,7 +173,7 @@ results page for films, only the dropdown.
 | `/movies`, `/kids` | A poster grid of the category, sorted by title |
 | `/movies/items/:id`, `/kids/items/:id` | A film: poster, year, runtime, rating, the audio tracks and subtitles it has, overview, player, cast picker, TMDB buttons |
 | `/tv` | A poster grid of the series |
-| `/tv/series/:name` | A series: overview, **Play all**, and the seasons in order, each with **Play season** and its episodes |
+| `/tv/series/:name` | A series: overview, a line with the audio languages and subtitles that exist in its episodes (`Audio: English, Swedish · Subtitles: Swedish, English`, the most common first), **Play all**, and the seasons in order, each with **Play season** and its episodes. An episode that lacks a track most episodes have shows it as a note (`no Swedish subtitles`); normal episodes show nothing |
 
 The player on a page starts at once and has a subtitle button, an audio button (when the film has more than one
 track) and a speed button, besides the controls of the video. **Play all** and **Play season**
