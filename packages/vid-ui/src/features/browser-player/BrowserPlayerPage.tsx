@@ -29,13 +29,14 @@ import {
 } from "../cast/cast.api";
 import { QueueList } from "../cast/QueueList";
 import { SubtitleTracks } from "../video/SubtitleTracks";
+import { useSubtitleTracks } from "../video/useSubtitleTracks";
 import { useVideos } from "../video/useVideos";
 import { SavePlaylistButton } from "../playlist/SavePlaylistButton";
 import { LabelledIconButton } from "../shared/LabelledIconButton";
 import { RateButton } from "../cast/RateButton";
 import { SubtitleButton } from "../cast/SubtitleButton";
 import { AudioButton } from "../movie/AudioButton";
-import { useSetMovieAudioMutation, useSetMovieSubtitleMutation } from "../movie/movie.api";
+import { useSetMovieAudioMutation } from "../movie/movie.api";
 import { ToggleIconButton } from "../shared/ToggleIconButton";
 import { BrowserPlayerCommand, FromPlayerMessage, openChannel, showMainWindow, ToPlayerMessage } from "./browserPlayerLink";
 import { followAction } from "./followSkew";
@@ -130,24 +131,11 @@ export const BrowserPlayerPage: React.FC = () => {
     const clipId = queue.clipIds[queue.index];
     const info = findVideo(clipId);
     const [setMovieAudio] = useSetMovieAudioMutation();
-    const [setMovieSubtitle] = useSetMovieSubtitleMutation();
-    // The subtitle that is kept with the film, so that a change is saved once and not each time the video says its tracks changed.
-    const keptSubtitle = useRef<number | null>(null);
-    keptSubtitle.current = info?.subtitle ?? null;
-    // The subtitle that shows, for the button. The video decides it, since its own menu changes it too.
-    const [subtitle, setSubtitle] = useState<number | null>(null);
     // The browser plays the first audio track of a file and cannot switch, so the BFF streams a copy with the chosen track.
     const src = url && info && info.audio > 0 ? `${url}&audio=${info.audio}` : url;
+    // What shows is decided by the video, which the app is told of: a subtitle picked in its menu is as good as one picked in the app.
+    const subtitles = useSubtitleTracks(video, clipId, info?.subtitle, src, () => latest.current.report());
     const next = nextIndex(queue);
-
-    /** The index of the subtitle that shows in the video, null for none. */
-    const shownSubtitle = (): number | null => {
-        const tracks = video.current?.textTracks;
-        for (let i = 0; tracks && i < tracks.length; i++) {
-            if (tracks[i].mode === "showing") return i;
-        }
-        return null;
-    };
 
     const report = () => {
         const element = video.current;
@@ -165,7 +153,7 @@ export const BrowserPlayerPage: React.FC = () => {
                 state,
                 positionSec: position,
                 durationSec: element?.duration || 0,
-                subtitle: shownSubtitle(),
+                subtitle: subtitles.shown(),
                 followGroupId: following.current?.groupId,
             },
         } satisfies FromPlayerMessage);
@@ -241,14 +229,6 @@ export const BrowserPlayerPage: React.FC = () => {
         else if (nextIndex(queueRef.current) !== undefined) advance(false);
     };
 
-    /** Shows the subtitle with the index in the video, none with null. */
-    const showSubtitle = (subtitle: number | null) => {
-        const tracks = video.current?.textTracks;
-        for (let i = 0; tracks && i < tracks.length; i++) {
-            tracks[i].mode = i === subtitle ? "showing" : "disabled";
-        }
-    };
-
     const handleCommand = (command: BrowserPlayerCommand) => {
         switch (command.action) {
             case "play":
@@ -264,7 +244,7 @@ export const BrowserPlayerPage: React.FC = () => {
                 nextClip();
                 return;
             case "subtitle":
-                showSubtitle(command.subtitle);
+                subtitles.show(command.subtitle);
                 return;
             case "stop":
                 writeSaved(undefined);
@@ -362,24 +342,6 @@ export const BrowserPlayerPage: React.FC = () => {
         };
     }, []);
 
-    // A subtitle picked in the menu of the video is as good as one picked in the app: the app is told, and the film keeps it.
-    useEffect(() => {
-        const tracks = video.current?.textTracks;
-        if (!tracks) return;
-        const changed = () => {
-            const shown = shownSubtitle();
-            setSubtitle(shown);
-            latest.current.report();
-            const { clipIds, index } = queueRef.current;
-            if (shown !== keptSubtitle.current && clipIds[index]) {
-                keptSubtitle.current = shown;
-                void setMovieSubtitle({ id: clipIds[index], subtitle: shown });
-            }
-        };
-        tracks.addEventListener("change", changed);
-        return () => tracks.removeEventListener("change", changed);
-    }, [src]);
-
     // The link to the stream is made for each clip that starts, since it runs out.
     useEffect(() => {
         setUrl(undefined);
@@ -432,7 +394,7 @@ export const BrowserPlayerPage: React.FC = () => {
                         style={{ display: "block", width: "100%", height: "100%" }}
                         onLoadedMetadata={(event) => {
                             event.currentTarget.playbackRate = rate;
-                            setSubtitle(shownSubtitle());
+                            subtitles.sync();
                             if (startAt.current > 0) event.currentTarget.currentTime = startAt.current;
                             startAt.current = 0;
                         }}
@@ -486,7 +448,7 @@ export const BrowserPlayerPage: React.FC = () => {
                         </LabelledIconButton>
                     )}
                     {info && info.subtitles.length > 0 && (
-                        <SubtitleButton subtitles={info.subtitles} selected={subtitle} onChange={showSubtitle} />
+                        <SubtitleButton subtitles={info.subtitles} selected={subtitles.subtitle} onChange={subtitles.show} />
                     )}
                     {!followGroup && info && info.audioTracks.length > 1 && (
                         <AudioButton tracks={info.audioTracks} selected={info.audio} onChange={changeAudio} compact />

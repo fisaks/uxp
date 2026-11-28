@@ -78,6 +78,8 @@ export const scanCategory = async (category: MovieCategory, folder: string, prev
                 ? known
                 : { ...(await probe(path.join(folder, file))), sizeBytes: size, mtimeMs };
         items.push({
+            // The cached item can be a whole earlier item: what is read from the folders now has to win over it.
+            ...cached,
             id: itemId(category, file),
             category,
             kind: entry.kind,
@@ -88,7 +90,6 @@ export const scanCategory = async (category: MovieCategory, folder: string, prev
             episode: entry.kind === "episode" ? entry.episode : null,
             file,
             subtitleFiles: subtitlesOf(file, files),
-            ...cached,
         });
     }
     return items;
