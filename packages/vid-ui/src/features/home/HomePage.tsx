@@ -45,7 +45,7 @@ const Tile: React.FC<TileProps> = ({ to, icon, title, lines, picture }) => (
         <ButtonBase
             component={Link}
             to={to}
-            sx={{ display: "flex", alignItems: "stretch", width: "100%", minHeight: 112, p: 1.5, gap: 0.5, textAlign: "left" }}
+            sx={{ display: "flex", alignItems: "stretch", width: "100%", height: "100%", minHeight: 112, p: 1.5, gap: 0.5, textAlign: "left" }}
         >
             <Box sx={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", justifyContent: "space-between", gap: 0.5 }}>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1, color: "primary.main" }}>
@@ -161,7 +161,7 @@ export const HomePage: React.FC = () => {
 
     return (
         <Box sx={{ p: { xs: 0, sm: 2 }, maxWidth: PAGE_WIDTH, mx: "auto" }}>
-            <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(auto-fill, minmax(260px, 1fr))" }, gap: 1.5 }}>
+            <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr", sm: "repeat(auto-fill, minmax(260px, 1fr))" }, gap: 1.5 }}>
                 <Tile
                     to={homeVideos.path}
                     icon={homeVideos.icon}

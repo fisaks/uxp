@@ -67,6 +67,8 @@ const SessionRow: React.FC<{ session: CastSessionSnapshot; now: number; compact:
 
     // Without room for the slider on the row the position gets a line of its own below it, with the times at both ends.
     const ownLine = !wide && !ended;
+    // The plain narrow row has no room for these; the player page has them.
+    const roomy = wide || compact;
 
     const buttons = (
         <>
@@ -117,7 +119,7 @@ const SessionRow: React.FC<{ session: CastSessionSnapshot; now: number; compact:
                     )}
                 </>
             )}
-            {inQueue && !ended && (
+            {roomy && inQueue && !ended && (
                 <ToggleIconButton
                     active={queue.repeat}
                     label={queue.repeat ? "Repeat the queue: on" : "Repeat the queue: off"}
@@ -126,7 +128,7 @@ const SessionRow: React.FC<{ session: CastSessionSnapshot; now: number; compact:
                     <RepeatIcon />
                 </ToggleIconButton>
             )}
-            {session.deviceId !== PLAYER_TAB_ID && !ended && (
+            {roomy && session.deviceId !== PLAYER_TAB_ID && !ended && (
                 <RateButton
                     rates={CAST_PLAYBACK_RATES}
                     rate={session.playbackRate ?? 1}
@@ -138,6 +140,7 @@ const SessionRow: React.FC<{ session: CastSessionSnapshot; now: number; compact:
                     <OpenInBrowserIcon />
                 </LabelledIconButton>
             ) : (
+                roomy &&
                 !ended &&
                 !session.members && (
                     <LabelledIconButton label="Restart the stream" onClick={() => restart(session.deviceId)}>

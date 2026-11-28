@@ -4,6 +4,7 @@ import PauseIcon from "@mui/icons-material/Pause";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import RepeatIcon from "@mui/icons-material/Repeat";
 import Replay30Icon from "@mui/icons-material/Replay30";
+import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import SkipNextIcon from "@mui/icons-material/SkipNext";
 import StopIcon from "@mui/icons-material/Stop";
 import { Box, ButtonBase, Slider, Stack, Typography } from "@mui/material";
@@ -31,7 +32,7 @@ const SKIP_SECONDS = 30;
 export const PlayerPage: React.FC = () => {
     const { deviceId = "" } = useParams();
     const navigate = useNavigate();
-    const { state, play, pause, stop, seek, next, editQueue, setRate } = useCast();
+    const { state, play, pause, stop, seek, restart, next, editQueue, setRate } = useCast();
     const { show: showPlayerTab } = useBrowserPlayer();
     const { data: castGroups } = useGetCastGroupsQuery();
     const findVideo = useVideos();
@@ -152,6 +153,11 @@ export const PlayerPage: React.FC = () => {
                     {(deviceId === PLAYER_TAB_ID || castGroups?.some((g) => g.id === deviceId && g.browser)) && (
                         <LabelledIconButton label="Show the player tab" onClick={showPlayerTab}>
                             <OpenInBrowserIcon />
+                        </LabelledIconButton>
+                    )}
+                    {deviceId !== PLAYER_TAB_ID && !ended && !session.members && (
+                        <LabelledIconButton label="Restart the stream" onClick={() => restart(deviceId)}>
+                            <RestartAltIcon />
                         </LabelledIconButton>
                     )}
                     <LabelledIconButton label="Stop" onClick={stopAndLeave}>
